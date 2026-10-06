@@ -14,7 +14,7 @@ who wins a fight between fighters of different levels.
 
 <ansi fg="yellow-bold">What each class gains a level</ansi>
 
-  <ansi fg="yellow">Warrior, Samurai</ansi>   Attack 1     Evasion 1      (level 30: 30 / 30)
+  <ansi fg="yellow">Warrior, Samurai, Gryphon Rider</ansi>   Attack 1     Evasion 1      (level 30: 30 / 30)
   <ansi fg="yellow">Rogue</ansi>              Attack 0.9   Evasion 1.1    (level 30: 27 / 33)
   <ansi fg="yellow">Ranger, Halberdier</ansi> Attack 1     Evasion 0.9    (level 30: 30 / 27)
   <ansi fg="yellow">Beast Tamer</ansi>        Attack 0.9   Evasion 0.9    (level 30: 27 / 27)

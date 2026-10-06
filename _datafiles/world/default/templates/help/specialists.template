@@ -10,7 +10,7 @@ better of them.
 
   <ansi fg="yellow">Read the Trail</ansi>  rangers  warns of enemies beyond the exits (<ansi fg="command">help trail</ansi>)
   <ansi fg="yellow">Pathfinder</ansi>      rangers  eases walking on rough ground (<ansi fg="command">help pathfinder</ansi>)
-  <ansi fg="yellow">Keen Eye</ansi>        rogues   spots secret exits (<ansi fg="command">help keeneye</ansi>)
+  <ansi fg="yellow">Keen Eye</ansi>        rogues, gryphon riders   spots secret exits (<ansi fg="command">help keeneye</ansi>)
   <ansi fg="yellow">Traps</ansi>           rogues   finds and disarms traps (<ansi fg="command">help trap</ansi>)
   <ansi fg="yellow">Haggle</ansi>          rogues   better market prices (<ansi fg="command">help haggle</ansi>)
   <ansi fg="yellow">Weather Sense</ansi>   wizards, witches, shamans forecasts the weather (<ansi fg="command">help forecast</ansi>)
@@ -27,7 +27,7 @@ them at character levels 1, 10, 20, and 30, on their own: these class
 skills are never trained (<ansi fg="command">company train</ansi> teaches only optional skills
 such as Cooking; <ansi fg="command">help company train</ansi>). For you, it is your level in
 your archetype's skill: <ansi fg="skill">track</ansi> for a ranger, <ansi fg="skill">skulduggery</ansi> for a
-rogue, <ansi fg="skill">cast</ansi> for a wizard, witch or shaman, <ansi fg="skill">brawling</ansi> for a warrior or samurai,
+rogue, <ansi fg="skill">cast</ansi> for a wizard, witch or shaman, <ansi fg="skill">brawling</ansi> for a warrior or samurai, <ansi fg="skill">skirmish</ansi> for a gryphon rider,
 <ansi fg="skill">protection</ansi> for a cleric. Recruit for the skills an expedition needs.
 
 <ansi fg="yellow-bold">Who counts</ansi>

@@ -151,12 +151,18 @@ func abilityPass() {
 			// the front row would shield is not reached by an ability,
 			// and a tackle needs the foe within hand-to-hand reach.
 			reached, close := abilityReach(a, u, foe, room)
-			if !reached {
-				continue
-			}
 			sit := abilitySituation(a, u, foe)
+			// Phase 39f: a Dive passes the front row, so it is the one
+			// ability that can strike a foe the swing could not reach.
+			sit.DiveOpen = diveOpen(a, u, foe, room)
+			if !reached {
+				sit.Known = diveOnly(sit.Known)
+				if len(sit.Known) == 0 || !sit.DiveOpen {
+					continue
+				}
+			}
 			sit.Ambush = ambushing(a, b)
-			sit.Close = close
+			sit.Close = close && reached
 			halberdSituation(&sit, a, u, f, foe, room, foes)
 			// Phase 38c2: a Pathfinder opens a foe that has not acted yet;
 			// a Sentinel holds when a foe could strike its middle or back row.
@@ -275,6 +281,8 @@ func abilityCooldown(c *characters.Character, id strategy.Ability, base int) int
 		cut = fx.Int(classes.AimCD)
 	case strategy.Sweep:
 		cut = fx.Int(classes.SweepCD) // Phase 39a
+	case strategy.Dive:
+		cut = fx.Int(classes.DiveCD) // Phase 39f
 	}
 	return max(1, base-cut)
 }
@@ -316,6 +324,8 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		useSweep(a, foe, room, foes)
 	case strategy.Brace:
 		useBrace(a, room)
+	case strategy.Dive:
+		useDive(a, u, foe, room)
 	case strategy.Tackle:
 		abilityTurns[a.who] = true
 		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj, characters.SkillEdge(a.char.AttackSkill(), foe.Character.Evasion()))
@@ -405,4 +415,15 @@ func endAbilityStrikes() {
 	}
 	clear(abilityStrikes)
 	clear(abilityDown)
+}
+
+// diveOnly keeps a Dive among the abilities a member knows.
+func diveOnly(known []strategy.Ability) []strategy.Ability {
+	var out []strategy.Ability
+	for _, id := range known {
+		if id == strategy.Dive {
+			out = append(out, id)
+		}
+	}
+	return out
 }

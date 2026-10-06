@@ -148,7 +148,7 @@ func TestWiringStartRejectsUnknownAnswer(t *testing.T) {
 	text := answer(t, u, "bard")
 	assert.Contains(t, text, "isn't one of the archetypes")
 	assert.Equal(t, `Which archetype will you follow?`, pending(u))
-	text = answer(t, u, "12")
+	text = answer(t, u, "99")
 	assert.Contains(t, text, "isn't one of the archetypes")
 }
 

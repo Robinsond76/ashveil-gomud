@@ -15,6 +15,7 @@ there is, and only warriors and rangers are taught it.
 
   <ansi fg="yellow">Warrior</ansi>                    any shield
   <ansi fg="yellow">Ranger</ansi>                     bucklers only
+  <ansi fg="yellow">Gryphon Rider</ansi>               a buckler, or none
   <ansi fg="yellow">Cleric, Rogue, Wizard, Witch, Shaman, Doll Master, Beast Tamer</ansi>      none
   <ansi fg="yellow">Samurai, Halberdier</ansi>        none
 
