@@ -1,0 +1,11 @@
+# Phase 39c: a Shaman's weather. Chill Wind slows the foes' chants and sling
+# shots for 3 rounds (the 30f cold rule).
+spellid: chillwind
+name: Chill Wind
+description: Calls a cold wind into the battle for 3 rounds. Foes' spell chants and sling shots take one extra round to begin. Replaces any other weather.
+type: helpsingle
+school: stormcraft
+cost: 8
+waitrounds: 1
+difficulty: 0
+scope: member

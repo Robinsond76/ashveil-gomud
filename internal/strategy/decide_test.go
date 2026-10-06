@@ -119,7 +119,8 @@ func TestDefaultAutoSpells(t *testing.T) {
 		"binding": UseHex, "slumber": UseHex, "earthbind": UseHex, "frailty": UseHex,
 		"leaden": UseHex, "miasma": UseHex, "dread": UseHex, "blight": UseHex, "hex": UseAttack,
 		"greaterheal": UseBigHeal, "rejuvenation": UseRejuv, "grove": UseGrove, "siphon": UseSiphon,
-		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon}
+		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon,
+		"rain": UseWeather, "chillwind": UseWeather, "callfog": UseWeather, "lightning": UseStorm, "gust": UseAttack, "stoneskin": UseBark}
 	got := DefaultAutoSpells()
 	if len(got) != len(want) {
 		t.Fatalf("DefaultAutoSpells = %+v", got)
@@ -174,5 +175,53 @@ func TestSummonerCallsOnlyForABattleWorthIt(t *testing.T) {
 	sit.Reserve = 70
 	if act := Decide(sit); act.Kind != Summon {
 		t.Fatalf("the reserve holds after the call: %+v", act)
+	}
+}
+
+func shamanSpells() []Spell {
+	return []Spell{
+		{ID: "rain", Use: UseWeather, Cost: 10},
+		{ID: "chillwind", Use: UseWeather, Cost: 8},
+		{ID: "callfog", Use: UseWeather, Cost: 6},
+		{ID: "lightning", Use: UseStorm, Cost: 12},
+		{ID: "gust", Use: UseAttack, Cost: 5},
+		{ID: "stoneskin", Use: UseBark, Cost: 8},
+	}
+}
+
+// Phase 39c: a Shaman calls a weather first when none is up, then Lightning,
+// then Gust; Rain waits for Lightning and fog or a chill for foes that
+// shoot or cast.
+func TestDecideShaman(t *testing.T) {
+	s := Situation{Role: Caster, Mana: 40, Knows: known("callfog", "chillwind", "rain", "lightning", "gust"), Spells: shamanSpells(), Foes: 2}
+	if a := Decide(s); a.Kind != Weather || a.Spell != "rain" {
+		t.Errorf("no weather up: %+v", a)
+	}
+	s.Weather = "rain"
+	if a := Decide(s); a.Kind != Storm || a.Spell != "lightning" {
+		t.Errorf("weather up, lightning first: %+v", a)
+	}
+	s.Mana = 11 // lightning costs 12
+	if a := Decide(s); a.Kind != Attack || a.Spell != "gust" {
+		t.Errorf("no mana for lightning: %+v", a)
+	}
+	s = Situation{Role: Caster, Mana: 40, Knows: known("callfog", "gust"), Spells: shamanSpells(), Foes: 1,
+		CanWeather: func(id string) bool { return false }}
+	if a := Decide(s); a.Kind != Attack || a.Spell != "gust" {
+		t.Errorf("no weather worth calling: %+v", a)
+	}
+	s.CanWeather = func(id string) bool { return id == "callfog" }
+	if a := Decide(s); a.Kind != Weather || a.Spell != "callfog" {
+		t.Errorf("fog against shooters: %+v", a)
+	}
+	s.Mana = 5
+	if a := Decide(s); a.Kind != Attack {
+		t.Errorf("cannot pay for fog: %+v", a)
+	}
+	// An Earthspeaker turns Stoneskin on an ally before the bolt.
+	s = Situation{Role: Caster, Mana: 40, Weather: "fog", Knows: known("stoneskin", "gust"), Spells: shamanSpells(), Foes: 1,
+		Allies: []Ally{{HP: 20, MaxHP: 20}}}
+	if a := Decide(s); a.Kind == Swing {
+		t.Errorf("stoneskin or gust expected: %+v", a)
 	}
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -754,7 +755,12 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 		return 1
 	}
 	factor := 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
-	return factor * (1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100)
+	factor *= 1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100
+	// Phase 39c: a fogbound caster's spells hit weaker.
+	if len(a.characterRecord.GetBuffs(status.Fogbound)) > 0 {
+		factor *= float64(100-stormcraft.FogSpellPct) / 100
+	}
+	return factor
 }
 
 // SpellPower is one roll of a spell's size for this caster (Phase 35b),

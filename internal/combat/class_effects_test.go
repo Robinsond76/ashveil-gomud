@@ -3,8 +3,11 @@ package combat
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -134,4 +137,15 @@ func TestDivineShieldIgnoresTheFirstBlowOfABattleOnly(t *testing.T) {
 	assert.Positive(t, strikeAt(armed(edgeSwordID), paladin).DamageToTarget, "only once a battle")
 	paladin.EndFightRT()
 	assert.False(t, paladin.RT.ShieldUsed, "a new battle renews it")
+}
+
+// Phase 39c: a fogbound attacker loses accuracy with a ranged weapon only.
+func TestFogPenaltyHitsRangedWeaponsOnly(t *testing.T) {
+	c := characters.New()
+	assert.Zero(t, fogPenalty(c), "no fog, no penalty")
+	c.Buffs.List = []*buffs.Buff{{BuffId: status.Fogbound, TriggersLeft: 3}}
+	c.Equipment.Weapon = items.Item{ItemId: 991, Spec: &items.ItemSpec{Subtype: items.Shooting}}
+	assert.Equal(t, stormcraft.FogHit, fogPenalty(c))
+	c.Equipment.Weapon = items.Item{ItemId: 992, Spec: &items.ItemSpec{Subtype: items.Wearable}}
+	assert.Zero(t, fogPenalty(c), "a melee blow ignores the fog")
 }

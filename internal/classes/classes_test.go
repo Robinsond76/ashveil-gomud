@@ -12,12 +12,12 @@ var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wi
 
 // neutralLineages have no good or evil route (Phase 39b): every route is open
 // to any alignment, at level 10 and level 30.
-var neutralLineages = []string{"samurai"}
+var neutralLineages = []string{"samurai", "shaman"}
 
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Equal(t, []string{"cleric", "ranger", "rogue", "samurai", "warrior", "witch", "wizard"}, Lineages())
+	assert.Equal(t, []string{"cleric", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, Lineages())
 	for _, l := range baseLineages {
 		adv := Advanced(l)
 		require.Len(t, adv, 3, l)
@@ -397,4 +397,44 @@ func TestRanksGainedBetweenLevels(t *testing.T) {
 	assert.Equal(t, []string{"Clean cut"}, names(RanksGained("samurai", "kensai", 14, 15)))
 	assert.Empty(t, RanksGained("warrior", "", 1, 9))
 	assert.Equal(t, []string{"New rank: Focus, +3% critical chance for each round in which no blow lands on it, up to +9%; a blow that lands resets it."}, RankLines("samurai", "", 2, 3))
+}
+
+// Phase 39c: the Shaman's routes, talents and elites.
+func TestShamanRoutesAndTalents(t *testing.T) {
+	assert.Len(t, Advanced("shaman"), 3)
+	assert.False(t, HasBase("shaman"), "its spells are its base, not class ranks")
+
+	sc := EffectsForLineage("shaman", "stormcaller", 10, nil)
+	assert.Equal(t, 50, sc.Int(Chain))
+	assert.Equal(t, 75, EffectsForLineage("shaman", "stormcaller", 20, nil).Int(Chain))
+	assert.Equal(t, 20, EffectsForLineage("shaman", "stormcaller", 25, nil).Int(SpellPct))
+	assert.Equal(t, 5, EffectsForLineage("shaman", "mistweaver", 10, nil).Int(FogEvade))
+	assert.Equal(t, 8, EffectsForLineage("shaman", "mistweaver", 20, nil).Int(FogEvade))
+	assert.Equal(t, 1, EffectsForLineage("shaman", "mistweaver", 15, nil).Int(WeatherLong))
+	assert.Equal(t, 2, EffectsForLineage("shaman", "mistweaver", 25, nil).Int(WeatherLong))
+	assert.Equal(t, 10, EffectsForLineage("shaman", "earthspeaker", 10, nil).Int(Stoneskin))
+	assert.Equal(t, 20, EffectsForLineage("shaman", "earthspeaker", 25, nil).Int(Stoneskin))
+
+	// The Earthspeaker's rank teaches the spell; nobody else gets it.
+	var taught []string
+	for _, r := range RanksReached("earthspeaker", 10) {
+		taught = append(taught, r.Spells...)
+	}
+	assert.Equal(t, []string{"stoneskin"}, taught)
+
+	// A talent adds a round to the weather on top of a route's.
+	fx := EffectsForLineage("shaman", "mistweaver", 25, []string{"long-weather"})
+	assert.Equal(t, 3, fx.Int(WeatherLong), "Lingering weather's 2 and Long Weather's 1")
+	assert.Len(t, TalentsFor("shaman"), 5)
+	if _, ok := TalentByID("long-weather"); !ok {
+		t.Error("Long Weather is a defined talent")
+	}
+
+	for _, id := range []string{"tempest-lord", "veil-mother", "mountain-speaker"} {
+		c, ok := Get(id)
+		if assert.True(t, ok, id) {
+			assert.True(t, c.Planned, "%s ships with the elite pass", id)
+			assert.Equal(t, GateAny, c.Gate)
+		}
+	}
 }

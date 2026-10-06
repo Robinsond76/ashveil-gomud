@@ -55,6 +55,8 @@ declare interface ActorObject {
     ClassEffect(key: string): number;
     RowAllies(rows: number): ActorObject[];
     Summon(): boolean;
+    Weather(): string;
+    CallWeather(kind: string): object;
     GrantWard(cap: number, blows: number): boolean;
     GrantBark(armor: number, thorns: number): boolean;
     StartRejuv(rounds: number, total: number): boolean;
