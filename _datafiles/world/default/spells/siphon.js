@@ -39,10 +39,18 @@ function onMagic(sourceActor, targetActors) {
         var dealt = -foe.AddHealth(-roll);
         var ally = sourceActor.MostHurtAlly(false);
         var suffix = ' (' + dealt + ' damage';
+        // Phase 38c3: a Necromancer's Deeper drain heals more than it takes,
+        // and Grave Chill hobbles the first foe.
+        var drain = sourceActor.ClassEffect('drainpct');
+        var give = drain > 0 ? Math.floor(dealt * drain / 100) : dealt;
+        if (i == 0 && dealt > 0 && sourceActor.ClassEffect('gravechill') > 0) {
+            foe.GiveStatus(1108, 1);
+            suffix += ', hobbled';
+        }
         if (ally != null && dealt > 0) {
-            var healed = ally.AddHealth(dealt);
+            var healed = ally.AddHealth(give);
             suffix += ', ' + healed + ' healed';
-            var over = dealt - healed;
+            var over = give - healed;
             if (over > 0 && sourceActor.ClassEffect('bloodward') > 0) {
                 var cap = Math.max(1, Math.floor(sourceActor.SpellPower('ward') / 2));
                 if (ally.GrantWard(cap, 1)) { suffix += ', ward ' + cap; }

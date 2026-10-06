@@ -1756,6 +1756,10 @@ func (c *Character) RecalculateStats() {
 	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel(), c.HPStart()), c.StatMod(string(statmods.HealthMax)))
 	// Phase 38b: a talent's percent more health, on the worked-out total.
 	c.HealthMax.Mods = classPct(c.HealthMax.Mods, classFx.Int(classes.HealthPct))
+	// Phase 38c3: a thrall rises with a share of its template's whole health.
+	if c.RT != nil && c.RT.Summon != nil && c.RT.Summon.HealthPct > 0 {
+		c.HealthMax.Mods = max(1, c.HealthMax.Mods*c.RT.Summon.HealthPct/100)
+	}
 	// Phase 39d: a doll's health is its own share of a warrior's.
 	if c.RT != nil && c.RT.Doll != nil && c.RT.Doll.HPPct > 0 {
 		c.HealthMax.Mods = c.HealthMax.Mods * c.RT.Doll.HPPct / 100

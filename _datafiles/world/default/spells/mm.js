@@ -60,4 +60,19 @@ function onMagic(sourceActor, targetActor) {
     SendUserMessage(sourceUserId, 'You release the light, and it streaks into ' + targetActor.GetCombatName(false) + '.' + suffix);
     SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' releases a streak of cold light into ' + targetActor.GetCombatName(false) + '.' + suffix, sourceUserId, targetUserId);
     SendUserMessage(targetUserId, sourceActor.GetCombatName(true) + ' releases a streak of cold light, and it strikes you.' + suffix);
+
+    // Phase 38c3: an Archmage's Arcane Barrage strikes a second foe at full
+    // damage.
+    if (sourceActor.ClassEffect('barrage') > 0) {
+        var all = sourceActor.CastTargets();
+        for (var i = 0; i < all.length; i++) {
+            var other = all[i];
+            if (other.UserId() == targetUserId && other.InstanceId() == targetActor.InstanceId()) { continue; }
+            var more = -other.AddHealth(-harmRoll(sourceActor, other));
+            var tail = ' (barrage, ' + more + ' damage)';
+            SendUserMessage(sourceUserId, 'A second streak of cold light arcs into ' + other.GetCombatName(false) + '.' + tail);
+            SendRoomMessage(roomId, 'A second streak of cold light arcs from ' + sourceActor.GetCombatName(true) + ' into ' + other.GetCombatName(false) + '.' + tail, sourceUserId, other.UserId());
+            break;
+        }
+    }
 }

@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">thrall</ansi>
+
+A thrall is a foe that fell in battle and rose again for the Necromancer's
+company (see <ansi fg="command">help necromancer</ansi>). Like an Angel or a Demon it lasts one
+battle and is never saved (see <ansi fg="command">help summoning</ansi>).
+
+<ansi fg="yellow-bold">What it is</ansi>
+
+  Who      any foe that fell in the battle, except a boss; the Necromancer
+           raises the strongest one that fell. Shown as "risen" and its name
+  Health   60% of the foe's, or 85% from level 45
+  Fights   with the weapon it died holding, at the level it had, as a
+           member of the company: it is aimed, struck and can fall
+  Never    casts spells, drops loot, wanders or gives experience when it falls
+
+<ansi fg="yellow-bold">How it is raised</ansi>
+
+Once a battle (twice from level 50), when a foe has fallen and the Necromancer
+has the mana (a tenth of its maximum), it chants 2 rounds, and a blow can break
+the chant (<ansi fg="command">help interrupts</ansi>). A foe's fall is remembered for the rest of
+the battle; a fight that is over forgets it.
+
+<ansi fg="yellow-bold">How it ends</ansi>
+
+When the battle ends it crumbles. If the Necromancer falls, it crumbles too; at
+60 the Lich's Bargain spends it to keep the Necromancer at 1 health.
+
+See also: <ansi fg="command">help necromancer</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help combat</ansi>.

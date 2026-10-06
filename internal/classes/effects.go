@@ -29,6 +29,44 @@ const (
 	HexedDamage = "hexeddamage" // percent more damage to foes under a hex
 	SlumberLong = "slumberlong" // rounds added to Slumber
 
+	// The Witch's elite routes (Phase 38c3).
+	HexWardCap  = "hexwardcap"  // percent of an average hit a hex's ward absorbs (Hearthward)
+	WardMend    = "wardmend"    // a breaking ward heals its holder half of a Minor Heal
+	WardCleanse = "wardcleanse" // a breaking ward removes one harmful status
+	WardPeace   = "wardpeace"   // Evasion given to allies holding the ward
+	WardLife    = "wardlife"    // once a battle a warded ally who would fall stays at 1 health
+	HexLong     = "hexlong"     // rounds added to every hex's status
+	HexCost     = "hexcost"     // percent less mana for hexes
+	BossHalf    = "bosshalf"    // a boss resists hexes by half as much
+	TwinHex     = "twinhex"     // every third hex landed also leaves its target exposed
+	Circle      = "circle"      // once a battle the first resisted hex lands anyway
+	CurseAtk    = "curseatk"    // Attack allies have against a hexed foe
+	HexQuick    = "hexquick"    // every other hex chants this many rounds less (Quick curses)
+	CurseDmg    = "cursedmg"    // percent more damage every ally's blows deal a hexed foe
+	PoisonX2    = "poisonx2"    // Miasma's poison deals double damage
+	Linger      = "linger"      // a foe stays exposed a round after a hex ends
+	SoulRot     = "soulrot"     // a hexed foe that falls forces a morale check on its group
+	Doom        = "doom"        // once a battle a foe hexed 3 rounds in a row falls
+
+	// The Wizard's elite routes (Phase 38c3).
+	Counter      = "counter"      // knows Counterspell, at this mana cost
+	CounterBonus = "counterbonus" // points added to Counterspell's chance
+	CounterDrain = "counterdrain" // percent of its mana a countered caster loses
+	WardExtra    = "wardextra"    // extra allies an Arcane Ward covers
+	SpellShield  = "spellshield"  // percent less spell damage to allies in its row
+	Reflect      = "reflect"      // once a battle a ward returns half a blow
+	Aegis        = "aegis"        // once a battle wards every ally at once
+	Overchannel  = "overchannel"  // rounds between Overchannels
+	ChantTrim    = "chanttrim"    // rounds off a damage spell's chant
+	Barrage      = "barrage"      // Magic Missile strikes a second foe
+	Storm        = "storm"        // once a battle a Shower of Sparks strikes every foe in the group
+	Raise        = "raise"        // times a battle it raises a fallen foe
+	RaiseHP      = "raisehp"      // percent of its health a thrall rises with
+	DrainPct     = "drainpct"     // percent of its damage Life Drain heals
+	GraveChill   = "gravechill"   // Life Drain hobbles its first target
+	Harvest      = "harvest"      // percent of its mana each fallen foe restores
+	Bargain      = "bargain"      // once a battle a felling blow leaves it at 1 health
+
 	// Ability tuning.
 	TackleCD   = "tacklecd"   // rounds off Tackle's cooldown
 	OpenCD     = "opencd"     // rounds off Opening Strike's cooldown

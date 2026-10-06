@@ -1,0 +1,35 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">crone-of-ash</ansi>
+
+The Crone of Ash is the elite class of the Hag (evil witch route). It needs
+alignment -30 or lower at level 30. Her curses make hexed foes easier to hit
+and far more fragile, and spread when they end.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Ashen Curse        foes under her hexes take 40% more damage from her
+                        own blows and 15% more from every ally's, and allies
+                        have +8 Attack against them
+  35 Rotting Miasma     Miasma's poison deals double damage
+  40 Quick curses       her hexes chant one round less
+  45 Lingering Curse    when a hex ends, the foe stays exposed for 1 round
+  50 Deeper Ashen Curse her own blows deal hexed foes 55% more
+  55 Soul Rot           a hexed foe that falls forces a morale check on its
+                        group
+  60 Crone's Doom       once a battle, a foe that stays hexed 3 rounds in a row
+                        falls; a boss loses 10% of its health instead
+
+<ansi fg="yellow-bold">How it plays</ansi>
+
+She hexes on her own like any witch (<ansi fg="command">help witch</ansi>). A foe counts as hexed
+while it is asleep, paralyzed or blighted, or poisoned, knocked down, hobbled
+or exposed by a hex (a Tackle's knockdown or a weapon's poison doesn't
+count). Poison lasts the longest, so Miasma is the way to Crone's Doom. Each
+line says what her curse did: (lingering curse, exposed), (soul rot, 3 morale
+checks), (crone's doom, N damage).
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Witch elite talents (levels 35, 45, 55): Deep Reserves, Iron Will, Hex Reach.
+See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help witch-routes</ansi>, <ansi fg="command">help hexes</ansi>, <ansi fg="command">help morale</ansi>, <ansi fg="command">help promotion</ansi>.
