@@ -60,3 +60,17 @@ func RemoveTestZoneRoom(r *Room) {
 		}
 	}
 }
+
+// SetTestZoneConfig installs a zone config for a zone name, replacing any,
+// and returns a function that restores the previous one. For testing only.
+func SetTestZoneConfig(cfg *ZoneConfig) (restore func()) {
+	prev, had := roomManager.zones[cfg.Name]
+	roomManager.zones[cfg.Name] = cfg
+	return func() {
+		if had {
+			roomManager.zones[cfg.Name] = prev
+		} else {
+			delete(roomManager.zones, cfg.Name)
+		}
+	}
+}

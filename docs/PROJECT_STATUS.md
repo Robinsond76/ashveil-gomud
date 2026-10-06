@@ -1,5 +1,68 @@
 # Ashveil Project Status
 
+**Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
+`scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
+`_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,
+frames, rows, anchor, timing per file). S0: 64-color palette (`palette.png`,
+`palette.gpl`), the two style frames, proportions sheets and icon sample.
+S1: 9 resource icons, markers, camp pieces, map units (idle and walk, down /
+up / side) for the 6 base classes plus `adventurer`, and app icons. Review
+the art in [the contact sheet](verification/40s1-contact-sheet.png). Tests:
+`go test ./scripts` checks the spec layout, palette-only colors, hard edges,
+the feet-baseline anchor and that committed PNGs equal generator output.
+Nothing is wired into the client yet, so no player help or tutorial change
+is due (40b, 40f and 40i wire it). Decisions (owner delegated): the
+review thread approves S0 against the art direction (roadmap); `palette.png`
+is an 8x8 image, one pixel per color; the here-ring has no outline (a 1 px
+ring would double); the ogre and goblins in `style-battle` are throwaway mocks
+for S3 to replace; battle idle shows one frame, since S3 owns full battle
+sheets; app icons are scaled by whole numbers from a 64 / 48 / 32 grid (the
+192 px version drops detail rather than just downscaling).
+**Review (2026-10-06):** S0 approved against the art direction: muted
+palette, adult 5- and 7-head proportions, grounded gear, natural map. Fixed:
+battle warrior was a red slab with a raised sword (now narrower, split
+surcoat, shield forward edge-on, sword low per the S3 pose); battle rogue was
+one charcoal block (now crouched, leather breeches, reverse-grip blades); far
+legs shade one step darker in battle; committed `__pycache__` removed and
+ignored. Accepted: contact sheet lives in `docs/verification/` rather than
+`sprites/contact/` (keeps review images out of shipped assets); manifest
+carries what 40b (paths, rows, anchor, baseline, timing, `adventurer`
+fallback), 40i (sizes, maskable safe zone) need; S3 extends it for 40f.
+Follow-ups for S3/40s5: real goblin and ogre art drawn side-on (the mocks face
+front; goblins must look feral, not comic); 4-frame battle idle; ranger
+"arrow nocked low", cleric shield and wizard stone glow poses; a 1x
+readability pass on the 3x3 formation with enemy mirroring; a darker
+battle-ground band so unit feet and shadows read on dirt. UI check: the map
+set gives a clear, readable class marker and camp state at 32 px; the gap is
+that S2 terrain must keep tiles quieter than units, and 40b should draw the
+here-ring and badge above terrain so the player's sprite never blends in.
+
+**Phase 37 complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) (2026-10-06):** Dark Forest (band 5-7) and the
+Catacombs (band 10-12) spring 2-3 foe battles (sometimes 4) in opted-in
+rooms, on steps and journey arrivals, with a boss lair (boss at band low+2,
+1.75x HP, no strategy, 2-3 escorts, `boss: true` flagged). Levels follow the
+zone band, never the player. Healer groups are about one in five and never
+in four-foe or boss groups. Grace after a battle (2 eligible entries and
+30 s) is saved per leader. Wins drop zone loot, a once-per-group cache and
+boss rolls, personal per company, with a Spoils line in the battle summary.
+`help encounters`, scout danger line, tutorial hint. Plan:
+[37 plan](plans/2026-10-06-phase-37-random-encounters.md); balance:
+[37 measurements](plans/2026-10-06-phase-37-measurements.md). Deferred:
+bad-luck protection, smart loot, autoloot filters, durable (restart-proof)
+groups, content migration to other zones, boss respawn clock.
+Review (Opus review thread): accepted and fixed: (1) every eligible step
+saved the grace registry to disk on the game loop, now only when the grace
+changes; (2) spoils noted by a death outside any fight leaked into the next
+fight's Spoils line, now cleared when a battle begins; (3) UI: players had
+no way to see a zone's level band, so `scout` in a dangerous room now names
+it (help updated). Each has a regression test. Rejected: a battle's end
+removing every ownerless group at once, not only its own (they would vanish
+within the 120 s timeout anyway). Follow-ups: a boss lair can be re-rolled
+every few entries for a guaranteed Rare (boss respawn clock, already
+deferred; 37b), the band shown in `look`/web client zone header, and the
+composition `kind` field is unused by drops (goods come from each foe's
+`lootcategory`).
+
 **38c-d elite routes design (2026-10-06):** rank tables 30–60 for the
 thirteen elites the faith routes design didn't cover (Warlord; Pathfinder,
 Swordmaster, Nightblade; Sentinel, Marksman, Ravager; Archon, Archmage,
@@ -66,6 +129,31 @@ cells moved within the sample's noise (55-68% against 67-70%). Rejected: the
 healers default also overriding a member's own `strategy` rule at levels 5-9
 is intended (company-wide default; `company tactics focus none` opts out,
 as `help tactics` says).
+
+**Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
+now receives `Company.Battle.Event`, one entry per combat happening of its
+fight (attack, spell, heal, status, wind-up, guard, yield, flee, death, fight
+start and end), released in step with the paced narration. No visible player
+change, so no help page. Data entries ride the combat pacer's queue with the
+text (flushed with it, sent at once with pacing off) and the module reuses
+`Company.Battle`'s IDs. Decisions: the leader's own fight only (allied
+companies each have their own fight, so no allied relay yet); fight-start
+lists the roster, not cells, because `Company.Battle` is the one source of
+cells; in the dark or for a hidden enemy every enemy ref is `?` and its
+statuses are dropped, instead of tracking which enemies the narration
+labelled; secret statuses are never sent. Design:
+[40e](designs/2026-10-05-phase-40e-combat-event-messages-design.md).
+Independent review (Opus, 2026-10-06): accepted, the leader's ref was
+`me`, which matches nothing in `Company.Battle`; it is now their member key
+`leader` (`me` only without a company), with a unit test and a real-round
+check that the fight-start roster matches the formation's cells; an unused
+viewer field removed. Rejected: data released one line after a spell's
+narration (by design: an event rides the next line). Left for 40f: an
+unseen enemy's cast still carries its spell ID (cast lines already hint at
+the spell); 40f should not show it for a `?` caster.
+Checked and sound: no health or secret status in the feed, dark/hidden
+masking matches `Company.Battle`, flushes carry the data, pace off sends at
+once. 40f follow-ups are in the design's Built section.
 
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
@@ -402,7 +490,7 @@ their dependencies and those decisions is the
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification. [Plan](plans/2026-10-06-phase-36a-loot-item-model.md), complete, merged via [PR #23](https://github.com/Robinsond76/ashveil-gomud/pull/23) | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items. [Plan](plans/2026-10-06-phase-36b-gear-catalog.md), complete, merged via [PR #25](https://github.com/Robinsond76/ashveil-gomud/pull/25) | Loot slice 2; equipment tiers | 36a |
 | 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
-| 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
+| 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3). [Plan](plans/2026-10-06-phase-37-random-encounters.md), complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
@@ -1051,7 +1139,6 @@ JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
 random-hit edge test; targeted rerun and final full run passed. Integration against 33h1 (ecd3255e)
 passed independent review, focused checks, browser checks, generate/validate,
 JS/Lua lint and the full race suite. 34d is complete.
-
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
 continue with 33h ahead of 33g's catalog slices. Companion
@@ -1929,7 +2016,6 @@ config key and its admin docs stay (engine config, now unused).
 - Next: 33b, company-only friendly-effect correctness first, then allied
   scopes once 33d defines consent. The current tooling has no cloud-session
   creation operation; continue here using the saved phase handoff.
-
 
 ### Company gameplay roadmap and future Phase 33 designs (2026-10-01)
 

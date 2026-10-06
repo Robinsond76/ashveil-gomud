@@ -29,6 +29,8 @@ band of ruffians</ansi>, or <ansi fg="yellow">The fight with a band of ruffians 
   foe's chant withstood (<ansi fg="yellow">failed</ansi>, shown when any did), and the chants
   of yours the enemy broke (<ansi fg="yellow">taken</ansi>) (<ansi fg="command">help interrupts</ansi>). A wind-up
   lost to a stun that no blow of yours dealt is not counted.
+- <ansi fg="yellow">Spoils</ansi> (when your company took any) lists the gear and gold your
+  company's own drop rolls gave (<ansi fg="command">help encounters</ansi>, <ansi fg="command">help loot</ansi>).
 - An enemy ends <ansi fg="yellow">slain</ansi>, <ansi fg="yellow">fled</ansi>, <ansi fg="yellow">left</ansi> (walked away), <ansi fg="yellow">beaten</ansi> (a
   practice foe), or <ansi fg="yellow">still standing</ansi>.
 

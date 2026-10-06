@@ -173,6 +173,9 @@ Repeated enemy names become fixed labels such as the first cutthroat and
 the second cutthroat. A survivor keeps its label when another falls; see
 <ansi fg="command">help narration</ansi> for pronouns and names.
 
+Walking into a dangerous room can spring a battle on you; its foes are set by
+the zone's level band and are yours alone (<ansi fg="command">help encounters</ansi>).
+
 Some enemies surrender or flee when their group breaks (help morale). After victory, answer each surrendered foe’s mercy question (help mercy).
 
 <ansi fg="yellow-bold">Member orders</ansi>

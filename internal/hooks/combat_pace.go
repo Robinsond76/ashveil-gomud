@@ -71,6 +71,27 @@ func deliver(user *users.UserRecord, text string) {
 	events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 }
 
+// deliverItems sends a player's released entries in order: text lines, and
+// each run of data entries as one batch before the line that follows it.
+func deliverItems(user *users.UserRecord, items []combatpace.Release) {
+	var batch []any
+	flushBatch := func() {
+		if len(batch) > 0 {
+			sendCombatData(user.UserId, batch)
+			batch = nil
+		}
+	}
+	for _, it := range items {
+		if it.IsData {
+			batch = append(batch, it.Data)
+			continue
+		}
+		flushBatch()
+		deliver(user, it.Text)
+	}
+	flushBatch()
+}
+
 // paceOf is a player's chosen pace, or its default.
 func paceOf(user *users.UserRecord) combatpace.Pace {
 	return combatpace.For(user.GetConfigOption(combatpace.OptionKey), user.ScreenReader)
@@ -100,9 +121,7 @@ func holdBehindCombat(user *users.UserRecord, text string, spoken bool) bool {
 			return false
 		}
 		spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
-		for _, older := range pacer.Hold(user.UserId, round, text, spec, paceNow()) {
-			deliver(user, older)
-		}
+		deliverItems(user, pacer.Hold(user.UserId, round, text, spec, paceNow()))
 		return true
 	}
 	if spoken || events.Typed() {
@@ -173,10 +192,15 @@ func ReleasePacedCombat(e events.Event) events.ListenerReturn {
 }
 
 func sendReleased(released []combatpace.Release, drained []int) {
-	for _, r := range released {
-		if user := users.GetByUserId(r.UserId); user != nil {
-			deliver(user, r.Text)
+	for i := 0; i < len(released); {
+		j := i + 1
+		for j < len(released) && released[j].UserId == released[i].UserId {
+			j++
 		}
+		if user := users.GetByUserId(released[i].UserId); user != nil {
+			deliverItems(user, released[i:j])
+		}
+		i = j
 	}
 	for _, userId := range drained {
 		finishDrain(userId)
@@ -204,9 +228,7 @@ func FlushPacedCombat(userId int) {
 		return
 	}
 	if user := users.GetByUserId(userId); user != nil {
-		for _, text := range lines {
-			deliver(user, text)
-		}
+		deliverItems(user, lines)
 	}
 	finishDrain(userId)
 }
@@ -262,6 +284,56 @@ func PaceCopyoverContributor() copyover.Contributor {
 func FlushPacedOnPaceChange(e events.Event) events.ListenerReturn {
 	if evt, ok := e.(events.UserSettingChanged); ok && evt.Name == combatpace.OptionKey {
 		FlushPacedCombat(evt.UserId)
+	}
+	return events.Continue
+}
+
+// Phase 40e: structured combat data (the web client's Company.Battle.Event)
+// rides the same queue as the narration. A producer queues events.CombatData
+// as it emits the happening, so it is dispatched in order with the round's
+// text: held with it for a player who paces combat, released with the next
+// line that follows it (or when the last line goes out), flushed with it.
+// What the data is, and how it is delivered, belongs to the module that
+// queued it: hooks only orders it.
+
+// combatDataSender delivers a batch of combat data to a player; the gmcp
+// module sets it. Tests replace it.
+var combatDataSender func(userId int, batch []any)
+
+// SetCombatDataSender sets how released combat data reaches a player.
+func SetCombatDataSender(fn func(userId int, batch []any)) { combatDataSender = fn }
+
+func sendCombatData(userId int, batch []any) {
+	if fn := combatDataSender; fn != nil {
+		fn(userId, batch)
+	}
+}
+
+// CombatData_Hold is events.CombatData's listener: it holds the data
+// behind the round's text, or sends it at once for a player whose pace is
+// off, for what they typed, and when nothing is held ahead of it.
+func CombatData_Hold(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.CombatData)
+	if !ok {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+	pacer := combatpace.Default()
+	if round := events.Cause(); round != 0 {
+		pace := paceOf(user)
+		if pace == combatpace.Off {
+			sendCombatData(user.UserId, []any{evt.Data})
+			return events.Continue
+		}
+		spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
+		deliverItems(user, pacer.HoldData(user.UserId, round, evt.Data, spec, paceNow()))
+		return events.Continue
+	}
+	if events.Typed() || !pacer.FollowData(user.UserId, evt.Data) {
+		sendCombatData(user.UserId, []any{evt.Data})
 	}
 	return events.Continue
 }
