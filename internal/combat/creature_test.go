@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,4 +52,13 @@ func TestStoneGolemTempoIsOrdinaryWithoutTheSpecies(t *testing.T) {
 	a, b := characters.New(), characters.New()
 	b.HPArchetype = "warrior"
 	assert.Equal(t, Tempo(a), Tempo(b))
+}
+
+// 38e review: a stone golem takes no lasting wound (stone cracks and a repair
+// closes it); it is checked before the companion rule, which would wound it.
+func TestStoneGolemTakesNoWounds(t *testing.T) {
+	golem := &mobs.Mob{InstanceId: 4351}
+	golem.Character.HPArchetype = "stone-golem"
+	ok, _ := MobWounds(golem)
+	assert.False(t, ok)
 }

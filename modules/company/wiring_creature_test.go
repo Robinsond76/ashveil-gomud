@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -134,7 +136,12 @@ func TestConstructsNeedNothingAndNeverLoseHeart(t *testing.T) {
 	assert.Contains(t, ids, 5, "a hound can lose heart")
 	assert.NotContains(t, ids, 6, "a golem is bound")
 	// Neither food nor rest is spent on the golem.
-	assert.Contains(t, b.cmd("company", "eat"), "")
+	needless := map[string]bool{}
+	for _, ref := range survival.CurrentRoster(7) {
+		needless[string(ref.Key)] = ref.Needless
+	}
+	assert.True(t, needless["companion:6"], "the survival roster marks the golem needless")
+	assert.False(t, needless["companion:5"], "the hound eats and rests")
 	assert.Equal(t, cairn.Character.Health, b.companion(6).Character.Health)
 }
 
@@ -185,4 +192,13 @@ func TestCreatureGearViewsOfferOnlyItsSlotsAndGear(t *testing.T) {
 	}
 	assert.NotContains(t, slots, string(items.Weapon))
 	assert.Contains(t, slots, string(items.Body))
+}
+
+// 38e review: a creature neither carries nor needs a riding horse, so a
+// company's riding pace asks a saddle only of its people (the herd cap and
+// the walkers agree).
+func TestCreaturesNeedNoRidingHorse(t *testing.T) {
+	creatureBrawl(t)
+	assert.Equal(t, 3, domain.WalkingMembers(7), "Aria, Tamsin and Oswin; not Brindle or Cairn")
+	assert.Equal(t, domain.CountedMembers(7), domain.WalkingMembers(7))
 }

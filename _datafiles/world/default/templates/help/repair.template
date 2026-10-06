@@ -7,9 +7,9 @@ fights do nothing for it (<ansi fg="command">help stone-golem</ansi>). It is rep
   <ansi fg="command">company repair [golem]</ansi>    pack mortar into the golem until it is whole
 
 Each mortar restores half the golem's maximum health. Mortar is taken from
-the company's cargo, then each member's own pack, then yours, and one is spent
-at a time until the golem is whole or the mortar runs out. Only what is needed
-is used.
+the company's cargo (your own pack too, when the company keeps no shared
+cargo), then from each companion's pack, and one is spent at a time until the
+golem is whole or the mortar runs out. Only what is needed is used.
 
   - The golem must be alive and with you. A fallen golem needs a
     resurrection (<ansi fg="command">help resurrect</ansi>).

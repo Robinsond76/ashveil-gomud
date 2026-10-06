@@ -246,7 +246,7 @@ Archetypes:
   - ArchetypeId: alchemist
     HPPerLevel: 0.65
     HPStart: 3
-    AttackRate: 0.65
+    AttackRate: 0.75
     EvasionRate: 0.85
     ArmorTraining: light
     ShieldSizes: [none]

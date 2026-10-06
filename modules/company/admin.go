@@ -116,8 +116,8 @@ func (m *CompanyModule) AdminSetMember(leaderUserID, roomID int, selector, class
 	// Phase 38e review: a creature's body is its template (a canine's bites,
 	// a golem's stone), so a person can't become one and a creature can't
 	// become a person; recruit the other kind instead.
-	if archetype != "" && creatures.Is(archetype) != creatures.Is(companion.Archetype) {
-		return "", fmt.Errorf("a creature and a person can't trade places: recruit one with testarea companion add %s", archetype)
+	if archetype != "" && archetype != companion.Archetype && (creatures.Is(archetype) || creatures.Is(companion.Archetype)) {
+		return "", fmt.Errorf("a creature keeps its species and a person can't become one (they can't trade places): recruit one with testarea companion add %s", archetype)
 	}
 	// What the live mob carries is the truth: record it before the respawn.
 	m.refreshSnapshot(leaderUserID, companion.ID)

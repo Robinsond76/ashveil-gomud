@@ -427,6 +427,7 @@ func TestCreaturesInTheArea(t *testing.T) {
 	assert.Contains(t, tr.run("testarea", "companion add stone-golem"), "Recruited")
 	assert.Contains(t, tr.run("testarea", "companion class brindle warrior"), "can't trade places")
 	assert.Contains(t, tr.run("testarea", "companion class dummy hound"), "can't trade places")
+	assert.Contains(t, tr.run("testarea", "companion class brindle stone-golem"), "can't trade places")
 	assert.Contains(t, tr.run("testarea", "companion level cairn 20"), "level 20")
 	assert.Contains(t, tr.run("testarea", "class hound"), "creature species")
 	ids, ok := kitItems("supplies")
