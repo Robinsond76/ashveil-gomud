@@ -1,0 +1,12 @@
+itemid: 283
+name: vial of mirethorn
+namesimple: mirethorn vial
+description: A stoppered glass vial of a dark, tacky draught. One dose coats one bladed
+  weapon (coat mirethorn); a wounding blow then has a 40% chance to leave it in
+  the wound (dodge chance down 10 points for 2 rounds). The coating lasts 10 minutes or 8 wounding blows
+  (help poisons).
+type: object
+subtype: mundane
+uses: 1
+value: 6
+weight: 30

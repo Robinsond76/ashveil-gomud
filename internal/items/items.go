@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
@@ -52,6 +53,13 @@ type Item struct {
 	// across copies.
 	SharpBonus   int `yaml:"sharpbonus,omitempty"`
 	SharpStrikes int `yaml:"sharpstrikes,omitempty"`
+	// Phase 43b: a poison coating on a blade. CoatKind is the poison's id,
+	// CoatExpires an absolute Unix time (real time passes offline), and
+	// CoatContacts the damaging contacts left. Plain values for the same
+	// reason as the edge.
+	CoatKind     string `yaml:"coatkind,omitempty"`
+	CoatExpires  int64  `yaml:"coatexpires,omitempty"`
+	CoatContacts int    `yaml:"coatcontacts,omitempty"`
 	// Phase 36a: a generated item's roll. A value, replaced whole by
 	// Identify, never edited through a shared slice.
 	Loot Rolled `yaml:"loot,omitempty"`
@@ -320,12 +328,84 @@ func (i *Item) SpendEdge(n int) {
 	}
 }
 
-// EdgeLabel is the edge suffix shown in inventories, or "" without one.
+// EdgeLabel is the weapon-condition suffix shown in inventories, or "":
+// the edge (Phase 23b) and a live poison coating (Phase 43b).
 func (i *Item) EdgeLabel() string {
-	if !i.Sharpened() {
+	var parts []string
+	if i.Sharpened() {
+		parts = append(parts, fmt.Sprintf(`<ansi fg="item-bonus-damage">(sharp: %d)</ansi>`, i.SharpStrikes))
+	}
+	if coat := i.CoatLabel(time.Now()); coat != `` {
+		parts = append(parts, coat)
+	}
+	return strings.Join(parts, ` `)
+}
+
+// Coated reports whether the item carries a live poison coating at now: it
+// names a poison, has contacts left, and has not run out of time. Expiry is
+// checked at every read, so an offline weapon never delivers stale poison.
+func (i *Item) Coated(now time.Time) bool {
+	return i.CoatKind != `` && i.CoatContacts > 0 && now.Unix() < i.CoatExpires
+}
+
+// Coat puts a poison coating on the item. A live coating is never replaced
+// or refreshed (clear it first); it reports whether the item was coated.
+func (i *Item) Coat(kind string, expires time.Time, contacts int, now time.Time) bool {
+	if i.Coated(now) || kind == `` || contacts <= 0 || !expires.After(now) {
+		return false
+	}
+	i.CoatKind = kind
+	i.CoatExpires = expires.Unix()
+	i.CoatContacts = contacts
+	return true
+}
+
+// ClearCoat removes any coating (live or lapsed) and reports whether the
+// item held one.
+func (i *Item) ClearCoat() bool {
+	had := i.CoatKind != ``
+	i.CoatKind, i.CoatExpires, i.CoatContacts = ``, 0, 0
+	return had
+}
+
+// SpendCoat spends n contacts of the coating; it ends at zero.
+func (i *Item) SpendCoat(n int) {
+	if n <= 0 || i.CoatKind == `` {
+		return
+	}
+	i.CoatContacts -= n
+	if i.CoatContacts <= 0 {
+		i.ClearCoat()
+	}
+}
+
+// CoatSummary is the coating without markup ("Bitterleaf, 9 min, 8 hits"),
+// or "" without a live one.
+func (i *Item) CoatSummary(now time.Time) string {
+	if !i.Coated(now) {
 		return ``
 	}
-	return fmt.Sprintf(`<ansi fg="item-bonus-damage">(sharp: %d)</ansi>`, i.SharpStrikes)
+	name := i.CoatKind
+	if p, ok := PoisonByID(i.CoatKind); ok {
+		name = p.Name
+	}
+	mins := int((time.Unix(i.CoatExpires, 0).Sub(now) + time.Minute - 1) / time.Minute)
+	return fmt.Sprintf(`%s, %d min, %d hits`, name, mins, i.CoatContacts)
+}
+
+// CoatLabel is the coating suffix shown in inventories, or "" without a
+// live one: the poison, the minutes left and the contacts left.
+func (i *Item) CoatLabel(now time.Time) string {
+	if !i.Coated(now) {
+		return ``
+	}
+	name := i.CoatKind
+	if p, ok := PoisonByID(i.CoatKind); ok {
+		name = p.Name
+	}
+	left := time.Unix(i.CoatExpires, 0).Sub(now)
+	mins := int((left + time.Minute - 1) / time.Minute)
+	return fmt.Sprintf(`<ansi fg="item-bonus-damage">(%s: %d min, %d hits)</ansi>`, name, mins, i.CoatContacts)
 }
 
 func (i *Item) IsBetterThan(otherItm Item) bool {

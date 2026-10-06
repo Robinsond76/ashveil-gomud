@@ -1,0 +1,69 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">poisons</ansi>
+
+A vial of poison coats one bladed weapon (slashing, cleaving, or stabbing).
+Poison is a way to prepare a company: a coated blade that wounds a foe may
+leave a poison in the wound, and the poison works on that foe for a few
+combat rounds.
+
+<ansi fg="yellow-bold">The coating</ansi>
+
+  One vial is one dose for one blade. A dual wielder needs two.
+  A coating lasts <ansi fg="yellow">10 real minutes</ansi> or <ansi fg="yellow">8 blows that wound</ansi>, whichever ends first.
+  Its time keeps running while you travel or log out.
+  A blow that misses, is dodged, parried, blocked, or does no damage uses
+  nothing. Each blow that does wound uses one hit and has a
+  <ansi fg="yellow">40%</ansi> chance to leave the poison (20% against a resistant foe, none
+  against an immune one, such as the dead and things built, not born).
+  A critical hit does not raise the chance.
+  A blade holds one coating at a time. Clear the old one before adding another.
+  Sharpening and coatings work together.
+
+<ansi fg="yellow-bold">The poisons</ansi> (sold in markets)
+
+  <ansi fg="command">bitterleaf</ansi>   1 damage a round for 3 rounds. Cheap; sold on the road too.
+  <ansi fg="command">leechbane</ansi>    The foe's healing is cut by a quarter for 3 rounds. Use it
+               against healers.
+  <ansi fg="command">leadroot</ansi>     The foe's physical blows do 15% less damage for 2 rounds.
+               Use it on a dangerous striker.
+  <ansi fg="command">mirethorn</ansi>    The foe's dodge chance is 10 points lower for 2 rounds.
+
+A foe carries one poison at a time. Another coated hit does not stack or
+refresh it, however many of your company carry coated blades. Mixing
+poisons across the company helps when members fight different foes.
+Poisons count combat rounds and end with the fight. A cleric's cleansing
+(<ansi fg="command">help statuses</ansi>) and <ansi fg="command">curepoison</ansi> take them off. Healing and
+<ansi fg="command">heal wounds</ansi> do not.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">coat</ansi> [poison] [<ansi fg="command">self</ansi>|member] [<ansi fg="command">main</ansi>|<ansi fg="command">off</ansi>]
+  Put one dose on one blade (default: your main hand), not in a fight and
+  not while travelling or resting. <ansi fg="command">coat bitterleaf</ansi>, <ansi fg="command">coat leadroot Corvin off</ansi>.
+
+  <ansi fg="command">coat status</ansi>
+  Show the vials you carry and every blade's coating, with minutes and
+  hits left.
+
+  <ansi fg="command">coat clear</ansi> [<ansi fg="command">self</ansi>|member] [<ansi fg="command">main</ansi>|<ansi fg="command">off</ansi>]
+  Wipe a coating off. The dose is lost.
+
+<ansi fg="yellow-bold">At camp</ansi>
+
+Set up the whole company at once with a preparation list. It spends nothing
+until you apply it, and applies all of it or none of it:
+
+  <ansi fg="command">camp poison</ansi>
+  <ansi fg="command">camp poison assign</ansi> [member|<ansi fg="command">self</ansi>] [<ansi fg="command">main</ansi>|<ansi fg="command">off</ansi>] [poison]
+  <ansi fg="command">camp poison unassign</ansi> [member|<ansi fg="command">self</ansi>] [<ansi fg="command">main</ansi>|<ansi fg="command">off</ansi>]
+  <ansi fg="command">camp poison preview</ansi>   exact doses needed, and anything blocking
+  <ansi fg="command">camp poison apply</ansi>     spend the doses and coat every assigned blade
+
+Vials come from your company's supplies (cargo first, then packs). Blades
+already coated with the assigned poison are skipped without a dose. If any
+blade is blocked, or the vials run short, nothing is spent and every
+problem is listed.
+
+Inventories, <ansi fg="command">conditions</ansi>, and the gear window show a blade's coating, and the
+fight lines name the poison on the blow that left it, such as
+<ansi fg="command">(3 damage, bitterleaf)</ansi>. See also <ansi fg="command">help combat</ansi>, <ansi fg="command">help camp</ansi>, and
+<ansi fg="command">help sharpen</ansi>.

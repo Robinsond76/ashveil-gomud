@@ -1,0 +1,5 @@
+flag: leechbane
+name: "Leechbane"
+description: "Healing the holder receives is cut by a quarter."
+locked: true
+harmful: true
