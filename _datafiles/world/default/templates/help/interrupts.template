@@ -26,8 +26,10 @@ may break it</ansi>:
   <ansi fg="command">You flinch, but your chant holds. (Minor Heal, chant held)</ansi>
 
 An Archon can break an enemy's chant on purpose by holding its turn: its
-Counterspell (<ansi fg="command">help archon</ansi>). Steadier casters (Arcanists, Archmages, Wizards with
-Focused Will) lose fewer chants to blows (<ansi fg="command">help archmage</ansi>).
+Counterspell (<ansi fg="command">help archon</ansi>). Steadier casters (Arcanists, Archmages, Sorcerers and High Sorcerers, Wizards with
+Focused Will) lose fewer chants to blows (<ansi fg="command">help archmage</ansi>,
+<ansi fg="command">help high-sorcerer</ansi>). A Sorcerer's Arcane Lance has the longest chant of any wizard spell,
+so each blow on it counts.
 
 A melee blow, a sling stone, or an arrow can break it, and so can a blow
 you take in someone else's place (guarding them, or catching it in the

@@ -67,3 +67,6 @@ AutoSpells:
   - { Spell: lightning, Use: storm }
   - { Spell: gust, Use: attack }
   - { Spell: stoneskin, Use: bark }
+  # Phase 38d: a Sorcerer (role caster) looses its Arcane Lance first, while
+  # its mana lasts, then falls back to Magic Missile.
+  - { Spell: arcanelance, Use: burst }

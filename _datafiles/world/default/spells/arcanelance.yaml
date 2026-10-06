@@ -1,0 +1,14 @@
+# Phase 38d: a Sorcerer's burst; about twice a Magic Missile, after a long chant.
+spellid: arcanelance
+name: Arcane Lance
+description: Hurts for 15+2d6, plus 1 per 5 caster levels and 1 per 8 Mysticism, scaled by skill; a long chant
+type: harmmulti
+school: conjuration
+cost: 18
+waitrounds: 2
+difficulty: 75
+power:
+  base: 15
+  dice: 2d6
+  leveldiv: 5
+  mysticismdiv: 8

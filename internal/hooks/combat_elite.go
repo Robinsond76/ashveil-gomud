@@ -227,6 +227,12 @@ func announceOverchannel(a actor, pct, mana int, storm bool) {
 	a.holder.say("You pour more of yourself into the spell."+suffix, "%s pours more of itself into the spell."+strings.ReplaceAll(suffix, "%", "%%"), "")
 }
 
+// announceInstantLance tells of a Lance that needs no chant (Phase 38d).
+func announceInstantLance(a actor) {
+	suffix := " (instant lance, no chant)"
+	a.holder.say("The lance forms at once."+suffix, "%s's lance forms at once."+suffix, "")
+}
+
 // applyEliteAuras gives each standing member the round's Mana Shield (the
 // best of its row's holders) and Hearth's Peace (its ward's Evasion).
 func applyEliteAuras(side []actor, rowOf func(actor) int) {

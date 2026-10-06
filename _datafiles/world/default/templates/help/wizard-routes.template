@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">wizard-routes</ansi>
 
-A wizard promotes at level 10 to one of three advanced classes, and at level 30
+A wizard promotes at level 10 to one of four advanced classes, and at level 30
 to the elite class that continues its route (<ansi fg="command">help promotion</ansi>).
 
 <ansi fg="yellow-bold">Theurgist</ansi> (good, alignment +30)  protective arcane support
@@ -18,6 +18,14 @@ to the elite class that continues its route (<ansi fg="command">help promotion</
   25 Steady chant     blows break its chant 25% less often
   Elite: Archmage (<ansi fg="command">help archmage</ansi>)
 
+<ansi fg="yellow-bold">Sorcerer</ansi> (neutral)  costly magical burst: one heavy Arcane Lance after a long chant
+  10 Arcane Lance     a heavy bolt at one foe, about twice a Magic Missile
+                      (chant 3 rounds, cost 18)
+  15 Gathered power   the Lance deals 25% more damage
+  20 Steady chant     blows break its chant 25% less often
+  25 Cheaper lance    the Lance costs 15
+  Elite: High Sorcerer (<ansi fg="command">help high-sorcerer</ansi>)
+
 <ansi fg="yellow-bold">Warlock</ansi> (evil, alignment -30)  life-draining magic
   10 Life Drain       damages one foe for a Magic Missile's worth and heals the
                       most hurt ally for the damage dealt (chant 1, cost 10)
@@ -27,7 +35,8 @@ to the elite class that continues its route (<ansi fg="command">help promotion</
   25 Dark focus       spells deal 10% more damage
   Elite: Necromancer (<ansi fg="command">help necromancer</ansi>)
 
-A wizard's role is caster (<ansi fg="command">help strategy</ansi>): it casts on its own, and a Theurgist
-wards the company first.
+A wizard's role is caster (<ansi fg="command">help strategy</ansi>): it casts on its own, a Theurgist
+wards the company first, and a Sorcerer looses its Lance first for as long as
+its mana lasts, then falls back to Magic Missile.
 
 See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help strategy</ansi>.

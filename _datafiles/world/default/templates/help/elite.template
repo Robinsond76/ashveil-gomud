@@ -52,6 +52,7 @@ list, the elite talents (every elite of a lineage shares one), beside the lineag
   <ansi fg="yellow-bold">Wizard</ansi>
   Archon          good      Theurgist route: Counterspell, wards    <ansi fg="command">help archon</ansi>
   Archmage        neutral   Arcanist route: Overchannel, Storm      <ansi fg="command">help archmage</ansi>
+  High Sorcerer   neutral   Sorcerer route: a swifter, twin Arcane Lance  <ansi fg="command">help high-sorcerer</ansi>
   Necromancer     evil      Warlock route: thralls, Life Drain      <ansi fg="command">help necromancer</ansi>
   <ansi fg="yellow-bold">Witch</ansi>
   Wise One        good      Hedge Witch route: Hearthward           <ansi fg="command">help wise-one</ansi>

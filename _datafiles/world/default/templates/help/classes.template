@@ -34,14 +34,14 @@ is no switching to another.
   Shaman    -            Stormcaller, Mistweaver and Earthspeaker, all open to any alignment
   Doll Master -          Puppeteer, Golemancer and Marionettist, all open to any alignment
   Witch     Hedge Witch  Coven Sage   Hag
-  Wizard    Theurgist    Arcanist     Warlock
+  Wizard    Theurgist    Arcanist     Warlock, and the Sorcerer, open to any alignment
   Ranger    Warden       Hunter       Stalker
   Rogue     Scout        Duelist      Assassin
 
 Elite classes (level 30 and on): Hierarch, Elder Druid and Demonologist
 (clerics), Paladin, Warlord and Dread Knight (warriors), Pathfinder,
 Swordmaster and Nightblade (rogues), Sentinel, Marksman and Ravager (rangers),
-Archon, Archmage and Necromancer (wizards), Wise One, Coven Mother and Crone
+Archon, Archmage, High Sorcerer and Necromancer (wizards), Wise One, Coven Mother and Crone
 of Ash (witches); see <ansi fg="command">help elite</ansi>. The elite classes of the other routes
 are still to come: their
 lineages keep their advanced class's ranks until then.
