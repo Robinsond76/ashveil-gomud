@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -69,6 +70,12 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if user.Character.Mana < user.Character.SpellCost(spellInfo) {
 		user.SendText(fmt.Sprintf(`You don't have enough mana to cast <ansi fg="spellname">%s</ansi>.`, spellName))
+		return true, nil
+	}
+
+	// Ashveil Phase 39g: an Alchemist's spells cost a flask, not mana.
+	if spellInfo.Flask > 0 && flasks.Remaining(user.Character) < spellInfo.Flask {
+		user.SendText(fmt.Sprintf(`Your satchel is empty, so you can't throw <ansi fg="spellname">%s</ansi>. Brew more flasks with <ansi fg="command">brew</ansi> (<ansi fg="command">help brew</ansi>).`, spellName))
 		return true, nil
 	}
 
@@ -309,6 +316,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `cast`, Details: spellInfo.SpellId})
 
 			user.Character.Mana -= user.Character.SpellCost(spellInfo)
+			user.Character.FlasksSpent += spellInfo.Flask // Phase 39g: a thrown flask is used up
 			events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 			user.Character.SetCast(spellInfo.WaitRounds, spellAggro)
 		}

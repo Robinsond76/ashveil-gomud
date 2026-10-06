@@ -1,0 +1,15 @@
+# Phase 39g: an Alchemist's fire flask, from level 6: about 70% of Sparks at
+# two foes (the one aimed at and the one beside it).
+spellid: fireflask
+name: Fire Flask
+description: A flask of fire burns the foe aimed at and one beside it for 2+1d4, plus 1 per 12 levels. It costs one flask, no mana and no chant
+type: harmmulti
+school: alchemy
+cost: 0
+flask: 1
+waitrounds: 0
+difficulty: 0
+power:
+  base: 2
+  dice: 1d4
+  leveldiv: 12

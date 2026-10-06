@@ -25,7 +25,7 @@ the company.
 Good routes need alignment +30 or higher and evil routes -30 or lower when
 you promote. Neutral routes need nothing, and the Samurai (Kensai,
 Hatamoto, Ronin), Shaman (Stormcaller, Mistweaver, Earthspeaker) and Gryphon Rider
-(Gryphon Knight, Skyscout, Wyvern Rider) lineages have only neutral routes. If your alignment is not yet right,
+(Gryphon Knight, Skyscout, Wyvern Rider) and Alchemist (Apothecary, Bombardier, Mutagenist) lineages have only neutral routes. If your alignment is not yet right,
 <ansi fg="command">class</ansi> says the promotion is waiting; you keep your ranks and promote once your
 alignment recovers (see <ansi fg="command">help alignment</ansi>). A class is never lowered.
 

@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">alchemist</ansi>
+
+The Alchemist heals and strengthens its company with thrown flasks instead of
+prayer or mana. Its flasks are spells that cost one flask each, with no
+chant to interrupt: a thrown flask lands the moment it is thrown. It is a
+neutral class: it has no alignment gate to meet.
+
+<ansi fg="yellow-bold">What the Alchemist is</ansi>
+
+  Health      3 to start, 0.65 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.75 and Evasion 0.85 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        light armor, no shield, daggers, staffs and slings (<ansi fg="command">help armor</ansi>)
+  Stats       smarts 4, perception 2, vitality 2, speed 2 (<ansi fg="command">help growth</ansi>)
+  Role        a healer by default (<ansi fg="command">help strategy</ansi>); it has no mana pool
+  Starter kit a dagger, light gear, food, a waterskin, a knapsack and three
+              reagents
+
+<ansi fg="yellow-bold">The flask satchel</ansi>
+
+An Alchemist carries a satchel of flasks: 6 at level 1, one more every three
+levels (16 at level 30). Every flask thrown is used up. The satchel is saved
+with the character, so a restart keeps what was thrown. <ansi fg="command">status</ansi> shows it, and the
+company panels show each Alchemist's flasks. Level-ups tell you when it grows.
+
+<ansi fg="yellow-bold">The flasks</ansi>
+
+All of them are thrown on their own in a battle (<ansi fg="command">help strategy</ansi>), and out of battle you may
+<ansi fg="command">cast</ansi> them by hand:
+
+  <ansi fg="yellow-bold">Healing Draught</ansi>  level 1: heals an ally for 8 and 2d4, plus 1 for each 6 levels; the
+                   most hurt ally first
+  <ansi fg="yellow-bold">Antidote</ansi>         level 3: cures an ally's poison and bleeding. Thrown before any
+                   heal only while no one is below half health
+  <ansi fg="yellow-bold">Fire Flask</ansi>       level 6: burns the foe aimed at and the foe beside it, at about
+                   70% of a Sparks spell. Thrown only while more than 2 flasks
+                   remain, so the last two are always for heals
+  <ansi fg="yellow-bold">Bracing Tonic</ansi>    level 8: one ally gets +5 Attack and +5 Evasion for 3 rounds, one
+                   a round, before the blows begin
+
+A flask is never thrown at a target it can't help, and an empty satchel
+throws nothing. A flask not yet learned is not thrown and not listed.
+
+<ansi fg="yellow-bold">Brewing</ansi>
+
+Reagents make flasks, one reagent a flask. A <ansi fg="command">camp</ansi> rest refills every Alchemist's
+satchel in the company from the leader's reagents when it ends
+(<ansi fg="command">help camp</ansi>), or use <ansi fg="command">brew</ansi> anywhere out of battle (<ansi fg="command">help brew</ansi>). Reagents are
+sold in Dunmar's market and never bought back.
+
+<ansi fg="yellow-bold">Routes</ansi>
+
+At level 10 an Alchemist promotes to an Apothecary, a Bombardier or a
+Mutagenist. All three are open at any alignment (<ansi fg="command">help alchemist-routes</ansi>).
+
+<ansi fg="yellow-bold">Companions</ansi>
+
+An Alchemist companion throws flasks the same way, from a satchel that is kept
+with it. Recruits are hired like any other (<ansi fg="command">help company</ansi>). Keep it out of the front
+row, and bring reagents.
+
+Commands: <ansi fg="command">brew</ansi>, <ansi fg="command">cast</ansi>, <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">help alchemist-routes</ansi>.
+
+See also: <ansi fg="command">help brew</ansi>, <ansi fg="command">help alchemist-routes</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help combat</ansi>.

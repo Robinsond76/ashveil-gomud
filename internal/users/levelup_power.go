@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 )
@@ -81,6 +82,10 @@ func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntr
 	}
 	if chance := strategy.HookChance(c.Level); chance > 0 && c.ArchetypeID() == "halberdier" {
 		out = append(out, powerEntry{name: "Hook", size: fmt.Sprintf("%d%% to trip a leaper", chance)})
+	}
+	// Phase 39g: an Alchemist's satchel grows a flask every three levels.
+	if flasks.IsAlchemist(c) {
+		out = append(out, powerEntry{name: "Flask satchel", size: fmt.Sprintf("%d flasks", flasks.Capacity(c))})
 	}
 	return out
 }

@@ -22,6 +22,8 @@
 #   summon      calls the class summon (Angel, Demon) as the battle opens
 #   weather     a Shaman's weather call (fog, chill wind, rain), when none is up (Phase 39c)
 #   storm       a Shaman's Lightning, ahead of its attack spell (Phase 39c)
+#   cure        an Alchemist's antidote, for an ally with poison or bleeding (Phase 39g)
+#   flame       an Alchemist's Fire Flask, at a foe and the one beside it (Phase 39g)
 # A character casts the first listed spell of a use that it knows and can
 # pay for. Unknown spells are dropped at load with a warning.
 AutoSpells:
@@ -64,3 +66,11 @@ AutoSpells:
   - { Spell: lightning, Use: storm }
   - { Spell: gust, Use: attack }
   - { Spell: stoneskin, Use: bark }
+  # Phase 39g: an Alchemist (role healer) throws flasks: a Healing Draught
+  # for the hurt, an antidote for poison and bleeding, a tonic before the
+  # first blow, and a Fire Flask when no one needs tending and more than two
+  # flasks remain. Each costs a flask from the satchel, not mana.
+  - { Spell: draught, Use: heal }
+  - { Spell: antidote, Use: cure }
+  - { Spell: tonic, Use: bless }
+  - { Spell: fireflask, Use: flame }

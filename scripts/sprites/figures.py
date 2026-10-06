@@ -57,6 +57,9 @@ CLASSES = {
     # Phase 39f: a sky skirmisher in a riding jack.
     "gryphon-rider": dict(trousers="leather", boots="leather", torso="ochre", sleeve="leather",
                           hair="leather"),
+    # Phase 39g: a brewer in a stained wool smock and a leather apron.
+    "alchemist": dict(trousers="wool", boots="leather", torso="wool", sleeve="wool",
+                      hair="leather"),
 }
 
 
@@ -657,7 +660,38 @@ def draw_gryphon_rider(r):
     cv.put(hx, tip + 1, "ochre.m")  # pennon
 
 
+def draw_alchemist(r):
+    """A wool smock under a leather apron, a bandolier of coloured flasks, a flask in hand."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("wool")
+    if v == "up":
+        cv.part(rect(r.tx0, r.ysh + r.px(2), r.tx1, r.yhip + r.px(4)), "leather", flat="m")  # apron ties
+    else:
+        cv.part(rect(r.tx0 + 1, r.ysh + r.px(3), r.tx1 - 1, r.yhip + r.px(4)), "leather")  # apron
+        cv.part({(x, r.ysh + r.px(3)) for x in range(r.tx0 + 1, r.tx1)}, "leather", flat="l")
+    _belt(r, "leather", r.yhip - r.px(1), "brass.m")
+    if v != "up":  # a bandolier of stoppered flasks across the chest
+        for i, x in enumerate(range(r.tx0, r.tx1 + 1)):
+            y = r.ysh + 1 + (x - r.tx0) * (r.yhip - r.ysh - r.px(3)) // max(1, r.tx1 - r.tx0)
+            cv.put(x, y, "leather.m")
+            if i % 2 == 0:
+                cv.put(x, y + 1, ("water.l", "ember.m", "moss.l")[i // 2 % 3])
+    r.arms("wool", glove="leather")
+    r.head(hair="leather")
+    cv.part({(r.cx - S.hw // 2 + i, r.top + 1) for i in range(S.hw)}, "brass", flat="m")  # goggle strap
+    hx, hy = r.hand_r
+    if v == "down":
+        hx += 1
+    # A round flask held up, its cork and its glow.
+    fy = hy - r.px(5)
+    cv.part(rect(hx - 1, fy, hx + 1, fy + r.px(3)), "bone", flat="l")
+    cv.part(rect(hx - 1, fy + 1, hx + 1, fy + r.px(3)), "ember", flat="m")
+    cv.part({(hx, fy - 1)}, "wood", flat="m")
+
+
 DRAWERS = {
+    "alchemist": draw_alchemist,
     "gryphon-rider": draw_gryphon_rider,
     "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
     "warrior": draw_warrior, "rogue": draw_rogue, "ranger": draw_ranger,
