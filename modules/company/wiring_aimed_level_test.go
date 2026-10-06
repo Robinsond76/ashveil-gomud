@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/strategy"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +18,10 @@ func aimedShotDamage(t *testing.T, level int) int {
 	b.cmd("strategy", "tamsin abilities off")
 	b.cmd("strategy", "garrick abilities off")
 	alwaysLand(t)
+	// Dice and blow quality are rolls too: pin them to the middle, so the two
+	// levels differ only by the bonus (37c; the 3/4 margin below once failed
+	// on a lucky low-level roll against an unlucky high-level one).
+	t.Cleanup(util.UseRandForTest(func(n int) int { return n / 2 }))
 	b.companion(4).Character.Level = level
 	b.start()
 	for i := 0; i < 4; i++ {
