@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,6 +36,10 @@ func samurai(t *testing.T, level int, class string) *characters.Character {
 func TestIaijutsuIsTheFirstStrikeOfABattleOnly(t *testing.T) {
 	defenseSpecs(t)
 	defenseOdds(t, 0, 0, 0)
+	// Iaijutsu's own +10% critical chance stands even with the odds pinned
+	// to 0, so a crit doubled the first strike about 1 run in 10 (37c
+	// review): every roll is its top face, which never crits.
+	t.Cleanup(util.UseRandForTest(func(n int) int { return n - 1 }))
 	s := samurai(t, 1, "")
 	target := armed(0)
 	assert.True(t, s.IaiReady())
