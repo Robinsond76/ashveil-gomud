@@ -18,6 +18,8 @@ spawninfo:
 - mobid: 70
   message: A hunched goblin hexer slips out of the undergrowth, knucklebones rattling.
   respawnrate: 6 real minutes
+resources:
+- forage
 mapx: 30
 mapy: -3
 mapz: 0

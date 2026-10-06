@@ -5,6 +5,7 @@ description: A waterskin that holds several glugs.
 type: drink
 subtype: drinkable
 uses: 5
+refillable: water
 hydration: 40
 buffids: 
 - 34

@@ -20,6 +20,8 @@ spawninfo:
     the light.
   forcehostile: true
   respawnrate: 2 real minutes
+resources:
+- shelter
 mapx: -20
 mapy: 15
 mapz: -1

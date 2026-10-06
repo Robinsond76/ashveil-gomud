@@ -11,6 +11,8 @@ exits:
     roomid: 752
   south:
     roomid: 750
+resources:
+- forage
 mapx: 23
 mapy: 13
 mapz: 0

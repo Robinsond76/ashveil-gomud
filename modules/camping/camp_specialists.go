@@ -471,6 +471,9 @@ func (m *CampingModule) forage(leader *users.UserRecord, room *rooms.Room, op st
 		return "", nil
 	}
 	count := cfg.ForageBase + sp.Level/cfg.ForageLevelsPerOne
+	if room.HasResource(rooms.ResourceForage) {
+		count++ // Phase 40a: a forage room gives one more find
+	}
 	total := 0
 	for _, f := range table {
 		total += f.Weight

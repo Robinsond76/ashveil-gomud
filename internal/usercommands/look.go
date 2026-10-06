@@ -630,6 +630,11 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 		user.SendText(line)
 	}
 
+	// Phase 40a: what the room provides (water, forage, shelter).
+	if line := room.ResourceLine(); line != "" {
+		user.SendText(line)
+	}
+
 	// Phase 32a: the camps pitched here, then a recruiter's notice.
 	for _, line := range camping.CampLines(camping.RoomCamps(room.RoomId), user.UserId, characterName) {
 		user.SendText(line)

@@ -14,6 +14,8 @@ exits:
     roomid: 1030
   south:
     roomid: 1044
+resources:
+- shelter
 mapx: -20
 mapy: 12
 mapz: -1

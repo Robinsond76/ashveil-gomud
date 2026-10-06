@@ -9,6 +9,11 @@ button in them just types a command for you.
   <ansi fg="yellow">Time and Date</ansi>, then the <ansi fg="yellow">Map</ansi>, then the <ansi fg="yellow">Room</ansi> you stand in (its exits
   and who's here), and the <ansi fg="yellow">Tutorial</ansi> while you're taking the course.
 
+  On the map, a small coloured dot in a room's corner marks what it
+  provides: blue fresh water, green forage, tan shelter. Hover for names;
+  the settings button turns the dots off (<ansi fg="command">help resources</ansi>). The Room Info
+  panel lists the current room's resources as badges under its name.
+
 <ansi fg="yellow-bold">The right column: the dock</ansi>
 
   Always at the top: your health and mana, a line for each companion
@@ -26,7 +31,8 @@ button in them just types a command for you.
               gear, your horses, and the cargo), and Camp.
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
-              Battle view during a battle.
+              Battle view during a battle. A battle also opens as a
+              picture, the battle screen (help battlescreen).
   <ansi fg="yellow">Comm</ansi>        what's said around you; a number on the tab counts what
               arrived while you were looking elsewhere.
 

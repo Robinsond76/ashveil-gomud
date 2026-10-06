@@ -18,6 +18,8 @@ spawninfo:
 - mobid: 85
   message: The trees shudder, and a forest ogre shoulders its way out onto the road.
   respawnrate: 15 real minutes
+resources:
+- forage
 mapx: 43
 mapy: 8
 mapz: 0

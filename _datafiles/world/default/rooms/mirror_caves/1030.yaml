@@ -26,6 +26,8 @@ spawninfo:
 - mobid: 22
   message: An abyssal creeper crawls out from the shadows.
   respawnrate: 5 real minutes
+resources:
+- shelter
 mapx: -20
 mapy: 11
 mapz: -1

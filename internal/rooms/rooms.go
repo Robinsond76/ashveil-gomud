@@ -91,6 +91,7 @@ type Room struct {
 	Pvp               bool                              `yaml:"pvp,omitempty"`                       // if config pvp is set to `limited`, uses this value
 	Encounter         *encounters.RoomSetting           `yaml:"encounter,omitempty"`                 // Phase 37: explicit random-encounter setting; absent means no encounters
 	Tags              []string                          `yaml:"tags,omitempty"`                      // short tags that can be added to rooms for any purpose (modules, scripting, etc)
+	Resources         []string                          `yaml:"resources,omitempty"`                 // Phase 40a: what the room provides (water, forage, shelter, ...); see resources.go
 	MapX              int                               `yaml:"mapx"`
 	MapY              int                               `yaml:"mapy"`
 	MapZ              int                               `yaml:"mapz"`

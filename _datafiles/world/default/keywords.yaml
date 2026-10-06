@@ -74,6 +74,7 @@ help:
       - camp
       - inn
       - cooking
+      - resources
     communication:
       - emote
       - say
@@ -134,6 +135,7 @@ help:
       - stat-edge
       - shields
       - shoot
+      - battlescreen
       - strategy
       - tactics
       - targeting
@@ -295,10 +297,12 @@ help-aliases:
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   camp:             [camping, campfire]
+  resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
   combat:           [battle, battles, fighting, fight]
+  battlescreen:     [battle-screen, battle screen, battle-map, battle map, battle-picture]
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]

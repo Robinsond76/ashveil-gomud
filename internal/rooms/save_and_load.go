@@ -326,6 +326,10 @@ func loadRoomFromFile(roomFilePath string) (*Room, error) {
 		mudlog.Error("loadRoomFromFile()", "error", err.Error())
 	}
 
+	if roomPtr != nil {
+		roomPtr.normalizeResources()
+	}
+
 	return roomPtr, err
 }
 
