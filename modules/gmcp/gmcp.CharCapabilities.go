@@ -33,7 +33,8 @@ func buildCapabilities(user *users.UserRecord) charCapabilities {
 	}
 	id, _ := archetypes.PlayerArchetype(user.UserId)
 	s := strategy.For(user.UserId, "leader", id)
-	for _, ability := range strategy.PlayerAbilities(user.Character.GetSkillLevel) {
+	class, _ := user.Character.ClassState()
+	for _, ability := range strategy.WithClass(strategy.PlayerAbilities(user.Character.GetSkillLevel), class, user.Character.Level) {
 		spec, ok := strategy.SpecOf(ability)
 		if !ok {
 			continue

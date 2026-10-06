@@ -57,16 +57,21 @@ func ResetWarlordForTest() {
 	clear(warlordDown)
 }
 
+// lendMark puts a mark on a foe's battle state: its attackers gain pts Attack
+// for two rounds.
+func lendMark(rt *characters.ClassRT, pts int) {
+	rt.Mark, rt.MarkRound = pts, combatRound.Load()
+	if !slices.Contains(marked, rt) {
+		marked = append(marked, rt)
+	}
+}
+
 // warlordTackle is what a landed Tackle adds for a Warlord: the mark, the
 // broken armor, and the watch for the foe standing up again.
 func warlordTackle(a actor, foe *mobs.Mob, target statusHolder) {
 	fx := a.char.ClassEffects()
 	if n := fx.Int(classes.MarkRuin); n > 0 {
-		rt := foe.Character.RTState()
-		rt.Mark, rt.MarkRound = n, combatRound.Load()
-		if !slices.Contains(marked, rt) {
-			marked = append(marked, rt)
-		}
+		lendMark(foe.Character.RTState(), n)
 		a.holder.say(fmt.Sprintf("You mark %s for ruin.", target.tag()),
 			"%s marks "+verbatim(target.tag())+" for ruin.", fmt.Sprintf(" (marked for ruin: +%d Attack for your allies, 2 rounds)", n))
 		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: foe.Character.RoomId, Source: a.ref, Target: target.ref, Status: "Marked for Ruin", Outcome: combatstream.OutcomeSucceeded})

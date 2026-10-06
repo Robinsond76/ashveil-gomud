@@ -41,11 +41,20 @@ list, the elite talents, beside the lineage's usual five. See <ansi fg="command"
   Hierarch        good      Priest route: Call the Host             <ansi fg="command">help summoning</ansi>
   Elder Druid     neutral   Druid route: groves and healing         <ansi fg="command">help cleric-routes</ansi>
   Demonologist    evil      Blood Priest route: Bind the Fiend      <ansi fg="command">help summoning</ansi>
+  <ansi fg="yellow-bold">Rogue</ansi>
+  Pathfinder      good      Scout route: fewer ambushes, openings   <ansi fg="command">help elite-pathfinder</ansi>
+  Swordmaster     neutral   Duelist route: twin ripostes            <ansi fg="command">help swordmaster</ansi>
+  Nightblade      evil      Assassin route: Death Mark, poison      <ansi fg="command">help nightblade</ansi>
+  <ansi fg="yellow-bold">Ranger</ansi>
+  Sentinel        good      Warden route: Overwatch                 <ansi fg="command">help sentinel</ansi>
+  Marksman        neutral   Hunter route: critical shots            <ansi fg="command">help marksman</ansi>
+  Ravager         evil      Stalker route: bleeding, hunted foes    <ansi fg="command">help ravager</ansi>
 
-The other lineages' elite classes (Pathfinder, Swordmaster, Nightblade,
-Sentinel, Marksman, Ravager, Archon, Archmage, Necromancer, Wise One, Coven
-Mother, Crone of Ash, and the Samurai's Sword Saint, Shogun and Kenshi) are
-still to come; until they arrive those characters keep their advanced class's
+The other lineages' elite classes (Archon, Archmage, Necromancer, Wise One,
+Coven Mother, Crone of Ash, and the Samurai's Sword Saint, Shogun and Kenshi)
+are still to come; until they arrive those characters keep their advanced class's
 ranks.
+
+Routes in depth: <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>.
 
 See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help alignment</ansi>.

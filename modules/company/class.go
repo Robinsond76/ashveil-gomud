@@ -411,7 +411,7 @@ func (m *CompanyModule) pathsView(s classSubject) string {
 			}
 		}
 	}
-	lines = append(lines, `Routes are final. See help promotion and help classes; the cleric and warrior routes have their own pages (help cleric-routes, help warrior-routes).`)
+	lines = append(lines, `Routes are final. See help promotion and help classes; the cleric, warrior, rogue and ranger routes have their own pages (help cleric-routes, help warrior-routes, help rogue-routes, help ranger-routes).`)
 	return strings.Join(lines, "\n")
 }
 
