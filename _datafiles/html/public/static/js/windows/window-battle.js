@@ -243,6 +243,7 @@
             u.label = m.name || m.key;
             u.klass = String(m.archetype || '').toLowerCase();
             u.sprite = u.klass || 'adventurer';
+            u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
             u.cell = cell;
             u.leader = m.key === 'leader';
             u.role = (m.strategy && m.strategy.role) || '';
@@ -669,7 +670,7 @@
             rect(x - 4, y - 30, 8, 6, 'rgba(10,10,16,0.75)');
             return;
         }
-        const sheet = art('battle/units/' + u.sprite + '/idle.png');
+        const sheet = (u.promoted && art('battle/units/' + u.promoted + '/idle.png')) || art('battle/units/' + u.sprite + '/idle.png');
         if (sheet) {
             // Art: the idle loop, anchored bottom-centre, enemies mirrored.
             const fw = (sheet.info.frame || [64, 64])[0], fh = (sheet.info.frame || [64, 64])[1];
@@ -892,7 +893,7 @@
                 biome,
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
-                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, cell: u.cell, frac: u.frac, band: u.band,
+                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting,
                     at: u.cell ? slot(u.side, u.cell.row, u.cell.col) : null,

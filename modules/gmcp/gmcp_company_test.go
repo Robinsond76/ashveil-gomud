@@ -463,3 +463,23 @@ func TestCompanyPayloadTrainingFields(t *testing.T) {
 	assert.NotContains(t, awaiting, "skills", "none trained")
 	assert.Equal(t, 0.0, awaiting["training_points"], "known, and zero")
 }
+
+// TestCompanyMemberClass (Phase 40s5): a promoted member's class id travels
+// with it so the battle screen can draw the class's art; before promotion the
+// key is absent.
+func TestCompanyMemberClass(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.Class = "paladin"
+	s.Companions[0].Class = "hag"
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, err := json.Marshal(p)
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	assert.Equal(t, "paladin", got["leader"].(map[string]any)["class"])
+	members := got["members"].([]any)
+	assert.Equal(t, "hag", members[0].(map[string]any)["class"])
+	_, has := members[1].(map[string]any)["class"]
+	assert.False(t, has, "an unpromoted member carries no class key")
+}

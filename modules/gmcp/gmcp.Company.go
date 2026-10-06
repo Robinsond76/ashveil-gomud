@@ -70,12 +70,15 @@ type companyStrategy struct {
 }
 
 type companyMember struct {
-	Key       string       `json:"key"`
-	ID        int          `json:"id"`
-	Name      string       `json:"name"`
-	Status    string       `json:"status"`
-	Level     int          `json:"level"`
-	Archetype *string      `json:"archetype"`
+	Key       string  `json:"key"`
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	Status    string  `json:"status"`
+	Level     int     `json:"level"`
+	Archetype *string `json:"archetype"`
+	// Class is its promoted class id (Phase 40s5 art key); omitted before
+	// promotion.
+	Class     string       `json:"class,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -203,6 +206,7 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	if !m.Leader || m.ArchetypeKnown {
 		out.Archetype = strPtr(m.Archetype)
 	}
+	out.Class = m.Class
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
 	}

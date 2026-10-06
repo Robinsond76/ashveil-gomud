@@ -1,5 +1,28 @@
 # Ashveil Project Status
 
+**Phase 40s5 built: class art, art set S5 (2026-10-06):** map sprites
+(down/up/side, idle and walk) and battle idles for the 23 promoted classes on
+master (the 18 level-10 classes plus Paladin, Hierarch, Elder Druid, Blood
+ Priest, Demonologist and Dread Knight), the Angel and Demon summons (large
+units) and a goblin shaman of its own (was the hexer's art); `scripts/sprites/promoted.py`,
+`summoned.py`, `make sprites` now also writes
+[`docs/verification/40s5-contact-sheet.png`](verification/40s5-contact-sheet.png).
+Forks, with reasons: (1) each promoted class is its lineage's base figure with
+ramps swapped and a few accessories, not a new rig, so a promotion reads as a
+step up and the S0 proportions and anchors hold for free; (2) good routes go
+lighter with brass, neutral earth-toned, evil darker with ember touches, using
+the existing 64-color palette only; (3) the Company GMCP member now carries
+`class` (promoted class id, omitted before promotion) and the battle window
+draws `battle/units/<class>/idle.png` when the manifest lists it, falling back
+to the base class, so the art shows today; (4) mobs `95-angel`, `96-demon` and
+the shaman use `sprite:` keys; (5) master had two mobs with id 95 (the 37b goblin shaman and 38b's Angel, which `internal/summons` pins), so every test that loads the world panicked: the shaman is now mob 97. Elite (38c) and neutral (39) classes still
+`Planned` are left to a later art pass: warlord, pathfinder, swordmaster,
+nightblade, sentinel, marksman, ravager, archon, archmage, necromancer,
+wise-one, coven-mother, crone-of-ash; `TestEveryBuiltClassHasArt` fails when a
+newly built class has none, and `TestMobSpriteKeysHaveArt` checks every mob
+`sprite:` key. Map rendering of promoted units waits for 40b/40h, which read
+the same manifest paths. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
