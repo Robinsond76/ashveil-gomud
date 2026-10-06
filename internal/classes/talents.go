@@ -15,7 +15,13 @@ type Talent struct {
 	Text string
 	Max  int
 	Add  Effects
+	// Elite marks a talent only an elite character of the lineage may take,
+	// from level EliteTalentLevel (Phase 38c1).
+	Elite bool
 }
+
+// EliteTalentLevel is the first talent level an elite talent is offered at.
+const EliteTalentLevel = 35
 
 // MaxPicks is how many times one talent may be taken unless it says
 // otherwise: six talent levels over five choices a lineage.
@@ -43,17 +49,58 @@ func offer(lineageID string, ts ...Talent) {
 	}
 }
 
+// defineEliteTalent defines a talent taken once, offered only to a
+// lineage's elites from level 35. 38c2 and 38c3 add their lineages' with
+// offerElite.
+func defineEliteTalent(t Talent) Talent {
+	t.Elite, t.Max = true, 1
+	return defineTalent(t)
+}
+
+func offerElite(lineageID string, ts ...Talent) { offer(lineageID, ts...) }
+
 // TalentByID returns a talent by id.
 func TalentByID(id string) (Talent, bool) {
 	t, ok := talentByID[normalize(id)]
 	return t, ok
 }
 
-// TalentsFor lists the talents a lineage may choose, in list order.
+// TalentsFor lists the talents any character of a lineage may choose, in
+// list order (the elite talents are MenuFor's).
 func TalentsFor(lineageID string) []Talent {
 	var out []Talent
 	for _, id := range talentsFor[normalize(lineageID)] {
-		out = append(out, talentByID[id])
+		if t := talentByID[id]; !t.Elite {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// EliteTalentsFor lists a lineage's elite talents.
+func EliteTalentsFor(lineageID string) []Talent {
+	var out []Talent
+	for _, id := range talentsFor[normalize(lineageID)] {
+		if t := talentByID[id]; t.Elite {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// eliteOpen reports whether an elite talent may be taken: the character's
+// class is an elite one and the level is the elite talent level or more.
+func eliteOpen(classID string, level int) bool {
+	c, ok := Get(classID)
+	return ok && c.Tier == TierElite && level >= EliteTalentLevel
+}
+
+// MenuFor is every talent a character may be offered: its lineage's, and
+// its lineage's elite talents once an elite of level 35 or more.
+func MenuFor(lineageID, classID string, level int) []Talent {
+	out := TalentsFor(lineageID)
+	if eliteOpen(classID, level) {
+		out = append(out, EliteTalentsFor(lineageID)...)
 	}
 	return out
 }
@@ -113,14 +160,18 @@ var (
 	ErrNoTalentOwed  = errors.New("no talent is owed yet")
 	ErrUnknownTalent = errors.New("no such talent")
 	ErrTalentMaxed   = errors.New("that talent is at its limit")
+	ErrEliteTalent   = errors.New("that talent is for elite characters from level 35")
 )
 
-// CanPick reports whether a character of a lineage, at a level, with the
-// talents it has, may take a talent now.
-func CanPick(lineageID string, picked []string, level int, id string) error {
+// CanPick reports whether a character of a lineage and class, at a level,
+// with the talents it has, may take a talent now.
+func CanPick(lineageID, classID string, picked []string, level int, id string) error {
 	id = normalize(id)
 	if !slices.Contains(talentsFor[normalize(lineageID)], id) {
 		return fmt.Errorf("%w: %q", ErrUnknownTalent, id)
+	}
+	if talentByID[id].Elite && !eliteOpen(classID, level) {
+		return ErrEliteTalent
 	}
 	if TalentsOwed(level, picked) < 1 {
 		return ErrNoTalentOwed
@@ -158,7 +209,22 @@ var (
 	tPotentHex = defineTalent(Talent{ID: "potent-hex", Name: "Potent Hex", Text: "+5 to a hex's chance to land", Add: Effects{HexLand: 5}})
 )
 
+// Elite talents (Phase 38c1: warrior and cleric; 38c2 adds rogue and ranger,
+// 38c3 wizard and witch). Taken once each, from level 35, elites only; they
+// stack with a base talent of the same kind.
+var (
+	tIronHide     = defineEliteTalent(Talent{ID: "iron-hide", Name: "Iron Hide", Text: "+5 armor", Add: Effects{Armor: 5}})
+	tSecondWind   = defineEliteTalent(Talent{ID: "second-wind", Name: "Second Wind", Text: "once a battle, at the start of its turn below 25% health, heals 10% of its maximum health (the turn is still taken)", Add: Effects{SecondWind: 10}})
+	tVeteransEdge = defineEliteTalent(Talent{ID: "veterans-edge", Name: "Veteran's Edge", Text: "+3 Attack", Add: Effects{Attack: 3}})
+
+	tFontOfGrace    = defineEliteTalent(Talent{ID: "font-of-grace", Name: "Font of Grace", Text: "+10% maximum mana", Add: Effects{ManaPct: 10}})
+	tRadiantHealing = defineEliteTalent(Talent{ID: "radiant-healing", Name: "Radiant Healing", Text: "+10% healing", Add: Effects{HealPct: 10}})
+	tUnshaken       = defineEliteTalent(Talent{ID: "unshaken", Name: "Unshaken", Text: "blows break your chant 25% less often", Add: Effects{ChantBreak: 25}})
+)
+
 func init() {
+	offerElite("warrior", tIronHide, tSecondWind, tVeteransEdge)
+	offerElite("cleric", tFontOfGrace, tRadiantHealing, tUnshaken)
 	offer("cleric", tMendingHands, tSteadfast, tDeepWell, tSanctuary, tGentleRest)
 	offer("warrior", tToughness, tHeavyHands, tKeenEdge, tFootwork, tTackleDril)
 	offer("rogue", tKeenEdge, tFootwork, tDeepCuts, tPatientHand, tHeavyHands)

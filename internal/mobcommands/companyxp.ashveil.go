@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"strconv"
 	"strings"
 )
 
@@ -23,7 +24,7 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 		return 0, nil
 	}
 	for _, instanceID := range leader.GetCharmIds() {
-		owner, _, ok := company.LeaderAndKeyForInstance(instanceID)
+		owner, memberKey, ok := company.LeaderAndKeyForInstance(instanceID)
 		if !ok || owner != leaderUserID {
 			continue
 		}
@@ -55,14 +56,19 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 			}
 			mob.Character.Health = min(health, mob.Character.HealthMax.Value)
 			mob.Character.Mana = min(mana, mob.Character.ManaMax.Value)
-			lines = append(lines, companionLevelLine(before, mob.Character))
+			lineage, who := "", ""
+			if id, ok := company.CompanionIDFromMemberKey(memberKey); ok {
+				lineage, _ = company.CompanionArchetype(leaderUserID, id)
+				who = "#" + strconv.Itoa(id)
+			}
+			lines = append(lines, companionLevelLine(before, mob.Character, lineage, who))
 		}
 	}
 	return paid, lines
 }
 
 // One report spans all gained levels and the final derived companion training.
-func companionLevelLine(before, after characters.Character) string {
+func companionLevelLine(before, after characters.Character, lineage, who string) string {
 	changes := []string{fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, after.HealthMax.Value), fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, after.ManaMax.Value),
 		// Phase 35a2: what the level made it better at.
 		fmt.Sprintf("Attack %d -> %d", before.AttackSkill(), after.AttackSkill()), fmt.Sprintf("Evasion %d -> %d", before.Evasion(), after.Evasion())}
@@ -78,6 +84,11 @@ func companionLevelLine(before, after characters.Character) string {
 	class, _ := after.ClassState()
 	if next := classes.Milestone(class, after.Level); next != "" {
 		line += " " + next
+	}
+	// Phase 38c1: each rank it earned, and an elite promotion ready or
+	// waiting on its gate.
+	for _, note := range classes.LevelNotes(lineage, class, before.Level, after.Level, int(after.Alignment), who, after.Name) {
+		line += " " + note
 	}
 	return line
 }

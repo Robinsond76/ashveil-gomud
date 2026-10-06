@@ -21,8 +21,8 @@ blood. All three heal on their own in battle; their strategy role stays healer
   20 Lasting growth     Rejuvenation lasts 4 rounds (160%)
   25 Thornhide          a foe that strikes a Barkskinned ally takes 2 damage
 
-  <ansi fg="yellow-bold">Elder Druid</ansi> (30): Grove (Rejuvenation on a whole row at 60%), Nature's
-  patience, Deep grove (80%), Entangle (hobble a foe 2 rounds), Wide bark, Wild
+  <ansi fg="yellow-bold">Elder Druid</ansi> (30): Grove (Rejuvenation on a whole row at 100%), Nature's
+  patience, Deep grove (130%), Entangle (hobble a foe 2 rounds), Wide bark, Wild
   growth (Rejuvenation also cures poison), Two groves (covers two rows).
 
 <ansi fg="yellow-bold">Blood Priest (evil)</ansi>
@@ -45,4 +45,7 @@ wards and Barkskin while no one is, Siphon on a foe. Wards, Barkskin, Bless
 and the summons keep the mana reserve; heals don't (<ansi fg="command">help strategy</ansi>). Every cleric also learns Cure Poison at level 6
 and Bless (+5 Attack and Evasion for 3 rounds) at level 8.
 
-See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help heal</ansi>, <ansi fg="command">help warrior-routes</ansi>.
+Elite clerics (level 35, 45, 55) also choose from Font of Grace, Radiant Healing and
+Unshaken: <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help heal</ansi>, <ansi fg="command">help warrior-routes</ansi>.

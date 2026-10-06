@@ -105,6 +105,12 @@ check(JSON.stringify(await subtabs()) === JSON.stringify(['Overview', 'Gear', 'S
 check(await page.evaluate(() => ['Worth', 'Gear', 'Pet', 'Party'].every(id => !VirtualWindows.getWindows().some(w => w._id === id))), 'Worth, Gear, Pet, and Party are no longer windows of their own');
 const overview = await page.evaluate(() => document.getElementById('cw-overview').textContent);
 check(overview.includes('Wren') && overview.includes('40 / 100') && overview.includes('300'), 'Overview carries Worth (XP, gold, bank)');
+// Phase 38c1: the character window names the promoted class, tier and rank.
+await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 52, route: 'Marksman', tier: 'elite', rank: 50, promotion: '' }));
+check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Marksman (elite), rank 50'), 'the character window shows the class, tier and rank');
+await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 30, route: 'Warden', tier: 'advanced', rank: 25, promotion: 'waiting-gate' }));
+check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('promotion waits on alignment'), 'and a promotion waiting on alignment');
+await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 5 }));
 await page.getByRole('tab', { name: 'Gear' }).click();
 check(await page.evaluate(() => document.getElementById('gw-bp-count').textContent) === 'You 2.5 kg \u00b7 company 46.0 / 50.0 kg', 'Gear header: your weight and the company\'s load against capacity');
 await page.evaluate(() => window.gmcp('Company.Inventory', { load: { total_g: 50500, capacity_g: 50000, member_capacity_g: 50000, mount_capacity_g: 0, cargo_g: 0 },
@@ -158,6 +164,13 @@ check((await status()).includes('each owner commands their own company') && (awa
 await page.locator('.company-member[data-key="companion:1"]').focus();
 await page.evaluate(() => window.gmcp('Company.Vitals', { vitals: { 'companion:1': { hp: 5, hp_max: 25, needs: null, warmth: null } }, rescue: { 'companion:4': 5340 } }));
 check((await status()).includes('5/25') && await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-key')) === 'companion:1', 'a vitals update applies, keeping focus on the card');
+// Phase 38c1: a promoted member shows its class with an elite badge and rank,
+// and a promotion that is ready or waiting on a gate.
+await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].class = 'Paladin'; g.members[0].tier = 'elite'; g.members[0].rank = 45; g.members[1].class = 'Knight'; g.members[1].tier = 'advanced'; g.members[1].rank = 25; g.members[1].promotion = 'waiting-gate'; g.leader.promotion = 'ready'; window.gmcp('Company', g); }, company);
+check((await status()).includes('Paladin \u2605 elite, rank 45') && (await status()).includes('Knight, rank 25'), 'a card shows the class, the elite badge and the rank');
+check((await status()).includes('Promotion ready') && (await status()).includes('Promotion waiting on alignment'), 'a card marks a promotion ready or waiting on alignment');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Paladin elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
+await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(c => window.gmcp('Company', c), company);
 
 const inventory = {

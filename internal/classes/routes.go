@@ -49,7 +49,16 @@ func init() {
 			rank(25, "Hit while down", "a tackled foe is also left exposed", TackleExpo, 1),
 		}})
 	register(Class{ID: "warlord", Name: "Warlord", Lineage: "warrior", Tier: TierElite, Parent: "mercenary", Gate: GateAny,
-		Role: "pressure on the chosen target", Planned: true})
+		Role: "pressure on the chosen target: marks it for the whole company",
+		Ranks: []Rank{
+			rank(30, "Marked for Ruin", "a foe the Warlord's Tackle lands on is marked for 2 rounds; every ally has +5 Attack against it", MarkRuin, 5),
+			rank(35, "Battle Cry", "at the start of each battle, every ally has +3 Attack for 2 rounds", BattleCry, 3),
+			rank(40, "Quicker tackle", "Tackle is ready another round sooner", TackleCD, 2),
+			rank(45, "Sunder", "Tackle also breaks the target's armor for 2 rounds", Sunder, 1),
+			rank(50, "Ruinous mark", "Marked for Ruin gives +10 Attack", MarkRuin, 10),
+			rank(55, "Relentless", "when a foe it knocked down stands up, the Warlord's action meter gains 25", Relentless, 25),
+			rank(60, "Warlord's Command", "once a battle, when an ally falls, every standing ally's action meter gains 25", WarCommand, 25),
+		}})
 	register(Class{ID: "blackguard", Name: "Blackguard", Lineage: "warrior", Tier: TierAdvanced, Gate: GateEvil,
 		Role: "armored protector who heals by spilling blood",
 		Ranks: []Rank{
@@ -101,9 +110,9 @@ func init() {
 	register(Class{ID: "elder-druid", Name: "Elder Druid", Lineage: "cleric", Tier: TierElite, Parent: "druid", Gate: GateAny,
 		Role: "heals whole rows at once",
 		Ranks: []Rank{
-			teaches(rank(30, "Grove", "Rejuvenation on a whole formation row at 60% each", Grove, 1, GrovePct, 60), "grove"),
+			teaches(rank(30, "Grove", "Rejuvenation on a whole formation row at 100% each", Grove, 1, GrovePct, 100), "grove"),
 			rank(35, "Nature's patience", "after-battle patching costs 20% less mana", PatchCost, 20),
-			rank(40, "Deep grove", "Grove at 80%", GrovePct, 80),
+			rank(40, "Deep grove", "Grove at 130%", GrovePct, 130),
 			teaches(rank(45, "Entangle", "one foe is hobbled for 2 rounds; chant 1, cost 10", Entangle, 1), "entangle"),
 			rank(50, "Wide bark", "Barkskin covers a whole row", BarkRow, 1),
 			rank(55, "Wild growth", "Rejuvenation also cures poison", WildGrowth, 1),

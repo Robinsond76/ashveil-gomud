@@ -70,12 +70,19 @@ type companyStrategy struct {
 }
 
 type companyMember struct {
-	Key       string       `json:"key"`
-	ID        int          `json:"id"`
-	Name      string       `json:"name"`
-	Status    string       `json:"status"`
-	Level     int          `json:"level"`
-	Archetype *string      `json:"archetype"`
+	Key       string  `json:"key"`
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	Status    string  `json:"status"`
+	Level     int     `json:"level"`
+	Archetype *string `json:"archetype"`
+	// Class is its advanced or elite class name, Tier "advanced" or
+	// "elite", Rank the highest rank level reached, and Promotion "ready"
+	// or "waiting-gate" (Phase 38c1); each omitted when empty.
+	Class     string       `json:"class,omitempty"`
+	Tier      string       `json:"tier,omitempty"`
+	Rank      int          `json:"rank,omitempty"`
+	Promotion string       `json:"promotion,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -203,6 +210,7 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	if !m.Leader || m.ArchetypeKnown {
 		out.Archetype = strPtr(m.Archetype)
 	}
+	out.Class, out.Tier, out.Rank, out.Promotion = m.ClassName, m.ClassTier, m.ClassRank, m.Promotion
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
 	}

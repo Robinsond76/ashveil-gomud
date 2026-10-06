@@ -105,6 +105,7 @@ type ClassAura struct {
 	Evasion int
 	Resolve int
 	Block   int // block chance points (a Knight guarding a ward)
+	Attack  int // Attack points (a Warlord's Battle Cry)
 }
 
 // ClassRT is a character's class state for the battle it is in: nothing in
@@ -125,6 +126,14 @@ type ClassRT struct {
 	Summoned      bool        // this character has called its summon this battle
 	Summon        *SummonInfo // set on a summoned creature
 	Bless         int         // rounds of Bless left
+
+	// Phase 38c1, the Warlord and elite talents.
+	Mark      int    // on a foe: the Attack every ally has against it (Marked for Ruin)
+	MarkRound uint64 // the combat round it was marked in
+	Tackled   []int  // foes this Warlord knocked down that have yet to stand (Relentless)
+	CmdUsed   bool   // Warlord's Command has been spent this battle
+	Standing  int    // company members standing at the last pass (Warlord's Command)
+	WindUsed  bool   // Second Wind has been spent this battle
 }
 
 // RTState is the character's class battle state, made on first use.

@@ -43,6 +43,8 @@ help:
       - talents
       - cleric-routes
       - warrior-routes
+      - elite
+      - warlord
       - summoning
     company:
       - company
@@ -286,10 +288,12 @@ help-aliases:
   standing:         [reputation, blackmarket, black-market]
   tutorial:         [replay]
   archetype:        [archetypes]
-  classes:          [class, advanced-class, elite-class, class-paths, routes, route]
+  classes:          [class, advanced-class, class-paths, routes, route]
   promotion:        [promote, promotions, class-promotion, promoting]
   talents:          [talent, talent-pick, talent-list]
   cleric-routes:    [priest, druid, blood-priest, blood priest, elder-druid, elder druid, siphon, rejuvenation, barkskin, grove, greater-heal]
+  elite:            [elites, elite-class, elite-classes, elite-promotion, second-promotion]
+  warlord:          [warlords, marked-for-ruin, battle-cry, sunder, relentless]
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   witch:            [witches, hedge-witch, hexcraft]

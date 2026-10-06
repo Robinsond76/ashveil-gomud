@@ -283,6 +283,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level, u.Character.ArchetypeID())
 		class, _ := u.Character.ClassState()
 		levelUpEvent.ClassMilestone = classes.Milestone(class, u.Character.Level)
+		levelUpEvent.ClassNotes = classes.LevelNotes(u.Character.ArchetypeID(), class, levelUpEvent.NewLevel-levelUpEvent.LevelsGained, levelUpEvent.NewLevel, int(u.Character.Alignment), "", "")
 		levelUpEvent.TrainingPoints = u.Character.TrainingPoints - tpBefore
 		levelUpEvent.StatPoints = u.Character.StatPoints - spBefore
 		for _, grant := range levelGrants {

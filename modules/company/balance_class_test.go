@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// Phase 38b: the faith routes in the even mirror. Opt-in (ASHVEIL_BALANCE=1);
+// Phase 38b (38c1 adds the Warlord and Elder Druid cells): the faith routes in the even mirror. Opt-in (ASHVEIL_BALANCE=1);
 // it reports and asserts nothing. ASHVEIL_BALANCE_FIGHTS sets the fights per
 // cell and ASHVEIL_BALANCE_ONLY limits the run to cells whose label contains
 // it. The numbers recorded in docs/PROJECT_STATUS.md came from this run.
@@ -43,14 +43,14 @@ func TestPhase38bClassRoutes(t *testing.T) {
 	for _, level := range []int{15, 25, 35, 45} {
 		routes := []string{"", "mercenary", "knight", "blackguard"}
 		if level >= 30 {
-			routes = []string{"", "mercenary", "paladin", "dread-knight"}
+			routes = []string{"", "mercenary", "paladin", "warlord", "dread-knight"}
 		}
 		for _, class := range routes {
 			cells = append(cells, cell{"healer", level, 1, class, false})
 		}
 	}
 	for _, level := range []int{35, 45} {
-		for _, class := range []string{"", "priest", "hierarch", "blood-priest", "demonologist"} {
+		for _, class := range []string{"", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist"} {
 			cells = append(cells, cell{"summon", level, 2, class, true})
 		}
 	}

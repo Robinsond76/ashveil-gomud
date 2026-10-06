@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/death"
@@ -36,8 +37,15 @@ type Member struct {
 	// when no provider can say (the leader only).
 	Archetype      string
 	ArchetypeKnown bool
-	HasHP          bool
-	HP, HPMax      int
+	// Class is the advanced or elite class id ("" before promotion),
+	// ClassName its name and ClassTier "advanced" or "elite"; ClassRank is
+	// the highest rank level reached (0 before any), and Promotion is
+	// "ready", "waiting-gate" or "" (Phase 38c1).
+	Class, ClassName, ClassTier string
+	ClassRank                   int
+	Promotion                   string
+	HasHP                       bool
+	HP, HPMax                   int
 	// HPLimit is the wound limit (Phase 30b): HPMax when unwounded.
 	HPLimit int
 	// HasMP is false when the member has no mana to show: none at all, or
@@ -65,6 +73,13 @@ type Member struct {
 	// points it has left to spend on them (Phase 35c).
 	Skills         map[string]int
 	TrainingPoints int
+}
+
+// SetClass fills a member's class fields from its lineage, class, level and
+// alignment: all of them derived, none saved.
+func (m *Member) SetClass(lineage, classID string, level, alignment int) {
+	info := classes.Describe(lineage, classID, level, alignment)
+	m.Class, m.ClassName, m.ClassTier, m.ClassRank, m.Promotion = info.ID, info.Name, info.Tier, info.Rank, info.Promotion
 }
 
 // Summary is a player and their company, as every surface shows them.
@@ -217,6 +232,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {
 			s.Leader.Archetype = src.archetypeName(id)
+			s.Leader.SetClass(id, classes.PlayerClass(uid).Class, c.Level, int(c.Alignment))
 		}
 	}
 
@@ -237,6 +253,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
+			m.SetClass(v.Archetype, v.Class, v.Level, v.Alignment)
 			m.Strategy = src.strategy(uid, m.Key)
 			m.Abilities = strategy.CompanionAbilities(v.Archetype)
 			switch v.Status {

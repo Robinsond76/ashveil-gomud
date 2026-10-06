@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">warlord</ansi>
+
+The Warlord is the elite class of the Mercenary (neutral warrior route). It
+asks no alignment at level 30. A Warlord turns Tackle into the company's
+opening: the foe it knocks down is marked, softened and chased.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Marked for Ruin    a foe the Warlord tackles is marked for 2 rounds;
+                        every ally has +5 Attack against it
+  35 Battle Cry         for the first 2 rounds of a battle every ally has +3
+                        Attack (a standing Warlord)
+  40 Quicker tackle     Tackle is ready a round sooner
+  45 Sunder             a landed Tackle also breaks the foe's armor for 2 rounds
+  50 Ruinous mark       the mark gives +10 Attack
+  55 Relentless         when a foe it knocked down climbs back up, the Warlord's
+                        action meter gains 25 points
+  60 Warlord's Command  once a battle, when an ally falls, every standing ally's
+                        action meter gains 25 points
+
+Meter points speed up a turn; they never grant an extra one. Marks, cries and
+meter points last only for the battle and are never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Warrior elite talents (levels 35, 45, 55): Iron Hide (+5 Armor), Second Wind
+(once a battle, below a quarter of its health at the start of its turn, it
+heals a tenth of its maximum), Veteran's Edge (+3 Attack). Every elite warrior
+may take them. See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help abilities</ansi>.

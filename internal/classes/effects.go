@@ -39,6 +39,14 @@ const (
 	TackleHold = "tacklehold" // rounds Tackle's knockdown lasts beyond its own
 	TackleExpo = "tacklexpo"  // a tackled foe is also left exposed
 
+	// The Warlord's pressure on the chosen target (Phase 38c1).
+	MarkRuin   = "markruin"   // a foe its Tackle lands on is marked for 2 rounds: allies have this much Attack against it
+	BattleCry  = "battlecry"  // every ally has this much Attack for the battle's first 2 rounds
+	Sunder     = "sunder"     // a Tackle also breaks the target's armor for 2 rounds
+	Relentless = "relentless" // action meter points gained when a foe it knocked down stands up
+	WarCommand = "warcommand" // once a battle, when an ally falls, every standing ally's meter gains this much
+	SecondWind = "secondwind" // once a battle, below 25% health at the start of its turn, heals this percent of maximum health
+
 	// Conditional blows and auras.
 	Ambush     = "ambush"     // Opening Strike opens any foe in the battle's first N rounds
 	Riposte    = "riposte"    // a parried blow is answered at once (1: Opening Strike size, 2: half again)

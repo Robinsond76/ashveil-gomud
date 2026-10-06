@@ -90,6 +90,13 @@ func Check(lineageID, current, target string, level, alignment int) (Class, erro
 		}
 		return c, nil
 	}
+	// Phase 38c1: a base character at the elite level takes its advanced
+	// class first and may take the elite one in the same visit.
+	if normalize(current) == "" && c.Tier == TierElite && c.Lineage == normalize(lineageID) {
+		if parent, ok := Get(c.Parent); ok {
+			return Class{}, fmt.Errorf("%w: a %s continues from a %s; take the %s first (class promote %s), then the %s in the same visit", ErrNotAvailable, c.Name, parent.Name, parent.Name, parent.ID, c.Name)
+		}
+	}
 	if normalize(current) != "" {
 		return Class{}, fmt.Errorf("%w: a %s doesn't continue as a %s (routes are final)", ErrNotAvailable, nameOr(current), c.Name)
 	}
@@ -135,4 +142,141 @@ func Milestone(current string, level int) string {
 		return ""
 	}
 	return fmt.Sprintf("Next: %s at level %d.", strings.Join(at[next], " and "), next)
+}
+
+// PromotionState is what a character can do about its next promotion, for
+// the roster, the web panel and GMCP: "ready" when it may promote now,
+// "waiting-gate" when it has the level but not the alignment (an elite
+// route keeps its advanced ranks and waits), "" otherwise.
+func PromotionState(lineageID, current string, level, alignment int) string {
+	for _, o := range Options(lineageID, current, level, alignment) {
+		if o.Eligible {
+			return "ready"
+		}
+	}
+	for _, o := range Options(lineageID, current, level, alignment) {
+		if o.Waiting {
+			return "waiting-gate"
+		}
+	}
+	return ""
+}
+
+// RankLevel is the highest rank level a character of a class has reached
+// at its level (0 before any): the "rank" a surface shows.
+func RankLevel(classID string, level int) int {
+	n := 0
+	for _, r := range RanksReached(classID, level) {
+		n = max(n, r.Level)
+	}
+	return n
+}
+
+// ReadinessNote is the level-up line about an elite promotion a character
+// at the elite level can take or is waiting on (Phase 38c1); "" when it has
+// no elite step open to it. who is the subject's selector for the command
+// ("" for the player, "#2" for a companion); noun is "You" or the name.
+func ReadinessNote(lineageID, current string, level, alignment int, who, name string) string {
+	cur, ok := Get(current)
+	if !ok || cur.Tier != TierAdvanced {
+		return ""
+	}
+	for _, o := range Options(lineageID, current, level, alignment) {
+		switch {
+		case o.Eligible:
+			cmd := "class promote"
+			if who != "" {
+				cmd += " " + who
+			}
+			where := "Visit a camp or town and type " + cmd + "."
+			return fmt.Sprintf("Elite promotion ready: %s -> %s. %s", cur.Name, o.Class.Name, where)
+		case o.Waiting:
+			gate := o.Class.Gate
+			if p, ok := Get(o.Class.Parent); ok {
+				gate = p.Gate
+			}
+			own, keeps := "yours", "You keep your"
+			if name != "" {
+				own, keeps = "theirs", name+" keeps their"
+			}
+			return fmt.Sprintf("%s needs %s (%s: %+d). %s %s ranks and can promote once it rises.", o.Class.Name, gateShort(gate), own, alignment, keeps, cur.Name)
+		}
+	}
+	return ""
+}
+
+// gateShort is a gate as the level-up line says it ("alignment +30").
+func gateShort(g Gate) string {
+	switch g {
+	case GateGood:
+		return fmt.Sprintf("alignment +%d", GateAlignment)
+	case GateEvil:
+		return fmt.Sprintf("alignment -%d", GateAlignment)
+	}
+	return "any alignment"
+}
+
+// RankUpLines are the lines a level-up adds for each rank of a class
+// reached by climbing from one level to another: "Rank 45 Nightblade:
+// Shadowstep. ..." (Phase 38c1). A character with no class gets none.
+func RankUpLines(classID string, from, to int) []string {
+	c, ok := Get(classID)
+	if !ok {
+		return nil
+	}
+	var out []string
+	for _, r := range RanksReached(classID, to) {
+		if r.Level > from {
+			out = append(out, fmt.Sprintf("Rank %d %s: %s. %s", r.Level, c.Name, r.Name, sentence(r.Text)))
+		}
+	}
+	return out
+}
+
+func sentence(s string) string {
+	if s == "" {
+		return s
+	}
+	s = strings.ToUpper(s[:1]) + s[1:]
+	if !strings.HasSuffix(s, ".") {
+		s += "."
+	}
+	return s
+}
+
+// LevelNotes are the class lines a level-up report adds (Phase 38c1): the
+// rank each level climbed past earned, then, from the elite level on, the
+// elite promotion the character can take or is waiting on. who and name
+// are the subject's selector and name for a companion ("" for the player).
+func LevelNotes(lineageID, current string, from, to, alignment int, who, name string) []string {
+	out := RankUpLines(current, from, to)
+	if to >= EliteLevel {
+		if note := ReadinessNote(lineageID, current, to, alignment, who, name); note != "" {
+			out = append(out, note)
+		}
+	}
+	return out
+}
+
+// Info is a character's class as a surface shows it (the web panels, GMCP):
+// derived from its lineage, class, level and alignment, never saved.
+type Info struct {
+	ID, Name string
+	Tier     string // "advanced", "elite" or ""
+	Rank     int    // the highest rank level reached, 0 before any
+	// Promotion is "ready", "waiting-gate" or "".
+	Promotion string
+}
+
+// Describe is the Info of a character.
+func Describe(lineageID, classID string, level, alignment int) Info {
+	info := Info{Promotion: PromotionState(lineageID, classID, level, alignment)}
+	if c, ok := Get(classID); ok {
+		info.ID, info.Name, info.Tier = c.ID, c.Name, "advanced"
+		if c.Tier == TierElite {
+			info.Tier = "elite"
+		}
+		info.Rank = RankLevel(c.ID, level)
+	}
+	return info
 }

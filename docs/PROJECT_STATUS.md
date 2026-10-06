@@ -1,5 +1,62 @@
 # Ashveil Project Status
 
+**Phase 38c1 built: elite framework, UI and the warrior and cleric elites (2026-10-06):**
+The promotion framework 38b shipped (level 30, gate wait, catch-up ranks) now
+has its rules and UI for all eighteen elites; 38c2 and 38c3 only add routes.
+Task 0 reconcile: Paladin, Dread Knight, Hierarch, Elder Druid and Demonologist
+matched the faith routes design as shipped; the Warlord (Mercenary elite) was
+the only elite left to build. Built:
+
+- **Warlord** (30 Marked for Ruin, 35 Battle Cry, 40 Quicker tackle, 45 Sunder,
+  50 Ruinous mark, 55 Relentless, 60 Warlord's Command) through real combat
+  hooks (`internal/hooks/combat_warlord.go`): marks and cries feed
+  `attackRating`, Relentless and the Command add action-meter points (never an
+  extra turn); all runtime only.
+- **Elite talents** at 35/45/55: `classes.EliteTalentsFor`, offered only to an
+  elite class (warrior: Iron Hide, Second Wind, Veteran's Edge; cleric: Font of
+  Grace, Radiant Healing, Unshaken). `CanPick` and `MenuFor` now take the
+  level; the base lists are unchanged. 38c2/38c3 add rogue, ranger, wizard and
+  witch lists with `offerElite`.
+- **Rules/UI:** a clear refusal for base to elite ("take the Priest first, then
+  the Hierarch in the same visit"); `classes.Describe`/`PromotionState`
+  feed the company roster, the class preview (design format), `class`, level-up
+  and companion level-up lines (`LevelNotes`), GMCP (`Company` members and
+  `Char.Info` gain class, tier, rank, promotion), and the web company and
+  character windows. The milestone schedule now lists the shipped elite ranks
+  (`eliteShipped`; 38c2/38c3 flip theirs).
+- **Help:** `help elite` and `help warlord`, updated promotion, classes,
+  talents, warrior-routes, cleric-routes, alignment, warrior and combat pages,
+  keywords and aliases, a tutorial hint (Departure lesson).
+
+Decisions: (1) the Warlord's mark and Battle Cry add Attack (not damage) so
+they stack with every role; (2) Relentless and the Command push meter points,
+because a free turn would break tempo; (3) elite talents come from a second
+list rather than replacing the lineage's five, so a level 35 pick is never a
+trap; (4) a Grove is cast on three hurt allies, not two, and Grove is now 100%
+and 130% (from 60% and 80%): the 3-round chant with the old numbers lost to
+plain Rejuvenation in the boss mirror. Design text for those numbers is
+superseded.
+
+Balance (`TestPhase38bClassRoutes`, 30 fights a cell, 60 for the druid line;
+wins / company HP lost): fighting healers vs Mercenary: L35 Warlord 80% / 49%
+vs Mercenary 63% / 70%; L45 86% / 46% vs 66% / 58% (+17 and +20 wins);
+Paladin 90/96% and Dread Knight 76/93% stay in the same band (the Paladin
+and Dread Knight are within 5 points at L45). Summoners (boss mirror): Hierarch
+100% vs Priest 53/46%; Demonologist 80/73% vs Blood Priest 43/46%. Missed:
+the Elder Druid did not beat the Druid (27% vs 33% at L35 after tuning, 20% vs
+33% at L45 on the old Grove). Its healing is not what a boss mirror rewards,
+and Entangle is not used by the company strategy. Left as a follow-up
+(candidate phase "Elder Druid tuning": let the strategy cast Entangle, then
+re-measure; a healer elite's gain may belong in a heal-load cell rather than
+a boss one).
+
+Follow-ups for 38c2/38c3: elite talent lists for the other four lineages,
+`eliteShipped` and GMCP `promotion` checks per route, route help pages.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`; the Chromium dock-windows check passes (its pre-existing
+battle-canvas hover timeout is unrelated). Independent review: Opus review
+thread.
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
@@ -772,7 +829,7 @@ their dependencies and those decisions is the
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
-| 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
+| 38c1 | Built (PR open). Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
 | 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |
 | 38c3 | Wizard and witch elites (Archon, Archmage, Necromancer with its thrall, Wise One, Coven Mother, Crone of Ash) | Elite routes design | 38c1 |
 | 38d | Expanded class catalogue bundles, Sorcerer first | Expanded catalogue | 38c1 |

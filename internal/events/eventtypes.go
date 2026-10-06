@@ -342,10 +342,13 @@ type LevelUp struct {
 	StatsBefore, StatsAfter stats.Statistics
 	NextMilestone           milestones.Milestone
 	ClassMilestone          string // Phase 38b: the class's next promotion, talent or rank
-	StatsDelta              stats.Statistics
-	TrainingPoints          int
-	StatPoints              int
-	LivesGained             int
+	// ClassNotes are Phase 38c1's lines: each rank earned, and an elite
+	// promotion ready or waiting on its gate.
+	ClassNotes     []string
+	StatsDelta     stats.Statistics
+	TrainingPoints int
+	StatPoints     int
+	LivesGained    int
 }
 
 func (l LevelUp) Type() string { return `LevelUp` }

@@ -349,8 +349,10 @@ type MemberView struct {
 	Level     int
 	Archetype string
 	// Class is its Phase 38b advanced or elite class id; blank before
-	// promotion.
-	Class string
+	// promotion. Alignment is its engine alignment (-100..100), which a
+	// promotion gate reads (Phase 38c1).
+	Class     string
+	Alignment int
 	// ExpInto and ExpTNL are the experience into the level and the span to
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int
