@@ -1,6 +1,6 @@
 # Ashveil Project Status
 
-**Phase 44b complete, in review (2026-10-06): world smoke playtest.** `make
+**Phase 44b complete (2026-10-06): world smoke playtest.** `make
 smoke-world` (`live_smoke_world_test.go`) plays a Warrior that skipped the
 tutorial through the world on a real server: recruiting at the Waymark Inn,
 the Old Kings Road journey (the fallen tree and `travel resume`), a random
@@ -43,6 +43,23 @@ Merging master (39b's Samurai) renumbered the creation menus and broke both
 smoke runs; they now answer the race and archetype prompts by name.
 Verification: `make generate`, `make validate`, `go test -race ./...`, `make
 js-lint`, `make js-test`, `make smoke`, `make smoke-world` (all pass on the merged tree).
+
+**Phase 44b reviewed and merged via [PR #55](https://github.com/Robinsond76/ashveil-gomud/pull/55) (2026-10-06, Opus review thread):**
+checked the deadlock fix: the travel timer already completes on the event
+loop, so queuing `journeyArrived` only moves the encounter roll past the
+expedition lock; the encounter roll re-checks that the leader is still in the
+arrival room, so a late arrival can't spring on someone who moved or logged
+off. The smoke's world bending (start room, fixture encounter table, unarmed
+brigands, admin role) only writes the test's temp copy and its overrides file.
+`AimedAtMob` reads the mob map on the game loop like every other caller; the
+`company status` refresh is the save path's own snapshot. No fixes needed.
+Decisions: (1) the city-weather gap stays a follow-up, not a quick table,
+because a city table would change journey weather (a Dunmar departure now
+takes the forest's weather from its destination); (2) the firewood-at-camp
+and Dunmar merchant/smith gaps go to world building 41, which places camps
+and shops; (3) a camp rest stays out of the world run (the tutorial run covers
+it). UI: the fixes are themselves the player-visible changes (HP, roster level,
+plural, battle refusals); no help change needed.
 
 **Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
 a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
