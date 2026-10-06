@@ -24,7 +24,7 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	args := util.SplitButRespectQuotes(rest)
 
-	if len(args) == 0 {
+	if isHelpIndexRequest(args) {
 
 		type helpCommand struct {
 			Command string
@@ -215,4 +215,10 @@ func resolveHelpTopic(input string) string {
 	helpName := util.SplitButRespectQuotes(input)[0]
 	helpName = regexp.MustCompile(`[^a-zA-Z0-9\\-]+`).ReplaceAllString(helpName, ``)
 	return keywords.TryHelpAlias(helpName)
+}
+
+// isHelpIndexRequest reports whether `help` should list its index: bare, or
+// asked about itself. `help help` once answered "No help found" (Phase 44).
+func isHelpIndexRequest(args []string) bool {
+	return len(args) == 0 || (len(args) == 1 && strings.EqualFold(args[0], "help"))
 }

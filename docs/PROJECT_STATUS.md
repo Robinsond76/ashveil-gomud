@@ -57,6 +57,136 @@ Verification: `make generate`, `make validate`, `go test -race ./...`,
 battle-canvas hover timeout is unrelated). Independent review: Opus review
 thread.
 
+**Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
+drops a state change (a collapse applies every unfired op in order) and
+catches up after a round of backlog, that reduced motion drops lunges,
+travel, tints and shake, and that an unseen foe stays unseen. Accepted and
+fixed: (1) **the title showed the server's round counter** ("round 48213"),
+since the feed's `round` is global; `Company.Battle.Event` now also sends
+`fight_round` (from 1, from the fight's start round or, for a fight-end, its
+summary) and the screen shows that (Go wiring test and gmcp unit test
+assert it). (2) **The outcome and the victory pose came before the last
+blow** while animation was behind: the fight's end now waits for every unit,
+and the outcome (with its reason, read while the last snapshot stands) shows
+when it plays; the empty snapshot that follows no longer shows "The battle is
+over" first or closes the screen early. A fight-start in the same batch as
+deaths no longer clears their hold. (3) **Spells were named by id** ("Ysolde's
+mm strikes"): the feed carries `spell_name` and the last-blow line and chant
+mark use it; an unseen caster's spell is neither named in the line nor
+coloured in its glow. (4) The help page no longer promises the picture never
+falls behind (it skips ahead after a round) and says the outcome follows the
+last blow. Tests: Node planner tests for the end-wait and hidden spells,
+browser checks for the outcome order, spell names and fight rounds (the
+harness now sends a server-sized `round`). Rejected: none. UI check: at each
+setting a player can follow who did what (last-blow line, digits, icons) and
+why the fight ended; `off` keeps the 40f picture. **Follow-ups:** 40g2
+allied formations (an allied relay in the 40e feed plus a third formation on
+the canvas; not small, so not folded in); a `pace` field on `Company.Battle`
+to replace pace inference; morale not drawn; role letters blurry; a `?`
+presence can overlap a visible foe. Gates: one full race run failed once in
+`modules/company` (its output was not kept); three package reruns and a
+second full race run passed, so it is likely one of the known company
+flakes, unidentified.
+
+**Phase 40g built: battle animation and effects (2026-10-06, PR #40):**
+the battle screen now plays each 40e event. A pure planner,
+`static/js/battle-timeline.js`, turns an event batch into steps (lunge,
+strike, shoot, chant, hurt, block, parry, dodge, windup, guard, tackle,
+yield, flee, fall, victory) with hit effects, projectiles, glows, digits and
+feedback icons, and a `Scheduler` queues them per unit (units overlap, one
+unit's actions do not), fires state changes when their step starts or ends,
+and when more than a round of work is queued collapses the older steps to
+their end state. `window-battle.js` plays them (S4 sheets at
+`battle/units/<key>/<pose>.png` and `battle/effects/...` when the manifest
+lists them; otherwise the idle figure nudges and effects are drawn in code).
+New on screen: the round in the title, a "last blow" line ("Wren hits the
+second wolf (6)"), a named outcome reason ("Victory: no foe is left
+standing"), a zone backdrop lookup (`battle/backgrounds/zone-<slug>.png` by
+`Room.Info.area`), and an **Animation** menu (`full`, `reduced`, `off`;
+`ashveil-battle-animations` in `localStorage`; default reduced when the
+system asks for reduced motion). `off` is the 40f path unchanged. Tests:
+`scripts/js/battle-timeline.test.mjs` (Node, new `make js-test`, run by
+`make test` and CI) and the animated section of
+`scripts/browser/battle-check.mjs`; screenshot `screens/40g-battle.png`.
+`help battlescreen` gained the Animation section. Decisions (delegated):
+(1) **Pace is inferred, not sent:** the feed carries no pace, so the client
+reads it from how batches arrive (whole-round batches mean pacing off, else
+the gap between batches: under 0.9 s fast, over 2.5 s slow); the budgets are
+the design's 1.2 s action and 0.6 s reaction, half for fast, 1.5x for slow,
+0.3 s for off. A `pace` field on `Company.Battle` would make this exact
+(follow-up, small). (2) **S4 art is not drawn** (40s4 is not on master), so
+every pose uses its fallback and effects are code-drawn; art lands with no
+code change. (3) **Allied reserve formations stay deferred:** they still
+need an allied relay in the 40e feed (a Go change to combat events, out of
+scope for a client polish phase). (4) **Crit digits are large, not
+"12!"** (the narration style has no exclamation marks) in animated modes;
+`off` keeps the 40f text. (5) A fall or exit waits for its animation: a
+`Company.Battle` snapshot arriving mid-fall does not lay the unit down or
+drop it early (`holding`). (6) The outcome hold waits up to 6 s more for the
+last animations. (7) Sound stays out of scope, per the roadmap. (8) **Review follow-ups folded in:** bars, role
+letters and statuses now draw in a second pass over every figure, so a large
+unit in front no longer hides the health of those behind it; a hit tints the
+figure's own shape for art units (a box for code figures). The flaky
+`TestSpellEventsThroughTheRealRound` ("mm never went off") is hardened:
+Aria did not own Minor Heal or Magic Missile, so each try rolled a success
+chance beside the bandits' interrupts and 60 misses in a row could happen;
+she now learns both (an owned spell never fizzles in battle, 35b) and has
+100 tries. Probable cause, not reproduced alone (25 and 15 clean runs
+before and after). Still open: morale (nerve) is not drawn; role letters
+are still blurry at the canvas font size; a `?` presence can overlap a
+visible foe.
+
+**Phase 44 complete: live smoke playtest (2026-10-06):** `make smoke` builds
+the server, copies the shipped world and plays a new Warrior over telnet
+through the whole tutorial (a real camp rest and a real battle), the `help`
+index, copyover, a second player (a Witch) in the same room, and a restart
+and relogin; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is
+env-gated (a few minutes of real time) and meant to be re-run at the end of
+each lane. First run found, and this phase fixed with regression tests:
+the tutorial's straw soldiers hit for the flat damage floor (a 0d0 body with
+no weapon now deals nothing; they had killed the whole company, against
+"cannot hurt anyone"), `status`/`who`/GMCP called every warrior a "scrub
+paladin" (now the archetype name), every login printed "inbox not
+recognized" and "mudletmap not recognized", a won fight ended with "Your
+target can't be found.", `help help` and `help bid|store|unstore` found nothing (the
+index listed a command that does not exist). Not fixed, noted: a line typed
+within one turn (50 ms) of the last is silently dropped, so a scripted
+client must pace itself; the tutorial hand-off drops input typed during it;
+the gate hand-off prints "looks a little confused (gate )" for each
+companion; "The battle is under way" is still said for a moment after a
+fight's summary; the `weather` command says "You can't tell what the weather
+is like here" in the open Weather Yard. Not covered (proposed 44b): a fight
+against a world mob with loot, travel on the Old Kings Road, and Dunmar's
+inn (the gate lands in Frostfang; the one shipped travel route starts in
+Dunmar, and no step of this run reached it), all needing 37's encounters.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`, `make smoke`. One flake seen: `TestAttackOnAWaitingGroupIsRefused`
+(modules/company) failed once in the full race run (its battle was already
+over after one round) and passed on a rerun of the package; it is random,
+not from this phase.
+Review (2026-10-06, Opus review thread): accepted the five live fixes as
+root-cause fixes (only races 19 dummy and 20 orb are 0d0, so no fighting
+mob lost its blows; `ClassTitle` falls back to the profession title with no
+archetype). Fixed in review, each with a regression test: a line typed
+within a turn of the last now waits out the turn instead of being dropped
+(telnet, websocket and restored connections; `waitForTurn`); companions no
+longer print "looks a little confused (gate )" when the graduation has
+already moved them beside their leader (`companionAlreadyWithLeader`; the
+smoke run now fails on that line); `TestAttackOnAWaitingGroupIsRefused` is
+deterministic (the bandits outlast the first round). Import grouping tidied.
+Rejected or left as follow-ups: "The battle is under way" for a moment after
+a summary (clearing the aim at victory did not change the brawl harness, so
+the live cause is elsewhere; `doAfterBattle` covers the smoke run); `weather`
+in the Weather Yard (only the forest biome has a weather table, so the
+tutorial and Frostfang show none: a content gap, not a code bug); input
+typed during the tutorial hand-off. A package run before the fixes showed
+the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` flake (37b).
+Verification after review: `make generate`, `make validate`, `make
+js-lint`, `go test -race ./...` (pass), `make smoke`. Merging master then
+found 37b's goblin shaman and 38b's summoned Angel both used mob id 95
+(every world load panicked); the shaman is now mob 97, its dark forest
+encounter updated, since the Angel's id is a code constant (40a2's review made the same fix).
+
 **Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
 firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
 and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
@@ -903,7 +1033,7 @@ their dependencies and those decisions is the
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
-| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
+| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
