@@ -837,6 +837,8 @@
         retreatBtn.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
         retreatBtn.addEventListener('click', () => Client.SendInput('retreat'));
         foot.appendChild(retreatBtn);
+        // A finger can't hover for the buttons' titles, so name the row.
+        foot.appendChild(el('span', 'bs-focus-label', 'Focus:'));
         FOCI.forEach(rule => {
             const b = el('button', null, rule);
             b.type = 'button';
@@ -866,7 +868,12 @@
         const help = el('button', null, 'Help');
         help.type = 'button';
         help.title = 'How to read the battle screen (help battlescreen)';
-        help.addEventListener('click', () => Client.SendInput('help battlescreen'));
+        help.addEventListener('click', () => {
+            Client.SendInput('help battlescreen');
+            // Phase 40i: on a phone the help text lands in the Game view behind
+            // this screen, so step aside to it; the badge brings the battle back.
+            if (window.Mobile && window.Mobile.active()) { close(); window.Mobile.show('game'); }
+        });
         foot.appendChild(help);
         overlay.appendChild(foot);
         document.body.appendChild(overlay);

@@ -140,6 +140,10 @@ const small = await page.evaluate(() => [...document.querySelectorAll('#mobile-n
   .map(b => b.textContent || b.id));
 check(small.length === 0, 'every touch control is at least 44 px: ' + small.join());
 check(await overflow() <= 0, 'the page never scrolls sideways');
+const hidden = await page.evaluate(() => [...document.querySelectorAll('#touch-bar button')]
+  .filter(b => !b.hidden).filter(b => { const r = b.getBoundingClientRect(); return r.left < 0 || r.right > window.innerWidth; })
+  .map(b => b.textContent));
+check(hidden.length === 0, 'every touch bar button is in sight without scrolling the bar: ' + hidden.join());
 const barBox = await box('#touch-bar'), navBox = await box('#mobile-nav'), inBox = await box('#input-area');
 check(inBox.y + inBox.height <= barBox.y + barBox.height + 80 && navBox.y + navBox.height <= 780 + 1, 'the command box, touch bar and view bar sit at the bottom of the screen');
 const termBox = await box('#terminal');
@@ -152,6 +156,15 @@ await page.locator('#touch-bar button[aria-label="Go up"]').tap();
 await page.locator('#touch-bar button', { hasText: 'Look' }).tap();
 await page.locator('#touch-bar button', { hasText: 'Camp' }).tap();
 check((await sent()).join() === 'north,up,look,camp', 'the compass and quick commands send ordinary commands: ' + (await sent()).join());
+await page.evaluate(() => Mobile.show('company'));
+await page.locator('#touch-bar button', { hasText: 'Inventory' }).tap();
+check(await page.evaluate(() => Mobile.view()) === 'game', 'a command that answers in text brings the Game view to the front');
+await page.locator('#touch-bar .mb-fold').tap();
+const foldedShown = await page.evaluate(() => [...document.querySelectorAll('#touch-bar button')].filter(b => b.offsetParent).map(b => b.title));
+check(foldedShown.join() === 'Show the touch bar', 'folding the touch bar leaves only its unfold button: ' + foldedShown.join());
+await page.locator('#touch-bar .mb-fold').tap();
+check(await page.evaluate(() => document.querySelector('#touch-bar button[aria-label="Go north"]').offsetParent !== null), 'and unfolding brings the buttons back');
+await clearSent();
 await clearSent();
 
 // --- the Map view, tap-to-walk, touch pan and pinch ---
@@ -298,8 +311,15 @@ await page.locator('#battle-screen .bs-foot button', { hasText: 'weakest' }).fir
 await clearSent();
 await page.locator('#battle-screen .bs-head button', { hasText: 'Minimise' }).tap();
 const badge = await box('#battle-badge');
-check(badge && badge.y + badge.height < 780 - 100 && badge.y > 0, 'minimised, the badge sits clear of the bottom bars');
+const barTop = (await box('#touch-bar')).y;
+check(badge && badge.y + badge.height <= barTop && badge.y > 0, 'minimised, the badge sits clear of the bottom bars: ' + Math.round(badge.y + badge.height) + ' <= ' + Math.round(barTop));
 await shot('battle-badge');
+await page.locator('#battle-badge').tap();
+await page.evaluate(() => Mobile.show('map'));
+await page.locator('#battle-screen .bs-foot button', { hasText: 'Help' }).tap();
+check((await sent()).includes('help battlescreen') && await page.evaluate(() => Mobile.view() === 'game' && getComputedStyle(document.getElementById('battle-screen')).display === 'none'),
+  'Help steps aside to the Game view, where its text lands');
+check(await page.evaluate(() => document.querySelector('#battle-screen .bs-focus-label').textContent) === 'Focus:', 'the focus buttons are named on a phone, where there is no hover');
 await gmcp('Company.Battle', {});
 
 // --- the manifest and icons ---

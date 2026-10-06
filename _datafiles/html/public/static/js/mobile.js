@@ -100,26 +100,34 @@
         bar.setAttribute('role', 'toolbar');
         bar.setAttribute('aria-label', 'Touch commands');
         foldBtn = button('▾', 'Hide the touch bar', function () { fold(!bar.classList.contains('folded')); }, 'mb-btn mb-fold');
-        bar.appendChild(foldBtn);
+        // Two rows, so every control is in sight on a 360 px screen: the
+        // compass, then the walk list and the commands that answer in text.
+        var rows = el('div', 'tb-rows');
         var row = el('div', 'tb-row');
+        row.appendChild(foldBtn);
         COMPASS.forEach(function (c) {
             row.appendChild(button(c.label, c.title, function () { send(c.cmd); }, 'mb-btn mb-dir'));
         });
+        rows.appendChild(row);
+        row = el('div', 'tb-row');
         walkBtn = button('Walk to…', 'Walk to a named place (walkto)', walkMenu, 'mb-btn mb-walk');
         row.appendChild(walkBtn);
         stopBtn = button('Stop', 'Stop walking (walkto stop)', function () { send('walkto stop'); }, 'mb-btn mb-stop');
         stopBtn.hidden = true;
         row.appendChild(stopBtn);
         QUICK.forEach(function (c) {
-            row.appendChild(button(c.label, c.title, function () { send(c.cmd); }));
+            // These answer in the game text, so bring it to the front.
+            row.appendChild(button(c.label, c.title, function () { send(c.cmd); show('game'); }));
         });
-        bar.appendChild(row);
+        rows.appendChild(row);
+        bar.appendChild(rows);
 
         var input = document.getElementById('input-area');
         input.parentNode.insertBefore(bar, input);
         input.parentNode.insertBefore(nav, input.nextSibling);
 
         if (store(BAR_KEY) === 'folded') { fold(true); }
+        window.addEventListener('resize', measureBars);
         // The walk in progress (Walkto) shows a Stop button beside the list.
         VirtualWindows.register({
             gmcpHandlers: ['Walkto'],
@@ -128,12 +136,21 @@
         paintNav();
     }
 
+    // The height of the bars at the bottom (touch bar, command box, view
+    // bar), so the battle badge can sit clear of them (mobile.css).
+    function measureBars() {
+        if (!built) { return; }
+        var top = Math.min(bar.getBoundingClientRect().top, document.getElementById('input-area').getBoundingClientRect().top);
+        document.body.style.setProperty('--mobile-bars', Math.max(0, Math.round(window.innerHeight - top)) + 'px');
+    }
+
     function fold(folded) {
         bar.classList.toggle('folded', folded);
         foldBtn.textContent = folded ? '▴' : '▾';
         foldBtn.title = folded ? 'Show the touch bar' : 'Hide the touch bar';
         foldBtn.setAttribute('aria-label', foldBtn.title);
         store(BAR_KEY, folded ? 'folded' : 'open');
+        measureBars();
         window.dispatchEvent(new Event('resize'));
     }
 

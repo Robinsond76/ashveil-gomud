@@ -1906,6 +1906,12 @@
         function setupResizeObserver(win) {
             if (typeof ResizeObserver === 'undefined') { return; }
             var ro = new ResizeObserver(function () { resizeCanvas(); render(); });
+            // Phase 40i: the phone layout announces a view change with a
+            // window resize; measure then too, in case the observer missed
+            // the panel coming back into sight.
+            window.addEventListener('resize', function () {
+                if (container && container.clientWidth && canvas && (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight)) { resizeCanvas(); render(); }
+            });
             var orig = win.open.bind(win);
             win.open = function () { orig(); if (container) { ro.observe(container); } };
         }

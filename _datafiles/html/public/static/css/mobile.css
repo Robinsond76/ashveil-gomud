@@ -80,22 +80,25 @@ body.mobile #touch-bar {
     background: var(--t-bg);
     border-top: 1px solid var(--t-border-accent);
 }
+body.mobile #touch-bar .tb-rows { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
 body.mobile #touch-bar .tb-row {
     display: flex;
-    flex: 1 1 auto;
     gap: 4px;
-    padding: 4px;
+    padding: 4px 4px 0;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
-body.mobile #touch-bar.folded .tb-row { display: none; }
+body.mobile #touch-bar .tb-row:last-child { padding-bottom: 4px; }
+body.mobile #touch-bar.folded .tb-row + .tb-row,
+body.mobile #touch-bar.folded .tb-row > :not(.mb-fold) { display: none; }
+body.mobile #touch-bar.folded .tb-row { padding-bottom: 4px; }
 body.mobile #touch-bar .mb-btn {
     flex: 0 0 auto;
     min-width: 44px;
     min-height: 44px;
-    padding: 0 12px;
+    padding: 0 6px;
     font: inherit;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--t-text);
     background: var(--t-bg-surface-alt, var(--t-bg-panel));
     border: 1px solid var(--t-accent-dim);
@@ -103,11 +106,11 @@ body.mobile #touch-bar .mb-btn {
     touch-action: manipulation;
 }
 body.mobile #touch-bar .mb-btn:active { background: var(--t-accent-dim); color: var(--t-text-white); }
-body.mobile #touch-bar .mb-dir { font-weight: bold; padding: 0; }
+body.mobile #touch-bar .mb-dir { flex: 1 1 0; font-weight: bold; font-size: 15px; padding: 0; }
 body.mobile #touch-bar .mb-walk { border-color: var(--t-border-accent); }
 body.mobile #touch-bar .mb-stop { color: var(--t-text-white); background: var(--t-accent-dim); }
 body.mobile #touch-bar .mb-stop[hidden] { display: none; }
-body.mobile #touch-bar .mb-fold { min-width: 36px; padding: 0 6px; border: none; background: none; align-self: center; }
+body.mobile #touch-bar .mb-fold { min-width: 32px; padding: 0 4px; border: none; background: none; align-self: center; }
 body.mobile #touch-bar.folded { min-height: 0; }
 body.mobile #touch-bar.folded .mb-fold { margin-left: auto; }
 
@@ -169,10 +172,11 @@ body.mobile #battle-screen select {
     font-size: 14px;
 }
 body.mobile #battle-screen .bs-foot { gap: 6px; }
+body.mobile #battle-screen .bs-focus-label { flex-basis: 100%; text-align: center; }
 body.mobile #battle-screen label { min-height: 44px; display: inline-flex; align-items: center; }
 body.mobile #battle-badge {
     min-height: 44px;
-    bottom: calc(150px + env(safe-area-inset-bottom)) !important;
+    bottom: calc(var(--mobile-bars, 210px) + 8px) !important;
     right: 8px !important;
 }
 

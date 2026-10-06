@@ -26,7 +26,8 @@ an ordinary command for you (<ansi fg="command">help webclient</ansi> describes 
                  places <ansi fg="command">walkto</ansi> understands); pick one and your company
                  walks there. While a walk is under way the list starts with
                  "Stop walking" and a <ansi fg="yellow">Stop</ansi> button appears (<ansi fg="command">walkto stop</ansi>).
-  <ansi fg="yellow">Look, Inventory, Status, Camp</ansi>   type those commands.
+  <ansi fg="yellow">Look, Inventory, Status, Camp</ansi>   type those commands and switch to the
+                 Game view, where their answer appears.
   The small arrow at the left folds the bar away and brings it back.
 
 <ansi fg="yellow-bold">Battles</ansi>
@@ -36,7 +37,8 @@ an ordinary command for you (<ansi fg="command">help webclient</ansi> describes 
   allies' companies show as small pennants at the top of the picture: tap
   one to watch that company full size, and tap your own band to come back
   (<ansi fg="command">help battlescreen</ansi>). Minimise shrinks the picture to a badge above the
-  bottom bar.
+  touch bar; tap the badge to bring it back. The screen's Help button
+  minimises it and shows the help text in the Game view.
 
 <ansi fg="yellow-bold">Installing it</ansi>
 
