@@ -17,6 +17,7 @@ package gmcp
 import (
 	"encoding/json"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"sort"
 	"strconv"
 	"strings"
@@ -67,6 +68,18 @@ type battleFacts struct {
 	// whether the player's own company is faltering (its nerve is tested).
 	Allies    []allyFact
 	Faltering bool
+	// Phase 39c: the weather a Shaman has called into the battle, if any.
+	Weather *battleWeather
+}
+
+// battleWeather is a Shaman's battle weather (Phase 39c): its kind ("fog",
+// "chill", "rain"), the name the battle's lines use, the combat rounds it
+// has left, and what it does, in a few words.
+type battleWeather struct {
+	Kind   string `json:"kind"`
+	Name   string `json:"name"`
+	Rounds int    `json:"rounds"`
+	Effect string `json:"effect"`
 }
 
 // allyFact is one allied company in the battle: its leader and the members
@@ -199,6 +212,9 @@ type battlePayload struct {
 	// while steady.
 	Allies []battleAlly `json:"allies,omitempty"`
 	Nerve  string       `json:"nerve,omitempty"`
+	// Phase 39c: the battle's weather (the battle screen's banner and the
+	// Battle view's note); omitted while the sky is clear.
+	Weather *battleWeather `json:"weather,omitempty"`
 }
 
 // battleAlly is an allied company: its leader's ref ("a:<user>") and name,
@@ -242,9 +258,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -351,6 +367,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		}
 	}
 	f.Guards = gatherGuards(user, room)
+	f.Weather = weatherFact(b.Weather)
 	f.Faltering = companyFaltering(b)
 	f.Allies = gatherAllies(user, b)
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
@@ -730,4 +747,13 @@ func gatherAllies(user *users.UserRecord, b battle.Battle) []allyFact {
 		}
 	}
 	return out
+}
+
+// weatherFact is the battle's weather for the feed: nil while clear. The
+// rounds left count the round in progress (a call's last tick ends it).
+func weatherFact(w battle.Weather) *battleWeather {
+	if w.Kind == stormcraft.None || w.Left < 1 {
+		return nil
+	}
+	return &battleWeather{Kind: string(w.Kind), Name: w.Kind.Name(), Rounds: max(1, w.Left-1), Effect: w.Kind.Effect()}
 }
