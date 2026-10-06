@@ -135,3 +135,22 @@ func TestDivineShieldIgnoresTheFirstBlowOfABattleOnly(t *testing.T) {
 	paladin.EndFightRT()
 	assert.False(t, paladin.RT.ShieldUsed, "a new battle renews it")
 }
+
+// Phase 39a: a Sweep's or a held blow's share of the damage is the blow's
+// own, before armor, and clears with the blow.
+func TestBlowPctScalesAClassBlow(t *testing.T) {
+	defenseSpecs(t)
+	src := classed("sweeper", 12)
+	foe := classed("", 12)
+	assert.Equal(t, 10, classBlowDamage(src, foe, 10))
+	src.RTState().BlowPct = 80
+	assert.Equal(t, 8, classBlowDamage(src, foe, 10))
+	src.RTState().BlowPct = 125
+	assert.Equal(t, 13, classBlowDamage(src, foe, 10), "rounded: 12.5")
+	assert.Equal(t, 1, classBlowDamage(src, foe, 1), "a blow that landed still does 1")
+	assert.Zero(t, classBlowDamage(src, foe, 0), "a miss stays a miss")
+	// Unclassed characters (a companion with no class) scale too.
+	plain := classed("", 12)
+	plain.RTState().BlowPct = 80
+	assert.Equal(t, 8, classBlowDamage(plain, foe, 10))
+}
