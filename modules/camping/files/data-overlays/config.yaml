@@ -56,6 +56,7 @@ FieldSmithStrikesPerLevel: 5
 # earns no Rested tier and no camp rewards.
 CampRaids:
   - { Zone: Old Kings Road, MobId: 86, ChancePct: 15 }
+  - { Zone: Test Area Road, MobId: 86, ChancePct: 100 } # the admin test area (testarea)
 WatchPctPerLevel: 25
 # Phase 40a4 camp theft: a rest in a zone listed here, with no camp bells
 # and trip lines strung, may draw thieves (ChancePct, rolled at rest start).
@@ -65,6 +66,7 @@ WatchPctPerLevel: 25
 # keys or camp gear. A posted watch may catch them (WatchPctPerLevel).
 CampTheft:
   - { Zone: Old Kings Road, ChancePct: 20 }
+  - { Zone: Test Area Road, ChancePct: 100 } # the admin test area (testarea)
 TheftSharePct: 10
 TheftMaxItems: 4
 RaidEarliestPct: 30
@@ -82,6 +84,16 @@ Forage:
       - { ItemId: 29, Weight: 3 }    # raw game meat
       - { ItemId: 30018, Weight: 2 } # wild thyme
       - { ItemId: 30007, Weight: 1 } # mushroom
+  - Zone: Test Area
+    Items:
+      - { ItemId: 29, Weight: 3 }
+      - { ItemId: 30018, Weight: 2 }
+      - { ItemId: 30007, Weight: 1 }
+  - Zone: Test Area Road
+    Items:
+      - { ItemId: 29, Weight: 3 }
+      - { ItemId: 30018, Weight: 2 }
+      - { ItemId: 30007, Weight: 1 }
 # Camp cooking ("camp cook"): the Waymark Inn hearth's dishes, tried in
 # order; the first the cook has the ingredients and Cooking for is made.
 CampRecipes:

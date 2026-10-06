@@ -275,6 +275,7 @@ help:
       - spawn
       - spell
       - syslogs
+      - testarea
       - teleport
       - unmute
       - zap

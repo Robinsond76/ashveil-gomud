@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"strconv"
 	"strings"
@@ -228,6 +229,7 @@ func init() {
 	events.RegisterListener(events.ItemOwnership{}, m.onItemOwnership)
 	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.BattleEnded{}, m.onBattleEnded) // Phase 35b
 	module = m

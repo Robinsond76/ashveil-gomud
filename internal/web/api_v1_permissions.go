@@ -69,6 +69,7 @@ var allPermissions = []PermissionDef{
 	{Key: "teleport.direction", Category: "Commands", Description: "Teleport through walls in a direction"},
 	{Key: "teleport.playername", Category: "Commands", Description: "Teleport to a player by name"},
 	{Key: "teleport.roomid", Category: "Commands", Description: "Teleport to a specific room ID"},
+	{Key: "testarea", Category: "Commands", Description: "The admin test area: teleport in and out of a closed test zone"},
 	{Key: "telemetry", Category: "Commands", Description: "Query and clear telemetry data in-game"},
 	{Key: "visit", Category: "Commands", Description: "View room visit statistics"},
 	{Key: "zap", Category: "Commands", Description: "Zap (damage) players or mobs"},

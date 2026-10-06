@@ -1,0 +1,13 @@
+roomid: 90007
+zone: Test Area
+title: Dark Cellar
+description: >-
+  A bare stone cellar with no light of its own. Bring a torch or a lantern to see here; it is the place to test darkness and light.
+biome: dungeon
+exits:
+  up:
+    roomid: 90001
+mapx: 0
+mapy: 0
+mapz: -1
+hascoordinates: true

@@ -15,6 +15,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
 	"strconv"
@@ -262,6 +263,7 @@ func init() {
 	m.plug.AddUserCommand("strain", m.userCommand, true, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("walking: save", "error", err)
