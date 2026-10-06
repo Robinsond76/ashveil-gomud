@@ -168,6 +168,7 @@
     let userOpened = false;     // opened by hand in manual mode
     let outcomeText = '';
     let outcomeTimer = null;
+    let ended = false;          // fight-end came: this battle's last snapshots change nothing
     let hover = null;           // the unit id under the pointer
     let raf = 0;
 
@@ -234,7 +235,8 @@
             if (!m || !m.key) { return; }
             const placed = battle && battle.positions ? battle.positions[m.key] : null;
             const cell = cellOf(placed) || cellOf(m.cell);
-            if (!cell || m.status === 'awaiting') { return; }
+            // As the Combat tab: only members still in the fight stand.
+            if (!cell || m.status === 'awaiting' || m.status === 'fled' || m.status === 'separated') { return; }
             const u = unit(m.key);
             const v = data.vitals(m.key);
             u.side = 'company';
@@ -244,7 +246,7 @@
             u.cell = cell;
             u.leader = m.key === 'leader';
             u.role = (m.strategy && m.strategy.role) || '';
-            u.fallen = m.status === 'dead' || (v.hp !== null && v.hp !== undefined && v.hp <= 0 && m.status !== undefined && m.status !== 'present' && false);
+            u.fallen = m.status === 'dead';
             u.frac = (v.hp !== null && v.hp !== undefined && v.hp_max > 0) ? Math.max(0, Math.min(1, v.hp / v.hp_max)) : (u.fallen ? 0 : 1);
             u.band = '';
             seen.add(m.key);
@@ -309,6 +311,7 @@
             if (!battle) { return; }
             clearOutcome();
             floaters = [];
+            if (ended) { ended = false; showLive(); }
             break;
         case 'attack':
             if (e.outcome === 'miss') { flash(tgt, '#9aa0aa', 'miss'); }
@@ -319,6 +322,10 @@
             break;
         case 'heal':
             flash(tgt, '#5fd08a', e.amount ? '+' + e.amount : '');
+            break;
+        case 'status-tick':
+            // Bleeding and the like: a small hurt, no name for an unseen holder.
+            if (e.damage) { flash(tgt, '#c06a3a', e.damage); }
             break;
         case 'cast-start':
             // A spell cast by one the player can't make out stays unnamed.
@@ -344,7 +351,9 @@
             if (src) { units.delete(src.id); }
             break;
         case 'fight-end':
+            ended = true;
             beginOutcome(e.outcome);
+            paintBadge();
             break;
         default:
             break;
@@ -354,6 +363,8 @@
     // ---------------------------------------------------------------------
     // Outcome and open/close
     // ---------------------------------------------------------------------
+
+    const HINT = 'Hover or tap a figure for its name, health, and whom it strikes.';
 
     const OUTCOMES = { victory: 'Victory', defeat: 'Defeat', 'broken-off': 'The company breaks off' };
 
@@ -387,7 +398,7 @@
     }
 
     function open() {
-        if (!battle && !outcomeTimer) { return; }
+        if ((!battle || ended) && !outcomeTimer) { return; }
         build();
         minimised = false;
         userOpened = true;
@@ -405,7 +416,7 @@
 
     function paintBadge() {
         if (!badge) { return; }
-        const live = !!battle && !isShown();
+        const live = !!battle && !ended && !isShown();
         badge.classList.toggle('show', live);
     }
 
@@ -473,6 +484,11 @@
         label.appendChild(autoBox);
         label.appendChild(document.createTextNode(' Open automatically'));
         foot.appendChild(label);
+        const help = el('button', null, 'Help');
+        help.type = 'button';
+        help.title = 'How to read the battle screen (help battlescreen)';
+        help.addEventListener('click', () => Client.SendInput('help battlescreen'));
+        foot.appendChild(help);
         overlay.appendChild(foot);
         document.body.appendChild(overlay);
 
@@ -527,7 +543,7 @@
     function paintCaption() {
         if (!captionNode) { return; }
         const u = hover ? units.get(hover) : null;
-        if (!u) { captionNode.textContent = ''; return; }
+        if (!u) { captionNode.textContent = battle && !outcomeText ? HINT : ''; return; }
         let text = u.label;
         if (u.side === 'enemy' && u.band) { text += ', ' + u.band; }
         if (u.side === 'company' && u.fallen) { text += ', fallen'; }
@@ -694,16 +710,16 @@
                 rect(x - 9, y - 12, 18, 7, body);                 // body
                 rect(x - 9 - (dir < 0 ? 0 : 0), y - 5, 3, 5, dark); // legs
                 rect(x + 6, y - 5, 3, 5, dark);
-                rect(dir > 0 ? x - 13 : x + 7, y - 15, 6, 6, body);  // head toward the centre
-                rect(dir > 0 ? x - 12 : x + 9, y - 13, 1, 1, '#ff5a3c');
+                rect(dir > 0 ? x + 7 : x - 13, y - 15, 6, 6, body);  // head toward the centre
+                rect(dir > 0 ? x + 11 : x - 12, y - 13, 1, 1, '#ff5a3c');
             } else {
                 const w = size[0], h = size[1];
                 rect(x - w / 2, y - h * 0.3, w * 0.4, h * 0.3, dark);          // legs
                 rect(x + w * 0.1, y - h * 0.3, w * 0.4, h * 0.3, dark);
                 rect(x - w / 2, y - h * 0.75, w, h * 0.5, body);               // torso
                 rect(x - w * 0.3, y - h, w * 0.6, h * 0.25, body);             // head
-                rect(dir > 0 ? x - w * 0.3 : x + w * 0.1, y - h * 0.9, 2, 2, '#ff5a3c'); // eyes
-                rect(dir > 0 ? x - w / 2 - 3 : x + w / 2 + 2, y - h * 0.7, 1, h * 0.45, '#b0b4bc'); // a weapon
+                rect(dir > 0 ? x + w * 0.1 : x - w * 0.3, y - h * 0.9, 2, 2, '#ff5a3c'); // eyes, toward the centre
+                rect(dir > 0 ? x + w / 2 + 2 : x - w / 2 - 3, y - h * 0.7, 1, h * 0.45, '#b0b4bc'); // a weapon in the leading hand
             }
         }
         if (flashing) {
@@ -803,21 +819,19 @@
         if (next && !was) {
             // A new battle: a fresh picture, and the screen opens itself.
             clearOutcome();
+            ended = false;
             units = new Map();
             floaters = [];
             minimised = false;
             userOpened = false;
         }
-        if (next) {
-            if (outcomeTimer) { clearOutcome(); }
-            rebuild();
-            build();
-            if (!isShown() && !minimised && (currentSetting() === 'auto' || userOpened)) {
-                overlay.classList.add('open');
-                fit();
-            }
+        if (next && ended) {
+            // The fight-end event came first (it rides with the narration):
+            // a snapshot of the finished battle neither clears the outcome
+            // nor reopens a screen the hold has closed.
             paintChrome();
-            draw();
+        } else if (next) {
+            showLive();
         } else if (was) {
             // The fight is over. The outcome event normally started the
             // three-second hold; if none came, show a plain ending.
@@ -825,6 +839,20 @@
             if (!outcomeTimer) { endBattleView(); }
             paintChrome();
         }
+        paintBadge();
+    }
+
+    // showLive refreshes the picture of a battle in progress and opens it
+    // unless it was minimised or the player keeps it shut.
+    function showLive() {
+        rebuild();
+        build();
+        if (!isShown() && !minimised && (currentSetting() === 'auto' || userOpened)) {
+            overlay.classList.add('open');
+            fit();
+        }
+        paintChrome();
+        draw();
         paintBadge();
     }
 

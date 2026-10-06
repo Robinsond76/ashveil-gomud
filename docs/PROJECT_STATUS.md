@@ -33,6 +33,31 @@ tutorial-zone and Stormwatchers Keep backdrop overrides wait for S3's
 `training-yard` and `ice-keep` art; (6) the screen is a floating panel, not
 a modal, so the terminal stays usable under it.
 
+**Phase 40f reviewed and merged (2026-10-06, PR #35):** the review
+confirmed the screen sends only `retreat` and `company tactics focus
+[rule]` (both allowed mid-battle, as the Combat tab), and hides what scout
+hides (enemy health in five bands, hidden foes skipped, every `?` one
+shadow, no spell or status for it). Fixed: (1) enemy figures faced away
+from the company (head, eyes and weapon mirrored the wrong way); (2)
+members who fled or were separated still stood in the picture (now
+filtered as the Combat tab does; dead `&& false` code removed); (3) a
+`Company.Battle` snapshot arriving after `fight-end` cleared the outcome,
+and one after the hold could reopen the finished battle and show "The
+battle is over" again (an `ended` flag now holds until the battle clears or
+a `fight-start`); (4) UI: a caption hint says to hover or tap a figure, a
+Help button sends `help battlescreen`, and status ticks (bleeding) flash
+their damage. Regression checks added to `battle-check.mjs`. Rejected: the
+design's "unknown-* at 50% per enemy in the dark" was replaced by one
+shadow on purpose (the 40e rule that `?` foes are one presence). UI
+follow-ups for 40g: show the round and a short "last blow" line so who hit
+whom reads without hovering; a named outcome reason (all fell, the company
+withdrew); role letters are blurry at the canvas font size; a `?` presence
+in a lit battle stands at front centre and can overlap a visible foe, and
+stays until the battle ends; morale (nerve) is not drawn yet. Flaky test seen: `TestBalanceMirrorClericIsACasterWhoCastsNothing`
+(`modules/company`) failed once in the full race run (1 of 5 foes aimed at
+the cleric) and passed alone five times and in a package re-run; this PR
+touches no company code, so it is left as a follow-up to make robust.
+
 **Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
 `scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
 `_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,

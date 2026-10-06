@@ -141,6 +141,16 @@ await gmcp('Company.Battle', { ...battle, focus_ready: false });
 check(await page.evaluate(() => document.querySelector('#battle-screen button[data-focus="weakest"]').disabled), 'focus buttons wait while an order is pending');
 await gmcp('Company.Battle', battle);
 
+await page.evaluate(() => { window.sent.length = 0; });
+await page.click('#battle-screen button:text("Help")');
+check((await page.evaluate(() => window.sent))[0] === 'help battlescreen', 'Help opens the battle screen\'s page');
+check((await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent)).includes('Hover or tap'), 'the caption says how to read a figure');
+
+// --- A member who fled leaves the picture (review fix) ---
+await gmcp('Company', { ...company, members: company.members.map(m => (m.key === 'companion:1' ? { ...m, status: 'fled' } : m)) });
+check(!unitOf(await state(), 'companion:1'), 'a member who fled no longer stands');
+await gmcp('Company', company);
+
 // --- Minimise and the badge ---
 await page.click('#battle-screen button:text("Minimise")');
 s = await state();
@@ -157,6 +167,19 @@ s = await state();
 check(s.open && s.outcome === 'Victory', 'the outcome shows after the fight');
 await page.waitForTimeout(3300);
 check(!(await state()).open, 'the screen closes about 3 seconds later');
+
+// --- A late snapshot of the finished battle keeps the outcome (review fix) ---
+await gmcp('Company.Battle', battle);
+await events({ fight: 1, round: 10, events: [{ seq: 21, kind: 'fight-end', outcome: 'defeat' }] });
+await gmcp('Company.Battle', battle);
+s = await state();
+check(s.open && s.outcome === 'Defeat', 'a snapshot after fight-end does not clear the outcome');
+await page.waitForTimeout(3300);
+await gmcp('Company.Battle', battle);
+s = await state();
+check(!s.open && !s.badge, 'nor reopen the screen once the hold has closed it');
+await gmcp('Company.Battle', {});
+check(!(await state()).open, 'the end of the battle does not show a second outcome');
 
 // --- A new battle reopens it, in the dark ---
 await gmcp('Company.Battle', { group: 'the enemy', dark: true, enemies: [], focus: 'none', saved_focus: 'none', focus_ready: true });

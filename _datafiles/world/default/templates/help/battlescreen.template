@@ -37,7 +37,7 @@ change the company's focus.
 <ansi fg="yellow-bold">Buttons</ansi>
 
   <ansi fg="yellow">Retreat</ansi> sends <ansi fg="command">retreat</ansi>, and the focus buttons send <ansi fg="command">company tactics focus [rule]</ansi>
-  (<ansi fg="command">help tactics</ansi>), as the Combat tab's do.
+  (<ansi fg="command">help tactics</ansi>), as the Combat tab's do. <ansi fg="yellow">Help</ansi> opens this page.
 
 Screen readers: the picture is decorative. The Combat tab's Battle view
 and the story text carry everything, and are unchanged.
