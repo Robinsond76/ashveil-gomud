@@ -187,17 +187,32 @@ func (m *CampingModule) grantPendingTiers() {
 		now := m.clock().UTC()
 		duration := settings.tierDuration(tier)
 		rounds := camping.RoundsFor(duration, m.roundLength())
+		// Phase 51: a camp rest's Rested buff skips the members on a duty.
+		var onDuty map[string]bool
+		duties := m.pendingDuties(leaderUserID, tier)
+		if tier == camping.TierRested {
+			onDuty = restedExcluded(duties)
+		}
 		// Buffs are granted outside m.mu: character state belongs to the
 		// game loop, and nothing below calls back into camping.
-		granted := m.applyTier(user.Character, tier, rounds, settings)
+		granted := false
+		if !onDuty[string(survival.LeaderMemberKey)] {
+			granted = m.applyTier(user.Character, tier, rounds, settings)
+		}
 		live, roster := m.companions(leaderUserID)
 		for _, companionID := range sortedIDs(live) {
+			if onDuty[string(survival.CompanionMemberKey(companionID))] {
+				continue
+			}
 			if m.applyTier(live[companionID], tier, rounds, settings) {
 				granted = true
 			}
 		}
 		owed := map[int]camping.OwedGrant{}
 		for _, companionID := range roster {
+			if onDuty[string(survival.CompanionMemberKey(companionID))] {
+				continue
+			}
 			owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(tier), Tier: tier, ExpiresAtUTC: now.Add(duration)}
 		}
 		// A failed save retries next round, so only announce a saved grant,
@@ -276,7 +291,11 @@ func (m *CampingModule) grantPendingTiers() {
 			}
 			// Phase 39g: and refills an Alchemist's flask satchel from the
 			// leader's reagents.
-			for _, line := range brewRestFlasks(user, live) {
+			for _, line := range brewRestFlasks(user, live, m.restBrewers(user, duties)) {
+				user.SendText(line)
+			}
+			// Phase 51: and the members on a work duty do their work.
+			for _, line := range m.settleDuties(user, live, duties) {
 				user.SendText(line)
 			}
 		}
@@ -432,6 +451,10 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		delete(m.wellRestedPending, leaderUserID)
 	}
 	delete(m.restedPending, leaderUserID)
+	duties, hadDuties := m.restedDuties[leaderUserID]
+	if restedPending {
+		delete(m.restedDuties, leaderUserID)
+	}
 	if wellPending && hadStay && !stay.Resting() {
 		delete(m.stays, leaderUserID)
 		delete(m.innRecoveryApplied, leaderUserID)
@@ -453,6 +476,9 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		}
 		if restedPending {
 			m.restedPending[leaderUserID] = true
+		}
+		if hadDuties {
+			m.restedDuties[leaderUserID] = duties
 		}
 		if hadStay {
 			m.stays[leaderUserID] = stay
@@ -639,7 +665,7 @@ func mendRestDolls(user *users.UserRecord, live map[int]*characters.Character) [
 // brewRestFlasks refills the company's Alchemists' satchels at the end of a
 // camp rest (Phase 39g) from the leader's reagents, one a flask, the leader's
 // own first and then each live companion's by number.
-func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) []string {
+func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character, brewers map[*characters.Character]bool) []string {
 	type alchemist struct {
 		name string
 		char *characters.Character
@@ -661,6 +687,9 @@ func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) 
 	if len(as) == 0 {
 		return nil
 	}
+	// Phase 51: the Alchemists on the brew duty are served first, so a
+	// short supply of reagents goes to them.
+	sort.SliceStable(as, func(i, j int) bool { return brewers[as[i].char] && !brewers[as[j].char] })
 	chars := make([]*characters.Character, len(as))
 	for i, a := range as {
 		chars[i] = a.char

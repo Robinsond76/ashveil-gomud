@@ -66,6 +66,10 @@ type RestSession struct {
 	// spent when the rest began; it takes effect when the rest is done
 	// (a spoiled rest gives none).
 	Broth []string `yaml:"broth,omitempty"`
+	// Duties (Phase 51) are the members' duties, locked when the rest
+	// began; a member with no entry slept. Replaced whole, never edited in
+	// place.
+	Duties map[string]string `yaml:"duties,omitempty"`
 }
 
 // Theft is thieves planned at rest start (Phase 40a4): they work unseen
@@ -180,8 +184,11 @@ type Camp struct {
 	// Prepared (Phase 43a) is what the company has queued for its next rest:
 	// fortifying broth and watch incense. A value, replaced whole, never
 	// edited in place.
-	Prepared *Prepared    `yaml:"prepared,omitempty"`
-	Rest     *RestSession `yaml:"rest,omitempty"`
+	Prepared *Prepared `yaml:"prepared,omitempty"`
+	// Duties (Phase 51) are the standing rest duties, by member key; a
+	// member with no entry sleeps. Locked on each rest when it starts.
+	Duties map[string]string `yaml:"duties,omitempty"`
+	Rest   *RestSession      `yaml:"rest,omitempty"`
 }
 
 func (c Camp) Validate() error {

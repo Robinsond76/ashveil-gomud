@@ -65,6 +65,24 @@ func (m *ArchetypeModule) BestSpecialist(leaderUserID int, utility string, roomI
 	return best.specialist(), true
 }
 
+// MemberUtilityLevel implements archetypes.MemberUtilityProvider (Phase 51).
+func (m *ArchetypeModule) MemberUtilityLevel(leaderUserID, companionID int, utility string) int {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil {
+		return 0
+	}
+	members := companyMembers(user, user.Character.RoomId)
+	m.levels(members, utility)
+	for _, mb := range members {
+		if (companionID == 0 && mb.IsLeader) || (companionID != 0 && mb.CompanionID == companionID) {
+			return mb.Level
+		}
+	}
+	return 0
+}
+
+var _ archetypes.MemberUtilityProvider = (*ArchetypeModule)(nil)
+
 func (mb member) specialist() archetypes.Specialist {
 	return archetypes.Specialist{Name: mb.Name, IsLeader: mb.user != nil, Level: mb.Level}
 }

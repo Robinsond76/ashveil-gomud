@@ -2,8 +2,11 @@ package camping
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var campTime = time.Date(2026, time.September, 22, 12, 0, 0, 0, time.UTC)
@@ -66,7 +69,7 @@ func TestCampLifecycle(t *testing.T) {
 		t.Fatalf("second rest at the same camp: %#v, %v", again, err)
 	}
 	camp, err = camp.Break()
-	if err != nil || camp != (Camp{}) {
+	if err != nil || !reflect.DeepEqual(camp, Camp{}) {
 		t.Fatalf("break idle camp: %#v, %v", camp, err)
 	}
 }
@@ -134,4 +137,30 @@ func TestAbandonForDeathNoProvider(t *testing.T) {
 	if err := AbandonForDeath(7); err != nil || len(f.leaders) != 1 || f.leaders[0] != 7 {
 		t.Fatalf("provider not called: %v %v", err, f.leaders)
 	}
+}
+
+// Phase 51: duty assignments are copied, sleep is the absence of one, and a
+// rest locks only the members at the camp.
+func TestDutyAssignmentsAreCopiedAndLockedForPresentMembers(t *testing.T) {
+	var none map[string]string
+	assert.Equal(t, DutySleep, DutyOf(none, "leader"))
+	a := WithDuty(none, "leader", DutyWatch)
+	b := WithDuty(a, "companion:1", DutyCook)
+	assert.Equal(t, map[string]string{"leader": "watch"}, a, "the original map is never edited")
+	assert.Equal(t, DutyCook, DutyOf(b, "companion:1"))
+	assert.Equal(t, []string{"companion:1"}, DutyMembers(b, DutyCook))
+	assert.Nil(t, WithDuty(a, "leader", DutySleep), "sleep removes the entry, and an empty map is nil")
+	assert.Equal(t, DutySleep, DutyOf(map[string]string{"leader": "dance"}, "leader"), "an unknown duty sleeps")
+
+	locked := LockDuties(b, map[string]bool{"leader": true})
+	assert.Equal(t, map[string]string{"leader": "watch"}, locked, "a member away from the camp sleeps")
+	assert.Equal(t, DutyWatch, RestSession{Duties: locked}.DutyOf("leader"))
+
+	for word, want := range map[string]Duty{"Watch": DutyWatch, "rest": DutySleep, " tend ": DutyTend} {
+		got, ok := ParseDuty(word)
+		assert.True(t, ok, word)
+		assert.Equal(t, want, got, word)
+	}
+	_, ok := ParseDuty("dance")
+	assert.False(t, ok)
 }

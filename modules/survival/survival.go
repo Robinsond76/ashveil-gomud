@@ -448,6 +448,15 @@ var _ domain.RestBonusService = (*SurvivalModule)(nil)
 // recovery for some members (Phase 40a3: a bedroll's +25%). The ledger
 // keeps the base amount, so a retry of the same rest is still idempotent.
 func (m *SurvivalModule) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[domain.MemberKey]int) ([]domain.ExertionResult, error) {
+	return m.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, nil)
+}
+
+var _ domain.RestCapService = (*SurvivalModule)(nil)
+
+// ApplyCompanyRestRecoveryCapped is the bonus recovery with a fatigue
+// ceiling for some members (Phase 51: a watcher ends a rest no better than
+// Ready). The ledger keeps the base amount, so a retry is idempotent.
+func (m *SurvivalModule) ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[domain.MemberKey]int, ceilings map[domain.MemberKey]int) ([]domain.ExertionResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
@@ -480,7 +489,13 @@ func (m *SurvivalModule) ApplyCompanyRestRecoveryBonus(leaderUserID int, operati
 		if pct := bonusPct[ref.Key]; pct > 0 {
 			amount += (fatigue*pct + 50) / 100
 		}
-		change, err := m.registry.ApplyRestRecovery(leaderUserID, ref.Key, amount)
+		var change domain.Change
+		var err error
+		if ceiling, capped := ceilings[ref.Key]; capped {
+			change, err = m.registry.ApplyRestRecoveryCapped(leaderUserID, ref.Key, amount, ceiling)
+		} else {
+			change, err = m.registry.ApplyRestRecovery(leaderUserID, ref.Key, amount)
+		}
 		if err != nil {
 			m.registry = snapshot
 			return nil, err

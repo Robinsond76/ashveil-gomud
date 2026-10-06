@@ -838,3 +838,31 @@ func TestApplyMemberDrainRejectsInvalidInput(t *testing.T) {
 	_, err = m.ApplyMemberDrain(0, domain.LeaderMemberKey, domain.Exertion{Thirst: 1})
 	require.ErrorIs(t, err, domain.ErrInvalidMember)
 }
+
+// Phase 51: a member who kept watch recovers no higher than the ceiling
+// (Ready), never lowering anyone already above it; the ledger still keeps
+// the base amount, so a replay changes nothing.
+func TestApplyCompanyRestRecoveryCappedStopsWatchersAtReady(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 70}))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 70}))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(2), domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 90}))
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{7: {
+		{Key: domain.LeaderMemberKey, Name: "Hero"},
+		{Key: domain.CompanionMemberKey(1), Name: "Bear"},
+		{Key: domain.CompanionMemberKey(2), Name: "Wolf"},
+	}}})
+
+	ceilings := map[domain.MemberKey]int{domain.CompanionMemberKey(1): 75, domain.CompanionMemberKey(2): 75}
+	_, err := m.ApplyCompanyRestRecoveryCapped(7, "rest-1", 20, nil, ceilings)
+	require.NoError(t, err)
+	assert.Equal(t, 90, m.registry.MustNeedsFor(7, domain.LeaderMemberKey).Fatigue, "a sleeper recovers the full 20")
+	assert.Equal(t, 75, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)).Fatigue, "a watcher stops at Ready")
+	assert.Equal(t, domain.BandSteady, domain.BandFor(m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)).Fatigue))
+	assert.Equal(t, 90, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(2)).Fatigue, "already above the ceiling: kept, not lowered")
+
+	_, err = m.ApplyCompanyRestRecoveryCapped(7, "rest-1", 20, nil, ceilings)
+	require.NoError(t, err)
+	assert.Equal(t, 90, m.registry.MustNeedsFor(7, domain.LeaderMemberKey).Fatigue, "a replay recovers nothing more")
+	var _ domain.RestCapService = m
+}

@@ -1,0 +1,68 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">camp duties</ansi>
+
+At camp, every member of your company sleeps by default. Rest duties let
+some of them work through the rest instead: more hands on the watch, the
+kit, the pot or the forage, paid for with their own sleep.
+
+<ansi fg="yellow-bold">Setting duties</ansi>
+
+  <ansi fg="command">camp duties</ansi>
+  Shows each member's duty for the next rest, or the ones fixed for the
+  rest that is running.
+
+  <ansi fg="command">camp duties</ansi> [member|all] [duty]
+  Gives a member at your camp a duty. <ansi fg="command">camp duties mira watch</ansi>,
+  <ansi fg="command">camp duties me forage</ansi>, <ansi fg="command">camp duties all sleep</ansi>.
+  With no member it is your own duty (<ansi fg="command">camp duties watch</ansi>).
+  <ansi fg="command">camp duties clear</ansi> sends everyone back to sleep.
+
+  Duties stay set from one rest to the next until you change them or
+  break camp (a new camp starts with everyone asleep). They are fixed when <ansi fg="command">camp rest</ansi> begins, for the members then at the camp (anyone
+  who has wandered off sleeps), and settled when it ends; a restart
+  never changes them. You can't change them while resting. In the web
+  client, Company > Camp has a button for each duty under each member.
+
+<ansi fg="yellow-bold">The duties</ansi>
+
+  <ansi fg="command">sleep</ansi>   The default. Full rest, and the Rested buff when it ends.
+  <ansi fg="command">watch</ansi>   Keeps watch. Each watcher adds a chance to spot the raiders
+           (their own Camp Watch level at 25% a level, never less than 20%),
+           and the chances stack: two watchers spot raiders more often than
+           one. A watcher who is also your camp's watch specialist counts once.
+           Bells, trip lines and incense still add to the total
+           (<ansi fg="command">help campwatch</ansi>). A watcher's Fatigue rises no higher than
+           75 (Ready) at the end of the rest, never to Rested.
+  <ansi fg="command">tend</ansi>    Tends the company when the rest ends. Each tender has the
+           surgeon's kit treat one more lasting wound, if you packed a kit
+           (<ansi fg="command">help camp gear</ansi>; as always it needs a healer who knows Tend and
+           has the mana), or else puts a fresh edge on one member's blades
+           with a whetstone (<ansi fg="command">help sharpen</ansi>), spending one use. With neither
+           there is nothing to tend and the report says so.
+  <ansi fg="command">forage</ansi>  Forages for food when the rest ends: 1 find, plus 1 for every 2
+           levels of the member's own Forage level (a ranger's skill). Your
+           best forager forages anyway, so the duty adds nothing for them.
+           Foragers share the camp's forage cooldown (<ansi fg="command">help forage</ansi>), so a
+           second rest soon after finds
+           nothing new, and the report says the ground is picked over.
+  <ansi fg="command">cook</ansi>    Cooks one dish when the rest ends, from your pack and cargo,
+           using that member's own Cooking rank (<ansi fg="command">help cooking</ansi>). It needs no
+           lit fire, because the rest was the fire. The dish gives its meal buff
+           to whoever eats it (<ansi fg="command">help cooking</ansi>).
+  <ansi fg="command">brew</ansi>    Alchemists only. Refills flasks from your reagents, and is
+           served before the other Alchemists when reagents are short
+           (<ansi fg="command">help brew</ansi>). Alchemists still brew on their own at the end of every
+           rest, with or without this duty.
+
+Anyone on a duty misses the Rested buff from that rest; a watcher also
+ends no better than Ready. A rest that raiders spoil (the watch missed
+them) settles no duties at all. The end of a rest lists what each duty
+did. If the company is fighting when the rest ends, the tend and cook
+duties are left undone. Duties are extra hands on top of the specialists, whose automatic work
+(your best watch, forager, cleric and kit healer) goes on exactly as before,
+so if you never set a duty nothing changes.
+
+Duties don't change the length of the rest, the world clock, or what the
+company carries beyond the forage finds and what the dishes, whetstones,
+kit and reagents use.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help campwatch</ansi>, <ansi fg="command">help forage</ansi>, <ansi fg="command">help cooking</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>.

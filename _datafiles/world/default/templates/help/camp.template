@@ -33,7 +33,13 @@ round count; a rest takes real time, not game time.
 
   <ansi fg="command">camp status</ansi>
   Shows your camp, whether the fire is lit, how a rest is progressing,
-  and your company's current needs.
+  and your company's current needs, with each member's rest duty once you
+  have set any.
+
+  <ansi fg="command">camp duties</ansi>
+  Lets members work through the next rest instead of sleeping: keep watch,
+  tend the company's wounds and blades, forage, cook or brew (<ansi fg="command">help camp duties</ansi>).
+  Everyone sleeps by default, and the rest is unchanged unless you set a duty.
 
 <ansi fg="yellow-bold">Resting</ansi>
 
@@ -46,7 +52,7 @@ round count; a rest takes real time, not game time.
   When the rest finishes, every current company member's Fatigue rises
   by 20 (less if bad weather is spoiling the rest, see below), and you
   and every companion with you gain the <ansi fg="yellow">Rested</ansi> buff for 15 minutes of
-  real time. Rested cuts your walking strain. If anyone already has the
+  real time (not anyone you gave a rest duty: <ansi fg="command">help camp duties</ansi>). Rested cuts your walking strain. If anyone already has the
   better <ansi fg="yellow">Well Rested</ansi> buff from an inn stay (<ansi fg="command">help inn</ansi>), the camp rest
   still restores their Fatigue but doesn't touch that buff — Well Rested
   always wins, and a camp rest never replaces it with the lesser Rested.
@@ -104,6 +110,7 @@ round count; a rest takes real time, not game time.
 <ansi fg="yellow-bold">Usage:</ansi>
 
   <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp duties</ansi> [member|all] [<ansi fg="command">sleep</ansi>|<ansi fg="command">watch</ansi>|<ansi fg="command">tend</ansi>|<ansi fg="command">forage</ansi>|<ansi fg="command">cook</ansi>|<ansi fg="command">brew</ansi>] | <ansi fg="command">camp duties clear</ansi>
   <ansi fg="command">camp poison</ansi> [<ansi fg="command">assign</ansi>|<ansi fg="command">unassign</ansi>|<ansi fg="command">preview</ansi>|<ansi fg="command">apply</ansi>]
   <ansi fg="command">camp sharpen</ansi> [<ansi fg="command">status</ansi> | <ansi fg="command">auto on</ansi>|<ansi fg="command">off</ansi>]
 
@@ -132,7 +139,7 @@ The web client's map also marks your camp as a tent on its tile, with its
 fire and a sleeping mark while you rest. The camps of your own party show
 as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
 
-See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help poisons</ansi>, <ansi fg="command">help survival</ansi>,
+See also: <ansi fg="command">help camp duties</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help poisons</ansi>, <ansi fg="command">help survival</ansi>,
 <ansi fg="command">help weather</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help banter</ansi>.
 
 A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

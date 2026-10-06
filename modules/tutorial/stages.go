@@ -137,7 +137,7 @@ func init() {
 				`Your companions talk by the fire as you rest, and sometimes after a won fight (<ansi fg="command">help banter</ansi>); <ansi fg="command">set banter off</ansi> quiets them.`,
 				`<ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>, and <ansi fg="command">help cooking</ansi> explain resting and cooking in full.`,
 				`Playing in the web client? The map window draws terrain tiles, and your camp appears on it as a tent with its fire, and a sleeping mark while you rest (<ansi fg="command">help worldmap</ansi>).`,
-				`Companions earn their keep at camp: a warrior keeps watch for raiders (<ansi fg="command">help campwatch</ansi>), a ranger forages, a cleric keeps a vigil, and <ansi fg="command">camp cook</ansi> cooks over your own fire.`,
+				`Companions earn their keep at camp: a warrior keeps watch for raiders (<ansi fg="command">help campwatch</ansi>), a ranger forages, a cleric keeps a vigil, and <ansi fg="command">camp cook</ansi> cooks over your own fire. <ansi fg="command">camp duties</ansi> sets anyone to work the rest instead of sleeping (watch, tend, forage, cook, brew): more hands, but they miss the Rested buff (<ansi fg="command">help camp duties</ansi>).`,
 				`Companions can learn Cooking: <ansi fg="command">company train</ansi> spends a companion's training points at your camp, and at <ansi fg="command">camp cook</ansi> the best cook with you does the cooking (<ansi fg="command">help company-train</ansi>).`,
 			},
 			Done: "Rested and ready.",
