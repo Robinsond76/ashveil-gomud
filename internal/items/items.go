@@ -54,7 +54,10 @@ type Item struct {
 	SharpStrikes int `yaml:"sharpstrikes,omitempty"`
 	// Phase 36a: a generated item's roll. A value, replaced whole by
 	// Identify, never edited through a shared slice.
-	Loot          Rolled         `yaml:"loot,omitempty"`
+	Loot Rolled `yaml:"loot,omitempty"`
+	// Phase 36c: the player marked this item as junk for `sell junk`. A
+	// plain value, so it follows the item wherever it goes.
+	Junk          bool           `yaml:"junk,omitempty"`
 	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
@@ -517,6 +520,9 @@ func (i *Item) AttrString() string {
 	}
 	if i.IsEnchanted() {
 		flags = append(flags, `<ansi fg="item-enchanted">e</ansi>`)
+	}
+	if i.Junk {
+		flags = append(flags, `<ansi fg="item-flags">j</ansi>`)
 	}
 
 	if len(flags) == 0 {

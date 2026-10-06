@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -1055,6 +1056,11 @@ type GMCPCharModule_Payload_Inventory_Item struct {
 	SubType string   `json:"subtype"`
 	Uses    int      `json:"uses"`
 	Details []string `json:"details"`
+	// Phase 36c: the name as players see it, with a rolled item's quality,
+	// affixes and generated name; Name stays the plain name commands match.
+	Label        string `json:"label,omitempty"`
+	Rarity       string `json:"rarity,omitempty"`
+	Unidentified bool   `json:"unidentified,omitempty"`
 }
 
 func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
@@ -1075,6 +1081,11 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		Uses:    itm.Uses,
 		Details: []string{},
 	}
+	if itm.IsRolled() {
+		d.Label = company.PlainLabel(itm)
+		d.Rarity = string(itm.RollRarity())
+		d.Unidentified = !itm.IsIdentified()
+	}
 
 	if !itm.Uncursed && itmSpec.Cursed {
 		d.Details = append(d.Details, `cursed`)
@@ -1082,6 +1093,11 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 
 	if itmSpec.QuestToken != `` {
 		d.Details = append(d.Details, `quest`)
+	}
+
+	// 36c review: the junk mark shows in the web gear window too.
+	if itm.Junk {
+		d.Details = append(d.Details, `junk`)
 	}
 
 	if itmSpec.Type == items.Weapon {

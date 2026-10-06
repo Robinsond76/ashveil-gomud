@@ -378,7 +378,7 @@
         const detailClass = item.details && item.details.includes('cursed') ? 'cursed'
                           : item.details && item.details.includes('quest')  ? 'quest' : '';
 
-        let html = '<div class="gw-tt-name">' + item.name;
+        let html = '<div class="gw-tt-name">' + (item.label || item.name);
         if (details) {
             html += ' <span class="gw-tt-details ' + detailClass + '">(' + details + ')</span>';
         }
@@ -611,7 +611,7 @@
             const isCursed = item.details && item.details.includes('cursed');
             const isQuest  = item.details && item.details.includes('quest');
 
-            nameEl.textContent = item.name;
+            nameEl.textContent = item.label || item.name;
             nameEl.className   = 'gw-equip-name' + (isCursed ? ' cursed' : isQuest ? ' quest' : '');
 
             if (isCursed) {
@@ -668,7 +668,7 @@
 
             const nameEl = document.createElement('span');
             nameEl.className   = 'gw-bp-name' + (isCursed ? ' cursed' : isQuest ? ' quest' : '');
-            nameEl.textContent = item.name || '';
+            nameEl.textContent = item.label || item.name || '';
 
             const badgeEl = document.createElement('span');
             badgeEl.className = 'gw-bp-badge';
