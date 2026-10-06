@@ -12,6 +12,8 @@ idlecommands:
 # Ashveil Phase 33i2: takes no wounds (help coordination).
 wounds: none
 activitylevel: 10
+# Phase 43b: weapon poison finds nothing to take hold of.
+poison: resistant
 character:
   name: sentient fungus
   description: 'Its cap, several feet in diameter, emits a soft, eerie glow. Veins of bioluminescence run across its surface, pulsating in a rhythmic pattern. As you approach, a faint, melodic hum emanates from the fungus-a musical language that resonates with the forest.'
