@@ -20,7 +20,7 @@ its scale, grain and proportions.
 | `warrior` | Broad, in a mail hauberk with a faded oxblood surcoat and a nasal helm. Sword in the right hand, round wooden shield on the left arm. Heavy, planted steps. |
 | `rogue` | Lean, in a charcoal hood with dull-plum mask cloth over dark leathers. Two short blades held low and reversed. Light, quiet steps. |
 | `ranger` | A travel-stained moss-green hooded cloak over tan leather. Longbow in hand, quiver on the back, long knife at the belt. |
-| `cleric` | A worn undyed wool tabard over mail, with an iron holy symbol on a cord and tarnished brass fittings. Flanged mace and a small shield. |
+| `cleric` | Pale undyed wool robes with a brass-trimmed stole and an iron holy symbol on a cord. A tall brass-topped staff. (The owner approved the staff in place of a mace and shield, 2026-10-06.) |
 | `wizard` | A long slate blue-grey robe with a deep hood, and a gaunt face or long beard in shadow. A tall gnarled staff topped by a dim pewter-set stone. |
 | `witch` | Layered tattered heather shawls and a hood, ash-moss under-robes, bone and herb charms at the belt. A crooked ash staff hung with a small lantern. (The owner's witch sample is the target look.) |
 | `halberdier` | A kettle helm and a steel breastplate over a tawny padded coat. A halberd carried upright, its blade above the head. |

@@ -4,6 +4,10 @@ Read [00-standards.md](00-standards.md) first. Attach `lineup-battle.png`
 and `scene-battle.png` from A0, and each class's approved A1 map sheet so
 the designs match.
 
+The gryphon rider and samurai map sheets are being redrawn taller (see
+`A1/_feedback.md` in Drive). Draw their battle idles last, once the new
+A1 sheets are approved, so the two match.
+
 The battle screen is a side view. The company stands in a 3×3 formation
 on the left, the enemy on the right. Units stand on a band of open ground
 across the lower part of the picture.
@@ -50,7 +54,7 @@ class's A1 map figure, drawn larger and side-on.
 | `warrior` | Shield forward, sword low, weight braced. |
 | `rogue` | Crouched, blades reversed, ready to spring. |
 | `ranger` | Bow held low with an arrow nocked. |
-| `cleric` | Mace and shield ready; the holy symbol glints on one frame. |
+| `cleric` | The approved A1 design: pale robes and the brass-topped staff, held ready in both hands. The holy symbol glints on one frame. |
 | `wizard` | Staff planted; a faint glow at the stone swells and fades. |
 | `witch` | Staff or wand low, the hood shading the face, a thin curl of grave-mist at the hem. |
 | `halberdier` | Halberd lowered and angled forward, feet set wide. |
