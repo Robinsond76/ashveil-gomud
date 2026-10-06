@@ -205,6 +205,17 @@ type ClassRT struct {
 	AimStruck  bool
 	BlowPierce int
 	Shred      int
+	// Phase 39i2: the Siege Master's Ballista bolts passed through this
+	// battle, and the Bastion's Covering shots loosed.
+	Through  int
+	ColShots int
+	// Phase 39i2: a Panacean's Elixir. On the Panacean: how many times it has
+	// worked this battle, how many it may, and the percent of an ally's health
+	// it leaves. On every ally of its side: the Panacean covering it.
+	ElixirSpent int
+	ElixirMax   int
+	ElixirPct   int
+	ElixirBy    *ClassRT
 	// The Beast Tamer's lineage (Phase 39e): the Attack Sic gives its beast
 	// this round, the Evasion Pack Sense gives the Tamer while the beast
 	// stands, and the Rally heals spent this battle.
@@ -346,6 +357,12 @@ func (c *Character) GuardFall(dmg, room int, warded bool) (int, string) {
 	if !c.RT.BargainUsed && c.ClassEffects().Has(classes.Bargain) {
 		c.RT.BargainUsed = true
 		c.RT.Saved = "bargain"
+		return max(0, room-1), c.RT.Saved
+	}
+	// Phase 39i2: a Panacean's Elixir keeps a falling ally on its feet.
+	if by := c.RT.ElixirBy; by != nil && by.ElixirSpent < by.ElixirMax {
+		by.ElixirSpent++
+		c.RT.Saved = "elixir"
 		return max(0, room-1), c.RT.Saved
 	}
 	return dmg, ""

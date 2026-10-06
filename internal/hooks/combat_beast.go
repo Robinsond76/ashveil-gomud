@@ -206,6 +206,9 @@ func drakeBreath(a actor, u *users.UserRecord, foes map[int]bool, room *rooms.Ro
 	round := combatRound.Load()
 	if info.BreathNext == 0 {
 		info.BreathNext = round + uint64(info.BreathEvery)
+		if info.BreathFirst {
+			info.BreathNext = round // Phase 39i2: a Dragon Lord's drake breathes at once
+		}
 	}
 	if round < info.BreathNext {
 		return false
@@ -223,7 +226,7 @@ func drakeBreath(a actor, u *users.UserRecord, foes map[int]bool, room *rooms.Ro
 	}
 	sort.Ints(ids)
 	for _, id := range ids {
-		if len(targets) >= 3 {
+		if len(targets) >= max(3, info.BreathFoes) {
 			break
 		}
 		if m := mobs.GetInstance(id); m != nil && m.Character.Health > 0 && !m.Character.CombatWithdrawn && !m.Character.HasBuffFlag("hidden") {
@@ -238,10 +241,18 @@ func drakeBreath(a actor, u *users.UserRecord, foes map[int]bool, room *rooms.Ro
 		if -t.Character.ApplyHealthChange(-dmg) > 0 {
 			burned++
 			roundExtraMobs = append(roundExtraMobs, t.InstanceId)
+			// Phase 39i2: a Dragon Lord's Breath leaves its foes alight.
+			if info.BreathBurn && t.Character.Health > 0 {
+				events.AddToQueue(events.Buff{MobInstanceId: t.InstanceId, BuffId: status.Burning, Source: `combat`})
+			}
 		}
 	}
 	abilityTurns[a.who] = true
-	a.holder.say("", fmt.Sprintf("%%s breathes fire across %s. (breath, %d foes)", verbatimTag(foe), burned), ` (breath)`)
+	note := fmt.Sprintf("breath, %d foes", burned)
+	if info.BreathBurn {
+		note += ", burning"
+	}
+	a.holder.say("", fmt.Sprintf("%%s breathes fire across %s. (%s)", verbatimTag(foe), note), ` (breath)`)
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(foe), Status: `Breath`})
 	return true
 }
@@ -251,15 +262,20 @@ func drakeBreath(a actor, u *users.UserRecord, foes map[int]bool, room *rooms.Ro
 func breathOwnerLevel(_ *characters.BeastInfo, c *characters.Character) int { return c.Level }
 
 // beastBlow is what a beast's landed bite does: a warhound's bite hobbles a
-// foe below half health, and a foe that fell ends its Tamer's pack-sense
-// bookkeeping nowhere (nothing else to do).
+// foe below half health (a Packlord's, three quarters) and, for a Packlord,
+// exposes a foe it had hobbled already; a Beastlord's bear rakes the foe
+// beside its target too.
 func beastBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	rt := attacker.char.RT
-	if rt == nil || rt.Beast == nil || !rt.Beast.Hobble || !r.Hit || r.DamageToTarget <= 0 {
+	if rt == nil || rt.Beast == nil || !r.Hit || r.DamageToTarget <= 0 {
 		return
 	}
+	info := rt.Beast
 	d := defender.char
-	if d.Health < 1 || d.HealthMax.Value <= 0 || d.Health*100 >= beasts.HobbleBelow*d.HealthMax.Value || status.Live(d, status.Hobbled) {
+	if info.Swipe > 0 && defender.mob != nil {
+		beastSwipe(attacker, defender, max(1, r.DamageToTarget*info.Swipe/100))
+	}
+	if !info.Hobble || d.Health < 1 || d.HealthMax.Value <= 0 {
 		return
 	}
 	ev := events.Buff{BuffId: status.Hobbled, Source: `combat`}
@@ -270,8 +286,41 @@ func beastBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	} else {
 		return
 	}
+	// Phase 39i2: the Packlord's pack hunts a foe it has crippled.
+	if info.Hunt && status.Live(d, status.Hobbled) && !status.Live(d, status.Exposed) {
+		ev.BuffId = status.Exposed
+		events.AddToQueue(ev)
+		attacker.say("", "%s's bite finds "+verbatim(defender.tag())+"'s lame leg, and it is left exposed. (exposed)", ` (exposed)`)
+		return
+	}
+	at := info.HobbleAt
+	if at <= 0 {
+		at = beasts.HobbleBelow
+	}
+	if d.Health*100 >= at*d.HealthMax.Value || status.Live(d, status.Hobbled) {
+		return
+	}
 	events.AddToQueue(ev)
 	attacker.say("", "%s's bite lays "+verbatim(defender.tag())+" open at the legs. (hobbled)", ` (hobble)`)
+}
+
+// beastSwipe is a Beastlord's bear raking the foe standing beside its target
+// (the nearest in the same row) for a share of the blow.
+func beastSwipe(attacker, defender statusHolder, dmg int) {
+	room := rooms.LoadRoom(defender.roomId)
+	if room == nil {
+		return
+	}
+	beside := foeBeside(defender.mob, room, nil)
+	if beside == nil || beside.Character.Health < 1 {
+		return
+	}
+	dealt := -beside.Character.ApplyHealthChange(-dmg)
+	if dealt < 1 {
+		return
+	}
+	roundExtraMobs = append(roundExtraMobs, beside.InstanceId)
+	attacker.say("", "%s's swipe rakes "+verbatim(mobHolder(beside).tag())+fmt.Sprintf(" too. (swipe, %d damage)", dealt), ` (swipe)`)
 }
 
 // beastGuardsLeft is how many guards a bonded bear has left this battle (none
@@ -287,6 +336,16 @@ func beastGuardsLeft(c *characters.Character) int {
 // battle and out of fights until the company rests. It never dies.
 func beastFalls(m *mobs.Mob) {
 	room := rooms.LoadRoom(m.Character.RoomId)
+	// Phase 39i2: a Beastlord's bear stands back up once a battle.
+	if rt := m.Character.RT; rt != nil && rt.Beast != nil && rt.Beast.Rise > 0 && !rt.Beast.RiseUsed {
+		rt.Beast.RiseUsed = true
+		m.Character.Health = max(1, m.Character.HealthLimit()*rt.Beast.Rise/100)
+		if room != nil {
+			room.SendText(fmt.Sprintf(`%s staggers, shakes itself and stands again. (stands again, %d health)`, named(mobTag(mobName(m.InstanceId))), m.Character.Health))
+		}
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: m.Character.RoomId, Source: mobRef(m), Status: `Stands again`, Outcome: combatstream.OutcomeSucceeded})
+		return
+	}
 	emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: m.Character.RoomId, Target: mobRef(m), Outcome: combatstream.OutcomeIncapacitated})
 	if room != nil {
 		room.SendText(fmt.Sprintf(`%s yelps and goes down, wounded. (it will mend after a rest)`, named(mobTag(mobName(m.InstanceId)))))

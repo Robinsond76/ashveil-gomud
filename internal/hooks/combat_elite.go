@@ -302,6 +302,23 @@ func wardAfterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	switch saved {
 	case "ward of life":
 		defender.say("The ward of life holds you at 1 health!", "The ward of life holds %s at 1 health!", " (ward of life)")
+	case "elixir":
+		// Phase 39i2: the blow left the ally at 1 health; the elixir brings it
+		// up to the Panacean's share of its health.
+		by := rt.ElixirBy
+		if by == nil || defender.char.Health < 1 {
+			return
+		}
+		target := max(1, defender.char.HealthLimit()*by.ElixirPct/100)
+		if defender.char.Health < target {
+			defender.char.ApplyHealthChange(target - defender.char.Health)
+		}
+		note := fmt.Sprintf(" (elixir, %d health, %d of %d left)", defender.char.Health, by.ElixirMax-by.ElixirSpent, by.ElixirMax)
+		defender.say("A Panacean's elixir burns down your throat as the blow lands, and you stay on your feet."+note, "A Panacean's elixir keeps %s on their feet."+note, "")
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: defender.roomId, Target: defender.ref, Status: `Elixir`, Outcome: combatstream.OutcomeSucceeded})
+		if defender.user != nil {
+			events.AddToQueue(events.CharacterVitalsChanged{UserId: defender.user.UserId})
+		}
 	case "bargain":
 		crumbled := ""
 		for _, id := range company.SummonInstances() {

@@ -50,6 +50,25 @@ function onMagic(sourceActor, target) {
     }
     suffix += ')';
 
+    // Phase 39i2: a Transmuter's Mutagen hardens more of its patient's row (no health paid for them).
+    var more = sourceActor.ClassEffect('mutagenrow');
+    if (armor > 0 && more > 0) {
+        var row = target.RowAllies(1);
+        for (var i = 0; i < row.length && more > 0; i++) {
+            var ally = row[i];
+            if (ally.UserId() == target.UserId() && ally.InstanceId() == target.InstanceId()) {
+                continue;
+            }
+            if (ally.GrantBark(armor, 0)) {
+                more--;
+                tell(sourceActor, ally,
+                    'The mutagen spreads to ' + ally.GetCombatName(false) + '. (+' + armor + ' armor for the battle)',
+                    fill(sourceActor, 'The mutagen spreads to you from %S\'s tonic.') + ' (+' + armor + ' armor for the battle)',
+                    'The mutagen spreads to ' + ally.GetCombatName(false) + '. (+' + armor + ' armor for the battle)');
+            }
+        }
+    }
+
     if (sourceActor.UserId() == target.UserId() && sourceActor.InstanceId() == target.InstanceId()) {
         tell(sourceActor, target, 'You drink a bracing tonic.' + suffix, '', fill(sourceActor, '%S drinks a bracing tonic.') + suffix);
         return;

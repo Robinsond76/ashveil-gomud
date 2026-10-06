@@ -30,7 +30,16 @@ func init() {
 			rank(25, "Heavy build", "the warhound has 130% of a wolf's health", BeastHPPct, 130),
 		}})
 	register(Class{ID: "packlord", Name: "Packlord", Lineage: "beasttamer", Tier: TierElite, Parent: "houndmaster", Gate: GateAny,
-		Role: "a second hound, and hounds that strike first", Planned: true})
+		Role: "a hunting pack: hounds that expose what they hobble, and that strike first",
+		Ranks: []Rank{
+			rank(30, "Pack hunt", "a warhound's bite that lands on a foe it has hobbled leaves it exposed", BeastHunt, 1),
+			rank(35, "Pack leader", "the warhound has 150% of a wolf's health", BeastHPPct, 150),
+			rank(40, "Hunting cry", "+4 Attack on the warhound's bites (in all)", BeastAttack, 4),
+			rank(45, "Wider hobble", "the warhound's bites hobble a foe below three quarters of its health", BeastHobbleAt, 75),
+			rank(50, "Hound of war", "the warhound has 175% of a wolf's health", BeastHPPct, 175),
+			rank(55, "Rending fangs", "+3 damage on the warhound's bites (in all)", BeastDamage, 3),
+			rank(60, "First strike", "the warhound starts a battle with 50 points on its action meter, so it strikes before the foes do", BeastOpen, 50),
+		}})
 
 	register(Class{ID: "bearward", Name: "Bearward", Lineage: "beasttamer", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a war bear that guards the Tamer and the company",
@@ -41,7 +50,16 @@ func init() {
 			rank(25, "Steady guard", "the bear guards one more time a battle", BeastGuards, 4),
 		}})
 	register(Class{ID: "beastlord", Name: "Beastlord", Lineage: "beasttamer", Tier: TierElite, Parent: "bearward", Gate: GateAny,
-		Role: "a bear whose swipes hit two foes", Planned: true})
+		Role: "a bear whose swipes hit two foes, and that stands back up",
+		Ranks: []Rank{
+			rank(30, "Cleaving swipe", "the bear's blows also strike the foe beside its target for half the damage", BeastSwipe, 50),
+			rank(35, "Great bear", "the bear has 160% of a wolf's health", BeastHPPct, 160),
+			rank(40, "Heavy paws", "+3 damage on the bear's blows (in all)", BeastDamage, 3),
+			rank(45, "Faithful guard", "the bear guards six times a battle", BeastGuards, 6),
+			rank(50, "Raking swipe", "the bear's second foe takes three quarters of the damage", BeastSwipe, 75),
+			rank(55, "Elder bear", "the bear has 190% of a wolf's health", BeastHPPct, 190),
+			rank(60, "Stands again", "once a battle, a bear that falls stands back up with half its health", BeastRise, 50),
+		}})
 
 	register(Class{ID: "dragon-tamer", Name: "Dragon Tamer", Lineage: "beasttamer", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a drake hatchling that breathes fire on a foe and its neighbours",
@@ -52,5 +70,14 @@ func init() {
 			rank(25, "Quick fire", "Breath comes every 2 rounds", BeastBreathCut, 1),
 		}})
 	register(Class{ID: "dragon-lord", Name: "Dragon Lord", Lineage: "beasttamer", Tier: TierElite, Parent: "dragon-tamer", Gate: GateAny,
-		Role: "a larger drake with a faster breath", Planned: true})
+		Role: "a larger drake whose breath leaves foes burning, and comes at once",
+		Ranks: []Rank{
+			rank(30, "Searing breath", "foes the drake's Breath strikes are left alight (2 damage a round for 4 rounds)", BreathBurn, 1),
+			rank(35, "Greater drake", "the drake has 150% of a wolf's health", BeastHPPct, 150),
+			rank(40, "Dragonfire", "+4 damage on the drake's bites and its Breath (in all)", BeastDamage, 4),
+			rank(45, "Wide breath", "Breath reaches four foes", BreathFoes, 4),
+			rank(50, "Drake ascendant", "the drake has 180% of a wolf's health", BeastHPPct, 180),
+			rank(55, "Razor claws", "+4 Attack on the drake's bites", BeastAttack, 4),
+			rank(60, "Furnace heart", "the drake's first Breath comes in the battle's first round", BreathFirst, 1),
+		}})
 }

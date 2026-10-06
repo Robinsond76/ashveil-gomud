@@ -295,6 +295,7 @@ func TestNeutralElitesPromoteThroughTheClassCommand(t *testing.T) {
 
 // The rogue, ranger, wizard and witch elites arrive with 38c2 and 38c3.
 func TestPlannedEliteIsNotOpenYet(t *testing.T) {
+	defer classes.SetPlannedForTest("packlord", true)() // every elite is open (39i2): borrow one
 	w, store := classBrawl(t, 30, 100)
 	w.withArchetypes("beasttamer")
 	store.state.Class = "houndmaster"
