@@ -2,6 +2,8 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -10,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -81,13 +84,26 @@ func TestGrantXPLevelReport(t *testing.T) {
 			assert.Equal(t, [2]int{1, target}, [2]int{ev.AttackBefore, ev.AttackAfter})
 			assert.Equal(t, [2]int{1, target}, [2]int{ev.EvasionBefore, ev.EvasionAfter})
 			assert.Contains(t, messages, fmt.Sprintf("Attack 1 -> %d   Evasion 1 -> %d", target, target))
-			assert.Contains(t, messages, "(coming)")
+			// 38c1 shipped the level 5 talent, so only the level 2 report
+			// still names an unshipped milestone next.
+			assert.Contains(t, messages, " Next: ")
+			if target == 2 {
+				assert.Contains(t, messages, "(coming)")
+			} else {
+				assert.NotContains(t, messages, "level 5: talent (coming)")
+			}
 			// Phase 35b review: the report renders each scaling spell's growth.
 			messages = ""
 			ev.PowerLines = []string{"Magic Missile 8-13 -> 9-14", "Shower of Sparks 5-8"}
 			SendLevelNotifications(ev)
 			events.ProcessEvents()
 			assert.Contains(t, messages, " Magic Missile 8-13 -> 9-14\n Shower of Sparks 5-8")
+			// Phase 38c1: the class notes render in the report.
+			messages = ""
+			ev.ClassNotes = []string{"Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin."}
+			SendLevelNotifications(ev)
+			events.ProcessEvents()
+			assert.Contains(t, messages, " Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin.\n")
 			assert.Empty(t, ev.ClassRanks, "a character with no lineage ranks gains none")
 			// 39b review: the report names each rank the new levels gave.
 			messages = ""
@@ -138,4 +154,70 @@ func TestGrantXPPaysStatPointCatchUpBeforeLevelReport(t *testing.T) {
 	assert.Equal(t, 2+3+1, u.Character.StatPoints, "catch-up (5 - 2) at peak 10, then level 12")
 	assert.Equal(t, 2, u.Character.StatPointRhythm)
 	assert.False(t, u.Character.CatchUpStatPoints(), "never paid twice")
+}
+
+type fakeLineage struct{}
+
+func (fakeLineage) CanTrain(int, string) (bool, string)      { return true, "" }
+func (fakeLineage) CanLearnSpell(int, string) (bool, string) { return true, "" }
+func (fakeLineage) Exists(string) bool                       { return true }
+func (fakeLineage) ArchetypeName(id string) (string, bool)   { return id, true }
+func (fakeLineage) PlayerArchetype(int) (string, bool)       { return "warrior", true }
+
+type fakeClassState struct{ state classes.State }
+
+func (f fakeClassState) PlayerClass(int) classes.State { return f.state }
+
+// Phase 38c1: a player's real level-up at 30 reports an elite promotion that
+// is ready, or waiting on its gate, and each rank a level earns.
+func TestGrantXPLevelReportNamesElitePromotionAndRanks(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "users"), 0755))
+	old := configs.Flatten(configs.GetOverrides())
+	flat := configs.Flatten(configs.GetOverrides())
+	flat["FilePaths.DataFiles"] = dir
+	require.NoError(t, configs.RestoreOverrides(flat))
+	t.Cleanup(func() { require.NoError(t, configs.RestoreOverrides(old)) })
+	g := configs.GetGamePlayConfig()
+	g.XPScale = 100
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
+	archetypes.SetProvider(fakeLineage{})
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+
+	for _, tc := range []struct {
+		name      string
+		class     string
+		from      int
+		alignment int8
+		want      string
+	}{
+		{"ready", "knight", 29, 41, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin."},
+		{"waiting", "knight", 29, 22, "Paladin needs alignment +30 (yours: +22). You keep your Knight ranks and can promote once it rises."},
+		{"warlord rank", "warlord", 34, 0, "New rank: Battle Cry, "},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			classes.SetProvider(fakeClassState{classes.State{Class: tc.class}})
+			t.Cleanup(func() { classes.SetProvider(nil) })
+			u := users.NewUserRecord(35003, 0)
+			u.Character.Level = tc.from
+			u.Character.PeakLevel = tc.from
+			u.Character.Experience = u.Character.XPTL(tc.from - 1)
+			u.Character.Alignment = tc.alignment
+			u.Character.SetUserId(u.UserId)
+			u.Character.Validate()
+			users.SetTestUser(u)
+			t.Cleanup(func() { users.RemoveTestUser(u.UserId) })
+			var ev events.LevelUp
+			id := events.RegisterListener(events.LevelUp{}, func(e events.Event) events.ListenerReturn { ev = e.(events.LevelUp); return events.Continue })
+			t.Cleanup(func() { events.UnregisterListener(events.LevelUp{}, id) })
+
+			u.GrantXP(u.Character.XPTL(tc.from)-u.Character.Experience, "test")
+			events.ProcessEvents()
+			require.Equal(t, tc.from+1, u.Character.Level)
+			// The ranks come in ClassRanks (39b), promotion lines in ClassNotes.
+			lines := append(append([]string{}, ev.ClassRanks...), ev.ClassNotes...)
+			require.NotEmpty(t, lines)
+			assert.Contains(t, strings.Join(lines, "\n"), tc.want)
+		})
+	}
 }

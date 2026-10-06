@@ -109,7 +109,9 @@ restock). These are balance defaults.
   ring, added to S1.
 - Fire, smoke and resting overlays are unchanged (40b).
 
-### Deferred: camp theft (owner, 2026-10-05)
+### Deferred: camp theft (owner, 2026-10-05), built in 40a4
+
+Built in 40a4; its decisions are in `docs/PROJECT_STATUS.md`.
 
 A future camp event, not part of 40a3:
 

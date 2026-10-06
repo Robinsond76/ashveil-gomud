@@ -39,6 +39,10 @@ Blackguard also heal.
   Terror (its critical hits that land also stagger the target, which loses its
   next action), and at 60 Blood Oath heals 100%.
 
+<ansi fg="yellow-bold">Warlord</ansi> (30, neutral): marks the foe it tackles (+5 Attack for allies, +10 from
+  50), Battle Cry (+3 Attack for the company in a battle's first 2 rounds),
+  Sunder, Relentless and Warlord's Command. See <ansi fg="command">help warlord</ansi>.
+
 Lay on Hands uses come back with a rest (a camp rest, an inn).
 
-See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help cleric-routes</ansi>.
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help warlord</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help cleric-routes</ansi>.

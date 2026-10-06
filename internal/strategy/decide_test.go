@@ -225,3 +225,31 @@ func TestDecideShaman(t *testing.T) {
 		t.Errorf("stoneskin or gust expected: %+v", a)
 	}
 }
+
+// Phase 38c1 review: an Elder Druid sows a Grove before anyone is in danger
+// (two scratched allies without Rejuvenation), and at two hurt allies; a
+// Druid without Grove keeps its Barkskin.
+func TestElderDruidSowsAGroveEarly(t *testing.T) {
+	list := []Spell{{ID: "heal", Use: UseHeal, Cost: 3}, {ID: "rejuvenation", Use: UseRejuv, Cost: 3},
+		{ID: "grove", Use: UseGrove, Cost: 8}, {ID: "barkskin", Use: UseBark, Cost: 4}}
+	knows := func(id string) bool { return true }
+	sit := Situation{Role: Healer, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 3,
+		Allies: []Ally{{HP: 90, MaxHP: 100}, {HP: 70, MaxHP: 100}, {HP: 80, MaxHP: 100}}}
+	if act := Decide(sit); act.Kind != Row || act.Spell != "grove" || act.Ally != 1 {
+		t.Fatalf("two scratched allies: %+v, want a Grove on the most hurt", act)
+	}
+	sit.Allies[1].Rejuv = true
+	if act := Decide(sit); act.Spell == "grove" {
+		t.Fatalf("only one scratched ally lacks Rejuvenation: %+v", act)
+	}
+	sit.Allies = []Ally{{HP: 40, MaxHP: 100}, {HP: 45, MaxHP: 100}, {HP: 100, MaxHP: 100}}
+	if act := Decide(sit); act.Kind != Row || act.Spell != "grove" {
+		t.Fatalf("two hurt allies: %+v, want a Grove", act)
+	}
+	druid := func(id string) bool { return id != "grove" }
+	sit.Knows = druid
+	sit.Allies = []Ally{{HP: 90, MaxHP: 100}, {HP: 70, MaxHP: 100}}
+	if act := Decide(sit); act.Kind != Buff || act.Spell != "barkskin" {
+		t.Fatalf("a Druid without Grove: %+v, want Barkskin", act)
+	}
+}

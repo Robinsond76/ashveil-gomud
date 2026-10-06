@@ -139,6 +139,27 @@ func TestDivineShieldIgnoresTheFirstBlowOfABattleOnly(t *testing.T) {
 	assert.False(t, paladin.RT.ShieldUsed, "a new battle renews it")
 }
 
+// Phase 38c1: a foe the Warlord marked is easier for every ally to hit, and a
+// Battle Cry raises its allies' Attack; neither touches the foe's own aim.
+func TestWarlordsMarkAndBattleCryRaiseAttack(t *testing.T) {
+	defenseSpecs(t)
+	ally, foe := classed("", 10), classed("", 10)
+	base := attackRating(ally, foe)
+
+	foe.RTState().Mark = 5
+	assert.Equal(t, base+5, attackRating(ally, foe), "marked: +5 Attack against it")
+	foe.RT.Mark = 10
+	assert.Equal(t, base+10, attackRating(ally, foe), "rank 50 mark: +10")
+	assert.Equal(t, base, attackRating(foe, ally), "a mark on the foe does not help the foe")
+	foe.RT.Mark = 0
+	assert.Equal(t, base, attackRating(ally, foe), "lifted")
+
+	ally.Aura.Attack = 3
+	assert.Equal(t, base+3, attackRating(ally, foe), "Battle Cry: +3 Attack")
+	foe.RTState().Mark = 5
+	assert.Equal(t, base+8, attackRating(ally, foe), "they stack")
+}
+
 // Phase 39a: a Sweep's or a held blow's share of the damage is the blow's
 // own, before armor, and clears with the blow.
 func TestBlowPctScalesAClassBlow(t *testing.T) {

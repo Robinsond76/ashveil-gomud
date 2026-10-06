@@ -5,6 +5,6 @@ description: Rejuvenation on a whole row of the formation
 type: helpsingle
 school: restoration
 cost: 8
-waitrounds: 2
+waitrounds: 1
 difficulty: 5
 scope: member

@@ -120,10 +120,35 @@ func (g campGear) lines(members int) []string {
 		out = append(out, "  Iron cookpot: a multi-ingredient dish makes one extra portion.")
 	}
 	if g.Bells {
-		out = append(out, fmt.Sprintf("  Camp bells and trip lines: raiders are spotted (%d%% with no watch, +%d with one).", bellsOnlyPct, bellsBonusPct))
+		out = append(out, fmt.Sprintf("  Camp bells and trip lines: raiders are spotted (%d%% with no watch, +%d with one) and thieves keep out.", bellsOnlyPct, bellsBonusPct))
 	}
 	if g.Kit {
 		out = append(out, "  Field surgeon's kit: a healer with mana treats a lasting wound at the end of a rest.")
+	}
+	return out
+}
+
+// labels is one short label per piece of gear carried, for the web Camp
+// tab (Phase 40a4).
+func (g campGear) labels(members int) []string {
+	var out []string
+	if n := len(g.Bedrolls); n > 0 {
+		out = append(out, fmt.Sprintf("Bedrolls %d/%d", n, max(members, n)))
+	}
+	if g.Tent {
+		out = append(out, "Tent")
+	}
+	if g.FireSteel {
+		out = append(out, "Fire steel")
+	}
+	if g.Cookpot {
+		out = append(out, "Cookpot")
+	}
+	if g.Bells {
+		out = append(out, "Bells and trip lines")
+	}
+	if g.Kit {
+		out = append(out, "Surgeon's kit")
 	}
 	return out
 }

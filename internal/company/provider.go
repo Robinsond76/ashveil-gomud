@@ -240,6 +240,36 @@ func FieldSurgery(leaderUserID, kitItemID int) ([]string, bool) {
 	return sp.FieldSurgery(leaderUserID, kitItemID)
 }
 
+// TheftLoss is one kind of item a camp thief took, for the wake-up report.
+type TheftLoss struct {
+	ItemID int
+	Name   string
+	Count  int
+}
+
+// TheftProvider is optionally implemented by the registered
+// FormationProvider (Phase 40a4): thieves in a camp rest. Game loop only.
+type TheftProvider interface {
+	// CampTheft takes loose items from the company's cargo and its
+	// companions' packs: about sharePct percent of the eligible units, at
+	// least one and at most maxUnits, each picked with pick(n) (0..n-1).
+	// Never taken: equipped gear, the leader's own pack, quest tokens, keys
+	// and any item protect reports true for. Gold is untouched.
+	CampTheft(leaderUserID, sharePct, maxUnits int, pick func(n int) int, protect func(itemID int) bool) []TheftLoss
+}
+
+// CampTheft robs a company's camp; nothing without a provider.
+func CampTheft(leaderUserID, sharePct, maxUnits int, pick func(n int) int, protect func(itemID int) bool) []TheftLoss {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	tp, ok := p.(TheftProvider)
+	if !ok {
+		return nil
+	}
+	return tp.CampTheft(leaderUserID, sharePct, maxUnits, pick, protect)
+}
+
 // ChemistryProvider is optionally implemented by the registered
 // FormationProvider (Phase 24). modules/company runs on the game loop, so
 // call these from the game loop only.
@@ -408,8 +438,10 @@ type MemberView struct {
 	Level     int
 	Archetype string
 	// Class is its Phase 38b advanced or elite class id; blank before
-	// promotion.
-	Class string
+	// promotion. Alignment is its engine alignment (-100..100), which a
+	// promotion gate reads (Phase 38c1).
+	Class     string
+	Alignment int
 	// ExpInto and ExpTNL are the experience into the level and the span to
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int

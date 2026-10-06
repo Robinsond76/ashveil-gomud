@@ -229,10 +229,12 @@ func Decide(s Situation) Action {
 				return Action{Kind: Heal, Spell: sp.ID, Ally: worst}
 			}
 		}
-		if hurt >= 2 {
+		if hurt >= GroveHurt {
 			if sp, ok := affordable(UseGrove); ok {
 				return Action{Kind: Row, Spell: sp.ID, Ally: worst}
 			}
+		}
+		if hurt >= 2 {
 			if sp, ok := affordable(UseHealAll); ok {
 				return Action{Kind: HealAll, Spell: sp.ID}
 			}
@@ -320,6 +322,12 @@ const SummonFoes = 3
 // which a healer reaches for its heavy heal, and from which it prefers a
 // heal over time (Phase 38b).
 const (
+	// GroveHurt is how many hurt allies make a Grove's long chant worth it
+	// (Phase 38c1 review: two, now that a Grove chants 2 rounds and blooms).
+	GroveHurt = 2
+	// GroveBelow (thousandths of health) is the scratch an idle Elder Druid
+	// sows a Grove for (Phase 38c1 review).
+	GroveBelow   = 850
 	BigHealBelow = 400
 	RejuvAbove   = 350
 )
@@ -333,6 +341,24 @@ func idleHealer(s Situation, affordable func(Use) (Spell, bool)) Action {
 	}
 	spare := func(sp Spell) bool {
 		return s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana
+	}
+	// Phase 38c1 review: a Grove is a heal over time, so an Elder Druid
+	// sows it before anyone is in danger, on the most hurt of two or more
+	// scratched allies who carry no Rejuvenation.
+	if sp, ok := affordable(UseGrove); ok && spare(sp) {
+		scratched, worst := 0, -1
+		for i, a := range s.Allies {
+			if a.HP < 1 || a.Pending || a.Rejuv || a.HP*1000 >= GroveBelow*a.MaxHP {
+				continue
+			}
+			scratched++
+			if worst < 0 || fraction(a.HP, a.MaxHP) < fraction(s.Allies[worst].HP, s.Allies[worst].MaxHP) {
+				worst = i
+			}
+		}
+		if scratched >= 2 {
+			return Action{Kind: Row, Spell: sp.ID, Ally: worst}
+		}
 	}
 	if act, ok := tryBuffs(s, affordable, spare, UseWard, UseBark, UseBless); ok {
 		return act
