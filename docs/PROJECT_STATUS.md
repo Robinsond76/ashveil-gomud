@@ -19,7 +19,9 @@ accepted: `help equipmenttiers` said reach lets the second rank strike
 text) and the hunting crossbow called itself slow before 39h's reload.
 Upheld the rejection above: the tier 3-4 uniques carry large stat mods.
 Glaive and crossbow data match the neutral classes design; note for 39a,
-its kit's "padded jerkin" is the catalog padded jack (20163). Verification:
+its kit's "padded jerkin" is the catalog padded jack (20163). Known flake,
+not 36b's: 35b's `TestBattleEndPatchesTheCompany` fails about 1 run in 10
+on master too (the battle-end patch is sometimes skipped). Verification:
 `make generate`, `make validate`, `go test -race ./...`, `make js-lint`.
 
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
