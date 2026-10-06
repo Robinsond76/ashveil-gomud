@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
@@ -373,4 +374,32 @@ func TestCampCommandRoutesSuppliesAndPrepare(t *testing.T) {
 	assert.Contains(t, out, "Prepared supplies:")
 	assert.Contains(t, out, "camp supplies | camp prepare")
 	assert.Len(t, *calls, 1)
+}
+
+// 43a review: the broth is granted before the finished rest restores
+// vitals, so the drinker wakes at the raised limit instead of a limit no
+// road regeneration reaches.
+func TestBrothDrinkerWakesAtTheRaisedHealthLimit(t *testing.T) {
+	e, user := heroEnv(t)
+	stock{camping.BrothItemID: 1}.install(e.module)
+	e.module.inBattle = func(int) bool { return false }
+	ledgerGrant := e.module.grantBuff
+	e.module.grantBuff = func(c *characters.Character, id, rounds int) error {
+		if camping.IsBrothBuff(id) {
+			c.HealthMax.Value += camping.BrothTierFor(c.HealthMax.Value).Bonus
+		}
+		return ledgerGrant(c, id, rounds)
+	}
+	user.Character.HealthMax.Value = 30
+	user.Character.Health = 12
+	e.module.establish(user, eligibleRoom())
+	e.module.lightFire(user, eligibleRoom())
+	require.Contains(t, e.module.prepareCommand(user, eligibleRoom(), []string{"broth"}), "set by")
+	require.Contains(t, e.module.startRest(user, eligibleRoom()), "settle in")
+	*e.now = e.now.Add(camping.RestDuration)
+	e.scheduler.fireLatest()
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	require.Contains(t, *e.buffs, buffCall{"Hero", camping.BrothBuffs[0].BuffID})
+	assert.Equal(t, 32, user.Character.HealthMax.Value)
+	assert.Equal(t, 32, user.Character.Health, "the rest fills the drinker to the fortified limit")
 }

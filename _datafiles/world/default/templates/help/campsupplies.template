@@ -11,9 +11,9 @@ and never bought back (<ansi fg="command">help market</ansi>), and each one is u
   <ansi fg="yellow">Fortifying broth</ansi>     10 gold   one dose a member
   Raises one member's health limit by about 5% (at least 2), for 15
   minutes after a rest. It is set by before the rest and takes hold when the
-  rest is done: <ansi fg="command">camp prepare broth</ansi> [member]. It does not heal anyone; healing
-  can then reach the higher limit, and when it ends nobody is left above
-  their ordinary limit, and it cannot kill.
+  rest is done: <ansi fg="command">camp prepare broth</ansi> [member]. The finished rest fills the
+  drinker to the higher limit; when it ends nobody is left above their
+  ordinary limit, and it cannot kill.
 
   <ansi fg="yellow">Warming draught</ansi>      12 gold   one dose a member
   For 15 minutes, a quarter less cold exposure builds up on that member

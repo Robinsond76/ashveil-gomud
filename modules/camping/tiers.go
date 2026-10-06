@@ -234,6 +234,12 @@ func (m *CampingModule) grantPendingTiers() {
 		// besides a draught. campRest is true only for the save that
 		// cleared the rest's marker, so a rest refills once, even across
 		// a crash or copyover.
+		// Phase 43a: the rest's fortifying broth takes hold now that it is
+		// done, before the vitals are restored, so the drinkers wake to the
+		// raised limit (43a review: granted after, it filled nobody).
+		if campRest {
+			m.grantBroth(user, live)
+		}
 		if tier == camping.TierWellRested || campRest {
 			restoreVitals(user.Character, live)
 		}
@@ -251,10 +257,6 @@ func (m *CampingModule) grantPendingTiers() {
 			for _, line := range archetypes.CampIdentify(leaderUserID) {
 				user.SendText(line)
 			}
-		}
-		// Phase 43a: the rest's fortifying broth takes hold now that it is done.
-		if campRest {
-			m.grantBroth(user, live)
 		}
 		if campRest && m.autoSharpenOn(leaderUserID) {
 			if text := m.sharpen(user, true); text != "" {
