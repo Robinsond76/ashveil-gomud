@@ -591,7 +591,16 @@ target rule, Sweeper, Vanguard and Valkyrie routes open at any alignment
 (mob 130), `help halberdier` and `help halberdier-routes`. See the
 [plan](plans/2026-10-06-phase-39a-halberdier.md). Decisions: Sweep 90% after
 the balance run showed 80% lost five-foe groups; sprite deferred to 40s5.
-Independent review is the Opus review thread's.
+Review (2026-10-06): accepted: the strategy, company and GMCP displays
+listed Brace from level 1 though it comes at 3 (new `strategy.AtLevel`
+filters displays and battle alike; GMCP shows it disabled, "Comes at level
+3"); the level-up report now names Brace, Hook and the whole-row Sweep as
+they arrive; help said Brace waits only on Sweep's cooldown (it also braces
+when Sweep has no second foe); stale 80% comments. Checked and fine: mob
+130 is clear of master (max 97) and 39b (139); brace state clears with the
+fight's class state; no economy surface. Balance re-run (40 fights a cell):
+the Halberdier is within 5 points of the Warrior everywhere but level 20
+five-foe groups (90% vs 72%), its intended crowd strength; Sweep stays 90%.
 
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
