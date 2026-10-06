@@ -141,7 +141,7 @@ set gives a clear, readable class marker and camp state at 32 px; the gap is
 that S2 terrain must keep tiles quieter than units, and 40b should draw the
 here-ring and badge above terrain so the player's sprite never blends in.
 
-**Phase 37b built (2026-10-06, PR pending review):** encounter follow-ups.
+**Phase 37b complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39) (2026-10-06):** encounter follow-ups.
 Enemy healers: a Dark Forest goblin shaman band; both pilot zones now hold
 healer groups at one in six of their table (cap stays 20%). Boss respawn: a
 company, and its party, finds a lair quiet for 30 real minutes after beating
@@ -160,6 +160,23 @@ cooldown 30 minutes, party-wide, starts on the boss's fall, because a
 fled fight should not lock the lair; `kind` removed because nothing reads it.
 Deferred: tier-appropriate gear in the harness (needs item tiers in the
 mirror), durable groups, bad-luck protection.
+
+**37b review (2026-10-06):** accepted and fixed: (1) a member who beat the
+boss could join a party led by a fresh character and farm the lair again,
+because the quiet was checked for the leader only; it now holds while any
+party member's quiet runs (regression test). (2) Only the owner heard that
+the lair fell quiet; every member now does. (3) A player in a quiet lair had
+no way to see why or for how long; `look` and `scout` now say how many
+minutes remain, and `help encounters` says so. (4) The admin config hint
+still said the span ships at 16. Verified, no change: the narration golden
+differs only by the span (regenerated at span 14 it matches master byte for
+byte); the span 8 gradient holds at higher bands (6-fight samples: band
+25-27 and 35-37 at-band 100% wins, two under 79-83%, five under 41-45%), so
+casters' lower rates saturating the edge at high levels does not break
+at-level fights. Follow-ups: the rating uses the player's own level, not a
+company average; the web header's rating refreshes only on the next room
+update after a level-up; boss quiet is keyed by composition id, so two zones
+sharing a lair id would share it.
 
 **Phase 37 complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) (2026-10-06):** Dark Forest (band 5-7) and the
 Catacombs (band 10-12) spring 2-3 foe battles (sometimes 4) in opted-in

@@ -349,6 +349,11 @@ func Rating(level int, b Band) string {
 	return RatingDangerous
 }
 
+// LairQuiet is how much longer the lair in roomID stays quiet for the
+// user's company after it beat the boss there (zero when it is not quiet).
+// The encounters module sets it; look and scout read it.
+var LairQuiet func(userID, roomID int) time.Duration
+
 // Available drops the boss compositions the cooling predicate holds back,
 // leaving ordinary ones. It never changes the table's own slice.
 func Available(table []Composition, cooling func(id string) bool) []Composition {

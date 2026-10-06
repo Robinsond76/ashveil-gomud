@@ -3,6 +3,7 @@ package usercommands
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -102,4 +103,42 @@ func TestLookShowsTheZoneBand(t *testing.T) {
 	events.ProcessEvents()
 	out := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
 	assert.Contains(t, out, "Foes in Band Look Wilds are of levels 5 to 7. Your company should manage.")
+}
+
+// TestLookAndScoutSayHowLongALairStaysQuiet (37b review): a lair the
+// company emptied tells look and scout how long it stays quiet.
+func TestLookAndScoutSayHowLongALairStaysQuiet(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "lairwood", Name: "Lair Wood", Symbol: "l", LitArea: true})
+	t.Cleanup(func() { rooms.RemoveTestBiome("lairwood") })
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	user := users.NewUserRecord(96905, 1)
+	users.SetTestUser(user)
+	room := &rooms.Room{RoomId: 96905, Zone: "Lair Look Wilds", Biome: "lairwood", Encounter: &encounters.RoomSetting{Enabled: true, Table: "lair"}}
+	rooms.SetTestRoom(room)
+	t.Cleanup(func() { rooms.RemoveTestRoom(96905) })
+	room.SetTestOccupants([]int{96905}, nil)
+
+	prev := encounters.LairQuiet
+	t.Cleanup(func() { encounters.LairQuiet = prev })
+	left := 90 * time.Second
+	encounters.LairQuiet = func(userID, roomID int) time.Duration {
+		if userID == 96905 && roomID == 96905 {
+			return left
+		}
+		return 0
+	}
+	assert.Contains(t, scoutList(room, user), "Your company emptied this lair: its master will not rise here for you for about 2 minutes.")
+
+	messages := captureLookMessages(t)
+	_, err := Look("", user, room, events.CmdSecretly)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	out := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
+	assert.Contains(t, out, "for about 2 minutes.")
+
+	left = 0
+	assert.NotContains(t, scoutList(room, user), "emptied this lair", "an awake lair says nothing")
 }

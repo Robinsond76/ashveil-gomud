@@ -2,8 +2,10 @@ package usercommands
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/encounters"
+	"math"
 	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -73,6 +75,9 @@ func scoutList(room *rooms.Room, user *users.UserRecord) string {
 		if room.Encounter != nil && room.Encounter.Enabled {
 			out := `You see no enemies here, but the place feels dangerous: a fight could find you.`
 			if note := zoneBandNote(user, room); note != `` {
+				out += ` ` + note
+			}
+			if note := lairNote(user, room); note != `` {
 				out += ` ` + note
 			}
 			return out
@@ -206,4 +211,23 @@ func zoneBandNote(user *users.UserRecord, room *rooms.Room) string {
 		}
 	}
 	return out
+}
+
+// lairNote says how much longer a lair the viewer's company emptied stays
+// quiet (37b), so a quiet lair reads as earned rather than broken. Empty
+// anywhere else.
+func lairNote(user *users.UserRecord, room *rooms.Room) string {
+	if user == nil || room == nil || encounters.LairQuiet == nil {
+		return ``
+	}
+	left := encounters.LairQuiet(user.UserId, room.RoomId)
+	if left <= 0 {
+		return ``
+	}
+	minutes := int(math.Ceil(left.Minutes()))
+	unit := `minutes`
+	if minutes == 1 {
+		unit = `minute`
+	}
+	return fmt.Sprintf(`Your company emptied this lair: its master will not rise here for you for about %d %s.`, minutes, unit)
 }

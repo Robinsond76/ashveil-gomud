@@ -628,9 +628,9 @@ func TestBossLairStaysQuietAfterTheBossFalls(t *testing.T) {
 	reborn.store = store
 	reborn.clock = w.m.clock
 	reborn.load()
-	assert.True(t, reborn.bossCoolingLocked(userID, "ogre-court"))
+	assert.Positive(t, reborn.bossCoolingLocked(userID, "ogre-court"))
 	w.now = w.now.Add((encounters.BossRespawnSeconds + 1) * time.Second)
-	assert.False(t, reborn.bossCoolingLocked(userID, "ogre-court"))
+	assert.Zero(t, reborn.bossCoolingLocked(userID, "ogre-court"))
 	w.back(t)
 	w.m.graces[userID] = encounters.Grace{}
 	w.walk(t, "up")
@@ -653,8 +653,45 @@ func TestBossCooldownCoversThePartyAndPurgeForgetsIt(t *testing.T) {
 		mobs.GetInstance(r.Foes[0]).Character.Health = 0
 	}
 	w.m.settleLocked(false)
-	assert.True(t, w.m.bossCoolingLocked(userID, "ogre-court"))
-	assert.True(t, w.m.bossCoolingLocked(userID+1, "ogre-court"), "a party cannot rotate its leader to farm the boss")
+	assert.Positive(t, w.m.bossCoolingLocked(userID, "ogre-court"))
+	assert.Positive(t, w.m.bossCoolingLocked(userID+1, "ogre-court"), "a party cannot rotate its leader to farm the boss")
+	assert.Equal(t, encounters.BossRespawnSeconds*time.Second, w.m.LairQuiet(userID+1, lairRm), "look and scout can say how long")
+	assert.Zero(t, w.m.LairQuiet(userID+1, startRm), "an ordinary room has no lair to be quiet")
+	p.Disband()
+	delete(w.m.bosses, userID+1)
 	w.m.onUserPurged(events.UserPurged{UserId: userID})
-	assert.False(t, w.m.bossCoolingLocked(userID, "ogre-court"))
+	assert.Zero(t, w.m.bossCoolingLocked(userID, "ogre-court"))
+}
+
+// 37b review: a member who beat the boss keeps the lair quiet for any party
+// they join, so handing the lead to a fresh character cannot farm it.
+func TestBossCooldownFollowsTheKillerIntoANewParty(t *testing.T) {
+	w := setup(t)
+	fresh := users.NewUserRecord(userID+1, userID+1)
+	fresh.Character.Name = "Fresh"
+	fresh.Character.Health = 50
+	fresh.Character.RoomId = startRm
+	users.SetTestUser(fresh)
+	w.walk(t, "up")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		mobs.GetInstance(r.Foes[0]).Character.Health = 0
+	}
+	w.m.settleLocked(false)
+	w.user.Character.RoomId = startRm
+	w.m.settleLocked(true)
+	require.Empty(t, w.m.active)
+	require.Zero(t, w.m.bossCoolingLocked(userID+1, "ogre-court"), "the fresh character never fought it")
+
+	p := parties.New(userID + 1)
+	p.InvitePlayer(userID)
+	p.AcceptInvite(userID)
+	require.True(t, p.IsLeader(userID+1))
+	assert.Positive(t, w.m.bossCoolingLocked(userID+1, "ogre-court"), "the killer's quiet follows them")
+	for i := 0; i < 10; i++ {
+		w.m.graces[userID+1] = encounters.Grace{}
+		fresh.Character.RoomId = lairRm
+		w.m.Entered(userID+1, lairRm)
+	}
+	assert.Empty(t, w.m.active, "the new leader cannot wake the lair while the killer rides along")
 }

@@ -67,3 +67,12 @@ lost, median rounds, seconds. Compare [phase 37](2026-10-06-phase-37-measurement
 - Cleric mana still runs dry around fight 3; pacing (rest points) covers it.
 - Harness cells in tier-appropriate gear were not built (the harness mirror
   has no item tiers); deferred, see PROJECT_STATUS.
+
+## Review check at higher bands (span 8, 6 fights per cell)
+
+| Band | At band (ordinary) | Under 2 | Under 3 | Under 5 |
+|---|---|---|---|---|
+| 25-27 | 100% | 83% | 70% | 41% |
+| 35-37 | 100% | 79% | 70% | 45% |
+
+Span 14 at band 25-27 for comparison: under 2 100%, under 5 79%.

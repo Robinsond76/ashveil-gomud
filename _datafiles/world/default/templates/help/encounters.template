@@ -51,7 +51,10 @@ normal battle begins with your company set up as it is.
   Beat the boss and its lair falls quiet for your company, and for your
   party, for about half an hour of real time: no boss springs there until
   it has passed, so a lair cannot be farmed. It is saved, so a restart
-  does not wake it early. Fleeing or losing starts no wait.
+  does not wake it early. Fleeing or losing starts no wait. While it is
+  quiet, <ansi fg="command">look</ansi> and <ansi fg="command">scout</ansi> in the lair say how many minutes are left.
+  The wait follows each member who beat the boss, so changing who leads
+  the party does not wake it.
 
 <ansi fg="yellow-bold">Whose fight it is</ansi>
   The foes are set on your company alone. They stand in the room where

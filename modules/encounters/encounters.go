@@ -129,6 +129,7 @@ func init() {
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	walking.AddStepListener(m.onStep)
 	walking.AddArrivalListener(m.onArrival)
+	encounters.LairQuiet = m.LairQuiet
 }
 
 func newModule() *EncountersModule {
@@ -250,7 +251,7 @@ func (m *EncountersModule) Entered(userID, roomID int) {
 	}
 	table := zone.Tables[room.Encounter.Table]
 	// A lair that this company emptied lately stays quiet (37b).
-	table = encounters.Available(table, func(id string) bool { return m.bossCoolingLocked(userID, id) })
+	table = encounters.Available(table, func(id string) bool { return m.bossCoolingLocked(userID, id) > 0 })
 	if len(table) == 0 {
 		return
 	}
@@ -380,11 +381,54 @@ func (m *EncountersModule) settleLocked(battleJustEnded bool) {
 	}
 }
 
-// bossCoolingLocked reports whether the user's lair for composition id is
-// still quiet.
-func (m *EncountersModule) bossCoolingLocked(userID int, id string) bool {
-	ready, ok := m.bosses[userID][id]
-	return ok && m.clock().Before(ready)
+// companyLocked is who shares a lair's quiet with the user: the user's
+// party, or the user alone.
+func companyLocked(userID int) []int {
+	p := parties.Get(userID)
+	if p == nil {
+		return []int{userID}
+	}
+	holders := p.GetMembers()
+	if !p.IsMember(userID) {
+		holders = append(holders, userID)
+	}
+	return holders
+}
+
+// bossCoolingLocked is how much longer the lair for composition id stays
+// quiet for the user's company: the longest wait any party member holds,
+// so swapping who leads cannot wake a lair one of them emptied.
+func (m *EncountersModule) bossCoolingLocked(userID int, id string) time.Duration {
+	now := m.clock()
+	var longest time.Duration
+	for _, uid := range companyLocked(userID) {
+		if ready, ok := m.bosses[uid][id]; ok && now.Before(ready) {
+			longest = max(longest, ready.Sub(now))
+		}
+	}
+	return longest
+}
+
+// LairQuiet is how much longer the lair in roomID stays quiet for the
+// user's company (zero when it is not quiet or the room has no lair).
+func (m *EncountersModule) LairQuiet(userID, roomID int) time.Duration {
+	room := rooms.LoadRoom(roomID)
+	if room == nil || room.Encounter == nil || !room.Encounter.Enabled {
+		return 0
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	zone, ok := m.zoneTables(room.Zone)
+	if !ok {
+		return 0
+	}
+	var longest time.Duration
+	for _, c := range zone.Tables[room.Encounter.Table] {
+		if c.Boss {
+			longest = max(longest, m.bossCoolingLocked(userID, c.ID))
+		}
+	}
+	return longest
 }
 
 // noteBossFallenLocked starts the lair's cooldown for the owner and the
@@ -399,13 +443,7 @@ func (m *EncountersModule) noteBossFallenLocked(r *record, now time.Time) {
 	}
 	r.cooled = true
 	ready := now.Add(encounters.BossRespawnSeconds * time.Second)
-	holders := []int{r.Owner}
-	if p := parties.Get(r.Owner); p != nil {
-		holders = p.GetMembers()
-		if !p.IsMember(r.Owner) {
-			holders = append(holders, r.Owner)
-		}
-	}
+	holders := companyLocked(r.Owner)
 	for _, uid := range holders {
 		if m.bosses[uid] == nil {
 			m.bosses[uid] = map[string]time.Time{}
@@ -420,8 +458,10 @@ func (m *EncountersModule) noteBossFallenLocked(r *record, now time.Time) {
 	if err := m.saveLocked(); err != nil {
 		mudlog.Warn("encounters: save boss cooldown", "user", r.Owner, "error", err)
 	}
-	if user := users.GetByUserId(r.Owner); user != nil {
-		user.SendText(`<ansi fg="yellow">The lair falls quiet. Nothing more will stir here for about half an hour.</ansi>`)
+	for _, uid := range holders {
+		if user := users.GetByUserId(uid); user != nil {
+			user.SendText(`<ansi fg="yellow">The lair falls quiet. Its master will not rise here again for your company for about half an hour.</ansi>`)
+		}
 	}
 }
 

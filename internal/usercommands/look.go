@@ -622,6 +622,9 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	if note := zoneBandNote(user, room); note != `` {
 		user.SendText(`<ansi fg="yellow">` + note + `</ansi>`)
 	}
+	if note := lairNote(user, room); note != `` {
+		user.SendText(`<ansi fg="yellow">` + note + `</ansi>`)
+	}
 
 	// Purely additive: the sky as seen from this room (weather, or a glimpse
 	// through an exit when indoors, plus the moon at night), never replacing
