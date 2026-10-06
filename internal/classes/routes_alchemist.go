@@ -31,7 +31,7 @@ func init() {
 		Ranks: []Rank{
 			rank(10, "Hotter flasks", "Fire Flask burns at 100% of Sparks (from 70%)", FlaskFire, 43),
 			rank(15, "Wide throw", "Fire Flask reaches one more foe", FlaskReach, 1),
-			rank(20, "Pitch and tar", "foes a Fire Flask burns are left alight (2 damage a round for 3 rounds)", FlaskBurn, 1),
+			rank(20, "Pitch and tar", "foes a Fire Flask burns are left alight (2 damage a round for 4 rounds)", FlaskBurn, 1),
 			rank(25, "Deep satchel", "+4 flasks in the satchel", FlaskCap, 4),
 		}})
 	register(Class{ID: "grenadier", Name: "Grenadier", Lineage: "alchemist", Tier: TierElite, Parent: "bombardier", Gate: GateAny,

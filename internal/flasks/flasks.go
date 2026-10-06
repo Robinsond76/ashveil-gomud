@@ -115,6 +115,11 @@ func Brew(leader *characters.Character, chars []*characters.Character) ([]items.
 	used := 0
 	for i, c := range chars {
 		out[i].Char = c
+		// A satchel that shrank (a rank or talent changed) is never owed
+		// more than it holds.
+		if IsAlchemist(c) {
+			c.FlasksSpent = min(c.FlasksSpent, Capacity(c))
+		}
 		n := min(Missing(c), have-used)
 		if n < 1 {
 			continue

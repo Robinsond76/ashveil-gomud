@@ -85,3 +85,15 @@ func TestTakeReagentsLeavesOtherItemsAlone(t *testing.T) {
 	assert.Len(t, TakeReagents(c, 9), 2)
 	assert.Len(t, c.Items, 1)
 }
+
+// 39g review: a satchel that shrank (a talent or rank lost) brews back to
+// full, not to a satchel still owed flasks it can no longer hold.
+func TestBrewFillsAShrunkSatchel(t *testing.T) {
+	c := withReagents(alchemist(1), 10)
+	c.FlasksSpent = 10 // thrown from a deeper satchel than the 6 it holds now
+	taken, out := Brew(c, []*characters.Character{c})
+	assert.Len(t, taken, 6)
+	assert.Equal(t, 6, out[0].Brewed)
+	assert.Zero(t, c.FlasksSpent)
+	assert.Equal(t, 6, Remaining(c))
+}

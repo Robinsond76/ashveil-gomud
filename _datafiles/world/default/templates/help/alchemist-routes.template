@@ -18,7 +18,7 @@ classes, and any alignment may choose any of them. Each class adds four ranks
   10 Hotter flasks      Fire Flask burns at 100% of Sparks (from 70%)
   15 Wide throw         Fire Flask reaches one more foe
   20 Pitch and tar      foes a Fire Flask burns are left alight (2 damage a round
-                        for 3 rounds)
+                        for 4 rounds)
   25 Deep satchel       +4 flasks in the satchel
 
 <ansi fg="yellow-bold">Mutagenist</ansi>
