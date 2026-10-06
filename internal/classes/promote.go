@@ -103,6 +103,36 @@ func nameOr(id string) string {
 	return id
 }
 
+// RanksGained are the ranks a character of a lineage and class earned
+// between two levels (above from, up to and including to): its lineage's base
+// ranks, then its route's. The level-up report names them (39b review), so a
+// player sees what a rank just gave, not only the next one.
+func RanksGained(lineageID, classID string, from, to int) []Rank {
+	var out []Rank
+	for _, r := range BaseRanks(lineageID) {
+		if r.Level > from && r.Level <= to {
+			out = append(out, r)
+		}
+	}
+	if classID != "" {
+		for _, r := range RanksReached(classID, to) {
+			if r.Level > from {
+				out = append(out, r)
+			}
+		}
+	}
+	return out
+}
+
+// RankLines are RanksGained as level-up report lines.
+func RankLines(lineageID, classID string, from, to int) []string {
+	var out []string
+	for _, r := range RanksGained(lineageID, classID, from, to) {
+		out = append(out, fmt.Sprintf("New rank: %s, %s.", r.Name, r.Text))
+	}
+	return out
+}
+
 // Milestone describes what a character at a level gains next on its way,
 // for the level-up report: the next talent, promotion or rank, with
 // everything that arrives at the same level.

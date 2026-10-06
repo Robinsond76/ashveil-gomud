@@ -381,3 +381,20 @@ func TestMilestoneForNamesTheNextBaseRank(t *testing.T) {
 	assert.Equal(t, "Next: a rank (Zanshin) at level 8.", MilestoneFor("samurai", "", 5))
 	assert.Equal(t, "Next: a talent at level 5.", MilestoneFor("warrior", "", 3), "other lineages have no base ranks")
 }
+
+// 39b review: the level-up report names the ranks the new levels gave,
+// base ranks and route ranks alike, each once.
+func TestRanksGainedBetweenLevels(t *testing.T) {
+	names := func(rs []Rank) (out []string) {
+		for _, r := range rs {
+			out = append(out, r.Name)
+		}
+		return
+	}
+	assert.Equal(t, []string{"Focus"}, names(RanksGained("samurai", "", 2, 3)))
+	assert.Equal(t, []string{"Focus", "Zanshin"}, names(RanksGained("samurai", "", 1, 9)))
+	assert.Empty(t, RanksGained("samurai", "", 3, 4))
+	assert.Equal(t, []string{"Clean cut"}, names(RanksGained("samurai", "kensai", 14, 15)))
+	assert.Empty(t, RanksGained("warrior", "", 1, 9))
+	assert.Equal(t, []string{"New rank: Focus, +3% critical chance for each round in which no blow lands on it, up to +9%; a blow that lands resets it."}, RankLines("samurai", "", 2, 3))
+}

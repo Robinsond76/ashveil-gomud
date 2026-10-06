@@ -44,7 +44,8 @@ until then.
 A rank is a gift that arrives at a set level: a new spell, a bigger number, a
 new way to fight. Ranks are gained automatically and stack up along a route,
 so an elite class keeps its advanced class's ranks. The level-up report names
-the next rank, talent or promotion. Spells a rank teaches are learned as soon
+each rank you just reached and what it does, then the next rank, talent or
+promotion. Spells a rank teaches are learned as soon
 as you reach it.
 
 Routes in depth: <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help summoning</ansi>.
