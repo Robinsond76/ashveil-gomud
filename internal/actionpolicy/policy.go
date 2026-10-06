@@ -19,12 +19,26 @@ func InBattle(u *users.UserRecord) bool {
 	if _, ok := battle.Current(u.UserId); ok {
 		return true
 	}
-	a := u.Character.Aggro
-	if a != nil && a.MobInstanceId > 0 && a.ExitName == "" {
-		return true
-	}
+	return AimedAtMob(u)
+}
 
-	return false
+// AimedAtMob reports whether the player is aimed at a mob in the room: a
+// battle about to begin. An aim at a foe already slain is not one: the last
+// blow of a fight kills its target and ends the battle that round, but the
+// player's aim is only cleared by the next round's combat, and until then a
+// finished fight kept answering "The battle is under way" (phase 44 follow-up).
+func AimedAtMob(u *users.UserRecord) bool {
+	if u == nil || u.Character == nil {
+		return false
+	}
+	a := u.Character.Aggro
+	if a == nil || a.MobInstanceId <= 0 || a.ExitName != "" {
+		return false
+	}
+	if m := mobs.GetInstance(a.MobInstanceId); m != nil && m.Character.Health < 1 {
+		return false
+	}
+	return true
 }
 
 func Management(command string) bool {

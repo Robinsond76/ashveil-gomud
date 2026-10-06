@@ -221,7 +221,16 @@ func (m *ArchetypeModule) ChooseAtCreation(userID int, archetypeID string) (stri
 	if user == nil {
 		return "", false
 	}
-	return m.chooseResult(user, archetypeID, true)
+	text, ok := m.chooseResult(user, archetypeID, true)
+	if ok {
+		// A new character is made with the engine's flat 10 health, but the
+		// archetype's own rates and head start set the real maximum: start
+		// at full health, not at a fraction of it (phase 44b live finding: a
+		// warrior that skipped the tutorial woke at 11/59).
+		user.Character.RecalculateStats()
+		user.Character.Health = user.Character.HealthLimit()
+	}
+	return text, ok
 }
 
 // healthLine states an archetype's live HP rates, head start and skill

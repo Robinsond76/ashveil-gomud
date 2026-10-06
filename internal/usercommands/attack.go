@@ -356,8 +356,7 @@ func InBattle(user *users.UserRecord) bool { return actionpolicy.InBattle(user) 
 // fightingMob reports whether the player is already aimed at a mob, a
 // battle about to begin.
 func fightingMob(user *users.UserRecord) bool {
-	a := user.Character.Aggro
-	return a != nil && a.MobInstanceId > 0 && a.ExitName == `` // a shot into the next room is no battle (32d review)
+	return actionpolicy.AimedAtMob(user) // a shot into the next room, or at a foe already slain, is no battle (32d review; 44b)
 }
 
 // battleGroup is the player's battle's group in the room.

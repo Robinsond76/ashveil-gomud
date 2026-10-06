@@ -31,6 +31,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/loot"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -732,7 +733,7 @@ func itemName(id int) string {
 func named(id, count int) string {
 	name := itemName(id)
 	if count > 1 {
-		name = fmt.Sprintf("%d %s", count, name)
+		name = fmt.Sprintf("%d %s", count, mobparty.Plural(name))
 	}
 	return fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, name)
 }

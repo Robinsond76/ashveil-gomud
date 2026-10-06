@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -109,4 +110,28 @@ func TestOutOfBattleTheCommandsWork(t *testing.T) {
 	out = heard(t, func() { _, _ = Drink("waterskin", user, room, 0) })
 	assert.NotContains(t, out, "battle")
 	assert.Equal(t, 1, user.Character.Items[0].Uses, "drank")
+}
+
+// Phase 44b: the last blow of a fight kills its target and ends the battle
+// that round, but the player's aim is only cleared by the next round's
+// combat. Until then a finished fight kept answering "The battle is under
+// way" to loot, go, eat and the rest.
+func TestAimAtASlainFoeIsNoBattle(t *testing.T) {
+	user := users.NewUserRecord(21, 1)
+	users.SetTestUser(user)
+	t.Cleanup(func() { users.RemoveTestUser(21) })
+	battle.Reset()
+	t.Cleanup(battle.Reset)
+	foe := &mobs.Mob{InstanceId: 9021, Character: *characters.New()}
+	foe.Character.Health = 10
+	mobs.SetTestInstance(foe)
+	t.Cleanup(func() { mobs.RemoveTestInstance(9021) })
+
+	user.Character.SetAggro(0, foe.InstanceId, characters.DefaultAttack)
+	assert.True(t, InBattle(user), "aimed at a living foe: a battle about to begin")
+	assert.True(t, fightingMob(user))
+
+	foe.Character.Health = 0
+	assert.False(t, InBattle(user), "the foe is slain: nothing is under way")
+	assert.False(t, fightingMob(user))
 }
