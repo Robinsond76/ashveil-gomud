@@ -5,6 +5,7 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -124,4 +125,35 @@ func TestCompanionCarry(t *testing.T) {
 	assert.Nil(t, module.CompanionCarry(8), "no company")
 	module.loadErr = assert.AnError
 	assert.Nil(t, module.CompanionCarry(7), "an unreadable company carries nothing")
+}
+
+// Phase 47: a companion one move behind its leader (mid-step, mid-camp-break)
+// still carries its share in unified-cargo mode, so the leader's capacity
+// does not dip and flash Overloaded; one farther away does not.
+func TestCompanionCarryCountsTrailingCompanions(t *testing.T) {
+	satchel := pack(t, 988031, 5000)
+	state := domain.MemberState{Level: 1, Items: []items.Item{satchel}}
+	state.Equipment.Pack = satchel
+	u := users.NewUserRecord(7, 1)
+	u.Character.CompanyCargo = true
+	users.SetTestUser(u)
+	t.Cleanup(func() { users.RemoveTestUser(7) })
+	runtime := &fakeRuntime{
+		live:      map[int]bool{701: true, 702: true},
+		liveState: map[int]domain.MemberState{701: state, 702: state},
+		away:      map[int]bool{701: true, 702: true},
+		trailing:  map[int]bool{701: true},
+		vitals:    map[int][2]int{701: {10, 10}, 702: {10, 10}},
+	}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58},
+		}},
+	}}, runtime)
+	module.setInstance(7, 1, 701)
+	module.setInstance(7, 2, 702)
+	assert.Len(t, module.CompanionCarry(7), 1, "only the companion one move behind")
+	runtime.away[701] = false
+	runtime.away[702] = false
+	assert.Len(t, module.CompanionCarry(7), 2, "both with the leader")
 }

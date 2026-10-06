@@ -220,6 +220,8 @@ type fakeRuntime struct {
 	strength map[int]int
 	// away marks live instances not in their leader's room (32f review).
 	away map[int]bool
+	// trailing marks away instances only one move behind (47).
+	trailing map[int]bool
 	// Phase 33h1: the growth each spawn received and each live retrain.
 	spawnedGrowth []domain.GrowthWeights
 	retrained     map[int]domain.GrowthWeights
@@ -360,6 +362,9 @@ func (f *fakeRuntime) TemplateState(int) (domain.MemberState, bool) {
 func (f *fakeRuntime) IsLive(instanceID int) bool { return f.live[instanceID] }
 func (f *fakeRuntime) WithLeader(_ int, instanceID int) bool {
 	return f.live[instanceID] && !f.away[instanceID]
+}
+func (f *fakeRuntime) Trailing(_ int, instanceID int) bool {
+	return f.live[instanceID] && (!f.away[instanceID] || f.trailing[instanceID])
 }
 func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool {
 	return f.live[instanceID] && !f.stolen[instanceID]
