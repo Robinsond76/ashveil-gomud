@@ -1,0 +1,10 @@
+itemid: 48
+name: iron cookpot
+namesimple: cookpot
+description: A squat iron pot with a bail handle. Over a camp fire it stretches any
+  dish made from more than one ingredient into a second portion (camp cook). Never
+  wears out (help camp gear).
+type: object
+subtype: mundane
+value: 12
+weight: 3000

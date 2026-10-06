@@ -48,6 +48,9 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
 await page.goto(process.env.DOCK_HARNESS_URL || 'file://' + path.join(here, 'dock-windows-harness.html'));
 await page.evaluate(() => localStorage.clear());
+// The battle screen (40f) opens over the dock on every battle and would
+// cover the Combat tab checked here; battle-check.mjs covers the screen.
+await page.evaluate(() => localStorage.setItem('ashveil-battle-screen', 'manual'));
 await page.reload();
 
 // --- Task 8: the vitals strip ---
@@ -294,8 +297,12 @@ check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 25, rest_seconds: 45, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Meal"]' && await page.getByRole('progressbar', { name: 'Rest' }).count() === 1, 'resting: the progress bar, no Rest or Break');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Resting: 45s left.'), 'the time left');
-await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
-check(JSON.stringify(await campButtons()) === '["Break camp","Meal"]' && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('has rested at this camp'), 'after a rest: no Rest (review finding 7)');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: false, embers: true, tent: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Feed fire","Break camp","Meal"]' && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('burned to embers'), 'after a rest: embers, Feed fire, no Rest until fed (40a3)');
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('oiled canvas tent'), 'a pitched tent shows (40a3)');
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '40a3-camp-embers.png') }); }
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: false, room: 'A Clearing', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true }));
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Your camp is at A Clearing.') && JSON.stringify(await campButtons()) === '["Meal","Inn"]', 'a camp elsewhere; an inn here');
 got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Inn' }).click(); });
@@ -561,7 +568,7 @@ const focused = JSON.parse(JSON.stringify(next));
 Object.assign(focused, { focus: 'none', saved_focus: 'none', focus_ready: true });
 await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
 const bar = page.getByRole('group', { name: 'Company focus' });
-check(await bar.getByRole('button').count() === 7, 'seven focus buttons');
+check(await bar.getByRole('button').count() === 8, 'eight focus buttons');
 check((await page.locator('.cbt-focus [aria-pressed="true"]').allTextContents()).join() === 'none', 'the current focus is pressed');
 got = await sentNow(async () => { await page.locator('.cbt-focus [data-focus="leader"]').click(); });
 check(JSON.stringify(got) === '["company tactics focus leader"]', 'a focus button sends the order');
