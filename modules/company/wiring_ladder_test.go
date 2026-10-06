@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

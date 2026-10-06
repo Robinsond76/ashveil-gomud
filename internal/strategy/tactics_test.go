@@ -81,8 +81,8 @@ func TestParseFocus(t *testing.T) {
 			t.Errorf("ParseFocus(%q) should refuse", in)
 		}
 	}
-	if len(FocusRules) != 7 || FocusRules[0] != NoFocus {
-		t.Errorf("seven focus values, none first: %v", FocusRules)
+	if len(FocusRules) != 8 || FocusRules[0] != NoFocus {
+		t.Errorf("eight focus values, none first: %v", FocusRules)
 	}
 }
 
