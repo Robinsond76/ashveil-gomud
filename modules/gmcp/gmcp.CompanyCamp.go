@@ -40,6 +40,20 @@ type campPayload struct {
 	// Phase 49: the company's latest exchange (camp talk or after a
 	// battle), shown on the Camp tab; absent before the first.
 	Banter []banterLine `json:"banter,omitempty"`
+	// Phase 51: the rest duty of each member at the camp, and whether a
+	// running rest has fixed them.
+	Duties       []dutyRow `json:"duties"`
+	DutiesLocked bool      `json:"duties_locked"`
+}
+
+// dutyRow is one member's rest duty for the Camp tab's picker. Command is
+// the word "camp duties" takes for the member.
+type dutyRow struct {
+	Key     string   `json:"key"`
+	Name    string   `json:"name"`
+	Command string   `json:"command"`
+	Duty    string   `json:"duty"`
+	Options []string `json:"options"`
 }
 
 type banterLine struct {
@@ -70,7 +84,11 @@ func campPayloadOf(s camping.CampState) campPayload {
 	if prepared == nil {
 		prepared = []string{}
 	}
-	return campPayload{Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	duties := make([]dutyRow, 0, len(s.Duties))
+	for _, d := range s.Duties {
+		duties = append(duties, dutyRow{Key: d.Key, Name: d.Name, Command: d.Command, Duty: d.Duty, Options: d.Options})
+	}
+	return campPayload{Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

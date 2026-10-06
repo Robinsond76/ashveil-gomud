@@ -14,6 +14,16 @@ and 70% of it).
   Fatigue still recovers, but nobody is Rested and there is no Forage
   or Vigil from that rest.
 
+<ansi fg="yellow-bold">Watch duty</ansi>
+
+  Any member can also take the watch duty (<ansi fg="command">camp duties [member] watch</ansi>,
+  <ansi fg="command">help camp duties</ansi>). Every watcher adds a chance of their own, their Camp
+  Watch level at 25% a level and never less than 20%, and they stack with
+  each other and with the specialist: two watchers spot raiders more often
+  than one. The chance that at least one of them spots the raiders is the
+  chance the camp has. A watcher stays up, so misses the Rested buff and
+  ends the rest no better than Ready.
+
 Camp bells and trip lines (<ansi fg="command">help camp gear</ansi>) spot raiders too: with no watch
 posted they give a flat 20% chance, and with a watch they add 10 points to
 its chance, up to 90%. A rest uses them a little, and after ten rests they

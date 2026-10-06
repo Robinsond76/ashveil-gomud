@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -49,8 +50,11 @@ type campRecipe struct {
 
 // campSettings is 33f3's configuration.
 type campSettings struct {
-	Raids              map[string]campRaid
-	WatchPctPerLevel   int
+	Raids            map[string]campRaid
+	WatchPctPerLevel int
+	// WatcherBasePct (Phase 51) is the least a member on the watch duty
+	// adds to the chance of spotting raiders, whatever their eye.
+	WatcherBasePct     int
 	RaidEarliestPct    int
 	RaidLatestPct      int
 	VigilCap           int
@@ -71,6 +75,7 @@ func defaultCampSettings() campSettings {
 	return campSettings{
 		Raids:              map[string]campRaid{},
 		WatchPctPerLevel:   25,
+		WatcherBasePct:     20,
 		RaidEarliestPct:    30,
 		RaidLatestPct:      70,
 		VigilCap:           60,
@@ -149,6 +154,7 @@ func parseCampSettings(get func(string) any) campSettings {
 		}
 	}
 	pct("WatchPctPerLevel", &s.WatchPctPerLevel, 0, 100)
+	pct("WatcherBasePct", &s.WatcherBasePct, 0, 100)
 	pct("RaidEarliestPct", &s.RaidEarliestPct, 0, 100)
 	pct("RaidLatestPct", &s.RaidLatestPct, 0, 100)
 	if s.RaidLatestPct < s.RaidEarliestPct {
@@ -255,11 +261,13 @@ func (m *CampingModule) fireDueRaids() {
 	due := map[int]int{} // leader -> camp room
 	strung := map[int]bool{}
 	incense := map[int]bool{}
+	dutied := map[int]map[string]string{}
 	for leaderUserID, camp := range m.camps {
 		if camp.Rest != nil && camp.Rest.RaidDue(now) {
 			due[leaderUserID] = camp.RoomID
 			strung[leaderUserID] = camp.Rest.Bells
 			incense[leaderUserID] = camp.Rest.Incense
+			dutied[leaderUserID] = camp.Rest.Duties
 		}
 	}
 	m.mu.Unlock()
@@ -287,6 +295,11 @@ func (m *CampingModule) fireDueRaids() {
 		watchPct := 0
 		if hasWatch {
 			watchPct = archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
+		}
+		// Phase 51: every member on the watch duty adds their own chance
+		// (a member who is also the specialist counts once, by their duty).
+		if present {
+			watch, hasWatch, watchPct = m.addDutyWatchers(leader, dutied[leaderUserID], watch, hasWatch, watchPct)
 		}
 		bells := strung[leaderUserID]
 		chance := spotChance(hasWatch, watchPct, bells)
@@ -438,6 +451,10 @@ func (m *CampingModule) liveRaiders(r raiders) []int {
 type campReward struct {
 	Op     string `yaml:"op"`
 	RoomID int    `yaml:"room_id"`
+	// Foragers (Phase 51) are the member keys on the forage duty, comma
+	// separated (a string so a reward stays comparable); each forages once
+	// under the same cooldown as the automatic forage.
+	Foragers string `yaml:"foragers,omitempty"`
 }
 
 // grantCampRewards applies each owed camp reward (game loop) once the
@@ -476,6 +493,16 @@ func (m *CampingModule) grantCampRewards() {
 			if text != "" {
 				lines = append(lines, text)
 			}
+			if reward.Foragers != "" {
+				text, err := m.dutyForage(leader, room, reward)
+				if err != nil {
+					mudlog.Warn("camping: duty forage", "leader", leaderUserID, "error", err)
+					continue
+				}
+				if text != "" {
+					lines = append(lines, text)
+				}
+			}
 			text, err = m.vigil(leader, reward.RoomID, reward.Op+":vigil")
 			if err != nil {
 				mudlog.Warn("camping: vigil", "leader", leaderUserID, "error", err)
@@ -506,13 +533,59 @@ func (m *CampingModule) forage(leader *users.UserRecord, room *rooms.Room, op st
 	if room == nil || m.specialist == nil {
 		return "", nil
 	}
+	sp, ok := m.specialist(leader.UserId, archetypes.UtilityForage, room.RoomId)
+	if !ok {
+		return "", nil
+	}
+	return m.forageFor(leader, room, op, sp)
+}
+
+// dutyForage (Phase 51) is each member on the forage duty finding food at
+// the end of the rest, from the same zone table and cooldown as the
+// automatic forage, so the finds are never a money source (the table's
+// food is not bought back above cost).
+func (m *CampingModule) dutyForage(leader *users.UserRecord, room *rooms.Room, reward campReward) (string, error) {
+	if room == nil {
+		return "", nil
+	}
+	var lines []string
+	targets, _ := m.prepTargets(leader)
+	here := map[string]bool{}
+	for _, t := range targets {
+		if t.char != nil && t.char.Health > 0 {
+			here[t.key] = true
+		}
+	}
+	for i, key := range strings.Split(reward.Foragers, ",") {
+		if !here[key] {
+			continue // gone from the camp or down: no forage
+		}
+		name := leader.Character.Name
+		isLeader := key == string(survival.LeaderMemberKey)
+		if !isLeader {
+			name = m.dutyNames(leader.UserId)[key]
+			if name == "" {
+				name = "A companion"
+			}
+		}
+		sp := archetypes.Specialist{Name: name, IsLeader: isLeader, Level: m.utilityLevel(leader.UserId, key, archetypes.UtilityForage)}
+		text, err := m.forageFor(leader, room, fmt.Sprintf("%s:dutyforage:%d", reward.Op, i), sp)
+		if err != nil {
+			return "", err
+		}
+		if text != "" {
+			lines = append(lines, text)
+		}
+	}
+	return strings.Join(lines, "\n"), nil
+}
+
+// forageFor is one forager's finds: 1 + level/2 items from the zone's
+// table, as many as the company can carry, into its cargo.
+func (m *CampingModule) forageFor(leader *users.UserRecord, room *rooms.Room, op string, sp archetypes.Specialist) (string, error) {
 	cfg := m.campSettings()
 	table := cfg.Forage[room.Zone]
 	if len(table) == 0 {
-		return "", nil
-	}
-	sp, ok := m.specialist(leader.UserId, archetypes.UtilityForage, room.RoomId)
-	if !ok {
 		return "", nil
 	}
 	count := cfg.ForageBase + sp.Level/cfg.ForageLevelsPerOne
@@ -765,7 +838,17 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	if len(recipes) == 0 {
 		return "There is nothing to cook over a campfire."
 	}
-	cook := m.bestCook(user, recipes)
+	return m.cookDish(user, room, m.bestCook(user, recipes))
+}
+
+// cookDish has cook turn the first recipe their Cooking allows into a dish
+// from the pack and cargo (the camp cook command, and Phase 51's cook duty
+// at the rest's end, which needs no lit fire: the rest was the fire).
+func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook campCook) string {
+	if room == nil {
+		return "You can't cook here."
+	}
+	recipes := m.campSettings().Recipes
 	chosen, blocked := selectCampRecipe(user, cook, recipes)
 	if chosen == nil {
 		if blocked != nil {

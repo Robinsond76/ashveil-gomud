@@ -45,6 +45,10 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
   fills the cargo with meat and thyme (<ansi fg="command">help forage</ansi>). You can't cook
   in a fight.
 
+A member on the cook duty (<ansi fg="command">camp duties [member] cook</ansi>, <ansi fg="command">help camp duties</ansi>) cooks one
+dish of their own when a rest ends, with their own Cooking and no lit fire
+needed, at the cost of their sleep.
+
 An iron cookpot in the company's gear (<ansi fg="command">help camp gear</ansi>) stretches a dish made
 from more than one ingredient into one extra portion.
 

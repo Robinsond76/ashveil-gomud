@@ -108,6 +108,10 @@
             .cmp-btn:hover { background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); }
         }
         .cmp-btn:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
+        .cmp-btn[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--t-accent); font-weight: bold; }
+        .cmp-btn[disabled] { opacity: 0.6; cursor: default; }
+        .cmp-duty { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 3px; }
+        .cmp-duty-name { min-width: 7em; }
 
         .cmp-block {
             border: 1px solid var(--t-accent-dim);
@@ -1140,6 +1144,36 @@
         keepFocus(panel, () => buildCamp(panel));
     }
 
+    // dutiesBlock is the rest duty picker (Phase 51): one row per member
+    // at the camp, a button for each duty they can take. The running rest's
+    // duties are fixed, so the buttons are disabled then.
+    function dutiesBlock(camp) {
+        const block = el('section', 'cmp-block');
+        block.setAttribute('aria-label', 'Rest duties');
+        block.appendChild(el('h4', null, camp.duties_locked ? 'Rest duties (fixed for this rest)' : 'Rest duties'));
+        camp.duties.forEach(row => {
+            const line = el('div', 'cmp-duty');
+            line.setAttribute('role', 'group');
+            line.setAttribute('aria-label', row.name + ' duty');
+            line.appendChild(el('span', 'cmp-duty-name', row.key === 'leader' ? row.name + ' (you)' : row.name));
+            (row.options || []).forEach(duty => {
+                const b = el('button', 'cmp-btn', duty.charAt(0).toUpperCase() + duty.slice(1));
+                b.type = 'button';
+                b.setAttribute('data-focus', 'duty|' + row.key + '|' + duty);
+                b.setAttribute('aria-pressed', row.duty === duty ? 'true' : 'false');
+                b.title = row.name + ': ' + duty + ' (camp duties ' + row.command + ' ' + duty + ')';
+                if (camp.duties_locked) { b.disabled = true; }
+                b.addEventListener('click', () => send('camp duties ' + row.command + ' ' + duty));
+                line.appendChild(b);
+            });
+            block.appendChild(line);
+        });
+        block.appendChild(el('div', 'cmp-note', camp.duties_locked
+            ? 'Duties are settled when the rest ends.'
+            : 'Anyone on a duty misses the Rested buff; a watcher also ends no better than Ready (help camp duties).'));
+        return block;
+    }
+
     function buildCamp(panel) {
         const camp = (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Camp) || {};
         const data = CompanyData.read();
@@ -1206,6 +1240,11 @@
                 talk.appendChild(row);
             });
             pad.appendChild(talk);
+        }
+
+        // Phase 51: who does what during the next rest.
+        if (camp.has_camp && camp.here && Array.isArray(camp.duties) && camp.duties.length) {
+            pad.appendChild(dutiesBlock(camp));
         }
 
         // Each button only when it would work.

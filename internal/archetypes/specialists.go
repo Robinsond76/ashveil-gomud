@@ -40,6 +40,23 @@ type SpecialistProvider interface {
 	SpecialistsView(leaderUserID int) string
 }
 
+// MemberUtilityProvider is optionally implemented by the provider (Phase 51
+// rest duties): one member's own level at a utility, whether or not they
+// are the company's best.
+type MemberUtilityProvider interface {
+	// MemberUtilityLevel is the level of the leader (companionID 0) or of a
+	// companion standing in the leader's room; 0 when they have none.
+	MemberUtilityLevel(leaderUserID, companionID int, utility string) int
+}
+
+// MemberUtilityLevel is 0 without a provider that resolves it.
+func MemberUtilityLevel(leaderUserID, companionID int, utility string) int {
+	if mp, ok := current().(MemberUtilityProvider); ok {
+		return mp.MemberUtilityLevel(leaderUserID, companionID, utility)
+	}
+	return 0
+}
+
 // BestSpecialist is false without a provider that resolves specialists.
 func BestSpecialist(leaderUserID int, utility string, roomIDs ...int) (Specialist, bool) {
 	if sp, ok := current().(SpecialistProvider); ok {
