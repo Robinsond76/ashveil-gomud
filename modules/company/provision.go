@@ -99,7 +99,8 @@ func larderEntry(spec items.ItemSpec) (larderItem, bool) {
 // member draws one use from the first source (cargo, their own pack, the
 // leader's pack) that has something suitable: the smallest item that
 // covers their need, else the largest. Food that also waters counts
-// toward thirst before anyone drinks.
+// toward thirst before anyone drinks. A member already on a meal buff eats
+// plain food when there is any, keeping its buff.
 func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) mealPlan {
 	larder = append([]larderItem(nil), larder...)
 	current := append([]survival.MemberNeeds(nil), needs...)
@@ -123,7 +124,15 @@ func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) 
 			if survival.BandFor(value(member.Needs)) == survival.BandFull {
 				continue
 			}
-			pick := pickFood(larder, member.Key, 100-value(member.Needs), drink)
+			// Phase 50 review: a member on a meal buff eats plain food when
+			// there is any, so the planner never swaps its buff for another.
+			pick := -1
+			if !drink && member.Needs.MealBattles > 0 {
+				pick = pickFood(larder, member.Key, 100-value(member.Needs), drink, true)
+			}
+			if pick < 0 {
+				pick = pickFood(larder, member.Key, 100-value(member.Needs), drink, false)
+			}
 			if pick < 0 {
 				if drink {
 					plan.Thirsty = append(plan.Thirsty, member.Name)
@@ -137,6 +146,9 @@ func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) 
 			benefit := mealBenefit(larder[pick], drink)
 			member.Needs.Hunger = min(100, member.Needs.Hunger+benefit.Nutrition)
 			member.Needs.Thirst = min(100, member.Needs.Thirst+benefit.Hydration)
+			if spec, ok := survival.MealFor(benefit.Meal); ok {
+				member.Needs.Meal, member.Needs.MealBattles = spec.Kind, spec.Battles
+			}
 		}
 	}
 	if kind != mealDrink {
@@ -149,11 +161,12 @@ func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) 
 }
 
 // pickFood is the larder index a member eats (or drinks) from, or -1.
-func pickFood(larder []larderItem, member survival.MemberKey, deficit int, drink bool) int {
+// plainOnly skips cooked meals (Phase 50).
+func pickFood(larder []larderItem, member survival.MemberKey, deficit int, drink, plainOnly bool) int {
 	for _, source := range []larderSource{fromCargo, fromOwnPack, fromLeaderPack} {
 		cover, largest := -1, -1
 		for i, food := range larder {
-			if food.Uses <= 0 || food.Source != source || (source == fromOwnPack && food.Owner != member) {
+			if food.Uses <= 0 || food.Source != source || (source == fromOwnPack && food.Owner != member) || (plainOnly && food.Meal != "") {
 				continue
 			}
 			amount := food.Nutrition

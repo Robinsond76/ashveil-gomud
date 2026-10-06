@@ -48,8 +48,8 @@ Damage counts blows and spells, dealt and taken.
 Sated, Comfortable and Ready or better cost nothing. A cooked meal adds
 a buff for its next few battles (<ansi fg="command">help cooking</ansi>). The fight opens with a
 "Going in:" line naming each member's condition; <ansi fg="command">survival</ansi>, <ansi fg="command">status</ansi>,
-<ansi fg="command">conditions</ansi> and the Company panel show it beforehand, and the battle
-screen and Combat tab show it during the fight.
+<ansi fg="command">conditions</ansi> and the Company panel show it for the next battle, and the
+battle screen and Combat tab show the one the fight began with.
 
 <ansi fg="yellow-bold">Feeding your company</ansi>
 

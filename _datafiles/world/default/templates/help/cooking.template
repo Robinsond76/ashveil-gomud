@@ -41,7 +41,8 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
 Eating a cooked meal gives the member who eats it a buff for its next
 few battles (battles, not hours: it never wears off while you travel).
 One buff at a time; a new meal replaces the old one. Each battle the
-member fights counts one off.
+member fights counts one off, even one you retreat from at once.
+<ansi fg="command">company meal</ansi> feeds a member already on a buff plain food when it can.
 
   <ansi fg="yellow">Meal</ansi>                <ansi fg="yellow">Buff</ansi>           <ansi fg="yellow">Battles</ansi>  <ansi fg="yellow">Effect</ansi>
   Seared game meat    Strong         2        +5% damage dealt
