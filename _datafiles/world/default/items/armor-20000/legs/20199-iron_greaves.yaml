@@ -1,0 +1,11 @@
+itemid: 20199
+name: iron greaves
+namesimple: greaves
+description: 'Riveted iron rings and plates, heavy and sure. It is leg armor of the heavy path.'
+type: legs
+subtype: wearable
+bulk: heavy
+tier: 1
+family: heavy
+damagereduction: 6
+weight: 3500

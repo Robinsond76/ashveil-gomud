@@ -1,0 +1,9 @@
+itemid: 241
+name: weathered map
+namesimple: map
+description: 'A weathered map of a road or ruin you do not recognise. A sage might.'
+type: commodity
+subtype: mundane
+goods: curio
+value: 30
+weight: 50

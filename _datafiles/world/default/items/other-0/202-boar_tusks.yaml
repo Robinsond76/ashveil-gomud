@@ -1,0 +1,9 @@
+itemid: 202
+name: boar tusks
+namesimple: tusks
+description: 'A pair of curved boar tusks, yellowed and sharp.'
+type: commodity
+subtype: mundane
+goods: trophy
+value: 9
+weight: 800

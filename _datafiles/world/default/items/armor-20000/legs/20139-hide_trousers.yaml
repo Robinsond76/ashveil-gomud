@@ -1,0 +1,11 @@
+itemid: 20139
+name: hide trousers
+namesimple: trousers
+description: 'Rough hide cut and laced, the cheapest armor that still stops a blow. It is leg armor of the leather path.'
+type: legs
+subtype: wearable
+bulk: light
+tier: 1
+family: leather
+damagereduction: 3
+weight: 1200

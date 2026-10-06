@@ -1,0 +1,11 @@
+itemid: 20135
+name: hardened leather jerkin
+namesimple: jerkin
+description: 'Leather hardened in wax and stitched in overlapping plates, stiff as wood and quiet to wear. It is body armor of the leather path.'
+type: body
+subtype: wearable
+bulk: light
+tier: 3
+family: leather
+damagereduction: 10
+weight: 2000

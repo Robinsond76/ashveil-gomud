@@ -1,0 +1,11 @@
+itemid: 20136
+name: hide gloves
+namesimple: gloves
+description: 'Rough hide cut and laced, the cheapest armor that still stops a blow. It is hand protection of the leather path.'
+type: gloves
+subtype: wearable
+bulk: light
+tier: 1
+family: leather
+damagereduction: 1
+weight: 300

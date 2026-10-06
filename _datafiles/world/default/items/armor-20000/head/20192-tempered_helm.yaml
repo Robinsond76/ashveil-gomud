@@ -1,0 +1,11 @@
+itemid: 20192
+name: tempered helm
+namesimple: helm
+description: 'Tempered steel plate, fitted and padded, the best a town smith can make. It is headgear of the heavy path.'
+type: head
+subtype: wearable
+bulk: heavy
+tier: 3
+family: heavy
+damagereduction: 8
+weight: 2000

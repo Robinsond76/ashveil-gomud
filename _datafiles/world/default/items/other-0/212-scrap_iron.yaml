@@ -1,0 +1,9 @@
+itemid: 212
+name: scrap iron
+namesimple: iron
+description: 'A sack of bent nails, hinges and odd iron fittings.'
+type: commodity
+subtype: mundane
+goods: salvage
+value: 7
+weight: 4000

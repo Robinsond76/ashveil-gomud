@@ -1,0 +1,9 @@
+itemid: 224
+name: bolt of silk
+namesimple: silk
+description: 'A bolt of pale silk, folded in oilcloth.'
+type: commodity
+subtype: mundane
+goods: material
+value: 38
+weight: 700

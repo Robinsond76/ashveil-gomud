@@ -27,6 +27,10 @@ sword and shield, not footwork. Bulk is not weight: a piece's weight
 adds to your burden (<ansi fg="command">help burden</ansi>), and the bulk costs come on top.
 <ansi fg="command">status</ansi> shows your bulk, and <ansi fg="command">company compare</ansi> a companion's.
 
+Armor comes in four paths: cloth and leather (light), medium and heavy,
+each in tiers that protect more at the same weight. The tiers and the
+numbers are in <ansi fg="command">help equipmenttiers</ansi>.
+
 <ansi fg="yellow-bold">Training</ansi>
 
 Each class is trained for armor up to a bulk:
@@ -40,5 +44,5 @@ doubled, you lose {{ config "GamePlay.Combat.UntrainedSkillLoss" }} Attack and {
 spell takes {{ config "GamePlay.Combat.UntrainedChantRounds" }} more round to chant. <ansi fg="command">equip</ansi> warns you when a piece is heavier
 than your training.
 
-See also: <ansi fg="command">help defense</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help tempo</ansi>, <ansi fg="command">help combat</ansi>,
+See also: <ansi fg="command">help equipmenttiers</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help tempo</ansi>, <ansi fg="command">help combat</ansi>,
 <ansi fg="command">help narration</ansi>.

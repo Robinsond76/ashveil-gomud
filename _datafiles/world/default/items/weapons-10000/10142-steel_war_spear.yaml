@@ -1,0 +1,14 @@
+itemid: 10142
+name: steel war spear
+namesimple: spear
+description: 'A long steel war spear with a leaf blade, held in two hands for reach over the front rank.'
+type: weapon
+hands: 2
+subtype: stabbing
+weaponclass: spear
+tier: 2
+family: war spear
+reach: true
+damage:
+  diceroll: 2d4+2
+weight: 2400

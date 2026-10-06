@@ -1,0 +1,13 @@
+itemid: 10171
+name: shortbow
+namesimple: bow
+description: 'A short bow of seasoned yew. It reaches over the front rank from the back of the line.'
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: bow
+tier: 1
+family: bow
+damage:
+  diceroll: 1d6+1
+weight: 900

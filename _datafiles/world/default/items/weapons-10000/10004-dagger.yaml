@@ -1,4 +1,6 @@
 itemid: 10004
+tier: 1
+family: dagger
 name: dagger
 namesimple: dagger
 description: A plain dagger that still has a bit of a stabby end left.

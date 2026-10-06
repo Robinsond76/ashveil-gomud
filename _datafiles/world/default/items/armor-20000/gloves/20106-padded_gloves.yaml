@@ -1,0 +1,11 @@
+itemid: 20106
+name: padded gloves
+namesimple: gloves
+description: 'Layers of stitched linen and wool wadding, light enough to travel in. It is hand protection of the cloth path.'
+type: gloves
+subtype: wearable
+bulk: light
+tier: 1
+family: cloth
+damagereduction: 1
+weight: 150

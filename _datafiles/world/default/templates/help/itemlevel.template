@@ -20,7 +20,7 @@ rank 4 shows its affix tiers and ranges.
 The tier of the base type (Common, Steel, Tempered, Masterwork, Runeforged
 and Relic) is a separate thing: it is the material and the power budget the
 item starts with. Tier comes from the type, item level from where it was
-found.
+found (<ansi fg="command">help equipmenttiers</ansi>).
 
 <ansi fg="yellow-bold">To wear it</ansi>
 

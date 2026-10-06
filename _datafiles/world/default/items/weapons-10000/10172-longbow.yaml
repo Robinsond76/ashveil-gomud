@@ -1,0 +1,13 @@
+itemid: 10172
+name: longbow
+namesimple: bow
+description: 'A tall longbow of seasoned yew with a heavy draw. It takes a strong arm to string and a steady eye to loose.'
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: bow
+tier: 2
+family: bow
+damage:
+  diceroll: 1d8+1
+weight: 1000

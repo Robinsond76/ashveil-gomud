@@ -1,0 +1,13 @@
+itemid: 10112
+name: steel war axe
+namesimple: axe
+description: 'A steel war axe with a bearded blade, swung in a wide chopping arc.'
+type: weapon
+hands: 1
+subtype: cleaving
+weaponclass: axe
+tier: 2
+family: axe
+damage:
+  diceroll: 1d8
+weight: 1700

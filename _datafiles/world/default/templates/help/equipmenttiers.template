@@ -1,0 +1,69 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">equipmenttiers</ansi>
+
+Gear is described by three separate things. The <ansi fg="yellow">family</ansi> is what it is for: a
+glaive reaches, a shield blocks. The <ansi fg="yellow">tier</ansi> is its material and its power:
+the higher the tier, the better the item of that family. <ansi fg="yellow">Rarity</ansi> is how
+special it is (<ansi fg="command">help rarity</ansi>). A rare iron sword is not automatically better than a
+steel one. <ansi fg="command">look</ansi> at a piece of gear and it tells you its tier and family.
+
+<ansi fg="yellow-bold">The tiers</ansi>
+
+  <ansi fg="yellow">1  Common</ansi>      iron or bronze, plain wood, padded cloth, hide
+  <ansi fg="yellow">2  Steel</ansi>       steel, seasoned wood, cured leather
+  <ansi fg="yellow">3  Tempered</ansi>    tempered steel, laminated wood, hardened leather
+  <ansi fg="yellow">4  Masterwork</ansi>, <ansi fg="yellow">5  Runeforged</ansi> and <ansi fg="yellow">6  Relic</ansi> come later, from bosses and rare finds
+
+Frostfang Armory stocks tier 1 weapons and armor. Tiers 2 and 3 are not
+sold yet: they will turn up as the world's drops arrive. A higher tier is
+not worn by right, and a level requirement still applies (<ansi fg="command">help itemlevel</ansi>).
+
+<ansi fg="yellow-bold">Weapons</ansi>
+
+Damage by tier (1 / 2 / 3). Two hands means no shield. Reach strikes the
+frontmost foe in a column or the one just behind it; bows and crossbows
+reach anyone in the column, however deep (<ansi fg="command">help formation</ansi>).
+
+  <ansi fg="yellow">Sword</ansi>        1d4+1 / 1d6+1 / 1d8+1       one hand, steady damage
+  <ansi fg="yellow">Axe</ansi>          1d6 / 1d8 / 1d10            one hand, a wider spread
+  <ansi fg="yellow">Mace</ansi>         1d6 / 1d6+1 / 1d6+2         one hand, blunt (clerics may use it)
+  <ansi fg="yellow">Short spear</ansi>  1d6 / 1d8 / 1d6+2          one hand, with a shield
+  <ansi fg="yellow">War spear</ansi>    1d8+1 / 2d4+2 / 1d10+3      two hands, reach
+  <ansi fg="yellow">Glaive</ansi>       1d10 / 2d6 / 1d12+2         two hands, reach, slashing
+  <ansi fg="yellow">Staff</ansi>        1d6 / 1d6+1 / 1d8+1         two hands, parry +5 / +6 / +7 (clerics may use it)
+  <ansi fg="yellow">Bow</ansi>          1d6+1 / 1d8+1 / 1d10+1      two hands, shoots from any rank
+  <ansi fg="yellow">Crossbow</ansi>     1d6+2 / 1d8+2 / 1d10+2      two hands, heavy, shoots from any rank
+
+The glaive is the militia glaive, steel glaive and tempered war glaive. A
+crossbow weighs about three times a bow. There is no ammunition to carry.
+
+<ansi fg="yellow-bold">Armor</ansi>
+
+Four paths of five pieces each (head, body, gloves, legs, feet). Protection
+is for a full set; bulk is the heaviest piece (<ansi fg="command">help armor</ansi>).
+
+  <ansi fg="yellow">Path       Bulk     Tier 1 / 2 / 3</ansi>    <ansi fg="yellow">Set weight</ansi>
+  <ansi fg="yellow">Cloth</ansi>      light    6 / 8 / 10          1.8 kg   padded, quilted, layered
+  <ansi fg="yellow">Leather</ansi>    light    12 / 18 / 24        4.7 kg   hide, cured, hardened
+  <ansi fg="yellow">Medium</ansi>     medium   19 / 27 / 36        9.2 kg   padded jack, scale, brigandine
+  <ansi fg="yellow">Heavy</ansi>      heavy    27 / 37 / 49        16.2 kg  iron, steel, tempered plate
+
+A higher tier protects more at the same weight. Cloth never matches plate:
+the best cloth is below the first tier of medium armor. Weight is burden
+(<ansi fg="command">help burden</ansi>), so a heavy set on a weak fighter costs dodge and turns. Armor
+does not need a class to wear, but untrained bulk costs extra.
+
+<ansi fg="yellow-bold">Shields</ansi>
+
+Buckler (light), round shield, kite shield (heavier) and tower shield, in
+tiers: a tier 1 kite shield has armor 7 and a tier 3 one 13. A two-handed
+weapon and a shield never go together (<ansi fg="command">help shields</ansi>).
+
+<ansi fg="yellow-bold">Compare before you buy</ansi>
+
+<ansi fg="command">company compare [member] [item]</ansi> shows damage, hands, reach, protection,
+weight and burden, so you can see what a tier is worth to that member.
+Protection and damage are one half; weight and the member's class are the
+other (<ansi fg="command">help equipment</ansi>).
+
+See also: <ansi fg="command">help equipment</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help quality</ansi>,
+<ansi fg="command">help itemlevel</ansi>, <ansi fg="command">help goods</ansi>.

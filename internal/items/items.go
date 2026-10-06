@@ -264,6 +264,14 @@ func (i *Item) GetLongDescriptionFor(scribeRank int) string {
 	if i.IsRolled() {
 		longDesc.WriteString("\n")
 		longDesc.WriteString(i.RolledDescription(scribeRank))
+	} else if iSpec.Tier > 0 {
+		longDesc.WriteString("\n")
+		longDesc.WriteString(iSpec.TierDescription())
+	}
+
+	if iSpec.IsGoods() {
+		longDesc.WriteString("\n")
+		longDesc.WriteString(iSpec.GoodsDescription())
 	}
 
 	return longDesc.String()
@@ -846,4 +854,26 @@ func (i *Item) SaddleKind() SaddleKind {
 		return i.Spec.Saddle
 	}
 	return ""
+}
+
+// TierDescription is the catalog line for look and inspect: the item's tier
+// and family ("Tier 2 (Steel) glaive"). Empty for an untiered item.
+func (i ItemSpec) TierDescription() string {
+	if i.Tier < 1 {
+		return ""
+	}
+	line := fmt.Sprintf("Tier %d (%s)", i.Tier, TierName(i.Tier))
+	if i.Family != "" {
+		line += " " + i.Family
+	}
+	return line + ". See help equipmenttiers."
+}
+
+// GoodsDescription is the trade line for look and inspect: the category and
+// what a kilogram of the item is worth.
+func (i ItemSpec) GoodsDescription() string {
+	if !i.IsGoods() {
+		return ""
+	}
+	return fmt.Sprintf("Trade good (%s): worth about %.0f gold a kg. See help goods.", i.Goods, i.GoodsValuePerKg())
 }

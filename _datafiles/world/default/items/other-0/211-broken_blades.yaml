@@ -1,0 +1,9 @@
+itemid: 211
+name: broken blades
+namesimple: blades
+description: 'An armful of snapped sword and knife blades, wrapped in sacking for a smith.'
+type: commodity
+subtype: mundane
+goods: salvage
+value: 5
+weight: 2500

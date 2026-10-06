@@ -1,0 +1,26 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">goods</ansi>
+
+Goods are things you carry to sell: hides, scrap, ore, trinkets. They do
+nothing in a fight. What matters is how much they weigh against what they
+are worth, because a pack, a pack horse and your cargo capacity are all
+limited (<ansi fg="command">help cargo</ansi>).
+
+<ansi fg="command">look</ansi> at a good and it names its category and what a kilogram is worth. Take
+the dense ones first and leave the heavy scrap when the pack is full.
+
+  <ansi fg="yellow">Category</ansi>    <ansi fg="yellow">Gold a kg</ansi>   Examples
+  <ansi fg="yellow">Trophy</ansi>      4 to 20      hides, antlers, tusks, pelts: heavy
+  <ansi fg="yellow">Salvage</ansi>     1 to 4       rusted mail, broken blades, scrap iron: the heaviest, the cheapest
+  <ansi fg="yellow">Material</ansi>    5 to 250     ore, steel ingots, planks, silk, runestone shards
+  <ansi fg="yellow">Valuable</ansi>    100 and up   silver trinkets, jewellery, gems, idols: light and rich
+  <ansi fg="yellow">Provision</ansi>   5 to 30      game meat and the like: eaten, or sold, but it spoils
+  <ansi fg="yellow">Curio</ansi>       200 and up   sealed letters, old maps, relic fragments
+
+Merchants buy goods like any other item, at a share of its value, and
+only the kind of thing they already trade in. A few goods, such as hides
+and game meat, are also traded at settlement markets, which pay more for
+what they are short of (<ansi fg="command">help market</ansi>).
+
+Most goods are not dropped by foes yet; that arrives with the world's drop tables.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help pack</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help market</ansi>, <ansi fg="command">help equipmenttiers</ansi>.

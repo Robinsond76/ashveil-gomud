@@ -1,0 +1,11 @@
+itemid: 20164
+name: scale hauberk
+namesimple: hauberk
+description: 'Overlapping steel scales sewn to a backing, flexible and sturdy. It is body armor of the medium path.'
+type: body
+subtype: wearable
+bulk: medium
+tier: 2
+family: medium
+damagereduction: 11
+weight: 4000

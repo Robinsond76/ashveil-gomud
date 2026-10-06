@@ -1,0 +1,9 @@
+itemid: 200
+name: bear hide
+namesimple: hide
+description: 'A heavy brown bear hide, still stiff from the knife. Tanners pay well for it, and it is a load.'
+type: commodity
+subtype: mundane
+goods: trophy
+value: 24
+weight: 3500

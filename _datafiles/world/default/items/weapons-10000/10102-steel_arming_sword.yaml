@@ -1,0 +1,13 @@
+itemid: 10102
+name: steel arming sword
+namesimple: sword
+description: 'A steel arming sword with a fuller down the blade, balanced for a hand that carries a shield in the other.'
+type: weapon
+hands: 1
+subtype: slashing
+weaponclass: sword
+tier: 2
+family: sword
+damage:
+  diceroll: 1d6+1
+weight: 1300

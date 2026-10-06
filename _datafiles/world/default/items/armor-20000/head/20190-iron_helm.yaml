@@ -1,0 +1,11 @@
+itemid: 20190
+name: iron helm
+namesimple: helm
+description: 'Riveted iron rings and plates, heavy and sure. It is headgear of the heavy path.'
+type: head
+subtype: wearable
+bulk: heavy
+tier: 1
+family: heavy
+damagereduction: 4
+weight: 2000

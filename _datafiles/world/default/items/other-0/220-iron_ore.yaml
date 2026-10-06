@@ -1,0 +1,9 @@
+itemid: 220
+name: iron ore
+namesimple: ore
+description: 'A lump of rich iron ore, heavy and dull red.'
+type: commodity
+subtype: mundane
+goods: material
+value: 18
+weight: 3000

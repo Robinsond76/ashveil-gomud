@@ -1,0 +1,12 @@
+itemid: 20305
+name: steel kite shield
+namesimple: shield
+description: 'A long kite shield faced with steel, heavier than a round shield and covering more.'
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 2
+family: kite shield
+damagereduction: 10
+weight: 5000

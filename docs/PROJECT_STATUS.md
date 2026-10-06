@@ -1,5 +1,29 @@
 # Ashveil Project Status
 
+**Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
+(swords, axes, maces, short and war spears, glaives, staffs, bows,
+crossbows, four armor paths, shields), 24 trade goods with value-per-kg
+bands, a tier for every shipped weapon and armor piece, new `family` and
+`goods` item fields shown on `look`, tier 1 stock at Frostfang Armory and
+goods at the general trader, and `help equipmenttiers` and `help goods`.
+Plan: [36b plan](plans/2026-10-06-phase-36b-gear-catalog.md). Independent
+review accepted: a duplicate `padded shoes` name (catalog piece renamed,
+uniqueness test), shield ladder inversion (shipped iron and tower shields
+audited tier 3, ladder test), Ivar's 20-variety limit (stock cut to 12),
+help claiming tanners and not saying goods do not drop yet. Rejected:
+shipped uniques whose tier exceeds their armor number (tier counts stat
+mods too; no mechanic reads tier). Deferred: harness cells in tiered gear
+(Phase 37), goods in markets (36c). Merge review (second, independent)
+accepted: `help equipmenttiers` said reach lets the second rank strike
+(reach is target depth, not wielder rank; fixed with the iron war spear
+text) and the hunting crossbow called itself slow before 39h's reload.
+Upheld the rejection above: the tier 3-4 uniques carry large stat mods.
+Glaive and crossbow data match the neutral classes design; note for 39a,
+its kit's "padded jerkin" is the catalog padded jack (20163). Known flake,
+not 36b's: 35b's `TestBattleEndPatchesTheCompany` fails about 1 run in 10
+on master too (the battle-end patch is sometimes skipped). Verification:
+`make generate`, `make validate`, `go test -race ./...`, `make js-lint`.
+
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
 school, reach 1 to the whole group by level, three new statuses (Asleep,
@@ -275,7 +299,7 @@ implemented (handoff rule 20).
 | 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), complete ([measurements](plans/2026-10-05-phase-35b-measurements.md)) | Level impact §2, §4 | 35a, 35a2 |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification. [Plan](plans/2026-10-06-phase-36a-loot-item-model.md), complete, merged via [PR #23](https://github.com/Robinsond76/ashveil-gomud/pull/23) | Loot design slice 1 | 35b, 35c |
-| 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
+| 36b | Tier 1–3 gear catalog, goods and an audit of existing items. [Plan](plans/2026-10-06-phase-36b-gear-catalog.md), complete, merged via [PR #25](https://github.com/Robinsond76/ashveil-gomud/pull/25) | Loot slice 2; equipment tiers | 36a |
 | 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |

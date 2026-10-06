@@ -7,7 +7,8 @@ there is, and only warriors and rangers are taught it.
 <ansi fg="yellow-bold">Sizes</ansi>
 
   <ansi fg="yellow">Buckler</ansi>   small and light (a leather buckler: armor 3)
-  <ansi fg="yellow">Shield</ansi>    the common kind (wooden: armor 5, iron: armor 10)
+  <ansi fg="yellow">Shield</ansi>    the common kind (wooden: armor 5, iron: armor 10); round and
+             kite shields come in tiers (<ansi fg="command">help equipmenttiers</ansi>)
   <ansi fg="yellow">Tower</ansi>     a wall to hide behind (armor 14), heavy bulk (<ansi fg="command">help armor</ansi>)
 
 <ansi fg="yellow-bold">Who may carry one</ansi>

@@ -1,4 +1,6 @@
 itemid: 10002
+tier: 1
+family: sword
 name: guardsman's broadsword
 namesimple: broadsword
 description: The standard issue weapon of a guardsman.

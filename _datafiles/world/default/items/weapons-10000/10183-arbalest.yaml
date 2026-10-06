@@ -1,0 +1,13 @@
+itemid: 10183
+name: arbalest
+namesimple: arbalest
+description: 'A great arbalest with a steel bow and a windlass. It outweighs a sword and hits like a ram.'
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: crossbow
+tier: 3
+family: crossbow
+damage:
+  diceroll: 1d10+2
+weight: 4000

@@ -1,0 +1,13 @@
+itemid: 10133
+name: tempered boar spear
+namesimple: spear
+description: 'A tempered boar spear, its crossbar set behind the blade so a charging beast cannot run up the shaft.'
+type: weapon
+hands: 1
+subtype: stabbing
+weaponclass: spear
+tier: 3
+family: spear
+damage:
+  diceroll: 1d6+2
+weight: 1400

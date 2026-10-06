@@ -1,0 +1,13 @@
+itemid: 10111
+name: iron hand axe
+namesimple: axe
+description: 'A short-hafted iron axe, as good for kindling as for a skull.'
+type: weapon
+hands: 1
+subtype: cleaving
+weaponclass: axe
+tier: 1
+family: axe
+damage:
+  diceroll: 1d6
+weight: 1500

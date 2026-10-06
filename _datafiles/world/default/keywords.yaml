@@ -51,6 +51,8 @@ help:
       - rarity
       - quality
       - itemlevel
+      - equipmenttiers
+      - goods
       - affixes
       - identify
       - scribe
@@ -243,7 +245,9 @@ help-aliases:
   loot: [autoloot, company-loot]
   rarity: [rare, epic, legendary, unidentified, level requirement, level-requirement, set items, uncommon]
   quality: [crude, worn, fine, superior, exquisite, workmanship]
-  itemlevel: [item level, ilvl, item-level, tier]
+  itemlevel: [item level, ilvl, item-level]
+  equipmenttiers: [tier, tiers, equipment-tiers, equipment tiers, weapon families, glaive, glaives, crossbows, polearms]
+  goods: [trade goods, trade-goods, trophies, salvage, materials, valuables, curios, value per kg]
   affixes: [affix, prefix, suffix, modifiers, major affix]
   identify: [identification, identified, read gear, unread]
   scribe: [scribing]

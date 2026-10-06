@@ -1,0 +1,11 @@
+itemid: 20113
+name: quilted shoes
+namesimple: shoes
+description: 'Quilted wool and linen, stitched in channels that turn a glancing cut. It is footwear of the cloth path.'
+type: feet
+subtype: wearable
+bulk: light
+tier: 2
+family: cloth
+damagereduction: 1
+weight: 300

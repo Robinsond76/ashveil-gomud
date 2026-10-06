@@ -1,0 +1,11 @@
+itemid: 20193
+name: iron mail
+namesimple: mail
+description: 'Riveted iron rings and plates, heavy and sure. It is body armor of the heavy path.'
+type: body
+subtype: wearable
+bulk: heavy
+tier: 1
+family: heavy
+damagereduction: 11
+weight: 8000

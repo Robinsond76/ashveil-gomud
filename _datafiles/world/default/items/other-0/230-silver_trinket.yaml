@@ -1,0 +1,9 @@
+itemid: 230
+name: silver trinket
+namesimple: trinket
+description: 'A small engraved silver trinket on a broken chain.'
+type: commodity
+subtype: mundane
+goods: valuable
+value: 40
+weight: 120
