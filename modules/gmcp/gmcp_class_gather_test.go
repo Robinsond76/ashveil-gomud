@@ -54,7 +54,7 @@ func TestRoomGatherCarriesTheWorksProgress(t *testing.T) {
 
 	g := &GMCPRoomModule{}
 	g.gatherProgressHandler(events.GatherProgress{UserId: 7, Kind: "herbs", Label: "gathering herbs", Phase: "start", Seconds: 20})
-	g.gatherProgressHandler(events.GatherProgress{UserId: 7, Kind: "herbs", Label: "gathering herbs", Phase: "done", Lines: []string{"Your company gathers 2 thyme."}})
+	g.gatherProgressHandler(events.GatherProgress{UserId: 7, Kind: "herbs", Label: "gathering herbs", Phase: "done", Lines: []string{`Your company gathers <ansi fg="itemname">2 thyme</ansi>.`}})
 	events.ProcessEvents()
 
 	require.Len(t, out, 2)
@@ -65,5 +65,5 @@ func TestRoomGatherCarriesTheWorksProgress(t *testing.T) {
 	assert.Equal(t, 20, start.Seconds)
 	raw, err := json.Marshal(out[1].Payload)
 	require.NoError(t, err)
-	assert.JSONEq(t, `{"phase":"done","kind":"herbs","label":"gathering herbs","lines":["Your company gathers 2 thyme."]}`, string(raw))
+	assert.JSONEq(t, `{"phase":"done","kind":"herbs","label":"gathering herbs","lines":["Your company gathers 2 thyme."]}`, string(raw), "colour tags are stripped for the panel")
 }

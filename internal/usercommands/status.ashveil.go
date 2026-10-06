@@ -123,7 +123,8 @@ func addAshveilCompany(p *templates.Panel, s companyview.Summary) {
 	// Phase 45: each companion's class, so the sheet shows who is who.
 	for _, m := range s.Companions {
 		if line := companionLine(m); line != `` {
-			addRow(p, `  `+companionLabel(m), companionLabel(m), line)
+			// Padded to the Members label so the values line up.
+			addRow(p, fmt.Sprintf(`  %-7s`, companionLabel(m, 6)), companionLabel(m, 3), line)
 		}
 	}
 	if s.LoadKnown {
@@ -151,15 +152,15 @@ func restLine(s companyview.Summary) string {
 	return fmt.Sprintf(`<ansi fg="green">%s</ansi> <ansi fg="black-bold">(%s left)</ansi>`, s.RestTier, companyview.FormatRemaining(s.RestLeft))
 }
 
-// companionLabel is a short row label for a companion: its name cut to fit
-// the panel's label column.
-func companionLabel(m companyview.Member) string {
+// companionLabel is a short row label for a companion: its name cut to
+// width runes to fit the panel's label column.
+func companionLabel(m companyview.Member, width int) string {
 	name := m.Name
 	if name == `` {
 		name = fmt.Sprintf(`#%d`, m.ID)
 	}
-	if r := []rune(name); len(r) > 7 {
-		name = string(r[:7])
+	if r := []rune(name); len(r) > width {
+		name = string(r[:width])
 	}
 	return name + `:`
 }

@@ -504,7 +504,7 @@ func (m *GatheringModule) start(user *users.UserRecord, room *rooms.Room, kind g
 	if kind == gathering.Game && !m.hasTool(user, toolBow) {
 		text = "No one has a bow, crossbow or sling, so your company sets snares instead. (" + durationText(rule.Duration) + ")"
 	}
-	return text + "\nAny command other than look or conditions stops the work."
+	return text + "\nAny command other than look, conditions or status stops the work."
 }
 
 // --- cancelling ---
@@ -514,6 +514,12 @@ var keepsWorking = map[string]bool{
 	"look": true, "l": true, "conditions": true, "gather": true, "fish": true, "hunt": true,
 }
 
+// readsSheet are the status sheet's names (Phase 45): the bare sheet shows
+// the work's progress, so reading it must not stop the work.
+var readsSheet = map[string]bool{
+	"status": true, "sta": true, "stat": true, "stats": true, "score": true, "info": true,
+}
+
 // onInput cancels the work when its leader types anything else.
 func (m *GatheringModule) onInput(e events.Event) events.ListenerReturn {
 	in, ok := e.(events.Input)
@@ -521,7 +527,7 @@ func (m *GatheringModule) onInput(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	fields := strings.Fields(strings.ToLower(in.InputText))
-	if len(fields) == 0 || keepsWorking[fields[0]] {
+	if len(fields) == 0 || keepsWorking[fields[0]] || (len(fields) == 1 && readsSheet[fields[0]]) {
 		return events.Continue
 	}
 	m.cancel(in.UserId, "You stop what you were doing; the work is abandoned.")

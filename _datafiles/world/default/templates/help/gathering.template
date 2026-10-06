@@ -18,8 +18,8 @@ for a while. It never advances the game clock.
 
 Only the leader of the company gives the order. The whole company takes
 part, so companions standing with you add to the haul. Any other command
-than <ansi fg="command">look</ansi> or <ansi fg="command">conditions</ansi>, moving, an attack, or a fight cancels the work with
-nothing gained. You can't start in battle, while resting or while travelling.
+than <ansi fg="command">look</ansi>, <ansi fg="command">conditions</ansi> or <ansi fg="command">status</ansi>, moving, an attack, or a fight cancels the work
+with nothing gained. You can't start in battle, while resting or while travelling.
 
 While the work runs, <ansi fg="command">status</ansi> and the prompt show it on the Doing line ("Gathering
 herbs 40%, 12s left"). In the web client the Room Info window shows a bar

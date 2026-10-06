@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/ansitags"
 )
 
 // ////////////////////////////////////////////////////////////////////
@@ -76,8 +77,13 @@ func (g *GMCPRoomModule) gatherProgressHandler(e events.Event) events.ListenerRe
 	if !ok {
 		return events.Continue
 	}
+	// The lines carry colour tags for the terminal; the panel shows plain text.
+	var lines []string
+	for _, l := range evt.Lines {
+		lines = append(lines, ansitags.Parse(l, ansitags.StripTags))
+	}
 	events.AddToQueue(GMCPOut{UserId: evt.UserId, Module: `Room.Gather`, Payload: GMCPRoomGatherPayload{
-		Phase: evt.Phase, Kind: evt.Kind, Label: evt.Label, Seconds: evt.Seconds, Lines: evt.Lines,
+		Phase: evt.Phase, Kind: evt.Kind, Label: evt.Label, Seconds: evt.Seconds, Lines: lines,
 	}})
 	return events.Continue
 }
