@@ -1,5 +1,14 @@
 # Ashveil Project Status
 
+**Higher-quality browser artwork roadmap (2026-10-06), planned:**
+[Six-phase plan](plans/2026-10-06-browser-art-quality.md) establishes a real-client
+quality proof, resolution-independent rendering and exports, matching terrain,
+full character coverage, cohesive UI, and release verification. The existing
+32px pilot is not the visual target. Implementation has not started; the first
+gate is a detailed scene at actual browser viewing sizes. No merge to master
+is authorized. Sol reviewed the plan with no blockers; reference links and
+per-phase review gates were clarified. This update changes documentation only.
+
 **Authored sprite pass 01 (2026-10-06), review branch:** implemented the approved
 Direction D proof as nine native sheets (60 frames): Warrior, Ranger, Witch
 idle/walk, tent/allied tent, and lit fire. Authored source sheets survive
