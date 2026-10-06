@@ -45,6 +45,9 @@ func (c stateContributor) Restore(userID, roomID int, data []byte) error {
 		}
 	}
 	m.forgetEquipmentView(userID)
+	// Banter remembers lines and falls from the area; it is flavor held in
+	// memory, so the return just forgets it.
+	m.banter.forget(userID)
 	if m.registry.Companies == nil {
 		return nil
 	}
