@@ -185,7 +185,7 @@ func TestBattlePayloadCarriesAlliesAndNerve(t *testing.T) {
 	f.Faltering = true
 	f.Allies = []allyFact{{Leader: 8, Name: "Brannoc", Members: []allyMemberFact{
 		{Key: "leader", Name: "Brannoc", Class: "warrior", Row: 0, Col: 1, Health: 20, HealthMax: 20},
-		{Key: "companion:2", Name: "Cael", Class: "cleric", Row: 1, Col: 2, Health: 4, HealthMax: 20},
+		{Key: "companion:2", Name: "Cael", Class: "cleric", Promoted: "hierarch", Row: 1, Col: 2, Health: 4, HealthMax: 20},
 		{Key: "companion:3", Name: "Dun", Row: 2, Col: 0, Health: 0, HealthMax: 20, Down: true},
 	}}}
 	raw, err := json.Marshal(buildBattle(f))
@@ -202,6 +202,7 @@ func TestBattlePayloadCarriesAlliesAndNerve(t *testing.T) {
 	require.Len(t, members, 3)
 	assert.Equal(t, map[string]any{"id": "a:8:leader", "name": "Brannoc", "class": "warrior", "cell": map[string]any{"row": 0.0, "col": 1.0}, "health": "unhurt"}, members[0])
 	assert.Equal(t, "near death", members[1].(map[string]any)["health"])
+	assert.Equal(t, "hierarch", members[1].(map[string]any)["promoted"], "a promoted ally draws its own class art")
 	assert.Equal(t, true, members[2].(map[string]any)["down"])
 	assert.NotContains(t, string(raw), "health_max")
 
@@ -272,4 +273,27 @@ func TestBattleEventPayloadCarriesThePace(t *testing.T) {
 	r2.turns(400)
 	require.NotEmpty(t, r2.payloads())
 	assert.Equal(t, "slow", r2.payloads()[0].Pace)
+}
+
+// TestAlliedHappeningsScrubAnAllyWithoutFormation (40g2 review): an allied
+// player with no formation is named "u:<id>", not "a:<leader>:<key>"; what
+// befell them is as private as a member's, so it loses its numbers and no
+// status on them is sent.
+func TestAlliedHappeningsScrubAnAllyWithoutFormation(t *testing.T) {
+	a := newAlliedRig(t)
+	bare := combatstream.Ref{UserId: 8, Name: "Brannoc"}
+	events.WithCause(341, func() {
+		a.stream.Emit(combatstream.Event{Round: 341, Kind: combatstream.Attack, FightID: a.allyID, Source: rigEnemy(88), Target: bare, Outcome: combatstream.OutcomeHit, Damage: 9, Status: "Poisoned"})
+		a.stream.Emit(combatstream.Event{Round: 341, Kind: combatstream.StatusApplied, FightID: a.allyID, Source: rigEnemy(88), Target: bare, Status: "Poisoned"})
+		a.stream.Emit(combatstream.Event{Round: 341, Kind: combatstream.Heal, FightID: a.allyID, Source: bare, Target: bare, SpellId: "mend", Amount: 5})
+	})
+	events.ProcessEvents()
+	assert.Equal(t, []string{"attack:m:88>u:8", "heal:u:8>u:8"}, a.kinds())
+	for _, p := range a.payloads() {
+		for _, e := range p.Events {
+			assert.Zero(t, e.Damage)
+			assert.Zero(t, e.Amount)
+			assert.Empty(t, e.Status)
+		}
+	}
 }

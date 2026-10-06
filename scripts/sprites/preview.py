@@ -142,3 +142,47 @@ def contact_sheet_s23(out, dest):
         sheet.alpha_composite(big, (x, yy))
     os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
     sheet.convert("RGB").save(dest, optimize=True)
+
+
+def contact_sheet_s5(out, dest):
+    """Sheet for S5: every promoted class (battle idle frames at 2x, map views at 3x), the summons and the goblin shaman."""
+    import promoted
+    import roster
+    W, margin, gap = 1500, 12, 10
+    tiles, placed = [], []
+    y = margin
+
+    def put_row(label, imgs):
+        nonlocal y
+        x = margin
+        row_h = 0
+        placed.append((label, x, y))
+        y += 14
+        for im, z in imgs:
+            big = im.resize((im.width * z, im.height * z), Image.NEAREST)
+            if x + big.width + margin > W:
+                x = margin
+                y += row_h + gap
+                row_h = 0
+            tiles.append((big, x, y))
+            x += big.width + gap
+            row_h = max(row_h, big.height)
+        y += row_h + gap + 6
+
+    for lineage in ("warrior", "cleric", "rogue", "ranger", "wizard", "witch"):
+        ids = [c for c in promoted.CLASS_IDS if promoted.LINEAGE[c] == lineage]
+        put_row(f"{lineage} line: base, then " + ", ".join(ids) + " (battle idle 2x)",
+                [(_load(out, f"battle/units/{i}/idle.png").crop((0, 0, 128, 64)), 2) for i in [lineage] + ids])
+        put_row(f"{lineage} line: map units, down/up/side rows, idle (3x)",
+                [(_load(out, f"map/units/{i}/idle.png").crop((0, 0, 32, 96)), 3) for i in [lineage] + ids])
+    put_row("summons (1x), goblin shaman and its hexer (2x)",
+            [(_load(out, f"battle/units/{i}/idle.png"), z) for i, z in
+             (("angel", 1), ("demon", 1), ("goblin-hexer", 2), ("goblin-shaman", 2))])
+    sheet = Image.new("RGBA", (W, y + margin), BG + (255,))
+    d = ImageDraw.Draw(sheet)
+    for label, x, yy in placed:
+        d.text((x, yy), label, fill=INK)
+    for big, x, yy in tiles:
+        sheet.alpha_composite(big, (x, yy))
+    os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
+    sheet.convert("RGB").save(dest, optimize=True)

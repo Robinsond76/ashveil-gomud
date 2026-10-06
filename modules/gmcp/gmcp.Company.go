@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -70,12 +71,18 @@ type companyStrategy struct {
 }
 
 type companyMember struct {
-	Key       string       `json:"key"`
-	ID        int          `json:"id"`
-	Name      string       `json:"name"`
-	Status    string       `json:"status"`
-	Level     int          `json:"level"`
-	Archetype *string      `json:"archetype"`
+	Key       string  `json:"key"`
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	Status    string  `json:"status"`
+	Level     int     `json:"level"`
+	Archetype *string `json:"archetype"`
+	// Class is its promoted class id (Phase 40s5 art key); omitted before
+	// promotion.
+	Class string `json:"class,omitempty"`
+	// ClassName is the class's display name (e.g. "Dread Knight"), sent with
+	// Class so the company list and battle caption can name it.
+	ClassName string       `json:"class_name,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -202,6 +209,10 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	out := companyMember{Key: string(m.Key), ID: m.ID, Name: m.Name, Status: statusName(m.Status), Level: m.Level}
 	if !m.Leader || m.ArchetypeKnown {
 		out.Archetype = strPtr(m.Archetype)
+	}
+	out.Class = m.Class
+	if c, ok := classes.Get(m.Class); ok && m.Class != "" {
+		out.ClassName = c.Name
 	}
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}

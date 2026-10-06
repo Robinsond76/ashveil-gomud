@@ -27,7 +27,7 @@ const company = {
   leader: member('leader', 0, 'Wren', 'Ranger', { row: 0, col: 1 }, 'fighter'),
   members: [
     member('companion:1', 1, 'Oswin', 'Cleric', { row: 1, col: 0 }, 'healer'),
-    member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'),
+    { ...member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'), class: 'knight', class_name: 'Knight' },
     member('companion:3', 3, 'Ysolde', 'Wizard', { row: 2, col: 2 }, 'caster'),
     member('companion:4', 4, 'Tamsin', 'Rogue', null, 'fighter'),
   ],
@@ -84,6 +84,15 @@ check(s.open, 'the screen opens by itself when a battle starts');
 check(s.biome === 'forest', 'the biome comes from Room.Info.environment');
 check(s.units.filter(u => u.side === 'company').length === 4, 'four placed members stand (the unplaced one does not)');
 check(s.units.filter(u => u.side === 'enemy').length === 4, 'four enemies stand');
+check(unitOf(s, 'companion:2').promoted === 'knight' && unitOf(s, 'leader').promoted === '', 'a promoted member draws its class art (40s5), others their base');
+{
+  const b = unitOf(s, 'companion:2').at;
+  const box = await page.locator('#battle-screen canvas').boundingBox();
+  await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
+  const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
+  check(cap.startsWith('Brant, Knight'), 'hovering a promoted member names its class: ' + cap);
+  await page.mouse.move(0, 0);
+}
 check(unitOf(s, 'leader').cell.row === 0 && unitOf(s, 'leader').cell.col === 1, 'the leader stands in their cell');
 check(unitOf(s, 'leader').at.x === 160 - 46 && unitOf(s, 'leader').at.y === 140, 'row 0 col 1 sits left of the line, middle lane');
 check(unitOf(s, 'm:1').at.x > 160 && unitOf(s, 'leader').at.x < 160, 'company left, enemy right');

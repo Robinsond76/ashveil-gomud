@@ -241,8 +241,10 @@ var allyKinds = map[combatstream.Kind]bool{
 	combatstream.Death: true, combatstream.Flee: true, combatstream.Ability: true,
 }
 
-// isAllyRef reports whether a ref names a member of an allied company.
-func isAllyRef(id string) bool { return strings.HasPrefix(id, "a:") }
+// isAllyRef reports whether a ref, in an allied fight's event, names one of
+// that company's side: a member ("a:<leader>:<key>") or a player without a
+// formation ("u:<id>"), whose numbers are as private as a member's.
+func isAllyRef(id string) bool { return strings.HasPrefix(id, "a:") || strings.HasPrefix(id, "u:") }
 
 // scrubAlly removes what another company's watcher is not shown of its
 // members: the numbers of what befell them (the narration of their own

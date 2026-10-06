@@ -19,12 +19,15 @@ change the company's focus.
   H healer, C caster, G guardian, K controller. You wear a small crown.
 - When your company is losing (half of it down, or a quarter of its health
   left), the header says <ansi fg="yellow">company faltering</ansi> and a drop of sweat shows by each
-  of you: companions of weak loyalty may now hesitate or flee
-  (<ansi fg="command">help morale</ansi>). A companion who hesitates loses its action, and the
+  of you. The first time it happens in a fight, companions of weak loyalty
+  may hesitate or flee (<ansi fg="command">help morale</ansi>). A companion who hesitates loses its action, and the
   last-blow line says so. A foe that yields or runs is marked the same way.
 - Enemy health is shown in five steps, never as numbers: unhurt, scratched,
   wounded, badly wounded, near death. Hover or tap a figure to read its
   name and health, and to see whom it strikes.
+- A member who has been promoted (<ansi fg="command">help promotion</ansi>) is drawn as that
+  class, a Paladin in white and brass rather than a plain warrior, and
+  hovering names the class.
 - A small coloured mark over a figure is a status on it. A bright mark
   means it is chanting a spell. A flash and a number show a blow, a heal,
   or a miss as it lands. A fallen figure lies down.

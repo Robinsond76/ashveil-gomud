@@ -80,6 +80,7 @@ type allyFact struct {
 type allyMemberFact struct {
 	Key               string
 	Name, Class       string
+	Promoted          string // the promoted class id (40s5 art key), if any
 	Row, Col          int
 	Health, HealthMax int
 	Down              bool
@@ -210,12 +211,15 @@ type battleAlly struct {
 }
 
 type battleAllyMember struct {
-	ID     string     `json:"id"`
-	Name   string     `json:"name"`
-	Class  string     `json:"class,omitempty"`
-	Cell   battleCell `json:"cell"`
-	Health string     `json:"health"`
-	Down   bool       `json:"down,omitempty"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Class string `json:"class,omitempty"`
+	// Promoted is the member's promoted class id, the art the battle
+	// screen draws first (as Company members' `class`).
+	Promoted string     `json:"promoted,omitempty"`
+	Cell     battleCell `json:"cell"`
+	Health   string     `json:"health"`
+	Down     bool       `json:"down,omitempty"`
 }
 
 // allyRef is an allied company's leader ref, and allyMemberRef a member's.
@@ -250,7 +254,7 @@ func buildBattle(f battleFacts) any {
 	for _, a := range f.Allies {
 		ba := battleAlly{ID: allyRef(a.Leader), Name: a.Name, Members: []battleAllyMember{}}
 		for _, m := range a.Members {
-			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class,
+			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class, Promoted: m.Promoted,
 				Cell: battleCell{Row: m.Row, Col: m.Col}, Health: enemyparty.HealthWord(m.Health, m.HealthMax), Down: m.Down})
 		}
 		p.Allies = append(p.Allies, ba)
@@ -714,7 +718,7 @@ func gatherAllies(user *users.UserRecord, b battle.Battle) []allyFact {
 			if !m.Leader || m.ArchetypeKnown {
 				class = strings.ToLower(m.Archetype)
 			}
-			fact.Members = append(fact.Members, allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Row: cell.Row, Col: cell.Col,
+			fact.Members = append(fact.Members, allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Promoted: m.Class, Row: cell.Row, Col: cell.Col,
 				Health: m.HP, HealthMax: m.HPMax, Down: m.Status == company.MemberDead || (m.HasHP && m.HP < 1)})
 		}
 		add(sum.Leader)
