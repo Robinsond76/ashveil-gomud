@@ -1,6 +1,7 @@
 package company
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
@@ -730,6 +731,48 @@ func CompanionClassState(leaderUserID, companionID int) (string, []string, bool)
 		return "", nil, false
 	}
 	return cp.CompanionClassState(leaderUserID, companionID)
+}
+
+// AdminProvider is optionally implemented by the registered
+// FormationProvider: the admin test area's company tools (modules/testarea).
+// Both bypass the allow list, the alignment gate, the price and the claim,
+// which is why only an admin command calls them.
+type AdminProvider interface {
+	// AdminRecruit adds a companion of a class (a base archetype or an
+	// advanced or elite class id) at a level, in the leader's room.
+	AdminRecruit(leaderUserID, roomID int, class string, level int) (string, error)
+	// AdminSetMember changes a companion's class and/or level (blank class
+	// or level 0 leaves it) and respawns it from the new record.
+	AdminSetMember(leaderUserID, roomID int, selector, class string, level int) (string, error)
+}
+
+// ErrAdminUnavailable is returned when no company module is loaded.
+var ErrAdminUnavailable = errors.New("the company tools are unavailable right now")
+
+func adminProvider() (AdminProvider, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	ap, ok := p.(AdminProvider)
+	return ap, ok
+}
+
+// AdminRecruit is AdminProvider.AdminRecruit.
+func AdminRecruit(leaderUserID, roomID int, class string, level int) (string, error) {
+	ap, ok := adminProvider()
+	if !ok {
+		return "", ErrAdminUnavailable
+	}
+	return ap.AdminRecruit(leaderUserID, roomID, class, level)
+}
+
+// AdminSetMember is AdminProvider.AdminSetMember.
+func AdminSetMember(leaderUserID, roomID int, selector, class string, level int) (string, error) {
+	ap, ok := adminProvider()
+	if !ok {
+		return "", ErrAdminUnavailable
+	}
+	return ap.AdminSetMember(leaderUserID, roomID, selector, class, level)
 }
 
 // BanterProvider is optionally implemented by the registered

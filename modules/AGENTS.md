@@ -32,6 +32,8 @@ Rules that apply to all of them:
   - admin API endpoints
 - Keep module-specific UI, files, and persistence inside the module when practical instead of spreading the feature across unrelated packages.
 
+- A module that keeps state by user id must register a `userstate.Contributor` (see `modules/testarea/AGENTS.md`), so the admin test area can snapshot and restore it; `purge_coverage_test.go` enforces it.
+
 ## Verification
 
 - Run the narrowest tests that cover the changed module behavior, then broader repo checks if the change crosses package boundaries.

@@ -1,0 +1,16 @@
+roomid: 90008
+zone: Test Area
+title: Narrow Pass
+description: >-
+  A cleft between two walls of rock, so tight that a battle here is fought on narrow ground.
+biome: mountains
+tags:
+  - lit
+  - narrow
+exits:
+  south:
+    roomid: 90002
+mapx: 0
+mapy: -2
+mapz: 0
+hascoordinates: true

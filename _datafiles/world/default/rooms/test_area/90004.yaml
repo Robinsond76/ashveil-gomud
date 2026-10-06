@@ -1,0 +1,15 @@
+roomid: 90004
+zone: Test Area
+title: Armory
+description: >-
+  Weapon racks, armor stands and crates line the walls. Nothing here costs anything: testarea kit weapons, armor, camp, supplies or saddles hands you one of each kind, testarea give <item> [count] gives any item, and testarea items <word> searches the catalog. Everything vanishes when you return.
+biome: fort
+tags:
+  - lit
+exits:
+  east:
+    roomid: 90001
+mapx: -1
+mapy: 0
+mapz: 0
+hascoordinates: true

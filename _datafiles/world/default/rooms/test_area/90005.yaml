@@ -1,0 +1,16 @@
+roomid: 90005
+zone: Test Area
+title: Stable
+description: >-
+  A long stable with stalls for riding horses and pack horses. The stablehand sells them as in any stable (stable list, stable buy), and testarea gold fills your purse.
+biome: farmland
+tags:
+  - lit
+  - stable
+exits:
+  north:
+    roomid: 90001
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

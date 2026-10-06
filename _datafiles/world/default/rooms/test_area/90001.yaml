@@ -1,0 +1,25 @@
+roomid: 90001
+zone: Test Area
+title: Test Area Hub
+description: >-
+  An admin-only test area, apart from the world. A painted signboard lists the rooms: the combat yard (north), the camp (east), the armory (west), the stable (south), the weather deck (up) and the dark cellar (down). Type testarea help for the commands, and testarea return to go back to where you were; nothing that happens here is kept. Lantern posts keep every room lit through the night; only the cellar is dark.
+biome: city
+tags:
+  - lit
+exits:
+  north:
+    roomid: 90002
+  east:
+    roomid: 90003
+  west:
+    roomid: 90004
+  south:
+    roomid: 90005
+  up:
+    roomid: 90006
+  down:
+    roomid: 90007
+mapx: 0
+mapy: 0
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,26 @@
+roomid: 90003
+zone: Test Area
+title: Test Camp
+description: >-
+  A clearing of beaten grass with a ring of fire stones, a stream, and a stand of kindling. Camp here with firewood, water and the camp gear from testarea kit camp. The road camp east of here draws thieves and raiders every time.
+biome: forest
+tags:
+  - lit
+  - camping
+exits:
+  west:
+    roomid: 90001
+  east:
+    roomid: 90010
+resources:
+  - water
+  - forage
+  - firewood
+  - herbs
+  - game
+  - fishing
+  - shelter
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true
