@@ -14,7 +14,7 @@ func TestNextMilestone(t *testing.T) {
 // Phase 38b delivered talents, promotion and the advanced ranks; Phase 38c1
 // delivers the elite step for warriors and clerics, so only they see it
 // without "(coming)".
-func TestEliteStepIsShippedForWarriorsAndClericsOnly(t *testing.T) {
+func TestEliteStepIsShippedForFourLineages(t *testing.T) {
 	for _, tc := range []struct {
 		level     int
 		archetype string
@@ -25,8 +25,9 @@ func TestEliteStepIsShippedForWarriorsAndClericsOnly(t *testing.T) {
 		{25, "wizard", "level 30: elite promotion (coming)"},
 		{25, "warrior", "level 30: elite promotion"},
 		{25, "cleric", "level 30: elite promotion"},
-		{29, "rogue", "level 30: elite promotion (coming)"},
-		{34, "ranger", "level 35: elite rank and talent (coming)"},
+		{29, "rogue", "level 30: elite promotion"},
+		{34, "ranger", "level 35: elite rank and talent"},
+		{29, "halberdier", "level 30: elite promotion (coming)"},
 		{34, "warrior", "level 35: elite rank and talent"},
 		{59, "cleric", "level 60: elite capstone"},
 		{60, "warrior", "No upcoming milestone announced."},

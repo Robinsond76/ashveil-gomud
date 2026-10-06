@@ -3,6 +3,8 @@ package mobcommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -96,11 +98,14 @@ func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]pers
 			add(loot.Goods(kind, goods, src), nil)
 		}
 		if cache {
-			add(loot.Equipment(loot.Cache, mob.Character.Level, profile, label+"'s company", src))
+			trailGold, _ := enemyparty.CompanyEffect(uid, classes.TrailGold) // Phase 38c2: Trailwise
+			trailLoot, _ := enemyparty.CompanyEffect(uid, classes.TrailLoot)
+			add(loot.EquipmentWith(loot.Cache, mob.Character.Level, profile, label+"'s company", src, trailLoot))
 			if hasGoods {
 				add(loot.Goods(loot.Cache, goods, src), nil)
 			}
 			d.Gold = loot.CacheGold(mob.Character.Level, mob.EncounterBoss, src)
+			d.Gold += d.Gold * trailGold / 100
 		}
 		if len(d.Items) > 0 || d.Gold > 0 {
 			out[uid] = d

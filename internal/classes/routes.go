@@ -148,7 +148,16 @@ func init() {
 			rank(25, "Long ambush", "Ambush lasts the battle's first two rounds", Ambush, 2),
 		}})
 	register(Class{ID: "pathfinder", Name: "Pathfinder", Lineage: "rogue", Tier: TierElite, Parent: "scout", Gate: GateGood,
-		Role: "reconnaissance and exposed foes", Planned: true})
+		Role: "reconnaissance: fewer ambushes and openings on foes caught unprepared",
+		Ranks: []Rank{
+			rank(30, "Pathfinder's Eye", "enemy ambushes on the company happen half as often, and Opening Strike opens one foe that hasn't acted yet each battle", PathEye, 1, PathOpens, 1),
+			rank(35, "Expose Weakness", "an Opening Strike that hits leaves the target exposed for 2 rounds", ExposeWeak, 1),
+			rank(40, "Scouted ground", "every ally's action meter starts the battle 10 points higher", ScoutMeter, 10),
+			rank(45, "Vanish", "once a battle, when struck below 30% health, it has +20 Evasion for the rest of that round and the next", Vanish, 20),
+			rank(50, "Double opening", "Pathfinder's Eye opens a foe that hasn't acted yet twice a battle", PathOpens, 2),
+			rank(55, "Trailwise", "the cache a won random encounter leaves holds 15% more gold and is 10 points likelier to hold equipment", TrailGold, 15, TrailLoot, 10),
+			rank(60, "Ambush Master", "when an ambush would catch the company off guard, the company ambushes instead", AmbushFlip, 1),
+		}})
 	register(Class{ID: "duelist", Name: "Duelist", Lineage: "rogue", Tier: TierAdvanced, Gate: GateAny,
 		Role: "precise blade fighting; answers a parry with a blow",
 		Ranks: []Rank{
@@ -158,7 +167,16 @@ func init() {
 			rank(25, "Duelist's edge", "+3 Attack", Attack, 3),
 		}})
 	register(Class{ID: "swordmaster", Name: "Swordmaster", Lineage: "rogue", Tier: TierElite, Parent: "duelist", Gate: GateAny,
-		Role: "parry-based ripostes", Planned: true})
+		Role: "parry-based ripostes that grow harder and more frequent",
+		Ranks: []Rank{
+			rank(30, "Blade Dance", "ripostes deal 50% more damage", RipostePct, 50),
+			rank(35, "Parry mastery", "+5 parry chance", Parry, 9),
+			rank(40, "Disarming Riposte", "a riposte that crits staggers the target, which loses its next action", RiposteDaze, 1),
+			rank(45, "Twin ripostes", "it can riposte twice a round", RiposteRound, 2),
+			rank(50, "Perfect Parry", "once a battle, it parries the next melee blow automatically", PerfectParry, 1),
+			rank(55, "Counter-strike", "a riposte also leaves its target exposed for a round", RiposteExpo, 1),
+			rank(60, "Unbroken Guard", "no riposte limit while it is above half health", RiposteFree, 1),
+		}})
 	register(Class{ID: "assassin", Name: "Assassin", Lineage: "rogue", Tier: TierAdvanced, Gate: GateEvil,
 		Role: "finishing blows against weakened foes",
 		Ranks: []Rank{
@@ -168,7 +186,16 @@ func init() {
 			rank(25, "Cold edge", "+3 Attack", Attack, 3),
 		}})
 	register(Class{ID: "nightblade", Name: "Nightblade", Lineage: "rogue", Tier: TierElite, Parent: "assassin", Gate: GateEvil,
-		Role: "finishing blows and poison", Planned: true})
+		Role: "a marked victim, finishing blows and poison",
+		Ranks: []Rank{
+			rank(30, "Death Mark", "its first target each battle is marked, left exposed for 2 rounds, and takes 40% more damage from it; when that foe falls, the mark passes to the most hurt foe in reach (exposed again)", DeathMark, 40),
+			rank(35, "Envenom", "its blows poison the target a quarter of the time", Envenom, 25),
+			rank(40, "Keener finish", "Finisher works on a foe at or below 60% health", Finisher, 3),
+			rank(45, "Shadowstep", "once every 3 rounds it may strike the marked foe in the middle row as if it had extended reach; guardians can still intercept", Shadowstep, 3),
+			rank(50, "Hunting the mark", "+15% critical chance against the marked foe", DeathCrit, 15),
+			rank(55, "Killing Spree", "when it fells the marked foe, its action meter gains 50, once a round", Spree, 50),
+			rank(60, "Coup de Grace", "a blow that lands on a foe below 20% health fells it outright; against a boss it deals double damage instead", Coup, 20),
+		}})
 
 	// ----- Ranger -----
 	register(Class{ID: "warden", Name: "Warden", Lineage: "ranger", Tier: TierAdvanced, Gate: GateGood,
@@ -180,7 +207,16 @@ func init() {
 			rank(25, "Shelter", "allies in the Warden's row take 5% less damage", AuraResolv, 5),
 		}})
 	register(Class{ID: "sentinel", Name: "Sentinel", Lineage: "ranger", Tier: TierElite, Parent: "warden", Gate: GateGood,
-		Role: "ranged protection of vulnerable allies", Planned: true})
+		Role: "ranged protection: shoots the foe that strikes a vulnerable ally",
+		Ranks: []Rank{
+			rank(30, "Overwatch", "when its Aimed Shot is not ready and a foe could strike its middle or back row, the Sentinel holds its turn; the first foe that goes for one of those allies is shot before the blow resolves, and on a hit the blow lands at half damage; if none does, it looses the arrow at its own foe at the round's end", Overwatch, 1, OverwatchMax, 1),
+			rank(35, "Steady overwatch", "the Overwatch shot has +5 Attack", OverwatchAtk, 5),
+			rank(40, "Pull down", "an Overwatch hit knocks down a leaping foe", OverwatchDwn, 1),
+			rank(45, "Watchful", "back-row allies have +5 Evasion while the Sentinel stands, on top of a row's own Evasion (such as a Warden's)", WatchBack, 5),
+			rank(50, "Spoil the chant", "Overwatch also answers a foe beginning a chant; a hit breaks the chant", OverwatchCh, 1),
+			rank(55, "Twin watch", "Overwatch can fire twice a round; the second shot spends the Sentinel's next turn too", OverwatchMax, 2),
+			rank(60, "Guardian Arrow", "an Overwatch hit stops the blow entirely", GuardArrow, 1),
+		}})
 	register(Class{ID: "hunter", Name: "Hunter", Lineage: "ranger", Tier: TierAdvanced, Gate: GateAny,
 		Role: "accurate ranged focus and a harder Aimed Shot",
 		Ranks: []Rank{
@@ -190,7 +226,16 @@ func init() {
 			rank(25, "Killing shot", "Aimed Shot deals +5 damage", AimBonus, 5),
 		}})
 	register(Class{ID: "marksman", Name: "Marksman", Lineage: "ranger", Tier: TierElite, Parent: "hunter", Gate: GateAny,
-		Role: "advanced Aimed Shot", Planned: true})
+		Role: "the critical-hit archer: a deadlier Aimed Shot",
+		Ranks: []Rank{
+			rank(30, "Called Shot", "its shots have +15% critical chance, and its critical hits deal 50% more damage", RangedCrit, 15, CritDamage, 50),
+			rank(35, "Quicker aim", "Aimed Shot is ready another round sooner", AimCD, 2),
+			rank(40, "Pinning Crit", "an Aimed Shot that lands hobbles the target for 2 rounds", PinCrit, 2),
+			rank(45, "Back-line eye", "+10 Attack against foes in the back row", BackAttack, 10),
+			rank(50, "Unblockable", "its critical hits can't be blocked", NoBlockCrit, 1),
+			rank(55, "Second Nock", "an Aimed Shot that fells its target shoots again at a new target, once a round", SecondNock, 1),
+			rank(60, "Perfect Shot", "its first Aimed Shot each battle can't miss or be avoided", PerfectShot, 1),
+		}})
 	register(Class{ID: "stalker", Name: "Stalker", Lineage: "ranger", Tier: TierAdvanced, Gate: GateEvil,
 		Role: "pressure on wounded targets",
 		Ranks: []Rank{
@@ -200,7 +245,16 @@ func init() {
 			rank(25, "Predator's eye", "+3 Attack", Attack, 3),
 		}})
 	register(Class{ID: "ravager", Name: "Ravager", Lineage: "ranger", Tier: TierElite, Parent: "stalker", Gate: GateEvil,
-		Role: "pursuit without blocking every flee", Planned: true})
+		Role: "pursuit: bleeding wounds, and a harder flight for the hunted",
+		Ranks: []Rank{
+			rank(30, "Hunt Down", "its blows open a bleeding wound on a foe at or below 75% health and add a stack to one already bleeding; a foe it struck this round has 25 points less chance to lose its nerve and flee (it can still flee)", HuntDown, 75, FleePenalty, 25),
+			rank(35, "Bloodscent", "+20% damage against bleeding foes", HuntBleed, 20),
+			rank(40, "Harrow", "when a foe it wounded loses its nerve, its whole group is rattled: every ally has +5 Attack against them for 2 rounds", Harrow, 5),
+			rank(45, "Deep wounds", "bleeding it causes lasts a round longer", BleedLong, 1),
+			rank(50, "Rend", "its critical hits also break the target's armor for 2 rounds", RendArmor, 1),
+			rank(55, "Relentless hunt", "Hunt Down's flee penalty is 40 points", FleePenalty, 40),
+			rank(60, "Apex", "each foe it fells forces a morale check on that foe's group", Apex, 1),
+		}})
 
 	// ----- Wizard -----
 	register(Class{ID: "theurgist", Name: "Theurgist", Lineage: "wizard", Tier: TierAdvanced, Gate: GateGood,

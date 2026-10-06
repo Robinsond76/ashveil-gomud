@@ -7,7 +7,8 @@ biggest choice a character makes after its archetype.
 
   Level 10   an advanced class, on the good, neutral or evil route
   Level 30   an elite class, where your route has one (Hierarch, Demonologist,
-             Elder Druid, Paladin, Warlord, Dread Knight); see <ansi fg="command">help elite</ansi>
+             Elder Druid, Paladin, Warlord, Dread Knight, Pathfinder, Swordmaster,
+             Nightblade, Sentinel, Marksman, Ravager); see <ansi fg="command">help elite</ansi>
 
 <ansi fg="yellow-bold">How</ansi>
 
@@ -35,4 +36,4 @@ took the advanced class can take both steps in one visit. A promotion starts the
 has already reached. Spells those ranks teach are learned immediately. A class
 changes how you fight but never takes anything away.
 
-See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help gryphon-rider-routes</ansi>.
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help gryphon-rider-routes</ansi>.

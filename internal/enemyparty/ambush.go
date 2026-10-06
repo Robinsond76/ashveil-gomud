@@ -113,6 +113,15 @@ func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, gr
 	advantage := 0
 	if surprise {
 		_, advantage = formationcombat.Detection(perception, stealth, visibility, cover, ambushRoll(100), false)
+		// Phase 38c2: a Pathfinder halves the ambushes on the company, and its
+		// Ambush Master turns one around.
+		if advantage < 0 {
+			if _, scout := CompanyEffect(leaderUserID, classes.AmbushFlip); scout != "" {
+				advantage, observer = 1, scout
+			} else if _, scout := CompanyEffect(leaderUserID, classes.PathEye); scout != "" && ambushRoll(100) < 50 {
+				advantage, observer = 0, scout
+			}
+		}
 	}
 	for _, foe := range foes {
 		foe.AmbushOwner, foe.AmbushAdvantage, foe.AmbushObserver = leaderUserID, advantage, observer
@@ -150,4 +159,35 @@ func WatchAmbush(roomID, first, owner int) {
 			m.AmbushAdvantage = 0
 		}
 	}
+}
+
+// CompanyEffect is the best value of a class effect among a leader's
+// standing company in the leader's room: the leader and each living
+// companion that is with them (Phase 38c2: an elite's company-wide gifts).
+// name is the holder that gives it, "" when none does.
+func CompanyEffect(leaderUserID int, key string) (value int, name string) {
+	u := users.GetByUserId(leaderUserID)
+	if u == nil || u.Character == nil {
+		return 0, ""
+	}
+	consider := func(c *characters.Character) {
+		if c.Health < 1 || c.CombatWithdrawn || c.RoomId != u.Character.RoomId {
+			return
+		}
+		if v := c.ClassEffects().Int(key); v > value {
+			value, name = v, c.Name
+		}
+	}
+	consider(u.Character)
+	members, _ := company.CompanyMembers(leaderUserID)
+	for _, member := range members {
+		id, ok := company.InstanceFor(leaderUserID, member.ID)
+		if !ok {
+			continue
+		}
+		if m := mobs.GetInstance(id); m != nil {
+			consider(&m.Character)
+		}
+	}
+	return value, name
 }

@@ -130,6 +130,51 @@ const (
 	Bodyguard = "bodyguard" // times a battle it steps in for the company leader
 	Vengeance = "vengeance" // percent more damage for each fallen ally
 
+	// The rogue and ranger elites (Phase 38c2).
+	PathEye      = "patheye"      // the Pathfinder: enemy ambushes on the company happen half as often
+	PathOpens    = "pathopens"    // Opening Strike opens a foe that hasn't acted yet, this many times a battle
+	ExposeWeak   = "exposeweak"   // an Opening Strike that hits leaves the target exposed for 2 rounds
+	ScoutMeter   = "scoutmeter"   // every ally's opening action meter starts this much higher
+	Vanish       = "vanish"       // once a battle, struck below 30% health: this much Evasion for the rest of that round and the next
+	TrailGold    = "trailgold"    // percent more gold in the cache a won random encounter leaves
+	TrailLoot    = "trailloot"    // points added to that cache's chance of holding equipment
+	AmbushFlip   = "ambushflip"   // an ambush that would catch the company ambushes instead
+	RipostePct   = "ripostepct"   // percent more riposte damage
+	RiposteRound = "ripostemax"   // ripostes a round (1 by default)
+	RiposteDaze  = "ripostedaze"  // a riposte that crits staggers the target
+	RiposteExpo  = "riposteexpo"  // a riposte leaves the target exposed for a round
+	RiposteFree  = "ripostefree"  // no riposte limit while above half health
+	PerfectParry = "perfectparry" // once a battle the next melee blow is parried automatically
+	DeathMark    = "deathmark"    // its first target each battle is marked: percent more damage from it
+	Envenom      = "envenom"      // percent chance a blow poisons the target
+	Shadowstep   = "shadowstep"   // rounds between steps that strike the marked foe in the middle row
+	DeathCrit    = "deathcrit"    // critical chance points against the marked foe
+	Spree        = "spree"        // action meter points gained on felling the marked foe
+	Coup         = "coup"         // percent of health below which a landed blow fells the foe outright
+	Overwatch    = "overwatch"    // the Sentinel may hold its turn to shoot the first foe striking a middle or back row ally
+	OverwatchAtk = "overwatchatk" // Attack the Overwatch shot adds
+	OverwatchDwn = "overwatchdwn" // an Overwatch hit knocks down a leaping foe
+	OverwatchCh  = "overwatchch"  // Overwatch also answers a foe beginning a chant, and a hit breaks it
+	OverwatchMax = "overwatchmax" // shots an Overwatch can fire in a round
+	GuardArrow   = "guardarrow"   // an Overwatch hit stops the blow entirely
+	WatchBack    = "watchback"    // Evasion for back-row allies while the holder stands
+	CritDamage   = "critdamage"   // percent more damage on a critical hit
+	RangedCrit   = "rangedcrit"   // critical chance points on shooting-weapon blows
+	RangedPct    = "rangedpct"    // percent more damage with a shooting weapon
+	RangedAttack = "rangedattack" // Attack with a shooting weapon
+	PinCrit      = "pincrit"      // an Aimed Shot that lands hobbles the target for this many rounds
+	BackAttack   = "backattack"   // Attack against foes in the enemy's back row
+	NoBlockCrit  = "noblockcrit"  // its critical hits can't be blocked
+	SecondNock   = "secondnock"   // an Aimed Shot that fells its target shoots again, once a round
+	PerfectShot  = "perfectshot"  // its first Aimed Shot each battle can't miss or be avoided
+	HuntDown     = "huntdown"     // its blows open a bleed on a foe at or below this percent of its health and add stacks to a bleeding one
+	HuntBleed    = "huntbleed"    // percent more damage against bleeding foes
+	FleePenalty  = "fleepenalty"  // points off a struck foe's chance to lose its nerve and flee
+	Harrow       = "harrow"       // Attack allies gain against the group of a foe it wounded that breaks
+	BleedLong    = "bleedlong"    // rounds added to the bleeding it causes
+	RendArmor    = "rendarmor"    // its critical hits break the target's armor for 2 rounds
+	Apex         = "apex"         // each foe it fells forces a morale check on that foe's group
+
 	// The Doll Master's lineage (Phase 39d). The doll is a durable fighter
 	// in a cell of its own that acts on its Master's turn.
 	DollGuards  = "dollguards"  // times a battle the doll guards its most hurt neighbour (Guard String)

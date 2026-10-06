@@ -321,7 +321,7 @@ func critsWith(sourceChar characters.Character, targetChar characters.Character,
 	if targetChar.HasBuffFlag(status.FlagExposed) {
 		chance = min(chance+status.ExposedCritBonus, 100)
 	}
-	chance = min(chance+sourceChar.ClassCrit()+extra, 100)
+	chance = min(chance+sourceChar.ClassCrit()+sourceChar.EliteCrit(&targetChar)+extra, 100)
 	critRoll := util.Rand(100)
 	util.LogRoll(`Crits`, critRoll, chance)
 	return critRoll < chance

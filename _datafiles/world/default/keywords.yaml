@@ -50,6 +50,14 @@ help:
       - warrior-routes
       - elite
       - warlord
+      - rogue-routes
+      - ranger-routes
+      - elite-pathfinder
+      - swordmaster
+      - nightblade
+      - sentinel
+      - marksman
+      - ravager
       - samurai
       - samurai-routes
       - shaman
@@ -309,6 +317,14 @@ help-aliases:
   talents:          [talent, talent-pick, talent-list]
   cleric-routes:    [priest, druid, blood-priest, blood priest, elder-druid, elder druid, siphon, rejuvenation, barkskin, grove, greater-heal]
   elite:            [elites, elite-class, elite-classes, elite-promotion, second-promotion]
+  rogue-routes:     [scout-class, assassin, riposte, finisher, rogue-class, rogue-classes]
+  ranger-routes:    [warden, hunter, stalker, ranger-class, ranger-classes]
+  elite-pathfinder: [pathfinder-class, pathfinder-elite, pathfinders-eye, ambush-master, trailwise, vanish]
+  swordmaster:      [swordmasters, blade-dance, twin-ripostes, perfect-parry, counter-strike]
+  nightblade:       [nightblades, death-mark, envenom, shadowstep, killing-spree, coup-de-grace]
+  sentinel:         [sentinels, overwatch, guardian-arrow, twin-watch]
+  marksman:         [marksmen, called-shot, second-nock, perfect-shot, pinning-crit]
+  ravager:          [ravagers, hunt-down, harrow, apex, bloodscent]
   warlord:          [warlords, marked-for-ruin, battle-cry, sunder, relentless]
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]

@@ -54,8 +54,7 @@ CLASSES = {
                     wide=1, hair="charcoal"),
     "shaman": dict(trousers="leather", boots="leather", torso="leather", sleeve="leather",
                    hair="charcoal"),
-    # Phase 39d/39f: a puppeteer in a long coat, a sky skirmisher in a riding jack.
-    "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum", hair="charcoal"),
+    # Phase 39f: a sky skirmisher in a riding jack.
     "gryphon-rider": dict(trousers="leather", boots="leather", torso="ochre", sleeve="leather",
                           hair="leather"),
 }
@@ -632,26 +631,6 @@ def draw_shaman(r):
     cv.part(line(hx - 1, tip + r.px(1), hx - r.px(2), tip + r.px(4)), "water", flat="m")
 
 
-def draw_dollmaster(r):
-    """A plum coat, a control bar in hand with strings hanging to a small wooden doll."""
-    S, cv, v, k = r.S, r.cv, r.view, r.k
-    r.legs()
-    r.torso("plum")
-    _belt(r, "brass", r.yhip - r.px(1))
-    r.arms("plum", glove="wool")
-    r.head(hair="charcoal")
-    if v == "up":
-        return
-    hx, hy = r.hand_r
-    bar = r.px(4)
-    cv.part(rect(hx - bar // 2, hy - r.px(2), hx + bar // 2, hy - r.px(2)), "wood", flat="m")  # control bar
-    dy = hy + r.px(4)
-    for x in (hx - bar // 2, hx + bar // 2):  # strings
-        cv.part({(x, y) for y in range(hy - r.px(2) + 1, dy)}, "bone", flat="l")
-    cv.part(rect(hx - r.px(1), dy, hx + r.px(1), dy + r.px(3)), "wood")  # the doll
-    cv.put(hx, dy, "ochre.l")
-
-
 def draw_gryphon_rider(r):
     """A riding jack, a winged helm with tawny feathers, a spear held high."""
     S, cv, v, k = r.S, r.cv, r.view, r.k
@@ -679,7 +658,7 @@ def draw_gryphon_rider(r):
 
 
 DRAWERS = {
-    "dollmaster": draw_dollmaster, "gryphon-rider": draw_gryphon_rider,
+    "gryphon-rider": draw_gryphon_rider,
     "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
     "warrior": draw_warrior, "rogue": draw_rogue, "ranger": draw_ranger,
     "cleric": draw_cleric, "wizard": draw_wizard, "witch": draw_witch,
