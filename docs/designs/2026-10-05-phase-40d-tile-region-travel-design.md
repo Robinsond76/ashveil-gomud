@@ -1,6 +1,6 @@
 # Phase 40d: tile-ready showcase region and click-to-walk
 
-Status: **design draft, awaiting owner approval** (handoff rule 20). Part
+Status: **approved 2026-10-06 under the owner's delegation**; open questions are decided in the [remaining roadmap](../plans/2026-10-06-remaining-roadmap.md#decisions-on-open-questions) (handoff rule 20). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
 Roadmap item 4: an area density pass on one region, plus click-to-walk.
 It reuses art set S2.

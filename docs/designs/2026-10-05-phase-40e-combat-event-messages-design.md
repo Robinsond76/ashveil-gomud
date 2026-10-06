@@ -1,6 +1,6 @@
 # Phase 40e: structured combat-event messages
 
-Status: **design draft, awaiting owner approval** (handoff rule 20). Part
+Status: **approved 2026-10-06 under the owner's delegation**; open questions are decided in the [remaining roadmap](../plans/2026-10-06-remaining-roadmap.md#decisions-on-open-questions) (handoff rule 20). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
 Roadmap item 5a. No art. **No visible player change**; it is the data feed
 for the battle screen (40f and 40g). It can be built in parallel with
