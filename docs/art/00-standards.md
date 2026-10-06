@@ -194,10 +194,19 @@ Don't put several tiles in one image.
 
 - **View:** straight top-down, like a campaign map, with soft top-left
   light. Trees are canopy tops, buildings are roofs, ground is seen flat.
-- **Edges:** the outer ~8% of each side is a calm band of the biome's
-  base color. A tile must sit next to itself, its other variants and any
-  other biome without a visible seam or a cut object. Nothing crosses an
-  edge.
+- **Full-bleed edges, no frame.** Paint each tile edge to edge in **its
+  own biome's colors**. Its edges look like its middle.
+  - Never add a border, frame, vignette, darkened edge or shared "neutral"
+    edge color. A shared edge color turns the map into a grid of boxes.
+  - Textures continue across edges: canopy, grass and water join up when
+    tiles touch. Large single objects (a boulder, a building) stay
+    inside, clear of the edges.
+- **Seamless with itself:** four copies placed 2×2 show no seam.
+  Neighboring biomes may change color softly at the join, but never with
+  a hard dark line.
+- **Open biomes stay open.** `water` is water to all four edges; banks
+  belong to `shore`. Paths (`road`) meet the middle of all four edges, or
+  run as texture edge to edge, so they connect from any side.
 - **Variants** share the base color and light. They differ only in where
   the details sit, and none of them stands out.
 - **Animated frames** are the base tile plus the moving element. Frames
@@ -214,6 +223,10 @@ Don't put several tiles in one image.
 - One family look: every icon in a set shares the outline weight, light,
   framing and level of detail. There's no background disc or plate
   unless the row says so.
+- **One main object.** At 16×16 an icon has room for one bold shape, plus
+  at most one small accent (a glow, a drop, a spark). Composite ideas
+  blur at that size: a helm with stars, or a cross with a scroll and a
+  hand. Draw the row's named object, not a substitute.
 - Symbols are visual, never letters, numbers or real-world logos.
 
 ## 7. Prompt skeletons
@@ -265,6 +278,8 @@ Go through every file:
       where required).
 - [ ] The right number of rows and columns, in the order the phase lists.
 - [ ] No text, matte, checkerboard, ground, border or stray specks.
+- [ ] Terrain: a 3×3 grid of each tile, and a mixed row of biomes, show no
+      frame or seam. Put both in the review sheet.
 - [ ] Shrunk to the logical size, it still reads. Shown next to the A0
       anchors, it looks like the same game.
 - [ ] Every frame is the same design and scale. Feet are level, and the
