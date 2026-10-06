@@ -166,6 +166,19 @@ const foldedShown = await page.evaluate(() => [...document.querySelectorAll('#to
 check(foldedShown.join() === 'Show the touch bar', 'folding the touch bar leaves only its unfold button: ' + foldedShown.join());
 await page.locator('#touch-bar .mb-fold').tap();
 check(await page.evaluate(() => document.querySelector('#touch-bar button[aria-label="Go north"]').offsetParent !== null), 'and unfolding brings the buttons back');
+// The Menu button opens the quick command menu, whose entries are 44 px targets.
+await clearSent();
+await gmcp('Room.Info', { num: 1, name: 'Meadow 0,0', area: 'Alderbrook', coords: 'Alderbrook,0,0,0', exits: { east: 2 }, exitsv2: { east: { num: 2, dx: 1, dy: 0, dz: 0 } }, Contents: { Npcs: [{ id: 11, name: 'giant rat' }] } });
+await page.locator('#touch-bar .mb-menu').tap();
+check(await page.evaluate(() => QuickMenu.isOpen()), 'the touch bar\'s Menu button opens the quick menu');
+const qmSmall = await page.evaluate(() => [...document.querySelectorAll('#quickmenu .qm-row')].filter(b => b.getBoundingClientRect().height < 44).map(b => b.textContent));
+check(qmSmall.length === 0, 'every quick menu entry is at least 44 px: ' + qmSmall.join());
+const qmBox = await box('#quickmenu');
+check(qmBox.x >= 0 && qmBox.x + qmBox.width <= VW && qmBox.y >= 0, 'the quick menu fits the screen: ' + JSON.stringify(qmBox));
+await shot('quick-menu');
+await page.locator('#quickmenu .qm-row', { hasText: 'Attack' }).tap();
+await page.locator('#quickmenu .qm-row', { hasText: 'giant rat' }).tap();
+check((await sent()).join() === 'attack 11', 'a tapped entry sends its command by id: ' + (await sent()).join());
 await clearSent();
 await clearSent();
 
