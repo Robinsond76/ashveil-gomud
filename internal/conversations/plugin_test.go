@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func TestMain(m *testing.M) {
@@ -117,5 +118,33 @@ func TestReadPluginConversationFile_KeyFormat(t *testing.T) {
 	}
 	if _, ok := readPluginConversationFile("frostfang", 43); ok {
 		t.Fatalf("did not expect a file for mob 43")
+	}
+}
+
+// A conversation not yet stepped has no LastRound; the maintenance sweep
+// must age it from its start, not prune it at once whenever the round
+// count is past ten (37c: this failed in shuffled runs).
+func TestFreshConversationSurvivesMaintenance(t *testing.T) {
+	resetPluginState()
+	defer resetPluginState()
+	prev := util.GetRoundCount()
+	defer util.SetRoundCount(prev)
+	RegisterFS(newFakeFS(map[string][]byte{
+		`conversations/testzone/9001.yaml`: []byte(sampleConversation),
+	}))
+
+	util.SetRoundCount(500)
+	convId := AttemptConversation(9001, 1, "goblin", 2, "rat", "TestZone")
+	if convId == 0 {
+		t.Fatal("no conversation")
+	}
+	util.SetRoundCount(503)
+	defer util.UseRandForTest(func(int) int { return 0 })() // every call sweeps
+	if getConversation(convId) == nil {
+		t.Fatal("pruned three rounds after it began, never stepped")
+	}
+	util.SetRoundCount(520)
+	if getConversation(convId) != nil {
+		t.Fatal("twenty idle rounds should be pruned")
 	}
 }

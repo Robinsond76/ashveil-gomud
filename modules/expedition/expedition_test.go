@@ -477,6 +477,45 @@ func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
 	assert.NotContains(t, module.sessions, 7)
 }
 
+// Phase 44b live finding: an arrival listener that asks the module about the
+// leader (as the random-encounter roll does) used to run inside the timer's
+// completion, which holds the module's lock: the first journey to end in an
+// encounter room deadlocked the server. It now hears the arrival from the
+// event queue, after the lock is released.
+func TestArrivalListenerMayCallBackIntoTheModule(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{user: user}
+	now := baseTime()
+	module := newTestModule(&fakeStore{}, scheduler, mover, &fakeSurvival{}, func() time.Time { return now }, interruptionProfiles())
+	var blocked []bool
+	removeArrival := walking.AddArrivalListener(func(userID, from, to int) {
+		b, _ := module.MovementBlocked(userID)
+		blocked = append(blocked, b)
+	})
+	t.Cleanup(removeArrival)
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+	now = baseTime().Add(time.Hour)
+	module.resume(7)
+	now = baseTime().Add(time.Hour + 5*time.Second)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		scheduler.fire(1)
+		events.ProcessEvents()
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the arrival listener deadlocked on the module's lock")
+	}
+	assert.Equal(t, []bool{false}, blocked, "the journey is over by the time the arrival is heard")
+}
+
 func TestReturnPersistsCancelledBeforeCleanupAndNeverMoves(t *testing.T) {
 	user := travelUser(t, 7, 100)
 	store := &fakeStore{}

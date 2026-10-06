@@ -65,7 +65,7 @@ help: ## List documented Makefile targets.
 	@printf "\n"
 
 ## Developer Workflow
-.PHONY: build build_local generate module validate test smoke coverage fmt fmtcheck vet mod js-lint js-test lua-lint
+.PHONY: build build_local generate module validate test smoke smoke-world coverage fmt fmtcheck vet mod js-lint js-test lua-lint
 
 build: validate build_local ## Validate the code and build ./$(BIN).
 
@@ -95,7 +95,10 @@ test: generate js-lint js-test lua-lint ## Run code generation, JavaScript/Lua l
 	@go test -race ./...
 
 smoke: generate ## Play a new character through a live server (a few minutes; see docs/LIVE_SMOKE_PLAYTEST.md).
-	@ASHVEIL_LIVE_SMOKE=1 go test -run TestLiveSmoke -timeout 20m -count=1 -v .
+	@ASHVEIL_LIVE_SMOKE=1 go test -run 'TestLiveSmoke$$' -timeout 20m -count=1 -v .
+
+smoke-world: generate ## Play the world on a live server: journey, encounter, loot, gathering, camp, inn (a few minutes).
+	@ASHVEIL_LIVE_SMOKE=1 go test -run 'TestLiveSmokeWorld$$' -timeout 20m -count=1 -v .
 
 coverage: ## Generate and open an HTML Go coverage report.
 	@mkdir -p bin/covdatafiles && \

@@ -1,5 +1,66 @@
 # Ashveil Project Status
 
+**Phase 44b complete (2026-10-06): world smoke playtest.** `make
+smoke-world` (`live_smoke_world_test.go`) plays a Warrior that skipped the
+tutorial through the world on a real server: recruiting at the Waymark Inn,
+the Old Kings Road journey (the fallen tree and `travel resume`), a random
+encounter fight and its loot, `gather firewood` and a camp, a restart, a
+salvage at the Frostfang armorer, a sale at the Dunmar market and a night at
+the Dunmar inn; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is its
+own target (about four minutes). Three things are bent in the test's own
+copy of the world only: new characters start at Dunmar's West Gate, the Old
+Kings Road gets an always-springing encounter table (two unarmed brigands),
+and the account is made an admin for the restart so it can teleport to
+Frostfang, which no shipped road reaches. Live bugs it found, each fixed with
+a regression test: (1) **a journey that ended in a room that springs random
+encounters froze the whole server**: `moveAndFinishLocked` held the expedition
+lock while the encounter roll asked the expedition module whether the leader
+could move (the arrival is now queued and heard after the lock is released;
+no shipped room was both a journey end and an encounter room, so only this
+run met it); (2) **a new character skipping the tutorial woke at 11/59 HP**
+(the engine seeds 10 health under the archetype's raised maximum; creation
+now starts at full health); (3) `company status` kept a companion's old level
+after it levelled in a fight (it showed the last save's snapshot); (4) "Your
+company gathers 3 firewood bundle" (now plural); (5) the phase 44 open item,
+"The battle is under way" lingering after a fight's summary: an aim at a foe
+already slain counted as a battle until the next round cleared it, so
+`loot`, `go`, `eat` and the rest were refused (it now does not). The fifth
+fix is read-only (the two reverted attempts cleared the aim); the world smoke
+loot step logs how long it waited, and the tutorial run keeps `doAfterBattle`
+as a safety net. Not fixed, noted for later: Dunmar has a market but no
+merchant or smith, and no road joins it to Frostfang, so gear a Dunmar
+company loots can only be sold or salvaged after a trip no shipped route
+makes; the only two camp rooms (the tutorial campground and the Fork) have free
+deadfall, so gathered firewood bundles have no use at a camp in the shipped
+world (a camp elsewhere would burn one) and markets never buy them; `weather`
+in Dunmar and Frostfang (city biomes) says "You can't tell what the weather
+is like here" because only the forest biome has a weather table (a content
+gap, not a code bug); a camp rest was not played in the world run, because the
+Fork's 15% camp-raid roll would make it depend on dice (the tutorial run covers
+a rest). One observation not reproduced: the prompt briefly showed
+"Overloaded" with 12.9 of 30 kg carried after `camp break` and a step.
+Merging master (39b's Samurai) renumbered the creation menus and broke both
+smoke runs; they now answer the race and archetype prompts by name.
+Verification: `make generate`, `make validate`, `go test -race ./...`, `make
+js-lint`, `make js-test`, `make smoke`, `make smoke-world` (all pass on the merged tree).
+
+**Phase 44b reviewed and merged via [PR #55](https://github.com/Robinsond76/ashveil-gomud/pull/55) (2026-10-06, Opus review thread):**
+checked the deadlock fix: the travel timer already completes on the event
+loop, so queuing `journeyArrived` only moves the encounter roll past the
+expedition lock; the encounter roll re-checks that the leader is still in the
+arrival room, so a late arrival can't spring on someone who moved or logged
+off. The smoke's world bending (start room, fixture encounter table, unarmed
+brigands, admin role) only writes the test's temp copy and its overrides file.
+`AimedAtMob` reads the mob map on the game loop like every other caller; the
+`company status` refresh is the save path's own snapshot. No fixes needed.
+Decisions: (1) the city-weather gap stays a follow-up, not a quick table,
+because a city table would change journey weather (a Dunmar departure now
+takes the forest's weather from its destination); (2) the firewood-at-camp
+and Dunmar merchant/smith gaps go to world building 41, which places camps
+and shops; (3) a camp rest stays out of the world run (the tutorial run covers
+it). UI: the fixes are themselves the player-visible changes (HP, roster level,
+plural, battle refusals); no help change needed.
+
 **Phase 39c complete, merged via [PR #54](https://github.com/Robinsond76/ashveil-gomud/pull/54) (2026-10-06): the Shaman neutral lineage.** A weather-caller: Call Fog and Gust at level 1, Chill Wind 3, Rain 6, Lightning 8. One battle-local weather at a time, 3 rounds, a new call replaces the old: Fog (Fogbound foes: ranged -10 to hit, spells -10%), Chill Wind (Windchilled: chants and sling shots one round slower), Rain (Lightning +50%). Routes Stormcaller (chain lightning at 50%), Mistweaver (+5 Evasion to allies in fog, longer weather), Earthspeaker (Stoneskin: +10/15/20 armor); elites planned (39i). Long Weather talent, recruit mob 150, `help shaman` and `help shaman-routes`, creation-lesson tutorial hint, strategy uses `weather` and `storm`. Plan: [39c](plans/2026-10-06-phase-39c-shaman.md). Decisions: Caster role, not a new support role; Fog and Chill are buffs so `conditions` shows them; weather marks only foes standing at the call; a spell with an apostrophe in its script text silently disabled the spell (fixed, `node --check` each spell script). Merged master (39a Halberdier) before the PR; powers are learned spells, so the strategy list, company summary and capability panel show them only once known, and route ranks reuse 39b's "New rank" level-up line. Follow-ups: Shaman battle sprites (art pass), elite ranks (39i).
 
 **Phase 39c review (Opus review thread):** accepted and fixed: (1) Rain promised "fire damage halved on both sides" in its spell text, cast line and `help shaman`, but nothing in the game deals fire damage (Burning is never applied), so the claim is gone and the dead `FireDamage` helper removed; Rain now only feeds Lightning. (2) UI: the player could not see which weather was up or for how long; `Company.Battle` now carries `weather` {kind, name, rounds, effect}, the battle screen's header names it ("fog (3 rounds: foe ranged attacks and spells weaker)") and the Combat tab's Battle view adds a Weather note; `help battlescreen` and `help shaman` say so (`TestBattleFeedCarriesTheWeather`, `scripts/browser/battle-check.mjs`). (3) Balance was too strong at 100 fights a cell: Shaman 62/69/33% against Wizard 28/40/29% and Witch 44/41/22% at levels 5/10/20. Experiments showed the weather itself is worth little in the mirror (a Shaman that never calls weather still won 55% at level 5); the edge was its sturdier body and focused single-target Gust, and the Wizard underperforms because it chants Shower of Sparks at a group instead of Magic Missile. Tuned: health and Evasion to the Wizard's (no head start, 0.5 a level, Evasion 0.75), Wizard-like growth (mysticism 4, smarts 3, perception 2, speed 1), Gust base 6 to 5 (about 70% of Magic Missile), Lightning base 10 to 9, Chill Wind cost 8 to 12. Result at 150 fights: Shaman 44/52/32%, within 5 points of the Witch at level 5 and of the Wizard at 20; level 10 stays about 10 points above both (Rain's Lightning bonus at 30% instead of 50% made no measurable difference, so the design's 50% stays). Routes after tuning (80 fights a cell, base/Stormcaller/Mistweaver/Earthspeaker): level 15 38/32/27/36%, level 25 16/23/21/30%; at 15 the routes sit within noise of the base class (Mistweaver lowest), at 25 all beat it; left for the 39i balance pass with the elites. Rejected: the Mistweaver's fog Evasion covering all blows, not only melee as the design said (simpler and visible; kept). Mob 150 and buffs 1112/1113 collide with nothing on master or open branches at merge time. Follow-ups: the Wizard picks Shower of Sparks over Magic Missile against groups and trails the other casters (balance candidate); Earthspeaker's Stoneskin is not listed in `strategy` spell lists for casters (minor); Mistweaver trails at level 15 (39i balance pass); Shaman sprites (art pass) and elite ranks (39i).
@@ -66,6 +127,10 @@ After the 40a3/40b/40s5 master merge, one race run failed
 21); it passed 8 of 8 reruns and is left for the flaky-test phase (37c).
 Merged after 39b: both neutral lineages share the help tables, recruit
 lists and `DefaultRule` (Samurai strongest, Halberdier crowded).
+
+**Phase 43b reviewed and merged via [PR #57](https://github.com/Robinsond76/ashveil-gomud/pull/57) (2026-10-06, Opus review thread):** builder decisions (1)-(6) kept: the shop-only launch needs nothing from 43a; dropping the antidote as a combat action matches the no-mid-battle-input rule (poison clears at fight end, and `curepoison` and cleansing exist); the camping registry is the same persistence path as `auto_sharpen`. Checked: the 10 real-minute coating uses an absolute Unix expiry, the same real-time model as the inn's Rested buffs, and never advances game time; poison is delivered automatically by the strike loop with no player input; combat-round durations match the existing convention (non-damage statuses carry rounds+1 ticks, as Blighted); vials are `SupplyOnly`, so nothing resells. Balance (level 8 company, 2-3 foes, 120 fights a cell, every member's blade coated): no poison 88% at 10-12 and 35% at 13-15; with poisons 90-92% and 29-39%, inside sampling noise, so the difficulty bands hold. Added: `TestCoatedBladePoisonsAFoeThroughTheRealRound` (DoCombat, Buff event, ApplyBuffs: the foe is poisoned, the blow names it, it ticks the next round), the only integration point without a real-round test. The new combat tests shift the package's dice order so `TestIaijutsuIsTheFirstStrikeOfABattleOnly` (the known Iaijutsu crit flake) failed every package run; ported 37c's fix unchanged (`util.UseRandForTest`, top-face rolls in that test), which no-ops when 37c merges. `TestSpawnLootRollsAnItemIntoTheRoom` failed once in the final race run and passed three package reruns; it is pre-existing on master and untouched by 37c, so it stays a follow-up. UI: coatings show in inventory, `conditions`, `coat status` and the gear window; a poisoned foe gets a status dot on the battle screen and the hit and tick lines name the poison; no change needed. Rejected: none. Follow-ups: the battle screen's status dots are unlabeled hues (true of every status, a candidate for a later UI pass).
+
+**Phase 43b built (2026-10-06): weapon poisons, shop-only launch (review pending).** The roadmap lists 43b after 43a, but the poison design's launch is explicitly shop-only (crafting, `camp brew` and the antidote draught are the later slice), so the launch needs nothing from 43a and was built on master directly. Four poisons (`items.Poisons`): bitterleaf (1 damage a round, 3 rounds), leechbane (healing received -25% rounded down, min 1), leadroot (physical damage dealt -15% rounded down, min 1), mirethorn (dodge -10 points); each is a one-dose vial (items 280-283, markets sell all four in Dunmar and bitterleaf on the Old Kings Road, `SupplyOnly` so they never resell). `coat <poison> [self|member] [main|off]`, `coat status`, `coat clear` and `camp coat` put a dose on one bladed weapon outside fights, travel and rests; `camp poison [assign|unassign|preview|apply]` keeps a per-leader preparation list (persisted in the camping registry as `poison_plans`) and applies it all-or-nothing, listing every blocker. A coating is item state (`CoatKind`, absolute `CoatExpires`, `CoatContacts`): 10 real minutes or 8 wounding blows, expiry checked at every read, never refreshed or replaced. In the strike loop (`internal/combat/poison.go`) a blow whose final damage is positive spends one contact (`AttackResult.PoisonSpent`, charged to the real weapon beside the edge by all four attack entry points) and rolls 40% (resistant 20%, immune 0, mob templates `poison:`) to queue the poison's combat status through `BuffTarget`; a victim carries one at a time (a contact against an already-poisoned victim spends but skips the roll). The statuses are ordinary combat statuses (buffs 1120-1123, flags `poison`, `weapon-poison`), so ticking, expiry at fight end, `curepoison` (flag) and cleric cleansing (`status.CleanseOne`) all work with no new machinery. Marked immune: the dead, constructs and practice dummies (11 templates); resistant: the ent and sentient fungus. UI: the coating shows in inventory and equipment lines (`EdgeLabel` now includes it), `conditions` (Weapon edges group), the gear window stats rows (`weapon_coat`, `offhand_coat`), and the hit and tick lines name the poison. Help: new `help poisons` (aliases poison, coat, bitterleaf...), linked from `help combat`, `help camp` and `help statuses`; tutorial Camp lesson gains a hint. Decisions (builder, owner delegation): (1) built the shop-only launch without waiting for 43a; the antidote draught (prevention) and `camp brew` stay with 43a and a later crafting slice; (2) the design's shop antidote as a combat action is **dropped**: mid-battle input is not allowed (Ogre Battle vision), poison clears at fight end anyway, and the cure already exists as `curepoison` and cleric cleansing; (3) assignments are stored in the camping registry beside `auto_sharpen` rather than on the company record, for the same persistence path and purge; rows for a member who left the roster are ignored; (4) vials are drawn from company supplies (cargo first, then packs) through the existing `itemCount`/`spendItem` seams; (5) bitterleaf costs 6 (a bandage), the other three 12, on the road bitterleaf 8, all `SupplyOnly`; (6) the web battle screen needs no change (statuses already draw as dots); the gear window gains two rows. Gate notes: `TestIaijutsuIsTheFirstStrikeOfABattleOnly` and `TestSpawnLootRollsAnItemIntoTheRoom` each failed once in the full race run and pass on rerun (the first fails 5 in 40 solo runs on master, a crit roll; the second 0 in 15 solo, on master too); both are left for 37c. Full gates otherwise green (`make generate`, `make validate`, `go test -race ./...`, `make js-lint`). Screenshot: `/mnt/project-files/screens/43b-camp-poison.png` (the real `camp poison` and `coat status` text).
 
 **Phase 40a4 reviewed and merged via [PR #50](https://github.com/Robinsond76/ashveil-gomud/pull/50) (2026-10-06, Opus review thread):** builder decisions (1)-(7) kept as reasoned below; (8) changed. Accepted and fixed: (a) breaking camp, or resting again, between a rest's end and the next round dodged its thieves (decision 8 only favoured a player who knew the trick), so `settleTheft` completes a due rest and resolves its theft first in `camp break` and `camp rest` (regression `TestBreakingCampOrRestingAgainDoesNotDodgeThieves`); (b) fairness/UI check: the only warning was help and a tutorial hint, so starting a rest on a road thieves work without bells now says so, and `Company.Camp.theft_risk` drives a Camp tab line "Thieves work this road" (the old "no gear" line, shown even in safe zones, no longer mentions thieves) (`TestThievesAreWarnedOfAtRestStartAndOnTheCampTab`, browser check); (c) `help camp gear` said "no warning" and "the rest report names what is missing"; reworded to match. Browser check `dock-windows-check.mjs` ran to the end (260 checks). Rejected: none. Follow-ups: a watch is only counted if the leader is still at the camp when the theft resolves (it resolves within a round of the rest, so left as is).
 
@@ -165,6 +230,44 @@ Samurai elites as still to come.
 Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
 in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
 a "Druid tuning" pass belongs with 39i or a small phase.
+
+**Phase 37c reviewed and merged via [PR #52](https://github.com/Robinsond76/ashveil-gomud/pull/52) (2026-10-06, Opus review thread).** Review checked the company-level rating (`look`, `scout`, GMCP `Room.Info`, the web header resend on a level change), the conversation sweep fix, and each test fix. Accepted and fixed: (1) the rating line never said what level it rated, so a lone leader and a full company could read one zone differently with no clue why; `look` and `scout` now name it ("Risky at your company's level (7): expect losses."), and `help encounters` says the fallen count and `look` names the level; (2) `util.UseRandForTest` swapped a plain package variable that every goroutine's `Rand` reads; it is now an `atomic.Pointer`, so a test that pins it never races a goroutine still rolling. Agreed with the builder: the fallen count toward the company level (they come back; every member status is temporary). Verification: full `go test -race ./...` twice (once before and once after the master merge), plus shuffled repeat runs of `modules/company`, `modules/archetype` and `internal/conversations`. Still unreproduced and left watched: the unnamed archetype flake and `TestAlliedFinalEnemyPaysAfterCombatClosesBattle`; `TestAttackOnAWaitingGroupIsRefused` has a likely fix only (shared road corpses). Also fixed in review: `TestIaijutsuIsTheFirstStrikeOfABattleOnly` (about 1 run in 8: Iaijutsu's own +10% critical chance stands with the odds pinned to 0, so a crit doubled the strike; the test now pins `util.Rand` to its top face; 100 of 100). Follow-up (candidate phase 37d): `internal/usercommands` tests share package state, so shuffled runs and `-count>1` fail (`TestDefenseHelp`, `TestStartFallsBackWithoutTheTutorial`, `TestSuicidePendingGoesStraightToRespawn`, `TestLookNamesTheLootClaimant` and others; each passes alone and in the default order); `TestSpawnLootRollsAnItemIntoTheRoom` (failed once in a full race run, 200 of 200 solo) is likely the same family. After the phase 45 master merge `TestStartFallsBackWithoutTheTutorial` failed every run: its premise (no tutorial rooms) held only if no earlier test loaded the default world, and `TestDefenseHelp` does; it now clears `TutorialRooms` itself through the new `configs.SetTestSpecialRoomsConfig`.
+
+**Phase 37c built: test stability and company-level zone rating (2026-10-06):**
+(1) The zone band rating (easy, fair, risky, dangerous) in `look`, `scout`,
+GMCP `Room.Info.levelband` and the web header now rates the **company's
+level**: the rounded average of the leader and every companion, the fallen
+included (`companyview.CompanyLevel`, the same "average level" the enemy
+coordination tiers use; the leader alone when the company can't be read).
+The web client's header refreshes when that level changes (a level-up, a
+recruit, a dismissal): the GMCP room module resends `Room.Info` on a
+company-level change inside a banded zone. Help (`encounters`, `scout`,
+`look`), the web tooltip and the tutorial hint say "your company's level".
+(2) Flaky tests, found by repeated and shuffled runs of `modules/company`
+(`go test -race -count=N -shuffle=on`) and fixed at the cause:
+`TestCompanyMovesAsOneThroughGo` (the moving, recruit and roster tests write
+different Dunmar 2003/2001 room files into one process-wide room cache, so
+whichever ran first left the others its rooms; now `freshDunmarRooms` evicts
+them before and after each); `TestEncounterFightEndsInOneCacheAndTheSpoilsLine`
+and likely `TestAttackOnAWaitingGroupIsRefused` (corpses and gold left on the
+shared brawl road by earlier tests; `newBrawl` now clears them; the waiting
+group test failed once in a shuffled run and never in 700 solo runs, so this
+is a likely cause, not a proven one);
+`TestBalanceMirrorClericIsACasterWhoCastsNothing` (about 1 run in 40: the
+balance fixture installs the real random aim roll after the test pinned its
+own, so the coordination tier's noise floor sent an enemy at a random
+member; the pin now comes after the fixture, 250 of 250);
+`TestAimedShotGrowsWithLevel` (dice and blow quality noise against a
+tight margin; the test now pins `util.Rand` through the new
+`util.UseRandForTest`); `TestSpellEventsThroughTheRealRound` (every
+chant-breaking blow broke the cast, so about 1 try in 20 went off and 60
+straight failures came up in about 1 run in 30; chants are now held against
+ordinary blows, and a try succeeds about 28% of the time); and a nil map
+panic in `TestRosterThroughPluginsLoad` (an event queued by an earlier test
+fired before the test reset its message map); and `TestAttemptConversation_UsesPluginFile`, which was a real engine bug: the conversation sweep pruned a conversation that had not yet been stepped (its `LastRound` is 0) whenever the round count was past ten, so a fresh conversation could vanish (now aged from its start). Not reproduced: the
+`modules/archetype` failure (25 shuffled runs clean; the test is unnamed) and
+`TestAlliedFinalEnemyPaysAfterCombatClosesBattle` (failed once in one
+shuffled run, clean on the same seed afterwards).
 
 **Phase 40c reviewed and merged via [PR #49](https://github.com/Robinsond76/ashveil-gomud/pull/49) (2026-10-06, Opus review thread): terrain and landmark tiles.** Review: regrow watcher cost is bounded by rooms currently picked clean (entries dropped on full regrowth), `Ledger.Charges` is read-only, no game time touched; allied camp `embers`/`tent` add nothing beyond what party members already see. Accepted and fixed: (1) `World.Resources` went to every online player, telling them of rooms they had never visited; it now goes only to players who have visited the room (`TestWorldResourcesGoToVisitorsOnline`); (2) a regrow watch that found nothing clean stayed in the per-round scan forever; it is now dropped (`TestPickedCleanShowsOnLookAndQueuesARedraw`). Agreed with the builder: tiles ignore the size and spacing sliders (scaling 32 px art off-grid would smear it; zoom covers size). Built: the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. (3) camps use the 40a3 fields: `embers` draws the low-glowing embers sprite when the fire is not lit and `tent: false` draws the rough camp (bedrolls, no tent) instead of the tent, for your camp and, with the same two fields added to allied camps, your party's. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
 
@@ -1384,7 +1487,9 @@ their dependencies and those decisions is the
 | 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
+| 44b | World smoke playtest (`make smoke-world`): journey, encounter fight and loot, gathering, camp, restart, salvage, market and inn on a live server; fixed a journey-arrival deadlock and four other live bugs. Complete, in review | Roadmap 2026-10-06 | 44, 37, 36c, 40a2 |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
+| 37c | Test stability (flaky tests found by shuffled and repeated runs) and the zone band rating by company level, refreshed on level change. Built, in review | Roadmap 2026-10-06 | 37b |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Built (PR open). Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
@@ -1398,7 +1503,7 @@ their dependencies and those decisions is the
 | 41 | World building, levels 1–15, tile-ready | Owner 2026-10-05 | 40d, 37b |
 | 42 | Zones 15–30+, elite content, tier 4–6 placement | Roadmap 2026-10-06 | 41, 38c1–38c3, 36d |
 | 43a | Camp consumables | [Design](designs/2026-10-01-camp-consumables-design.md) | 40a2 |
-| 43b | Weapon poisons | [Design](designs/2026-10-01-weapon-poisons-design.md) | 43a |
+| 43b | Weapon poisons (shop-only launch merged 2026-10-06, PR #57; crafting stays later) | [Design](designs/2026-10-01-weapon-poisons-design.md) | 43a for crafting only |
 
 World building (zones for levels 1–15) now waits until the visual client
 milestone below is in place (owner, 2026-10-05). A small showcase area for

@@ -1,0 +1,12 @@
+itemid: 280
+name: vial of bitterleaf
+namesimple: bitterleaf vial
+description: A stoppered glass vial of a cheap, bitter green draught. One dose coats one bladed
+  weapon (coat bitterleaf); a wounding blow then has a 40% chance to leave it in
+  the wound (1 damage a round for 3 rounds). The coating lasts 10 minutes or 8 wounding blows
+  (help poisons).
+type: object
+subtype: mundane
+uses: 1
+value: 3
+weight: 30

@@ -143,6 +143,22 @@ func onTravelTimerDue(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
+// journeyArrived carries a finished journey's arrival onto the event queue.
+// Arrival listeners (the random-encounter roll) call back into this module
+// (MovementBlocked) and the world, so they must run after the module's lock
+// is released, never inside the timer's completion (phase 44b: arriving in a
+// room that springs an encounter froze the whole server).
+type journeyArrived struct{ userID, fromRoomID, toRoomID int }
+
+func (journeyArrived) Type() string { return `JourneyArrived` }
+
+func onJourneyArrived(e events.Event) events.ListenerReturn {
+	if a, ok := e.(journeyArrived); ok {
+		walking.Arrived(a.userID, a.fromRoomID, a.toRoomID)
+	}
+	return events.Continue
+}
+
 type realTimer struct{ timer *time.Timer }
 
 func (r realTimer) Stop() bool { return r.timer.Stop() }
@@ -298,6 +314,7 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(travelTimerDue{}, onTravelTimerDue)
+	events.RegisterListener(journeyArrived{}, onJourneyArrived)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("expedition: save", "error", err)
@@ -1112,8 +1129,10 @@ func (m *ExpeditionModule) moveAndFinishLocked(session expedition.TravelSession,
 		mudlog.Warn("expedition: persist arrival cleanup", "leader", session.LeaderUserID, "error", err)
 	}
 	// Phase 37: the arrival may spring a random room encounter. It runs
-	// after the journey record is gone, so the arrival is not "travelling".
-	walking.Arrived(session.LeaderUserID, session.OriginRoomID, session.DestinationRoomID)
+	// after the journey record is gone, so the arrival is not "travelling",
+	// and after this lock is released (journeyArrived), because the encounter
+	// asks this module whether the leader may move.
+	events.AddToQueue(journeyArrived{userID: session.LeaderUserID, fromRoomID: session.OriginRoomID, toRoomID: session.DestinationRoomID})
 }
 
 // recoverLocked reconciles persisted sessions with the current clock on module
