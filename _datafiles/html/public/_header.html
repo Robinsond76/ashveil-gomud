@@ -37,6 +37,9 @@
     if (link) {
       link.addEventListener('click', function(e) {
         e.preventDefault();
+        // The link now lives in the settings modal; close it with the header.
+        var backdrop = document.getElementById('site-settings-backdrop');
+        if (backdrop) { backdrop.classList.remove('open'); }
         document.getElementsByTagName('header')[0].style.display = 'none';
         document.getElementsByTagName('footer')[0].style.display = 'none';
         if (typeof resizeClientIFrame === 'function') { resizeClientIFrame(); }

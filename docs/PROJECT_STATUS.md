@@ -1672,7 +1672,12 @@ Online, Web Client, Configuration, Help) moved into a "Pages" tab of the
 top-right settings menu; the header and footer are slimmer so the web client
 fills more of the screen; the default `Server.MudName` is now "Ashveil"; the
 footer is one tiny "Powered by GoMud" line linking to the GoMud GitHub.
-Screenshots in `docs/screens/web-cleanup-*.png`.
+Screenshots in `docs/screens/web-cleanup-*.png`. Review (2026-10-06):
+one fix accepted, "Hide header and footer" (now in the settings modal) left
+the modal open over the game; it now closes it. Checked in Chromium at
+1280x800 and 390x844: the web client frame grows from 741 to 800 px tall on
+desktop with the header hidden. A local `config-overrides.yaml` setting
+`Server.MudName` would keep an old name; none ships in the repo.
 
 **35b caster power, mana and recovery (2026-10-05), complete:** owned spells
 never fizzle in a battle, and a 100% cast never fails anywhere. Spell and
