@@ -175,6 +175,31 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # A militia glaive, a padded tunic and leggings, rations and a waterskin.
     Kit: [10151, 20103, 20109, 30004, 30015, 38]
+  # Phase 39b: the duelist, a neutral lineage (no alignment gate at 10 or 30).
+  # Its first strike each battle is its best (Iaijutsu, internal/classes);
+  # medium armor and no shield make it an ordinary front-liner after that.
+  - ArchetypeId: samurai
+    HPPerLevel: 0.85
+    HPStart: 6
+    AttackRate: 1.0
+    EvasionRate: 1.0
+    ArmorTraining: medium
+    ShieldSizes: [none]
+    WeaponClasses: [sword]
+    Name: Samurai
+    Description: Duelists who open a fight half a turn ahead with a hard first strike, then fight on in medium armor with a sword; no creed, no shield, no alignment gate on their routes.
+    Skills: [brawling]
+    GrantSkills:
+      - { Skill: brawling, Level: 1 }
+    Utility: [watch]
+    Growth:
+      - { Stat: speed, Weight: 4 }
+      - { Stat: strength, Weight: 3 }
+      - { Stat: perception, Weight: 2 }
+      - { Stat: smarts, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+    # An iron shortsword, a padded jack, a leather cap and worn boots.
+    Kit: [10101, 20163, 20020, 20003, 30004, 30015, 38]
   - ArchetypeId: cleric
     HPPerLevel: 0.6
     HPStart: 2

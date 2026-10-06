@@ -19,8 +19,8 @@ and choose talents the same way.
 <ansi fg="yellow-bold">The three routes</ansi>
 
 Most lineages have a good route (alignment +30 or higher), an evil route
-(-30 or lower) and a neutral route that asks nothing. The Halberdier, a neutral
-lineage, has three routes and asks nothing of any of them. The gate is checked
+(-30 or lower) and a neutral route that asks nothing. The Samurai and the
+Halberdier, neutral lineages, each have three routes and no gate at all. The gate is checked
 when you promote. Once you have promoted, you keep your class even if your
 alignment moves; only the next promotion asks again. Routes are final: there
 is no switching to another.
@@ -28,11 +28,12 @@ is no switching to another.
   <ansi fg="yellow-bold">Lineage</ansi>   <ansi fg="yellow-bold">Good</ansi>         <ansi fg="yellow-bold">Neutral</ansi>      <ansi fg="yellow-bold">Evil</ansi>
   Cleric    Priest       Druid        Blood Priest
   Warrior   Knight       Mercenary    Blackguard
+  Samurai   -            Kensai, Hatamoto and Ronin, all open to any alignment
+  Halberdier -           Sweeper, Vanguard and Valkyrie, all open to any alignment
   Witch     Hedge Witch  Coven Sage   Hag
   Wizard    Theurgist    Arcanist     Warlock
   Ranger    Warden       Hunter       Stalker
   Rogue     Scout        Duelist      Assassin
-  Halberdier  (any)      Sweeper, Vanguard, Valkyrie (all open at any alignment)
 
 Elite classes (level 30 and on): Hierarch and Demonologist (clerics), Elder
 Druid, Paladin and Dread Knight (warriors). The elite classes of the other
@@ -44,9 +45,10 @@ until then.
 A rank is a gift that arrives at a set level: a new spell, a bigger number, a
 new way to fight. Ranks are gained automatically and stack up along a route,
 so an elite class keeps its advanced class's ranks. The level-up report names
-the next rank, talent or promotion. Spells a rank teaches are learned as soon
+each rank you just reached and what it does, then the next rank, talent or
+promotion. Spells a rank teaches are learned as soon
 as you reach it.
 
-Routes in depth: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help summoning</ansi>.
+Routes in depth: <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help summoning</ansi>.
 
 See also: <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help progression</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help strategy</ansi>.

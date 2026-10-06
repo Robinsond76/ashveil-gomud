@@ -256,4 +256,41 @@ func init() {
 		}})
 	register(Class{ID: "crone-of-ash", Name: "Crone of Ash", Lineage: "witch", Tier: TierElite, Parent: "hag", Gate: GateEvil,
 		Role: "curses that spread", Planned: true})
+
+	// ----- Samurai (Phase 39b: a neutral lineage, no alignment gates) -----
+	registerBase("samurai",
+		rank(1, "Iaijutsu", "starts a battle with half a turn on its action meter (it acts sooner), and its first strike each battle deals 50% more damage with +10% critical chance", Iai, 1, IaiDamage, 50, IaiCrit, 10, OpenMeter, 50),
+		rank(3, "Focus", "+3% critical chance for each round in which no blow lands on it, up to +9%; a blow that lands resets it", Focus, 3, FocusMax, 9),
+		rank(8, "Zanshin", "when it fells a foe, its action meter gains half a turn (once a round)", Zanshin, 50),
+	)
+	register(Class{ID: "kensai", Name: "Kensai", Lineage: "samurai", Tier: TierAdvanced, Gate: GateAny,
+		Role: "a master of the first cut, and of a patient, deepening focus",
+		Ranks: []Rank{
+			rank(10, "Piercing draw", "Iaijutsu also ignores half of the target's armor", IaiPierce, 50),
+			rank(15, "Clean cut", "+2 Attack", Attack, 2),
+			rank(20, "Deep focus", "Focus builds up to +20%", FocusMax, 20),
+			rank(25, "Opening edge", "Iaijutsu deals 75% more damage", IaiDamage, 75),
+		}})
+	register(Class{ID: "sword-saint", Name: "Sword Saint", Lineage: "samurai", Tier: TierElite, Parent: "kensai", Gate: GateAny,
+		Role: "Focus to +25%, and Iaijutsu that strikes twice", Planned: true})
+	register(Class{ID: "hatamoto", Name: "Hatamoto", Lineage: "samurai", Tier: TierAdvanced, Gate: GateAny,
+		Role: "a sworn bodyguard who stands in for the company leader",
+		Ranks: []Rank{
+			rank(10, "Bodyguard", "steps in front of the company leader twice a battle, like a guardian (a standing swordsman in reach)", Bodyguard, 2),
+			rank(15, "Standard bearer", "allies in its row gain +3 Evasion", AuraEvade, 3),
+			rank(20, "Loyal blade", "Bodyguard: 3 times a battle", Bodyguard, 3),
+			rank(25, "Shield wall", "allies in its row take 5% less damage", AuraResolv, 5),
+		}})
+	register(Class{ID: "shogun", Name: "Shogun", Lineage: "samurai", Tier: TierElite, Parent: "hatamoto", Gate: GateAny,
+		Role: "a commander whose whole company starts a battle sooner", Planned: true})
+	register(Class{ID: "ronin", Name: "Ronin", Lineage: "samurai", Tier: TierAdvanced, Gate: GateAny,
+		Role: "a masterless blade that grows fiercer as the company falls",
+		Ranks: []Rank{
+			rank(10, "Vengeance", "+10% damage for each fallen ally in the company", Vengeance, 10),
+			rank(15, "Grim resolve", "+2 Attack", Attack, 2),
+			rank(20, "Deeper vengeance", "+15% damage for each fallen ally", Vengeance, 15),
+			rank(25, "Lone blade", "+3 Evasion", Evasion, 3),
+		}})
+	register(Class{ID: "kenshi", Name: "Kenshi", Lineage: "samurai", Tier: TierElite, Parent: "ronin", Gate: GateAny,
+		Role: "vengeance that cannot be knocked down when it stands alone", Planned: true})
 }

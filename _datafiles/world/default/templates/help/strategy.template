@@ -47,7 +47,8 @@ heals you even when you are down and bleeding out.
 
 <ansi fg="yellow-bold">Target rules</ansi>
 
-  <ansi fg="command">weakest</ansi>    the foe with the least health left (the default)
+  <ansi fg="command">weakest</ansi>    the foe with the least health left (the default; a samurai's
+              default is <ansi fg="command">strongest</ansi>)
   <ansi fg="command">strongest</ansi>  the foe with the most health left
   <ansi fg="command">wounded</ansi>    the most badly hurt foe, to finish it
   <ansi fg="command">nearest</ansi>    the front-most foe

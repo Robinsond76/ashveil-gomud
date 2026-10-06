@@ -76,6 +76,10 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if p := fx.Int(classes.HexedDamage); p > 0 && hexed(tgt) {
 		pct += p
 	}
+	// Phase 39b: a Ronin's Vengeance grows with each fallen ally.
+	if p := fx.Int(classes.Vengeance); p > 0 {
+		pct += p * src.Aura.Fallen
+	}
 	if pct > 0 {
 		dmg += (dmg*pct + 50) / 100
 	}

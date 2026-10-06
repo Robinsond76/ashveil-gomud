@@ -43,6 +43,7 @@ for each level through {{ config "GamePlay.Progression.HPFullLevels" }}, a littl
   Warrior     10           1               59        88
   Halberdier  7            0.9             55        82
   Ranger      6            0.8             54        78
+  Samurai     6            0.85            54        79
   Rogue       4            0.7             52        73
   Cleric      2            0.6             50        68
   Wizard      0            0.5             48        63

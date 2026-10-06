@@ -124,20 +124,24 @@ func DefaultRole(archetype string) Role {
 	return Fighter
 }
 
-// Default is the strategy a character of this archetype fights by until
-// it is changed: its archetype's role, and the weakest foe it can reach
-// (the rule every fight used before 32d).
-func Default(archetype string) Strategy {
-	return Strategy{Role: DefaultRole(archetype), Rule: DefaultRule(archetype)}
-}
-
-// DefaultRule is an archetype's target rule: the weakest foe it can reach,
-// except a halberdier, which goes for the most crowded row (Phase 39a).
+// DefaultRule is an archetype's target rule: the weakest foe it can reach
+// (the rule every fight used before 32d), except a Samurai, the duelist
+// (Phase 39b), who goes for the strongest, and a Halberdier (Phase 39a),
+// who goes for the most crowded row.
 func DefaultRule(archetype string) Rule {
-	if strings.EqualFold(strings.TrimSpace(archetype), "halberdier") {
+	switch strings.ToLower(strings.TrimSpace(archetype)) {
+	case "samurai":
+		return Strongest
+	case "halberdier":
 		return Crowded
 	}
 	return Weakest
+}
+
+// Default is the strategy a character of this archetype fights by until
+// it is changed: its archetype's role and target rule.
+func Default(archetype string) Strategy {
+	return Strategy{Role: DefaultRole(archetype), Rule: DefaultRule(archetype)}
 }
 
 // Resolve fills blank fields from the archetype's default.

@@ -109,4 +109,16 @@ const (
 	BraceDown   = "bracedown"   // the held blow knocks the foe down when it hits
 	ChargedMana = "chargedmana" // mana a Charged Sweep spends for lightning on every foe it strikes
 	ChargedDice = "chargeddice" // sides of the Charged Sweep's lightning die (1dN)
+	// The Samurai's lineage (Phase 39b).
+	Iai       = "iai"       // knows Iaijutsu: a stronger, surer first strike each battle
+	IaiDamage = "iaidamage" // percent more damage on the first strike
+	IaiCrit   = "iaicrit"   // critical chance points on the first strike
+	IaiPierce = "iaipierce" // percent of the target's armor the first strike ignores
+	OpenMeter = "openmeter" // action meter points the character starts a battle with
+	Focus     = "focus"     // critical chance points gained each round no blow lands on it
+	FocusMax  = "focusmax"  // the most Focus can add
+	Zanshin   = "zanshin"   // action meter points gained when it fells a foe, once a round
+	Crit      = "crit"      // critical chance points on every blow
+	Bodyguard = "bodyguard" // times a battle it steps in for the company leader
+	Vengeance = "vengeance" // percent more damage for each fallen ally
 )

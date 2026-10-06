@@ -76,7 +76,11 @@ func companionLevelLine(before, after characters.Character) string {
 	line := fmt.Sprintf("%s reaches level %d (%s).", after.Name, after.Level, strings.Join(changes, ", "))
 	// Phase 38b: what its class gains next.
 	class, _ := after.ClassState()
-	if next := classes.Milestone(class, after.Level); next != "" {
+	// 39b review: and what the new levels just gave it.
+	for _, r := range classes.RankLines(after.ArchetypeID(), class, before.Level, after.Level) {
+		line += " " + r
+	}
+	if next := classes.MilestoneFor(after.ArchetypeID(), class, after.Level); next != "" {
 		line += " " + next
 	}
 	return line

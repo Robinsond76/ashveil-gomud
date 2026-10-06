@@ -10,10 +10,14 @@ import (
 
 var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wizard"}
 
+// neutralLineages have no good or evil route (Phase 39b): every route is open
+// to any alignment, at level 10 and level 30.
+var neutralLineages = []string{"halberdier", "samurai"}
+
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Subset(t, Lineages(), baseLineages) // the neutral lineages (39a+) have their own tests
+	assert.Equal(t, []string{"cleric", "halberdier", "ranger", "rogue", "samurai", "warrior", "witch", "wizard"}, Lineages())
 	for _, l := range baseLineages {
 		adv := Advanced(l)
 		require.Len(t, adv, 3, l)
@@ -30,6 +34,28 @@ func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
 			assert.Equal(t, c.Gate, elite.Gate, "%s keeps its parent's gate", elite.ID)
 		}
 		assert.Len(t, gates, 3, "%s covers good, any and evil", l)
+	}
+}
+
+// TestNeutralLineagesHaveNoGates: three routes, all open at any alignment (the
+// design's rule 1: promotion at 10 and 30 checks level only).
+func TestNeutralLineagesHaveNoGates(t *testing.T) {
+	for _, l := range neutralLineages {
+		adv := Advanced(l)
+		require.Len(t, adv, 3, l)
+		for _, c := range adv {
+			assert.Equal(t, GateAny, c.Gate, c.ID)
+			elite, ok := Elite(c.ID)
+			require.True(t, ok, c.ID)
+			assert.Equal(t, GateAny, elite.Gate, elite.ID)
+			for _, al := range []int{-100, 0, 100} {
+				got, err := Check(l, "", c.ID, 10, al)
+				require.NoError(t, err, "%s at %d", c.ID, al)
+				assert.Equal(t, c.ID, got.ID)
+			}
+			_, err := Check(l, "", c.ID, 9, 0)
+			assert.Error(t, err)
+		}
 	}
 }
 
@@ -305,4 +331,70 @@ func TestSpellLockedBelowItsRank(t *testing.T) {
 	assert.True(t, SpellLocked("hierarch", 29, "callhost"))
 	assert.False(t, SpellLocked("priest", 1, "heal"), "a spell no rank teaches is never locked")
 	assert.False(t, SpellLocked("", 1, "greaterheal"))
+}
+
+// TestSamuraiBaseRanksAndRoutes: Iaijutsu from level 1, Focus at 3, Zanshin
+// at 8, and a route's ranks and talents on top of them.
+func TestSamuraiBaseRanksAndRoutes(t *testing.T) {
+	assert.Nil(t, EffectsForLineage("warrior", "", 20, nil), "other lineages have no base ranks")
+
+	fx := EffectsForLineage("samurai", "", 1, nil)
+	assert.True(t, fx.Has(Iai))
+	assert.Equal(t, 50, fx.Int(IaiDamage))
+	assert.Equal(t, 10, fx.Int(IaiCrit))
+	assert.Equal(t, 50, fx.Int(OpenMeter))
+	assert.False(t, fx.Has(Focus), "Focus waits for level 3")
+	assert.False(t, fx.Has(Zanshin), "Zanshin waits for level 8")
+
+	fx = EffectsForLineage("samurai", "", 3, nil)
+	assert.Equal(t, 3, fx.Int(Focus))
+	assert.Equal(t, 9, fx.Int(FocusMax))
+
+	fx = EffectsForLineage("samurai", "", 8, nil)
+	assert.Equal(t, 50, fx.Int(Zanshin))
+
+	// A route's rank replaces a base value; talents add on top.
+	fx = EffectsForLineage("samurai", "kensai", 25, []string{"keen-edge", "sharp-eye"})
+	assert.Equal(t, 75, fx.Int(IaiDamage), "Opening edge replaces Iaijutsu's 50")
+	assert.Equal(t, 50, fx.Int(IaiPierce))
+	assert.Equal(t, 20, fx.Int(FocusMax))
+	assert.Equal(t, 2+2, fx.Int(Attack), "Clean cut and Keen Edge")
+	assert.Equal(t, 3, fx.Int(Crit))
+	assert.Equal(t, 2, EffectsForLineage("samurai", "hatamoto", 10, nil).Int(Bodyguard))
+	assert.Equal(t, 3, EffectsForLineage("samurai", "hatamoto", 20, nil).Int(Bodyguard))
+	assert.Equal(t, 10, EffectsForLineage("samurai", "ronin", 10, nil).Int(Vengeance))
+	assert.Equal(t, 15, EffectsForLineage("samurai", "ronin", 20, nil).Int(Vengeance))
+
+	assert.Len(t, TalentsFor("samurai"), 5)
+	for _, c := range All() {
+		if c.Lineage == "samurai" && c.Tier == TierElite {
+			assert.True(t, c.Planned, "%s ships with the elite pass", c.ID)
+		}
+	}
+}
+
+// TestMilestoneForNamesTheNextBaseRank: a Samurai's level-up report counts
+// Focus and Zanshin among what comes next.
+func TestMilestoneForNamesTheNextBaseRank(t *testing.T) {
+	assert.Equal(t, "Next: a rank (Focus) at level 3.", MilestoneFor("samurai", "", 1))
+	assert.Equal(t, "Next: a talent at level 5.", MilestoneFor("samurai", "", 3))
+	assert.Equal(t, "Next: a rank (Zanshin) at level 8.", MilestoneFor("samurai", "", 5))
+	assert.Equal(t, "Next: a talent at level 5.", MilestoneFor("warrior", "", 3), "other lineages have no base ranks")
+}
+
+// 39b review: the level-up report names the ranks the new levels gave,
+// base ranks and route ranks alike, each once.
+func TestRanksGainedBetweenLevels(t *testing.T) {
+	names := func(rs []Rank) (out []string) {
+		for _, r := range rs {
+			out = append(out, r.Name)
+		}
+		return
+	}
+	assert.Equal(t, []string{"Focus"}, names(RanksGained("samurai", "", 2, 3)))
+	assert.Equal(t, []string{"Focus", "Zanshin"}, names(RanksGained("samurai", "", 1, 9)))
+	assert.Empty(t, RanksGained("samurai", "", 3, 4))
+	assert.Equal(t, []string{"Clean cut"}, names(RanksGained("samurai", "kensai", 14, 15)))
+	assert.Empty(t, RanksGained("warrior", "", 1, 9))
+	assert.Equal(t, []string{"New rank: Focus, +3% critical chance for each round in which no blow lands on it, up to +9%; a blow that lands resets it."}, RankLines("samurai", "", 2, 3))
 }

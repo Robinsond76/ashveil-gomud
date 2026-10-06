@@ -103,10 +103,44 @@ func nameOr(id string) string {
 	return id
 }
 
+// RanksGained are the ranks a character of a lineage and class earned
+// between two levels (above from, up to and including to): its lineage's base
+// ranks, then its route's. The level-up report names them (39b review), so a
+// player sees what a rank just gave, not only the next one.
+func RanksGained(lineageID, classID string, from, to int) []Rank {
+	var out []Rank
+	for _, r := range BaseRanks(lineageID) {
+		if r.Level > from && r.Level <= to {
+			out = append(out, r)
+		}
+	}
+	if classID != "" {
+		for _, r := range RanksReached(classID, to) {
+			if r.Level > from {
+				out = append(out, r)
+			}
+		}
+	}
+	return out
+}
+
+// RankLines are RanksGained as level-up report lines.
+func RankLines(lineageID, classID string, from, to int) []string {
+	var out []string
+	for _, r := range RanksGained(lineageID, classID, from, to) {
+		out = append(out, fmt.Sprintf("New rank: %s, %s.", r.Name, r.Text))
+	}
+	return out
+}
+
 // Milestone describes what a character at a level gains next on its way,
 // for the level-up report: the next talent, promotion or rank, with
 // everything that arrives at the same level.
-func Milestone(current string, level int) string {
+func Milestone(current string, level int) string { return MilestoneFor("", current, level) }
+
+// MilestoneFor is Milestone for a character of a lineage, whose base ranks
+// (a Samurai's Focus and Zanshin) count among what comes next.
+func MilestoneFor(lineageID, current string, level int) string {
 	at := map[int][]string{}
 	if l, ok := NextTalentLevel(level); ok {
 		at[l] = append(at[l], "a talent")
@@ -123,6 +157,12 @@ func Milestone(current string, level int) string {
 	if has {
 		if r, ok := NextRank(current, level); ok {
 			at[r.Level] = append(at[r.Level], "a rank ("+r.Name+")")
+		}
+	}
+	for _, r := range BaseRanks(lineageID) {
+		if r.Level > level {
+			at[r.Level] = append(at[r.Level], "a rank ("+r.Name+")")
+			break
 		}
 	}
 	next := 0

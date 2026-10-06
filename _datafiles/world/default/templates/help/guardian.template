@@ -16,6 +16,8 @@ ward again.
   Each blow it steps in for spends one.
 - While any guard is spent, one comes back every <ansi fg="yellow">2 combat rounds</ansi>, up to
   its most. A new battle starts with them all.
+- A Hatamoto (a Samurai route) also steps in for the company leader twice a
+  battle whatever its strategy, from its own count (<ansi fg="command">help samurai-routes</ansi>).
 - Only weapon blows are guarded, not spells. A guardian keeps a healer's
   chant whole: the blow that might have broken it lands on the guardian
   (and may break the guardian's own chant, if it was chanting;
