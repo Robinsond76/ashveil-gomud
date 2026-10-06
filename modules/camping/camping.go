@@ -75,6 +75,10 @@ type Registry struct {
 	// CampRewardCooldown).
 	CampRewards     map[int]campReward `yaml:"camp_rewards,omitempty"`
 	LastCampRewards map[int]time.Time  `yaml:"last_camp_rewards,omitempty"`
+	// RestedDuties (51 review) are the duties of the rest a pending Rested
+	// grant is for, saved with it, so breaking camp or starting a new rest
+	// before the grant neither drops nor swaps them.
+	RestedDuties map[int]map[string]string `yaml:"rested_duties,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -91,6 +95,7 @@ func NewRegistry() *Registry {
 		PoisonPlans:        map[int][]PoisonAssign{},
 		CampRewards:        map[int]campReward{},
 		LastCampRewards:    map[int]time.Time{},
+		RestedDuties:       map[int]map[string]string{},
 	}
 }
 
@@ -128,6 +133,10 @@ func (r Registry) Clone() Registry {
 		PoisonPlans:        clonePlans(r.PoisonPlans),
 		CampRewards:        make(map[int]campReward, len(r.CampRewards)),
 		LastCampRewards:    make(map[int]time.Time, len(r.LastCampRewards)),
+		RestedDuties:       make(map[int]map[string]string, len(r.RestedDuties)),
+	}
+	for leaderUserID, duties := range r.RestedDuties {
+		out.RestedDuties[leaderUserID] = duties // replaced whole, never edited
 	}
 	for leaderUserID, reward := range r.CampRewards {
 		out.CampRewards[leaderUserID] = reward
@@ -233,6 +242,11 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	for leaderUserID, reward := range wire.CampRewards {
 		if leaderUserID > 0 && reward.Op != "" && reward.RoomID > 0 {
 			loaded.CampRewards[leaderUserID] = reward
+		}
+	}
+	for leaderUserID, duties := range wire.RestedDuties {
+		if leaderUserID > 0 && len(duties) > 0 {
+			loaded.RestedDuties[leaderUserID] = duties
 		}
 	}
 	for leaderUserID, at := range wire.LastCampRewards {
@@ -389,7 +403,10 @@ type CampingModule struct {
 	companionCooks func(leaderUserID int, recipes []campRecipe) []campCook
 	spawnRaid      func(roomID, mobTemplateID, leaderUserID int) (int, error)
 	campRewards    map[int]campReward
-	lastRewards    map[int]time.Time
+	// restedDuties (51 review) are the locked duties owed with a pending
+	// Rested grant (Registry.RestedDuties).
+	restedDuties map[int]map[string]string
+	lastRewards  map[int]time.Time
 	// raiders, and the seams that find, check, and send off raid groups.
 	raiders       map[int]raiders
 	raidGroup     func(roomID, first int) []int
@@ -580,6 +597,7 @@ func (m *CampingModule) saveLocked() error {
 		PoisonPlans:        m.poisonPlans,
 		CampRewards:        m.campRewards,
 		LastCampRewards:    m.lastRewards,
+		RestedDuties:       m.restedDuties,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -637,6 +655,9 @@ func (m *CampingModule) load() {
 	}
 	if loaded.LastCampRewards != nil {
 		m.lastRewards = loaded.LastCampRewards
+	}
+	if loaded.RestedDuties != nil {
+		m.restedDuties = loaded.RestedDuties
 	}
 	if m.plug != nil {
 		m.campCfg = parseCampSettings(m.plug.Config.Get)
@@ -1259,6 +1280,12 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 	// the game loop (this can run on a timer goroutine). Phase 33f3: so
 	// are the rest's Forage and Vigil.
 	m.restedPending[leaderUserID] = true
+	// 51 review: the rest's duties go with the pending grant.
+	if len(camp.Rest.Duties) > 0 {
+		m.restedDuties[leaderUserID] = camp.Rest.Duties
+	} else {
+		delete(m.restedDuties, leaderUserID)
+	}
 	// Forage and Vigil come at most once per CampRewardCooldown (33f3
 	// review: a free one-minute rest must not be farmed).
 	if last, ok := m.lastRewards[leaderUserID]; !ok || camp.Rest.StartedAtUTC.Sub(last) >= m.campSettings().RewardCooldown {

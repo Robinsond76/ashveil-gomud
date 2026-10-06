@@ -16,8 +16,8 @@ kit, the pot or the forage, paid for with their own sleep.
   With no member it is your own duty (<ansi fg="command">camp duties watch</ansi>).
   <ansi fg="command">camp duties clear</ansi> sends everyone back to sleep.
 
-  Duties stay set from one rest to the next until you change them. They
-  are fixed when <ansi fg="command">camp rest</ansi> begins, for the members then at the camp (anyone
+  Duties stay set from one rest to the next until you change them or
+  break camp (a new camp starts with everyone asleep). They are fixed when <ansi fg="command">camp rest</ansi> begins, for the members then at the camp (anyone
   who has wandered off sleeps), and settled when it ends; a restart
   never changes them. You can't change them while resting. In the web
   client, Company > Camp has a button for each duty under each member.
@@ -39,8 +39,10 @@ kit, the pot or the forage, paid for with their own sleep.
            with a whetstone (<ansi fg="command">help sharpen</ansi>), spending one use. With neither
            there is nothing to tend and the report says so.
   <ansi fg="command">forage</ansi>  Forages for food when the rest ends: 1 find, plus 1 for every 2
-           levels of the member's own Forage level (a ranger's skill). They share the camp's
-           forage cooldown (<ansi fg="command">help forage</ansi>), so a second rest soon after finds
+           levels of the member's own Forage level (a ranger's skill). Your
+           best forager forages anyway, so the duty adds nothing for them.
+           Foragers share the camp's forage cooldown (<ansi fg="command">help forage</ansi>), so a
+           second rest soon after finds
            nothing new, and the report says the ground is picked over.
   <ansi fg="command">cook</ansi>    Cooks one dish when the rest ends, from your pack and cargo,
            using that member's own Cooking rank (<ansi fg="command">help cooking</ansi>). It needs no
@@ -54,11 +56,13 @@ kit, the pot or the forage, paid for with their own sleep.
 Anyone on a duty misses the Rested buff from that rest; a watcher also
 ends no better than Ready. A rest that raiders spoil (the watch missed
 them) settles no duties at all. The end of a rest lists what each duty
-did. Duties are extra hands on top of the specialists, whose automatic work
+did. If the company is fighting when the rest ends, the tend and cook
+duties are left undone. Duties are extra hands on top of the specialists, whose automatic work
 (your best watch, forager, cleric and kit healer) goes on exactly as before,
 so if you never set a duty nothing changes.
 
 Duties don't change the length of the rest, the world clock, or what the
-company carries beyond what the dishes, whetstones, kit and reagents use.
+company carries beyond the forage finds and what the dishes, whetstones,
+kit and reagents use.
 
 See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help campwatch</ansi>, <ansi fg="command">help forage</ansi>, <ansi fg="command">help cooking</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>.

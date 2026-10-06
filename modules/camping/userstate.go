@@ -13,14 +13,14 @@ func (stateContributor) Name() string { return "camping" }
 func (c stateContributor) maps() userstate.Maps {
 	m := c.m
 	return userstate.Maps{m.camps, m.recoveryApplied, m.stays, m.innRecoveryApplied, m.wellRestedPending,
-		m.restedPending, m.owed, m.autoSharpen, m.poisonPlans, m.campRewards, m.lastRewards}
+		m.restedPending, m.owed, m.autoSharpen, m.poisonPlans, m.campRewards, m.lastRewards, m.restedDuties}
 }
 
 func (c stateContributor) ready() bool {
 	m := c.m
 	return m.camps != nil && m.recoveryApplied != nil && m.stays != nil && m.innRecoveryApplied != nil &&
 		m.wellRestedPending != nil && m.restedPending != nil && m.owed != nil && m.autoSharpen != nil &&
-		m.poisonPlans != nil && m.campRewards != nil && m.lastRewards != nil
+		m.poisonPlans != nil && m.campRewards != nil && m.lastRewards != nil && m.restedDuties != nil
 }
 
 func (c stateContributor) Capture(userID int) ([]byte, error) {

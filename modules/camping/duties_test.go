@@ -366,3 +366,76 @@ func TestCampCommandRoutesDutiesAndParsesTheWatcherBase(t *testing.T) {
 	assert.Equal(t, 35, parseCampSettings(func(k string) any { return map[string]any{"WatcherBasePct": 35}[k] }).WatcherBasePct)
 	assert.Equal(t, 20, parseCampSettings(func(k string) any { return map[string]any{"WatcherBasePct": 300}[k] }).WatcherBasePct, "out of range keeps the default")
 }
+
+// 51 review: the duties go with the pending Rested grant, so breaking camp
+// between the rest's end and the grant neither hands the members on duty
+// the Rested buff nor drops their work, and the owed duties are saved.
+func TestBreakingCampBeforeTheGrantKeepsTheRestsDuties(t *testing.T) {
+	d := newDutyWorld(t, 0)
+	d.duty(t, "mira", "watch")
+	d.duty(t, "bran", "tend")
+	d.rest(t)
+	finishRest(d.raidWorld)
+	assert.Equal(t, map[string]string{"companion:1": "watch", "companion:2": "tend"}, d.store.saved.RestedDuties[7], "saved with the pending grant")
+	messages := captureMessages(t)
+	d.m.breakCamp(d.user, d.room)
+	require.NotContains(t, d.m.camps, 7)
+	d.m.onNewRound(events.NewRound{})
+	events.ProcessEvents()
+
+	assert.Empty(t, d.buffs[d.mira], "a watcher is not Rested, camp or no camp")
+	assert.Empty(t, d.buffs[d.bran])
+	assert.NotEmpty(t, d.buffs[d.user.Character])
+	text := strings.Join(*messages, "\n")
+	assert.Contains(t, text, "Mira kept watch through the night.")
+	assert.Contains(t, text, "Bran finds nothing to tend")
+	assert.Empty(t, d.m.restedDuties, "settled once, then cleared")
+}
+
+// 51 review: the camp's watch specialist on the watch duty counts once.
+func TestWatchSpecialistOnWatchDutyCountsOnce(t *testing.T) {
+	spotted := func(watcher string) bool {
+		d := newDutyWorld(t, 100, 0, 0, 30)
+		d.m.specialist = specialistsAt(t, 100, map[string]archetypes.Specialist{archetypes.UtilityWatch: {Name: "Mira", Level: 1}})
+		d.m.memberLevel = func(_ int, companionID int, _ string) int { return map[int]int{1: 1}[companionID] }
+		d.duty(t, watcher, "watch")
+		d.rest(t)
+		d.at(camping.RestDuration / 2)
+		d.m.onNewRound(events.NewRound{})
+		return d.camp().Rest.Raid.Spotted
+	}
+	assert.False(t, spotted("mira"), "Mira's 25% once, not 25% twice (44%): a roll of 30 gets past")
+	assert.True(t, spotted("bran"), "Mira 25% and Bran's 20%: 40%")
+}
+
+// 51 review: the company's forager on the forage duty forages once.
+func TestForageSpecialistOnForageDutyForagesOnce(t *testing.T) {
+	d := newDutyWorld(t, 0)
+	forageSpecs(t)
+	d.m.campCfg.Forage["Road"] = []forageFind{{ItemID: 29, Weight: 1}}
+	cargo := newFakeCargo(100000)
+	useCargo(t, cargo)
+	d.m.specialist = specialistsAt(t, 100, map[string]archetypes.Specialist{archetypes.UtilityForage: {Name: "Mira", Level: 4}})
+	d.m.memberLevel = func(_ int, companionID int, _ string) int { return map[int]int{1: 4}[companionID] }
+	d.duty(t, "mira", "forage")
+	d.rest(t)
+	d.finishAndGrant()
+	d.m.onNewRound(events.NewRound{})
+	events.ProcessEvents()
+	assert.Equal(t, 3, cargo.stacks[29], "Mira's own forage (1+4/2), not a second one for her duty")
+}
+
+// The company fighting as the rest ends leaves the work duties undone.
+func TestDutiesLeftUndoneWhenTheCompanyIsFighting(t *testing.T) {
+	d := newDutyWorld(t, 0)
+	d.duty(t, "bran", "tend")
+	d.duty(t, "mira", "watch")
+	d.rest(t)
+	messages := captureMessages(t)
+	d.m.inBattle = func(int) bool { return true }
+	d.finishAndGrant()
+	text := strings.Join(*messages, "\n")
+	assert.Contains(t, text, "Mira kept watch through the night.")
+	assert.Contains(t, text, "left undone")
+	assert.NotContains(t, text, "Bran finds nothing to tend")
+}

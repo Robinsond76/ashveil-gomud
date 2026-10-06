@@ -87,7 +87,7 @@ func (m *CampingModule) dutiesCommand(user *users.UserRecord, room *rooms.Room, 
 	if room == nil || camp.RoomID != room.RoomId {
 		return "Your camp is not here: set its duties at the camp."
 	}
-	if len(args) == 1 && (args[0] == "clear" || args[0] == "reset") {
+	if len(args) == 1 && (strings.EqualFold(args[0], "clear") || strings.EqualFold(args[0], "reset")) {
 		return m.assignDuties(user, camp, nil, camping.DutySleep, true)
 	}
 	if len(args) == 1 {
@@ -264,6 +264,18 @@ func (m *CampingModule) restDuties(leaderUserID int) map[string]string {
 	return out
 }
 
+// pendingDuties are the duties saved with a pending Rested grant (51
+// review: not the camp's current rest, which a break or a new rest may
+// have replaced before the grant). An inn's Well Rested has none.
+func (m *CampingModule) pendingDuties(leaderUserID int, tier camping.Tier) map[string]string {
+	if tier != camping.TierRested {
+		return nil
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.restedDuties[leaderUserID]
+}
+
 // utilityLevel is a member's own level at a utility.
 func (m *CampingModule) utilityLevel(leaderUserID int, key, utility string) int {
 	level := archetypes.MemberUtilityLevel
@@ -316,7 +328,7 @@ func (m *CampingModule) addDutyWatchers(leader *users.UserRecord, duties map[str
 	var chances2 []int
 	spotter, best := archetypes.Specialist{}, -1
 	for i, w := range workers {
-		if hasAuto && ((auto.IsLeader && w.key == string(survival.LeaderMemberKey)) || (!auto.IsLeader && auto.Name == w.name)) {
+		if hasAuto && isSpecialist(auto, w.key, w.name) {
 			hasAuto = false // the specialist is on watch duty: counted below
 		}
 		chances2 = append(chances2, chances[i])
@@ -332,6 +344,15 @@ func (m *CampingModule) addDutyWatchers(leader *users.UserRecord, duties map[str
 		}
 	}
 	return spotter, true, combineChances(chances2...)
+}
+
+// isSpecialist reports whether the member with key and name is sp (a
+// Specialist carries no companion id, so a companion is matched by name).
+func isSpecialist(sp archetypes.Specialist, key, name string) bool {
+	if sp.IsLeader {
+		return key == string(survival.LeaderMemberKey)
+	}
+	return key != string(survival.LeaderMemberKey) && sp.Name == name
 }
 
 // --- the rest ends ---
@@ -445,7 +466,7 @@ func (m *CampingModule) settleTending(user *users.UserRecord, duties map[string]
 		if kit {
 			if treated, ok := m.fieldSurgery(user.UserId); ok {
 				lines = append(lines, treated...)
-				lines = append(lines, fmt.Sprintf("%s %s the lantern while the surgeon's kit does its work.", w.subject(), w.verb("hold", "holds")))
+				lines = append(lines, fmt.Sprintf("%s %s the lantern while the surgeon's kit does its work; the kit wears a little with it.", w.subject(), w.verb("hold", "holds")))
 				continue
 			}
 		}

@@ -33,9 +33,11 @@ resells for profit.
    else sharpens one member's blades with one whetstone use (the sharpen
    rules, limited to one member), else reports nothing to tend.
 6. **Forage:** each forager forages from the zone table with their own level,
-   under the existing 15 minute forage cooldown and the same food table, so
-   it is never a money source. Cooldown-blocked foragers get a "picked over"
-   line.
+   under the existing 15 minute forage cooldown and the same food table.
+   Cooldown-blocked foragers get a "picked over" line. (51 review: the finds
+   do sell, about 1.7 gold a find at a shopkeeper's 25%; kept, see the
+   review in PROJECT_STATUS. The company's best forager on the duty forages
+   once.)
 7. **Cook:** each cook makes one dish with their own Cooking from the pack
    and cargo (`cookDish`, the camp cook path without the fire check: the
    rest was the fire). Dishes carry phase 50's meal buffs when eaten; duties

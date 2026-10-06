@@ -542,8 +542,8 @@ func (m *CampingModule) forage(leader *users.UserRecord, room *rooms.Room, op st
 
 // dutyForage (Phase 51) is each member on the forage duty finding food at
 // the end of the rest, from the same zone table and cooldown as the
-// automatic forage, so the finds are never a money source (the table's
-// food is not bought back above cost).
+// automatic forage. The company's best forager forages anyway, so the duty
+// adds nothing for them (51 review: no double forage).
 func (m *CampingModule) dutyForage(leader *users.UserRecord, room *rooms.Room, reward campReward) (string, error) {
 	if room == nil {
 		return "", nil
@@ -556,9 +556,17 @@ func (m *CampingModule) dutyForage(leader *users.UserRecord, room *rooms.Room, r
 			here[t.key] = true
 		}
 	}
+	var auto archetypes.Specialist
+	hasAuto := false
+	if m.specialist != nil {
+		auto, hasAuto = m.specialist(leader.UserId, archetypes.UtilityForage, room.RoomId)
+	}
 	for i, key := range strings.Split(reward.Foragers, ",") {
 		if !here[key] {
 			continue // gone from the camp or down: no forage
+		}
+		if hasAuto && isSpecialist(auto, key, m.dutyNames(leader.UserId)[key]) {
+			continue // already foraged as the company's forager
 		}
 		name := leader.Character.Name
 		isLeader := key == string(survival.LeaderMemberKey)

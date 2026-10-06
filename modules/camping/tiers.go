@@ -189,7 +189,7 @@ func (m *CampingModule) grantPendingTiers() {
 		rounds := camping.RoundsFor(duration, m.roundLength())
 		// Phase 51: a camp rest's Rested buff skips the members on a duty.
 		var onDuty map[string]bool
-		duties := m.restDuties(leaderUserID)
+		duties := m.pendingDuties(leaderUserID, tier)
 		if tier == camping.TierRested {
 			onDuty = restedExcluded(duties)
 		}
@@ -451,6 +451,10 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		delete(m.wellRestedPending, leaderUserID)
 	}
 	delete(m.restedPending, leaderUserID)
+	duties, hadDuties := m.restedDuties[leaderUserID]
+	if restedPending {
+		delete(m.restedDuties, leaderUserID)
+	}
 	if wellPending && hadStay && !stay.Resting() {
 		delete(m.stays, leaderUserID)
 		delete(m.innRecoveryApplied, leaderUserID)
@@ -472,6 +476,9 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		}
 		if restedPending {
 			m.restedPending[leaderUserID] = true
+		}
+		if hadDuties {
+			m.restedDuties[leaderUserID] = duties
 		}
 		if hadStay {
 			m.stays[leaderUserID] = stay
