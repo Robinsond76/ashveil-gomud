@@ -1,0 +1,41 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">ranger-routes</ansi>
+
+The ranger lineage splits at level 10 into a warden, a hunter or a stalker.
+They all shoot (Aimed Shot, <ansi fg="command">help abilities</ansi>) from any row.
+
+<ansi fg="yellow-bold">Warden (good)</ansi>
+
+  10 Watchful row       allies in the Warden's row gain +3 Evasion
+  15 Steady shot        Aimed Shot is ready a round sooner
+  20 Keener watch       the row's Evasion bonus is +5
+  25 Shelter            allies in the Warden's row take 5% less damage
+
+  <ansi fg="yellow-bold">Sentinel</ansi> (30): Overwatch (it holds its turn and shoots the first foe that
+  goes for a middle- or back-row ally), Steady overwatch, Pull down, Watchful,
+  Spoil the chant, Twin watch and Guardian Arrow. See <ansi fg="command">help sentinel</ansi>.
+
+<ansi fg="yellow-bold">Hunter (neutral)</ansi>
+
+  10 Hunter's eye       Aimed Shot deals +3 damage
+  15 Quick draw         Aimed Shot is ready a round sooner
+  20 True aim           +3 Attack
+  25 Killing shot       Aimed Shot deals +5 damage
+
+  <ansi fg="yellow-bold">Marksman</ansi> (30): Called Shot (+15% critical chance, +50% critical damage),
+  Quicker aim, Pinning Crit, Back-line eye, Unblockable, Second Nock and
+  Perfect Shot. See <ansi fg="command">help marksman</ansi>.
+
+<ansi fg="yellow-bold">Stalker (evil)</ansi>
+
+  10 Pursuit            blows against a foe at or below half health deal 20% more
+  15 Silent step        +2 Evasion
+  20 Relentless         Pursuit deals 30% more
+  25 Predator's eye     +3 Attack
+
+  <ansi fg="yellow-bold">Ravager</ansi> (30): Hunt Down (bleeding wounds, a harder flight), Bloodscent,
+  Harrow, Deep wounds, Rend, Relentless hunt and Apex. See <ansi fg="command">help ravager</ansi>.
+
+Warden needs alignment +30 and Stalker -30 when you promote; Hunter asks
+nothing (<ansi fg="command">help promotion</ansi>).
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help talents</ansi>.

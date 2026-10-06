@@ -157,6 +157,7 @@ type ClassRT struct {
 	ZanshinRound uint64 // the combat round Zanshin last gave its turn back
 	Bodyguards   int    // Bodyguard steps spent this battle
 	SidePeak     int    // the most of its side standing this battle (Vengeance)
+	EliteRT             // Phase 38c2: the rogue and ranger elites
 	// The Doll Master's lineage (Phase 39d): Guard String uses spent, the
 	// Emergency Splice spent this battle, and the Master's next turn owed to
 	// it.

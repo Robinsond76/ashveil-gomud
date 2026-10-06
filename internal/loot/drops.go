@@ -129,11 +129,17 @@ func PickBase(tier int, rng Source) int {
 // Equipment rolls a source's equipment drop: nothing, or the rule's count
 // of generated items at the zone's item level.
 func Equipment(kind Kind, sourceLevel int, p ZoneProfile, label string, rng Source) ([]items.Item, error) {
+	return EquipmentWith(kind, sourceLevel, p, label, rng, 0)
+}
+
+// EquipmentWith is Equipment with chanceBonus points added to the rule's
+// chance of holding equipment (Phase 38c2: a Pathfinder's Trailwise).
+func EquipmentWith(kind Kind, sourceLevel int, p ZoneProfile, label string, rng Source, chanceBonus int) ([]items.Item, error) {
 	rule, ok := Rules[kind]
 	if !ok || rule.EquipCount < 1 {
 		return nil, nil
 	}
-	if rule.EquipChance < 100 && rng.Intn(100) >= rule.EquipChance {
+	if chance := min(100, rule.EquipChance+chanceBonus); chance < 100 && rng.Intn(100) >= chance {
 		return nil, nil
 	}
 	ilvl := p.ItemLevel(sourceLevel)

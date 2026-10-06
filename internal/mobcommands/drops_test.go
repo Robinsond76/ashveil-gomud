@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -207,4 +208,34 @@ func TestAlliedCompaniesEachRollTheirOwn(t *testing.T) {
 	for _, u := range w.users {
 		assert.NotEmpty(t, loot.TakeSpoils(u.UserId))
 	}
+}
+
+// Phase 38c2: a Pathfinder's Trailwise (rank 55) makes a won encounter's
+// cache hold 15% more gold.
+type trailClass struct {
+	classes.PlayerProvider
+	class string
+}
+
+func (p trailClass) PlayerClass(int) classes.State { return classes.State{Class: p.class} }
+
+func TestTrailwiseFattensTheCacheGold(t *testing.T) {
+	cacheGold := func(class string) (lowest int) {
+		classes.SetProvider(trailClass{class: class})
+		t.Cleanup(func() { classes.SetProvider(nil) })
+		lowest = 1 << 30
+		for i := 0; i < 40; i++ {
+			w := newDropWorld(t, 1, encounters.Band{Low: 5, High: 7})
+			w.users[0].Character.Level = 55
+			m := w.foe(98830+i, nil)
+			_, err := Suicide("", m, w.room)
+			require.NoError(t, err)
+			require.NotEmpty(t, w.room.Corpses)
+			lowest = min(lowest, w.room.Corpses[0].Gold)
+			mobs.RemoveTestInstance(m.InstanceId)
+		}
+		return lowest
+	}
+	assert.Less(t, cacheGold("scout"), 27, "level 6 caches hold 24 to 36 gold")
+	assert.GreaterOrEqual(t, cacheGold("pathfinder"), 27, "and 15% more with Trailwise")
 }

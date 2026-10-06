@@ -43,6 +43,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	combatRound.Store(evt.RoundNumber)
 	expireIntimidation(evt.RoundNumber) // Phase 38b review: a round, not a battle
 	expireMarks(evt.RoundNumber)        // Phase 38c1: a mark lasts 2 rounds
+	eliteRoundStart()                   // Phase 38c2
 	resetRoundExtras()
 	beginBattlefieldRound()
 
@@ -90,6 +91,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 33i2: enemy healers and casters, by their group's
 	// coordination.
 	enemyStrategyPass()
+	elitePass() // Phase 38c2: Death Mark, Shadowstep, Vanish
 	// Ashveil Phase 33e: members about to swing may use a class ability.
 	abilityPass()
 	defer endAbilityStrikes()
@@ -101,10 +103,12 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt, false)
 
 	affectedPlayers2, affectedMobs2 := handleMobCombat(evt, false)
+	looseHeldShots() // Phase 38c2 review: a quiet Overwatch hold still shoots
 
 	// Earned second physical turns reuse the same gates and attribution. Round
 	// upkeep, chants and waits were already processed in the first pass.
 	endAbilityStrikes()
+	endShadowsteps()
 	clear(battlefieldPowers)
 	p3, m3 := handlePlayerCombat(evt, true)
 	p4, m4 := handleMobCombat(evt, true)

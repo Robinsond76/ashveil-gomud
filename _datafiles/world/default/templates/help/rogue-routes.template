@@ -1,0 +1,42 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">rogue-routes</ansi>
+
+The rogue lineage splits at level 10 into a scout, a duelist or an assassin.
+They all strike openings (Opening Strike, <ansi fg="command">help abilities</ansi>) with a blade or claws.
+
+<ansi fg="yellow-bold">Scout (good)</ansi>
+
+  10 Ambush             Opening Strike opens any foe in the battle's first round
+  15 Light step         +3 Evasion
+  20 Quick opening      Opening Strike is ready a round sooner
+  25 Long ambush        Ambush lasts the battle's first two rounds
+
+  <ansi fg="yellow-bold">Pathfinder</ansi> (30): enemy ambushes happen half as often, an opening on a foe
+  that has not acted, Expose Weakness, Scouted ground (every ally's meter
+  starts 10 higher), Vanish, Trailwise (richer caches) and Ambush Master.
+  See <ansi fg="command">help elite-pathfinder</ansi>.
+
+<ansi fg="yellow-bold">Duelist (neutral)</ansi>
+
+  10 Riposte            a parried blow is answered at once with a counter-blow
+  15 Parrying drill     +4 parry chance
+  20 Sharper riposte    the counter-blow is half again as strong
+  25 Duelist's edge     +3 Attack
+
+  <ansi fg="yellow-bold">Swordmaster</ansi> (30): Blade Dance (+50% riposte damage), Parry mastery, Disarming
+  Riposte, Twin ripostes, Perfect Parry, Counter-strike and Unbroken Guard.
+  See <ansi fg="command">help swordmaster</ansi>.
+
+<ansi fg="yellow-bold">Assassin (evil)</ansi>
+
+  10 Finisher           blows against a foe at or below 40% health deal more
+  15 Deep cuts          Opening Strike deals +2 damage
+  20 Killing eye        Finisher works at or below 50% health
+  25 Cold edge          +3 Attack
+
+  <ansi fg="yellow-bold">Nightblade</ansi> (30): Death Mark, Envenom, a keener Finisher, Shadowstep,
+  Hunting the mark, Killing Spree and Coup de Grace. See <ansi fg="command">help nightblade</ansi>.
+
+Scout needs alignment +30 and Assassin -30 when you promote; Duelist asks
+nothing (<ansi fg="command">help promotion</ansi>).
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help talents</ansi>.
