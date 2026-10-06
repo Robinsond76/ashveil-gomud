@@ -37,6 +37,7 @@ func TestCampStateOf(t *testing.T) {
 	s, _ = m.CampStateOf(7, 200, []string{"camping"})
 	assert.True(t, s.HasCamp)
 	assert.False(t, s.Here)
+	assert.Equal(t, 100, s.RoomID, "the camp's room, for the map marker (Phase 40b)")
 	assert.Equal(t, "room #100", s.RoomTitle, "no such room loaded in the test")
 
 	s, _ = m.CampStateOf(8, 300, []string{m.innSettings().RoomTag})

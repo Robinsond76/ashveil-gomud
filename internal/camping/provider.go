@@ -188,8 +188,10 @@ type CampState struct {
 	// room. RoomTitle is the camp's room.
 	HasCamp, Here bool
 	RoomTitle     string
-	FireLit       bool
-	Resting       bool
+	// RoomID is the camp's room (Phase 40b), so the map can mark its tile.
+	RoomID  int
+	FireLit bool
+	Resting bool
 	// Rested is a camp whose rest is done: it can't rest again (32g
 	// review finding 7).
 	Rested bool

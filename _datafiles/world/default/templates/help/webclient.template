@@ -16,6 +16,12 @@ button in them just types a command for you.
   gathering resource that has been picked clean is drawn hollow with a
   slash on the map and dimmed in the panel (<ansi fg="command">help gathering</ansi>).
 
+  You stand on the map as your class, facing the way you walked, with a
+  gold ring under you. A small shield with a number shows how many of
+  your company travel with you, your party's members show as their
+  classes, and your camp (and your party's) shows as a tent with its
+  fire. The settings button has Sprites and Camps switches (<ansi fg="command">help worldmap</ansi>).
+
 <ansi fg="yellow-bold">The right column: the dock</ansi>
 
   Always at the top: your health and mana, a line for each companion
