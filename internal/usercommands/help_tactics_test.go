@@ -27,7 +27,7 @@ func TestTacticsHelp(t *testing.T) {
 	plainText := tagPattern.ReplaceAllString(text, "")
 	for _, want := range []string{
 		"Help for tactics",
-		"none", "leader", "casters", "nearest", "weakest", "strongest", "wounded",
+		"none", "leader", "casters", "healers", "nearest", "weakest", "strongest", "wounded",
 		"company tactics focus [rule]", "company tactics focus default",
 		"company tactics healing [percent]", "company tactics default",
 		"You call the company onto the bandit captain.",
@@ -35,6 +35,8 @@ func TestTacticsHelp(t *testing.T) {
 		"10 to 90 percent", "It is 50, half health",
 		"wolves go for the\nmost badly hurt",
 		"tactics is short for company tactics",
+		"From level 5, a healer on the other side changes the default.",
+		"Your company marks the goblin shaman as a healer and goes for it first.",
 	} {
 		assert.Contains(t, plainText, want)
 	}

@@ -106,6 +106,9 @@ type companyTactics struct {
 	Focus   string `json:"focus"`
 	Healing int    `json:"healing"`
 	Patch   int    `json:"patch"`
+	// Phase 35e: on the level default, the company goes for an enemy healer
+	// first.
+	HealersFirst bool `json:"healers_first,omitempty"`
 }
 
 // companyStructure is what changes only with the roster, formation, load,
@@ -256,7 +259,7 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 		p.Checkpoint = strPtr(s.Checkpoint)
 	}
 	t := s.Tactics.Resolve()
-	p.Tactics = companyTactics{Focus: string(t.Focus), Healing: t.Healing, Patch: t.Patch}
+	p.Tactics = companyTactics{Focus: string(t.Focus), Healing: t.Healing, Patch: t.Patch, HealersFirst: s.HealersFirst}
 	return p, true
 }
 
