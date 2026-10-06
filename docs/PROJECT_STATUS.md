@@ -1,5 +1,25 @@
 # Ashveil Project Status
 
+**Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
+`scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
+`_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,
+frames, rows, anchor, timing per file). S0: 64-color palette (`palette.png`,
+`palette.gpl`), the two style frames, proportions sheets and icon sample.
+S1: 9 resource icons, markers, camp pieces, map units (idle and walk, down /
+up / side) for the 6 base classes plus `adventurer`, and app icons. Review
+the art in [the contact sheet](verification/40s1-contact-sheet.png). Tests:
+`go test ./scripts` checks the spec layout, palette-only colors, hard edges,
+the feet-baseline anchor and that committed PNGs equal generator output.
+Nothing is wired into the client yet, so no player help or tutorial change
+is due (40b, 40f and 40i wire it). Decisions (owner delegated): the
+review thread approves S0 against the art direction (roadmap); `palette.png`
+is an 8x8 image, one pixel per color; the here-ring has no outline (a 1 px
+ring would double); the ogre and goblins in `style-battle` are throwaway mocks
+for S3 to replace; battle idle shows one frame, since S3 owns full battle
+sheets; app icons are scaled by whole numbers from a 64 / 48 / 32 grid (the
+192 px version drops detail rather than just downscaling). Independent
+review pending (separate thread).
+
 **Remaining roadmap planned (2026-10-06):** the owner handed over the rest
 of the roadmap, delegating design approval and the visual direction. The
 [remaining roadmap](plans/2026-10-06-remaining-roadmap.md) maps every
