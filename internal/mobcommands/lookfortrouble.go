@@ -39,6 +39,11 @@ func LookForTrouble(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) 
 				continue
 			}
 
+			// Phase 37: a random encounter's foes seek only their company.
+			if parties.ReservedFrom(mob.EncounterOwner, playerId) {
+				continue
+			}
+
 			raceInfo := races.GetRace(user.Character.GetRaceId())
 			if raceInfo == nil {
 				mudlog.Error("RaceError", "Not Found", user.Character.GetRaceId())

@@ -264,9 +264,37 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 		}
 
+		// Phase 37: each company that fought makes its own roll on the zone's
+		// drop tables. The claimant's joins the corpse; the others get a
+		// corpse of their own, claimed by them.
+		var otherSpoils []rooms.Corpse
+		if claimCorpse {
+			drops := zoneDrops(mob, room, contributors)
+			for _, uid := range contributors {
+				d, ok := drops[uid]
+				if !ok {
+					continue
+				}
+				if uid == claimOwner {
+					corpseItems = append(corpseItems, d.Items...)
+					corpseGold += d.Gold
+					continue
+				}
+				otherSpoils = append(otherSpoils, rooms.Corpse{
+					ClaimUserId:  uid,
+					BattleSpoils: true,
+					MobId:        int(mob.MobId),
+					Character:    mob.Character,
+					RoundCreated: currentRound,
+					Items:        d.Items,
+					Gold:         d.Gold,
+				})
+			}
+		}
+
 		if mob.Character.Gold > 0 {
 			if bool(config.Death.CorpseItems && config.Death.CorpsesEnabled) || claimCorpse {
-				corpseGold = mob.Character.Gold
+				corpseGold += mob.Character.Gold
 			} else {
 				msg := fmt.Sprintf(`<ansi fg="yellow-bold">%d gold</ansi> drops to the ground.`, mob.Character.Gold)
 				room.SendText(msg)
@@ -302,6 +330,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			for _, item := range body.dropWorn {
 				c.Character.RemoveFromBody(item)
 			}
+			room.AddCorpse(c)
+		}
+		for _, c := range otherSpoils {
 			room.AddCorpse(c)
 		}
 

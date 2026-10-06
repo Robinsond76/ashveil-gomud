@@ -57,17 +57,23 @@ type Mob struct {
 	Temperament        string  `yaml:"temperament,omitempty"`
 	NeverBreak         bool    `yaml:"neverbreak,omitempty"`
 	// Boss (Phase 38a): a hex resists it 25 points more and holds it half as long.
-	Boss            bool `yaml:"boss,omitempty"`
-	MobId           MobId
-	Zone            string               `yaml:"zone,omitempty"`
-	ItemDropChance  int                  `yaml:"itemdropchance,omitempty"` // chance in 100
-	LootCategory    string               `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
-	ActivityLevel   int                  `yaml:"activitylevel,omitempty"`  // 1-100%
-	InstanceId      int                  `yaml:"-"`
-	HomeRoomId      int                  `yaml:"-"`
-	Hostile         bool                 `yaml:"hostile,omitempty"` // whether they attack on sight
-	Reach           bool                 `yaml:"reach,omitempty"`   // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
-	AmbushOwner     int                  `yaml:"-"`
+	Boss           bool `yaml:"boss,omitempty"`
+	MobId          MobId
+	Zone           string `yaml:"zone,omitempty"`
+	ItemDropChance int    `yaml:"itemdropchance,omitempty"` // chance in 100
+	LootCategory   string `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
+	ActivityLevel  int    `yaml:"activitylevel,omitempty"`  // 1-100%
+	InstanceId     int    `yaml:"-"`
+	HomeRoomId     int    `yaml:"-"`
+	Hostile        bool   `yaml:"hostile,omitempty"` // whether they attack on sight
+	Reach          bool   `yaml:"reach,omitempty"`   // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
+	AmbushOwner    int    `yaml:"-"`
+	// Phase 37: a random room encounter's foe. EncounterOwner is the leader
+	// whose company it is reserved for (0: none); EncounterID names the
+	// unresolved group, so its cache rolls once when the last foe falls.
+	EncounterOwner  int                  `yaml:"-"`
+	EncounterID     string               `yaml:"-"`
+	EncounterBoss   bool                 `yaml:"-"` // the group has a boss: its cache holds more gold
 	AmbushAdvantage int                  `yaml:"-"`
 	AmbushObserver  string               `yaml:"-"`
 	Leap            bool                 `yaml:"leap,omitempty"`
