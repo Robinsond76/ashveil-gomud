@@ -1,4 +1,5 @@
 mobid:  36
+sprite: spider-warrior
 zone: Dark Forest
 itemdropchance: 5
 hostile: true

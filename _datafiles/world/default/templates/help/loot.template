@@ -36,6 +36,8 @@ found unidentified until a Scribe reads it: <ansi fg="command">help rarity</ansi
 <ansi fg="command">help itemlevel</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help identify</ansi>, <ansi fg="command">help scribe</ansi>.
 
 Gear also comes in families and tiers (<ansi fg="command">help equipmenttiers</ansi>), and goods are things
-you carry to sell (<ansi fg="command">help goods</ansi>).
+you carry to sell (<ansi fg="command">help goods</ansi>). Merchants buy gear (<ansi fg="command">help sell</ansi>),
+smiths salvage it (<ansi fg="command">help salvage</ansi>), and <ansi fg="command">mark [item] junk</ansi> then <ansi fg="command">sell junk</ansi> clears what
+you do not want (<ansi fg="command">help mark</ansi>).
 
 See also: <ansi fg="command">help encounters</ansi>, <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>.

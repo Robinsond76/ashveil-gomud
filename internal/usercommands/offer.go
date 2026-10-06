@@ -31,7 +31,7 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		user.Character.CancelBuffsWithFlag("hidden")
 
-		if item.IsSpecial() {
+		if item.IsSpecialForSale() {
 
 			mob.Command(`say I'm afraid I don't buy those.`)
 
@@ -47,7 +47,11 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			continue
 		}
 
-		mob.Command(fmt.Sprintf(`say I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, sellValue, item.DisplayName()))
+		quote := fmt.Sprintf(`say I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, sellValue, item.DisplayName())
+		if note := saleNote(mob, item); note != `` {
+			quote += ` ` + note
+		}
+		mob.Command(quote)
 
 		break
 	}

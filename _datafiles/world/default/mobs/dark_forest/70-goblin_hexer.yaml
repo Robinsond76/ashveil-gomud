@@ -2,6 +2,7 @@
 # company's healers and casters first (its goblin race aims by "casters"),
 # and a blow that draws blood breaks the chant (help interrupts).
 mobid: 70
+sprite: goblin-hexer
 zone: Dark Forest
 itemdropchance: 5
 hostile: true

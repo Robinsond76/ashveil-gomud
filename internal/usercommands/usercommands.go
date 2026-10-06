@@ -110,6 +110,7 @@ var (
 		`lock`:        {Lock, false, false},
 		`look`:        {Look, true, false},
 		`map`:         {Map, false, false},
+		`mark`:        {Mark, false, false}, // Ashveil Phase 36c
 		`macros`:      {Macros, true, false},
 		`mob`:         {Mob, true, true},    // Admin only
 		`modify`:      {Modify, true, true}, // Admin only
@@ -144,7 +145,8 @@ var (
 		`save`:        {Save, true, false},
 		`say`:         {Say, true, false},
 		`sell`:        {Sell, false, false},
-		`server`:      {Server, false, true}, // Admin only
+		`salvage`:     {Salvage, false, false}, // Ashveil Phase 36c
+		`server`:      {Server, false, true},   // Admin only
 		`set`:         {Set, true, false},
 		`share`:       {Share, false, false},
 		`shoot`:       {Shoot, false, false},

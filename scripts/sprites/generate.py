@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the Ashveil sprite sets (S0 style foundation, S1 map basics).
+"""Generate the Ashveil sprite sets (S0 style, S1 map basics, S2 terrain, S3 battle).
 
     python3 scripts/sprites/generate.py [--out DIR] [--preview FILE]
 
@@ -20,6 +20,11 @@ from PIL import Image  # noqa: E402
 import figures  # noqa: E402
 import icons  # noqa: E402
 import scenes  # noqa: E402
+import backgrounds  # noqa: E402
+import landmarks  # noqa: E402
+import roster  # noqa: E402
+import terrain  # noqa: E402
+import uiicons  # noqa: E402
 from palette import PAL  # noqa: E402
 from pixels import Canvas, sheet  # noqa: E402
 
@@ -136,6 +141,92 @@ def write_s1(w):
           set="S1")
 
 
+def write_s2(w):
+    """Terrain tiles (3 variants), animated overlays, fog and state tiles, landmarks."""
+    D = "map/terrain/"
+    for biome, fn in terrain.BIOMES.items():
+        anim = biome in terrain.ANIMATED
+        w.canvas(f"{D}{biome}.png", terrain.variants(fn), kind="terrain", set="S2", frame=[32, 32],
+                 frames=3, variants=3, animated_overlay=f"{biome}-anim.png" if anim else None)
+    for biome, fn in terrain.ANIMATED.items():
+        w.canvas(f"{D}{biome}-anim.png", terrain._overlay(fn), kind="terrain-anim", set="S2",
+                 frame=[32, 32], frames=4, frame_ms=250, overlay=True, over=f"{biome}.png")
+    w.canvas(D + "fog.png", terrain.fog(), kind="terrain-state", set="S2", frame=[32, 32], frames=1,
+             overlay=True)
+    w.canvas(D + "unknown.png", terrain.unknown(), kind="terrain-state", set="S2", frame=[32, 32], frames=1)
+    w.canvas(D + "night-mask.png", terrain.night_mask(), kind="terrain-state", set="S2", frame=[32, 32],
+             frames=1, overlay=True, note="dithered vignette; hard alpha, palette colors")
+    for name, fn in landmarks.LANDMARKS.items():
+        w.canvas(f"map/landmarks/{name}.png", fn(), kind="landmark", set="S2", frame=[32, 32],
+                 frames=1, anchor="center")
+
+
+def write_s3(w):
+    """Battle backgrounds, idle battle units, formation markers and the status/role/morale/condition icons."""
+    for bid, (fn, biomes) in backgrounds.BACKGROUNDS.items():
+        w.canvas(f"battle/backgrounds/{bid}.png", fn(), kind="battle-background", set="S3",
+                 frame=[320, 180], frames=1, biomes=biomes, ground_band=[16, 100, 304, 176])
+    for u in roster.UNITS:
+        meta = dict(kind="battle-unit", set="S3", frame=[u.frame, u.frame], frames=4, frame_ms=180,
+                    anchor="bottom-center", feet_baseline=u.frame - 2, facing="right",
+                    size_class=u.size, family=u.family)
+        if u.names:
+            meta["names"] = u.names
+        if u.variant_of:
+            meta["variant_of"] = u.variant_of
+        if u.note:
+            meta["note"] = u.note
+        if u.floating:
+            meta.update(floating=True, anchor="center")
+            del meta["feet_baseline"]
+        w.canvas(f"battle/units/{u.id}/idle.png", sheet([u.frames()]), **meta)
+    B = "battle/ui/"
+    one = dict(kind="battle-ui", set="S3", frames=1)
+    w.canvas(B + "cell.png", uiicons.cell(), frame=[32, 16], anchor="center", **one)
+    w.canvas(B + "cell-acting.png", sheet([uiicons.cell_acting_frames()]), kind="battle-ui", set="S3",
+             frame=[32, 16], frames=4, anchor="center", frame_ms=180)
+    w.canvas(B + "cell-targeted.png", sheet([uiicons.cell_targeted_frames()]), kind="battle-ui",
+             set="S3", frame=[32, 16], frames=2, anchor="center", frame_ms=250)
+    w.canvas(B + "acting-arrow.png", sheet([uiicons.acting_arrow_frames()]), kind="battle-ui", set="S3",
+             frame=[8, 8], frames=2, anchor="center", frame_ms=250)
+    w.canvas(B + "fallen.png", uiicons.fallen(), frame=[16, 16], anchor="center", **one)
+    w.canvas(B + "surrendered.png", uiicons.surrendered(), frame=[16, 16], anchor="center", **one)
+    w.canvas(B + "hp-frame.png", uiicons.hp_frame(), frame=[32, 6], anchor="top-left", **one)
+    for folder, table in (("status", uiicons.STATUS), ("roles", uiicons.ROLES),
+                          ("morale", uiicons.MORALE), ("conditions", uiicons.CONDITIONS)):
+        for name, fn in table.items():
+            w.canvas(f"ui/{folder}/{name}.png", fn(), kind="ui-icon", set="S3", frame=[16, 16],
+                     frames=1, anchor="center", group=folder)
+
+
+def write_battle_mapping(w):
+    """Key table for the client: mob name -> unit, biome -> background."""
+    names = {}
+    for u in roster.UNITS:
+        for n in u.names:
+            names[n.lower()] = u.id
+    bg = {}
+    for bid, (_, biomes) in backgrounds.BACKGROUNDS.items():
+        for b in biomes:
+            bg[b] = bid
+    doc = {
+        "version": 1,
+        "notes": "Mob names (lowercase) map to battle unit ids; biomes map to background ids; "
+                 "zone overrides win over biomes.  Units without art fall back to unknown-humanoid, "
+                 "unknown-beast or unknown-large.",
+        "units": dict(sorted(names.items())),
+        "backgrounds": dict(sorted(bg.items())),
+        "zone_overrides": {"Stormwatchers Keep": "ice-keep", "Tutorial": "training-yard"},
+        "fallbacks": {"humanoid": "unknown-humanoid", "beast": "unknown-beast", "large": "unknown-large"},
+    }
+    path = os.path.join(w.out, "battle/mapping.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(doc, f, indent=1)
+        f.write("\n")
+    w.manifest["battle/mapping.json"] = {"kind": "mapping", "set": "S3"}
+
+
 def write_manifest(w):
     doc = {
         "version": 1,
@@ -153,15 +244,22 @@ def write_manifest(w):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=DEFAULT_OUT, help="output directory")
-    ap.add_argument("--preview", help="also write a contact sheet PNG here")
+    ap.add_argument("--preview", help="also write the S0/S1 contact sheet PNG here")
+    ap.add_argument("--preview-s23", help="also write the S2/S3 contact sheet PNG here")
     args = ap.parse_args(argv)
     w = Writer(args.out)
     write_s0(w)
     write_s1(w)
+    write_s2(w)
+    write_s3(w)
+    write_battle_mapping(w)
     write_manifest(w)
     if args.preview:
         import preview
         preview.contact_sheet(w.out, args.preview)
+    if args.preview_s23:
+        import preview
+        preview.contact_sheet_s23(w.out, args.preview_s23)
     print(f"wrote {len(w.manifest)} files to {w.out}")
 
 

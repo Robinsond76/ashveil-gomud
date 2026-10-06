@@ -6,6 +6,8 @@ in the class's materials, then given a 1 px outline.  The same rig draws the
 frame (side, facing right), so a silhouette reads the same at both sizes.
 Parts and colors are data; nothing here is a copy of any existing artwork.
 """
+import math
+
 from pixels import Canvas, rect, round_rect, line, thick, ellipse
 
 
@@ -53,6 +55,7 @@ class Rig:
 
     def __init__(self, cls, view, S, pose):
         self.spec = CLASSES[cls]
+        self.skin = self.spec.get("skin", "skin")
         self.cls, self.view, self.S = cls, view, S
         self.pose = {**STAND, **pose}
         self.cv = Canvas(S.W, S.W)
@@ -173,7 +176,7 @@ class Rig:
             return
         if v == "side":
             nose = {(x0 + hw, eye_y + 1)}
-            self.cv.part(base | nose, "skin")
+            self.cv.part(base | nose, self.skin)
             if cover:
                 back = {(x, y) for x, y in base if x < x0 + hw - max(2, round(2 * self.k))}
                 top = {(x, y) for x, y in base if y < y0 + max(2, round(2 * self.k))}
@@ -195,7 +198,7 @@ class Rig:
                 self.cv.part(bd, beard)
             return
         # front
-        self.cv.part(base, "skin")
+        self.cv.part(base, self.skin)
         if cover:
             side_w = max(1, round(1.3 * self.k))
             frame = {(x, y) for x, y in base
@@ -388,6 +391,13 @@ def draw_cleric(r):
         cv.put(r.cx - 1, r.ysh + r.px(4) - (1 if k == 1 else 0), "steel.l")
         cv.put(r.cx + 1, r.ysh + r.px(4) - (1 if k == 1 else 0), "steel.l")
     r.head(hair="leather")
+    if r.battle:  # round shield on the near forearm, rim and boss in brass
+        sx, sy = r.tx1, r.ysh + 11
+        sh = ellipse(sx, sy, 2.6, 7)
+        cv.part(sh, "wood")
+        cv.part({(x, y) for x, y in sh if x == sx - 2}, "wood", flat="l")
+        cv.part({(x, y) for x, y in sh if x >= sx + 2}, "brass", flat="m")
+        cv.fill({(sx, sy), (sx, sy - 1), (sx, sy + 1)}, "brass.l")
     # Mace in the hand, head up.
     if v == "down":
         hx, hy = r.hand_r
@@ -543,8 +553,75 @@ def map_walk(cls):
 
 # Per-class battle stance tweaks over the shared braced stance.
 BATTLE_STANCE = {"rogue": dict(bob=3, stride=(-4, 3))}
+BREATH = [0, 1, 2, 1]  # four-frame idle: the body settles and rises
 
 
-def battle_idle(cls):
-    pose = {**dict(bob=0, stride=(-3, 3)), **BATTLE_STANCE.get(cls, {})}
-    return render(cls, "side", BATTLE, pose)
+def _extras_ranger(r, t):
+    """Arrow nocked low on the string, point toward the enemy."""
+    hx, hy = r.hand_r
+    cv = r.cv
+    cv.part(line(hx - 1, hy + 2, hx + 9, hy + 6 + (t == 2)), "bone", flat="m")
+    cv.fill({(hx + 10, hy + 6 + (t == 2)), (hx + 11, hy + 7 + (t == 2))}, "steel.l")
+    cv.fill({(hx - 2, hy + 2), (hx - 2, hy + 3)}, "oxblood.m")
+
+
+def _extras_wizard(r, t):
+    """A dim pale glow that swells and fades at the staff stone."""
+    cv = r.cv
+    sx = r.hand_r[0] + 1
+    sy = r.top - 3
+    ring = [(-2, 0), (2, 0), (0, -2), (0, 2)]
+    wide = [(-3, -1), (3, -1), (-1, -3), (1, -3), (-3, 1), (3, 1)]
+    if t in (1, 3):
+        for dx, dy in ring:
+            if cv.get(sx + dx, sy + dy) is None:
+                cv.put(sx + dx, sy + dy, "bone.d")
+    if t == 2:
+        for dx, dy in ring:
+            if cv.get(sx + dx, sy + dy) is None:
+                cv.put(sx + dx, sy + dy, "bone.m")
+        for dx, dy in wide:
+            if cv.get(sx + dx, sy + dy) is None:
+                cv.put(sx + dx, sy + dy, "bone.d")
+    cv.fill({(sx, sy), (sx + 1, sy)}, "wool.l" if t == 2 else "bone.l")
+
+
+def _extras_witch(r, t):
+    """A thin curl of grave-mist rising from the ground beside the hem."""
+    cv = r.cv
+    x0 = r.tx0 - 8
+    base = r.fy - 1
+    for i in range(14):
+        wob = round(2.2 * math.sin((i + t * 2.5) / 2.2))
+        c = "ashmoss.l" if i % 3 else "bone.d"
+        if i > 9:
+            c = "ashmoss.m"
+        cv.put(x0 + wob, base - i, c)
+        if i % 4 == 1:
+            cv.put(x0 + wob + 1, base - i, "ashmoss.m")
+
+
+def _extras_cleric(r, t):
+    """The iron holy symbol glints on the tabard in the third frame."""
+    if t == 2:
+        r.cv.fill({(r.cx + 2, r.ysh + 5), (r.cx + 2, r.ysh + 4), (r.cx + 1, r.ysh + 5)}, "steel.l")
+
+
+EXTRAS = {"ranger": _extras_ranger, "wizard": _extras_wizard, "witch": _extras_witch,
+          "cleric": _extras_cleric}
+
+
+def battle_idle(cls, t=0):
+    """One frame (t = 0..3) of the 64x64 battle idle, facing right."""
+    base = {**dict(bob=0, stride=(-3, 3)), **BATTLE_STANCE.get(cls, {})}
+    pose = dict(base, bob=base["bob"] + BREATH[t % 4])
+    r = Rig(cls, "side", BATTLE, pose)
+    DRAWERS[cls](r)
+    if cls in EXTRAS:
+        EXTRAS[cls](r, t % 4)
+    r.cv.outline()
+    return r.cv
+
+
+def battle_idle_frames(cls):
+    return [battle_idle(cls, t) for t in range(4)]

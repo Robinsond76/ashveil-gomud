@@ -48,3 +48,18 @@ func ScribeManaCost(r items.Rarity) int {
 	}
 	return 0
 }
+
+// IdentifyFee is what a merchant charges to read an unidentified item
+// (Phase 36c): 60 gold for a Rare, 150 for an Epic, 400 for a Legendary or
+// Set. Cheaper than the gold a good find is worth, dearer than a camp rest.
+func IdentifyFee(r items.Rarity) int {
+	switch r {
+	case items.RarityRare:
+		return 60
+	case items.RarityEpic:
+		return 150
+	case items.RarityLegendary, items.RaritySet:
+		return 400
+	}
+	return 20
+}
