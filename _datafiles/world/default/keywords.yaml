@@ -71,6 +71,8 @@ help:
       - samurai-routes
       - shaman
       - shaman-routes
+      - gryphon-rider
+      - gryphon-rider-routes
       - summoning
     company:
       - company
@@ -345,6 +347,8 @@ help-aliases:
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
+  gryphon-rider:    [gryphon rider, gryphon, gryphons, rider, dive, talons, skirmisher, skirmish, power-dive]
+  gryphon-rider-routes: [gryphon-knight, gryphon knight, skyscout, wyvern-rider, wyvern rider, gryphon-lord, gryphon lord, falcon-marshal, falcon marshal, wyvern-lord, wyvern lord, lance-charge, eagle-eye, hawk-s-mark]
   samurai-routes:   [kensai, hatamoto, ronin, sword-saint, sword saint, shogun, kenshi, bodyguard, vengeance]
   shaman:           [shamans, weather-caller, stormcraft, call-fog, callfog, gust, chill-wind, chillwind, lightning, battle-weather, fogbound, windchilled]
   shaman-routes:    [stormcaller, mistweaver, earthspeaker, tempest-lord, tempest lord, veil-mother, veil mother, mountain-speaker, mountain speaker, stoneskin, chain-lightning]

@@ -127,13 +127,16 @@ func DefaultRole(archetype string) Role {
 // DefaultRule is an archetype's target rule: the weakest foe it can reach
 // (the rule every fight used before 32d), except a Samurai, the duelist
 // (Phase 39b), who goes for the strongest, and a Halberdier (Phase 39a),
-// who goes for the most crowded row.
+// who goes for the most crowded row, and a Gryphon Rider (Phase 39f), the
+// skirmisher, who goes for healers and casters in the rear.
 func DefaultRule(archetype string) Rule {
 	switch strings.ToLower(strings.TrimSpace(archetype)) {
 	case "samurai":
 		return Strongest
 	case "halberdier":
 		return Crowded
+	case "gryphon-rider":
+		return Healers // Phase 39f: the skirmisher dives on healers, then casters
 	}
 	return Weakest
 }

@@ -234,4 +234,14 @@ const (
 	FogEvade    = "fogevade"    // Evasion allies gain while its Fog lasts
 	WeatherLong = "weatherlong" // extra rounds its weather calls last
 	Stoneskin   = "stoneskin"   // armor its Stoneskin gives one ally for the battle
+
+	// The Gryphon Rider's lineage (Phase 39f).
+	Talons     = "talons"     // a landed Dive leaves the foe bleeding
+	DiveDmg    = "divedmg"    // percent more damage a Dive deals
+	DiveCD     = "divecd"     // rounds off Dive's cooldown
+	DiveDown   = "divedown"   // a landed Dive with a two-handed reach weapon knocks the foe down
+	DiveExpo   = "diveexpo"   // a landed Dive leaves the foe exposed
+	DivePois   = "divepois"   // a landed Dive poisons the foe
+	DiveSteady = "divesteady" // a Dive costs no Evasion
+	SkyEye     = "skyeye"     // Perception added when its company looks for an ambush in the open
 )
