@@ -86,7 +86,11 @@ preview (only reached after the check passes).
 Master merge (40s5 class art, 40a3): GMCP `Company` members now follow
 40s5's keys, `class` (id) and `class_name`, plus 38c1's `tier`, `rank` and
 `promotion`; the company card shows the class name in its header and the
-tier and rank beneath (dock-windows check passes in full).
+tier and rank beneath (dock-windows check passes in full). With 39b
+(Samurai) merged, a level-up names its ranks once, through 39b's
+`ClassRanks` ("New rank: ..."), and `ClassNotes`/`LevelNotes` carry only
+the elite promotion line (`RankUpLines` removed); `help elite` lists the
+Samurai elites as still to come.
 Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
 in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
 a "Druid tuning" pass belongs with 39i or a small phase.
