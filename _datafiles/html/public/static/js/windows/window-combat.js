@@ -619,6 +619,13 @@
             note.title = 'Laid before the fight with cast sigil of [kind] (help sigils)';
             root.appendChild(note);
         }
+        // Phase 50: each member's battle condition as the battle began (help survival).
+        const fare = battle.fare || {};
+        Object.keys(fare).forEach(key => {
+            const note = el('div', 'cbt-note cbt-fare', 'Condition: ' + (nameOf(key, battle, data) || key) + ', ' + fare[key]);
+            note.title = 'Set as the battle began from needs and a meal buff (help survival, help cooking)';
+            root.appendChild(note);
+        });
         if (battle.outlook && battle.outlook.text) {
             const outlook = el('div', 'cbt-note cbt-outlook cbt-risk-' + String(battle.outlook.risk || '').replace(/[^a-z]/g, ''),
                 'Outlook: ' + battle.outlook.text);

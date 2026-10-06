@@ -21,6 +21,10 @@ Thirst too. When it moves someone's Hunger or Thirst into a new band
 told you provisioned them. See ~help survival~ for what
 Hunger and Thirst mean and how they're spent.
 
+A cooked meal (seared game meat, thyme-roasted game, hunter's stew,
+grilled fish) also gives the eater a buff for its next few battles; the
+message names it. See ~help cooking~.
+
 To feed your whole company at once, from the cargo and everyone's packs, type ~company eat~ or ~company meal~ (see ~help company meal~).
 
 Find out more about referring to items by name by typing ~help item-names~.

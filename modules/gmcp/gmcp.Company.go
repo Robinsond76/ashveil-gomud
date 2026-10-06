@@ -52,6 +52,9 @@ type companyVitals struct {
 	FlasksMax *int          `json:"flasks_max,omitempty"`
 	Needs     *companyNeeds `json:"needs"`
 	Warmth    *string       `json:"warmth"`
+	// Fare is the member's battle condition (Phase 50): what its needs and
+	// meal buff do in the next battle, omitted when nothing.
+	Fare string `json:"fare,omitempty"`
 }
 
 type companyCell struct {
@@ -216,6 +219,7 @@ func vitalsOf(m companyview.Member) companyVitals {
 	if m.WarmthKnown {
 		v.Warmth = strPtr(m.Warmth)
 	}
+	v.Fare = m.Fare
 	return v
 }
 

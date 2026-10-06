@@ -234,6 +234,7 @@ type ItemSpec struct {
 	KeyLockId       string            `yaml:"keylockid,omitempty"`   // Example: `778-north` - If it's a key, what lock does it open? roomid-exitname etc.
 	Nutrition       int               `yaml:"nutrition,omitempty"`   // Survival hunger benefit when eaten; zero keeps ordinary food behavior
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
+	Meal            string            `yaml:"meal,omitempty"`        // Phase 50: a cooked meal's buff kind (survival.MealKinds), given when eaten
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
 	Sling           bool              `yaml:"sling,omitempty"`       // cold delays this weapon, never inferred from its name

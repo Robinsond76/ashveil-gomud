@@ -32,8 +32,24 @@ something spends them:
 A member at 0 Fatigue is Collapsed: your company can't set out on a
 route until someone rests (<ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>). Anyone above 0
 but at or below 25 Fatigue is Exhausted; you'll be told when a member
-crosses into or out of either band. Hunger and Thirst at 0 only change
-the label right now; they don't yet stop you doing anything.
+crosses into or out of either band.
+
+<ansi fg="yellow-bold">In battle</ansi>
+
+When a battle begins, each member's needs set its battle condition for
+that whole battle (you can't eat mid-fight, so feed the company first):
+
+  <ansi fg="yellow">Need</ansi>      <ansi fg="yellow">Hungry/Thirsty/Tired</ansi>   <ansi fg="yellow">Starving/Parched/Exhausted or worse</ansi>
+  Hunger    -5% damage dealt       -10% damage dealt
+  Thirst    +5% damage taken       +10% damage taken
+  Fatigue   -5 hit chance          -10 hit chance (-20 Collapsed)
+
+Damage counts blows and spells, dealt and taken.
+Sated, Comfortable and Ready or better cost nothing. A cooked meal adds
+a buff for its next few battles (<ansi fg="command">help cooking</ansi>). The fight opens with a
+"Going in:" line naming each member's condition; <ansi fg="command">survival</ansi>, <ansi fg="command">status</ansi>,
+<ansi fg="command">conditions</ansi> and the Company panel show it beforehand, and the battle
+screen and Combat tab show it during the fight.
 
 <ansi fg="yellow-bold">Feeding your company</ansi>
 
@@ -48,9 +64,10 @@ fish and game take time and effort (<ansi fg="command">help gathering</ansi>).
 <ansi fg="yellow-bold">Usage:</ansi>
 
   <ansi fg="command">survival</ansi>
-  Shows every current company member's Hunger, Thirst, and Fatigue.
+  Shows every current company member's Hunger, Thirst, and Fatigue, and
+  an "In battle:" line for anyone whose needs or meal change a fight.
 
 See also: <ansi fg="command">help gathering</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>,
 <ansi fg="command">help temperature</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.
 
-Fatigue affects physical hit chance: Tired (26-50) -5 percentage points, Exhausted (1-25) -10, Collapsed (0) -20. Ready and Rested have no penalty. See help battlefield.
+Fatigue's hit chance cut is on physical blows (<ansi fg="command">help battlefield</ansi>).

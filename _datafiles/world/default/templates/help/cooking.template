@@ -36,6 +36,22 @@ Fish gathered with <ansi fg="command">fish</ansi> (<ansi fg="command">help gathe
 
 The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train</ansi>).
 
+<ansi fg="yellow-bold">Meal buffs</ansi>
+
+Eating a cooked meal gives the member who eats it a buff for its next
+few battles (battles, not hours: it never wears off while you travel).
+One buff at a time; a new meal replaces the old one. Each battle the
+member fights counts one off.
+
+  <ansi fg="yellow">Meal</ansi>                <ansi fg="yellow">Buff</ansi>           <ansi fg="yellow">Battles</ansi>  <ansi fg="yellow">Effect</ansi>
+  Seared game meat    Strong         2        +5% damage dealt
+  Thyme-roasted game  Steady         3        +5% damage, 5% less damage taken
+  Hunter's stew       Hearty         3        10% less damage taken
+  Grilled fish        Clear-headed   3        20% of max mana back as each battle begins
+
+<ansi fg="command">eat</ansi> and <ansi fg="command">company eat</ansi> name the buff; <ansi fg="command">survival</ansi> and <ansi fg="command">status</ansi> show the battles
+left. A meal's buff adds to the member's battle condition (<ansi fg="command">help survival</ansi>).
+
 <ansi fg="yellow-bold">Cooking at camp</ansi>
 
   <ansi fg="command">camp cook</ansi>

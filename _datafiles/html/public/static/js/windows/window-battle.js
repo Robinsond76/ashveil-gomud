@@ -942,6 +942,9 @@
             if (battle.sigil && battle.sigil.name) {
                 banners.push(battle.sigil.name + ' (' + battle.sigil.effect + ')');
             }
+            // Phase 50: members that went in hungry, parched or tired, or on a meal buff.
+            const fareNames = Object.keys(battle.fare || {}).map(k => { const u = units.get(k); return u ? u.label : ''; }).filter(Boolean);
+            if (fareNames.length) { banners.push('condition: ' + fareNames.join(', ')); }
             if ((battle.allies || []).length) { banners.push('allies: ' + battle.allies.map(a => a.name).join(', ')); }
             if (battle.waiting && battle.waiting.length) { banners.push('waiting: ' + battle.waiting.join(', ')); }
         }
@@ -982,6 +985,8 @@
         if (u.side !== 'ally' && !u.fallen && u.statuses.size) {
             text += ', ' + Array.from(u.statuses).map(s => s.replace(/-/g, ' ')).join(', ');
         }
+        // Phase 50: the battle condition the member went in with.
+        if (u.side === 'company' && !u.fallen && battle && battle.fare && battle.fare[u.id]) { text += ', ' + battle.fare[u.id]; }
         const t = targetOf(u.id);
         if (t && units.get(t)) { text += ', striking ' + units.get(t).label; }
         captionNode.textContent = text;

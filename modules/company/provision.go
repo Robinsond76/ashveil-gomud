@@ -56,6 +56,7 @@ type larderItem struct {
 	Drinkable bool
 	Nutrition int
 	Hydration int
+	Meal      string // Phase 50: a cooked meal's buff kind
 	BuffIds   []int
 	Uses      int
 }
@@ -89,7 +90,7 @@ func larderEntry(spec items.ItemSpec) (larderItem, bool) {
 	}
 	return larderItem{
 		ItemId: spec.ItemId, Name: spec.Name, Edible: edible, Drinkable: drinkable,
-		Nutrition: spec.Nutrition, Hydration: spec.Hydration, BuffIds: spec.BuffIds,
+		Nutrition: spec.Nutrition, Hydration: spec.Hydration, Meal: spec.Meal, BuffIds: spec.BuffIds,
 	}, true
 }
 
@@ -194,7 +195,7 @@ func mealBenefit(food larderItem, drink bool) survival.Benefit {
 	if drink {
 		return survival.Benefit{Hydration: food.Hydration}
 	}
-	return survival.Benefit{Nutrition: food.Nutrition, Hydration: food.Hydration}
+	return survival.Benefit{Nutrition: food.Nutrition, Hydration: food.Hydration, Meal: food.Meal}
 }
 
 // companionIDOf is a companion member key's id; false for the leader.
@@ -530,6 +531,9 @@ func mealLine(step mealStep, food larderItem, result survival.ProvisionResult, i
 	status := "Hunger: " + survival.HungerLabel(result.Needs.Hunger)
 	if step.Drink {
 		status = "Thirst: " + survival.ThirstLabel(result.Needs.Thirst)
+	} else if m, ok := survival.MealFor(food.Meal); ok {
+		// Phase 50: a cooked meal's battle buff.
+		status += fmt.Sprintf("; %s for %s: %s", m.Name, survival.BattlesLeft(m.Battles), m.Effect())
 	}
 	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> (%s). %s.`, subject, verb, food.Name, where, status)
 }

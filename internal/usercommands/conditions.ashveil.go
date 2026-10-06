@@ -59,6 +59,11 @@ func conditionGroups(user *users.UserRecord, s companyview.Summary) []condGroup 
 		}
 	}
 
+	// Phase 50: the battle condition those needs and a meal buff set.
+	if s.Leader.Fare != `` {
+		survival.rows = append(survival.rows, condRow{name: `In battle`, description: s.Leader.Fare, permaBuff: true})
+	}
+
 	for _, buff := range user.Character.GetBuffs() {
 		spec := buffs.GetBuffSpec(buff.BuffId)
 		if spec == nil {

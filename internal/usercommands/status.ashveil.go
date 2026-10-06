@@ -93,6 +93,10 @@ func addAshveilVitals(p *templates.Panel, s companyview.Summary) {
 			addRow(p, row.full, row.short, needValue(row.need))
 		}
 	}
+	// Phase 50: what those needs and a meal buff do in the next battle.
+	if s.Leader.Fare != `` {
+		addRow(p, `Battle: `, `Btl:`, `<ansi fg="yellow">`+s.Leader.Fare+`</ansi>`)
+	}
 	// Phase 39g: an Alchemist's flask satchel.
 	if s.Leader.FlasksMax > 0 {
 		colour := `green`
