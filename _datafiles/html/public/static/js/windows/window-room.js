@@ -662,6 +662,9 @@
     let gatherHide  = null;
     let gatherRequested = false;
 
+    // Phase 47: a reconnect (copyover) is a new session; ask again.
+    window.addEventListener('vwin:connected', function() { gatherRequested = false; });
+
     function gatherCapitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
     function updateGather(g) {

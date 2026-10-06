@@ -79,6 +79,7 @@ func (c *Character) Evasion() int {
 	_, rate := c.skillRates()
 	bonus := c.ClassEffects().Int(classes.Evasion) + c.Aura.Evasion + c.blessPoints()
 	if c.RT != nil {
+		bonus += c.RT.PackSense   // Phase 39e: Pack Sense, while the beast stands
 		bonus += c.RT.VanishEvade // Phase 38c2: a Pathfinder's Vanish
 	}
 	if c.Aggro != nil && c.Aggro.Type == SpellCast {

@@ -237,6 +237,21 @@ const (
 	DollNoWear  = "dollnowear"  // a doll that cannot wear armor (a golem's body is its armor)
 	DollAttack  = "dollattack"  // Attack added to each doll's blows
 	DollDamage  = "dolldamage"  // damage added to each doll's blows
+	// The Beast Tamer's lineage (Phase 39e). The beast is alive: it takes its
+	// own turn in a cell of its own.
+	BeastSic       = "beastsic"       // knows Sic: the Tamer's turn sends the beast in with Attack behind it
+	SicAttack      = "sicattack"      // Attack Sic gives (10 when Sic is known)
+	BeastAttack    = "beastattack"    // Attack added to each of the beast's blows
+	Rally          = "rally"          // times a battle the Tamer heals its beast, with no mana
+	PackSense      = "packsense"      // Evasion the Tamer has while its beast stands
+	BeastKind      = "beastkind"      // which beast the route raises: 1 warhound, 2 war bear, 3 drake hatchling
+	BeastHPPct     = "beasthppct"     // the beast's health as a percent of the standard beast's (100 when absent)
+	BeastHPBonus   = "beasthpbonus"   // percent points added to that
+	BeastDamage    = "beastdamage"    // damage added to each of the beast's blows
+	BeastGuards    = "beastguards"    // times a battle the beast guards the most hurt ally
+	BeastBreath    = "beastbreath"    // rounds between the drake's Breath (3 when the drake breathes)
+	BeastBreathCut = "beastbreathcut" // rounds off that
+	BeastHobble    = "beasthobble"    // the beast's bites hobble a wounded foe
 	// The Shaman's lineage (Phase 39c).
 	Chain       = "chain"       // percent of a Lightning bolt a second foe takes
 	FogEvade    = "fogevade"    // Evasion allies gain while its Fog lasts

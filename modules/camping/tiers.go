@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/beasts"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -245,6 +246,11 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 		if tier == camping.TierWellRested || campRest {
 			restoreVitals(user.Character, live)
+			// Phase 39e: the rest also closes a bonded beast's wounds and
+			// brings its health back.
+			for _, line := range restBeasts(user, live) {
+				user.SendText(line)
+			}
 		}
 		// Review fix: the leader's limit may have risen.
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: leaderUserID})
@@ -677,6 +683,27 @@ func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) 
 				verb = "brews"
 			}
 			lines = append(lines, fmt.Sprintf("%s %s through the night: %d flask(s) from %d reagent(s).", as[i].name, verb, b.Brewed, b.Brewed))
+		}
+	}
+	return lines
+}
+
+// restBeasts brings the company's bonded beasts back to health at the end of
+// a rest (Phase 39e): the leader's own first, then each live companion's by
+// number. Nothing is spent; a rest is the cure.
+func restBeasts(user *users.UserRecord, live map[int]*characters.Character) []string {
+	var lines []string
+	if beasts.Recover(user.Character) {
+		lines = append(lines, fmt.Sprintf("%s is rested and whole again.", user.Character.Beast.Name))
+	}
+	ids := make([]int, 0, len(live))
+	for id := range live {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		if c := live[id]; c != nil && beasts.Recover(c) {
+			lines = append(lines, fmt.Sprintf("%s's %s is rested and whole again.", c.Name, c.Beast.Name))
 		}
 	}
 	return lines

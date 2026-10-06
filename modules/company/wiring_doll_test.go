@@ -171,3 +171,29 @@ func TestGuardStringStepsADollInForAHurtAlly(t *testing.T) {
 	assert.Positive(t, guards, "the doll guarded a hurt ally")
 	assert.Positive(t, b.companion(1).Character.RT.DollGuards, "the Master counts the guard")
 }
+
+// Phase 47: a Master who falls while its doll still stands leaves the doll
+// limp, and the room and the battle screen are told.
+func TestADollGoesLimpWhenItsMasterFalls(t *testing.T) {
+	b, stream := dollBrawl(t, 3)
+	b.hardenBandits()
+	b.fight()
+	pip := b.doll(0)
+	id := pip.InstanceId
+	require.Greater(t, pip.Character.Health, 0)
+	b.companion(1).Character.Health = 0
+	n := len(*stream)
+	out := b.fight()
+	assert.Contains(t, out, "goes limp as its Master falls")
+	_, alive := domain.DollOf(id)
+	assert.False(t, alive, "the limp doll leaves the battle")
+	var fell bool
+	for _, e := range since(*stream, n) {
+		if e.Kind == combatstream.Death && e.Outcome == combatstream.OutcomeIncapacitated {
+			fell = true
+		}
+	}
+	assert.True(t, fell, "the battle screen lays the doll down")
+	// A doll that was already broken says nothing more.
+	assert.NotContains(t, strings.ToLower(b.fight()), "goes limp")
+}

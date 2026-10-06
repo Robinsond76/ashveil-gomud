@@ -59,6 +59,13 @@ cost merge order, not a dependency.
 | **42** | **Zones 15–30+, elite content, tier 4–6 placement** (new) | 41, 38c, 36d | Later |
 | **43a** | **Camp consumables** (designed 2026-10-01, now scheduled) | 40a2 | After 40a2 |
 | **43b** | **Weapon poisons** (designed 2026-10-01, now scheduled) | 43a | After 43a |
+| **50** | **Condition carries into battle; meal buffs** ([Outward phases](2026-10-06-outward-survival-phases.md)) | 47 | After 47 |
+| **51** | **Rest duties** (sleep, watch, tend, forage, cook, brew) | 47 (coordinate with 49) | After 47 |
+| **52** | **Tents with trade-offs** | 51 | After 51 |
+| **53** | **Defeat scenarios** in place of the church respawn | Companion equipment, 40a4 | After companion equipment |
+| **54** | **Sigils**: prepare the ground before a battle | — | **Now** |
+| **55** | **Ailments and remedies** | 50 | After 50 |
+| **56** | **Recipe discovery** | 50 | After 50 |
 
 ### Order of work
 
@@ -146,6 +153,17 @@ Both were designed on 2026-10-01 and never scheduled. They come after
 gathering (40a2) so ingredients can be gathered as well as bought, and
 they give the Alchemist (39g) and rogue routes more to work with. Their
 proposed balance numbers are accepted as defaults.
+
+### 50–56 Survival lessons from Outward
+
+Added 2026-10-06 at the owner's request after a research thread on
+Outward. They make the existing survival layer matter in the core loop:
+condition going into battle (50), choices at the camp fire (51, 52), a
+story instead of a church respawn on defeat (53), set-up before a fight
+(54), and texture for herbs and cooking (55, 56). Scope, sizes, the
+overlap check against 47, 49 and companion equipment, and each phase's
+acceptance are in the [phase plan](2026-10-06-outward-survival-phases.md).
+Build order: 50 and 54 first, then 51 and 53, then 52, 55 and 56.
 
 ## Folded into existing phases
 

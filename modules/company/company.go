@@ -58,6 +58,9 @@ type Runtime interface {
 	// walking with them (32f review: meals and the riding pace count only
 	// members present).
 	WithLeader(leaderUserID, instanceID int) bool
+	// Trailing reports whether a live mob is with its leader or one move
+	// behind (47: a companion mid-step still carries its share).
+	Trailing(leaderUserID, instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
 	// Relocate moves a live, living mob into roomID and out of any fight
@@ -215,6 +218,7 @@ func init() {
 	m.plug.AddUserCommand("class", m.classCommand, false, false)     // Phase 38b: promotion
 	m.plug.AddUserCommand("talent", m.talentCommand, false, false)   // Phase 38b: talents
 	m.plug.AddUserCommand("doll", m.dollCommand, false, false)       // Phase 39d: a Doll Master's dolls
+	m.plug.AddUserCommand("beast", m.beastCommand, false, false)     // Phase 39e: a Beast Tamer's bonded beast
 	m.plug.AddUserCommand("brew", m.brewCommand, false, false)       // Phase 39g: an Alchemist's flasks
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {

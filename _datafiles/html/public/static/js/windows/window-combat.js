@@ -197,6 +197,7 @@
         .cbt-fighter.is-enemy { border-color: var(--t-aggro-text, var(--t-error)); }
         .cbt-fighter.is-you { color: var(--t-party-leader); font-weight: bold; }
         .cbt-fighter.is-doll { font-style: italic; } /* Phase 39d: a Doll Master's doll */
+        .cbt-fighter.is-beast { border-left: 3px solid #9a7b4f; } /* Phase 39e: a Beast Tamer's bonded beast */
         .cbt-fighter.is-fallen { opacity: 0.55; border-style: dashed; }
         .cbt-fighter.is-hl { background: var(--t-accent-dim); color: var(--t-text-white); }
         .cbt-fighter .cbt-sub { display: block; font-weight: normal; font-size: 0.85em; color: var(--t-text-secondary); }
@@ -678,9 +679,11 @@
         (battle.dolls || []).forEach(d => {
             const hp = d.hp + ' / ' + d.hp_max;
             const owner = dollOwner(d, data);
-            const sub = el('span', 'cbt-sub', hp + ' · ' + owner + ' doll');
-            const node = fighterButton(d.key, 'is-doll', d.name, sub, d.name + ', ' + owner + ' doll, health ' + d.hp + ' of ' + d.hp_max);
-            node.title = 'A Doll Master\'s doll: it strikes on its Master\'s turn (help doll)';
+            const beast = !!d.kind; // Phase 39e: a Beast Tamer's bonded beast
+            const noun = beast ? ({ bear: 'war bear', drake: 'drake hatchling' }[d.kind] || d.kind) : 'doll';
+            const sub = el('span', 'cbt-sub', hp + ' · ' + owner + ' ' + noun);
+            const node = fighterButton(d.key, beast ? 'is-beast' : 'is-doll', d.name, sub, d.name + ', ' + owner + ' ' + noun + ', health ' + d.hp + ' of ' + d.hp_max);
+            node.title = beast ? 'A Beast Tamer\'s bonded beast: it takes its own turn (help beast)' : 'A Doll Master\'s doll: it strikes on its Master\'s turn (help doll)';
             node.addEventListener('click', () => pin(d.key));
             ours.push({ cell: battle.positions ? battle.positions[d.key] || null : null, node });
         });

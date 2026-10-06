@@ -1,0 +1,22 @@
+raceid: 26
+name: beast
+defaultpronouns: it
+description: A bonded beast that fights beside its Beast Tamer.
+defaultalignment: 0
+size: medium
+groupnoun: beasts
+unarmedname: teeth
+tnlscale: 1.0
+tameable: false
+stats:
+  strength:
+    base: 3
+  speed:
+    base: 2
+  vitality:
+    base: 3
+damage:
+  diceroll: 1d8
+disabledslots: []
+# Phase 39e: a beast is alive and can lose its nerve like any fighter.
+targeting: nearest
