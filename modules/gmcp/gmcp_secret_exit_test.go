@@ -3,6 +3,7 @@ package gmcp
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -39,4 +40,35 @@ func TestRoomInfoShowsASpottedSecretExit(t *testing.T) {
 	assert.NotContains(t, exits(), "west")
 	user.Character.LearnSecretExit(990301, "west")
 	assert.Contains(t, exits(), "west")
+}
+
+// TestRoomInfoCarriesTheZoneLevelBand (37b): the web client's zone header
+// reads levelband, rated against the player's level; a zone with no band
+// sends none.
+func TestRoomInfoCarriesTheZoneLevelBand(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "gmcpband", Name: "Band", LitArea: true})
+	t.Cleanup(func() { rooms.RemoveTestBiome("gmcpband") })
+	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: "Banded", Encounters: encounters.ZoneConfig{Band: encounters.Band{Low: 10, High: 12}}}))
+	for _, r := range []*rooms.Room{{RoomId: 990311, Zone: "Banded", Biome: "gmcpband"}, {RoomId: 990312, Zone: "Unbanded", Biome: "gmcpband"}} {
+		rooms.SetTestRoom(r)
+		id := r.RoomId
+		t.Cleanup(func() { rooms.RemoveTestRoom(id) })
+	}
+	user := users.NewUserRecord(8, 1)
+	user.Character.Level = 5
+	g := &GMCPRoomModule{}
+	info := func(room int) GMCPRoomModule_Payload {
+		user.Character.RoomId = room
+		data, _ := g.GetRoomNode(user, `Room.Info`)
+		payload, ok := data.(GMCPRoomModule_Payload)
+		require.True(t, ok)
+		return payload
+	}
+	band := info(990311).LevelBand
+	require.NotNil(t, band)
+	assert.Equal(t, GMCPRoomModule_Payload_LevelBand{Low: 10, High: 12, Rating: "dangerous"}, *band)
+	user.Character.Level = 12
+	assert.Equal(t, "easy", info(990311).LevelBand.Rating)
+	assert.Nil(t, info(990312).LevelBand)
 }
