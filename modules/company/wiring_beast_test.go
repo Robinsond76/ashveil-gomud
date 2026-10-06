@@ -9,7 +9,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,6 +24,12 @@ import (
 // beastBrawl is a brawl whose first companion is a level-level Beast Tamer
 // (of a route, when given); the fight has begun on the captain.
 func beastBrawl(t *testing.T, level int, route string) (*brawl, *[]combatstream.Event) {
+	t.Helper()
+	return beastBrawlWith(t, level, route, nil)
+}
+
+// beastBrawlWith is beastBrawl with a setup run before the fight begins.
+func beastBrawlWith(t *testing.T, level int, route string, before func(*brawl)) (*brawl, *[]combatstream.Event) {
 	t.Helper()
 	hooks.ResetBeastsForTest()
 	domain.ResetBeastsForTest()
@@ -42,6 +50,9 @@ func beastBrawl(t *testing.T, level int, route string) (*brawl, *[]combatstream.
 	tamsin.Character.HPArchetype = "beasttamer"
 	if route != "" {
 		tamsin.Character.SetClassState(route, nil)
+	}
+	if before != nil {
+		before(b)
 	}
 	b.start()
 	return b, stream
@@ -225,4 +236,66 @@ func TestAPlayerBeastTamerSendsItsBeastIn(t *testing.T) {
 	assert.NotEmpty(t, swingsBy(since(*stream, n), beast.Character.Name), "it bites on its own turn")
 	assert.Equal(t, 7, beast.Character.RT.Beast.OwnerUser)
 	assert.Contains(t, out, "(sic)")
+}
+
+// Review fix: the beast command's health is the health the beast stands
+// with in battle.
+func TestTheBeastCommandShowsTheHealthTheBeastFightsWith(t *testing.T) {
+	b, _ := beastBrawl(t, 12, "bearward")
+	stood := 0
+	t.Cleanup(beasts.UseSpawnHookForTest(func(m *mobs.Mob) {
+		stood = m.Character.HealthLimit()
+		m.Character.HealthMax.Value = 1000
+		m.Character.Health = 1000
+	}))
+	b.hardenBandits()
+	b.fight()
+	require.Positive(t, stood, "the beast stood")
+	assert.Equal(t, stood, beasts.HealthLimit(&b.companion(1).Character))
+}
+
+// Review fix: a beast sent down the ordinary death path (suicide) is wounded
+// on its Tamer's record, never killed with a corpse or a reward.
+func TestABeastOnTheDeathPathIsWoundedNotKilled(t *testing.T) {
+	b, _ := beastBrawl(t, 3, "")
+	b.hardenBandits()
+	b.fight()
+	ash := b.beast()
+	id := ash.InstanceId
+	_, err := mobcommands.Suicide("", ash, rooms.LoadRoom(ash.Character.RoomId))
+	require.NoError(t, err)
+	tamsin := b.companion(1)
+	require.NotNil(t, tamsin.Character.Beast)
+	assert.True(t, tamsin.Character.Beast.Wounded, "the record keeps the wound")
+	_, standing := domain.BeastOf(id)
+	assert.False(t, standing)
+	assert.Nil(t, mobs.GetInstance(id))
+}
+
+// Review fix: "strategy [member] abilities off" holds a Tamer's Sic and
+// Rally back, as the help says; the beast still takes its own turn.
+func TestAbilitiesOffHoldsSicBack(t *testing.T) {
+	b, stream := beastBrawlWith(t, 3, "", func(b *brawl) {
+		require.Contains(t, b.cmd("strategy", "tamsin abilities off"), "class abilities")
+	})
+	b.hardenBandits()
+	n := len(*stream)
+	out := b.fight()
+	round := since(*stream, n)
+	assert.Empty(t, abilityEvents(round, "Tamsin Reed"), "no Sic\n%s", out)
+	assert.NotContains(t, out, "(sic)")
+	assert.NotEmpty(t, swingsBy(round, "Ash"), "the beast still bites on its own turn")
+}
+
+// Review fix: a battle a wounded beast sits out says so, once.
+func TestAWoundedBeastSitsTheBattleOutAndSaysSo(t *testing.T) {
+	b, _ := beastBrawl(t, 3, "")
+	tamsin := b.companion(1)
+	tamsin.Character.EnsureBeast("Ash").Wounded = true
+	b.hardenBandits()
+	out := b.fight()
+	out += b.fight()
+	assert.Equal(t, 1, strings.Count(out, "sits this battle out"), out)
+	_, standing := beasts.Live(beasts.Tamer{Leader: 7, Key: domain.CompanionMemberKey(1)})
+	assert.False(t, standing)
 }

@@ -33,6 +33,9 @@ const (
 	Drake    = "drake"
 )
 
+// RaceID is the beasts' race (_datafiles/world/default/races/26-beast.yaml).
+const RaceID = 26
+
 // Mob templates of the beasts (_datafiles/world/default/mobs/summons).
 const (
 	WolfMobID     = 200
@@ -42,7 +45,7 @@ const (
 )
 
 // Numbers of the standard beast: its health is a share of a warrior's at its
-// Tamer's level, it takes 80% of a normal tempo, and its Attack and Evasion
+// Tamer's level, it takes 70% of a normal tempo, and its Attack and Evasion
 // run at 90% of the warrior's rate.
 const (
 	BaseHPPct    = 35
@@ -336,7 +339,7 @@ func IsBeast(m *mobs.Mob) bool {
 // HealthLimit is the health a Tamer's beast would have, whole.
 func HealthLimit(t *characters.Character) int {
 	g := GiftsFor(t.ClassEffects())
-	probe := characters.Character{Level: max(t.Level, 1), HPArchetype: "warrior"}
+	probe := characters.Character{Level: max(t.Level, 1), HPArchetype: "warrior", RaceId: RaceID} // the beast race's stats, as the live mob has
 	probe.RT = &characters.ClassRT{Beast: &characters.BeastInfo{HPPct: g.HPPct}}
 	probe.RecalculateStats()
 	return max(1, probe.HealthLimit())

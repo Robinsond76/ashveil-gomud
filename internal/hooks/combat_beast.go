@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -68,6 +69,14 @@ func beastPass() {
 				continue
 			}
 			rt := a.char.RTState()
+			// Review fix: a wounded beast's absence is said once a battle,
+			// so the company knows why it fights without it.
+			if err == beasts.ErrWounded && !rt.Benched && a.char.Beast != nil {
+				rt.Benched = true
+				name := a.char.Beast.Name
+				a.holder.say(fmt.Sprintf("%s is still wounded and sits this battle out. (rest to mend it)", name),
+					"%s's beast "+name+" is still wounded and sits this battle out.", "")
+			}
 			rt.PackSense = 0
 			if mob, standing := beasts.Live(tamer); standing {
 				live[mob.InstanceId] = true
@@ -125,6 +134,11 @@ func beastOf(a actor, u *users.UserRecord) (*mobs.Mob, bool) {
 func sicBeast(a actor, u *users.UserRecord, foes map[int]bool, room *rooms.Room) {
 	fx := a.char.ClassEffects()
 	if !fx.Has(classes.BeastSic) || !beasts.IsTamer(a.char) {
+		return
+	}
+	// Review fix: "strategy [member] abilities off" holds the beast back
+	// (no Sic, no Rally); it still fights on its own turn.
+	if enemyparty.MemberStrategy(u.UserId, a.key).NoAbilities {
 		return
 	}
 	beast, ok := beastOf(a, u)

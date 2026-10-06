@@ -171,6 +171,8 @@ type ClassRT struct {
 	Sic       int
 	PackSense int
 	Rallies   int
+	// Benched is a wounded beast's sitting-out told this battle (review fix).
+	Benched bool
 }
 
 // RTState is the character's class battle state, made on first use.

@@ -10,7 +10,7 @@ to meet.
 <ansi fg="yellow-bold">What the Beast Tamer is</ansi>
 
   Health      5 to start, 0.8 a level to level 20 (<ansi fg="command">help health</ansi>)
-  Skill       Attack 0.9 and Evasion 0.9 a level (<ansi fg="command">help evasion</ansi>)
+  Skill       Attack 0.8 and Evasion 0.9 a level (<ansi fg="command">help evasion</ansi>)
   Gear        medium armor, no shield, whips, spears and daggers (<ansi fg="command">help armor</ansi>)
   Stats       perception 3, vitality 3, strength 2, smarts 2 (<ansi fg="command">help growth</ansi>)
   Starts with the Taming skill, which its abilities draw on
@@ -20,13 +20,14 @@ to meet.
 
   Where       it stands in the formation for a battle and takes no company slot
               (<ansi fg="command">help formation</ansi>); it is gone when the battle ends
-  Health      60% of a warrior's at the Tamer's level (a route changes this)
+  Health      35% of a warrior's at the Tamer's level (a route or talent adds to it)
   Attack      90% of the Tamer's level, and the same Evasion
-  Turn        its own, at 80% of a normal tempo, with teeth (1d8 to start);
+  Turn        its own, at 70% of a normal tempo, with teeth (1d8 to start);
               it can't wear gear
   Falling     at 0 health it is wounded and out of the battle, never lost: it
               sits out battles until the company rests, and a rest brings it
-              back to full health (<ansi fg="command">help camp</ansi>)
+              back to full health (<ansi fg="command">help camp</ansi>). If its
+              Tamer falls, the beast leaves the battle with it.
   Persistence it is saved on the Tamer: name, health and wounds survive a restart
   No mana and no experience of its own; it takes no company slot
 

@@ -47,7 +47,7 @@ func init() {
 		Role: "a drake hatchling that breathes fire on a foe and its neighbours",
 		Ranks: []Rank{
 			rank(10, "Drake hatchling", "your beast is a drake hatchling; every 3 rounds it breathes fire on its foe and up to two foes beside it", BeastKind, KindDrake, BeastBreath, 3),
-			rank(15, "Scorching breath", "+2 damage on the drake's Breath", BeastDamage, 2),
+			rank(15, "Scorching breath", "+2 damage on the drake's bites and its Breath", BeastDamage, 2),
 			rank(20, "Growing drake", "the drake has 120% of a wolf's health", BeastHPPct, 120),
 			rank(25, "Quick fire", "Breath comes every 2 rounds", BeastBreathCut, 1),
 		}})
