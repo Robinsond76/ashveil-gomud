@@ -6,10 +6,11 @@ import "sync"
 type RoomCamp struct {
 	LeaderUserID int
 	FireLit      bool
-	Damp         bool // lit with damp wood: no warmth (Phase 40a2)
-	Embers       bool // burned down after a rest (Phase 40a3)
-	Tent         bool // an oiled canvas tent is pitched (Phase 40a3)
-	Resting      bool // a rest is under way
+	Damp         bool     // lit with damp wood: no warmth (Phase 40a2)
+	Embers       bool     // burned down after a rest (Phase 40a3)
+	Tent         bool     // a tent is pitched (Phase 40a3)
+	TentKind     TentKind // which one (Phase 52); empty is canvas
+	Resting      bool     // a rest is under way
 }
 
 var (
@@ -51,7 +52,7 @@ func CampLines(camps []RoomCamp, viewerUserID int, nameOf func(userID int) strin
 		}
 		pitch := "bedrolls"
 		if camp.Tent {
-			pitch = "an oiled canvas tent and bedrolls"
+			pitch = TentOf(camp.TentKind).WithArticle() + " and bedrolls"
 		}
 		switch {
 		case camp.FireLit && camp.Damp:

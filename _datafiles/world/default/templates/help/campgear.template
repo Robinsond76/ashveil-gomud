@@ -13,11 +13,10 @@ you take on the road is the decision.
   camp rest. Bedrolls go to you first, then to companions by number.
   Members without one recover normally; a bedroll is a bonus, never a need.
 
-  <ansi fg="yellow">Oiled canvas tent</ansi>  9 kg    40 gold   never wears out
-  One covers the whole company. It counts as shelter for the rest, which
-  halves the weather's penalty (<ansi fg="command">help resources</ansi>), and it blocks the cold
-  while the company rests. It does not stack with a shelter room: the
-  better one applies. <ansi fg="command">look</ansi> shows a tent at your camp.
+  <ansi fg="yellow">Tents</ansi>  (see Tents below)    never wear out
+  One tent covers the whole company. Every tent counts as shelter for the
+  rest and blocks the cold while the company rests; each trades something
+  for something. <ansi fg="command">look</ansi> shows the tent at your camp.
 
   <ansi fg="yellow">Fire steel and tinder</ansi>  0.2 kg   5 gold   never wears out
   Damp firewood lights at the first try and burns with full warmth.
@@ -39,8 +38,52 @@ you take on the road is the decision.
   splints, and the kit wears one use. It does nothing without a healer
   who knows Tend Wounds and has the mana (<ansi fg="command">help wounds</ansi>).
 
-Provisioners (the markets of Dunmar and the Old Kings Road) sell all six, a
-little dearer on the road. They never buy gear back (<ansi fg="command">help market</ansi>).
+Provisioners (the markets of Dunmar and the Old Kings Road) sell all of it,
+a little dearer on the road. They never buy gear back, tents included
+(<ansi fg="command">help market</ansi>).
+
+<ansi fg="yellow-bold">Tents</ansi>
+
+Four tents, one pitched at a time. Which one is pitched is your choice;
+the pitched tent is fixed when a rest begins.
+
+  <ansi fg="yellow">Oiled canvas tent</ansi>   9 kg    40 gold
+  The plain shelter. Halves the weather's penalty to a rest
+  (<ansi fg="command">help resources</ansi>); it does not stack with a shelter room: the better
+  one applies. Everything else is as with no tent.
+
+  <ansi fg="yellow">Fur-lined tent</ansi>      12 kg   90 gold
+  Shuts the weather out of a rest entirely: no penalty at all, not just
+  half. Heavier, and dearer.
+
+  <ansi fg="yellow">Camouflaged tent</ansi>    7 kg    70 gold
+  Raiders and thieves come to the camp half as often (the chance is
+  halved as the rest begins). The cost is a light, wary sleep: the Rested
+  buff lasts half as long, 7 and a half minutes instead of 15. It does not
+  stop a raid that does come, and a watch still helps.
+
+  <ansi fg="yellow">Large pavilion tent</ansi> 20 kg   120 gold
+  Room for everyone to stretch out: a finished rest grants every member
+  who slept the <ansi fg="yellow">Well Rested</ansi> buff (30 minutes) in place of Rested
+  (<ansi fg="command">help inn</ansi>). It is easy to find: raiders and thieves come half again
+  as often. A member on a duty still misses the buff, and the rest's
+  wounds and Mana follow a camp rest, not an inn stay. It needs a pack
+  horse of its own: 20 kg is a real share of a company's load
+  (<ansi fg="command">help cargo</ansi>).
+
+  <ansi fg="command">camp tent</ansi>                 lists the tents you carry and the one pitched.
+  <ansi fg="command">camp tent</ansi> [canvas|fur|camouflaged|large]   pitches one you carry, at your camp,
+                            between rests. <ansi fg="command">camp tent clear</ansi> goes back to the default.
+  With no choice made, the first you carry is pitched, plain canvas first.
+  A tent you chose but no longer carry is replaced by one you do. The
+  choice lasts until the camp is broken. The web client's Company > Camp
+  tab shows the pitched tent and a button for each tent you carry.
+
+  Whether raiders or thieves come is rolled as the rest begins, so a tent
+  changes the odds for that rest only. Bells and trip lines still keep
+  thieves out whatever the tent. On a road with no raiders or thieves, the
+  camouflaged tent only costs you rest; the large one is then free Well
+  Rested.
 
 <ansi fg="yellow-bold">How gear is counted</ansi>
 
@@ -51,9 +94,11 @@ little dearer on the road. They never buy gear back (<ansi fg="command">help mar
     bedroll lost mid-rest changes nothing until the next rest. Between
     rests, <ansi fg="command">camp status</ansi> lists the gear at hand and what it will do;
     the rest report and <ansi fg="command">camp status</ansi> during a rest list the gear in use.
-  - You get one tent, one cookpot, one fire steel and one set of bells at
-    most: a second does nothing. Bedrolls count one per member.
-  - Thieves never take camp gear (see below); it is only ever made use of.
+  - You get one tent (of whichever kind is pitched), one cookpot, one fire
+    steel and one set of bells at most: a second does nothing. Bedrolls
+    count one per member.
+  - Thieves never take camp gear, tents included (see below); it is only
+    ever made use of.
 
 <ansi fg="yellow-bold">Thieves</ansi>
 

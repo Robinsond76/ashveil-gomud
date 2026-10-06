@@ -185,7 +185,21 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 		tier := pending[leaderUserID]
 		now := m.clock().UTC()
-		duration := settings.tierDuration(tier)
+		// Phase 52: the tent the rest was slept in sets the buff: a large
+		// tent's is Well Rested, a camouflaged tent's is shorter. Only the
+		// buff changes; wounds, vitals and the rest's other rewards follow
+		// the camp rest (tier).
+		buffTier, duration := tier, settings.tierDuration(tier)
+		if tier == camping.TierRested {
+			if tent, ok := m.pendingTent(leaderUserID); ok {
+				if tent.WellRested {
+					buffTier = camping.TierWellRested
+					duration = settings.tierDuration(buffTier)
+				} else {
+					duration = duration * time.Duration(max(tent.RestedPct, 1)) / 100
+				}
+			}
+		}
 		rounds := camping.RoundsFor(duration, m.roundLength())
 		// Phase 51: a camp rest's Rested buff skips the members on a duty.
 		var onDuty map[string]bool
@@ -197,14 +211,14 @@ func (m *CampingModule) grantPendingTiers() {
 		// game loop, and nothing below calls back into camping.
 		granted := false
 		if !onDuty[string(survival.LeaderMemberKey)] {
-			granted = m.applyTier(user.Character, tier, rounds, settings)
+			granted = m.applyTier(user.Character, buffTier, rounds, settings)
 		}
 		live, roster := m.companions(leaderUserID)
 		for _, companionID := range sortedIDs(live) {
 			if onDuty[string(survival.CompanionMemberKey(companionID))] {
 				continue
 			}
-			if m.applyTier(live[companionID], tier, rounds, settings) {
+			if m.applyTier(live[companionID], buffTier, rounds, settings) {
 				granted = true
 			}
 		}
@@ -213,7 +227,7 @@ func (m *CampingModule) grantPendingTiers() {
 			if onDuty[string(survival.CompanionMemberKey(companionID))] {
 				continue
 			}
-			owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(tier), Tier: tier, ExpiresAtUTC: now.Add(duration)}
+			owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(buffTier), Tier: buffTier, ExpiresAtUTC: now.Add(duration)}
 		}
 		// A failed save retries next round, so only announce a saved grant,
 		// and only one that gave anybody anything.
@@ -221,7 +235,7 @@ func (m *CampingModule) grantPendingTiers() {
 		if !saved {
 			continue
 		}
-		if granted && tier == camping.TierWellRested {
+		if granted && buffTier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
@@ -452,8 +466,10 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 	}
 	delete(m.restedPending, leaderUserID)
 	duties, hadDuties := m.restedDuties[leaderUserID]
+	tentKind, hadTent := m.restedTents[leaderUserID]
 	if restedPending {
 		delete(m.restedDuties, leaderUserID)
+		delete(m.restedTents, leaderUserID)
 	}
 	if wellPending && hadStay && !stay.Resting() {
 		delete(m.stays, leaderUserID)
@@ -479,6 +495,9 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		}
 		if hadDuties {
 			m.restedDuties[leaderUserID] = duties
+		}
+		if hadTent {
+			m.restedTents[leaderUserID] = tentKind
 		}
 		if hadStay {
 			m.stays[leaderUserID] = stay

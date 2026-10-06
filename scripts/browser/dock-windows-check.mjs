@@ -408,6 +408,29 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(true));
   check(await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty button')].every(b => b.disabled)) && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('fixed for this rest'), 'duties lock while resting (51)');
 }
+// Phase 52: the pitched tent, and a picker when more than one tent is carried.
+{
+  const tents = [
+    { kind: 'canvas', name: 'oiled canvas tent', effect: 'shelter', pitched: false, command: 'camp tent canvas' },
+    { kind: 'large', name: 'large pavilion tent', effect: 'everyone wakes Well Rested', pitched: true, command: 'camp tent large' },
+  ];
+  const campWith = (extra) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, tent: true, tent_kind: 'large', tent_name: 'large pavilion tent', tent_note: 'everyone wakes Well Rested', tents, gear: ['Large tent'], ...extra });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({}));
+  check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('A large pavilion tent is pitched here: everyone wakes Well Rested.'), 'the pitched tent is named with its effect (52)');
+  const picks = await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].map(b => ({ text: b.textContent, pressed: b.getAttribute('aria-pressed') })));
+  check(picks.length === 2 && picks[1].text === 'Large pavilion tent' && picks[1].pressed === 'true' && picks[0].pressed === 'false', 'a button per tent carried, the pitched one pressed (52)');
+  got = await sentNow(async () => { await page.getByRole('group', { name: 'Tent choice' }).getByRole('button', { name: 'Oiled canvas tent' }).click(); });
+  check(JSON.stringify(got) === '["camp tent canvas"]', 'a tent button sends camp tent (52)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '52-camp-tents.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the tent picker fits a phone (52)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '52-camp-tents-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ resting: true, rest_seconds: 20 }));
+  check(await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].every(b => b.disabled)), 'the tent is fixed while resting (52)');
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tents: [tents[1]] }));
+  check(await page.evaluate(() => document.querySelectorAll('#company-camp [aria-label="Tent choice"]').length) === 0, 'no picker with one tent carried (52)');
+}
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work this road'), 'no bells on a thieves road: the warning (40a4)');
