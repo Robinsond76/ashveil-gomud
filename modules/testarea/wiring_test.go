@@ -460,7 +460,16 @@ func TestArmoryCatalogListsEverythingAndGivesNothing(t *testing.T) {
 	assert.Contains(t, tr.run("testarea", "catalog"), "Start a trip first")
 	assert.Empty(t, payloads, "nothing is sent off a trip")
 
+	// Arriving in the armory opens the screen (any move in: a walk or testarea armory).
 	tr.run("testarea", "armory")
+	require.Len(t, payloads, 1, "the catalog opens on arrival in the armory")
+	assert.Len(t, payloads[0].Items, len(items.GetAllItemSpecs()))
+	tr.run("testarea", "hub")
+	assert.Len(t, payloads, 1, "the hub opens nothing")
+	tr.run("testarea", "armory")
+	require.Len(t, payloads, 2, "coming back into the armory opens it again")
+	payloads = nil
+
 	owned := len(tr.user.Character.Items)
 	out := tr.run("testarea", "catalog")
 	assert.Contains(t, out, "The catalog holds")

@@ -17,7 +17,7 @@ Your trip is saved: a disconnect or a server restart still lets you return. The 
 <ansi fg="command">testarea companion class</ansi> [member] [class]  Change a companion's class. <ansi fg="command">testarea companion level</ansi> [member] [level]  Change its level.
 
 <ansi fg="yellow-bold">Gear and the world</ansi>
-<ansi fg="command">testarea catalog</ansi> [word]  Browse every item of the world and pick what you want. The web client opens a screen with a search box, type filters and a Take button (with a count); other clients get a text list. Nothing is given until you take it.
+<ansi fg="command">testarea catalog</ansi> [word]  Browse every item of the world and pick what you want. The web client opens a screen with a search box, type filters and a Take button (with a count), and opens it by itself whenever you enter the armory; other clients get a text list. Nothing is given until you take it.
 <ansi fg="command">testarea give</ansi> [item name or id] [count]  Take one item (up to 20). <ansi fg="command">testarea items</ansi> [word]  A short text search. <ansi fg="command">testarea kit</ansi> [weapons|armor|camp|supplies|saddles]  One of each kind at once. <ansi fg="command">testarea gold</ansi> [amount]
 Anything you drop in a test room vanishes at once, and so does anything left on its floor; nothing here can be sold on or carried out.
 <ansi fg="command">testarea weather</ansi> [condition|auto]  Hold the zone's weather. The world's day and night are shared and never changed here.

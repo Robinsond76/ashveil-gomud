@@ -91,6 +91,7 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
+	events.RegisterListener(events.RoomChange{}, m.onEnterArmory)
 	events.RegisterListener(events.ItemOwnership{}, onItemDropped)
 	events.RegisterListener(events.NewRound{}, onNewRound)
 	death.SetWakeOverride(m.wakeRoom)

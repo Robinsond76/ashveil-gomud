@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -112,4 +113,26 @@ func sendCatalog(user *users.UserRecord, p catalogPayload) {
 			send(user.UserId, "Armory", p)
 		}
 	}
+}
+
+// ArmoryRoom is the test room whose catalog opens on arrival.
+const ArmoryRoom = 90004
+
+// onEnterArmory opens the catalog screen when an admin on a trip walks into
+// (or is sent to) the armory, so the web client shows it without a typed
+// command. Text clients already read the command in the room description.
+func (m *Module) onEnterArmory(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.RoomChange)
+	if !ok || evt.UserId == 0 || evt.ToRoomId != ArmoryRoom || evt.FromRoomId == ArmoryRoom {
+		return events.Continue
+	}
+	if _, in := m.session(evt.UserId); !in {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil || user.Character == nil || user.Character.RoomId != ArmoryRoom {
+		return events.Continue
+	}
+	sendCatalog(user, catalogPayload{Items: catalogEntries()})
+	return events.Continue
 }
