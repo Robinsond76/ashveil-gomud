@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -47,11 +48,15 @@ type Registry struct {
 	// owes (Phase 22a). It is written in the same save as the choice; only
 	// choices made from Phase 22a on owe a kit.
 	Kits map[int]string `yaml:"kits,omitempty"`
+	// Classes maps a user id to the class and talents they promoted into
+	// (Phase 38b). Absent for an unpromoted character, so old saves read
+	// as unpromoted.
+	Classes map[int]ClassRecord `yaml:"classes,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Players: map[int]string{}, Autoskill: map[int]map[string]bool{}, Disarmed: map[string]uint64{}, Kits: map[int]string{}}
+	return &Registry{Players: map[int]string{}, Autoskill: map[int]map[string]bool{}, Disarmed: map[string]uint64{}, Kits: map[int]string{}, Classes: map[int]ClassRecord{}}
 }
 
 // Clone returns a deep copy.
@@ -72,6 +77,9 @@ func (r Registry) Clone() Registry {
 	}
 	for id, a := range r.Kits {
 		out.Kits[id] = a
+	}
+	for id, c := range r.Classes {
+		out.Classes[id] = c.clone()
 	}
 	return out
 }
@@ -132,6 +140,13 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			continue
 		}
 		loaded.Kits[id] = strings.ToLower(strings.TrimSpace(a))
+	}
+	for id, c := range wire.Classes {
+		c.Class = strings.ToLower(strings.TrimSpace(c.Class))
+		if id <= 0 || (c.Class == "" && len(c.Talents) == 0) {
+			continue
+		}
+		loaded.Classes[id] = c.clone()
 	}
 	*registry = *loaded
 	return nil
@@ -217,6 +232,7 @@ func init() {
 	users.RegisterLevelGrant(m.levelGrant)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	archetypes.SetProvider(m)
+	classes.SetProvider(m)
 }
 
 func (m *ArchetypeModule) persistenceAvailable() error {
@@ -676,9 +692,14 @@ func (m *ArchetypeModule) resetChoice(userID int) (string, error) {
 		return "That character has no archetype.", nil
 	}
 	owed, wasOwed := m.registry.Kits[userID]
+	class, hadClass := m.registry.Classes[userID]
 	delete(m.registry.Players, userID)
 	delete(m.registry.Kits, userID)
+	delete(m.registry.Classes, userID)
 	if err := m.saveLocked(); err != nil {
+		if hadClass {
+			m.registry.Classes[userID] = class
+		}
 		m.registry.Players[userID] = original
 		if wasOwed {
 			m.registry.Kits[userID] = owed
@@ -699,7 +720,7 @@ func (m *ArchetypeModule) levelGrant(user *users.UserRecord) []string {
 	if !chosen || !known {
 		return nil
 	}
-	return grantLevelSpells(user, a)
+	return append(grantLevelSpells(user, a), m.grantClassSpells(user)...)
 }
 
 // onLevelUp teaches a player the level spells their new level reaches
@@ -748,13 +769,18 @@ func (m *ArchetypeModule) clearCharacter(userID int) error {
 	archetype, hadArchetype := m.registry.Players[userID]
 	toggles, hadToggles := m.registry.Autoskill[userID]
 	kit, hadKit := m.registry.Kits[userID]
-	if !hadArchetype && !hadToggles && !hadKit {
+	class, hadClass := m.registry.Classes[userID]
+	if !hadArchetype && !hadToggles && !hadKit && !hadClass {
 		return nil
 	}
 	delete(m.registry.Players, userID)
 	delete(m.registry.Autoskill, userID)
 	delete(m.registry.Kits, userID)
+	delete(m.registry.Classes, userID)
 	if err := m.saveLocked(); err != nil {
+		if hadClass {
+			m.registry.Classes[userID] = class
+		}
 		if hadArchetype {
 			m.registry.Players[userID] = archetype
 		}
@@ -782,6 +808,7 @@ func (m *ArchetypeModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if chosen && known {
 		user := users.GetByUserId(evt.UserId)
 		applyGrants(user, a)
+		m.grantClassSpells(user) // Phase 38b
 		// Phase 35a2: existing characters are fixed once, on load.
 		if note := users.SettleClassGear(user, m.saveUser); note != "" {
 			user.SendText(note)

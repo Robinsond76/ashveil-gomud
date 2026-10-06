@@ -55,7 +55,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	spellInfo := spells.GetSpell(spellName)
 
-	if spellInfo == nil || !user.Character.HasSpell(spellName) {
+	if spellInfo == nil || !user.Character.KnowsSpell(spellName) {
 		user.SendText(fmt.Sprintf(`You don't know a spell called <ansi fg="spellname">%s</ansi>.`, spellName))
 		return true, nil
 	}
@@ -67,7 +67,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	if user.Character.Mana < spellInfo.Cost {
+	if user.Character.Mana < user.Character.SpellCost(spellInfo) {
 		user.SendText(fmt.Sprintf(`You don't have enough mana to cast <ansi fg="spellname">%s</ansi>.`, spellName))
 		return true, nil
 	}
@@ -308,7 +308,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			// Fire an event that a skill has been used
 			events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `cast`, Details: spellInfo.SpellId})
 
-			user.Character.Mana -= spellInfo.Cost
+			user.Character.Mana -= user.Character.SpellCost(spellInfo)
 			events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 			user.Character.SetCast(spellInfo.WaitRounds, spellAggro)
 		}

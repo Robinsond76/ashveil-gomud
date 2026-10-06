@@ -40,6 +40,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	// Ashveil Phase 29b: every event this round reports is stamped with it.
 	combatRound.Store(evt.RoundNumber)
+	expireIntimidation(evt.RoundNumber) // Phase 38b review: a round, not a battle
 	resetRoundExtras()
 	beginBattlefieldRound()
 
@@ -74,6 +75,8 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	beginTempoRound()
 	defer func() { tempoActive = false }()
+	auraPass()   // Phase 38b: class auras for the round
+	summonPass() // Phase 38b: Angels and Demons
 	nervePass()
 	strategyPass()
 	// Ashveil Phase 33i2: enemy healers and casters, by their group's

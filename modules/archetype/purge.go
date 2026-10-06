@@ -41,6 +41,8 @@ func (m *ArchetypeModule) purge(userID int) bool {
 	_, c := m.registry.Kits[userID]
 	delete(m.registry.Players, userID)
 	delete(m.registry.Autoskill, userID)
+	_, d := m.registry.Classes[userID]
 	delete(m.registry.Kits, userID)
-	return a || b || c
+	delete(m.registry.Classes, userID)
+	return a || b || c || d
 }

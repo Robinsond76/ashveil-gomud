@@ -25,6 +25,11 @@ Whatever its role, a warrior, rogue, or ranger also uses its class
 ability on its own when the moment comes: a tackle, an opening strike, or
 an aimed shot (<ansi fg="command">help abilities</ansi>).
 
+A promoted healer or caster also casts its class spells on its own (Greater Heal,
+Rejuvenation, Grove, Ward, Barkskin, Bless, Siphon, and the summons of a Hierarch
+and a Demonologist, which come first in a battle): <ansi fg="command">help cleric-routes</ansi>,
+<ansi fg="command">help summoning</ansi>.
+
 Each character starts with its archetype's role: clerics heal, wizards
 cast, witches hex (<ansi fg="command">help hexes</ansi>), everyone else fights. Nobody starts as a guardian. A healer or
 caster casts only the spells it knows. Wizards start with Magic Missile and clerics with Minor Heal; a

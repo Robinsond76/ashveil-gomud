@@ -1,6 +1,11 @@
 package archetypes
 
-import "sync"
+import (
+	"slices"
+	"sync"
+
+	"github.com/GoMudEngine/GoMud/internal/classes"
+)
 
 // Provider is implemented by modules/archetype. It is the read-only seam
 // the engine (skill training, scripted spell learning, picklock) and other
@@ -34,6 +39,21 @@ func CompanionSpells(archetypeID string, level int) []string {
 		return cp.CompanionSpells(archetypeID, level)
 	}
 	return nil
+}
+
+// CompanionKnownSpells is the spells a companion knows at a level: its
+// archetype's, plus the ones its class's ranks have reached (Phase 38b).
+func CompanionKnownSpells(archetypeID, classID string, level int) []string {
+	out := CompanionSpells(archetypeID, level)
+	if classID == "" {
+		return out
+	}
+	for _, id := range classes.SpellsAt(classID, level) {
+		if !slices.Contains(out, id) {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // CompanionGrowthProvider is optionally implemented by the provider (Phase

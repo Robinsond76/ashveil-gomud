@@ -299,3 +299,22 @@ func Grounded(c *characters.Character) bool {
 	})
 	return grounded
 }
+
+// cleansable are the statuses a cleansing heal or touch takes off, worst
+// first.
+var cleansable = []int{Stunned, Paralyzed, Asleep, KnockedDown, Hobbled, Burning, Bleeding, Blighted, ArmorBroken, Exposed, Staggered}
+
+// CleanseOne ends the worst harmful status c carries and returns its word,
+// or "" when it has none.
+func CleanseOne(c *characters.Character) string {
+	for _, id := range cleansable {
+		if Live(c, id) {
+			c.RemoveBuff(id)
+			if s := Get(id); s != nil {
+				return s.Word
+			}
+			return "status"
+		}
+	}
+	return ""
+}

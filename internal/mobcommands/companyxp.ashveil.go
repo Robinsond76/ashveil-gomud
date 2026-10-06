@@ -3,6 +3,7 @@ package mobcommands
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"strings"
@@ -72,5 +73,11 @@ func companionLevelLine(before, after characters.Character) string {
 			changes = append(changes, fmt.Sprintf("%s %d -> %d", name, old[i], now[i]))
 		}
 	}
-	return fmt.Sprintf("%s reaches level %d (%s).", after.Name, after.Level, strings.Join(changes, ", "))
+	line := fmt.Sprintf("%s reaches level %d (%s).", after.Name, after.Level, strings.Join(changes, ", "))
+	// Phase 38b: what its class gains next.
+	class, _ := after.ClassState()
+	if next := classes.Milestone(class, after.Level); next != "" {
+		line += " " + next
+	}
+	return line
 }

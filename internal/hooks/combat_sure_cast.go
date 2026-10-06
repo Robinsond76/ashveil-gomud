@@ -40,7 +40,8 @@ func mobCastsSure(mob *mobs.Mob, spellId string) bool {
 		return false
 	}
 	arch, _ := company.CompanionArchetype(leaderId, id)
-	for _, known := range archetypes.CompanionSpells(arch, mob.Character.Level) {
+	class, _ := mob.Character.ClassState()
+	for _, known := range archetypes.CompanionKnownSpells(arch, class, mob.Character.Level) {
 		if known == spellId {
 			return true
 		}
