@@ -13,8 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeArchetypes answers only PlayerArchetype; the embedded nil interface
-// panics on anything else, so the test shows what the payload calls.
+// fakeArchetypes answers only PlayerArchetype and ArchetypeName (the class
+// title Char.Info shows); the embedded nil interface panics on anything
+// else, so the test shows what the payload calls.
 type fakeArchetypes struct {
 	archetypes.Provider
 	chosen map[int]string
@@ -23,6 +24,10 @@ type fakeArchetypes struct {
 func (f fakeArchetypes) PlayerArchetype(userID int) (string, bool) {
 	a, ok := f.chosen[userID]
 	return a, ok
+}
+
+func (f fakeArchetypes) ArchetypeName(archetypeID string) (string, bool) {
+	return archetypeID, archetypeID != ""
 }
 
 type fakeClasses struct{ class map[int]string }

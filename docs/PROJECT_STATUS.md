@@ -36,7 +36,9 @@ existing party-only `Party.Vitals`. Accepted and fixed: a camp on your own
 tile was hidden under your sprite, so it is now pitched behind your left
 shoulder with the fire by your right foot (map-check regression); `help
 worldmap` claimed the map never shows more than `look`, though it shows your
-party's camps anywhere in the zone, reworded. Rejected: continuous redraw
+party's camps anywhere in the zone, reworded; after merging master (44's
+`ClassTitle` in `Char.Info`), the sprite-keys test's fake archetype provider
+gained `ArchetypeName`. Rejected: continuous redraw
 while sprites show is needed (every map sprite animates, and closing the
 window stops it). Follow-up: companions are not drawn on the map (only the
 badge count).
