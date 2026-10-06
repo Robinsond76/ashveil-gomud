@@ -625,3 +625,65 @@ func TestWarmthAffixAddsToTheSlotDefault(t *testing.T) {
 	u.Character.Equipment.Body = tunic
 	assert.Equal(t, plain+2, e.m.warmthOf(u.Character))
 }
+
+// Phase 43a: a warming draught or cooling salve cuts the exposure its
+// member takes on by a quarter, in its own direction only.
+func TestDraughtStressCutsAQuarterRoundedUpInItsOwnDirection(t *testing.T) {
+	buffs.SetTestFlag(warmingDraughtFlag)
+	buffs.SetTestFlag(coolingSalveFlag)
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 9401, Name: "warming draught", TriggerCount: 1, Flags: []string{warmingDraughtFlag}})
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 9402, Name: "cooling salve", TriggerCount: 1, Flags: []string{coolingSalveFlag}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(9401); buffs.RemoveTestBuffSpec(9402) })
+	plain, warmed, cooled := characters.New(), characters.New(), characters.New()
+	require.NoError(t, warmed.AddBuff(9401, false))
+	require.NoError(t, cooled.AddBuff(9402, false))
+
+	for _, tc := range []struct{ stress, warm, cool int }{
+		{-38, -29, -38}, {-4, -3, -4}, {-1, -1, -1}, {0, 0, 0}, {1, 1, 1}, {4, 4, 3}, {38, 38, 29},
+	} {
+		assert.Equal(t, tc.stress, draughtStress(plain, tc.stress), "no supply")
+		assert.Equal(t, tc.warm, draughtStress(warmed, tc.stress), "warming at %d", tc.stress)
+		assert.Equal(t, tc.cool, draughtStress(cooled, tc.stress), "cooling at %d", tc.stress)
+	}
+	assert.Equal(t, -5, draughtStress(nil, -5))
+}
+
+func TestWarmingDraughtSlowsColdThroughTheRealTick(t *testing.T) {
+	buffs.SetTestFlag(warmingDraughtFlag)
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 9401, Name: "warming draught", TriggerCount: 5, RoundInterval: 1, Flags: []string{warmingDraughtFlag}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(9401) })
+	e := setup(t)
+	e.night = true
+	bare := e.addUser(t, 7, 1)
+	drinker := e.addUser(t, 8, 1)
+	require.NoError(t, drinker.Character.AddBuff(9401, false))
+
+	e.m.tick()
+	assert.Equal(t, -19, e.m.exposureFor(7, survival.LeaderMemberKey), "naked at night, no draught")
+	assert.Greater(t, e.m.exposureFor(8, survival.LeaderMemberKey), -19, "the draught takes on less cold")
+	assert.Less(t, e.m.exposureFor(8, survival.LeaderMemberKey), 0)
+	_ = bare
+}
+
+func TestCoolingSalveSlowsHeatAndWarmingDoesNotHelpIt(t *testing.T) {
+	buffs.SetTestFlag(warmingDraughtFlag)
+	buffs.SetTestFlag(coolingSalveFlag)
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 9401, Name: "warming draught", TriggerCount: 5, RoundInterval: 1, Flags: []string{warmingDraughtFlag}})
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 9402, Name: "cooling salve", TriggerCount: 5, RoundInterval: 1, Flags: []string{coolingSalveFlag}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(9401); buffs.RemoveTestBuffSpec(9402) })
+	e := setup(t)
+	plain := e.addUser(t, 7, 2) // desert noon, clothed heavily: real heat stress
+	plain.Character.Equipment.Body = items.New(testFurCoat)
+	cooled := e.addUser(t, 8, 2)
+	cooled.Character.Equipment.Body = items.New(testFurCoat)
+	require.NoError(t, cooled.Character.AddBuff(9402, false))
+	warmed := e.addUser(t, 9, 2)
+	warmed.Character.Equipment.Body = items.New(testFurCoat)
+	require.NoError(t, warmed.Character.AddBuff(9401, false))
+
+	e.m.tick()
+	base := e.m.exposureFor(7, survival.LeaderMemberKey)
+	require.Greater(t, base, 0)
+	assert.Less(t, e.m.exposureFor(8, survival.LeaderMemberKey), base, "the salve takes on less heat")
+	assert.Equal(t, base, e.m.exposureFor(9, survival.LeaderMemberKey), "a warming draught gives no heat protection")
+}

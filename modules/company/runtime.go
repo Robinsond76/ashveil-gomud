@@ -267,7 +267,7 @@ func (nativeRuntime) SetItemUses(instanceID int, itm items.Item, uses int) bool 
 	}
 	for i := range mob.Character.Items {
 		if mob.Character.Items[i].Equals(itm) {
-			mob.Character.Items[i].Uses = uses
+			mob.Character.Items[i] = mob.Character.Items[i].Refilled(uses)
 			return true
 		}
 	}

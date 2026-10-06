@@ -59,6 +59,13 @@ type RestSession struct {
 	// Theft (Phase 40a4) is the camp theft rolled when a rest without
 	// bells began, if any.
 	Theft *Theft `yaml:"theft,omitempty"`
+	// Incense (Phase 43a): watch incense was burned when the rest began, so
+	// the watch's chance to spot its raiders is ten points higher.
+	Incense bool `yaml:"incense,omitempty"`
+	// Broth (Phase 43a) are the member keys whose fortifying broth was
+	// spent when the rest began; it takes effect when the rest is done
+	// (a spoiled rest gives none).
+	Broth []string `yaml:"broth,omitempty"`
 }
 
 // Theft is thieves planned at rest start (Phase 40a4): they work unseen
@@ -169,8 +176,12 @@ type Camp struct {
 	// needs the fire fed (camp fire).
 	Embers bool `yaml:"embers,omitempty"`
 	// Tent (Phase 40a3): an oiled canvas tent is pitched at the camp.
-	Tent bool         `yaml:"tent,omitempty"`
-	Rest *RestSession `yaml:"rest,omitempty"`
+	Tent bool `yaml:"tent,omitempty"`
+	// Prepared (Phase 43a) is what the company has queued for its next rest:
+	// fortifying broth and watch incense. A value, replaced whole, never
+	// edited in place.
+	Prepared *Prepared    `yaml:"prepared,omitempty"`
+	Rest     *RestSession `yaml:"rest,omitempty"`
 }
 
 func (c Camp) Validate() error {

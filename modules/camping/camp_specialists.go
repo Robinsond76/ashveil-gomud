@@ -254,10 +254,12 @@ func (m *CampingModule) fireDueRaids() {
 	m.mu.Lock()
 	due := map[int]int{} // leader -> camp room
 	strung := map[int]bool{}
+	incense := map[int]bool{}
 	for leaderUserID, camp := range m.camps {
 		if camp.Rest != nil && camp.Rest.RaidDue(now) {
 			due[leaderUserID] = camp.RoomID
 			strung[leaderUserID] = camp.Rest.Bells
+			incense[leaderUserID] = camp.Rest.Incense
 		}
 	}
 	m.mu.Unlock()
@@ -288,6 +290,11 @@ func (m *CampingModule) fireDueRaids() {
 		}
 		bells := strung[leaderUserID]
 		chance := spotChance(hasWatch, watchPct, bells)
+		// Phase 43a: incense burned at the start of the rest sharpens a
+		// posted watch's eye; it changes only this detection roll.
+		if hasWatch && incense[leaderUserID] {
+			chance = camping.IncenseChance(chance)
+		}
 		spotted := chance > 0 && m.rollPct() < chance
 
 		m.mu.Lock()
