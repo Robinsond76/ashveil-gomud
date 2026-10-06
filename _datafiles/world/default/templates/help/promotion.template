@@ -7,7 +7,7 @@ biggest choice a character makes after its archetype.
 
   Level 10   an advanced class, on the good, neutral or evil route
   Level 30   an elite class, where your route has one (Hierarch, Demonologist,
-             Elder Druid, Paladin, Dread Knight)
+             Elder Druid, Paladin, Warlord, Dread Knight); see <ansi fg="command">help elite</ansi>
 
 <ansi fg="yellow-bold">How</ansi>
 
@@ -29,8 +29,9 @@ alignment recovers (see <ansi fg="command">help alignment</ansi>). A class is ne
 
 <ansi fg="yellow-bold">What you get</ansi>
 
-A promotion starts the class's ranks at once, including every rank your level
+Elite classes ask the same gate when you promote, and a character that never
+took the advanced class can take both steps in one visit. A promotion starts the class's ranks at once, including every rank your level
 has already reached. Spells those ranks teach are learned immediately. A class
 changes how you fight but never takes anything away.
 
-See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>.
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>.

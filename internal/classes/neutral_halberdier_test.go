@@ -53,7 +53,7 @@ func TestHalberdierRouteEffects(t *testing.T) {
 func TestHalberdierOffersFiveTalents(t *testing.T) {
 	ts := TalentsFor("halberdier")
 	assert.Len(t, ts, 5)
-	assert.NoError(t, CanPick("halberdier", nil, 5, "sweep-drill"))
-	assert.ErrorIs(t, CanPick("halberdier", []string{"sweep-drill"}, 15, "sweep-drill"), ErrTalentMaxed)
-	assert.ErrorIs(t, CanPick("halberdier", nil, 5, "deep-well"), ErrUnknownTalent)
+	assert.NoError(t, CanPick("halberdier", "", nil, 5, "sweep-drill"))
+	assert.ErrorIs(t, CanPick("halberdier", "", []string{"sweep-drill"}, 15, "sweep-drill"), ErrTalentMaxed)
+	assert.ErrorIs(t, CanPick("halberdier", "", nil, 5, "deep-well"), ErrUnknownTalent)
 }

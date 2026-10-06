@@ -1,7 +1,7 @@
-// Phase 38b: Grove. Rejuvenation on a whole formation row at the Grove's share each.
+// Phase 38b: Grove. Rejuvenation on a whole formation row at the Grove's share each, plus half of it at once.
 SPELL_ID = 'grove';
 SPELL_NAME = 'Grove';
-WAIT_ROUNDS = 2; // grove.yaml's waitrounds
+WAIT_ROUNDS = 1; // grove.yaml's waitrounds
 
 // Phase 29c narration voice: mechanics in lowercase parentheses at the end.
 function chanting(rounds) {
@@ -45,7 +45,9 @@ function onMagic(sourceActor, single) {
     var names = [];
     for (var i = 0; i < targetActors.length; i++) {
         if (targetActors[i].StartRejuv(rounds, total)) {
-            names.push(targetActors[i].GetCombatName(false) + ' (' + total + ' over ' + rounds + ' rounds)');
+            // Phase 38c1 review: the grove blooms, healing half its share at once.
+            var bloom = targetActors[i].AddHealth(Math.floor(total / 2));
+            names.push(targetActors[i].GetCombatName(false) + ' (' + bloom + ' now, ' + total + ' over ' + rounds + ' rounds)');
             SendUserMessage(targetActors[i].UserId(), fill(sourceActor, 'A grove of green light from %S settles over you.'));
         }
     }

@@ -100,16 +100,19 @@ func TestClassPathsListsTheLineagesRoutesAndTheirGates(t *testing.T) {
 	}
 	assert.Contains(t, w.cmd("class", "paths oswin"), "Routes for a Cleric")
 	assert.Contains(t, w.cmd("class", "paths tamsin"), "Knight")
-	assert.Contains(t, w.cmd("class", "paths tamsin"), "Warlord (planned: not open yet)")
+	assert.Contains(t, w.cmd("class", "paths tamsin"), "then Warlord: pressure on the chosen target")
+	assert.NotContains(t, w.cmd("class", "paths tamsin"), "planned")
 }
 
 func TestPlayerPromotionPreviewConfirmAndRepeat(t *testing.T) {
 	w, store := classBrawl(t, 10, 45)
 	preview := w.cmd("class", "promote priest")
-	assert.Contains(t, preview, "You can become a Priest")
-	assert.Contains(t, preview, "Rank 10, Ward")
+	assert.Contains(t, preview, "Cleric -> Priest (advanced, cleric lineage)")
+	assert.Contains(t, preview, "Gate: alignment +30 or higher (yours: +45)  ready")
+	assert.Contains(t, preview, "Now:  rank 10 Ward")
+	assert.Contains(t, preview, "Next: rank 15 (level 15): Greater Heal")
 	assert.Contains(t, preview, "Routes are final")
-	assert.Contains(t, preview, "class promote priest confirm")
+	assert.Contains(t, preview, "class promote self priest confirm")
 	assert.Empty(t, store.state.Class, "a preview changes nothing")
 
 	assert.Contains(t, w.cmd("class", "promote priest confirm"), "You are now a Priest.")
@@ -140,7 +143,7 @@ func TestPromotionNeedsLevelAndTheAlignmentGate(t *testing.T) {
 
 func TestPromotionDriftBetweenPreviewAndConfirmIsRechecked(t *testing.T) {
 	w, store := classBrawl(t, 10, 40)
-	assert.Contains(t, w.cmd("class", "promote priest"), "You can become a Priest")
+	assert.Contains(t, w.cmd("class", "promote priest"), "Cleric -> Priest (advanced, cleric lineage)")
 	w.aria.Character.Alignment = 10 // drifted after the preview
 	assert.Contains(t, w.cmd("class", "promote priest confirm"), "needs alignment +30 or higher")
 	assert.Empty(t, store.state.Class)
@@ -181,8 +184,9 @@ func TestCompanionPromotionThroughTheCommandSavesAndSurvivesARestart(t *testing.
 	assert.Contains(t, view, "Ready to promote: Priest. Type class promote #2 priest.")
 
 	preview := w.cmd("class", "promote oswin priest")
-	assert.Contains(t, preview, "Brother Oswin can become a Priest")
-	assert.Contains(t, preview, "Type class promote #2 priest confirm")
+	assert.Contains(t, preview, "Brother Oswin: Cleric -> Priest (advanced, cleric lineage)")
+	assert.Contains(t, preview, "Gate: alignment +30 or higher (theirs: +40)  ready")
+	assert.Contains(t, preview, "Type: class promote #2 priest confirm")
 	class, _ := companionClass(t, 2)
 	assert.Empty(t, class)
 
@@ -268,11 +272,13 @@ func TestEliteWaitsForTheGateAndPromotesWhenItRecovers(t *testing.T) {
 	assert.Contains(t, w.cmd("class", ""), "a Hierarch (elite class)")
 }
 
+// The rogue, ranger, wizard and witch elites arrive with 38c2 and 38c3.
 func TestPlannedEliteIsNotOpenYet(t *testing.T) {
 	w, store := classBrawl(t, 30, 100)
-	w.withArchetypes("warrior")
-	store.state.Class = "mercenary"
-	assert.Contains(t, w.cmd("class", "promote warlord confirm"), "not open yet")
+	w.withArchetypes("rogue")
+	store.state.Class = "scout"
+	assert.Contains(t, w.cmd("class", "promote pathfinder confirm"), "not open yet")
+	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Pathfinder")
 }
 
 func TestUnpromotedHighLevelCharacterKeepsItsBase(t *testing.T) {
@@ -280,8 +286,10 @@ func TestUnpromotedHighLevelCharacterKeepsItsBase(t *testing.T) {
 	view := w.cmd("class", "")
 	assert.Contains(t, view, "level 40 Cleric with no promotion yet")
 	assert.Contains(t, view, "Ready to promote: Druid.")
-	// Elite needs an advanced class first.
-	assert.Contains(t, w.cmd("class", "promote hierarch confirm"), "can't become a Hierarch")
+	// Elite needs an advanced class first, and says so.
+	refused := w.cmd("class", "promote hierarch confirm")
+	assert.Contains(t, refused, "can't become a Hierarch")
+	assert.Contains(t, refused, "take the Priest first, then the Hierarch in the same visit. Type class promote priest.")
 }
 
 func TestTalentsThroughTheCommand(t *testing.T) {
@@ -358,4 +366,178 @@ func TestOldRecordsReadAsUnpromoted(t *testing.T) {
 	assert.Empty(t, live)
 	assert.Empty(t, liveTalents)
 	assert.Nil(t, w.companion(1).Character.ClassEffects())
+}
+
+// Phase 38c1: the elite step through the real commands for the six open
+// routes, at the gate boundaries, for the leader.
+func TestEliteGatesForTheSixOpenRoutes(t *testing.T) {
+	for _, tc := range []struct {
+		lineage, advanced, elite, name string
+		good, evil                     bool
+	}{
+		{"warrior", "knight", "paladin", "Paladin", true, false},
+		{"warrior", "mercenary", "warlord", "Warlord", false, false},
+		{"warrior", "blackguard", "dread-knight", "Dread Knight", false, true},
+		{"cleric", "priest", "hierarch", "Hierarch", true, false},
+		{"cleric", "druid", "elder-druid", "Elder Druid", false, false},
+		{"cleric", "blood-priest", "demonologist", "Demonologist", false, true},
+	} {
+		t.Run(tc.elite, func(t *testing.T) {
+			wait, ok := 0, 0 // the alignments one point short of the gate, and at it
+			switch {
+			case tc.good:
+				wait, ok = 29, 30
+			case tc.evil:
+				wait, ok = -29, -30
+			}
+			w, store := classBrawl(t, 29, ok)
+			w.withArchetypes(tc.lineage)
+			store.state.Class = tc.advanced
+			assert.Contains(t, w.cmd("class", "promote "+tc.elite+" confirm"), "needs level 30", "level 29")
+			assert.Equal(t, tc.advanced, store.state.Class)
+			assert.NotContains(t, w.cmd("class", ""), "Ready to promote")
+
+			w.aria.Character.Level = 30
+			if tc.good || tc.evil {
+				w.aria.Character.Alignment = int8(wait)
+				assert.Contains(t, w.cmd("class", ""), "Waiting: "+tc.name, "one point short of the gate waits")
+				assert.Contains(t, w.cmd("class", "promote "+tc.elite+" confirm"), "needs alignment")
+				assert.Equal(t, tc.advanced, store.state.Class)
+			}
+			w.aria.Character.Alignment = int8(ok)
+			assert.Contains(t, w.cmd("class", ""), "Ready to promote: "+tc.name)
+			preview := w.cmd("class", "promote "+tc.elite)
+			assert.Contains(t, preview, "(elite, "+tc.lineage+" lineage)")
+			assert.Contains(t, preview, "Now:  rank 30")
+			assert.Contains(t, preview, "Talents from 35 add:")
+			assert.Equal(t, tc.advanced, store.state.Class, "a preview changes nothing")
+
+			assert.Contains(t, w.cmd("class", "promote "+tc.elite+" confirm"), "You are now a "+tc.name+".")
+			assert.Equal(t, tc.elite, store.state.Class)
+			assert.Contains(t, w.cmd("class", "promote "+tc.elite+" confirm"), "already a "+tc.name, "a repeated confirm changes nothing")
+			assert.Contains(t, w.cmd("class", ""), "("+"elite class)")
+			assert.Contains(t, w.cmd("class", "promote "+tc.advanced+" confirm"), "final", "routes are final")
+		})
+	}
+}
+
+// A late promoter takes the advanced class and the elite one in the same
+// visit, and gets every rank its level has earned at once.
+func TestLateElitePromotionCatchesUpEveryRank(t *testing.T) {
+	w, store := classBrawl(t, 42, 0)
+	w.withArchetypes("warrior")
+	preview := w.cmd("class", "promote mercenary")
+	assert.Contains(t, preview, "Warrior -> Mercenary (advanced, warrior lineage)")
+	assert.Contains(t, w.cmd("class", "promote mercenary confirm"), "You are now a Mercenary.")
+
+	preview = w.cmd("class", "promote warlord")
+	assert.Contains(t, preview, "Mercenary -> Warlord (elite, warrior lineage)")
+	for _, rank := range []string{"rank 30 Marked for Ruin", "rank 35 Battle Cry", "rank 40 Quicker tackle"} {
+		assert.Contains(t, preview, rank)
+	}
+	assert.NotContains(t, preview, "rank 45 Sunder", "not yet earned")
+	assert.Contains(t, preview, "Next: rank 45 (level 45): Sunder")
+	assert.Contains(t, preview, "Talents from 35 add: Iron Hide, Second Wind, Veteran's Edge")
+
+	confirmed := w.cmd("class", "promote warlord confirm")
+	assert.Contains(t, confirmed, "You are now a Warlord. Your route is final.")
+	for _, rank := range []string{"Rank 30, Marked for Ruin", "Rank 35, Battle Cry", "Rank 40, Quicker tackle"} {
+		assert.Contains(t, confirmed, rank)
+	}
+	assert.Equal(t, "warlord", store.state.Class)
+	view := w.cmd("class", "")
+	assert.Contains(t, view, "a Warlord (elite class)")
+	assert.Contains(t, view, "Rank 30, Marked for Ruin")
+	assert.Contains(t, view, "Rank 40, Quicker tackle")
+	assert.NotContains(t, view, "Rank 45")
+	assert.Equal(t, 5, w.aria.Character.ClassEffects().Int(classes.MarkRuin))
+	assert.Equal(t, 3, w.aria.Character.ClassEffects().Int(classes.BattleCry))
+}
+
+// An elite companion promotes by the same commands, the class is saved, and
+// a restart keeps it with its ranks.
+func TestEliteCompanionPromotionKeepsTheClassAcrossARestart(t *testing.T) {
+	w, _ := classBrawl(t, 3, 0)
+	tamsin := w.companion(1)
+	tamsin.Character.Level = 31
+	setCompanionAlignment(t, 1, 0)
+	w.respawn()
+	require.Equal(t, 31, w.companion(1).Character.Level)
+	// Phase 38c1 review: a base companion asking for the elite is sent to
+	// its own advanced step, with its selector.
+	assert.Contains(t, w.cmd("class", "promote tamsin warlord confirm"), "take the Mercenary first, then the Warlord in the same visit. Type class promote #1 mercenary.")
+	require.NoError(t, module.registry.SetCompanionClass(7, 1, "mercenary"))
+	w.respawn()
+
+	view := w.cmd("class", "tamsin")
+	assert.Contains(t, view, "Ready to promote: Warlord. Type class promote #1 warlord.")
+	assert.Regexp(t, `\[promote ready.*class #1\]`, w.cmd("company", "status"))
+	preview := w.cmd("class", "promote tamsin warlord")
+	assert.Contains(t, preview, "Tamsin Reed: Mercenary -> Warlord (elite, warrior lineage)")
+	assert.Contains(t, preview, "Type: class promote #1 warlord confirm")
+
+	assert.Contains(t, w.cmd("class", "promote #1 warlord confirm"), "Tamsin Reed is now a Warlord (elite). Their route is final.")
+	class, _ := companionClass(t, 1)
+	assert.Equal(t, "warlord", class)
+	live, _ := w.companion(1).Character.ClassState()
+	assert.Equal(t, "warlord", live)
+	assert.Equal(t, 5, w.companion(1).Character.ClassEffects().Int(classes.MarkRuin), "the live companion has the rank at once")
+	assert.Contains(t, w.cmd("company", "status"), "Warlord (elite warrior)")
+	assert.NotContains(t, w.cmd("company", "status"), "promote ready")
+
+	w.respawn() // copyover and restart rebuild the mob from the record
+	class, _ = companionClass(t, 1)
+	assert.Equal(t, "warlord", class)
+	live, _ = w.companion(1).Character.ClassState()
+	assert.Equal(t, "warlord", live)
+	assert.Contains(t, w.cmd("class", "tamsin"), "a Warlord (elite class)")
+}
+
+func TestCompanionWaitingOnTheGateIsMarkedInTheRoster(t *testing.T) {
+	w, _ := classBrawl(t, 3, 0)
+	w.companion(1).Character.Level = 30
+	setCompanionAlignment(t, 1, 29)
+	w.respawn()
+	require.NoError(t, module.registry.SetCompanionClass(7, 1, "knight"))
+	w.respawn()
+	roster := w.cmd("company", "status")
+	assert.Contains(t, roster, "Knight (advanced warrior)")
+	assert.Regexp(t, `\[waiting: alignment.*class #1\]`, roster)
+	assert.Contains(t, w.cmd("class", "promote tamsin paladin confirm"), "needs alignment +30")
+	setCompanionAlignment(t, 1, 30)
+	assert.Regexp(t, `\[promote ready.*class #1\]`, w.cmd("company", "status"))
+}
+
+// Elite talents are for elites from level 35: refused below it, and for a
+// non-elite, then taken through the command.
+func TestEliteTalentsThroughTheCommand(t *testing.T) {
+	w, store := classBrawl(t, 34, 0)
+	w.withArchetypes("warrior")
+	store.state = classes.State{Class: "warlord", Talents: []string{"toughness", "toughness", "keen-edge"}}
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "Iron Hide is an elite talent: it opens to an elite class from level 35.", "level 34")
+
+	w.aria.Character.Level = 35
+	menu := w.cmd("talent", "")
+	assert.Contains(t, menu, "Iron Hide (iron-hide): +5 armor.")
+	assert.Contains(t, menu, "Second Wind (second-wind)")
+	assert.Contains(t, menu, "Veteran's Edge (veterans-edge): +3 Attack.")
+	assert.Contains(t, w.cmd("talent", "pick iron hide"), "You can take Iron Hide")
+	assert.Empty(t, store.state.Talents[3:], "a preview changes nothing")
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "You take Iron Hide: +5 armor.")
+	assert.Equal(t, []string{"toughness", "toughness", "keen-edge", "iron-hide"}, store.state.Talents)
+	assert.Equal(t, 5, w.aria.Character.ClassEffects().Int(classes.Armor))
+
+	// Each is taken once.
+	w.aria.Character.Level = 45
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "as many times as it can be taken")
+
+	// An advanced Mercenary has none of them, and another lineage's are unknown.
+	store.state = classes.State{Class: "mercenary", Talents: []string{"toughness", "toughness", "keen-edge"}}
+	w.aria.Character.Level = 35
+	assert.NotContains(t, w.cmd("talent", ""), "Iron Hide")
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "is an elite talent")
+	store.state = classes.State{Class: "hierarch", Talents: []string{"deep-well", "deep-well", "mending-hands"}}
+	w.withArchetypes("cleric")
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "can't take Iron Hide")
+	assert.Contains(t, w.cmd("talent", "pick font-of-grace confirm"), "You take Font of Grace")
 }

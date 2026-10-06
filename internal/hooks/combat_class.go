@@ -42,6 +42,11 @@ func auraPass() {
 		f, _ := company.FormationFor(uid)
 		side := sideActors(u, room)
 		applyAuras(uid, side, f)
+		cry, cryer := battleCry(side, b, combatRound.Load())
+		for _, a := range side {
+			a.char.Aura.Attack = cry
+		}
+		announceCry(cryer, cry, b, combatRound.Load())
 		for _, a := range side {
 			if a.char.ClassEffects() != nil {
 				a.char.RTState()
