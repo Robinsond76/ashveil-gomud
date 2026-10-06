@@ -26,6 +26,7 @@ import promoted  # noqa: E402
 import roster  # noqa: E402
 import terrain  # noqa: E402
 import uiicons  # noqa: E402
+import authored  # noqa: E402
 from palette import PAL  # noqa: E402
 from pixels import Canvas, sheet  # noqa: E402
 
@@ -45,6 +46,7 @@ class Writer:
         self.manifest = {}
 
     def png(self, rel, img, **meta):
+        img = authored.replacement(rel, img, meta)
         path = os.path.join(self.out, rel)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         img.save(path, optimize=True)

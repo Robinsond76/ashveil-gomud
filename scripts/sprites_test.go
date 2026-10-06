@@ -210,7 +210,8 @@ func TestMapUnitSpritesFollowAnchorRules(t *testing.T) {
 }
 
 // The committed art must be exactly what the generator produces, so the
-// script stays the source of truth.  Skipped where Python or Pillow is absent.
+// procedural drawers and native authored sheets stay the source of truth.
+// Skipped where Python or Pillow is absent.
 func TestSpritesMatchGenerator(t *testing.T) {
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("python3 not available")
@@ -223,6 +224,10 @@ func TestSpritesMatchGenerator(t *testing.T) {
 	_ = root
 	_, src, _, _ := runtime.Caller(0)
 	gen := filepath.Join(filepath.Dir(src), "sprites", "generate.py")
+	contracts := exec.Command("python3", "-m", "unittest", "discover", "-s", filepath.Dir(gen), "-p", "*_test.py")
+	if out, err := contracts.CombinedOutput(); err != nil {
+		t.Fatalf("authored import contracts: %v\n%s", err, out)
+	}
 	tmp := t.TempDir()
 	if out, err := exec.Command("python3", "-I", gen, "--out", tmp).CombinedOutput(); err != nil {
 		t.Fatalf("generate: %v\n%s", err, out)

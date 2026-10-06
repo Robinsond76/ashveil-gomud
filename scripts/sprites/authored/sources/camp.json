@@ -1,0 +1,42 @@
+{
+  "source": "camp.png",
+  "boxes": [
+    [
+      32,
+      247,
+      408,
+      529
+    ],
+    [
+      417,
+      201,
+      786,
+      529
+    ],
+    [
+      843,
+      295,
+      1113,
+      537
+    ],
+    [
+      1172,
+      258,
+      1443,
+      537
+    ],
+    [
+      1501,
+      209,
+      1780,
+      537
+    ],
+    [
+      1838,
+      291,
+      2109,
+      537
+    ]
+  ],
+  "conversion": "nearest-neighbor; master palette without dithering; alpha threshold 50%; bottom-center"
+}
