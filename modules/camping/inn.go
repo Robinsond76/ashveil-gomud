@@ -329,6 +329,8 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 		user.Character.Gold += price
 		return err.Error()
 	}
+	// The Worth panel refreshes on this event, like every other purchase.
+	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	m.scheduleStayLocked(stay)
 	return fmt.Sprintf("You pay %d gold and your company settles in to rest. (%s)", price, settings.RestDuration)
 }
@@ -458,11 +460,7 @@ func (m *CampingModule) innStatusTextLocked(leaderUserID int) string {
 	}
 	lines = append(lines, "Company:")
 	for _, member := range m.survival.CompanyNeeds(leaderUserID) {
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			member.Name,
-			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
-			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+		lines = append(lines, survival.NeedsLine(member.Name, member.Needs))
 	}
 	return strings.Join(lines, "\n")
 }
