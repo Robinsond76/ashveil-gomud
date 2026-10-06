@@ -66,10 +66,18 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 // many seconds, so a company walking in behind its leader arrives first.
 func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, group, groupName string, surprise bool, delay float64) {
 	observer, perception, visibility := "you", 0, room.GetVisibility()
+	// Phase 39f: a Skyscout watches from the air, in the open only.
+	watch := func(c *characters.Character) int {
+		n := c.Stats.Perception.ValueAdj
+		if !room.IsIndoor() {
+			n += c.ClassEffects().Int(classes.SkyEye)
+		}
+		return n
+	}
 	if u := users.GetByUserId(leaderUserID); u != nil && u.Character != nil {
 		found := u.Character.Health > 0 && u.Character.RoomId == roomID && !u.Character.CombatWithdrawn
 		if found {
-			perception, visibility = u.Character.Stats.Perception.ValueAdj, room.VisibilityForUser(u)
+			perception, visibility = watch(u.Character), room.VisibilityForUser(u)
 		}
 		// Roster order supplies stable ties, including deliberately unplaced observers.
 		if members, ok := company.CompanyMembers(leaderUserID); ok {
@@ -82,9 +90,9 @@ func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, gr
 				if m == nil || m.Character.Health < 1 || m.Character.RoomId != roomID || m.Character.CombatWithdrawn {
 					continue
 				}
-				if !found || m.Character.Stats.Perception.ValueAdj > perception {
+				if sees := watch(&m.Character); !found || sees > perception {
 					found = true
-					observer, perception, visibility = m.Character.Name, m.Character.Stats.Perception.ValueAdj, room.VisibilityForMob(m)
+					observer, perception, visibility = m.Character.Name, sees, room.VisibilityForMob(m)
 				}
 			}
 		}
