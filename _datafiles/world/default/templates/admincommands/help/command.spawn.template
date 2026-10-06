@@ -3,3 +3,7 @@ The <ansi fg="command">spawn</ansi> command can be used in the following ways:
 <ansi fg="yellow">Gold</ansi> - Spawns a pile of gold in the room.
     <ansi fg="command">spawn gold [amount]</ansi> - e.g. <ansi fg="command">spawn gold 100</ansi>
 
+<ansi fg="yellow">Loot</ansi> - Rolls a piece of gear (Phase 36a) and drops it in the room.
+    <ansi fg="command">spawn loot [item] [ilvl] [rarity] [quality]</ansi> - e.g. <ansi fg="command">spawn loot "short sword" 20 rare fine</ansi>
+    Rarity: common, uncommon, rare, epic, legendary, set. Quality: crude, worn, standard, fine, superior, exquisite.
+    Rare and better drop unidentified; <ansi fg="command">help identify</ansi> explains how to read them.

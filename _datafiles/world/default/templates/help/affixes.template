@@ -1,0 +1,32 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">affixes</ansi>
+
+An affix is one special property on a piece of gear, from a prefix or suffix
+in its name ("Mighty", "of the Bear"). An item has at most one affix of a
+kind, so nothing rolls +Strength twice. What an affix can be depends on the
+slot: weapons, shields, armor and jewelry each have their own pool.
+
+<ansi fg="yellow-bold">What affixes do today</ansi>
+
+  Stats        +Strength, Speed, Smarts, Vitality, Mysticism, Perception
+  Vitals       +maximum health, +maximum mana
+  Offense      +damage on every hit (weapons)
+  Defense      +protection (armor and shields), +parry (weapons)
+  Healing      +healing percent (weapons and jewelry)
+  Logistics    +warmth (armor), -weight percent
+
+Strength grows with the item's item level (<ansi fg="command">help itemlevel</ansi>). More chances,
+resists, status-on-crit and the major mechanics (cleaving, vampiric,
+warded, echoing) join as the systems that read them arrive.
+
+<ansi fg="yellow-bold">Major affixes</ansi>
+
+An Epic item has one major affix, a large one. For now majors are big
+numbers: a strength of a Titan, Ironbound protection, Lifeblood health,
+Saintly healing.
+
+<ansi fg="yellow-bold">Seeing them</ansi>
+
+<ansi fg="command">look [item]</ansi> lists an identified item's affixes. Unidentified gear hides
+them (<ansi fg="command">help identify</ansi>) and gives nothing from them until it is read.
+
+See also: <ansi fg="command">help rarity</ansi>, <ansi fg="command">help quality</ansi>, <ansi fg="command">help itemlevel</ansi>, <ansi fg="command">help scribe</ansi>.

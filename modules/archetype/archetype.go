@@ -204,6 +204,7 @@ func init() {
 	m.plug.AddUserCommand("archetypereset", m.adminResetCommand, true, true)
 	m.registerUtility()
 	m.registerSpecialists()
+	m.registerScribe()
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {

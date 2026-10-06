@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -229,6 +230,13 @@ func (m *CampingModule) grantPendingTiers() {
 		// so a camp rest that finished after the snapshot still counts.
 		// Once per camp rest; a pass is idempotent anyway, since sharp
 		// blades cost nothing.
+		// Phase 36a: the rest also lets the company's Scribe read any
+		// unidentified gear (and a worn item reveals itself).
+		if campRest {
+			for _, line := range archetypes.CampIdentify(leaderUserID) {
+				user.SendText(line)
+			}
+		}
 		if campRest && m.autoSharpenOn(leaderUserID) {
 			if text := m.sharpen(user, true); text != "" {
 				user.SendText(text)

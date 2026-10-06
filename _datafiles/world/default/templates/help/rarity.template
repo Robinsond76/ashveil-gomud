@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">rarity</ansi>
+
+Gear has five layers: its base type, tier, item level (<ansi fg="command">help itemlevel</ansi>),
+quality (<ansi fg="command">help quality</ansi>) and rarity. Rarity is how many special properties it
+has and how rare it is. A rare iron sword is not automatically better than
+a fine steel one: rarity is availability and special properties, tier is the
+power budget.
+
+  <ansi fg="rarity-common">Common</ansi>      no affixes
+  <ansi fg="rarity-uncommon">Uncommon</ansi>    one affix
+  <ansi fg="rarity-rare">Rare</ansi>        two or three affixes, and a name of its own, like Gloomfang
+  <ansi fg="rarity-epic">Epic</ansi>        three or four affixes, one of them major (<ansi fg="command">help affixes</ansi>)
+  <ansi fg="rarity-legendary">Legendary</ansi>   a unique effect and two rolled affixes; named, hand-made items
+  <ansi fg="rarity-set">Set</ansi>         fixed pieces of a small set, with a bonus when you wear several
+
+A name's colour shows its rarity in the text and web clients. Rare and
+better gear is found unidentified (<ansi fg="command">help identify</ansi>): you can see the
+rarity, but not the affixes, until a Scribe reads it.
+
+<ansi fg="yellow-bold">Level requirement</ansi>
+
+Rare and better gear needs you to be 5 levels below its item level or more
+(an item level 20 Rare needs level 15); Uncommon needs 10 levels below.
+Common gear has none. Equip refuses, and says what level it needs, so a
+rare find isn't handed down to a new character. Companions follow the
+same rule through <ansi fg="command">company equip</ansi> and <ansi fg="command">company compare</ansi>.
+
+Gear that drops from foes comes in a later update; until then rolled
+gear only appears when an admin spawns it.
+
+See also: <ansi fg="command">help quality</ansi>, <ansi fg="command">help itemlevel</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help identify</ansi>, <ansi fg="command">help equipment</ansi>.

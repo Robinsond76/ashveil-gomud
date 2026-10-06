@@ -1,0 +1,246 @@
+# Phase 36a loot affixes (docs/designs/2026-10-05-loot-system-design.md).
+# Each affix maps onto a mechanic that already exists. Tiers rise with item
+# level (minilvl); one affix per group per item. Hit, crit, block and dodge
+# chances, status-on-crit, resists, spell power, chant-break resistance and
+# the Epic mechanics (cleaving, vampiric, warded, echoing) join with the
+# systems that read them.
+affixes:
+  - id: strength
+    group: stat-strength
+    prefix: Mighty
+    suffix: of the Bear
+    mechanic: statmod:strength
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 5 }
+      - { minilvl: 45, min: 5, max: 7 }
+      - { minilvl: 60, min: 7, max: 9 }
+    weight: 10
+  - id: speed
+    group: stat-speed
+    prefix: Swift
+    suffix: of the Hare
+    mechanic: statmod:speed
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 5 }
+      - { minilvl: 45, min: 5, max: 7 }
+      - { minilvl: 60, min: 7, max: 9 }
+    weight: 10
+  - id: smarts
+    group: stat-smarts
+    prefix: Clever
+    suffix: of the Fox
+    mechanic: statmod:smarts
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 5 }
+      - { minilvl: 45, min: 5, max: 7 }
+      - { minilvl: 60, min: 7, max: 9 }
+    weight: 10
+  - id: vitality
+    group: stat-vitality
+    prefix: Hale
+    suffix: of the Ox
+    mechanic: statmod:vitality
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 5 }
+      - { minilvl: 45, min: 5, max: 7 }
+      - { minilvl: 60, min: 7, max: 9 }
+    weight: 10
+  - id: mysticism
+    group: stat-mysticism
+    prefix: Arcane
+    suffix: of the Moon
+    mechanic: statmod:mysticism
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 5 }
+      - { minilvl: 45, min: 5, max: 7 }
+      - { minilvl: 60, min: 7, max: 9 }
+    weight: 10
+  - id: perception
+    group: stat-perception
+    prefix: Keen
+    suffix: of the Hawk
+    mechanic: statmod:perception
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 5 }
+      - { minilvl: 45, min: 5, max: 7 }
+      - { minilvl: 60, min: 7, max: 9 }
+    weight: 10
+  - id: health
+    group: vital-health
+    prefix: Stout
+    suffix: of Vigor
+    mechanic: statmod:healthmax
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 5, max: 8 }
+      - { minilvl: 15, min: 9, max: 14 }
+      - { minilvl: 30, min: 15, max: 22 }
+      - { minilvl: 45, min: 23, max: 31 }
+      - { minilvl: 60, min: 32, max: 40 }
+    weight: 8
+  - id: mana
+    group: vital-mana
+    prefix: Brimming
+    suffix: of the Well
+    mechanic: statmod:manamax
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 5, max: 9 }
+      - { minilvl: 15, min: 10, max: 17 }
+      - { minilvl: 30, min: 18, max: 28 }
+      - { minilvl: 45, min: 29, max: 40 }
+      - { minilvl: 60, min: 41, max: 50 }
+    weight: 6
+  - id: damage
+    group: offense-damage
+    prefix: Cruel
+    suffix: of Slaying
+    mechanic: statmod:damage
+    slots: [weapon]
+    tiers:
+      - { minilvl: 1, min: 1, max: 1 }
+      - { minilvl: 15, min: 1, max: 2 }
+      - { minilvl: 30, min: 2, max: 3 }
+      - { minilvl: 45, min: 3, max: 4 }
+      - { minilvl: 60, min: 4, max: 6 }
+    weight: 8
+  - id: protection
+    group: defense-protection
+    prefix: Sturdy
+    suffix: of Warding
+    mechanic: protection
+    slots: [shield, armor]
+    tiers:
+      - { minilvl: 1, min: 1, max: 1 }
+      - { minilvl: 15, min: 1, max: 2 }
+      - { minilvl: 30, min: 2, max: 3 }
+      - { minilvl: 45, min: 3, max: 4 }
+      - { minilvl: 60, min: 4, max: 5 }
+    weight: 8
+  - id: parry
+    group: defense-parry
+    prefix: Guarded
+    suffix: of Parrying
+    mechanic: parry
+    slots: [weapon]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 4 }
+      - { minilvl: 45, min: 4, max: 5 }
+      - { minilvl: 60, min: 5, max: 5 }
+    weight: 6
+  - id: healing
+    group: spell-healing
+    prefix: Gentle
+    suffix: of Mending
+    mechanic: statmod:healing
+    slots: [weapon, jewelry]
+    tiers:
+      - { minilvl: 1, min: 2, max: 5 }
+      - { minilvl: 15, min: 5, max: 9 }
+      - { minilvl: 30, min: 8, max: 13 }
+      - { minilvl: 45, min: 12, max: 18 }
+      - { minilvl: 60, min: 17, max: 25 }
+    weight: 5
+  - id: warmth
+    group: logistics-warmth
+    prefix: Fur-lined
+    suffix: of the Hearth
+    mechanic: warmth
+    slots: [armor]
+    tiers:
+      - { minilvl: 1, min: 1, max: 2 }
+      - { minilvl: 15, min: 2, max: 3 }
+      - { minilvl: 30, min: 3, max: 4 }
+      - { minilvl: 45, min: 4, max: 5 }
+      - { minilvl: 60, min: 5, max: 6 }
+    weight: 4
+  - id: featherweight
+    group: logistics-weight
+    prefix: Light
+    suffix: of Lightness
+    mechanic: weightpct
+    slots: [weapon, shield, armor]
+    tiers:
+      - { minilvl: 1, min: 5, max: 8 }
+      - { minilvl: 15, min: 8, max: 12 }
+      - { minilvl: 30, min: 12, max: 16 }
+      - { minilvl: 45, min: 16, max: 20 }
+      - { minilvl: 60, min: 20, max: 25 }
+    weight: 4
+  # Epic's one major affix: numeric for now, large enough to matter.
+  - id: titan
+    group: stat-strength
+    prefix: Titan's
+    suffix: of the Titan
+    mechanic: statmod:strength
+    slots: [weapon, shield, armor]
+    tiers:
+      - { minilvl: 1, min: 2, max: 3 }
+      - { minilvl: 15, min: 4, max: 5 }
+      - { minilvl: 30, min: 6, max: 8 }
+      - { minilvl: 45, min: 9, max: 11 }
+      - { minilvl: 60, min: 12, max: 14 }
+    weight: 5
+    major: true
+  - id: ironbound
+    group: defense-protection
+    prefix: Ironbound
+    suffix: of Iron
+    mechanic: protection
+    slots: [shield, armor]
+    tiers:
+      - { minilvl: 1, min: 2, max: 3 }
+      - { minilvl: 15, min: 3, max: 5 }
+      - { minilvl: 30, min: 5, max: 7 }
+      - { minilvl: 45, min: 7, max: 9 }
+      - { minilvl: 60, min: 9, max: 12 }
+    weight: 5
+    major: true
+  - id: lifeblood
+    group: vital-health
+    prefix: Lifeblood
+    suffix: of Lifeblood
+    mechanic: statmod:healthmax
+    slots: [weapon, shield, armor, jewelry]
+    tiers:
+      - { minilvl: 1, min: 10, max: 16 }
+      - { minilvl: 15, min: 18, max: 28 }
+      - { minilvl: 30, min: 30, max: 44 }
+      - { minilvl: 45, min: 46, max: 62 }
+      - { minilvl: 60, min: 64, max: 80 }
+    weight: 5
+    major: true
+  - id: saint
+    group: spell-healing
+    prefix: Saintly
+    suffix: of the Saint
+    mechanic: statmod:healing
+    slots: [weapon, jewelry]
+    tiers:
+      - { minilvl: 1, min: 6, max: 10 }
+      - { minilvl: 15, min: 10, max: 15 }
+      - { minilvl: 30, min: 15, max: 20 }
+      - { minilvl: 45, min: 20, max: 26 }
+      - { minilvl: 60, min: 26, max: 35 }
+    weight: 4
+    major: true

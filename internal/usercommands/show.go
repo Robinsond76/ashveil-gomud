@@ -61,7 +61,7 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			)
 
 			targetUser.SendText(
-				"\n" + showItem.GetLongDescription() + "\n",
+				"\n" + showItem.GetLongDescriptionFor(targetUser.Character.GetSkillLevel(`scribe`)) + "\n",
 			)
 
 			// Tell the rest of the room

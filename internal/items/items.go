@@ -50,8 +50,11 @@ type Item struct {
 	// strike until SharpStrikes run out. Plain values, never a pointer:
 	// items are copied by value, and a shared pointer would alias one edge
 	// across copies.
-	SharpBonus    int            `yaml:"sharpbonus,omitempty"`
-	SharpStrikes  int            `yaml:"sharpstrikes,omitempty"`
+	SharpBonus   int `yaml:"sharpbonus,omitempty"`
+	SharpStrikes int `yaml:"sharpstrikes,omitempty"`
+	// Phase 36a: a generated item's roll. A value, replaced whole by
+	// Identify, never edited through a shared slice.
+	Loot          Rolled         `yaml:"loot,omitempty"`
 	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
@@ -176,6 +179,13 @@ func (i *Item) Validate() {
 }
 
 func (i *Item) GetLongDescription() string {
+	return i.GetLongDescriptionFor(0)
+}
+
+// GetLongDescriptionFor is the long description as seen by a viewer with
+// the given Scribe rank (Phase 36a): rank 4 sees each affix's tier and range
+// and where a rolled item came from.
+func (i *Item) GetLongDescriptionFor(scribeRank int) string {
 
 	iSpec := i.GetSpec()
 
@@ -249,6 +259,11 @@ func (i *Item) GetLongDescription() string {
 		longDesc.WriteString("\n")
 		longDesc.WriteString(` - You could probably <ansi fg="command">use</ansi> this.`)
 
+	}
+
+	if i.IsRolled() {
+		longDesc.WriteString("\n")
+		longDesc.WriteString(i.RolledDescription(scribeRank))
 	}
 
 	return longDesc.String()
@@ -360,6 +375,8 @@ func (i *Item) UnEnchant() {
 	if i.IsEnchanted() {
 		i.Spec = nil
 		i.Enchantments = 0
+		// Phase 36a: a rolled item's numbers live in its Spec override.
+		i.rebuildRolledSpec()
 	}
 }
 
@@ -423,7 +440,7 @@ func (i *Item) IsSpecial() bool {
 	if iSpec.Uses > 0 && iSpec.Uses != i.Uses {
 		return true
 	}
-	if i.Spec != nil {
+	if i.Spec != nil || i.IsRolled() {
 		return true
 	}
 
@@ -522,6 +539,17 @@ func (i *Item) DisplayName() string {
 			return prefix + spec.DisplayName + suffix
 		}
 	}
+	// Phase 36a: rolled gear shows its quality, affixes and rarity colour.
+	if i.IsRolled() {
+		name := i.RollName(spec.Name)
+		if i.Loot.Rarity != RarityCommon && i.Loot.Rarity != `` {
+			name = fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, i.Loot.Rarity.Colour(), name)
+		}
+		if label := i.RollLabel(); label != `` {
+			suffix = ` ` + label + suffix
+		}
+		return prefix + name + suffix
+	}
 	return prefix + spec.Name + suffix
 }
 
@@ -592,6 +620,17 @@ func (i *Item) NameMatch(input string, allowContains bool) (partialMatch bool, f
 
 	input = strings.ToLower(input)
 	simpleName := strings.ToLower(i.Name())
+
+	// Phase 36a: an identified rolled item answers to its generated name.
+	if i.IsRolled() && i.Loot.Identified && i.Loot.Name != `` {
+		rolledName := strings.ToLower(i.Loot.Name)
+		if rolledName == input {
+			return true, true
+		}
+		if strings.HasPrefix(rolledName, input) {
+			return true, false
+		}
+	}
 
 	if allowContains {
 		for _, word := range strings.Fields(simpleName) {

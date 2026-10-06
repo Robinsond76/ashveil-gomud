@@ -209,6 +209,7 @@ type AttackMessages map[ItemSubType]AttackEffects
 type ItemSpec struct {
 	ItemId          int
 	Value           int
+	Tier            int         `yaml:"tier,omitempty"`            // Phase 36a: material and power budget 1-6; 0 means unset (tier 1)
 	Uses            int         `yaml:"uses,omitempty"`            // How many uses it starts with
 	BuffIds         []int       `yaml:"buffids,omitempty"`         // What buffs it can apply (if used)
 	WornBuffIds     []int       `yaml:"wornbuffids,omitempty"`     // BuffId's that are applied while worn, and expired when removed.

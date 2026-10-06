@@ -112,6 +112,7 @@ type Character struct {
 	Created             time.Time                      `yaml:"created"`                    // When this character was created
 	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`           // any special timers added to this character
 	ZonesVisited        map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`     // permanent record of every room visited, keyed by zone name
+	ScribeReset         bool                           `yaml:"scribereset,omitempty"`      // Ashveil 36a: any old (33f1-retired) scribe rank was refunded once
 	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
 	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
@@ -2153,6 +2154,11 @@ func (c *Character) Wear(i items.Item, targetSlots ...items.ItemType) (returnIte
 		return returnItems, false, reason
 	}
 
+	// Phase 36a: rolled gear has a level requirement.
+	if reason := i.WearRefusal(c.Level); reason != "" {
+		return returnItems, false, reason
+	}
+
 	iHandsRequired := c.HandsRequired(i)
 	if iHandsRequired > 2 {
 		return returnItems, false, `That requires too many hands.`
@@ -2473,6 +2479,18 @@ func (c *Character) RetireSkills() (int, []string) {
 		if level > 0 {
 			refund += skills.TrainingCost(level)
 			retired = append(retired, id)
+		}
+	}
+	// Ashveil 36a: the old scribe rank is refunded once, before the skill
+	// returns as the new Scribe.
+	if !c.ScribeReset {
+		c.ScribeReset = true
+		if level, ok := c.Skills[skills.ScribeReset]; ok {
+			delete(c.Skills, skills.ScribeReset)
+			if level > 0 {
+				refund += skills.TrainingCost(level)
+				retired = append(retired, skills.ScribeReset)
+			}
 		}
 	}
 	for _, id := range skills.CappedSkills() {

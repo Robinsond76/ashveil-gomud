@@ -58,6 +58,7 @@ func cloneItem(i items.Item) items.Item {
 		spec := *i.Spec
 		i.Spec = &spec
 	}
+	i.Loot.Affixes = append([]items.RolledAffix(nil), i.Loot.Affixes...)
 	return i
 }
 
