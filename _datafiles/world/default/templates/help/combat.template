@@ -161,6 +161,7 @@ and your company's health.
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">help hexes</ansi>        a Witch's hexes, and how they land
+  <ansi fg="command">help halberdier</ansi>   a Halberdier's sweep, brace and hook
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
@@ -208,5 +209,5 @@ Healers still heal by spells; ordinary buffs keep their real-time durations.
 Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).
 Maximum health grows only a little with level; skill decides fights (<ansi fg="command">help progression</ansi>).
 Each point of a stat over your opponent's counts the same at every level (<ansi fg="command">help stat-edge</ansi>).
-A promoted character fights with its class's ranks, and some summon allies (<ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>).
+A promoted character fights with its class's ranks, and some summon allies (<ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help elite</ansi>).
 A Samurai opens a fight half a turn ahead, with a first strike that hits harder (<ansi fg="command">help samurai</ansi>).

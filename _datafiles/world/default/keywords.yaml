@@ -38,11 +38,15 @@ help:
       - bury
       - archetype
       - witch
+      - halberdier
+      - halberdier-routes
       - classes
       - promotion
       - talents
       - cleric-routes
       - warrior-routes
+      - elite
+      - warlord
       - samurai
       - samurai-routes
       - summoning
@@ -290,15 +294,19 @@ help-aliases:
   standing:         [reputation, blackmarket, black-market]
   tutorial:         [replay]
   archetype:        [archetypes]
-  classes:          [class, advanced-class, elite-class, class-paths, routes, route]
+  classes:          [class, advanced-class, class-paths, routes, route]
   promotion:        [promote, promotions, class-promotion, promoting]
   talents:          [talent, talent-pick, talent-list]
   cleric-routes:    [priest, druid, blood-priest, blood priest, elder-druid, elder druid, siphon, rejuvenation, barkskin, grove, greater-heal]
+  elite:            [elites, elite-class, elite-classes, elite-promotion, second-promotion]
+  warlord:          [warlords, marked-for-ruin, battle-cry, sunder, relentless]
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
   samurai-routes:   [kensai, hatamoto, ronin, sword-saint, sword saint, shogun, kenshi, bodyguard, vengeance]
   witch:            [witches, hedge-witch, hexcraft]
+  halberdier:       [halberdiers, sweep, brace, hook, crowded]
+  halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]
   specialists:      [specialist, company-specialists, expedition-skills, utilities]
@@ -322,7 +330,7 @@ help-aliases:
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
-  campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers]
+  campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]

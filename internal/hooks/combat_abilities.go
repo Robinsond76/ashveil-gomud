@@ -114,6 +114,10 @@ func abilityPass() {
 		side := sideActors(u, room)
 		f, _ := company.FormationFor(u.UserId)
 		for _, a := range side {
+			// Phase 39a: a held brace lasts until its halberdier's next turn.
+			if a.char.RT != nil {
+				a.char.RT.Brace = false
+			}
 			if surprised(a.who.userId, a.who.mobId) {
 				continue
 			}
@@ -135,11 +139,12 @@ func abilityPass() {
 			sit := abilitySituation(a, u, foe)
 			sit.Ambush = ambushing(a, b)
 			sit.Close = close
+			halberdSituation(&sit, a, u, f, foe, room, foes)
 			id, use := strategy.DecideAbility(sit)
 			if !use {
 				continue
 			}
-			useAbility(a, foe, id, room)
+			useAbility(a, foe, id, room, foes)
 		}
 	}
 }
@@ -201,6 +206,8 @@ func abilitySituation(a actor, u *users.UserRecord, foe *mobs.Mob) strategy.Abil
 	} else {
 		known = strategy.CompanionAbilities(a.archetype)
 	}
+	// Phase 39a: an ability may come at a level.
+	known = strategy.AtLevel(known, a.char.Level)
 	weapon, backstab := wielding(a.char)
 	return strategy.AbilitySituation{
 		Known: known,
@@ -238,6 +245,8 @@ func abilityCooldown(c *characters.Character, id strategy.Ability, base int) int
 		cut = fx.Int(classes.OpenCD)
 	case strategy.AimedShot:
 		cut = fx.Int(classes.AimCD)
+	case strategy.Sweep:
+		cut = fx.Int(classes.SweepCD) // Phase 39a
 	}
 	return max(1, base-cut)
 }
@@ -264,7 +273,7 @@ func wielding(c *characters.Character) (strategy.WeaponKind, bool) {
 
 // useAbility carries out an ability: its cooldown, its line, its event,
 // and its effect.
-func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
+func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, foes map[int]bool) {
 	spec, ok := strategy.SpecOf(id)
 	if !ok {
 		return
@@ -273,6 +282,10 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 	target := mobHolder(foe)
 	event := combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: target.ref, Status: spec.Name}
 	switch id {
+	case strategy.Sweep:
+		useSweep(a, foe, room, foes)
+	case strategy.Brace:
+		useBrace(a, room)
 	case strategy.Tackle:
 		abilityTurns[a.who] = true
 		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj, characters.SkillEdge(a.char.AttackSkill(), foe.Character.Evasion()))
@@ -296,6 +309,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 		if a.char.ClassEffects().Has(classes.TackleExpo) {
 			events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.Exposed, Source: `combat`})
 		}
+		warlordTackle(a, foe, target) // Phase 38c1
 		// A tackle is heavy force: it breaks a chant (an enemy starts
 		// again) and a wind-up, as a knockdown blow would.
 		if !interruptsOff && target.chanting() {

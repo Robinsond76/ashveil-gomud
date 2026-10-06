@@ -135,3 +135,43 @@ func TestDivineShieldIgnoresTheFirstBlowOfABattleOnly(t *testing.T) {
 	paladin.EndFightRT()
 	assert.False(t, paladin.RT.ShieldUsed, "a new battle renews it")
 }
+
+// Phase 38c1: a foe the Warlord marked is easier for every ally to hit, and a
+// Battle Cry raises its allies' Attack; neither touches the foe's own aim.
+func TestWarlordsMarkAndBattleCryRaiseAttack(t *testing.T) {
+	defenseSpecs(t)
+	ally, foe := classed("", 10), classed("", 10)
+	base := attackRating(ally, foe)
+
+	foe.RTState().Mark = 5
+	assert.Equal(t, base+5, attackRating(ally, foe), "marked: +5 Attack against it")
+	foe.RT.Mark = 10
+	assert.Equal(t, base+10, attackRating(ally, foe), "rank 50 mark: +10")
+	assert.Equal(t, base, attackRating(foe, ally), "a mark on the foe does not help the foe")
+	foe.RT.Mark = 0
+	assert.Equal(t, base, attackRating(ally, foe), "lifted")
+
+	ally.Aura.Attack = 3
+	assert.Equal(t, base+3, attackRating(ally, foe), "Battle Cry: +3 Attack")
+	foe.RTState().Mark = 5
+	assert.Equal(t, base+8, attackRating(ally, foe), "they stack")
+}
+
+// Phase 39a: a Sweep's or a held blow's share of the damage is the blow's
+// own, before armor, and clears with the blow.
+func TestBlowPctScalesAClassBlow(t *testing.T) {
+	defenseSpecs(t)
+	src := classed("sweeper", 12)
+	foe := classed("", 12)
+	assert.Equal(t, 10, classBlowDamage(src, foe, 10))
+	src.RTState().BlowPct = 80
+	assert.Equal(t, 8, classBlowDamage(src, foe, 10))
+	src.RTState().BlowPct = 125
+	assert.Equal(t, 13, classBlowDamage(src, foe, 10), "rounded: 12.5")
+	assert.Equal(t, 1, classBlowDamage(src, foe, 1), "a blow that landed still does 1")
+	assert.Zero(t, classBlowDamage(src, foe, 0), "a miss stays a miss")
+	// Unclassed characters (a companion with no class) scale too.
+	plain := classed("", 12)
+	plain.RTState().BlowPct = 80
+	assert.Equal(t, 8, classBlowDamage(plain, foe, 10))
+}

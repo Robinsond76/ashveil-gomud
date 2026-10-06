@@ -366,7 +366,9 @@ type CampingModule struct {
 	// and the leaders whose first try with damp wood failed.
 	// surgery stands in for the company's field surgery in tests (Phase
 	// 40a3).
-	surgery   func(leaderUserID int) ([]string, bool)
+	surgery func(leaderUserID int) ([]string, bool)
+	// theft stands in for the company's camp theft in tests (Phase 40a4).
+	theft     func(leaderUserID, sharePct, maxUnits int, pick func(n int) int, protect func(itemID int) bool) []company.TheftLoss
 	itemCount func(leaderUserID, itemID int) int
 	spendItem func(leaderUserID, itemID int) bool
 	dampTried map[int]bool
@@ -839,6 +841,8 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	// module) and locked on the rest; the bells wear a use once the rest
 	// is on, also outside m.mu.
 	gear := m.gearOf(user.UserId)
+	// 40a4 review: a finished rest's thieves come before another rest.
+	m.settleTheft(user.UserId)
 	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId))
 	if started && gear.Bells {
 		spend := m.spendItem
@@ -894,6 +898,11 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	resting.Tent = gear.Tent
 	// Phase 33f3: whether raiders come, and when, is settled now.
 	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
+	// Phase 40a4: so is whether thieves come; bells and trip lines never
+	// let them.
+	if !gear.Bells {
+		rest.Theft = m.planTheftLocked(room)
+	}
 	resting.Rest = &rest
 	m.camps[user.UserId] = resting
 	if err := m.saveLocked(); err != nil {
@@ -913,6 +922,11 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	if line := restGearText(resting.Rest, gear.Tent, members); line != "" {
 		text += "\n" + line
 	}
+	// 40a4 review: warn of thieves on a road they work, whether or not
+	// they come this time.
+	if !gear.Bells && m.theftRiskIn(room) {
+		text += "\nNo bells or trip lines are strung: on this road, thieves may slip into the camp while you sleep."
+	}
 	return text, true
 }
 
@@ -921,6 +935,9 @@ func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
+	// 40a4 review: breaking camp straight after a rest does not dodge its
+	// thieves.
+	m.settleTheft(user.UserId)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -1463,9 +1480,20 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		}
 		return false
 	}
+	// Phase 40a4: the gear the company carries calls into the company
+	// module, so it is read before m.mu; only a leader with a camp shows it.
+	m.mu.Lock()
+	_, hasCamp := m.camps[leaderUserID]
+	m.mu.Unlock()
+	var gear []string
+	bells := false
+	if hasCamp {
+		carried := m.gearOf(leaderUserID)
+		gear, bells = carried.labels(m.companyMembers(leaderUserID)), carried.Bells
+	}
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]
-	s := camping.CampState{Inn: has(m.innSettings().RoomTag)}
+	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear}
 	if !ok {
 		s.CanCamp = has(m.roomTag())
 	} else {
@@ -1485,6 +1513,11 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	m.mu.Unlock()
 	if s.HasCamp && !s.Here {
 		s.RoomTitle = roomTitle(camp.RoomID)
+	}
+	// 40a4 review: the Camp tab warns when thieves work the camp's road
+	// and no bells are carried.
+	if s.HasCamp && !bells {
+		s.TheftRisk = m.theftRiskIn(rooms.LoadRoom(camp.RoomID))
 	}
 	return s, true
 }

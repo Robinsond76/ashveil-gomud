@@ -39,6 +39,14 @@ const (
 	TackleHold = "tacklehold" // rounds Tackle's knockdown lasts beyond its own
 	TackleExpo = "tacklexpo"  // a tackled foe is also left exposed
 
+	// The Warlord's pressure on the chosen target (Phase 38c1).
+	MarkRuin   = "markruin"   // a foe its Tackle lands on is marked for 2 rounds: allies have this much Attack against it
+	BattleCry  = "battlecry"  // every ally has this much Attack for the battle's first 2 rounds
+	Sunder     = "sunder"     // a Tackle also breaks the target's armor for 2 rounds
+	Relentless = "relentless" // action meter points gained when a foe it knocked down stands up
+	WarCommand = "warcommand" // once a battle, when an ally falls, every standing ally's meter gains this much
+	SecondWind = "secondwind" // once a battle, below 25% health at the start of its turn, heals this percent of maximum health
+
 	// Conditional blows and auras.
 	Ambush     = "ambush"     // Opening Strike opens any foe in the battle's first N rounds
 	Riposte    = "riposte"    // a parried blow is answered at once (1: Opening Strike size, 2: half again)
@@ -101,6 +109,14 @@ const (
 	Intimidate   = "intimidate"   // Attack a wounded foe loses against its allies
 	TerrorCrit   = "terrorcrit"   // a critical hit that lands also staggers the target
 
+	// The Halberdier's routes (Phase 39a). Hook and the wider Sweep are the
+	// lineage's own, by level, so they have no key.
+	SweepPct    = "sweeppct"    // percent of a blow's damage each foe a Sweep strikes takes (a Sweeper's 100, else 90)
+	SweepCD     = "sweepcd"     // rounds off Sweep's cooldown
+	BraceCol    = "bracecol"    // Brace answers a blow at anyone in the Halberdier's column, not only itself
+	BraceDown   = "bracedown"   // the held blow knocks the foe down when it hits
+	ChargedMana = "chargedmana" // mana a Charged Sweep spends for lightning on every foe it strikes
+	ChargedDice = "chargeddice" // sides of the Charged Sweep's lightning die (1dN)
 	// The Samurai's lineage (Phase 39b).
 	Iai       = "iai"       // knows Iaijutsu: a stronger, surer first strike each battle
 	IaiDamage = "iaidamage" // percent more damage on the first strike
