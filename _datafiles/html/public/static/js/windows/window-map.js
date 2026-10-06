@@ -531,7 +531,13 @@
         var dragActive = false;
         var dragStartPxX = 0, dragStartPxY = 0;
         var dragStartPanX = 0, dragStartPanY = 0;
-        var zoomScale     = 1.0;
+        // Phase 47: a phone starts one tile size closer (48 px tiles), so
+        // the rooms around you read at arm's length; a default zoom in the
+        // map settings or a pinch still wins.
+        function startZoom() {
+            try { return window.matchMedia && window.matchMedia('(max-width: 820px)').matches ? 1.5 : 1.0; } catch (e) { return 1.0; }
+        }
+        var zoomScale     = startZoom();
         var currentZoneKey = '';
         var partyPositions = {}; // name -> { x, y, z }
 
@@ -1881,7 +1887,7 @@
             btnReset.addEventListener('click', function (e) {
                 e.stopPropagation();
                 Object.assign(mapSettings, MAP_SETTINGS_DEFAULTS);
-                zoomScale = 1.0;
+                zoomScale = startZoom();
                 saveMapSettings();
                 panel.remove();
                 document.removeEventListener('click', onOutsideClick, true);
@@ -1963,6 +1969,22 @@
                 });
                 out.sort(function (a, b) { return a.d - b.d || a.id - b.id; });
                 return out.slice(0, 14);
+            },
+            // Phase 47: every visited room whose name contains q (all of them
+            // for an empty q), nearest first, for the phone's room search.
+            search: function (q) {
+                var needle = (q || '').trim().toLowerCase();
+                var here = rooms.get(currentRoomId);
+                var out = [];
+                rooms.forEach(function (r, id) {
+                    var info = roomInfoStore.get(id);
+                    if (id === currentRoomId || !info || !info.name) { return; }
+                    if (needle && info.name.toLowerCase().indexOf(needle) < 0) { return; }
+                    out.push({ id: id, name: info.name, legend: info.maplegend || '',
+                               d: here ? Math.abs(r.x - here.x) + Math.abs(r.y - here.y) : 0 });
+                });
+                out.sort(function (a, b) { return a.d - b.d || a.id - b.id; });
+                return out.slice(0, 40);
             },
             walking: function () { return !!walkInfo; },
             viewport: function () { return { pan: [panOffsetX, panOffsetY], zoom: zoomScale }; },
@@ -2223,6 +2245,7 @@
     // Phase 40i: the phone's touch bar asks the map for places to walk to.
     window.MapPlaces = {
         list:    function () { return view2d.places(); },
+        search:  function (q) { return view2d.search(q); },
         walking: function () { return view2d.walking(); },
         viewport: function () { return view2d.viewport(); },
     };
