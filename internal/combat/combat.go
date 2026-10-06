@@ -515,6 +515,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 		woundable, lightOnly = MobWounds(targetMob[0])
 	}
 
+	// Phase 39b: a Samurai's Iaijutsu is its battle's first strike (a wind-up
+	// is not one): stronger, surer and, for a Kensai, armor-piercing. It is
+	// spent by that swing whether it lands or not.
+	iai := power == nil && sourceChar.IaiReady()
+	iaiFx := sourceChar.ClassEffects()
+
 	// backstabCrit makes the first blow that lands a critical hit.
 	backstabCrit := false
 	// strikeBonus is a readied strike's extra damage (Opening Strike).
@@ -615,6 +621,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				isCrit := false
 				hitQuality := QualitySolid
 
+				strikeIai := iai
+				if iai {
+					iai = false
+					sourceChar.RT.IaiSpent = true
+				}
 				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
 				if hit {
 					// Phase 30g2: one active defense, before armor; a
@@ -665,7 +676,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackTargetDamage += strikeBonus
 						strikeBonus = 0
 					}
-					isCrit = backstabCrit || Crits(sourceChar, targetChar)
+					critBonus := 0
+					if strikeIai {
+						critBonus = iaiFx.Int(classes.IaiCrit)
+						attackTargetDamage += (attackTargetDamage*iaiFx.Int(classes.IaiDamage) + 50) / 100
+					}
+					isCrit = backstabCrit || critsWith(sourceChar, targetChar, critBonus)
 					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
 						attackResult.Crit = true // record that at least one crit occurred this round
@@ -678,7 +694,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				}
 
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
-				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+				defense := targetChar.GetDefense()
+				if strikeIai && hit {
+					defense -= defense * min(iaiFx.Int(classes.IaiPierce), 100) / 100
+				}
+				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, defense)
 				// Phase 38b review: an aura's "less damage" is a true percent
 				// off the blow (on the armor roll it averaged half that).
 				if r := targetChar.Aura.Resolve; r > 0 && attackTargetDamage > 0 {

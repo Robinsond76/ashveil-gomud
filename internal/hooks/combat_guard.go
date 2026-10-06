@@ -112,6 +112,20 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 	if !found {
 		return guardMember{}, false
 	}
+	// Phase 39b: a Hatamoto's Bodyguard steps in for the company leader,
+	// whatever strategy it fights by, a few times a battle.
+	if struck == company.LeaderMemberKey {
+		narrow := enemyparty.Narrow(rooms.LoadRoom(leader.Character.RoomId))
+		for _, g := range members {
+			if g.key == struck || (len(struckAlready) > 0 && struckAlready[0][g.key]) ||
+				bodyguardLeft(g.char) < 1 || !ableToGuard(g) || !formationcombat.GuardGround(f, g.key, struck, narrow) {
+				continue
+			}
+			g.char.RTState().Bodyguards++
+			announceGuard(leader, b.FightID, g, ward, bodyguardLeft(g.char))
+			return g, true
+		}
+	}
 	for _, g := range members {
 		if g.key == struck || (len(struckAlready) > 0 && struckAlready[0][g.key]) {
 			continue

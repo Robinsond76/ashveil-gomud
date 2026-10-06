@@ -106,7 +106,11 @@ func nameOr(id string) string {
 // Milestone describes what a character at a level gains next on its way,
 // for the level-up report: the next talent, promotion or rank, with
 // everything that arrives at the same level.
-func Milestone(current string, level int) string {
+func Milestone(current string, level int) string { return MilestoneFor("", current, level) }
+
+// MilestoneFor is Milestone for a character of a lineage, whose base ranks
+// (a Samurai's Focus and Zanshin) count among what comes next.
+func MilestoneFor(lineageID, current string, level int) string {
 	at := map[int][]string{}
 	if l, ok := NextTalentLevel(level); ok {
 		at[l] = append(at[l], "a talent")
@@ -123,6 +127,12 @@ func Milestone(current string, level int) string {
 	if has {
 		if r, ok := NextRank(current, level); ok {
 			at[r.Level] = append(at[r.Level], "a rank ("+r.Name+")")
+		}
+	}
+	for _, r := range BaseRanks(lineageID) {
+		if r.Level > level {
+			at[r.Level] = append(at[r.Level], "a rank ("+r.Name+")")
+			break
 		}
 	}
 	next := 0
