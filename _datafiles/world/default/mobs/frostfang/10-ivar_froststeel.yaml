@@ -42,10 +42,6 @@ character:
       quantitymax: 2
     - itemid: 20304
       quantitymax: 3
-    - itemid: 20133
-      quantitymax: 3
-    - itemid: 20163
-      quantitymax: 2
     - itemid: 20193
       quantitymax: 2
   equipment:

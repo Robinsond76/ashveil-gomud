@@ -59,7 +59,7 @@ a tier for every shipped weapon and armor piece. Branch
   steel and tempered round shields (the shipped wooden shield is the tier 1
   round shield and the leather buckler the tier 1 buckler), and a kite
   shield at each tier (armor 7 / 10 / 13, heavier than a round shield). No
-  new tower shields: the shipped one is audited tier 2.
+  new tower shields: the shipped tower and iron shields are audited tier 3.
 - **Goods (24 new, ids `200`–`242`, `other-0`).** Trophies, salvage,
   materials, valuables and curios, as commodity items (the garnet is a
   gemstone), each with a `goods` category, a weight and a value. The
@@ -70,7 +70,7 @@ a tier for every shipped weapon and armor piece. Branch
 - **Audit.** Every shipped weapon and armor piece (73) has a `tier`, and
   weapons also a `family`. Tiers follow protection and damage, not name:
   plain gear tier 1; the captain's broadsword, obsidian dagger, finely
-  crafted shortsword, iron shield, tower shield, chain coif, circlet and
+  crafted shortsword, chain coif, circlet and
   similar tier 2; the shadowsteel breastplate, wolf pelt, spider
   exoskeleton, snow wolf mane, royal ring, ogre's great club, tree trunk,
   jeweled dagger and dancing needle tier 3; the glowing battleaxe, ancient
@@ -78,7 +78,7 @@ a tier for every shipped weapon and armor piece. Branch
   uniques). No stat changed.
 - **Shops.** Frostfang Armory (Ivar) stocks tier 1 gear: iron shortsword,
   iron hand axe, iron mace, iron short spear, militia glaive, shortbow,
-  hunting crossbow, kite shield, hide jerkin, padded jack and iron mail. The
+  hunting crossbow, kite shield, and iron mail. The
   general trader (Brynja) stocks scrap iron, iron ore and tanned leather,
   which also makes her buy goods (a merchant buys the types it stocks).
   Starter kits are unchanged.
@@ -131,6 +131,6 @@ a tier for every shipped weapon and armor piece. Branch
   validation, descriptions, real `equip` with hands and reach, merchant
   pricing, class rules, generator rolls on every catalog item, help render.
 - [x] Help pages, aliases, hub links and the Departure hint.
-- [ ] Independent full-diff review; fix findings with regressions.
+- [x] Independent full-diff review (below); findings fixed with regressions.
 - [ ] Final checks: `make generate`, `make validate`, `go test -race ./...`,
   `make js-lint`. Project Status entry, PR.

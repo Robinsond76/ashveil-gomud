@@ -236,7 +236,7 @@ func TestShippedShieldCatalog(t *testing.T) {
 	assert.Equal(t, BulkLight, byFamily["buckler"][3].Bulk)
 	assert.Greater(t, byFamily["kite shield"][1].Weight, byFamily["round shield"][1].Weight, "a kite shield is heavier than a round one")
 	assert.Greater(t, byFamily["kite shield"][1].DamageReduction, byFamily["round shield"][1].DamageReduction)
-	assert.Equal(t, 2, specs[20048].Tier, "the shipped tower shield is audited as tier 2")
+	assert.Equal(t, 3, specs[20048].Tier, "the shipped tower shield is audited as tier 3")
 }
 
 // Goods: a category, a weight and a value density inside the category's
@@ -325,4 +325,37 @@ func TestShippedShopsStockCatalogItems(t *testing.T) {
 		}
 	}
 	assert.GreaterOrEqual(t, goods, 3, "the general trader stocks goods, so she buys them")
+}
+
+// Item names are unique, so `equip <name>` never picks between a catalog
+// piece and a shipped one by accident (36b review).
+func TestShippedItemNamesAreUnique(t *testing.T) {
+	seen := map[string]int{}
+	for id, spec := range shippedSpecs(t) {
+		name := strings.ToLower(spec.Name)
+		if other, dup := seen[name]; dup {
+			t.Errorf("items %d and %d are both named %q", other, id, name)
+		}
+		seen[name] = id
+	}
+}
+
+// The shipped shields fit the ladder: no shield of a lower tier protects
+// more than a catalog shield of the tier above it, among shields of the same
+// size class.
+func TestShieldTiersDoNotInvert(t *testing.T) {
+	specs := shippedSpecs(t)
+	var shields []*ItemSpec
+	for _, s := range specs {
+		if s.IsShield() && s.ShieldSize != ShieldTower {
+			shields = append(shields, s)
+		}
+	}
+	for _, a := range shields {
+		for _, b := range shields {
+			if a.Tier < b.Tier && b.ItemId >= 20300 && a.Family == b.Family {
+				assert.LessOrEqual(t, a.DamageReduction, b.DamageReduction, "%s (tier %d) out-protects %s (tier %d)", a.Name, a.Tier, b.Name, b.Tier)
+			}
+		}
+	}
 }
