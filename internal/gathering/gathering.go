@@ -7,6 +7,7 @@ package gathering
 import (
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -470,4 +471,46 @@ func (l Ledger) RoomIDs() []int {
 	}
 	sort.Ints(ids)
 	return ids
+}
+
+// Progress is a company's gathering work in progress (Phase 45): what it is
+// doing and how long is left, for the prompt and the status sheet.
+type Progress struct {
+	Kind      Kind
+	Label     string // "gathering herbs", "fishing"
+	Total     time.Duration
+	Remaining time.Duration
+}
+
+// Percent is how much of the work is done, 0..99 while it runs.
+func (p Progress) Percent() int {
+	if p.Total <= 0 {
+		return 0
+	}
+	done := int((p.Total - p.Remaining) * 100 / p.Total)
+	return min(max(done, 0), 99)
+}
+
+var (
+	progressMu       sync.RWMutex
+	progressProvider func(userID int) (Progress, bool)
+)
+
+// SetProgressProvider installs the module that knows the work in progress;
+// nil removes it.
+func SetProgressProvider(fn func(userID int) (Progress, bool)) {
+	progressMu.Lock()
+	progressProvider = fn
+	progressMu.Unlock()
+}
+
+// ProgressOf is the leader's gathering work in progress, if any.
+func ProgressOf(userID int) (Progress, bool) {
+	progressMu.RLock()
+	fn := progressProvider
+	progressMu.RUnlock()
+	if fn == nil {
+		return Progress{}, false
+	}
+	return fn(userID)
 }

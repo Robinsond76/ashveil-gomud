@@ -161,6 +161,7 @@ func init() {
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(events.PlayerDespawn{}, m.onDespawn)
 	rooms.SetDepletedCheck(m.isDepleted)
+	gathering.SetProgressProvider(m.progress)
 }
 
 func newModule() *GatheringModule {
@@ -498,12 +499,13 @@ func (m *GatheringModule) start(user *users.UserRecord, room *rooms.Room, kind g
 	m.mu.Lock()
 	m.actions[user.UserId] = &action{Kind: kind, RoomID: room.RoomId, Started: now, Due: now.Add(rule.Duration)}
 	m.mu.Unlock()
+	m.announce(user.UserId, kind, "start", int(rule.Duration/time.Second), nil)
 
 	text := fmt.Sprintf("Your company sets about %s. (%s)", verbs[kind].present, durationText(rule.Duration))
 	if kind == gathering.Game && !m.hasTool(user, toolBow) {
 		text = "No one has a bow, crossbow or sling, so your company sets snares instead. (" + durationText(rule.Duration) + ")"
 	}
-	return text + "\nAny command other than look or conditions stops the work."
+	return text + "\nAny command other than look, conditions or status stops the work."
 }
 
 // --- cancelling ---
@@ -513,6 +515,12 @@ var keepsWorking = map[string]bool{
 	"look": true, "l": true, "conditions": true, "gather": true, "fish": true, "hunt": true,
 }
 
+// readsSheet are the status sheet's names (Phase 45): the bare sheet shows
+// the work's progress, so reading it must not stop the work.
+var readsSheet = map[string]bool{
+	"status": true, "sta": true, "stat": true, "stats": true, "score": true, "info": true,
+}
+
 // onInput cancels the work when its leader types anything else.
 func (m *GatheringModule) onInput(e events.Event) events.ListenerReturn {
 	in, ok := e.(events.Input)
@@ -520,7 +528,7 @@ func (m *GatheringModule) onInput(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	fields := strings.Fields(strings.ToLower(in.InputText))
-	if len(fields) == 0 || keepsWorking[fields[0]] {
+	if len(fields) == 0 || keepsWorking[fields[0]] || (len(fields) == 1 && readsSheet[fields[0]]) {
 		return events.Continue
 	}
 	m.cancel(in.UserId, "You stop what you were doing; the work is abandoned.")
@@ -530,12 +538,17 @@ func (m *GatheringModule) onInput(e events.Event) events.ListenerReturn {
 // cancel ends a user's work with nothing gained, telling them why.
 func (m *GatheringModule) cancel(userID int, why string) bool {
 	m.mu.Lock()
-	_, busy := m.actions[userID]
+	cur, busy := m.actions[userID]
+	var kind gathering.Kind
+	if busy {
+		kind = cur.Kind
+	}
 	delete(m.actions, userID)
 	m.mu.Unlock()
 	if busy && why != "" {
 		if user := m.lookupUser(userID); user != nil {
 			user.SendText(why)
+			m.announce(userID, kind, "stopped", 0, []string{why})
 		}
 	}
 	return busy
@@ -553,6 +566,28 @@ func (m *GatheringModule) onDespawn(e events.Event) events.ListenerReturn {
 		m.cancel(evt.UserId, "")
 	}
 	return events.Continue
+}
+
+// announce tells the web client a gathering action started, finished or was
+// stopped (Phase 45); the GMCP module turns it into Room.Gather.
+func (m *GatheringModule) announce(userID int, kind gathering.Kind, phase string, seconds int, lines []string) {
+	events.AddToQueue(events.GatherProgress{UserId: userID, Kind: string(kind), Label: verbs[kind].present, Phase: phase, Seconds: seconds, Lines: lines})
+}
+
+// progress is the leader's work in progress, for the prompt and status sheet.
+func (m *GatheringModule) progress(userID int) (gathering.Progress, bool) {
+	m.mu.Lock()
+	a, ok := m.actions[userID]
+	var snap action
+	if ok {
+		snap = *a
+	}
+	m.mu.Unlock()
+	if !ok {
+		return gathering.Progress{}, false
+	}
+	remaining := snap.Due.Sub(m.clock())
+	return gathering.Progress{Kind: snap.Kind, Label: verbs[snap.Kind].present, Total: snap.Due.Sub(snap.Started), Remaining: max(remaining, 0)}, true
 }
 
 // Active reports whether the user's company is working (tests, views).
@@ -724,7 +759,9 @@ func (m *GatheringModule) finish(user *users.UserRecord, room *rooms.Room, a act
 		mudlog.Error("gathering: save pools", "error", saveErr)
 	}
 	if !spent {
-		user.SendText(fmt.Sprintf("While your company worked, another company picked the %s here clean. You find nothing.", verbs[a.Kind].noun))
+		lost := fmt.Sprintf("While your company worked, another company picked the %s here clean. You find nothing.", verbs[a.Kind].noun)
+		user.SendText(lost)
+		m.announce(user.UserId, a.Kind, "done", 0, []string{lost})
 		return
 	}
 
@@ -810,6 +847,7 @@ func (m *GatheringModule) finish(user *users.UserRecord, room *rooms.Room, a act
 		events.AddToQueue(events.RoomResourcesChanged{RoomId: room.RoomId}) // clients redraw the marker
 	}
 	user.SendText(strings.Join(lines, "\n"))
+	m.announce(user.UserId, a.Kind, "done", 0, lines)
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi>'s company finishes %s.`, user.Character.Name, verbs[a.Kind].present), user.UserId)
 
 	bonus := 0

@@ -532,6 +532,8 @@ func TestTypedCommandsCancelTheWork(t *testing.T) {
 		cancel bool
 	}{
 		{"look", false}, {"l", false}, {"conditions", false}, {"gather herbs", false}, {"fish", false}, {"hunt", false},
+		// Phase 45: the status sheet shows the progress, so reading it keeps the work going.
+		{"status", false}, {"score", false}, {"STAT", false}, {"status train", true},
 		{"say hello", true}, {"go north", true}, {"attack rat", true}, {"inventory", true}, {"camp", true}, {"n", true},
 	}
 	for _, c := range cases {
@@ -782,7 +784,7 @@ func TestTheCommandsStartTheWork(t *testing.T) {
 	for verb, kind := range map[string]gathering.Kind{"herbs": gathering.Herbs, "wood": gathering.Firewood, "fish": gathering.Fishing, "game": gathering.Game} {
 		w.m.cancel(7, "")
 		got := w.heard(func() { _, _ = w.m.gatherCommand(verb, w.user, w.room, 0) })
-		assert.Contains(t, got, "Any command other than look or conditions stops the work", verb)
+		assert.Contains(t, got, "Any command other than look, conditions or status stops the work", verb)
 		cur, busy := w.m.Active(7)
 		assert.True(t, busy, verb)
 		assert.Equal(t, kind, cur, verb)
