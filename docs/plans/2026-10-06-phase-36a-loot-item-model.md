@@ -84,6 +84,11 @@ the drop tables (Phase 37) wire the generator to kills.
    `company compare` numbers beyond what the spec shows, drop tables and
    `autoloot` rarity filters, goods, salvage, `sell junk`, and
    `help goods`/`salvage`/`autoloot`/`equipmenttiers`.
+10. **Also deferred:** merchants refuse rolled gear (`IsSpecial`), so it
+    cannot be sold until the goods slice; GMCP item lists still show base
+    names; Legendary's signature effect and Set bonuses (a Legendary rolls
+    three affixes with one major, a Set two). Phase 38a should add
+    `scribe` to the Witch.
 
 ## Tasks
 
@@ -100,6 +105,6 @@ the drop tables (Phase 37) wire the generator to kills.
   eligibility, distributions, bad data), real `equip`, `spawn loot`, `look`,
   `company equip`/`compare`, camp-rest completion, `scribe` command,
   training gates, the one-time reset, `cargo put`.
-- [ ] Independent full-diff review; fix findings with regressions.
-- [ ] Final checks: `make generate`, `make validate`, `go test -race ./...`,
+- [x] Independent full-diff review; fix findings with regressions.
+- [x] Final checks: `make generate`, `make validate`, `go test -race ./...`,
   `make js-lint`. Project Status entry, PR.

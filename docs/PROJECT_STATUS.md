@@ -1,5 +1,21 @@
 # Ashveil Project Status
 
+**Phase 36a loot item model built (2026-10-06):** gear can roll quality,
+rarity, affixes and a level requirement (`items.Rolled`, `internal/loot`,
+data in `lootaffixes/`); Rare and better arrive unidentified until a Scribe
+reads them (new wizard/cleric skill, `scribe` command, camp-rest reading,
+`autoskill scribe`); `Wear` enforces the level requirement; `spawn loot`
+rolls items for testing. Players do not see drops yet. Plan:
+[36a plan](plans/2026-10-06-phase-36a-loot-item-model.md), with deviations
+and deferrals (merchant sale, GMCP names, signature and set effects).
+Independent review accepted: identify clobbered later enchants (fixed),
+`gearup` proposed refused gear and wore by item id (fixed, uuid wear),
+multi-attack quality scaling (per hit), stale scribe rank wiped after
+training (CanTrain settles first), inaccurate help (Legendary, Set, sale),
+companion name lowercased at camp. Rejected: none outright; GMCP names and
+merchant sale are deferred, not fixed. Verification: `make generate`,
+`make validate`, `go test -race ./...`, `make js-lint`.
+
 **Neutral classes design approved (2026-10-05):** the owner asked for a
 glaive class and classes with no good or evil path, inspired by Ogre Battle
 and Unicorn Overlord. Added the [neutral classes design](designs/2026-10-05-neutral-classes-design.md):
@@ -204,7 +220,7 @@ implemented (handoff rule 20).
 | 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md); complete, merged via [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18) ([measurements](plans/2026-10-05-phase-35a2-measurements.md)); three balance rows retuned in 35b | Owner direction 2026-10-05 | 35a |
 | 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), complete ([measurements](plans/2026-10-05-phase-35b-measurements.md)) | Level impact §2, §4 | 35a, 35a2 |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
-| 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
+| 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification (built, PR open) | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
