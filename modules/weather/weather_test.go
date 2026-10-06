@@ -365,10 +365,11 @@ func TestUserCommandShowsAirTemperature(t *testing.T) {
 	assert.NotContains(t, joinMessages(*messages), "Temperature here:", "no provider, no temperature line")
 }
 
-// TestShippedWorldTracksOldKingsRoadNotDunmar loads the shipped world and
+// TestShippedWorldTracksOldKingsRoadAndDunmar loads the shipped world and
 // the shipped biome tables (Phase 16 decision 6): the fork's forest zone
-// gets weather, Dunmar (a city) does not.
-func TestShippedWorldTracksOldKingsRoadNotDunmar(t *testing.T) {
+// gets weather, and since Phase 46 so does Dunmar (a city), with weather that
+// changes nothing for travel, exertion or rest.
+func TestShippedWorldTracksOldKingsRoadAndDunmar(t *testing.T) {
 	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
 	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
 	rooms.LoadDataFiles()
@@ -387,5 +388,13 @@ func TestShippedWorldTracksOldKingsRoadNotDunmar(t *testing.T) {
 	_, tracked := module.CurrentCondition("Old Kings Road")
 	assert.True(t, tracked, "the proving route's forest zone has weather")
 	_, tracked = module.CurrentCondition("Dunmar")
-	assert.False(t, tracked, "Dunmar is a city: no weather")
+	assert.True(t, tracked, "Dunmar is a city: it has weather to see")
+	table := module.biomes["city"]
+	require.NoError(t, table.Validate())
+	for _, c := range table.Conditions {
+		assert.Equal(t, 100, c.TravelDurationPct, c.Name)
+		assert.Equal(t, 100, c.ExertionPct, c.Name)
+		assert.Equal(t, 100, c.RestRecoveryPct, c.Name)
+		assert.Zero(t, c.VisibilityMod, c.Name)
+	}
 }
