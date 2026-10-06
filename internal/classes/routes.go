@@ -188,7 +188,7 @@ func init() {
 	register(Class{ID: "nightblade", Name: "Nightblade", Lineage: "rogue", Tier: TierElite, Parent: "assassin", Gate: GateEvil,
 		Role: "a marked victim, finishing blows and poison",
 		Ranks: []Rank{
-			rank(30, "Death Mark", "its first target each battle is marked and takes 40% more damage from it; when that foe falls, the mark passes to the most hurt foe in reach", DeathMark, 40),
+			rank(30, "Death Mark", "its first target each battle is marked, left exposed for 2 rounds, and takes 40% more damage from it; when that foe falls, the mark passes to the most hurt foe in reach (exposed again)", DeathMark, 40),
 			rank(35, "Envenom", "its blows poison the target a quarter of the time", Envenom, 25),
 			rank(40, "Keener finish", "Finisher works on a foe at or below 60% health", Finisher, 3),
 			rank(45, "Shadowstep", "once every 3 rounds it may strike the marked foe in the middle row as if it had extended reach; guardians can still intercept", Shadowstep, 3),

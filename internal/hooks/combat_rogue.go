@@ -197,8 +197,11 @@ func deathMark(a actor, u *users.UserRecord, room *rooms.Room, foes map[int]bool
 	rt.MarkSet, rt.MarkedFoe, rt.DeathMark = true, foe.InstanceId, foe.Character.RTState()
 	target := mobHolder(foe)
 	pct := a.char.ClassEffects().Int(classes.DeathMark)
+	// Phase 38c2 review: the mark finds the foe's weak spot, an opening for
+	// the Nightblade's (and any rogue's) Opening Strike.
+	events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.Exposed, Source: `combat`, Triggers: 2})
 	a.holder.say(fmt.Sprintf("You mark %s for death.", target.tag()),
-		"%s marks "+verbatim(target.tag())+" for death.", fmt.Sprintf(" (death mark: +%d%% damage from you)", pct))
+		"%s marks "+verbatim(target.tag())+" for death.", fmt.Sprintf(" (death mark: +%d%% damage from you; exposed, 2 rounds)", pct))
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: a.char.RoomId, Source: a.ref, Target: target.ref, Status: "Death Mark", Outcome: combatstream.OutcomeSucceeded})
 }
 

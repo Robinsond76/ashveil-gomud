@@ -111,13 +111,15 @@ func TestNightbladeMarksItsAimAndTheMarkPassesWhenItFalls(t *testing.T) {
 	tamsin := b.companion(1)
 	aim := aimOf(&tamsin.Character)
 	require.NotZero(t, aim)
-	b.fight()
+	out := b.fight()
+	assert.Contains(t, out, "for death. (death mark: +40% damage from you; exposed, 2 rounds)")
 	rt := tamsin.Character.RT
 	require.NotNil(t, rt)
 	require.NotNil(t, rt.DeathMark, "the aim is marked at the battle's start")
 	foe := mobs.GetInstance(aim)
 	require.NotNil(t, foe)
 	assert.Same(t, foe.Character.RT, rt.DeathMark)
+	assert.True(t, foe.Character.HasBuff(status.Exposed), "the mark leaves its foe exposed")
 
 	foe.Character.Health = 0 // it falls
 	b.toughen()

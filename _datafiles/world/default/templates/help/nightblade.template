@@ -6,9 +6,11 @@ poisons the rest.
 
 <ansi fg="yellow-bold">Ranks</ansi>
 
-  30 Death Mark        its first target each battle is marked and takes
-                       40% more damage from it; when that foe falls,
-                       the mark passes to the most hurt foe in reach
+  30 Death Mark        its first target each battle is marked, left
+                       exposed for 2 rounds (an opening for Opening
+                       Strike), and takes 40% more damage from it;
+                       when that foe falls, the mark passes to the
+                       most hurt foe in reach, exposed again
   35 Envenom           its blows poison the target a quarter of the
                        time
   40 Keener finish     Finisher works on a foe at or below 60% health
