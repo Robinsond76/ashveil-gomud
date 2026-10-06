@@ -674,8 +674,10 @@
             return { x: unit.x, y: unit.y, walking: false, start: 0 };
         }
 
-        function fireAndRest(cx, cy, mult, lit, resting, now) {
-            var fx = cx + 8 * mult, fy = cy + 8 * mult;
+        // fireAndRest draws a camp's fire (bottom right of the tent, or at
+        // <at>) and its resting mark (over the tent).
+        function fireAndRest(cx, cy, mult, lit, resting, now, at) {
+            var fx = at ? at.px : cx + 8 * mult, fy = at ? at.py : cy + 8 * mult;
             if (lit) {
                 drawIcon('map/camp/fire-lit.png', fx, fy, mult, now);
                 drawIcon('map/camp/smoke.png', fx, fy - 12 * mult, mult, now);
@@ -685,11 +687,19 @@
             if (resting) { drawIcon('map/camp/resting.png', cx - 8 * mult, cy - 12 * mult, mult, now); }
         }
 
-        function drawCamp(roomId, ally, lit, resting, innRest, now) {
+        function drawCamp(roomId, ally, lit, resting, innRest, now, occupied) {
             var r = rooms.get(roomId);
             if (!r) { return; }
             var p = gridToCanvas(r.x, r.y);
             var mult = spriteMult(getRoomSize() * zoomScale);
+            var fire = null;
+            if (occupied) {
+                // Your sprite stands on this tile and would hide the camp:
+                // pitch the tent behind your left shoulder and the fire by
+                // your right foot so both still show (40b review).
+                fire = { px: p.px + 14 * mult, py: p.py + 6 * mult };
+                p = { px: p.px - 12 * mult, py: p.py - 8 * mult };
+            }
             if (innRest) {
                 drawIcon('map/camp/inn-rest.png', p.px, p.py, mult, now);
                 return;
@@ -701,17 +711,19 @@
                 ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
                 ctx.beginPath(); ctx.moveTo(p.px, p.py - q); ctx.lineTo(p.px + q, p.py + q); ctx.lineTo(p.px - q, p.py + q); ctx.closePath(); ctx.fill();
             }
-            fireAndRest(p.px, p.py, mult, lit, resting, now);
+            fireAndRest(p.px, p.py, mult, lit, resting, now, fire);
         }
 
-        function drawCamps(now) {
+        // drawCamps draws your camp and your party's. spriteOn says your class
+        // sprite stands on your tile, so a camp there is drawn beside it.
+        function drawCamps(now, spriteOn) {
             if (!campInfo || mapSettings.showCamp === false) { return; }
             (campInfo.allied_camps || []).forEach(function (c) {
-                drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now);
+                drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, spriteOn && c.room_id === currentRoomId);
             });
             if (campInfo.has_camp && campInfo.room_id) {
                 var inn = !!(campInfo.here && campInfo.inn && campInfo.resting);
-                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now);
+                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, spriteOn && campInfo.room_id === currentRoomId);
             }
         }
 
@@ -1067,7 +1079,7 @@
                 }
             });
 
-            drawCamps(nowMs);
+            drawCamps(nowMs, spriteOn);
 
             // Draw party member hearts over rooms (skip the player's current room).
             // Each heart eases from its previous grid position to the new one over HEART_EASE_DURATION.

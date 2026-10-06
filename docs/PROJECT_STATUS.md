@@ -1,6 +1,6 @@
 # Ashveil Project Status
 
-**Phase 40b built: map sprites in the web client (2026-10-06), PR pending review:** the Map
+**Phase 40b complete, merged via [PR #43](https://github.com/Robinsond76/ashveil-gomud/pull/43) (2026-10-06): map sprites in the web client.** The Map
 window draws you as your class sprite (chain: current class, lineage,
 `adventurer`, then the classic red square), a gold here-ring under you and the
 company badge (members present with the leader, hidden alone), all drawn above
@@ -28,6 +28,18 @@ keeps its existing ease; allied camps refresh with the company feed's changed-
 payload sends (no new event); the sprite loader does not yet replace the
 battle screen's own loader (follow-up, no behaviour change). Not changed: other
 players do not appear on the map, no race variants (owner deferrals).
+Review (Opus): decisions hold (whole-multiple scale keeps pixels square;
+inn-rest rule matches the payload; allied camps reach the client within a
+round because the company feed rebuilds every round). No leak: allied camps
+come only from accepted party members (not invitees), party sprites ride the
+existing party-only `Party.Vitals`. Accepted and fixed: a camp on your own
+tile was hidden under your sprite, so it is now pitched behind your left
+shoulder with the fire by your right foot (map-check regression); `help
+worldmap` claimed the map never shows more than `look`, though it shows your
+party's camps anywhere in the zone, reworded. Rejected: continuous redraw
+while sprites show is needed (every map sprite animates, and closing the
+window stops it). Follow-up: companions are not drawn on the map (only the
+badge count).
 
 **Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
 firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`

@@ -45,7 +45,7 @@ and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ans
 
   The settings button on the map has <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red
   square and hearts) and <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker). Both
-  are kept per browser. The map reads what the game already tells you, so
-  it never shows anything <ansi fg="command">look</ansi> would not.
+  are kept per browser. The map shows only what the game already tells
+  you: nothing about anyone outside your party.
 
 See also: <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.

@@ -181,6 +181,18 @@ const noCamp = await page.evaluate(() => { window.MapView.state(); return docume
 await gmcp(page, 'Company.Camp', { has_camp: true, here: false, room: 'x', room_id: id(3, 1), fire_lit: false, allied_camps: [] });
 await tick(page, 300);
 check(noCamp !== await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL()), 'a camp draws its tent');
+// A camp on your own tile is pitched beside your sprite, not hidden under it.
+const leftOfYou = () => page.evaluate(() => {
+  const c = document.getElementById('map-2d-canvas');
+  return Array.from(c.getContext('2d').getImageData(Math.round(c.width / 2) - 40, Math.round(c.height / 2) - 40, 24, 40).data).join();
+});
+const yourTile = (await state(page)).unit;
+await gmcp(page, 'Company.Camp', { has_camp: false, here: false, room: '', room_id: 0, fire_lit: false, allied_camps: [] });
+await tick(page, 300);
+const bare = await leftOfYou();
+await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: false, allied_camps: [] });
+await tick(page, 300);
+check(bare !== await leftOfYou(), 'a camp on your own tile shows beside your sprite');
 
 // --- Allies ---
 await gmcp(page, 'Party.Vitals', {
