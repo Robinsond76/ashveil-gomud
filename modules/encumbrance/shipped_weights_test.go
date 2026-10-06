@@ -89,9 +89,13 @@ func weightRange(itemType string) (lo, hi int) {
 	case "readable", "key", "lockpicks":
 		return 5, 2000
 	}
-	// Mundane objects: up to 20 kg (Phase 52: the large pavilion tent).
-	return 5, 20000
+	return 5, 10000
 }
+
+// heavyObjects are the mundane objects allowed past weightRange's 10 kg, each
+// with its own ceiling, so the guard still catches a typo elsewhere
+// (52 review: the fur-lined and large pavilion tents are meant to be hauled).
+var heavyObjects = map[int]int{300: 12000, 302: 20000}
 
 func TestShippedItemsWeighSomething(t *testing.T) {
 	for _, world := range []string{"default", "empty"} {
@@ -106,6 +110,9 @@ func weighSomething(t *testing.T, items map[int]shippedItem) {
 			continue
 		}
 		lo, hi := weightRange(it.Type)
+		if ceiling, ok := heavyObjects[id]; ok && it.Type == "object" {
+			hi = ceiling
+		}
 		assert.GreaterOrEqual(t, it.Weight, lo, "%d %s (%s)", id, it.Name, it.Type)
 		assert.LessOrEqual(t, it.Weight, hi, "%d %s (%s)", id, it.Name, it.Type)
 	}

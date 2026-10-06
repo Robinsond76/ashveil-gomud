@@ -430,6 +430,8 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   check(await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].every(b => b.disabled)), 'the tent is fixed while resting (52)');
   await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tents: [tents[1]] }));
   check(await page.evaluate(() => document.querySelectorAll('#company-camp [aria-label="Tent choice"]').length) === 0, 'no picker with one tent carried (52)');
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tent_kind: 'canvas', tent_name: 'oiled canvas tent', tent_note: 'shelter' }));
+  check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('An oiled canvas tent is pitched here'), 'a tent name starting with a vowel takes "An" (52 review)');
 }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');

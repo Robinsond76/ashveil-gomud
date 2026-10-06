@@ -217,9 +217,9 @@ func TestCampTentChoosesAmongCarriedTents(t *testing.T) {
 	assert.Contains(t, text, "You pitch the fur-lined tent")
 	camp := w.camp()
 	assert.Equal(t, camping.TentFur, camp.TentKind)
-	assert.Equal(t, camping.TentFur, camp.TentChoice)
+	assert.Equal(t, camping.TentFur, w.m.tentChoices[7])
 	assert.True(t, camp.Tent)
-	assert.Equal(t, camping.TentFur, w.store.saved.Camps[7].TentChoice, "durable")
+	assert.Equal(t, camping.TentFur, w.store.saved.TentChoices[7], "durable")
 	assert.Contains(t, w.m.status(7), "A fur-lined tent is pitched here")
 	assert.Contains(t, camping.CampLines(w.m.RoomCamps(100), 7, nil)[0], "a fur-lined tent")
 
@@ -245,7 +245,32 @@ func TestCampTentRefusals(t *testing.T) {
 	assert.Equal(t, camping.TentCanvas, w.camp().Rest.Tent, "locked for the rest")
 
 	e := newInnEnv(t)
-	assert.Contains(t, e.module.tentCommand(campUser(t, 9, 100), eligibleRoom(), nil), "no camp")
+	assert.Contains(t, e.module.tentCommand(campUser(t, 9, 100), eligibleRoom(), nil), "You carry no tent")
+}
+
+// 52 review: the choice outlives the camp, so a company carrying two tents
+// need not choose again at every camp, and it can choose before camping.
+func TestTentChoiceOutlivesTheCamp(t *testing.T) {
+	w := newRaidWorld(t, 0)
+	tentStock(tentItemID, furTentItemID).install(w.m)
+	w.m.tentCommand(w.user, w.room, []string{"fur"})
+
+	delete(w.m.camps, 7)
+	view := w.m.tentCommand(w.user, w.room, nil)
+	assert.Contains(t, view, "* Fur-lined tent", "with no camp up the view marks the next camp's tent")
+	assert.Contains(t, view, "your next camp pitches")
+	assert.Contains(t, w.m.establish(w.user, w.room), "fur-lined tent", "the next camp pitches the chosen tent")
+
+	delete(w.m.camps, 7)
+	assert.Contains(t, w.m.tentCommand(w.user, w.room, []string{"canvas"}), "Your next camp will pitch the oiled canvas tent")
+	assert.Equal(t, camping.TentCanvas, w.store.saved.TentChoices[7], "chosen without a camp, and saved")
+
+	// It survives a reload.
+	data, err := yaml.Marshal(w.store.saved)
+	require.NoError(t, err)
+	loaded := NewRegistry()
+	require.NoError(t, decodeRegistry(data, loaded))
+	assert.Equal(t, camping.TentCanvas, loaded.TentChoices[7])
 }
 
 func TestCampTentNoTentCarried(t *testing.T) {
@@ -277,7 +302,7 @@ func TestCampTentClearResetsToTheDefault(t *testing.T) {
 	w.m.tentCommand(w.user, w.room, []string{"large"})
 	require.Equal(t, camping.TentLarge, w.camp().TentKind)
 	assert.Contains(t, w.m.tentCommand(w.user, w.room, []string{"clear"}), "You pitch the oiled canvas tent")
-	assert.Empty(t, w.camp().TentChoice)
+	assert.Empty(t, w.m.tentChoices)
 	assert.Equal(t, camping.TentCanvas, w.camp().TentKind)
 }
 

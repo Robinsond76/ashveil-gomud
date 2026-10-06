@@ -83,6 +83,10 @@ type Registry struct {
 	// in (it sets the buff's tier and length), saved with the grant for the
 	// same reason as RestedDuties.
 	RestedTents map[int]camping.TentKind `yaml:"rested_tents,omitempty"`
+	// TentChoices (52 review) is the tent each leader chose with `camp
+	// tent`. Like AutoSharpen it outlives the camp, so a company carrying
+	// two tents need not choose again at every camp.
+	TentChoices map[int]camping.TentKind `yaml:"tent_choices,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -101,6 +105,7 @@ func NewRegistry() *Registry {
 		LastCampRewards:    map[int]time.Time{},
 		RestedDuties:       map[int]map[string]string{},
 		RestedTents:        map[int]camping.TentKind{},
+		TentChoices:        map[int]camping.TentKind{},
 	}
 }
 
@@ -140,6 +145,10 @@ func (r Registry) Clone() Registry {
 		LastCampRewards:    make(map[int]time.Time, len(r.LastCampRewards)),
 		RestedDuties:       make(map[int]map[string]string, len(r.RestedDuties)),
 		RestedTents:        make(map[int]camping.TentKind, len(r.RestedTents)),
+		TentChoices:        make(map[int]camping.TentKind, len(r.TentChoices)),
+	}
+	for leaderUserID, kind := range r.TentChoices {
+		out.TentChoices[leaderUserID] = kind
 	}
 	for leaderUserID, kind := range r.RestedTents {
 		out.RestedTents[leaderUserID] = kind
@@ -251,6 +260,11 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	for leaderUserID, reward := range wire.CampRewards {
 		if leaderUserID > 0 && reward.Op != "" && reward.RoomID > 0 {
 			loaded.CampRewards[leaderUserID] = reward
+		}
+	}
+	for leaderUserID, kind := range wire.TentChoices {
+		if _, known := camping.ParseTent(string(kind)); leaderUserID > 0 && known {
+			loaded.TentChoices[leaderUserID] = kind
 		}
 	}
 	for leaderUserID, kind := range wire.RestedTents {
@@ -422,6 +436,9 @@ type CampingModule struct {
 	restedDuties map[int]map[string]string
 	// restedTents (Phase 52) is the tent a pending Rested grant was slept in.
 	restedTents map[int]camping.TentKind
+	// tentChoices (52 review) is each leader's chosen tent
+	// (Registry.TentChoices).
+	tentChoices map[int]camping.TentKind
 	lastRewards map[int]time.Time
 	// raiders, and the seams that find, check, and send off raid groups.
 	raiders       map[int]raiders
@@ -615,6 +632,7 @@ func (m *CampingModule) saveLocked() error {
 		LastCampRewards:    m.lastRewards,
 		RestedDuties:       m.restedDuties,
 		RestedTents:        m.restedTents,
+		TentChoices:        m.tentChoices,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -676,6 +694,9 @@ func (m *CampingModule) load() {
 	if loaded.RestedTents != nil {
 		m.restedTents = loaded.RestedTents
 	}
+	if loaded.TentChoices != nil {
+		m.tentChoices = loaded.TentChoices
+	}
 	if loaded.RestedDuties != nil {
 		m.restedDuties = loaded.RestedDuties
 	}
@@ -734,8 +755,9 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
-	tentKind, tent := camping.PickTent(m.tentsCarried(user.UserId), "") // read before m.mu: it calls the company module
+	carried := m.tentsCarried(user.UserId) // read before m.mu: it calls the company module
 	m.mu.Lock()
+	tentKind, tent := camping.PickTent(carried, m.tentChoices[user.UserId])
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
 	if !roomEligible(room, m.roomTag()) {
@@ -770,7 +792,7 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 	}
 	m.mu.Lock()
 	camp, ok := m.camps[user.UserId]
-	choice := camp.TentChoice
+	choice := m.tentChoices[user.UserId]
 	var refusal string
 	switch {
 	case !ok:
@@ -1662,7 +1684,7 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		carried := m.gearOf(leaderUserID)
 		gear, bells = carried.labels(m.companyMembers(leaderUserID)), carried.Bells
 		supplies = m.supplyLabels(leaderUserID)
-		tents = m.tentChoices(leaderUserID, carried.TentKind, carried.Tents)
+		tents = m.tentRows(leaderUserID, carried.TentKind, carried.Tents)
 	}
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]

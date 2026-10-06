@@ -184,10 +184,8 @@ type Camp struct {
 	// Tent (Phase 40a3): an oiled canvas tent is pitched at the camp.
 	Tent bool `yaml:"tent,omitempty"`
 	// TentKind (Phase 52) is which tent is pitched; empty with Tent set is
-	// the canvas tent, as before there were kinds. TentChoice is the tent
-	// the leader asked for (`camp tent`), used while the company carries it.
-	TentKind   TentKind `yaml:"tent_kind,omitempty"`
-	TentChoice TentKind `yaml:"tent_choice,omitempty"`
+	// the canvas tent, as before there were kinds.
+	TentKind TentKind `yaml:"tent_kind,omitempty"`
 	// Prepared (Phase 43a) is what the company has queued for its next rest:
 	// fortifying broth and watch incense. A value, replaced whole, never
 	// edited in place.

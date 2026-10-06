@@ -64,7 +64,7 @@ func (m *CampingModule) gearCount(leaderUserID, itemID int) int {
 // it is read before taking m.mu.
 func (m *CampingModule) gearOf(leaderUserID int) campGear {
 	m.mu.Lock()
-	choice := m.camps[leaderUserID].TentChoice
+	choice := m.tentChoices[leaderUserID]
 	m.mu.Unlock()
 	tents := m.tentsCarried(leaderUserID)
 	kind, pitched := camping.PickTent(tents, choice)

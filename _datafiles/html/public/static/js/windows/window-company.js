@@ -1240,7 +1240,9 @@
         }
         pad.appendChild(el('div', null, where));
         if (camp.has_camp && camp.here && camp.tent) {
-            pad.appendChild(el('div', 'cmp-line', 'A ' + (camp.tent_name || 'oiled canvas tent') + ' is pitched here: ' + (camp.tent_note || 'shelter, and no cold while you rest') + '.'));
+            const tentName = camp.tent_name || 'oiled canvas tent';
+            const article = /^[aeiou]/i.test(tentName) ? 'An ' : 'A ';
+            pad.appendChild(el('div', 'cmp-line', article + tentName + ' is pitched here: ' + (camp.tent_note || 'shelter, and no cold while you rest') + '.'));
         }
         if (camp.has_camp && Array.isArray(camp.gear) && camp.gear.length) {
             pad.appendChild(el('div', 'cmp-line', 'Camp gear: ' + camp.gear.join(', ') + '.'));

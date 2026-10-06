@@ -152,6 +152,7 @@ func (m *CampingModule) resetInnState() {
 	m.lastRewards = map[int]time.Time{}
 	m.restedDuties = map[int]map[string]string{}
 	m.restedTents = map[int]camping.TentKind{}
+	m.tentChoices = map[int]camping.TentKind{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }

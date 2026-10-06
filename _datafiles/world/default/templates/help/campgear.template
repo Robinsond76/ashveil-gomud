@@ -73,10 +73,12 @@ the pitched tent is fixed when a rest begins.
 
   <ansi fg="command">camp tent</ansi>                 lists the tents you carry and the one pitched.
   <ansi fg="command">camp tent</ansi> [canvas|fur|camouflaged|large]   pitches one you carry, at your camp,
-                            between rests. <ansi fg="command">camp tent clear</ansi> goes back to the default.
+                            between rests (or for your next camp, with none up).
+                            <ansi fg="command">camp tent clear</ansi> goes back to the default.
   With no choice made, the first you carry is pitched, plain canvas first.
   A tent you chose but no longer carry is replaced by one you do. The
-  choice lasts until the camp is broken. The web client's Company > Camp
+  choice is kept from camp to camp until you change it, and you can make
+  it before you camp. The web client's Company > Camp
   tab shows the pitched tent and a button for each tent you carry.
 
   Whether raiders or thieves come is rolled as the rest begins, so a tent

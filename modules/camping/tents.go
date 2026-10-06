@@ -34,8 +34,8 @@ func (m *CampingModule) pendingTent(leaderUserID int) (camping.Tent, bool) {
 	return camping.TentOf(kind), true
 }
 
-// tentChoices is the tents carried, for the Camp tab's picker.
-func (m *CampingModule) tentChoices(leaderUserID int, pitched camping.TentKind, tents []camping.TentKind) []camping.TentChoice {
+// tentRows is the tents carried, for the Camp tab's picker.
+func (m *CampingModule) tentRows(leaderUserID int, pitched camping.TentKind, tents []camping.TentKind) []camping.TentChoice {
 	out := make([]camping.TentChoice, 0, len(tents))
 	for _, k := range tents {
 		t := camping.TentOf(k)
@@ -56,26 +56,26 @@ func tentWords() []string {
 	return out
 }
 
-// tentCommand shows the tents carried, or pitches one.
+// tentCommand shows the tents carried, or chooses one. The choice outlives
+// the camp (52 review), so it can be made before a camp is pitched; at a
+// camp it re-pitches the tent there, between rests.
 func (m *CampingModule) tentCommand(user *users.UserRecord, room *rooms.Room, args []string) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
 	carried := m.tentsCarried(user.UserId) // before m.mu: it calls the company module
 	m.mu.Lock()
-	camp, ok := m.camps[user.UserId]
+	camp, hasCamp := m.camps[user.UserId]
+	chosen := m.tentChoices[user.UserId]
 	m.mu.Unlock()
-	if !ok {
-		return `You have no camp. Use "camp" to make one.`
-	}
-	pitched, _ := camping.PickTent(carried, camp.TentChoice)
+	pitched, _ := camping.PickTent(carried, chosen)
 	if len(args) == 0 {
-		return tentView(carried, pitched, camp.Tent)
+		return tentView(carried, pitched, hasCamp && camp.Tent)
 	}
-	if camp.Rest != nil && camp.Rest.State == camping.Resting {
+	if hasCamp && camp.Rest != nil && camp.Rest.State == camping.Resting {
 		return "The company is resting: the tent was fixed when the rest began. Choose another for the next rest once it is over."
 	}
-	if room == nil || camp.RoomID != room.RoomId {
+	if hasCamp && (room == nil || camp.RoomID != room.RoomId) {
 		return "Your camp is not here: pitch its tent at the camp."
 	}
 	word := strings.Join(args, " ")
@@ -94,17 +94,32 @@ func (m *CampingModule) tentCommand(user *users.UserRecord, room *rooms.Room, ar
 	}
 	next, has := camping.PickTent(carried, choice)
 	m.mu.Lock()
-	current, ok := m.camps[user.UserId]
-	if !ok || (current.Rest != nil && current.Rest.State == camping.Resting) {
+	current, stillCamp := m.camps[user.UserId]
+	if stillCamp != hasCamp || (stillCamp && current.Rest != nil && current.Rest.State == camping.Resting) {
 		m.mu.Unlock()
 		return "You can't change the tent now."
 	}
-	updated := current
-	updated.TentChoice, updated.Tent, updated.TentKind = choice, has, next
-	m.camps[user.UserId] = updated
+	prevChoice, hadChoice := m.tentChoices[user.UserId]
+	if choice == "" {
+		delete(m.tentChoices, user.UserId)
+	} else {
+		m.tentChoices[user.UserId] = choice
+	}
+	if stillCamp {
+		updated := current
+		updated.Tent, updated.TentKind = has, next
+		m.camps[user.UserId] = updated
+	}
 	defer m.refreshLitRoomsLocked()
 	if err := m.saveLocked(); err != nil {
-		m.camps[user.UserId] = current
+		if stillCamp {
+			m.camps[user.UserId] = current
+		}
+		if hadChoice {
+			m.tentChoices[user.UserId] = prevChoice
+		} else {
+			delete(m.tentChoices, user.UserId)
+		}
 		m.mu.Unlock()
 		return err.Error()
 	}
@@ -113,6 +128,9 @@ func (m *CampingModule) tentCommand(user *users.UserRecord, room *rooms.Room, ar
 		return "You carry no tent to pitch."
 	}
 	t := camping.TentOf(next)
+	if !stillCamp {
+		return fmt.Sprintf("Your next camp will pitch the %s: %s.", t.Name, t.Effect)
+	}
 	return fmt.Sprintf("You pitch the %s: %s.", t.Name, t.Effect)
 }
 
@@ -126,7 +144,8 @@ func hasTent(kinds []camping.TentKind, kind camping.TentKind) bool {
 }
 
 // tentView is `camp tent` with no argument: every tent carried with its
-// effect, and the one pitched.
+// effect, and the one pitched (or, with no camp up, the one a camp would
+// pitch).
 func tentView(carried []camping.TentKind, pitched camping.TentKind, up bool) string {
 	if len(carried) == 0 {
 		return "You carry no tent. A market sells them (help camp gear)."
@@ -135,11 +154,15 @@ func tentView(carried []camping.TentKind, pitched camping.TentKind, up bool) str
 	for _, k := range carried {
 		t := camping.TentOf(k)
 		mark := "  "
-		if up && k == pitched {
+		if k == pitched {
 			mark = "* "
 		}
 		lines = append(lines, fmt.Sprintf("%s%s (%s): %s.", mark, util.CapitalizeFirst(t.Name), t.Short, t.Effect))
 	}
-	lines = append(lines, "* is pitched. Choose with: camp tent ["+strings.Join(tentWords(), "|")+"]. The tent is fixed when a rest begins.")
+	legend := "* is pitched."
+	if !up {
+		legend = "* is the one your next camp pitches."
+	}
+	lines = append(lines, legend+" Choose with: camp tent ["+strings.Join(tentWords(), "|")+"]. The tent is fixed when a rest begins.")
 	return strings.Join(lines, "\n")
 }
