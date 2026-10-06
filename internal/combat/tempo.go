@@ -15,6 +15,10 @@ func Tempo(c *characters.Character) float64 {
 	// Phase 35a2: armor bulk costs turns on top of burden; Strength never
 	// offsets it.
 	rate := (speed + 0.1*float64(c.StatMod("attacks"))) * (1 - 0.35*c.Burden()) * c.BulkTempoFactor()
+	// Phase 39e: a bonded beast moves at a share of a normal tempo.
+	if c.RT != nil && c.RT.Beast != nil && c.RT.Beast.TempoPct > 0 {
+		rate = rate * float64(c.RT.Beast.TempoPct) / 100
+	}
 	return math.Max(float64(cfg.TempoMin), math.Min(float64(cfg.TempoMax), rate))
 }
 

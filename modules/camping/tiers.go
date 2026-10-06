@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/beasts"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -244,6 +246,11 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 		if tier == camping.TierWellRested || campRest {
 			restoreVitals(user.Character, live)
+			// Phase 39e: the rest also closes a bonded beast's wounds and
+			// brings its health back.
+			for _, line := range restBeasts(user, live) {
+				user.SendText(line)
+			}
 		}
 		// Review fix: the leader's limit may have risen.
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: leaderUserID})
@@ -265,6 +272,11 @@ func (m *CampingModule) grantPendingTiers() {
 		// number.
 		if campRest {
 			for _, line := range mendRestDolls(user, live) {
+				user.SendText(line)
+			}
+			// Phase 39g: and refills an Alchemist's flask satchel from the
+			// leader's reagents.
+			for _, line := range brewRestFlasks(user, live) {
 				user.SendText(line)
 			}
 		}
@@ -619,6 +631,79 @@ func mendRestDolls(user *users.UserRecord, live map[int]*characters.Character) [
 				verb = "mends"
 			}
 			lines = append(lines, fmt.Sprintf("%s %s the dolls through the night with %d doll part(s).", masters[i].name, verb, n))
+		}
+	}
+	return lines
+}
+
+// brewRestFlasks refills the company's Alchemists' satchels at the end of a
+// camp rest (Phase 39g) from the leader's reagents, one a flask, the leader's
+// own first and then each live companion's by number.
+func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) []string {
+	type alchemist struct {
+		name string
+		char *characters.Character
+	}
+	var as []alchemist
+	if flasks.IsAlchemist(user.Character) {
+		as = append(as, alchemist{"You", user.Character})
+	}
+	ids := make([]int, 0, len(live))
+	for id := range live {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		if c := live[id]; c != nil && flasks.IsAlchemist(c) {
+			as = append(as, alchemist{c.Name, c})
+		}
+	}
+	if len(as) == 0 {
+		return nil
+	}
+	chars := make([]*characters.Character, len(as))
+	for i, a := range as {
+		chars[i] = a.char
+	}
+	if !flasks.NeedsBrewing(chars...) {
+		return nil
+	}
+	if flasks.Reagents(user.Character) == 0 {
+		return []string{"Your flask satchels stay low: you have no reagents."}
+	}
+	taken, brewed := flasks.Brew(user.Character, chars)
+	for _, itm := range taken {
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
+	}
+	var lines []string
+	for i, b := range brewed {
+		if b.Brewed > 0 {
+			verb := "brew"
+			if as[i].name != "You" {
+				verb = "brews"
+			}
+			lines = append(lines, fmt.Sprintf("%s %s through the night: %d flask(s) from %d reagent(s).", as[i].name, verb, b.Brewed, b.Brewed))
+		}
+	}
+	return lines
+}
+
+// restBeasts brings the company's bonded beasts back to health at the end of
+// a rest (Phase 39e): the leader's own first, then each live companion's by
+// number. Nothing is spent; a rest is the cure.
+func restBeasts(user *users.UserRecord, live map[int]*characters.Character) []string {
+	var lines []string
+	if beasts.Recover(user.Character) {
+		lines = append(lines, fmt.Sprintf("%s is rested and whole again.", user.Character.Beast.Name))
+	}
+	ids := make([]int, 0, len(live))
+	for id := range live {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		if c := live[id]; c != nil && beasts.Recover(c) {
+			lines = append(lines, fmt.Sprintf("%s's %s is rested and whole again.", c.Name, c.Beast.Name))
 		}
 	}
 	return lines

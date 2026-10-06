@@ -36,9 +36,11 @@ a cleric heals, a wizard casts, a witch hexes (<ansi fg="command">help strategy<
 (<ansi fg="command">help shaman</ansi>), a samurai opens a fight half a turn
 ahead (<ansi fg="command">help samurai</ansi>), a gryphon rider dives onto the rows behind the front
 (<ansi fg="command">help gryphon-rider</ansi>), and a warrior
-tackles, a rogue strikes an opening, a ranger aims a shot, a halberdier sweeps a row
-and a Doll Master fights through a wooden doll
-(<ansi fg="command">help halberdier</ansi>, <ansi fg="command">help dollmaster</ansi>, <ansi fg="command">help abilities</ansi>).
+tackles, a rogue strikes an opening, a ranger aims a shot, a halberdier sweeps a row,
+a Doll Master fights through a wooden doll,
+a Beast Tamer sends a living beast in beside it,
+and an alchemist heals and burns with thrown flasks
+(<ansi fg="command">help halberdier</ansi>, <ansi fg="command">help dollmaster</ansi>, <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help alchemist</ansi>, <ansi fg="command">help abilities</ansi>).
 
 Wizards start with Magic Missile, clerics with Minor Heal, witches with
 Slumber and shamans with Call Fog and Gust, the spells they cast in battle
@@ -63,7 +65,9 @@ neutral or evil route, with ranks and talents of its own (<ansi fg="command">hel
   Halberdier medium  none           glaives and spears
   Doll Master light  none           daggers, rods and staffs
   Gryphon Rider medium  none, bucklers  spears and swords
+  Beast Tamer medium none           whips, spears and daggers
   Shaman    light    none           any
+  Alchemist light    none           daggers, staffs and slings
 
 A cleric's holy symbol, carried in the off hand, adds 5% to every heal.
 <ansi fg="command">archetype</ansi> shows each class's health and its Attack and Evasion a level

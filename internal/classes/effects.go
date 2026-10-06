@@ -229,6 +229,21 @@ const (
 	DollNoWear  = "dollnowear"  // a doll that cannot wear armor (a golem's body is its armor)
 	DollAttack  = "dollattack"  // Attack added to each doll's blows
 	DollDamage  = "dolldamage"  // damage added to each doll's blows
+	// The Beast Tamer's lineage (Phase 39e). The beast is alive: it takes its
+	// own turn in a cell of its own.
+	BeastSic       = "beastsic"       // knows Sic: the Tamer's turn sends the beast in with Attack behind it
+	SicAttack      = "sicattack"      // Attack Sic gives (10 when Sic is known)
+	BeastAttack    = "beastattack"    // Attack added to each of the beast's blows
+	Rally          = "rally"          // times a battle the Tamer heals its beast, with no mana
+	PackSense      = "packsense"      // Evasion the Tamer has while its beast stands
+	BeastKind      = "beastkind"      // which beast the route raises: 1 warhound, 2 war bear, 3 drake hatchling
+	BeastHPPct     = "beasthppct"     // the beast's health as a percent of the standard beast's (100 when absent)
+	BeastHPBonus   = "beasthpbonus"   // percent points added to that
+	BeastDamage    = "beastdamage"    // damage added to each of the beast's blows
+	BeastGuards    = "beastguards"    // times a battle the beast guards the most hurt ally
+	BeastBreath    = "beastbreath"    // rounds between the drake's Breath (3 when the drake breathes)
+	BeastBreathCut = "beastbreathcut" // rounds off that
+	BeastHobble    = "beasthobble"    // the beast's bites hobble a wounded foe
 	// The Shaman's lineage (Phase 39c).
 	Chain       = "chain"       // percent of a Lightning bolt a second foe takes
 	FogEvade    = "fogevade"    // Evasion allies gain while its Fog lasts
@@ -244,4 +259,17 @@ const (
 	DivePois   = "divepois"   // a landed Dive poisons the foe
 	DiveSteady = "divesteady" // a Dive costs no Evasion
 	SkyEye     = "skyeye"     // Perception added when its company looks for an ambush in the open
+
+	// The Alchemist's lineage (Phase 39g).
+	FlaskHeal   = "flaskheal"   // percent more a Healing Draught heals
+	FlaskCap    = "flaskcap"    // flasks added to the satchel's size
+	FlaskSplash = "flasksplash" // percent of a draught's heal that also reaches the next most hurt ally
+	FlaskClean  = "flaskclean"  // a draught also takes one harmful status off its patient
+	FlaskFire   = "flaskfire"   // percent more a Fire Flask burns
+	FlaskReach  = "flaskreach"  // extra foes a Fire Flask reaches
+	FlaskBurn   = "flaskburn"   // a Fire Flask leaves the foes it burns alight
+	TonicLong   = "toniclong"   // rounds added to a Bracing Tonic
+	MutagenArmr = "mutagenarmr" // armor a Bracing Tonic adds for the battle (a Mutagen)
+	MutagenCost = "mutagencost" // percent of its health the ally pays for a Mutagen
+	MutagenFree = "mutagenfree" // a Mutagen costs its ally no health
 )

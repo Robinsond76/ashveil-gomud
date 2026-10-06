@@ -1,0 +1,11 @@
+# Phase 39g: an Alchemist's antidote flask, from level 3.
+spellid: antidote
+name: Antidote
+description: A thrown flask cures an ally's poison and bleeding. It costs one flask, no mana and no chant
+type: helpsingle
+school: alchemy
+cost: 0
+flask: 1
+waitrounds: 0
+difficulty: 0
+scope: member

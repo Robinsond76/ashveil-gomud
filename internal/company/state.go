@@ -26,6 +26,11 @@ type MemberState struct {
 	// Dolls are a Doll Master companion's dolls (Phase 39d): name, wear,
 	// broken flag and gear, snapshotted with the companion.
 	Dolls []characters.DollState `yaml:"dolls,omitempty"`
+	// Beast is a Beast Tamer companion's bonded beast (Phase 39e).
+	Beast *characters.BeastState `yaml:"beast,omitempty"`
+	// FlasksSpent is the flasks an Alchemist companion has thrown since it
+	// last brewed (Phase 39g); 0 is a full satchel.
+	FlasksSpent int `yaml:"flasksspent,omitempty"`
 }
 
 // Vitals are a companion's saved health and mana (Phase 33h2). Percent,
@@ -70,6 +75,7 @@ func (s MemberState) Clone() MemberState {
 	out := s
 	out.Wounds = append([]wounds.Wound(nil), s.Wounds...)
 	out.Dolls = characters.CloneDolls(s.Dolls)
+	out.Beast = characters.CloneBeast(s.Beast)
 	if s.Vitals != nil {
 		v := *s.Vitals
 		out.Vitals = &v

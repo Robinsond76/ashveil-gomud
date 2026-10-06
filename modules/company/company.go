@@ -217,6 +217,8 @@ func init() {
 	m.plug.AddUserCommand("class", m.classCommand, false, false)     // Phase 38b: promotion
 	m.plug.AddUserCommand("talent", m.talentCommand, false, false)   // Phase 38b: talents
 	m.plug.AddUserCommand("doll", m.dollCommand, false, false)       // Phase 39d: a Doll Master's dolls
+	m.plug.AddUserCommand("beast", m.beastCommand, false, false)     // Phase 39e: a Beast Tamer's bonded beast
+	m.plug.AddUserCommand("brew", m.brewCommand, false, false)       // Phase 39g: an Alchemist's flasks
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.

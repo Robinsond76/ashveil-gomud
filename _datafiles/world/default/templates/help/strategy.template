@@ -21,10 +21,15 @@ and each companion's. A strategy is a role (what they do) and a target rule
             ward is a member you name, else whoever is most hurt, within
             one column of it (<ansi fg="command">help guardian</ansi>).
 
-Whatever its role, a warrior, rogue, ranger, halberdier, Doll Master or gryphon
-rider also uses its class ability on its own when the moment comes: a tackle,
-an opening strike, an aimed shot, a sweep, a doll's strike, or a dive
-(<ansi fg="command">help abilities</ansi>).
+An Alchemist is a healer that throws flasks instead of casting: a Healing Draught
+for anyone below half health, an Antidote for poison and bleeding while no one is
+in danger, a Bracing Tonic before the blows, and a Fire Flask while more than
+2 flasks remain (<ansi fg="command">help alchemist</ansi>).
+
+Whatever its role, a warrior, rogue, ranger, halberdier, Doll Master, gryphon
+rider or Beast Tamer also uses its class ability on its own when the moment
+comes: a tackle, an opening strike, an aimed shot, a sweep, a doll's strike, a
+dive, or a beast sent in (<ansi fg="command">help abilities</ansi>).
 
 A promoted healer or caster also casts its class spells on its own (Greater Heal,
 Rejuvenation, Grove, Ward, Barkskin, Stoneskin, Bless, Siphon, and the summons of a Hierarch
