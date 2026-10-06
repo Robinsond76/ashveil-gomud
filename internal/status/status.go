@@ -26,6 +26,7 @@ const (
 	Asleep      = 1109 // Phase 38a: the Witch's hexes
 	Paralyzed   = 1110
 	Blighted    = 1111
+	Poisoned    = 13 // the shipped poison buff (Miasma's hex; Phase 38c3 reads it as a hex's mark)
 )
 
 // Buff flags the statuses carry.

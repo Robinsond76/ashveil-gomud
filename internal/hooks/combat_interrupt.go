@@ -112,7 +112,8 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		defender.say(spec.EndYou, spec.EndOther, ` (woken by the blow)`)
 		emitCombat(combatstream.Event{Kind: combatstream.StatusExpired, RoomId: defender.roomId, Target: defender.ref, BuffId: spec.Id, Status: spec.Word})
 	}
-	samuraiBlow(attacker, defender, r) // Phase 39b
+	samuraiBlow(attacker, defender, r)   // Phase 39b
+	wardAfterBlow(attacker, defender, r) // Phase 38c3
 	if interruptsOff {
 		return
 	}

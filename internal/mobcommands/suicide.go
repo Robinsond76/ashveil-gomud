@@ -30,6 +30,11 @@ type PracticeBeaten struct {
 // (mobs.Mob.Practice) is beaten. The tutorial's practice fight counts it.
 var OnPracticeBeaten util.Hook[PracticeBeaten]
 
+// OnFoeFall fires on the game loop when a mob falls for real (not a vanish,
+// a practice foe or a summon), before its death is announced: the wizard and
+// witch elites read what it carried (Phase 38c3).
+var OnFoeFall util.Hook[*mobs.Mob]
+
 // mobNameTag is a mob's name as the death notices print it.
 func mobNameTag(mob *mobs.Mob) string {
 	return `<ansi fg="mobname">` + battle.EnemyDisplayName(mob.InstanceId, mob.Character.Name) + `</ansi>`
@@ -110,6 +115,8 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		return true, nil
 	}
+
+	OnFoeFall.Fire(mob) // Phase 38c3
 
 	// Send a death msg to everyone in the room. Phase 29c: a combat death
 	// ("suicide quiet") has already printed it, in order, from the round.

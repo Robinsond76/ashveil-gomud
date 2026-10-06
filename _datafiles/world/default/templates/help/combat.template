@@ -209,5 +209,5 @@ Healers still heal by spells; ordinary buffs keep their real-time durations.
 Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).
 Maximum health grows only a little with level; skill decides fights (<ansi fg="command">help progression</ansi>).
 Each point of a stat over your opponent's counts the same at every level (<ansi fg="command">help stat-edge</ansi>).
-A promoted character fights with its class's ranks, and some summon allies (<ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help elite</ansi>).
+A promoted character fights with its class's ranks, and some summon allies (<ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help elite</ansi>); the wizard and witch elites also break chants (<ansi fg="command">help archon</ansi>), raise thralls (<ansi fg="command">help necromancer</ansi>), ward and curse (<ansi fg="command">help wise-one</ansi>, <ansi fg="command">help crone-of-ash</ansi>).
 A Samurai opens a fight half a turn ahead, with a first strike that hits harder (<ansi fg="command">help samurai</ansi>).

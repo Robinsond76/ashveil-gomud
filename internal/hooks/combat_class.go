@@ -100,6 +100,7 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 			a.char.Aura.Block = fx.Int(classes.FaithBlock)
 		}
 	}
+	applyEliteAuras(side, rowOf) // Phase 38c3: Mana Shield, Hearth's Peace
 }
 
 // rejuvPass heals each ally that carries Rejuvenation by one round's share

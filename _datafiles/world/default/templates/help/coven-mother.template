@@ -1,0 +1,33 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">coven-mother</ansi>
+
+The Coven Mother is the elite class of the Coven Sage (neutral witch route).
+It asks no alignment at level 30. Where other witches hold the foes they hit,
+the Coven Mother holds the whole group: her hexes land more often, chant
+less, last longer and cost less.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Coven's Will      hexes land 5 points more often (never above 90), and
+                       chants take one round less again
+  35 Lasting hexes     hexes last a round longer (a foe is still never held
+                       more than half a fight)
+  40 Cheaper hexes     hexes cost 20% less mana
+  45 Breaking the boss a boss resists her hexes by 12 instead of 25
+  50 Twin Hex          every third hex she lands also leaves its target
+                       exposed for 1 round
+  55 Surer hexes       hexes land another 5 points more often
+  60 Coven Circle      once a battle, the first hex that would be resisted
+                       lands anyway (a boss still halves its length)
+
+<ansi fg="yellow-bold">How it plays</ansi>
+
+She hexes on her own like any witch (<ansi fg="command">help witch</ansi>). A hex now often lands in
+the round the battle opens. Coven Circle says so when it turns a resist into a
+hold.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Witch elite talents (levels 35, 45, 55): Deep Reserves, Iron Will, Hex Reach.
+See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help witch-routes</ansi>, <ansi fg="command">help hexes</ansi>, <ansi fg="command">help promotion</ansi>.

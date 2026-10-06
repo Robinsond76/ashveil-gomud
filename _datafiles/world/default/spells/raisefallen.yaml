@@ -1,0 +1,10 @@
+# Phase 38c3: the Necromancer's Raise the Fallen. Costs a tenth of the caster's mana (Character.SpellCost); raises a foe that fell in the battle as a thrall, up to the class's uses a battle.
+spellid: raisefallen
+name: Raise the Fallen
+description: Raises a foe that fell in the battle as a thrall, with half its health and its weapon, to fight for the company until the battle ends
+type: helpsingle
+school: restoration
+cost: 10
+waitrounds: 1
+difficulty: 0
+scope: member

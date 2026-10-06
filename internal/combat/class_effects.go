@@ -20,11 +20,20 @@ var unholyRaces = map[string]bool{"undead": true, "ghostly spirit": true, "demon
 var holyRaces = map[string]bool{"angel": true}
 
 // hexStatuses are the statuses a Witch's hexes leave on a foe.
-var hexStatuses = []int{status.Asleep, status.Paralyzed, status.Blighted}
+//
+// Phase 38c3: every status a hex leaves counts (a foe that is poisoned by
+// Miasma, hobbled, knocked down or exposed by a hex is "hexed" too), or the
+// Hag's and Crone of Ash's curse would only ever meet sleepers.
+var hexStatuses = []int{status.Asleep, status.Paralyzed, status.Blighted, status.Poisoned, status.KnockedDown, status.Hobbled, status.Exposed}
+
+// Hexed reports whether a character carries a status a hex leaves.
+func Hexed(c *characters.Character) bool { return hexed(c) }
 
 func hexed(c *characters.Character) bool {
 	for _, id := range hexStatuses {
-		if c.HasBuff(id) {
+		// A status buff left behind by its expiry is not a hex; poison is
+		// the shipped buff, which carries no status spec.
+		if id == status.Poisoned && c.HasBuff(id) || id != status.Poisoned && status.Live(c, id) {
 			return true
 		}
 	}
@@ -96,6 +105,10 @@ func attackRating(atk, def *characters.Character) int {
 	// Phase 38c1: a foe the Warlord has marked is easier for everyone to hit.
 	if def.RT != nil && def.RT.Mark > 0 {
 		rating += def.RT.Mark
+	}
+	// Phase 38c3: a Crone of Ash's Ashen Curse makes a hexed foe easier to hit.
+	if def.RT != nil && def.RT.CurseAtk > 0 && hexed(def) {
+		rating += def.RT.CurseAtk
 	}
 	if rt := atk.RT; rt != nil && rt.Intim > 0 && def.RT != rt.IntimOwner {
 		rating -= rt.Intim

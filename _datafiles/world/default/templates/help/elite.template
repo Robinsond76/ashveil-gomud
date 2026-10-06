@@ -29,7 +29,7 @@ as "Promotion ready" or "Promotion waiting on alignment".
 <ansi fg="yellow-bold">Elite talents</ansi>
 
 From level 35 an elite character's talent slots (35, 45, 55) offer a second
-list, the elite talents, beside the lineage's usual five. See <ansi fg="command">help talents</ansi>.
+list, the elite talents (every elite of a lineage shares one), beside the lineage's usual five. See <ansi fg="command">help talents</ansi>.
 
 <ansi fg="yellow-bold">The elite classes</ansi>
 
@@ -41,11 +41,18 @@ list, the elite talents, beside the lineage's usual five. See <ansi fg="command"
   Hierarch        good      Priest route: Call the Host             <ansi fg="command">help summoning</ansi>
   Elder Druid     neutral   Druid route: groves and healing         <ansi fg="command">help cleric-routes</ansi>
   Demonologist    evil      Blood Priest route: Bind the Fiend      <ansi fg="command">help summoning</ansi>
+  <ansi fg="yellow-bold">Wizard</ansi>
+  Archon          good      Theurgist route: Counterspell, wards    <ansi fg="command">help archon</ansi>
+  Archmage        neutral   Arcanist route: Overchannel, Storm      <ansi fg="command">help archmage</ansi>
+  Necromancer     evil      Warlock route: thralls, Life Drain      <ansi fg="command">help necromancer</ansi>
+  <ansi fg="yellow-bold">Witch</ansi>
+  Wise One        good      Hedge Witch route: Hearthward           <ansi fg="command">help wise-one</ansi>
+  Coven Mother    neutral   Coven Sage route: surer, longer hexes   <ansi fg="command">help coven-mother</ansi>
+  Crone of Ash    evil      Hag route: curses that spread and kill  <ansi fg="command">help crone-of-ash</ansi>
 
 The other lineages' elite classes (Pathfinder, Swordmaster, Nightblade,
-Sentinel, Marksman, Ravager, Archon, Archmage, Necromancer, Wise One, Coven
-Mother, Crone of Ash, and the Samurai's Sword Saint, Shogun and Kenshi) are
-still to come; until they arrive those characters keep their advanced class's
-ranks.
+Sentinel, Marksman, Ravager, and the Samurai's Sword Saint, Shogun and Kenshi)
+are still to come; until they arrive those characters keep their advanced
+class's ranks.
 
 See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help alignment</ansi>.

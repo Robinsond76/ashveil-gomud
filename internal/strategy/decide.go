@@ -21,12 +21,13 @@ const (
 	UseBless   Use = "bless"    // Attack and Evasion for an ally
 	UseSiphon  Use = "siphon"   // drains a foe and heals the most hurt ally
 	UseSummon  Use = "summon"   // calls the class summon at the start of a battle
+	UseRaise   Use = "raise"    // raises a fallen foe as a thrall (a Necromancer, Phase 38c3)
 )
 
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise:
 		return u, true
 	}
 	return "", false
@@ -71,6 +72,7 @@ func DefaultAutoSpells() []Spell {
 		{ID: "entangle", Use: UseHex},
 		{ID: "callhost", Use: UseSummon},
 		{ID: "bindfiend", Use: UseSummon},
+		{ID: "raisefallen", Use: UseRaise},
 	}
 }
 
@@ -120,6 +122,9 @@ type Situation struct {
 	// MaxMana and Reserve (a percent, Phase 33e): an attack spell is cast
 	// only while Reserve percent of MaxMana would remain. Heals ignore it.
 	MaxMana, Reserve int
+	// CanRaise (Phase 38c3) is whether a foe has fallen that the character
+	// may raise as a thrall now: a Necromancer with a raise left.
+	CanRaise bool
 	// CanHex (Phase 38a) reports whether a hex has a foe worth casting it
 	// at: one that doesn't already carry its status, isn't immune to it,
 	// and (Blight) heals. Nil means every hex may be cast.
@@ -140,6 +145,7 @@ const (
 	Row                         // a spell on the formation row of Allies[Ally]
 	Drain                       // Siphon at the foes it reaches
 	Summon                      // call the class summon (the caster is its own target)
+	Raise                       // raise a fallen foe as a thrall (the caster is its own target)
 )
 
 // Action is a role's decision. Spell is the spell to cast (for all but
@@ -182,6 +188,12 @@ func Decide(s Situation) Action {
 	if !s.Summoned && (s.Foes >= SummonFoes || (s.Boss && s.Foes >= 1)) && (s.Role == Healer || s.Role == Caster || s.Role == Controller) {
 		if sp, ok := affordable(UseSummon); ok && (s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana) {
 			return Action{Kind: Summon, Spell: sp.ID}
+		}
+	}
+	// Phase 38c3: a Necromancer raises a foe that has fallen.
+	if s.CanRaise && (s.Role == Healer || s.Role == Caster || s.Role == Controller) {
+		if sp, ok := affordable(UseRaise); ok && (s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana) {
+			return Action{Kind: Raise, Spell: sp.ID}
 		}
 	}
 	switch s.Role {
@@ -262,6 +274,15 @@ func Decide(s Situation) Action {
 		if act, ok := tryBuffs(s, affordable, spare, UseWard); ok {
 			return act
 		}
+		// Phase 38c3: a Warlock's Life Drain, while an ally is hurt enough to
+		// want it (a drain heals the most hurt ally).
+		if sp, ok := affordable(UseSiphon); ok && spare(sp) {
+			for _, a := range s.Allies {
+				if a.HP >= 1 && !a.Pending && a.HP*1000 < DrainBelow*a.MaxHP {
+					return Action{Kind: Drain, Spell: sp.ID, Ally: -1}
+				}
+			}
+		}
 		if s.Foes >= 2 {
 			if sp, ok := affordable(UseAttackAll); ok {
 				return Action{Kind: AttackAll, Spell: sp.ID}
@@ -290,7 +311,10 @@ const (
 	GroveHurt = 2
 	// GroveBelow (thousandths of health) is the scratch an idle Elder Druid
 	// sows a Grove for (Phase 38c1 review).
-	GroveBelow   = 850
+	GroveBelow = 850
+	// DrainBelow (thousandths of health) is the wound a Warlock's Life Drain
+	// is worth casting for (Phase 38c3).
+	DrainBelow   = 750
 	BigHealBelow = 400
 	RejuvAbove   = 350
 )

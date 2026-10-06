@@ -349,6 +349,16 @@ func TestClassHelpTopics(t *testing.T) {
 		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
 		"elite":             {"Warlord", "Paladin", "Dread Knight", "Promotion ready", "Elite talents", "Routes are final"},
 		"warlord":           {"Marked for Ruin", "Battle Cry", "Sunder", "Relentless", "Warlord's Command", "Iron Hide"},
+		// Phase 38c3: the wizard and witch elites.
+		"archon":        {"Counterspell", "Twin ward", "Mana Shield", "Reflection", "Archon's Aegis", "Focused Will"},
+		"archmage":      {"Overchannel", "Quick casting", "Arcane Barrage", "Archmage's Storm", "Deep Reserves"},
+		"necromancer":   {"Raise the Fallen", "Deeper drain", "Grave Chill", "Death's Harvest", "Lich's Bargain", "help thrall"},
+		"thrall":        {"risen", "60%", "never saved", "help necromancer"},
+		"wizard-routes": {"Theurgist", "Arcanist", "Warlock", "Life Drain", "help archon"},
+		"wise-one":      {"Hearthward", "Deep Slumber", "Mend Charm", "Cleansing ward", "Hearth's Peace", "Ward of Life"},
+		"coven-mother":  {"Coven's Will", "Lasting hexes", "Cheaper hexes", "Breaking the boss", "Twin Hex", "Coven Circle"},
+		"crone-of-ash":  {"Ashen Curse", "Rotting Miasma", "Dread everywhere", "Lingering Curse", "Soul Rot", "Crone's Doom"},
+		"witch-routes":  {"Hedge Witch", "Coven Sage", "Hag", "help wise-one", "help crone-of-ash"},
 	}
 	for topic, wants := range pages {
 		assert.Contains(t, listed, topic, "help index lists %s", topic)
@@ -367,6 +377,9 @@ func TestClassHelpTopics(t *testing.T) {
 		"hierarch": "summoning", "demonologist": "summoning",
 		"elites": "elite", "elite-class": "elite", "warlords": "warlord", "battle-cry": "warlord",
 		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
+		"counterspell": "archon", "overchannel": "archmage", "raise-the-fallen": "necromancer", "thralls": "thrall",
+		"theurgist": "wizard-routes", "warlock": "wizard-routes", "hearthward": "wise-one", "coven-circle": "coven-mother",
+		"crone": "crone-of-ash", "soul-rot": "crone-of-ash", "hag": "witch-routes", "coven-sage": "witch-routes",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -375,7 +388,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "promotion", "classes"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "promotion", "classes", "elite", "interrupts", "summoning", "talents"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)

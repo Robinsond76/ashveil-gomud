@@ -754,7 +754,16 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 		return 1
 	}
 	factor := 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
-	return factor * (1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100)
+	factor *= 1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100
+	// Phase 38c3: an Archmage's Overchannel, and an Archon's Mana Shield on
+	// the one the spell strikes.
+	if agg := a.characterRecord.Aggro; agg != nil && agg.Type == characters.SpellCast && agg.SpellInfo.Over > 0 {
+		factor *= 1 + float64(agg.SpellInfo.Over)/100
+	}
+	if r := target.characterRecord.Aura.SpellResolve; r > 0 {
+		factor *= 1 - float64(min(r, 100))/100
+	}
+	return factor
 }
 
 // SpellPower is one roll of a spell's size for this caster (Phase 35b),
@@ -1361,12 +1370,32 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 	if h.Resist == hexes.Vitality {
 		theirs = tc.Stats.Vitality.ValueAdj
 	}
-	if hexRoll(100) >= hexes.LandChance(combat.StatEdge(mine, theirs), boss)+a.characterRecord.ClassEffects().Int(classes.HexLand) {
-		out[`reason`] = `resisted`
-		return out
+	fx := a.characterRecord.ClassEffects()
+	resist := 0
+	if boss {
+		resist = hexes.BossResist
+		if fx.Has(classes.BossHalf) {
+			resist /= 2 // Phase 38c3: Breaking the boss
+		}
+	}
+	if hexRoll(100) >= hexes.LandChanceWith(combat.StatEdge(mine, theirs), resist, fx.Int(classes.HexLand)) {
+		// Phase 38c3: Coven Circle lets the first resisted hex of a battle land.
+		if rt := a.characterRecord.RTState(); fx.Has(classes.Circle) && !rt.CircleUsed {
+			rt.CircleUsed = true
+			out[`circle`] = true
+			line := `    The coven's circle closes round the hex, and it lands anyway. (coven circle)`
+			if a.userId > 0 {
+				SendUserMessage(a.userId, line)
+			}
+			SendRoomMessage(a.characterRecord.RoomId, line, a.userId)
+		} else {
+			out[`reason`] = `resisted`
+			return out
+		}
 	}
 	out[`landed`], out[`reason`] = true, `landed`
 	a.hexWard()
+	a.curseFoe(target, h)
 	if h.Morale {
 		leader := a.userId
 		if a.mobInstanceId > 0 {
@@ -1389,14 +1418,25 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 	}
 	rounds := h.RoundsAt(a.characterRecord.Level, boss, own)
 	if h.Buff == buffAsleepID && rounds > 0 && !boss {
-		rounds += a.characterRecord.ClassEffects().Int(classes.SlumberLong)
+		rounds += fx.Int(classes.SlumberLong)
+	}
+	longer := 0
+	if !boss {
+		longer = fx.Int(classes.HexLong) // Phase 38c3: Lasting hexes
 	}
 	evt := events.Buff{UserId: target.userId, MobInstanceId: target.mobInstanceId, BuffId: h.Buff, Source: `spell`}
 	if rounds > 0 {
+		rounds += longer
 		evt.Triggers = rounds + extra
 	} else {
 		rounds = own
+		if longer > 0 {
+			rounds += longer
+			evt.Triggers = rounds + extra
+		}
 	}
+	a.twinHex(target)
+	a.lingerCurse(target, rounds)
 	events.AddToQueue(evt)
 	hexes.Default.Land(holder, buff, rounds)
 	out[`rounds`] = rounds
@@ -1407,13 +1447,66 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 const buffAsleepID = status.Asleep
 
 // hexWard is a Witch's Warding hex: a landed hex shields the most hurt ally
-// from the next blows, up to an average hit of her level.
+// from the next blows, up to an average hit of her level. A Wise One's
+// Hearthward (Phase 38c3) wards the two, then three, most hurt allies
+// without a ward, each up to 1.5 average hits.
 func (a ScriptActor) hexWard() {
 	fx := a.characterRecord.ClassEffects()
-	if !fx.Has(classes.HexWard) {
+	n := fx.Int(classes.HexWard)
+	if n < 1 {
 		return
 	}
-	if ally := a.MostHurtAlly(false); ally != nil {
-		ally.GrantWard(max(1, int(a.SpellPower("ward"))), max(1, fx.Int(classes.WardBlows)))
+	pct := max(100, fx.Int(classes.HexWardCap))
+	cap := max(1, int(a.SpellPower("ward"))*pct/100)
+	granted := 0
+	for _, ally := range a.HurtAllies(false) {
+		if granted >= n {
+			break
+		}
+		if ally.GrantWard(cap, max(1, fx.Int(classes.WardBlows))) {
+			a.WardGifts(ally)
+			granted++
+		}
+	}
+}
+
+// curseFoe marks a foe a hex landed on for the Crone's riders (Phase
+// 38c3): allies' Attack against it, the poison that doubles, and the fall
+// that frightens its group; it also remembers whose hex it carries, and
+// that the hexed streak of Crone's Doom starts here.
+func (a ScriptActor) curseFoe(target ScriptActor, h hexes.Hex) {
+	fx := a.characterRecord.ClassEffects()
+	if fx == nil || target.characterRecord == nil || target.mobRecord == nil {
+		return
+	}
+	rt := target.characterRecord.RTState()
+	rt.CurseBy = a.characterRecord
+	if n := fx.Int(classes.CurseAtk); n > 0 {
+		rt.CurseAtk = n
+	}
+	if fx.Has(classes.SoulRot) {
+		rt.SoulRot = true
+	}
+	if fx.Has(classes.PoisonX2) && h.Spell == `miasma` {
+		rt.PoisonX2 = true
+	}
+}
+
+// twinHex counts a landed hex, and on every third leaves its target
+// exposed for a round (Phase 38c3).
+func (a ScriptActor) twinHex(target ScriptActor) {
+	fx := a.characterRecord.ClassEffects()
+	rt := a.characterRecord.RTState()
+	rt.HexLands++
+	if fx.Has(classes.TwinHex) && rt.HexLands%3 == 0 {
+		target.GiveStatus(status.Exposed, 1)
+	}
+}
+
+// lingerCurse notes the round a hex ends, so the foe is left exposed a
+// round after it (Lingering Curse, Phase 38c3).
+func (a ScriptActor) lingerCurse(target ScriptActor, rounds int) {
+	if a.characterRecord.ClassEffects().Has(classes.Linger) && target.characterRecord != nil && rounds > 0 {
+		target.characterRecord.RTState().LingerAt = uint64(hexes.Default.Round() + rounds + 1)
 	}
 }

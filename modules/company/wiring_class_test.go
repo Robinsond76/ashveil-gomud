@@ -370,7 +370,7 @@ func TestOldRecordsReadAsUnpromoted(t *testing.T) {
 
 // Phase 38c1: the elite step through the real commands for the six open
 // routes, at the gate boundaries, for the leader.
-func TestEliteGatesForTheSixOpenRoutes(t *testing.T) {
+func TestEliteGatesForTheOpenRoutes(t *testing.T) {
 	for _, tc := range []struct {
 		lineage, advanced, elite, name string
 		good, evil                     bool
@@ -381,6 +381,12 @@ func TestEliteGatesForTheSixOpenRoutes(t *testing.T) {
 		{"cleric", "priest", "hierarch", "Hierarch", true, false},
 		{"cleric", "druid", "elder-druid", "Elder Druid", false, false},
 		{"cleric", "blood-priest", "demonologist", "Demonologist", false, true},
+		{"wizard", "theurgist", "archon", "Archon", true, false},
+		{"wizard", "arcanist", "archmage", "Archmage", false, false},
+		{"wizard", "warlock", "necromancer", "Necromancer", false, true},
+		{"witch", "hedge-witch", "wise-one", "Wise One", true, false},
+		{"witch", "coven-sage", "coven-mother", "Coven Mother", false, false},
+		{"witch", "hag", "crone-of-ash", "Crone of Ash", false, true},
 	} {
 		t.Run(tc.elite, func(t *testing.T) {
 			wait, ok := 0, 0 // the alignments one point short of the gate, and at it
@@ -540,4 +546,21 @@ func TestEliteTalentsThroughTheCommand(t *testing.T) {
 	w.withArchetypes("cleric")
 	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "can't take Iron Hide")
 	assert.Contains(t, w.cmd("talent", "pick font-of-grace confirm"), "You take Font of Grace")
+}
+
+// Phase 38c3: a wizard companion promotes to its elite by the same commands.
+func TestWizardEliteCompanionPromotion(t *testing.T) {
+	w, _ := classBrawl(t, 3, 0)
+	garrick := w.companion(3)
+	garrick.Character.Level = 31
+	setCompanionAlignment(t, 3, -30)
+	require.NoError(t, module.registry.SetCompanionClass(7, 3, "warlock"))
+	w.respawn()
+	view := w.cmd("class", "garrick")
+	assert.Contains(t, view, "Ready to promote: Necromancer. Type class promote #3 necromancer.")
+	assert.Contains(t, w.cmd("class", "promote #3 necromancer confirm"), "Garrick Vane is now a Necromancer (elite). Their route is final.")
+	live, _ := w.companion(3).Character.ClassState()
+	assert.Equal(t, "necromancer", live)
+	assert.Equal(t, 1, w.companion(3).Character.ClassEffects().Int(classes.Raise), "Raise the Fallen at once")
+	assert.Contains(t, w.cmd("company", "status"), "Necromancer (elite")
 }

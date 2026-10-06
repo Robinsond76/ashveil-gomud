@@ -83,6 +83,7 @@ func abilityPass() {
 	clear(abilityTurns)
 	clear(abilityStrikes)
 	clear(abilityDown)
+	takeHeldTurns() // Phase 38c3: an Archon's held turn
 	for k, round := range abilityReady {
 		if round <= abilityRounds {
 			delete(abilityReady, k)
