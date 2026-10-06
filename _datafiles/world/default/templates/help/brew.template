@@ -1,0 +1,17 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">brew</ansi>
+
+<ansi fg="command">brew</ansi> refills every Alchemist's flask satchel in your company from the
+reagents in your pack: one reagent makes one flask, the first Alchemist first
+(you, then your companions by number). It works anywhere out of battle and
+never advances the world clock.
+
+  <ansi fg="command">brew</ansi>
+
+It says how many flasks each Alchemist brewed and how many reagents are left
+(<ansi fg="command">Reagents carried: N.</ansi>). A full satchel takes no reagents. With no reagents it
+says so; with no Alchemist in your company it says no one throws flasks.
+
+A camp rest does the same on its own when it ends (<ansi fg="command">help camp</ansi>). Reagents are sold in
+Dunmar's market and never bought back; each new Alchemist starts with a few.
+
+See also: <ansi fg="command">help alchemist</ansi>, <ansi fg="command">help camp</ansi>.

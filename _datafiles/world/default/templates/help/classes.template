@@ -19,7 +19,7 @@ and choose talents the same way.
 <ansi fg="yellow-bold">The three routes</ansi>
 
 Most lineages have a good route (alignment +30 or higher), an evil route
-(-30 or lower) and a neutral route that asks nothing. The Samurai, Halberdier, Shaman, Doll Master and Gryphon Rider,
+(-30 or lower) and a neutral route that asks nothing. The Samurai, Halberdier, Shaman, Doll Master, Gryphon Rider and Alchemist,
 neutral lineages, each have three routes and no gate at all. The gate is checked
 when you promote. Once you have promoted, you keep your class even if your
 alignment moves; only the next promotion asks again. Routes are final: there
@@ -33,6 +33,7 @@ is no switching to another.
   Gryphon Rider -        Gryphon Knight, Skyscout and Wyvern Rider, all open to any alignment
   Shaman    -            Stormcaller, Mistweaver and Earthspeaker, all open to any alignment
   Doll Master -          Puppeteer, Golemancer and Marionettist, all open to any alignment
+  Alchemist -            Apothecary, Bombardier and Mutagenist, all open to any alignment
   Witch     Hedge Witch  Coven Sage   Hag
   Wizard    Theurgist    Arcanist     Warlock, and the Sorcerer, open to any alignment
   Ranger    Warden       Hunter       Stalker

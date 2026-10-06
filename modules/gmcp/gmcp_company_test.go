@@ -517,3 +517,30 @@ func TestCompanyMemberClass(t *testing.T) {
 	_, has = members[1].(map[string]any)["class_name"]
 	assert.False(t, has, "nor a class name")
 }
+
+// TestCompanyVitalsFlasks (Phase 39g): an Alchemist's satchel travels in the
+// vitals, is absent for everyone else, and a thrown flask alone sends only
+// Company.Vitals.
+func TestCompanyVitalsFlasks(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.Flasks, s.Leader.FlasksMax = 5, 8
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, _ := json.Marshal(p)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	vitals := got["vitals"].(map[string]any)
+	lv := vitals["leader"].(map[string]any)
+	assert.Equal(t, 5.0, lv["flasks"])
+	assert.Equal(t, 8.0, lv["flasks_max"])
+	bv := vitals["companion:1"].(map[string]any)
+	assert.Nil(t, bv["flasks"], "no satchel")
+	assert.Nil(t, bv["flasks_max"])
+
+	f, out := testFeed()
+	f.update(7, s)
+	s.Leader.Flasks = 4
+	f.update(7, s)
+	require.Len(t, *out, 2)
+	assert.Equal(t, "Company.Vitals", (*out)[1].module)
+}

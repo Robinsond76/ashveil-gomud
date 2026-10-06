@@ -28,23 +28,30 @@ const (
 	UseStorm   Use = "storm"   // Lightning, a heavy bolt at one foe (a second for a Stormcaller)
 
 	// Phase 38d: a Sorcerer's burst.
-	UseBurst Use = "burst" // Arcane Lance, one heavy bolt after a long chant
+	UseBurst Use = "burst" // Arcane Lance, one heavy, costly bolt at one foe
+
+	// Phase 39g: an Alchemist's flasks.
+	UseCure  Use = "cure"  // an antidote: takes poison and bleeding off an ally
+	UseFlame Use = "flame" // a Fire Flask at a foe and the one beside it
 )
 
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise, UseWeather, UseStorm, UseBurst:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise, UseWeather, UseStorm, UseCure, UseFlame, UseBurst:
 		return u, true
 	}
 	return "", false
 }
 
 // Spell is a spell cast automatically, what it's for, and its mana cost.
+// Flask (Phase 39g) is the flasks it uses up, an Alchemist's cost instead of
+// mana.
 type Spell struct {
-	ID   string
-	Use  Use
-	Cost int
+	ID    string
+	Use   Use
+	Cost  int
+	Flask int
 }
 
 // DefaultAutoSpells is the shipped list of automatic spells (costs are
@@ -90,6 +97,11 @@ func DefaultAutoSpells() []Spell {
 		{ID: "stoneskin", Use: UseBark},
 		// Phase 38d: the Sorcerer's Lance, ahead of the plain attack spells.
 		{ID: "arcanelance", Use: UseBurst},
+		// Phase 39g: the Alchemist's flasks. Each costs a flask, not mana.
+		{ID: "draught", Use: UseHeal},
+		{ID: "antidote", Use: UseCure},
+		{ID: "tonic", Use: UseBless},
+		{ID: "fireflask", Use: UseFlame},
 	}
 }
 
@@ -117,6 +129,9 @@ type Ally struct {
 	// Phase 38b: what the ally already carries this battle, so a buff goes
 	// to someone without it.
 	Warded, Barked, Rejuv, Blessed bool
+	// Afflicted (Phase 39g) is an ally with poison or bleeding on it, which
+	// an antidote takes off.
+	Afflicted bool
 }
 
 // Situation is what a character's role decides from, each round.
@@ -152,6 +167,11 @@ type Situation struct {
 	// shoots or casts; rain needs Lightning to feed). Nil means always.
 	Weather    string
 	CanWeather func(spellID string) bool
+	// Flasks (Phase 39g) is the flasks the character's satchel holds. A
+	// spell that costs flasks is cast only while it holds enough; a Fire
+	// Flask only while more than FlaskKeep remain, so a heal is never left
+	// without one.
+	Flasks int
 }
 
 // ActionKind is what a character does this round.
@@ -171,6 +191,7 @@ const (
 	Raise                       // raise a fallen foe as a thrall (the caster is its own target)
 	Weather                     // call a battle weather (the caster stands for it; Phase 39c)
 	Storm                       // Lightning at a foe, and a second for a chain (Phase 39c)
+	Flame                       // a Fire Flask at a foe and the one beside it (Phase 39g)
 )
 
 // Action is a role's decision. Spell is the spell to cast (for all but
@@ -199,7 +220,10 @@ type Action struct {
 func Decide(s Situation) Action {
 	affordable := func(use Use) (Spell, bool) {
 		sp, ok := SpellFor(s.Spells, use, s.Knows)
-		if !ok || s.Mana < sp.Cost {
+		if !ok || s.Mana < sp.Cost || s.Flasks < sp.Flask {
+			return Spell{}, false
+		}
+		if use == UseFlame && s.Flasks <= FlaskKeep {
 			return Spell{}, false
 		}
 		if (use == UseAttack || use == UseAttackAll || use == UseBurst) && s.Reserve > 0 && (s.Mana-sp.Cost)*100 < s.Reserve*s.MaxMana {
@@ -241,6 +265,12 @@ func Decide(s Situation) Action {
 			return idleHealer(s, affordable)
 		}
 		worstFrac := fraction(s.Allies[worst].HP, s.Allies[worst].MaxHP)
+		// Phase 39g: an antidote first, while no one is in danger.
+		if worstFrac >= CureAbove {
+			if act, ok := tryCure(s, affordable); ok {
+				return act
+			}
+		}
 		if worstFrac < BigHealBelow {
 			if sp, ok := affordable(UseBigHeal); ok {
 				return Action{Kind: Heal, Spell: sp.ID, Ally: worst}
@@ -363,7 +393,15 @@ const (
 	DrainBelow   = 750
 	BigHealBelow = 400
 	RejuvAbove   = 350
+	// CureAbove (thousandths of health) is the share of health the most
+	// hurt ally must still have for an Alchemist to turn to an antidote
+	// before a heal (Phase 39g).
+	CureAbove = 500
 )
+
+// FlaskKeep is the flasks an Alchemist holds back from its fire, for heals
+// (Phase 39g).
+const FlaskKeep = 2
 
 // idleHealer is what a healer does when no one needs healing: while foes
 // stand, put up a class buff on someone without it, hobble a foe, or drain
@@ -371,6 +409,9 @@ const (
 func idleHealer(s Situation, affordable func(Use) (Spell, bool)) Action {
 	if s.Foes < 1 {
 		return Action{Kind: Swing}
+	}
+	if act, ok := tryCure(s, affordable); ok {
+		return act
 	}
 	spare := func(sp Spell) bool {
 		return s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana
@@ -408,7 +449,26 @@ func idleHealer(s Situation, affordable func(Use) (Spell, bool)) Action {
 	if sp, ok := affordable(UseSiphon); ok && spare(sp) {
 		return Action{Kind: Drain, Spell: sp.ID, Ally: -1}
 	}
+	// Phase 39g: an Alchemist with flasks to spare throws fire.
+	if sp, ok := affordable(UseFlame); ok {
+		return Action{Kind: Flame, Spell: sp.ID}
+	}
 	return Action{Kind: Swing}
+}
+
+// tryCure is an antidote at the first ally that carries poison or bleeding,
+// when the character has one (Phase 39g).
+func tryCure(s Situation, affordable func(Use) (Spell, bool)) (Action, bool) {
+	sp, ok := affordable(UseCure)
+	if !ok {
+		return Action{}, false
+	}
+	for i, a := range s.Allies {
+		if a.HP >= 1 && a.Afflicted && !a.Pending {
+			return Action{Kind: Buff, Spell: sp.ID, Ally: i}, true
+		}
+	}
+	return Action{}, false
 }
 
 // tryBuffs is the first of the buffs, in order, that a known, affordable

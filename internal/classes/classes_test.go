@@ -12,7 +12,7 @@ var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wi
 
 // neutralLineages have no good or evil route (Phase 39b): every route is open
 // to any alignment, at level 10 and level 30.
-var neutralLineages = []string{"dollmaster", "gryphon-rider", "halberdier", "samurai", "shaman"}
+var neutralLineages = []string{"alchemist", "dollmaster", "gryphon-rider", "halberdier", "samurai", "shaman"}
 
 // extraAdvanced counts the advanced routes a lineage has beyond its good,
 // unrestricted and evil three (the catalogue bundles of Phase 38d).
@@ -21,7 +21,7 @@ var extraAdvanced = map[string]int{"wizard": 1}
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Equal(t, []string{"cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, Lineages())
+	assert.Equal(t, []string{"alchemist", "cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, Lineages())
 	for _, l := range baseLineages {
 		adv := Advanced(l)
 		// Phase 38d: the catalogue bundles add routes; the wizard has the

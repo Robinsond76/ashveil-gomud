@@ -42,10 +42,14 @@ type companyVitals struct {
 	// HPLimit is the wound limit (Phase 30b), sent only while below max.
 	HPLimit *int `json:"hp_limit,omitempty"`
 	// MP and MPMax are omitted for a member with no mana to show (32g).
-	MP     *int          `json:"mp,omitempty"`
-	MPMax  *int          `json:"mp_max,omitempty"`
-	Needs  *companyNeeds `json:"needs"`
-	Warmth *string       `json:"warmth"`
+	MP    *int `json:"mp,omitempty"`
+	MPMax *int `json:"mp_max,omitempty"`
+	// Flasks and FlasksMax are an Alchemist's satchel (Phase 39g), omitted
+	// for anyone without one.
+	Flasks    *int          `json:"flasks,omitempty"`
+	FlasksMax *int          `json:"flasks_max,omitempty"`
+	Needs     *companyNeeds `json:"needs"`
+	Warmth    *string       `json:"warmth"`
 }
 
 type companyCell struct {
@@ -200,6 +204,9 @@ func vitalsOf(m companyview.Member) companyVitals {
 	}
 	if m.HasMP {
 		v.MP, v.MPMax = intPtr(m.MP), intPtr(m.MPMax)
+	}
+	if m.FlasksMax > 0 {
+		v.Flasks, v.FlasksMax = intPtr(m.Flasks), intPtr(m.FlasksMax)
 	}
 	if m.Hunger.Known || m.Thirst.Known || m.Fatigue.Known {
 		v.Needs = &companyNeeds{Hunger: needOf(m.Hunger), Thirst: needOf(m.Thirst), Fatigue: needOf(m.Fatigue)}

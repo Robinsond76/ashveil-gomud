@@ -1,0 +1,22 @@
+mobid: 190
+zone: Dunmar
+# Phase 39g recruit base (alchemist). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Alchemist
+  description: A stained apothecary's apprentice with a clinking satchel of stoppered flasks, looking for a company to brew for.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10004
+    head:
+      itemid: 20020
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003

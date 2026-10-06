@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -265,6 +266,11 @@ func (m *CampingModule) grantPendingTiers() {
 		// number.
 		if campRest {
 			for _, line := range mendRestDolls(user, live) {
+				user.SendText(line)
+			}
+			// Phase 39g: and refills an Alchemist's flask satchel from the
+			// leader's reagents.
+			for _, line := range brewRestFlasks(user, live) {
 				user.SendText(line)
 			}
 		}
@@ -619,6 +625,58 @@ func mendRestDolls(user *users.UserRecord, live map[int]*characters.Character) [
 				verb = "mends"
 			}
 			lines = append(lines, fmt.Sprintf("%s %s the dolls through the night with %d doll part(s).", masters[i].name, verb, n))
+		}
+	}
+	return lines
+}
+
+// brewRestFlasks refills the company's Alchemists' satchels at the end of a
+// camp rest (Phase 39g) from the leader's reagents, one a flask, the leader's
+// own first and then each live companion's by number.
+func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) []string {
+	type alchemist struct {
+		name string
+		char *characters.Character
+	}
+	var as []alchemist
+	if flasks.IsAlchemist(user.Character) {
+		as = append(as, alchemist{"You", user.Character})
+	}
+	ids := make([]int, 0, len(live))
+	for id := range live {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		if c := live[id]; c != nil && flasks.IsAlchemist(c) {
+			as = append(as, alchemist{c.Name, c})
+		}
+	}
+	if len(as) == 0 {
+		return nil
+	}
+	chars := make([]*characters.Character, len(as))
+	for i, a := range as {
+		chars[i] = a.char
+	}
+	if !flasks.NeedsBrewing(chars...) {
+		return nil
+	}
+	if flasks.Reagents(user.Character) == 0 {
+		return []string{"Your flask satchels stay low: you have no reagents."}
+	}
+	taken, brewed := flasks.Brew(user.Character, chars)
+	for _, itm := range taken {
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
+	}
+	var lines []string
+	for i, b := range brewed {
+		if b.Brewed > 0 {
+			verb := "brew"
+			if as[i].name != "You" {
+				verb = "brews"
+			}
+			lines = append(lines, fmt.Sprintf("%s %s through the night: %d flask(s) from %d reagent(s).", as[i].name, verb, b.Brewed, b.Brewed))
 		}
 	}
 	return lines
