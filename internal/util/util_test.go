@@ -1174,3 +1174,13 @@ func containsAt(s, sub string, index int) bool {
 	}
 	return true
 }
+
+func TestUseRandForTestPinsRandAndRollDice(t *testing.T) {
+	restore := UseRandForTest(func(n int) int { return n - 1 })
+	assert.Equal(t, 9, Rand(10))
+	assert.Equal(t, 12, RollDice(2, 6), "every die is its top face")
+	restore()
+	for i := 0; i < 50; i++ {
+		assert.Less(t, Rand(3), 3)
+	}
+}

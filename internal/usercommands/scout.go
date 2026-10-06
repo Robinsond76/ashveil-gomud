@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
@@ -185,19 +186,19 @@ func burdenedLine(members []*mobs.Mob) string {
 	return `Burdened: ` + strings.Join(parts, `, `) + `. A burdened fighter dodges less.`
 }
 
-// ratingPhrases say how a zone's band weighs on the viewer's level
+// ratingPhrases say how a zone's band weighs on the company's level
 // (encounters.Rating): the owner's rule that difficulty comes only from
 // entering a zone above your level.
 var ratingPhrases = map[string]string{
 	encounters.RatingEasy:      `Your company should manage.`,
-	encounters.RatingFair:      `A fair test at your level.`,
-	encounters.RatingRisky:     `Risky at your level: expect losses.`,
-	encounters.RatingDangerous: `Dangerous at your level: prepare carefully.`,
+	encounters.RatingFair:      `A fair test at your company's level.`,
+	encounters.RatingRisky:     `Risky at your company's level: expect losses.`,
+	encounters.RatingDangerous: `Dangerous at your company's level: prepare carefully.`,
 }
 
 // zoneBandNote is the zone's level band for look and scout: "Foes in the
 // Dark Forest are of levels 5 to 7." and how that weighs on the viewer's
-// level. Empty for a zone with no band (towns, unfinished zones).
+// company level (37c). Empty for a zone with no band (towns, unfinished zones).
 func zoneBandNote(user *users.UserRecord, room *rooms.Room) string {
 	cfg := rooms.GetZoneConfig(room.Zone)
 	if cfg == nil || !cfg.Encounters.Band.Valid() {
@@ -206,7 +207,7 @@ func zoneBandNote(user *users.UserRecord, room *rooms.Room) string {
 	b := cfg.Encounters.Band
 	out := fmt.Sprintf(`Foes in %s are of levels %d to %d.`, cfg.Name, b.Low, b.High)
 	if user != nil && user.Character != nil {
-		if phrase := ratingPhrases[encounters.Rating(user.Character.Level, b)]; phrase != `` {
+		if phrase := ratingPhrases[encounters.Rating(companyview.LevelFor(user), b)]; phrase != `` {
 			out += ` ` + phrase
 		}
 	}

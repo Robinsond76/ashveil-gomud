@@ -5,7 +5,7 @@ The ~look~ command looks at things in the room around you.
 ## Usage:
 
   ~look~  
-  This looks at the room you are in and tells you about it. In a zone with a level band it also names the levels its foes come at and how that weighs on your level (see ~help encounters~).
+  This looks at the room you are in and tells you about it. In a zone with a level band it also names the levels its foes come at and how that weighs on your company's level (see ~help encounters~).
 
   ~look north~  
   This tries to peer into the room to the north exit.

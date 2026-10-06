@@ -315,6 +315,12 @@ func TestInterceptedBlowFellsTheLeaderThatRound(t *testing.T) {
 // fight, counted in the summary's company damage.
 func TestSpellEventsThroughTheRealRound(t *testing.T) {
 	b := newBrawl(t)
+	// newBrawl lets every blow that can break a chant break it, so a cast
+	// went off only when all the bandits missed that round: about 1 try in
+	// 20, and 60 straight failures (the cap below) came up in roughly 1 run
+	// in 30. Hold the chant against ordinary blows; the casts then fail only
+	// by their own fizzle chance (37c).
+	breakDice(t, 99)
 	got := b.listen()
 	b.aimAt("bandit cutthroat")
 	b.aria.Character.HealthMax.Value = 1000

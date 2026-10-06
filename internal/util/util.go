@@ -174,7 +174,24 @@ func Rand(maxInt int) int {
 	if maxInt < 1 {
 		return 0
 	}
+	if f := randForTest; f != nil {
+		return f(maxInt)
+	}
 	return rand.Intn(maxInt)
+}
+
+// randForTest, when set, replaces the random source of every Rand and
+// RollDice call. Tests set it before the game loop runs, never during.
+var randForTest func(int) int
+
+// UseRandForTest makes Rand (and so RollDice) return f(max), for a test
+// that compares two measurements through the real combat round and must not
+// let dice and quality rolls blur the difference (37c). Call the returned
+// func to restore the random source. For testing only.
+func UseRandForTest(f func(int) int) (restore func()) {
+	prev := randForTest
+	randForTest = f
+	return func() { randForTest = prev }
 }
 
 func LogRoll(name string, rollResult int, targetNumber int) {

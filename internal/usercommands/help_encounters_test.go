@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -71,13 +72,49 @@ func TestZoneBandNoteRatesTheBandAgainstTheViewersLevel(t *testing.T) {
 	room := &rooms.Room{RoomId: 96902, Zone: "Band Test Wilds"}
 	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: room.Zone, Encounters: encounters.ZoneConfig{Band: encounters.Band{Low: 10, High: 12}}}))
 	user := users.NewUserRecord(96902, 0)
-	for level, want := range map[int]string{12: "Your company should manage.", 9: "A fair test", 7: "Risky at your level", 5: "Dangerous at your level: prepare carefully."} {
+	for level, want := range map[int]string{12: "Your company should manage.", 9: "A fair test", 7: "Risky at your company's level", 5: "Dangerous at your company's level: prepare carefully."} {
 		user.Character.Level = level
 		note := zoneBandNote(user, room)
 		assert.Contains(t, note, "Foes in Band Test Wilds are of levels 10 to 12.", "level %d", level)
 		assert.Contains(t, note, want, "level %d", level)
 	}
 	assert.Empty(t, zoneBandNote(user, &rooms.Room{RoomId: 96903, Zone: "No Such Zone"}), "no band, no line")
+}
+
+// bandCompany is a fake company provider listing fixed companion levels.
+type bandCompany struct{ levels []int }
+
+func (bandCompany) FormationFor(int) (company.Formation, bool) { return company.Formation{}, false }
+func (bandCompany) InstanceFor(int, int) (int, bool)           { return 0, false }
+func (bandCompany) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) {
+	return 0, "", false
+}
+func (b bandCompany) CompanyMembers(int) ([]company.MemberView, bool) {
+	out := make([]company.MemberView, len(b.levels))
+	for i, l := range b.levels {
+		out[i] = company.MemberView{ID: i + 1, Level: l, Status: company.MemberPresent}
+	}
+	return out, true
+}
+
+// TestZoneBandNoteRatesByTheCompanyLevel (37c): a leader under the band
+// whose company is of band level reads "should manage"; and the other way.
+func TestZoneBandNoteRatesByTheCompanyLevel(t *testing.T) {
+	room := &rooms.Room{RoomId: 96905, Zone: "Company Band Wilds"}
+	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: room.Zone, Encounters: encounters.ZoneConfig{Band: encounters.Band{Low: 10, High: 12}}}))
+	user := users.NewUserRecord(96905, 0)
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+
+	user.Character.Level = 6
+	company.SetFormationProvider(bandCompany{levels: []int{12, 12, 12, 12}}) // (6+48)/5 = 10.8 -> 11
+	assert.Contains(t, zoneBandNote(user, room), "Your company should manage.")
+
+	user.Character.Level = 12
+	company.SetFormationProvider(bandCompany{levels: []int{3, 3, 3, 3}}) // (12+12)/5 = 4.8 -> 5
+	assert.Contains(t, zoneBandNote(user, room), "Dangerous at your company's level")
+
+	company.SetFormationProvider(nil) // no company readable: the leader alone
+	assert.Contains(t, zoneBandNote(user, room), "Your company should manage.")
 }
 
 // TestLookShowsTheZoneBand (37b): the real look command prints the band.

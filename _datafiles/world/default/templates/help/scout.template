@@ -50,7 +50,7 @@ the same way, with the same words, and keeps it current (<ansi fg="command">help
 
 With no enemies in sight, <ansi fg="command">scout</ansi> tells you when a room is dangerous: it can
 spring a random encounter on you (<ansi fg="command">help encounters</ansi>), and names the
-levels the zone's foes come at and how that weighs on your level. <ansi fg="command">look</ansi>
+levels the zone's foes come at and how that weighs on your company's level. <ansi fg="command">look</ansi>
 shows the same line in any zone with a level band.
 
 You see what <ansi fg="command">look</ansi> sees: hidden members are left out, and in the dark

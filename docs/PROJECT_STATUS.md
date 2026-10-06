@@ -1,5 +1,41 @@
 # Ashveil Project Status
 
+**Phase 37c built: test stability and company-level zone rating (2026-10-06):**
+(1) The zone band rating (easy, fair, risky, dangerous) in `look`, `scout`,
+GMCP `Room.Info.levelband` and the web header now rates the **company's
+level**: the rounded average of the leader and every companion, the fallen
+included (`companyview.CompanyLevel`, the same "average level" the enemy
+coordination tiers use; the leader alone when the company can't be read).
+The web client's header refreshes when that level changes (a level-up, a
+recruit, a dismissal): the GMCP room module resends `Room.Info` on a
+company-level change inside a banded zone. Help (`encounters`, `scout`,
+`look`), the web tooltip and the tutorial hint say "your company's level".
+(2) Flaky tests, found by repeated and shuffled runs of `modules/company`
+(`go test -race -count=N -shuffle=on`) and fixed at the cause:
+`TestCompanyMovesAsOneThroughGo` (the moving, recruit and roster tests write
+different Dunmar 2003/2001 room files into one process-wide room cache, so
+whichever ran first left the others its rooms; now `freshDunmarRooms` evicts
+them before and after each); `TestEncounterFightEndsInOneCacheAndTheSpoilsLine`
+and likely `TestAttackOnAWaitingGroupIsRefused` (corpses and gold left on the
+shared brawl road by earlier tests; `newBrawl` now clears them; the waiting
+group test failed once in a shuffled run and never in 700 solo runs, so this
+is a likely cause, not a proven one);
+`TestBalanceMirrorClericIsACasterWhoCastsNothing` (about 1 run in 40: the
+balance fixture installs the real random aim roll after the test pinned its
+own, so the coordination tier's noise floor sent an enemy at a random
+member; the pin now comes after the fixture, 250 of 250);
+`TestAimedShotGrowsWithLevel` (dice and blow quality noise against a
+tight margin; the test now pins `util.Rand` through the new
+`util.UseRandForTest`); `TestSpellEventsThroughTheRealRound` (every
+chant-breaking blow broke the cast, so about 1 try in 20 went off and 60
+straight failures came up in about 1 run in 30; chants are now held against
+ordinary blows, and a try succeeds about 28% of the time); and a nil map
+panic in `TestRosterThroughPluginsLoad` (an event queued by an earlier test
+fired before the test reset its message map). Not reproduced: the
+`modules/archetype` failure (25 shuffled runs clean; the test is unnamed) and
+`TestAlliedFinalEnemyPaysAfterCombatClosesBattle` (failed once in one
+shuffled run, clean on the same seed afterwards).
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
@@ -720,6 +756,7 @@ their dependencies and those decisions is the
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
+| 37c | Test stability (flaky tests found by shuffled and repeated runs) and the zone band rating by company level, refreshed on level change. Built, in review | Roadmap 2026-10-06 | 37b |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |

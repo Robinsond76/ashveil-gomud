@@ -16,10 +16,12 @@ normal battle begins with your company set up as it is.
 
 <ansi fg="yellow-bold">The zone's level band</ansi>
   <ansi fg="command">look</ansi> and <ansi fg="command">scout</ansi> name the levels a zone's foes come at ("Foes in the Dark
-  Forest are of levels 5 to 7") and how that weighs on your level, and the
-  web client's room panel shows it as "Lv 5-7" beside the zone's name:
-  green is easy, yellow fair, orange risky, red dangerous.
-    easy       your level is at or above the band's low end
+  Forest are of levels 5 to 7") and how that weighs on your company's level
+  (the average of you and your companions, rounded), and the web client's
+  room panel shows it as "Lv 5-7" beside the zone's name and updates it
+  when a level comes: green is easy, yellow fair, orange risky, red
+  dangerous.
+    easy       your company's level is at or above the band's low end
     fair       one or two levels under it: a fair test
     risky      three or four under: expect losses
     dangerous  five or more under: prepare carefully (formation,

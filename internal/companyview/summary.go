@@ -365,3 +365,30 @@ func (s Summary) WarnWords() []string {
 	}
 	return words
 }
+
+// CompanyLevel is the level a zone band is rated against (Phase 37c): the
+// average of the leader and every companion, rounded to the nearest level
+// (the same "average level" the enemy coordination tiers use, 33i2). The
+// fallen still count; they come back. A company that can't be read rates
+// by the leader alone.
+func CompanyLevel(s Summary) int {
+	sum, n := s.Leader.Level, 1
+	if s.CompanyKnown {
+		for _, m := range s.Companions {
+			if m.Level > 0 {
+				sum += m.Level
+				n++
+			}
+		}
+	}
+	return max((sum+n/2)/n, 1)
+}
+
+// LevelFor is CompanyLevel for a user's live company. Call it on the game
+// loop, like For.
+func LevelFor(user *users.UserRecord) int {
+	if user == nil || user.Character == nil {
+		return 1
+	}
+	return CompanyLevel(For(user))
+}

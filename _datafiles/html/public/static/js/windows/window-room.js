@@ -485,7 +485,7 @@
                 bandEl.textContent = '\u00b7 Lv ' + band.low + '\u2013' + band.high;
                 bandEl.className = band.rating || '';
                 bandEl.title = 'Foes here are levels ' + band.low + ' to ' + band.high +
-                    (band.rating ? ' (' + band.rating + ' at your level)' : '');
+                    (band.rating ? ' (' + band.rating + ' at your company\'s level)' : '');
             } else {
                 bandEl.textContent = '';
                 bandEl.className = '';
