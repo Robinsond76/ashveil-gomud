@@ -122,6 +122,15 @@ await events({ fight: 1, round: 1, events: [
 s = await state();
 check(unitOf(s, 'm:1').statuses.includes('bleeding'), 'a status applied shows on its unit');
 check(unitOf(s, 'companion:3').casting === 'fire bolt', 'a chanting caster is marked');
+{
+  // Phase 40h: the status marks are named when the figure is hovered.
+  const b = unitOf(s, 'm:1').at;
+  const box = await page.locator('#battle-screen canvas').boundingBox();
+  await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
+  const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
+  check(/, bleeding/.test(cap), 'hovering a figure names its statuses: ' + cap);
+  await page.mouse.move(0, 0);
+}
 await events({ fight: 1, round: 2, events: [
   { seq: 5, kind: 'status-expired', tgt: 'm:1', status: 'bleeding' },
   { seq: 6, kind: 'cast-complete', src: 'companion:3', outcome: 'cast' },

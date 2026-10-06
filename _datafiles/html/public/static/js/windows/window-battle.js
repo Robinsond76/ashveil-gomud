@@ -703,7 +703,7 @@
     // Outcome and open/close
     // ---------------------------------------------------------------------
 
-    const HINT = 'Hover or tap a figure for its name, health, and whom it strikes.';
+    const HINT = 'Hover or tap a figure for its name, health, statuses, and whom it strikes.';
 
     const OUTCOMES = { victory: 'Victory', defeat: 'Defeat', 'broken-off': 'The company breaks off' };
 
@@ -943,6 +943,12 @@
         if (u.side !== 'enemy' && u.fallen) { text += ', fallen'; }
         if (u.side === 'company' && !u.fallen && battle && battle.nerve === 'faltering') { text += ', shaken'; }
         if (u.yielded) { text += ', surrendered'; }
+        // Phase 40h: the coloured marks over a figure are named here, in the
+        // words the narration uses (a status the screen draws is a status
+        // the server has told in text).
+        if (u.side !== 'ally' && !u.fallen && u.statuses.size) {
+            text += ', ' + Array.from(u.statuses).map(s => s.replace(/-/g, ' ')).join(', ');
+        }
         const t = targetOf(u.id);
         if (t && units.get(t)) { text += ', striking ' + units.get(t).label; }
         captionNode.textContent = text;
