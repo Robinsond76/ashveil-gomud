@@ -1,0 +1,10 @@
+itemid: 300
+name: fur-lined tent
+namesimple: fur tent
+description: A canvas tent lined with sewn furs, pegged and corded like any other.
+  Pitched at camp, it shuts the weather out of a rest entirely, not just halves
+  it. It is heavy, and a horse is welcome (help camp gear).
+type: object
+subtype: mundane
+value: 90
+weight: 12000

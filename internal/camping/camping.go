@@ -70,6 +70,8 @@ type RestSession struct {
 	// began; a member with no entry slept. Replaced whole, never edited in
 	// place.
 	Duties map[string]string `yaml:"duties,omitempty"`
+	// Tent (Phase 52) is the tent pitched when the rest began, locked then.
+	Tent TentKind `yaml:"tent,omitempty"`
 }
 
 // Theft is thieves planned at rest start (Phase 40a4): they work unseen
@@ -181,6 +183,9 @@ type Camp struct {
 	Embers bool `yaml:"embers,omitempty"`
 	// Tent (Phase 40a3): an oiled canvas tent is pitched at the camp.
 	Tent bool `yaml:"tent,omitempty"`
+	// TentKind (Phase 52) is which tent is pitched; empty with Tent set is
+	// the canvas tent, as before there were kinds.
+	TentKind TentKind `yaml:"tent_kind,omitempty"`
 	// Prepared (Phase 43a) is what the company has queued for its next rest:
 	// fortifying broth and watch incense. A value, replaced whole, never
 	// edited in place.

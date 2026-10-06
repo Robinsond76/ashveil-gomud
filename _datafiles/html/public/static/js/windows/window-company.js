@@ -1386,6 +1386,31 @@
         return block;
     }
 
+    // tentsBlock is the tent picker (Phase 52): one button per tent carried,
+    // shown when there is a choice. The pitched tent is fixed for a running
+    // rest, so the buttons are disabled then.
+    function tentsBlock(camp) {
+        const block = el('section', 'cmp-block');
+        block.setAttribute('aria-label', 'Tent');
+        block.appendChild(el('h4', null, camp.resting ? 'Tent (fixed for this rest)' : 'Tent'));
+        const line = el('div', 'cmp-duty');
+        line.setAttribute('role', 'group');
+        line.setAttribute('aria-label', 'Tent choice');
+        camp.tents.forEach(t => {
+            const b = el('button', 'cmp-btn', t.name.charAt(0).toUpperCase() + t.name.slice(1));
+            b.type = 'button';
+            b.setAttribute('data-focus', 'tent|' + t.kind);
+            b.setAttribute('aria-pressed', t.pitched ? 'true' : 'false');
+            b.title = t.name + ': ' + t.effect + ' (' + t.command + ')';
+            if (camp.resting) { b.disabled = true; }
+            b.addEventListener('click', () => send(t.command));
+            line.appendChild(b);
+        });
+        block.appendChild(line);
+        block.appendChild(el('div', 'cmp-note', 'Each tent trades something for something (help camp gear).'));
+        return block;
+    }
+
     function buildCamp(panel) {
         const camp = (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Camp) || {};
         const data = CompanyData.read();
@@ -1401,7 +1426,9 @@
         }
         pad.appendChild(el('div', null, where));
         if (camp.has_camp && camp.here && camp.tent) {
-            pad.appendChild(el('div', 'cmp-line', 'An oiled canvas tent is pitched here: shelter, and no cold while you rest.'));
+            const tentName = camp.tent_name || 'oiled canvas tent';
+            const article = /^[aeiou]/i.test(tentName) ? 'An ' : 'A ';
+            pad.appendChild(el('div', 'cmp-line', article + tentName + ' is pitched here: ' + (camp.tent_note || 'shelter, and no cold while you rest') + '.'));
         }
         if (camp.has_camp && Array.isArray(camp.gear) && camp.gear.length) {
             pad.appendChild(el('div', 'cmp-line', 'Camp gear: ' + camp.gear.join(', ') + '.'));
@@ -1468,6 +1495,10 @@
         // own buttons (51 review: above them it pushed Rest off a phone).
         if (camp.has_camp && camp.here && Array.isArray(camp.duties) && camp.duties.length) {
             pad.appendChild(dutiesBlock(camp));
+        }
+
+        if (camp.has_camp && camp.here && Array.isArray(camp.tents) && camp.tents.length > 1) {
+            pad.appendChild(tentsBlock(camp));
         }
 
         const members = data.members.filter(m => m && m.status !== 'dead');
