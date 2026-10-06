@@ -397,7 +397,7 @@ func (m *StrategyModule) spellsFor(mb member, role domain.Role) []string {
 	var uses []domain.Use
 	switch role {
 	case domain.Healer:
-		uses = []domain.Use{domain.UseHeal, domain.UseHealAll}
+		uses = []domain.Use{domain.UseHeal, domain.UseHealAll, domain.UseCure, domain.UseBless, domain.UseFlame}
 	case domain.Caster:
 		uses = []domain.Use{domain.UseWeather, domain.UseStorm, domain.UseAttack, domain.UseAttackAll}
 	case domain.Controller:
@@ -415,6 +415,10 @@ func (m *StrategyModule) spellsFor(mb member, role domain.Role) []string {
 			continue
 		}
 		if name, cost, ok := m.env.spellInfo(sp.ID); ok {
+			if cost == 0 { // Phase 39g: an Alchemist's spell costs a flask, not mana
+				out = append(out, fmt.Sprintf(`<ansi fg="spellname">%s</ansi> (a flask)`, name))
+				continue
+			}
 			out = append(out, fmt.Sprintf(`<ansi fg="spellname">%s</ansi> (%d mana)`, name, cost))
 		}
 	}

@@ -1,0 +1,16 @@
+# Phase 39g: the Alchemist's signature. A thrown flask, no chant and no mana.
+spellid: draught
+name: Healing Draught
+description: A thrown flask heals an ally for 8+2d4, plus 1 per 6 levels. It costs one flask, no mana and no chant
+type: helpsingle
+school: alchemy
+cost: 0
+flask: 1
+waitrounds: 0
+difficulty: 0
+scope: member
+allowdowned: true
+power:
+  base: 8
+  dice: 2d4
+  leveldiv: 6

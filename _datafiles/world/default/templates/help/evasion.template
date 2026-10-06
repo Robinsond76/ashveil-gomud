@@ -21,6 +21,7 @@ who wins a fight between fighters of different levels.
   <ansi fg="yellow">Cleric, Wizard, Witch</ansi>  Attack 0.7   Evasion 0.75   (level 30: 21 / 22)
   <ansi fg="yellow">Doll Master</ansi>        Attack 0.7   Evasion 0.8    (level 30: 21 / 24)
   <ansi fg="yellow">Shaman</ansi>             Attack 0.7   Evasion 0.75   (level 30: 21 / 22)
+  <ansi fg="yellow">Alchemist</ansi>          Attack 0.75  Evasion 0.85   (level 30: 22 / 25)
   <ansi fg="yellow">Enemies</ansi>            Attack {{ config "GamePlay.Combat.DefaultAttackRate" }}     Evasion {{ config "GamePlay.Combat.DefaultEvasionRate" }}
 
 Fractions round down. A trained enemy captain or a clumsy brute may be a

@@ -134,6 +134,7 @@ type Character struct {
 	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
 	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
 	Dolls               []DollState                    `yaml:"dolls,omitempty"`            // Ashveil Phase 39d: a Doll Master's durable dolls
+	FlasksSpent         int                            `yaml:"flasksspent,omitempty"`      // Ashveil Phase 39g: flasks an Alchemist has thrown since it last brewed (0 is a full satchel)
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character

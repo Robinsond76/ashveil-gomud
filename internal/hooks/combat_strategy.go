@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -103,6 +104,8 @@ func strategyPass() {
 			if rt := a.char.RT; rt != nil {
 				allies[i].Warded, allies[i].Barked, allies[i].Rejuv, allies[i].Blessed = rt.Ward > 0, rt.Bark > 0, rt.Rejuv > 0, rt.Bless > 0
 			}
+			// Phase 39g: poison or bleeding an Alchemist's antidote takes off.
+			allies[i].Afflicted = a.char.HasBuffFlag("poison") || a.char.HasBuffFlag("bleeding")
 		}
 		// Phase 33e: a heal already chanting covers its patients, so a
 		// second healer turns to someone else.
@@ -145,6 +148,8 @@ func strategyPass() {
 				// Phase 39c: a Shaman calls a weather when none is up.
 				Weather:    string(b.Weather.Kind),
 				CanWeather: weatherReady(a, foes),
+				// Phase 39g: an Alchemist throws flasks while its satchel holds them.
+				Flasks: flasks.Remaining(a.char),
 			})
 			info, ok := autoSpellTargets(action, a, side, g, foes)
 			if !ok {
@@ -164,6 +169,7 @@ func costedAutoSpells() []strategy.Spell {
 	for _, sp := range strategy.AutoSpells() {
 		if data := spells.GetSpell(sp.ID); data != nil {
 			sp.Cost = data.Cost
+			sp.Flask = data.Flask // Phase 39g
 			out = append(out, sp)
 		}
 	}
@@ -325,6 +331,14 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 				}
 			}
 		}
+	case strategy.Flame:
+		att := a.att
+		att.Spell = true // a flask reaches anyone
+		id, ok := enemyparty.Aim(g, att)
+		if !ok {
+			return info, false
+		}
+		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, flameTargets(a, g, foes, id)...)
 	case strategy.Attack, strategy.Storm:
 		att := a.att
 		att.Spell = true // a spell reaches anyone
@@ -359,7 +373,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 // the cast-start event. The caster's aim is remembered, to turn back to.
 func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId int) bool {
 	sp := spells.GetSpell(spellId)
-	if sp == nil || a.char.Mana < a.char.SpellCost(sp) {
+	if sp == nil || a.char.Mana < a.char.SpellCost(sp) || flasks.Remaining(a.char) < sp.Flask {
 		return false
 	}
 	info = effecttargets.Resolve(a.who.userId, a.who.mobId, info)
@@ -392,6 +406,7 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		announceOverchannel(a, pct, mana, storm)
 	}
 	a.char.Mana -= cost
+	a.char.FlasksSpent += sp.Flask // Phase 39g: a thrown flask is used up
 	wait := sp.WaitRounds
 	if sp.Type == spells.HarmSingle || sp.Type == spells.HarmMulti {
 		// Phase 38c3: Quick casting trims every other damage spell's chant.
@@ -488,8 +503,10 @@ func coverHeal(allies []strategy.Ally, action strategy.Action) {
 				allies[action.Ally].Warded = true
 			case "barkskin", "stoneskin":
 				allies[action.Ally].Barked = true
-			case "bless":
+			case "bless", "tonic":
 				allies[action.Ally].Blessed = true
+			case "antidote":
+				allies[action.Ally].Afflicted = false
 			}
 		}
 	case strategy.Heal:

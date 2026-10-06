@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
@@ -55,6 +56,9 @@ type Member struct {
 	// not out (Phase 32g).
 	HasMP     bool
 	MP, MPMax int
+	// FlasksMax is an Alchemist's satchel size and Flasks what it still
+	// carries (Phase 39g); FlasksMax 0 means the member has none.
+	Flasks, FlasksMax int
 	// Hunger, Thirst, and Fatigue are unknown for the dead and whenever
 	// survival can't report them.
 	Hunger, Thirst, Fatigue Need
@@ -212,7 +216,8 @@ func (src sources) summary(user *users.UserRecord) Summary {
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
 		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value, HPLimit: c.HealthLimit(),
-		HasMP: c.ManaMax.Value > 0, MP: c.Mana, MPMax: c.ManaMax.Value}
+		HasMP: c.ManaMax.Value > 0, MP: c.Mana, MPMax: c.ManaMax.Value,
+		Flasks: flasks.Remaining(c), FlasksMax: flasks.Capacity(c)}
 	if f, ok := src.formation(uid); ok {
 		s.Leader.Row, s.Leader.Col, s.Leader.Placed = f.Find(company.LeaderMemberKey)
 		if !s.Leader.Placed {
@@ -275,6 +280,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 						m.HPLimit = m.HPMax
 					}
 					m.HasMP, m.MP, m.MPMax = v.MPMax > 0, v.MP, v.MPMax
+					m.Flasks, m.FlasksMax = v.Flasks, v.FlasksMax
 				}
 				if n, ok := needs[m.Key]; ok {
 					m.Hunger, m.Thirst, m.Fatigue = needsOf(n)

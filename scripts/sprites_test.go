@@ -16,7 +16,7 @@ import (
 )
 
 // promotedClasses are the Phase 38b advanced and built elite classes with art (S5).
-var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag", "puppeteer", "golemancer", "marionettist", "warlord", "sweeper", "vanguard", "valkyrie", "kensai", "hatamoto", "ronin", "stormcaller", "mistweaver", "earthspeaker"}
+var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag", "puppeteer", "golemancer", "marionettist", "warlord", "sweeper", "vanguard", "valkyrie", "kensai", "hatamoto", "ronin", "stormcaller", "mistweaver", "earthspeaker", "pathfinder", "swordmaster", "nightblade", "sentinel", "marksman", "ravager", "archon", "archmage", "necromancer", "wise-one", "coven-mother", "crone-of-ash", "gryphon-knight", "skyscout", "wyvern-rider"}
 
 type spriteMeta struct {
 	Size   []int    `json:"size"`
@@ -111,7 +111,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 	for _, r := range []string{"water", "forage", "herbs", "firewood", "shelter", "fishing", "game", "unknown", "depleted"} {
 		want = append(want, "map/resources/"+r+".png")
 	}
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "arbalist"}, promotedClasses...) {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "arbalist"}, promotedClasses...) {
 		want = append(want, "map/units/"+u+"/idle.png", "map/units/"+u+"/walk.png")
 	}
 	for _, rel := range want {
@@ -174,7 +174,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 // feet on row 30 (frameHeight-2) and nothing outside the frame margins.
 func TestMapUnitSpritesFollowAnchorRules(t *testing.T) {
 	dir := spriteDir(t)
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "arbalist"}, promotedClasses...) {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "arbalist"}, promotedClasses...) {
 		for file, frames := range map[string]int{"idle.png": 2, "walk.png": 4} {
 			f, err := os.Open(filepath.Join(dir, "map", "units", u, file))
 			if err != nil {
@@ -275,7 +275,7 @@ func TestSpriteSetsS2S3AreComplete(t *testing.T) {
 	for _, b := range strings.Fields("forest deep-web plains road city slums interior catacombs cave snowfield ice-keep shore swamp desert highlands training-yard") {
 		want = append(want, "battle/backgrounds/"+b+".png")
 	}
-	for _, u := range strings.Fields(`warrior rogue ranger cleric wizard witch adventurer dollmaster halberdier samurai shaman gryphon-rider ` + strings.Join(promotedClasses, " ") + ` unknown-humanoid unknown-beast unknown-large
+	for _, u := range strings.Fields(`warrior rogue ranger cleric wizard witch adventurer dollmaster halberdier samurai shaman gryphon-rider alchemist ` + strings.Join(promotedClasses, " ") + ` unknown-humanoid unknown-beast unknown-large
 		rat rat-big wolf-timber wolf-snow dog-junkyard spider-hatchling spider-large spider-warrior spider-queen skeleton bone-warden
 		bonecrafter lich acolyte-dark grave-chanter brigand ruffian ruffian-dangerous ruffian-enforcer poacher poacher-shieldman
 		bonesetter shadow-trainee shadow-master goblin goblin-hexer goblin-loot faerie imp-forest fungus ent ogre-forest crocodile
