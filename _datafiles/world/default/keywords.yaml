@@ -56,6 +56,7 @@ help:
       - warlord
       - archon
       - archmage
+      - high-sorcerer
       - necromancer
       - thrall
       - wizard-routes
@@ -349,7 +350,8 @@ help-aliases:
   archmage:         [archmages, overchannel, storm, arcane-barrage, barrage]
   necromancer:      [necromancers, raise-the-fallen, raise the fallen, raisefallen, lich, liches, death-harvest]
   thrall:           [thralls, risen]
-  wizard-routes:    [theurgist, arcanist, warlock, life-drain, wizard-class, wizard-classes]
+  wizard-routes:    [theurgist, arcanist, warlock, life-drain, sorcerer, arcane-lance, lance, wizard-class, wizard-classes]
+  high-sorcerer:    [high-sorcerers, high-lance, twin-lance, instant-lance, gathered-chant, unbroken-chant]
   wise-one:         [wise-ones, hearthward, hearth-ward, mend-charm, ward-of-life, deep-slumber]
   coven-mother:     [coven-mothers, covens-will, coven-circle, twin-hex, lasting-hexes]
   crone-of-ash:     [crone, crones, ashen-curse, soul-rot, lingering-curse, crones-doom]

@@ -87,6 +87,12 @@ func (c *Character) SpellCost(sp *spells.SpellData) int {
 		}
 		return max(1, cost-(cost*fx.Int(classes.SpellCost)+50)/100)
 	}
+	if sp.SpellId == "arcanelance" {
+		// Phase 38d: the Lance's rank sets its cost, then the spell discount.
+		if n := fx.Int(classes.LanceCost); n > 0 {
+			cost = n
+		}
+	}
 	pct := fx.Int(classes.SpellCost)
 	// Phase 38c3: a Coven Mother's hexes cost less again.
 	if _, isHex := hexes.For(sp.SpellId); isHex {
@@ -199,6 +205,7 @@ type ClassRT struct {
 	OverRound   uint64 // the combat round of its last Overchannel
 	OverSpent   bool   // Overchannel has been used this battle
 	StormUsed   bool   // Archmage's Storm has been spent
+	LanceFreed  bool   // the High Sorcerer's Instant Lance has been spent
 	AegisUsed   bool   // Archon's Aegis has been spent
 	ReflectUsed bool   // Reflection has been spent
 	Raised      int    // thralls raised this battle
