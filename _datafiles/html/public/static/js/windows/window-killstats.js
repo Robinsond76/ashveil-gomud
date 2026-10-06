@@ -56,9 +56,11 @@
 
         #ks-window .ks-tab-btn:last-child { border-right: none; }
 
-        #ks-window .ks-tab-btn:hover {
-            background: var(--t-border);
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            #ks-window .ks-tab-btn:hover {
+                background: var(--t-border);
+                color: var(--t-text);
+            }
         }
 
         #ks-window .ks-tab-btn.active {
@@ -136,7 +138,9 @@
 
         .ks-row:last-child { border-bottom: none; }
 
-        .ks-row:hover { background: var(--t-bg-surface); }
+        @media (hover: hover) and (pointer: fine) {
+            .ks-row:hover { background: var(--t-bg-surface); }
+        }
 
         .ks-row-name {
             flex: 1;

@@ -70,7 +70,9 @@
         }
 
         .cmp-tab-btn:last-child { border-right: none; }
-        .cmp-tab-btn:hover { background: var(--t-border); color: var(--t-text); }
+        @media (hover: hover) and (pointer: fine) {
+            .cmp-tab-btn:hover { background: var(--t-border); color: var(--t-text); }
+        }
         .cmp-tab-btn.active { background: var(--t-bg); color: var(--t-text); border-bottom: 2px solid var(--t-accent); }
         .cmp-tab-btn:focus-visible { outline: 2px solid var(--t-accent); outline-offset: -2px; }
 
@@ -102,7 +104,9 @@
             cursor: pointer;
         }
 
-        .cmp-btn:hover { background: var(--t-accent-dim); color: var(--t-text-white); }
+        @media (hover: hover) and (pointer: fine) {
+            .cmp-btn:hover { background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); }
+        }
         .cmp-btn:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
 
         .cmp-block {
@@ -149,7 +153,11 @@
         .cmp-slot.empty .cmp-name { color: var(--t-text-secondary); font-style: italic; }
         .cmp-drop { outline: 2px dashed var(--t-accent); outline-offset: -2px; }
         .cmp-away { opacity: 0.6; }
-        button.cmp-item:hover { background: var(--t-accent-dim); color: var(--t-text-white); }
+        @media (hover: hover) and (pointer: fine) {
+            button.cmp-item:hover { background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); }
+            /* Phase 57: every part of a highlighted row stays readable */
+            button.cmp-item:hover .cmp-meta, button.cmp-item:hover .cmp-slotname { color: inherit; }
+        }
         button.cmp-item:focus-visible { outline: 2px solid var(--t-accent); }
         .cmp-item .cmp-meta { color: var(--t-text-secondary); white-space: nowrap; }
 

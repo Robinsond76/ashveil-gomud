@@ -69,7 +69,18 @@ function injectStyles(css) {
     // Phase 32g: entries are buttons in a role="menu" list, so the keyboard
     // reaches them: the first is focused on open, arrows, Home, and End
     // move, Enter or Space chooses, Escape closes.
+    function ensureMenuStyle() {
+        if (document.getElementById('ui-menu-style')) { return; }
+        const style = document.createElement('style');
+        style.id = 'ui-menu-style';
+        style.textContent =
+            '.ui-menu-item:focus { outline: none; background: var(--t-bg-hover) !important; color: var(--t-text) !important; box-shadow: inset 2px 0 0 var(--t-accent); }' +
+            '.ui-menu-item:focus-visible { outline: 1px solid var(--t-accent); outline-offset: -1px; }';
+        document.head.appendChild(style);
+    }
+
     window.uiMenu = function uiMenu(event, items) {
+        ensureMenuStyle();
         dismiss(false);
         opener = (event && event.currentTarget instanceof Element) ? event.currentTarget
                : (event && event.target instanceof Element ? event.target : null);
@@ -113,12 +124,11 @@ function injectStyles(css) {
                 'text-align:left',
                 'font:inherit',
             ].join(';');
-            const on  = function() { entry.style.background = 'var(--t-accent-dim)'; entry.style.color = 'var(--t-text-white)'; };
-            const off = function() { entry.style.background = ''; entry.style.color = 'var(--t-text)'; };
-            entry.addEventListener('mouseenter', on);
-            entry.addEventListener('mouseleave', off);
-            entry.addEventListener('focus', on);
-            entry.addEventListener('blur', off);
+            // One highlighted entry at a time (Phase 57): the pointer moves
+            // focus to the entry under it, and the highlight is the focus
+            // style in the stylesheet below, so there is no inline state to
+            // leave behind when a menu closes or the pointer leaves.
+            entry.addEventListener('mouseenter', function() { entry.focus({ preventScroll: true }); });
             entry.addEventListener('click', function(e) {
                 e.stopPropagation();
                 dismiss(false);

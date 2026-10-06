@@ -35,9 +35,11 @@ button in them just types a command for you.
 
   Below it, the tabs:
 
-  <ansi fg="yellow">Character</ansi>   Overview (your sheet, experience, and gold), Gear (what you
-              wear and carry, and its weight), Skills (with your jobs),
-              Quests, Effects, and Pet when you have one.
+  <ansi fg="yellow">Character</ansi>   Overview (your name, class, level, stats, experience, and
+              gold), Gear (what you wear and carry, and its weight),
+              Skills (each trained skill with what it does, then what
+              your abilities and company can do), Quests, Effects, and
+              Pet when you have one.
   <ansi fg="yellow">Company</ansi>     Status (formation and each member), Inventory (everyone's
               gear, your horses, and the cargo), and Camp.
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
@@ -65,8 +67,10 @@ button in them just types a command for you.
   Under the buttons, "Around the fire" shows your companions' latest talk
   (<ansi fg="command">help banter</ansi>).
 
-  Menus work from the keyboard too: Enter opens one, the arrow keys move,
-  Enter chooses, and Escape closes it.
+  Click a stat, a skill, your race, or your points on the Character tab
+  to open its help page; Escape closes it and puts you back where you
+  were. Menus work from the keyboard too: Enter opens one, the arrow keys
+  move, Enter chooses, and Escape closes it.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
   or where they stand (<ansi fg="command">formation</ansi>). A guardian's menu picks whom it

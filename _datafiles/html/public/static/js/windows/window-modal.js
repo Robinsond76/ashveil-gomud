@@ -39,6 +39,11 @@
             display: flex;
         }
 
+        /* While the screen is open nothing behind it takes the pointer, so the
+           control that opened it drops its hover highlight at once (Phase 57). */
+        body.game-modal-open #main-container,
+        body.game-modal-open .vw-window { pointer-events: none; }
+
         /* ---- Panel ---- */
         #game-modal-panel {
             position: relative;
@@ -87,8 +92,8 @@
             transition: color 0.15s;
         }
 
-        #game-modal-close:hover {
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            #game-modal-close:hover { color: var(--t-text); }
         }
 
         /* ---- Body ---- */
@@ -144,6 +149,7 @@
     // DOM - built once on DOMContentLoaded, hidden until opened
     // -----------------------------------------------------------------------
     let backdrop, panel, titleEl, closeBtn, termContainer, htmlContainer;
+    let opener        = null;   // what had focus when the screen opened
     let modalTerm     = null;
     let modalFitAddon = null;
 
@@ -240,6 +246,14 @@
 
         titleEl.textContent = title;
 
+        // Hand focus to the screen: a control left focused behind it would
+        // keep its highlight (Phase 57). Close returns focus to it.
+        if (!backdrop.classList.contains('open')) {
+            const active = document.activeElement;
+            opener = (active && active !== document.body && active.blur) ? active : null;
+            if (opener) { opener.blur(); }
+        }
+
         if (format === 'html') {
             termContainer.style.display = 'none';
             htmlContainer.style.display = '';
@@ -252,6 +266,7 @@
 
         // Show the backdrop first so the terminal container has layout dimensions
         backdrop.classList.add('open');
+        document.body.classList.add('game-modal-open');
 
         if (format !== 'html') {
             requestAnimationFrame(function() {
@@ -275,6 +290,11 @@
 
     function close() {
         backdrop.classList.remove('open');
+        document.body.classList.remove('game-modal-open');
+        if (opener && opener.isConnected && typeof opener.focus === 'function') {
+            opener.focus({ preventScroll: true });
+        }
+        opener = null;
     }
 
     // -----------------------------------------------------------------------
