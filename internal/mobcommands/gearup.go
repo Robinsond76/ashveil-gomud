@@ -39,7 +39,7 @@ func Gearup(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	isCharmed := mob.Character.IsCharmed()
 	for _, itm := range upgrades {
-		mob.Command(fmt.Sprintf(`wear !%d`, itm.ItemId))
+		mob.Command(fmt.Sprintf(`wear !%d:%s`, itm.ItemId, itm.UUID))
 		if isCharmed {
 			if oldItm, ok := wornItems[itm.GetSpec().Type]; ok {
 				mob.Command(fmt.Sprintf(`drop !%d`, oldItm.ItemId))

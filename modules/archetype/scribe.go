@@ -136,11 +136,11 @@ func (m *ArchetypeModule) CampIdentify(leaderUserID int) []string {
 			}
 		}
 		if len(worn) > 0 {
-			who := "Your"
+			who := "your"
 			if !h.isLeader {
 				who = h.name + "'s"
 			}
-			lines = append(lines, fmt.Sprintf(`<ansi fg="yellow">By the fire, %s worn gear gives up its secrets: %s.</ansi>`, strings.ToLower(who), strings.Join(worn, ", ")))
+			lines = append(lines, fmt.Sprintf(`<ansi fg="yellow">By the fire, %s worn gear gives up its secrets: %s.</ansi>`, who, strings.Join(worn, ", ")))
 			h.ch.Validate(true)
 		}
 	}

@@ -2,8 +2,9 @@
 
 Rare and better gear is found <ansi fg="yellow">unidentified</ansi>. You can see what it is, its tier, its
 quality and its rarity, but not its affixes (<ansi fg="command">help affixes</ansi>). An unread item
-gives only its base numbers and sells for its base value, so there is
-always a reason to read it before you commit to wearing it.
+gives only its base numbers, so there is always a reason to read it
+before you commit to wearing it. Rolled gear can't be sold to merchants
+yet; keep it, wear it, or leave it.
 
 <ansi fg="yellow-bold">Ways to read an item</ansi>
 

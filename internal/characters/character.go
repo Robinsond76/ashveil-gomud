@@ -2060,6 +2060,10 @@ func (c *Character) BestUpgrades() map[items.ItemType]items.Item {
 		if itmSpec.Type != items.Weapon && itmSpec.Subtype != items.Wearable {
 			continue
 		}
+		// Phase 36a: gear the wearer is too low for is never an upgrade.
+		if itm.WearRefusal(c.Level) != `` {
+			continue
+		}
 		if prev, ok := bestBySlot[itmSpec.Type]; !ok || itmSpec.Value > prev.GetSpec().Value {
 			bestBySlot[itmSpec.Type] = itm
 		}

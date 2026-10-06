@@ -254,3 +254,38 @@ func TestCopyingARolledItemDoesNotAliasItsAffixes(t *testing.T) {
 	assert.False(t, a.Loot.Identified)
 	assert.NotEqual(t, a.GetSpec().StatMods.Get("strength"), b.GetSpec().StatMods.Get("strength"))
 }
+
+// Identifying an item that was enchanted, renamed or given a worn buff since
+// it rolled adds its affixes to the item as it is, instead of rebuilding it
+// from the base type.
+func TestIdentifyKeepsLaterEnchantmentsRenamesAndBuffs(t *testing.T) {
+	rollTestSpecs(t)
+	itm := New(testSwordID)
+	itm.ApplyRoll(testRoll(QualityFine, RarityRare, false))
+	itm.Enchant(2, 0, map[string]int{"speed": 2}, false)
+	itm.Rename("sunblade")
+	itm.AddWornBuff(77)
+	before := itm.GetSpec()
+
+	require.True(t, itm.Identify())
+	after := itm.GetSpec()
+	assert.Equal(t, uint8(1), itm.Enchantments)
+	assert.Equal(t, before.Damage.BonusDamage, after.Damage.BonusDamage, "the enchantment's damage stays")
+	assert.Equal(t, 3, after.StatMods.Get("speed"), "base speed 1 plus the enchantment's 2")
+	assert.Equal(t, 3, after.StatMods.Get("strength"), "and the affix now applies")
+	assert.Equal(t, "sunblade", after.Name)
+	assert.Equal(t, []int{77}, after.WornBuffIds)
+	assert.Equal(t, 900, after.Weight)
+}
+
+// A multi-attack weapon scales per hit: Exquisite adds the same bonus to each
+// hit that it would to a single-attack weapon of the same dice.
+func TestQualityScalesPerHitOnMultiAttackWeapons(t *testing.T) {
+	rollTestSpecs(t)
+	single := RolledSpec(*GetItemSpec(testSwordID), testRoll(QualityExquisite, RarityCommon, true))
+	multi := *GetItemSpec(testSwordID)
+	multi.Damage.Attacks = 3
+	got := RolledSpec(multi, testRoll(QualityExquisite, RarityCommon, true))
+	assert.Equal(t, single.Damage.BonusDamage, got.Damage.BonusDamage)
+	assert.Positive(t, got.Damage.BonusDamage)
+}

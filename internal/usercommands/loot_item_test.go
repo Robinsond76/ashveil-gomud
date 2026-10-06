@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -149,7 +150,9 @@ func TestLookAtRolledItemShowsLayersAndScribeDetail(t *testing.T) {
 	t.Cleanup(users.ResetActiveUsers)
 	user := users.NewUserRecord(11, 5)
 	users.SetTestUser(user)
-	room := &rooms.Room{RoomId: 91011, Zone: "Test"}
+	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "lootlit", Name: "Lit Hall", LitArea: true, Indoor: true})
+	t.Cleanup(func() { rooms.RemoveTestBiome("lootlit") })
+	room := &rooms.Room{RoomId: 91011, Zone: "Test", Biome: "lootlit"}
 	room.SetTestOccupants([]int{11}, nil)
 	require.True(t, user.Character.StoreItem(rolledMail(items.RarityRare, 20, true)))
 
@@ -170,4 +173,38 @@ func TestLookAtRolledItemShowsLayersAndScribeDetail(t *testing.T) {
 	require.NoError(t, err)
 	events.ProcessEvents()
 	assert.Contains(t, tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), ""), "(tier 1, 1 to 3)")
+}
+
+// gearup never proposes gear the wearer is too low for, and wearing by the
+// item's uuid picks the exact instance among copies of one base item.
+func TestGearupSkipsRefusedGearAndWearsTheExactInstance(t *testing.T) {
+	useWorld(t, "default")
+	races.LoadDataFiles()
+	lootMail(t)
+
+	user := users.NewUserRecord(12, 6)
+	user.Character.Name = "Wren"
+	user.Character.RaceId = 1
+	user.Character.Level = 9
+	tooHigh := rolledMail(items.RarityRare, 20, true) // level 15; worth more
+	plain := items.New(lootMailID)
+	require.True(t, user.Character.StoreItem(tooHigh))
+	require.True(t, user.Character.StoreItem(plain))
+	require.Greater(t, tooHigh.GetSpec().Value, plain.GetSpec().Value)
+
+	best := user.Character.BestUpgrades()[items.Body]
+	assert.Equal(t, plain.UUID, best.UUID, "the refused hauberk is not the upgrade")
+
+	user.Character.Level = 15
+	best = user.Character.BestUpgrades()[items.Body]
+	assert.Equal(t, tooHigh.UUID, best.UUID, "once the level is met it is")
+
+	messages := captureLookMessages(t)
+	_, err := Equip(fmt.Sprintf("!%d:%s", best.ItemId, best.UUID), user, &rooms.Room{RoomId: 1}, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	_ = messages
+	assert.Equal(t, tooHigh.UUID, user.Character.Equipment.Body.UUID, "the exact instance was worn")
+	require.Len(t, user.Character.Items, 1)
+	assert.Equal(t, plain.UUID, user.Character.Items[0].UUID)
 }

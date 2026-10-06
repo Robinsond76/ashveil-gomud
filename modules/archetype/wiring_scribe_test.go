@@ -289,3 +289,33 @@ func TestScribeIsAShippedCasterSkill(t *testing.T) {
 	assert.True(t, m.autoskillOn(421, utilityScribe))
 	assert.Contains(t, m.autoskillList(421), "scribe")
 }
+
+// A companion's worn gear reveals itself at camp under their own name, with
+// its capitals kept.
+func TestCampRestNamesACompanionsWornGearWithItsCase(t *testing.T) {
+	m := registered(t)
+	scribeRoom(t, 97708)
+	scribeLeader(t, 417, 97708, 0)
+	bran := withCompanion(t, 417, 97923, 97708, 8, "wizard")
+	bran.Character.Equipment.Weapon = scribeItem(t, items.RarityEpic)
+
+	lines := m.CampIdentify(417)
+	require.Len(t, lines, 1)
+	assert.Contains(t, lines[0], "By the fire, Bran's worn gear")
+	assert.True(t, bran.Character.Equipment.Weapon.IsIdentified())
+}
+
+// Copies of one base item are read one at a time, by instance.
+func TestScribeReadsOneOfTwoCopiesOfTheSameBaseItem(t *testing.T) {
+	m := registered(t)
+	room := scribeRoom(t, 97709)
+	u := scribeLeader(t, 418, 97709, 1)
+	first := scribeItem(t, items.RarityRare)
+	second := scribeItem(t, items.RarityRare)
+	pack(u, first, second)
+
+	captureText(t, func() { _, _ = m.scribeCommand("test blade", u, room, 0) })
+	assert.Equal(t, 1, unreadCount(u.Character), "only one copy was read")
+	captureText(t, func() { _, _ = m.scribeCommand("test blade", u, room, 0) })
+	assert.Equal(t, 0, unreadCount(u.Character))
+}

@@ -203,7 +203,19 @@ func (i *Item) Identify() bool {
 	loot := i.Loot.clone()
 	loot.Identified = true
 	i.Loot = loot
-	i.rebuildRolledSpec()
+	if i.Spec == nil {
+		i.rebuildRolledSpec()
+		return true
+	}
+	// Add the affixes to the item as it now is, so an enchantment, a worn
+	// buff or a new name it has gained since the roll stay.
+	spec := *i.Spec
+	spec.StatMods = cloneStatMods(spec.StatMods)
+	for _, a := range loot.Affixes {
+		applyAffix(&spec, a)
+		spec.Value += a.worth()
+	}
+	i.Spec = &spec
 	return true
 }
 
@@ -230,14 +242,9 @@ func RolledSpec(base ItemSpec, r Rolled) ItemSpec {
 	pct := r.Quality.StatPct()
 	if pct != 0 {
 		if spec.Damage.DiceCount > 0 && spec.Damage.SideCount > 0 {
-			attacks := max(1, spec.Damage.Attacks)
+			// BonusDamage is added to every hit, so scale the per-hit average.
 			expected := float64(spec.Damage.DiceCount*(spec.Damage.SideCount+1))/2 + float64(spec.Damage.BonusDamage)
-			delta := scaled(expected*float64(attacks), pct)
-			// An attack's bonus is per hit; spread across the attacks.
-			spec.Damage.BonusDamage += int(math.Round(float64(delta) / float64(attacks)))
-			if delta != 0 && spec.Damage.BonusDamage == base.Damage.BonusDamage {
-				spec.Damage.BonusDamage += delta / abs(delta)
-			}
+			spec.Damage.BonusDamage += scaled(expected, pct)
 			spec.Damage.FormatDiceRoll()
 		}
 		if spec.DamageReduction > 0 {

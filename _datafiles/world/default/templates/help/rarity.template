@@ -10,8 +10,8 @@ power budget.
   <ansi fg="rarity-uncommon">Uncommon</ansi>    one affix
   <ansi fg="rarity-rare">Rare</ansi>        two or three affixes, and a name of its own, like Gloomfang
   <ansi fg="rarity-epic">Epic</ansi>        three or four affixes, one of them major (<ansi fg="command">help affixes</ansi>)
-  <ansi fg="rarity-legendary">Legendary</ansi>   a unique effect and two rolled affixes; named, hand-made items
-  <ansi fg="rarity-set">Set</ansi>         fixed pieces of a small set, with a bonus when you wear several
+  <ansi fg="rarity-legendary">Legendary</ansi>   three affixes, one of them major; named, hand-made items (its unique effect is not in yet)
+  <ansi fg="rarity-set">Set</ansi>         two affixes; set bonuses are not in yet
 
 A name's colour shows its rarity in the text and web clients. Rare and
 better gear is found unidentified (<ansi fg="command">help identify</ansi>): you can see the

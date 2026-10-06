@@ -79,3 +79,21 @@ func TestOldScribeRankIsRefundedOnce(t *testing.T) {
 	assert.Equal(t, 26, u.Character.TrainingPoints)
 	assert.NotContains(t, text, "No longer part of the world")
 }
+
+// Asking to train scribe before the spawn-time reset ran settles the old rank
+// first, so a rank bought afterwards survives the next spawn.
+func TestTrainingScribeSettlesTheOldRankFirst(t *testing.T) {
+	m := registered(t)
+	m.saveUser = func(*users.UserRecord) error { return nil }
+	u := trainee(t, 54, 96008)
+	u.Character.Skills = map[string]int{"scribe": 2}
+
+	m.CanTrain(54, "scribe")
+	assert.True(t, u.Character.ScribeReset)
+	assert.Zero(t, u.Character.Skills["scribe"])
+	assert.Equal(t, 20+3, u.Character.TrainingPoints)
+
+	u.Character.Skills["scribe"] = 1 // trained after the settle
+	captureText(t, func() { m.onPlayerSpawn(events.PlayerSpawn{UserId: 54}) })
+	assert.Equal(t, 1, u.Character.Skills["scribe"])
+}
