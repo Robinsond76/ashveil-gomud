@@ -122,7 +122,11 @@ func TestPackCapacityTracksPresenceDeathDismissalAndResurrection(t *testing.T) {
 	b := equipmentBrawl(t)
 	before, _ := encumbrance.CurrentLoad(7)
 	live := b.companion(1)
+	// Phase 47: one move behind still carries its share (no Overloaded flash).
 	live.Character.RoomId++
+	behind, _ := encumbrance.CurrentLoad(7)
+	assert.Equal(t, before.CapacityGrams, behind.CapacityGrams, "a companion one move behind still carries")
+	live.Character.RoomId = b.road.RoomId + 1000
 	away, _ := encumbrance.CurrentLoad(7)
 	assert.Equal(t, before.CapacityGrams-10000, away.CapacityGrams)
 	live.Character.RoomId = b.road.RoomId
