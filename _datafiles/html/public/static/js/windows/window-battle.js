@@ -682,7 +682,7 @@
     // Outcome and open/close
     // ---------------------------------------------------------------------
 
-    const HINT = 'Hover or tap a figure for its name, health, and whom it strikes.';
+    const HINT = 'Hover or tap a figure for its name, health, statuses, and whom it strikes.';
 
     const OUTCOMES = { victory: 'Victory', defeat: 'Defeat', 'broken-off': 'The company breaks off' };
 
