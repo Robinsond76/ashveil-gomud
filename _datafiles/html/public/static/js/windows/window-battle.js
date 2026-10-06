@@ -78,6 +78,8 @@
         bear: ['#5b4030', '#8a6a4a'], drake: ['#3f7a4a', '#d9622b'],
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
+    // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'unknown-large', drake: 'unknown-beast' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
@@ -391,7 +393,7 @@
                 u.side = 'company';
                 u.label = d.name || d.key;
                 u.klass = d.kind || 'doll'; // Phase 39e: a beast's kind, else the doll
-                u.sprite = d.kind || 'doll';
+                u.sprite = BEAST_SPRITES[d.kind] || d.kind || 'doll';
                 u.promoted = '';
                 u.className = d.kind ? ({ bear: 'War bear', drake: 'Drake hatchling' }[d.kind] || (d.kind.charAt(0).toUpperCase() + d.kind.slice(1))) : 'Doll';
                 u.cell = cell;

@@ -375,7 +375,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
 		"dolls": "dollmaster", "tangle": "dollmaster", "puppeteer": "dollmaster-routes", "marionettist": "dollmaster-routes",
 		"mend-doll": "doll",
-		"sic": "beasttamer", "rally": "beasttamer", "bonded-beast": "beasttamer", "houndmaster": "beasttamer-routes", "bearward": "beasttamer-routes", "dragon-tamer": "beasttamer-routes",
+		"sic":       "beasttamer", "rally": "beasttamer", "bonded-beast": "beasttamer", "houndmaster": "beasttamer-routes", "bearward": "beasttamer-routes", "dragon-tamer": "beasttamer-routes",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)

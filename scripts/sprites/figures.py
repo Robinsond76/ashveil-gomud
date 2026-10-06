@@ -54,6 +54,9 @@ CLASSES = {
                     wide=1, hair="charcoal"),
     "shaman": dict(trousers="leather", boots="leather", torso="leather", sleeve="leather",
                    hair="charcoal"),
+    # Phase 39e: handlers in hide and fur, a whip coiled at the belt.
+    "beasttamer": dict(trousers="leather", boots="leather", torso="wool", sleeve="wool",
+                       hair="ochre", wide=1),
 }
 
 
@@ -628,8 +631,33 @@ def draw_shaman(r):
     cv.part(line(hx - 1, tip + r.px(1), hx - r.px(2), tip + r.px(4)), "water", flat="m")
 
 
+def draw_beasttamer(r):
+    """A hide vest over a wool shirt, a fur collar, a coiled whip at the belt (and in hand in battle)."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("wool")
+    if v == "up":
+        cv.part(rect(r.tx0, r.ysh + 1, r.tx1, r.yhip - r.px(1)), "leather")
+    else:
+        cv.part(rect(r.tx0, r.ysh + 1, r.tx0 + 1, r.yhip - r.px(1)), "leather")  # open hide vest
+        cv.part(rect(r.tx1 - 1, r.ysh + 1, r.tx1, r.yhip - r.px(1)), "leather")
+    cv.part(rect(r.tx0 - 1, r.ysh, r.tx1 + 1, r.ysh + r.px(2)), "bone", flat="l")  # fur collar
+    _belt(r, "leather", r.yhip - r.px(2), "brass.m")
+    r.arms("wool", glove="leather")
+    r.head(hair="ochre")
+    if r.battle:
+        hx, hy = r.hand_r
+        cv.part(line(hx, hy, hx + r.px(6), hy - r.px(4)), "leather", flat="m")  # the lash
+        cv.part(line(hx + r.px(6), hy - r.px(4), hx + r.px(11), hy - r.px(2)), "leather", flat="d")
+        cv.part({(hx + r.px(11), hy - r.px(2))}, "bone", flat="l")
+    elif v != "up":
+        kx = r.tx1 + 1 if v == "down" else r.cx + r.px(1)
+        cv.part(ellipse(kx, r.yhip, 1 if k == 1 else 2, 1), "leather", flat="m")  # coiled whip
+
+
 DRAWERS = {
     "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
+    "beasttamer": draw_beasttamer,
     "warrior": draw_warrior, "rogue": draw_rogue, "ranger": draw_ranger,
     "cleric": draw_cleric, "wizard": draw_wizard, "witch": draw_witch,
     "adventurer": draw_adventurer,
