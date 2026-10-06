@@ -26,6 +26,7 @@ CompanionArchetypes:
   - { MobTemplateId: 175, Archetype: gryphon-rider } # Phase 39f
   - { MobTemplateId: 190, Archetype: alchemist } # Phase 39g
   - { MobTemplateId: 204, Archetype: beasttamer } # Phase 39e
+  - { MobTemplateId: 235, Archetype: arbalist } # Phase 39h
   - { MobTemplateId: 150, Archetype: shaman } # Phase 39c
 # Phase 21a: company alignment. Values are alignment points on the
 # -100..100 scale players see. Out-of-range values fall back to the
@@ -155,6 +156,7 @@ RecruitTemplates:
   - { MobTemplateId: 175, Weight: 1, PricePercent: 110 } # Phase 39f
   - { MobTemplateId: 190, Weight: 1, PricePercent: 110 } # Phase 39g
   - { MobTemplateId: 204, Weight: 1, PricePercent: 110 }
+  - { MobTemplateId: 235, Weight: 1, PricePercent: 110 } # Phase 39h
   - { MobTemplateId: 150, Weight: 1, PricePercent: 110 }
 RecruitGivenNames: [Hild, Anselm, Tobin, Wren, Edda, Bram, Ilse, Corrin, Maud, Osric, Petra, Aldo, Sabine, Lorn, Nessa, Joren, Thea, Ulric, Brisa, Cade, Fenna, Hugo, Ines, Kester, Liesl, Merrit, Orla, Quill, Rowan, Senna]
 RecruitBynames: [Marrow, Reyes, Ashdown, Thorne, Pike, Holloway, of the Ford, of Dunmar, the Younger, Fletcher, Cobb, Wick, Harrow, Stane]
@@ -202,3 +204,11 @@ ResurrectionAllowanceDays: 3
 # of the leader's online time, once the leader is out of any fight,
 # journey, or camp rest. 15 rounds is about a minute.
 SeparationRounds: 15
+
+# Phase 49: companion banter. The chance, in percent (0..100), that the
+# company talks as a camp rest begins (BanterCampStartPercent), as one ends
+# (BanterRestedPercent), and after a won battle (BanterBattlePercent). A
+# player can turn banter off with `set banter off`.
+BanterCampStartPercent: 100
+BanterRestedPercent: 50
+BanterBattlePercent: 33

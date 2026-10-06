@@ -1,0 +1,19 @@
+roomid: 90002
+zone: Test Area
+title: Combat Yard
+description: >-
+  A packed-earth yard ringed by a low wall, scuffed by countless practice fights. Use testarea fight to call a group of foes here (testarea fight 8 3 skeleton), and testarea clear to send them away. Narrow ground lies to the north and a thicket to the east.
+biome: land
+tags:
+  - lit
+exits:
+  south:
+    roomid: 90001
+  north:
+    roomid: 90008
+  east:
+    roomid: 90009
+mapx: 0
+mapy: -1
+mapz: 0
+hascoordinates: true

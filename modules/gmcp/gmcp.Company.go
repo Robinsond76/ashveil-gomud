@@ -9,6 +9,8 @@ package gmcp
 
 import (
 	"encoding/json"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -341,12 +343,13 @@ func newCompanyFeed() *companyFeed {
 		accepting: nativeAccepting,
 		gearOpen:  map[int]gearWatch{},
 	}
-	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle)}
+	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle)}
 	return f
 }
 
 type gearWatch struct {
 	slot      string
+	member    string    // who the editor shows: "me" or "#N"
 	refreshed time.Time // when an open last asked for a refresh
 }
 
@@ -360,7 +363,11 @@ const gearRefreshGap = 200 * time.Millisecond
 // It reports whether to refresh the user now: only when the editor opened
 // or changed slot, and not within gearRefreshGap of the last (the next
 // round's refresh then brings the slot).
-func (f *companyFeed) setGearOpen(userID int, open bool, slot string) bool {
+func (f *companyFeed) setGearOpen(userID int, open bool, slot string, member ...string) bool {
+	who := "me"
+	if len(member) > 0 && validGearMember(member[0]) {
+		who = member[0]
+	}
 	known := false
 	for _, s := range items.AllEquipSlots() {
 		known = known || string(s) == slot
@@ -375,17 +382,37 @@ func (f *companyFeed) setGearOpen(userID int, open bool, slot string) bool {
 		return false
 	}
 	before, was := f.gearOpen[userID]
-	if was && before.slot == slot {
+	if was && before.slot == slot && before.member == who {
 		return false
 	}
 	now := time.Now()
 	refresh := !was || now.Sub(before.refreshed) >= gearRefreshGap
-	next := gearWatch{slot: slot, refreshed: before.refreshed}
+	next := gearWatch{slot: slot, member: who, refreshed: before.refreshed}
 	if refresh {
 		next.refreshed = now
 	}
 	f.gearOpen[userID] = next
 	return refresh
+}
+
+// validGearMember accepts "me" and "#N", the references a client may send.
+func validGearMember(s string) bool {
+	if s == "me" {
+		return true
+	}
+	n, err := strconv.Atoi(strings.TrimPrefix(s, "#"))
+	return strings.HasPrefix(s, "#") && err == nil && n > 0
+}
+
+// watchingGearMember is the member a user's Gear editor shows ("me" when
+// none was named).
+func (f *companyFeed) watchingGearMember(userID int) string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if w, ok := f.gearOpen[userID]; ok && w.member != "" {
+		return w.member
+	}
+	return "me"
 }
 
 // watchingGear reports the slot a user's Gear editor shows, if open.
@@ -526,6 +553,7 @@ type GMCPGearWatch struct {
 	UserId int
 	Open   bool
 	Slot   string // the slot the editor shows
+	Member string // who the editor shows: "me" or "#N"
 }
 
 func (g GMCPGearWatch) Type() string { return `GMCPGearWatch` }
@@ -558,7 +586,7 @@ func init() {
 	})
 	events.RegisterListener(GMCPGearWatch{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(GMCPGearWatch); ok {
-			if companyFeeds.setGearOpen(evt.UserId, evt.Open, evt.Slot) {
+			if companyFeeds.setGearOpen(evt.UserId, evt.Open, evt.Slot, evt.Member) {
 				companyview.RefreshUser(evt.UserId)
 			}
 		}

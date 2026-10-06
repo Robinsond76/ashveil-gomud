@@ -38,6 +38,10 @@ There are a handful of settings you can adjust with this command, including:
   How fast a combat round's lines come to you, one by one. Normal is the  
   default (off with a screen reader). See ~help combatpace~
 
+  ~set banter [on|off]~  
+  Your companions chat at camp and sometimes after a won fight. This turns  
+  that on or off (on by default). See ~help banter~
+
   ~set wimpy~  
   Set your wimpy percentage (See ~help wimpy~)
 

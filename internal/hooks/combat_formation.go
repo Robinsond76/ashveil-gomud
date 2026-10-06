@@ -491,6 +491,7 @@ func chooseFromParty(leaderId, col int, placed bool, party mobparty.Party, alive
 			Caster:   len(m.Character.SpellBook) > 0,
 			Healer:   strategy.Role(m.EnemyRole()) == strategy.Healer,
 			Chanting: m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
+			Armor:    m.Character.GetDefense(), // the armored rule (39h review)
 		})
 		leader = false
 	}

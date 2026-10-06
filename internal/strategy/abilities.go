@@ -36,6 +36,10 @@ const (
 	// Dive (gryphon rider, Phase 39f): the whole turn, a stooping blow that
 	// may pass a standing front-row foe to strike one in the rows behind.
 	Dive Ability = "dive"
+	// PiercingBolt (arbalist, Phase 39h): the whole turn, a heavy bolt that
+	// ignores part of the target's armor; the next turn is spent winding the
+	// crossbow.
+	PiercingBolt Ability = "piercing-bolt"
 	// Overwatch (Phase 38c2, the Sentinel's class gift, not an archetype's):
 	// holds the turn; the first foe to strike a middle- or back-row ally is
 	// shot before the blow resolves.
@@ -103,6 +107,9 @@ var Abilities = []AbilitySpec{
 	{ID: Splice, Name: "Emergency Splice", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 18,
 		When: "the doll would break",
 		Does: "once a battle the doll stands back up at 25% health, and its Master loses its next turn"},
+	{ID: PiercingBolt, Name: "Piercing Bolt", Archetype: "arbalist", Skill: "arbalestry", Cooldown: 2,
+		When: "it wields a shooting weapon (the crossbow), and is not winding it",
+		Does: "one heavy bolt, 140% of a shot, that ignores half the foe's armor (all of it from level 8); +10 Attack from level 3 when nothing has hurt it since its last bolt; from level 6 a landed bolt hobbles the foe; the whole turn, and the next turn is spent winding the crossbow"},
 	{ID: Sic, Name: "Sic", Archetype: "beasttamer", Skill: "taming",
 		When: "its beast stands and the Tamer has a foe",
 		Does: "sends the beast at the Tamer's foe with +10 Attack on its strike; the Tamer's own blow is still struck, with a whip that reaches like a polearm"},
@@ -275,6 +282,10 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 			if s.Weapon == Melee && s.DiveOpen {
 				return id, true
 			}
+		case PiercingBolt:
+			if s.Weapon == Shooting {
+				return id, true
+			}
 		}
 	}
 	return "", false
@@ -375,3 +386,8 @@ func SweepWide(level int) bool { return level >= SweepRowLevel }
 // DiveEvasionCost is the Evasion a rider loses after a dive, until its next
 // turn (Phase 39f). Its other numbers are class ranks (internal/classes).
 const DiveEvasionCost = 10
+
+// BoltBlowPct is the share of a shot's damage a Piercing Bolt deals (Phase
+// 39h): it comes every other turn, so it hits harder than one arrow. Its
+// other numbers are class ranks (internal/classes).
+const BoltBlowPct = 140

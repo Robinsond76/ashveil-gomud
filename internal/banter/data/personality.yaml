@@ -1,0 +1,141 @@
+# Phase 49: lines by personality. ctx says when a line fits; every line is
+# said by a member whose personality is listed. {other} is another member
+# talking, {fallen} a member who just fell, {leader} the player.
+
+# --- stoic ---
+- {text: "The fire is good. That is enough.", ctx: [camp], pers: [stoic]}
+- {text: "I will take the first watch. I do not need much sleep.", ctx: [camp], pers: [stoic]}
+- {text: "Talk costs breath. I would rather sit and listen to the fire.", ctx: [camp], pers: [stoic]}
+- {text: "We walked far today. We will walk farther tomorrow.", ctx: [camp], pers: [stoic]}
+- {text: "A full pack and a dry blanket. What more is there to want?", ctx: [camp], pers: [stoic]}
+- {text: "Boots off, feet to the flames, and no complaints. That is how it is done.", ctx: [camp], pers: [stoic]}
+- {text: "I have slept in worse places than this.", ctx: [camp], pers: [stoic]}
+- {text: "Rest while you can. The road does not wait.", ctx: [camp], pers: [stoic]}
+- {text: "That was a good rest. We should move.", ctx: [rested], pers: [stoic]}
+- {text: "Up, then. Let us not waste the light.", ctx: [rested], pers: [stoic], when: [day]}
+- {text: "I feel whole again. That will do.", ctx: [rested], pers: [stoic]}
+- {text: "It is done. Let us see to our gear.", ctx: [win], pers: [stoic]}
+- {text: "Nothing to say about it. We did what was needed.", ctx: [win], pers: [stoic]}
+- {text: "Quiet now. It is over.", ctx: [win], pers: [stoic]}
+- {text: "A fight is a fight. On to the next thing.", ctx: [win], pers: [stoic]}
+- {text: "That was closer than I like. I will not say it twice.", ctx: [close], pers: [stoic]}
+- {text: "Closer than it should have been. We stand, and that is all.", ctx: [close], pers: [stoic]}
+- {text: "{fallen} did not deserve that. We carry them to a church, and we carry on.", ctx: [fall], pers: [stoic]}
+- {text: "A moment for {fallen}. Then we find a church, and quickly.", ctx: [fall], pers: [stoic]}
+- {text: "Clean work. Nobody is hurt. I will take it.", ctx: [flawless], pers: [stoic]}
+- {text: "Well done, all of you. That is as it should be.", ctx: [flawless], pers: [stoic]}
+
+# --- cheerful ---
+- {text: "Look at those stars! You could almost reach up and pluck one.", ctx: [camp], pers: [cheerful], when: [night]}
+- {text: "Who is hungry? I am always hungry. Tell me I am not the only one.", ctx: [camp], pers: [cheerful]}
+- {text: "There is nothing like a fire after a long day. Nothing!", ctx: [camp], pers: [cheerful]}
+- {text: "I know a song for nights like this. Do not worry, I will only hum it.", ctx: [camp], pers: [cheerful], when: [night]}
+- {text: "Good company, a warm blaze, and no one is bleeding. A fine evening.", ctx: [camp], pers: [cheerful], when: [night]}
+- {text: "I tell you, a pot of something hot and the right folk beside me, and I am a rich person.", ctx: [camp], pers: [cheerful]}
+- {text: "Sit closer, there is room! The fire does not bite.", ctx: [camp], pers: [cheerful], align: [good, neutral]}
+- {text: "Tomorrow will be a good day. I can feel it in my knees.", ctx: [camp], pers: [cheerful]}
+- {text: "Ahh, that was lovely. I feel like a new person!", ctx: [rested], pers: [cheerful]}
+- {text: "Up and at it, everyone! The world will not explore itself.", ctx: [rested], pers: [cheerful]}
+- {text: "I dreamed of roast fowl. I am a little sad to be awake.", ctx: [rested], pers: [cheerful]}
+- {text: "We did it! Did you see that? We actually did it!", ctx: [win], pers: [cheerful]}
+- {text: "Another one down. I am starting to like this company.", ctx: [win], pers: [cheerful]}
+- {text: "Well, that was exciting! Anyone else's heart still racing?", ctx: [win], pers: [cheerful]}
+- {text: "A bit of a scrape, a bit of a laugh. A good day's work.", ctx: [win], pers: [cheerful]}
+- {text: "Whew! That was too close. Let us never do that again. Until next time.", ctx: [close], pers: [cheerful]}
+- {text: "I am laughing because the alternative is shaking. We are alive!", ctx: [close], pers: [cheerful]}
+- {text: "I cannot make a joke about it. Not about {fallen}. Not today.", ctx: [fall], pers: [cheerful]}
+- {text: "I wish we could have been quicker. {fallen} deserved better.", ctx: [fall], pers: [cheerful], align: [good, neutral]}
+- {text: "Not a scratch on anyone! Is that a first? It feels like a first.", ctx: [flawless], pers: [cheerful]}
+- {text: "Perfect! Absolutely perfect! I could cheer.", ctx: [flawless], pers: [cheerful]}
+
+# --- grim ---
+- {text: "Keep the fire low. There are eyes out there, I am sure of it.", ctx: [camp], pers: [grim], when: [night]}
+- {text: "Every night around a fire like this, I count who is missing. Not tonight. Not yet.", ctx: [camp], pers: [grim], when: [night]}
+- {text: "Sleep with your boots on. Trouble does not knock.", ctx: [camp], pers: [grim]}
+- {text: "I do not trust quiet nights. They are only the breath before the blow.", ctx: [camp], pers: [grim], when: [night]}
+- {text: "The dark here feels like it is waiting for us to blink.", ctx: [camp], pers: [grim], when: [night]}
+- {text: "I have buried too many friends to enjoy a quiet fire. But I will take it.", ctx: [camp], pers: [grim]}
+- {text: "We eat, we sleep, we move on. That is all this life is.", ctx: [camp], pers: [grim]}
+- {text: "Warm food and cold ground. We have it better than most.", ctx: [camp], pers: [grim]}
+- {text: "We woke. That is a good enough start.", ctx: [rested], pers: [grim]}
+- {text: "Nobody cut our throats while we slept. That is rare enough to note.", ctx: [rested], pers: [grim]}
+- {text: "Rested, then. It will not last.", ctx: [rested], pers: [grim]}
+- {text: "One less thing to kill us tomorrow.", ctx: [win], pers: [grim]}
+- {text: "Dead is dead. It is the only fair thing in this world.", ctx: [win], pers: [grim]}
+- {text: "We won this one. There is always another waiting.", ctx: [win], pers: [grim]}
+- {text: "Do not celebrate. Count your blood and your blades.", ctx: [win], pers: [grim]}
+- {text: "Another inch and I would have been counting teeth on the ground. Mine.", ctx: [close], pers: [grim]}
+- {text: "One more blow and it would have been over for us. Remember that.", ctx: [close], pers: [grim]}
+- {text: "{fallen} is down. This is how it goes. Do not tell me it is fair.", ctx: [fall], pers: [grim]}
+- {text: "We pay for every fight. {fallen} paid today.", ctx: [fall], pers: [grim]}
+- {text: "No one hurt. I will believe it when we are behind walls.", ctx: [flawless], pers: [grim]}
+- {text: "Clean. Almost too clean. Be ready for the price.", ctx: [flawless], pers: [grim]}
+
+# --- boastful ---
+- {text: "Tell the tale of the day's fight again? Oh, I will, and I will make myself taller in it.", ctx: [camp], pers: [boastful]}
+- {text: "When the bards write this company's song, I trust they will give me the best verse.", ctx: [camp], pers: [boastful]}
+- {text: "Do not worry about the watch. Wake me when the danger is worth my time.", ctx: [camp], pers: [boastful]}
+- {text: "I am glad to share my fire with you lot. Not everyone is lucky enough to sit with greatness.", ctx: [camp], pers: [boastful]}
+- {text: "I once held a whole crowd at bay with nothing but a stare. Ask anyone. Well, do not ask anyone.", ctx: [camp], pers: [boastful]}
+- {text: "My feet ache, my back aches, and still no one in this camp could keep up with me.", ctx: [camp], pers: [boastful]}
+- {text: "I carry this company, you know. Gently. Without complaint.", ctx: [camp], pers: [boastful]}
+- {text: "Everyone should have a story like mine. Few do. I will share, if you like.", ctx: [camp], pers: [boastful]}
+- {text: "I slept like a champion. Of course I did.", ctx: [rested], pers: [boastful]}
+- {text: "Another day, another chance for me to be magnificent.", ctx: [rested], pers: [boastful]}
+- {text: "A rested hero is a terrible thing to stand against. Let them come.", ctx: [rested], pers: [boastful]}
+- {text: "Did you see that? Of course you did. Everyone saw that.", ctx: [win], pers: [boastful]}
+- {text: "I barely broke a sweat. Do not strain yourselves trying to match it.", ctx: [win], pers: [boastful]}
+- {text: "That is what happens when you stand in front of me. Remember it.", ctx: [win], pers: [boastful]}
+- {text: "I will be telling that one for years. You should all feel honored to have been there.", ctx: [win], pers: [boastful]}
+- {text: "I had it under control. Mostly. All right, partly. Let us not tell the tale that way.", ctx: [close], pers: [boastful]}
+- {text: "That was a calculated risk. I did not plan on it going that far, I admit.", ctx: [close], pers: [boastful]}
+- {text: "{fallen} is a good one. I would have saved them, if I had been a bit nearer. I would have.", ctx: [fall], pers: [boastful]}
+- {text: "I will not boast today. Not with {fallen} cold on the ground. When they are back, maybe.", ctx: [fall], pers: [boastful]}
+- {text: "Flawless. Of course. I accept your praise, and your silence.", ctx: [flawless], pers: [boastful]}
+- {text: "Not one wound among us. A masterpiece, and I am the artist.", ctx: [flawless], pers: [boastful]}
+
+# --- wry ---
+- {text: "Ah, the great outdoors. A bed with no walls and a roof that leaks stars.", ctx: [camp], pers: [wry], when: [night]}
+- {text: "I am sure this is all very romantic to someone who has not slept on a root.", ctx: [camp], pers: [wry]}
+- {text: "The food is warm and no one has tried to eat us yet. I give the evening high marks.", ctx: [camp], pers: [wry], when: [night]}
+- {text: "If I had known adventure meant this much walking, I would have asked for a horse. Oh, I did.", ctx: [camp], pers: [wry]}
+- {text: "Someone should write a guide: how to sleep on rocks and call it comfort.", ctx: [camp], pers: [wry]}
+- {text: "Look at us. Heroes, wanderers, and professional fire-watchers.", ctx: [camp], pers: [wry]}
+- {text: "I will say this for the road: it never runs out of lessons, and it never runs out of mud.", ctx: [camp], pers: [wry]}
+- {text: "I volunteer someone else for the first watch. Any takers? Anyone? No?", ctx: [camp], pers: [wry]}
+- {text: "I slept so well I forgot I am sleeping on the ground. Now it remembers me.", ctx: [rested], pers: [wry]}
+- {text: "Ah, waking up. Overrated, but necessary.", ctx: [rested], pers: [wry]}
+- {text: "My back has filed a complaint about the ground. It was denied.", ctx: [rested], pers: [wry]}
+- {text: "Well. That could have gone worse. It usually does.", ctx: [win], pers: [wry]}
+- {text: "I would say we make it look easy, but that would be lying.", ctx: [win], pers: [wry]}
+- {text: "Well fought, everyone. I mean that sincerely. Mostly.", ctx: [win], pers: [wry]}
+- {text: "We won. Let us enjoy it before something reminds us not to.", ctx: [win], pers: [wry]}
+- {text: "I like it when our plans work. I like it more when they are not this dramatic.", ctx: [close], pers: [wry]}
+- {text: "Another few inches, and I would have a very short story to tell.", ctx: [close], pers: [wry]}
+- {text: "I do not have a joke for this. I tried. {fallen} deserved a better one.", ctx: [fall], pers: [wry]}
+- {text: "Even my jokes have gone quiet for {fallen}.", ctx: [fall], pers: [wry]}
+- {text: "Not a scratch. If someone asks, we always make it look this good.", ctx: [flawless], pers: [wry]}
+- {text: "Flawless. I would be suspicious, but I am enjoying it.", ctx: [flawless], pers: [wry]}
+
+# --- devout ---
+- {text: "I give thanks for the fire, the food, and the company. In that order, sometimes.", ctx: [camp], pers: [devout], align: [good, neutral]}
+- {text: "Let us hold a moment of quiet before we sleep. We are not alone out here.", ctx: [camp], pers: [devout], align: [good, neutral]}
+- {text: "I will say a prayer for the road ahead. It costs nothing, and it comforts.", ctx: [camp], pers: [devout]}
+- {text: "Even in the wilderness there is grace, if you look for it.", ctx: [camp], pers: [devout], align: [good, neutral]}
+- {text: "Whatever watches over us, I am grateful tonight.", ctx: [camp], pers: [devout], when: [night]}
+- {text: "The night is kind to those who ask it gently. Sleep well.", ctx: [camp], pers: [devout], when: [night]}
+- {text: "I remember in my prayers everyone who has walked beside me. That is a long list, and a good one.", ctx: [camp], pers: [devout], align: [good, neutral]}
+- {text: "A fire, a friend, and a blessing. What a night.", ctx: [camp], pers: [devout], when: [night]}
+- {text: "Every waking is a gift. Let us not waste this one.", ctx: [rested], pers: [devout]}
+- {text: "I woke with a good heart. I take it as a sign.", ctx: [rested], pers: [devout]}
+- {text: "Blessed be the rest. We are renewed.", ctx: [rested], pers: [devout]}
+- {text: "Thank goodness. We are spared, and I give thanks.", ctx: [win], pers: [devout]}
+- {text: "I say a quiet word for the fallen foe. They too were someone's.", ctx: [win], pers: [devout], align: [good, neutral]}
+- {text: "Praise be. We have come through whole.", ctx: [win], pers: [devout]}
+- {text: "It is not our strength but our fortune. Do not forget to be grateful.", ctx: [win], pers: [devout], align: [good, neutral]}
+- {text: "I felt the hand of grace on that one. Truly. We were close to the edge.", ctx: [close], pers: [devout]}
+- {text: "Thank the heavens we stand. That was nearer than I could bear.", ctx: [close], pers: [devout]}
+- {text: "Hold on, {fallen}. A church can still call you back, and I will pray until it does.", ctx: [fall], pers: [devout]}
+- {text: "We are lessened without {fallen}. Let us not be without them for long.", ctx: [fall], pers: [devout]}
+- {text: "We were blessed today. Not a soul hurt. I give thanks.", ctx: [flawless], pers: [devout]}
+- {text: "A perfect victory is a gift. May we deserve it.", ctx: [flawless], pers: [devout]}

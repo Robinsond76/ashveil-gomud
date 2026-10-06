@@ -827,11 +827,14 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			if cap, ok := skills.LevelCap(skillName); ok {
 				skillLevel = min(skillLevel, cap)
 			}
+			def := skills.GetSkill(skillName)
 			payload.Skills = append(payload.Skills, GMCPCharModule_Payload_Skill{
-				Name:     skillName,
-				Level:    skillLevel,
-				Maximum:  skillLevel >= skills.MaxSkillLevel(skillName),
-				MaxLevel: skills.MaxSkillLevel(skillName),
+				Name:        skillName,
+				Title:       def.Name,
+				Description: def.Description,
+				Level:       skillLevel,
+				Maximum:     skillLevel >= skills.MaxSkillLevel(skillName),
+				MaxLevel:    skills.MaxSkillLevel(skillName),
 			})
 		}
 
@@ -1213,10 +1216,12 @@ type GMCPCharModule_Payload_Pet_Ability struct {
 // Char.Skills
 // /////////////////
 type GMCPCharModule_Payload_Skill struct {
-	MaxLevel int    `json:"max_level"`
-	Name     string `json:"name"`
-	Level    int    `json:"level"`
-	Maximum  bool   `json:"maximum,omitempty"`
+	MaxLevel    int    `json:"max_level"`
+	Name        string `json:"name"`
+	Title       string `json:"title,omitempty"`       // display name, e.g. "Dual Wield" for "dual-wield"
+	Description string `json:"description,omitempty"` // what the skill is and does (Phase 57)
+	Level       int    `json:"level"`
+	Maximum     bool   `json:"maximum,omitempty"`
 }
 
 // /////////////////

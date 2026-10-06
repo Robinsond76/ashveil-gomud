@@ -75,3 +75,23 @@ func PickPlayerTalent(userID, level int, talent string) error {
 	}
 	return ErrUnavailable
 }
+
+// AdminWriter is implemented by the same module as PlayerWriter, for the
+// admin test area (modules/testarea): it sets a player's archetype and
+// class outright, with none of the promotion rules.
+type AdminWriter interface {
+	AdminSetClass(userID int, id string) (string, error)
+}
+
+// AdminSetClass sets a player's archetype (a base archetype id) or advanced
+// or elite class (a class id, which also sets its lineage's archetype). It
+// returns what the player is now.
+func AdminSetClass(userID int, id string) (string, error) {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if w, ok := p.(AdminWriter); ok {
+		return w.AdminSetClass(userID, id)
+	}
+	return "", ErrUnavailable
+}

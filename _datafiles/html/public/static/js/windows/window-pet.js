@@ -55,9 +55,11 @@
 
         #pet-window .pw-tab-btn:last-child { border-right: none; }
 
-        #pet-window .pw-tab-btn:hover {
-            background: var(--t-border);
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            #pet-window .pw-tab-btn:hover {
+                background: var(--t-border);
+                color: var(--t-text);
+            }
         }
 
         #pet-window .pw-tab-btn.active {
@@ -271,9 +273,11 @@
             gap: 3px;
         }
 
-        .pw-stat-cell:hover .pw-stat-abbr,
-        .pw-stat-cell:hover .pw-stat-num {
-            color: var(--t-accent);
+        @media (hover: hover) and (pointer: fine) {
+            .pw-stat-cell:hover .pw-stat-abbr,
+            .pw-stat-cell:hover .pw-stat-num {
+                color: var(--t-accent);
+            }
         }
 
         .pw-stat-abbr {
@@ -365,7 +369,9 @@
         }
 
         .pw-item-row:last-child { border-bottom: none; }
-        .pw-item-row:hover { background: var(--t-bg-surface-alt); }
+        @media (hover: hover) and (pointer: fine) {
+            .pw-item-row:hover { background: var(--t-bg-surface-alt); }
+        }
 
         .pw-item-type {
             width: 54px;

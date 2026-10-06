@@ -213,6 +213,14 @@ const (
 	RendArmor    = "rendarmor"    // its critical hits break the target's armor for 2 rounds
 	Apex         = "apex"         // each foe it fells forces a morale check on that foe's group
 
+	// The Sorcerer's routes (Phase 38d).
+	Lance     = "lance"     // knows Arcane Lance
+	LancePct  = "lancepct"  // percent more damage the Lance deals
+	LanceCost = "lancecost" // the Lance's mana cost
+	LanceTrim = "lancetrim" // rounds off every Lance's chant
+	LanceTwin = "lancetwin" // percent of its damage a second foe takes from a Lance
+	LanceFree = "lancefree" // once a battle the first Lance needs no chant
+
 	// The Doll Master's lineage (Phase 39d). The doll is a durable fighter
 	// in a cell of its own that acts on its Master's turn.
 	DollGuards  = "dollguards"  // times a battle the doll guards its most hurt neighbour (Guard String)
@@ -272,4 +280,16 @@ const (
 	MutagenArmr = "mutagenarmr" // armor a Bracing Tonic adds for the battle (a Mutagen)
 	MutagenCost = "mutagencost" // percent of its health the ally pays for a Mutagen
 	MutagenFree = "mutagenfree" // a Mutagen costs its ally no health
+)
+
+// The Arbalist's lineage (Phase 39h).
+const (
+	BoltPierce  = "boltpierce"  // percent of the target's armor a Piercing Bolt ignores
+	SteadyAim   = "steadyaim"   // Attack a bolt gains when nothing has hurt the shooter since its last one
+	BoltCripple = "boltcripple" // rounds a landed bolt hobbles the target
+	BoltDmg     = "boltdmg"     // percent more damage a Piercing Bolt deals
+	Shred       = "shred"       // armor points each landed bolt takes off the target for the battle
+	ShredCap    = "shredcap"    // the most armor a foe loses that way
+	FirstLoaded = "firstloaded" // the first bolt of each battle needs no reload
+	BoltCD      = "boltcd"      // rounds off Piercing Bolt's cooldown (its reload is unchanged)
 )

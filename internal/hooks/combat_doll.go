@@ -89,6 +89,7 @@ func dollPass() {
 	}
 	for _, id := range company.DollInstances() {
 		if !live[id] {
+			dollGoesLimp(id)
 			dolls.Dismiss(id)
 		}
 	}
@@ -102,6 +103,25 @@ func dollPass() {
 	for _, id := range company.DollInstances() {
 		dolls.Sync(id)
 	}
+}
+
+// dollGoesLimp tells the room when a Master has fallen while its doll still
+// stands (Phase 47): the strings it hung from are cut. A doll removed because
+// its battle ended, or because it was already broken, says nothing.
+func dollGoesLimp(id int) {
+	d := mobs.GetInstance(id)
+	e, ok := company.DollOf(id)
+	if d == nil || !ok || d.Character.Health < 1 {
+		return
+	}
+	master, found := dolls.Of(e.Leader, e.Owner)
+	if !found || master.Char.Health > 0 {
+		return
+	}
+	if room := rooms.LoadRoom(d.Character.RoomId); room != nil {
+		room.SendText(fmt.Sprintf(`%s goes limp as its Master falls.`, named(mobTag(mobName(id)))))
+	}
+	emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: d.Character.RoomId, Target: mobRef(d), Outcome: combatstream.OutcomeIncapacitated})
 }
 
 // dismissDolls takes a leader's dolls away: its battle ended.

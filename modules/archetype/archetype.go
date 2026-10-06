@@ -12,6 +12,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
 	"strconv"
@@ -231,6 +232,7 @@ func init() {
 	events.RegisterListener(events.LevelUp{}, m.onLevelUp)
 	users.RegisterLevelGrant(m.levelGrant)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	archetypes.SetProvider(m)
 	classes.SetProvider(m)
 }

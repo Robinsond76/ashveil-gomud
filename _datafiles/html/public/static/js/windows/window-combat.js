@@ -142,7 +142,10 @@
             cursor: pointer;
         }
 
-        .cbt-member:hover { background: var(--t-accent-dim); color: var(--t-text-white); }
+        @media (hover: hover) and (pointer: fine) {
+            .cbt-member:hover { background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); }
+            .cbt-member:hover .cbt-how { color: inherit; }
+        }
         .cbt-member:focus-visible { outline: 2px solid var(--t-accent); }
         .cbt-member .cbt-how { color: var(--t-text-secondary); white-space: nowrap; }
         .cbt-member.is-fallen { opacity: 0.6; border-style: dashed; }
@@ -159,7 +162,9 @@
             cursor: pointer;
         }
 
-        .cbt-btn:hover { background: var(--t-accent-dim); color: var(--t-text-white); }
+        @media (hover: hover) and (pointer: fine) {
+            .cbt-btn:hover { background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); }
+        }
 
         /* Phase 32g2: the Battle view. */
         .cbt-live {

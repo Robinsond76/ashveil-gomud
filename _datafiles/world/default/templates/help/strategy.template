@@ -27,12 +27,12 @@ in danger, a Bracing Tonic before the blows, and a Fire Flask while more than
 2 flasks remain (<ansi fg="command">help alchemist</ansi>).
 
 Whatever its role, a warrior, rogue, ranger, halberdier, Doll Master, gryphon
-rider or Beast Tamer also uses its class ability on its own when the moment
+rider, Beast Tamer or arbalist also uses its class ability on its own when the moment
 comes: a tackle, an opening strike, an aimed shot, a sweep, a doll's strike, a
-dive, or a beast sent in (<ansi fg="command">help abilities</ansi>).
+dive, a beast sent in, or a piercing bolt (<ansi fg="command">help abilities</ansi>).
 
 A promoted healer or caster also casts its class spells on its own (Greater Heal,
-Rejuvenation, Grove, Ward, Barkskin, Stoneskin, Bless, Siphon, and the summons of a Hierarch
+Rejuvenation, Grove, Ward, Barkskin, Stoneskin, Bless, Siphon, a Sorcerer's Arcane Lance, and the summons of a Hierarch
 and a Demonologist, which come first in a battle): <ansi fg="command">help cleric-routes</ansi>,
 <ansi fg="command">help summoning</ansi>.
 
@@ -61,6 +61,8 @@ heals you even when you are down and bleeding out.
   <ansi fg="command">furthest</ansi>   the back-most foe
   <ansi fg="command">crowded</ansi>    the weakest foe in the row with the most foes (a halberdier's default;
              also <ansi fg="command">row</ansi>, <ansi fg="command">sweep</ansi>)
+  <ansi fg="command">armored</ansi>    the foe with the most armor, the weakest on a tie (an arbalist's
+              default; also <ansi fg="command">armor</ansi>, <ansi fg="command">tank</ansi>)
   <ansi fg="command">leader</ansi>     their leader, the toughest of them
   <ansi fg="command">casters</ansi>    their spell-casters, one chanting a spell first
   <ansi fg="command">healers</ansi>    their healers first, one chanting a heal before an idle one

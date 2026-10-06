@@ -156,3 +156,69 @@ func (m *ArchetypeModule) grantClassSpells(user *users.UserRecord) []string {
 	}
 	return learned
 }
+
+var _ classes.AdminWriter = (*ArchetypeModule)(nil)
+
+// AdminSetClass implements classes.AdminWriter (the admin test area): the
+// player becomes the archetype, or the class and its lineage's archetype,
+// with no gate, price or permanence. Spells are re-taught from scratch (the
+// book is cleared first, so what the class gives is what it gives alone),
+// skills are only raised, and no kit is owed. Talents are cleared.
+func (m *ArchetypeModule) AdminSetClass(userID int, id string) (string, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return "", err
+	}
+	user := users.GetByUserId(userID)
+	if user == nil || user.Character == nil {
+		return "", errors.New("that player is not online")
+	}
+	id = strings.ToLower(strings.TrimSpace(id))
+	lineage, classID := id, ""
+	if c, ok := classes.Get(id); ok {
+		lineage, classID = c.Lineage, c.ID
+	}
+	m.mu.Lock()
+	a, ok := m.table.Get(lineage)
+	if !ok {
+		m.mu.Unlock()
+		return "", fmt.Errorf("there is no archetype or class called %q", id)
+	}
+	prevPlayer, hadPlayer := m.registry.Players[userID]
+	prevClass, hadClass := m.registry.Classes[userID]
+	prevKit, hadKit := m.registry.Kits[userID]
+	m.registry.Players[userID] = a.ID
+	delete(m.registry.Kits, userID)
+	if classID != "" {
+		m.registry.Classes[userID] = ClassRecord{Class: classID}
+	} else {
+		delete(m.registry.Classes, userID)
+	}
+	if err := m.saveLocked(); err != nil {
+		if hadPlayer {
+			m.registry.Players[userID] = prevPlayer
+		} else {
+			delete(m.registry.Players, userID)
+		}
+		if hadClass {
+			m.registry.Classes[userID] = prevClass
+		} else {
+			delete(m.registry.Classes, userID)
+		}
+		if hadKit {
+			m.registry.Kits[userID] = prevKit
+		}
+		m.mu.Unlock()
+		return "", err
+	}
+	m.mu.Unlock()
+	user.Character.SpellBook = map[string]int{}
+	applyGrants(user, a)
+	users.SettleClassGear(user, m.saveUser)
+	m.afterClassChange(userID)
+	if classID != "" {
+		if c, ok := classes.Get(classID); ok {
+			return c.Name, nil
+		}
+	}
+	return a.Name, nil
+}

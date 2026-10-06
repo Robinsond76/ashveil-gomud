@@ -85,3 +85,7 @@
   status fields are scrubbed), tactics, or fight start/end/focus. `Company.Battle`
   also carries `allies` (formation cells, class and health words) and `nerve`
   ("faltering" while `morale.Losing` holds for the company).
+
+- Phase 57: `Char.Skills` entries also carry `title` (the skill's display name) and
+  `description` (what it does), additive. The web client's Character > Skills renders
+  both; it no longer renders `Char.Jobs`, which stays for other clients.

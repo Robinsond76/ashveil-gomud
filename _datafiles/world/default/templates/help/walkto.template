@@ -58,8 +58,9 @@ In the web client you can also click a tile on the map.
 <ansi fg="yellow-bold">On a phone</ansi>
 
   Tap a room on the Map view for "Walk to [room]", or use Walk to... on the
-  touch bar for a list of the named places on the map; a Stop button shows
-  while you walk (<ansi fg="command">help mobile</ansi>).
+  touch bar for a list of the named places on the map, or its "Find a
+  visited room..." search for any room you have seen in this zone; a Stop
+  button shows while you walk (<ansi fg="command">help mobile</ansi>).
 
 See also: <ansi fg="command">help mobile</ansi>, <ansi fg="command">help worldmap</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help encounters</ansi>,
 <ansi fg="command">help webclient</ansi>.

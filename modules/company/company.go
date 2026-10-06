@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"strconv"
 	"strings"
@@ -58,6 +59,9 @@ type Runtime interface {
 	// walking with them (32f review: meals and the riding pace count only
 	// members present).
 	WithLeader(leaderUserID, instanceID int) bool
+	// Trailing reports whether a live mob is with its leader or one move
+	// behind (47: a companion mid-step still carries its share).
+	Trailing(leaderUserID, instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
 	// Relocate moves a live, living mob into roomID and out of any fight
@@ -150,6 +154,8 @@ func (s pluginStore) Save(registry domain.Registry) error {
 }
 
 type CompanyModule struct {
+	// banter is the Phase 49 banter memory (banter.go).
+	banter banterState
 	// equipmentViews caches the Gear editor's read model (Phase 34c).
 	equipmentViews     equipmentViewCache
 	starterPackForTest int
@@ -230,6 +236,7 @@ func init() {
 	events.RegisterListener(events.ItemOwnership{}, m.onItemOwnership)
 	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.BattleEnded{}, m.onBattleEnded) // Phase 35b
 	module = m
@@ -468,6 +475,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	m.assignConfiguredArchetype(leaderUserID, companion)
 	companion.Archetype, _ = m.CompanionArchetype(leaderUserID, companion.ID)
 	m.seedDisposition(leaderUserID, companion)
+	m.rollPersonality(leaderUserID, companion) // Phase 49
 	var spawnState *domain.MemberState
 	if hire != nil {
 		g := hire.candidate
@@ -658,6 +666,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 			loyalty = c.Disposition.Loyalty
 		}
 		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, alignment %s, loyalty %d (%s)%s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), companionLevel(c), classLabel(c), alignmentLabel(m.companionAlignment(c)), loyalty, state, m.classNote(m.companionSubject(leaderUserID, c))))
+		if gear := m.statusGearLine(leaderUserID, c); gear != "" {
+			lines = append(lines, "    Gear: "+gear)
+		}
 	}
 	if lost := lostLine(record); lost != "" {
 		lines = append(lines, lost)
@@ -681,10 +692,16 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if !ok {
 		return "", fmt.Errorf("company: no companion matches %q", selector)
 	}
-	if err := m.removeCompanion(leaderUserID, record, companion); err != nil {
+	name := nameOf(companion, strconv.Itoa(companion.MobTemplateID))
+	returned, gold, err := m.dropCompanionGear(leaderUserID, record, companion, nil)
+	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Companion dismissed: %s (#%d).", nameOf(companion, strconv.Itoa(companion.MobTemplateID)), companion.ID), nil
+	text := fmt.Sprintf("Companion dismissed: %s (#%d).", name, companion.ID)
+	if line := gearReturnLine(leaderUserID, name, returned, gold); line != "" {
+		text += " " + line
+	}
+	return text, nil
 }
 
 // removeCompanion takes one companion out of the company (dismissal and
@@ -695,11 +712,42 @@ func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, 
 }
 
 // dropCompanion is removeCompanion; with lost (Phase 25b expiry), the
-// companion is also remembered among the lost in the same save.
+// companion is also remembered among the lost in the same save. The leader
+// is told when gear came back to the cargo.
 func (m *CompanyModule) dropCompanion(leaderUserID int, record domain.Record, companion domain.Companion, lost *domain.LostCompanion) error {
-	snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
+	returned, gold, err := m.dropCompanionGear(leaderUserID, record, companion, lost)
 	if err != nil {
 		return err
+	}
+	if line := gearReturnLine(leaderUserID, nameOf(companion, strconv.Itoa(companion.MobTemplateID)), returned, gold); line != "" {
+		m.chemistryWorld().Tell(leaderUserID, line)
+	}
+	return nil
+}
+
+// dropCompanionGear removes a companion and returns the gear the leader gave
+// it to the leader's cargo in the same save (Phase 48 gear return).
+func (m *CompanyModule) dropCompanionGear(leaderUserID int, record domain.Record, companion domain.Companion, lost *domain.LostCompanion) ([]items.Item, int, error) {
+	leader := m.gearReturnLeader(leaderUserID)
+	if leader != nil {
+		// A pending asset write finishes first, then the companion's own
+		// state is read, so nothing returned is stale.
+		if err := m.PrepareAssets(leaderUserID); err != nil {
+			return nil, 0, err
+		}
+		record, _ = m.registry.Get(leaderUserID)
+		if fresh, ok := findCompanion(record, companion.ID); ok {
+			companion = fresh
+		}
+	}
+	var returned []items.Item
+	gold := 0
+	if leader != nil {
+		returned, gold = m.returnableGear(leaderUserID, companion)
+	}
+	snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
+	if err != nil {
+		return nil, 0, err
 	}
 	removed := false
 	if lost != nil {
@@ -708,19 +756,22 @@ func (m *CompanyModule) dropCompanion(leaderUserID int, record domain.Record, co
 		removed = m.registry.Dismiss(leaderUserID, companion.ID)
 	}
 	if !removed {
-		return fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
+		return nil, 0, fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
 	}
 	if err := survival.RemoveCompanyMember(leaderUserID, companion.ID); err != nil {
 		m.registry.Put(record)
-		return err
+		return nil, 0, err
+	}
+	if leader != nil && (len(returned) > 0 || gold > 0) {
+		m.stageGearReturn(leader, returned, gold)
 	}
 	if err := m.save(); err != nil {
 		restoreErr := survival.RestoreCompanyMember(leaderUserID, companion.ID, snapshot)
 		m.registry.Put(record)
 		if restoreErr != nil {
-			return errors.Join(err, restoreErr)
+			return nil, 0, errors.Join(err, restoreErr)
 		}
-		return err
+		return nil, 0, err
 	}
 	if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
 		if m.runtime.IsLive(instanceID) {
@@ -728,13 +779,31 @@ func (m *CompanyModule) dropCompanion(leaderUserID int, record domain.Record, co
 		}
 		m.clearInstance(leaderUserID, companion.ID)
 	}
-	return nil
+	if leader != nil && (len(returned) > 0 || gold > 0) {
+		m.finishGearReturn(leader)
+	}
+	return returned, gold, nil
 }
 
 func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok || len(record.Companions) == 0 {
 		return "No companions.", nil
+	}
+	leader := m.gearReturnLeader(leaderUserID)
+	if leader != nil {
+		if err := m.PrepareAssets(leaderUserID); err != nil {
+			return "", err
+		}
+		record, _ = m.registry.Get(leaderUserID)
+	}
+	var returned []items.Item
+	gold := 0
+	if leader != nil {
+		for _, companion := range record.Companions {
+			gear, g := m.returnableGear(leaderUserID, companion)
+			returned, gold = append(returned, gear...), gold+g
+		}
 	}
 	snapshots := make(map[int]survival.MemberSnapshot, len(record.Companions))
 	for _, companion := range record.Companions {
@@ -748,6 +817,9 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	if err := survival.RemoveAllCompanyMembers(leaderUserID); err != nil {
 		m.registry.Put(record)
 		return "", err
+	}
+	if leader != nil && (len(returned) > 0 || gold > 0) {
+		m.stageGearReturn(leader, returned, gold)
 	}
 	if err := m.save(); err != nil {
 		var restoreErr error
@@ -770,7 +842,14 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 			m.clearInstance(leaderUserID, companion.ID)
 		}
 	}
-	return fmt.Sprintf("Dismissed %d companion(s).", count), nil
+	if leader != nil && (len(returned) > 0 || gold > 0) {
+		m.finishGearReturn(leader)
+	}
+	text := fmt.Sprintf("Dismissed %d companion(s).", count)
+	if line := gearReturnLine(leaderUserID, "The company", returned, gold); line != "" {
+		text += " " + line
+	}
+	return text, nil
 }
 
 // resolveCompanion matches a companion by #id, bare numeric ID, exact name, or name substring.

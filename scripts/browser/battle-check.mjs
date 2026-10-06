@@ -131,6 +131,15 @@ check(unitOf(s, 'companion:3').casting === 'fire bolt', 'a chanting caster is ma
   check(/, bleeding/.test(cap), 'hovering a figure names its statuses: ' + cap);
   await page.mouse.move(0, 0);
 }
+{
+  // Phase 47: a legend names the coloured dots on screen, and only those.
+  await page.waitForTimeout(100);
+  const legend = await page.evaluate(() => [...document.querySelectorAll('#battle-screen .bs-legend .bs-legend-item')].map(i => i.textContent));
+  check(legend.length === 1 && legend[0] === 'bleeding', 'the legend names the status dots on screen: ' + legend.join('|'));
+  const swatch = await page.evaluate(() => document.querySelector('#battle-screen .bs-legend .bs-dot').style.background);
+  check(/hsl|rgb/.test(swatch), 'with the dot\'s colour beside it: ' + swatch);
+  if (shot) { await page.locator('#battle-screen').screenshot({ path: shot.replace(/\.png$/, '-legend.png') }); }
+}
 await events({ fight: 1, round: 2, events: [
   { seq: 5, kind: 'status-expired', tgt: 'm:1', status: 'bleeding' },
   { seq: 6, kind: 'cast-complete', src: 'companion:3', outcome: 'cast' },
@@ -139,6 +148,8 @@ await events({ fight: 1, round: 2, events: [
 ] });
 s = await state();
 check(unitOf(s, 'm:1').statuses.length === 0, 'an expired status leaves');
+await page.waitForTimeout(100);
+check(await page.evaluate(() => document.querySelectorAll('#battle-screen .bs-legend .bs-legend-item').length) === 0, 'and the legend drops it');
 check(unitOf(s, 'companion:3').casting === '', 'the chant mark ends with the cast');
 check(unitOf(s, 'm:3').fallen, 'a death lays its unit down');
 check(unitOf(s, 'm:2').yielded, 'a yield is marked');

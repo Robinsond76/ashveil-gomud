@@ -35,9 +35,11 @@ button in them just types a command for you.
 
   Below it, the tabs:
 
-  <ansi fg="yellow">Character</ansi>   Overview (your sheet, experience, and gold), Gear (what you
-              wear and carry, and its weight), Skills (with your jobs),
-              Quests, Effects, and Pet when you have one.
+  <ansi fg="yellow">Character</ansi>   Overview (your name, class, level, stats, experience, and
+              gold), Gear (what you wear and carry, and its weight),
+              Skills (each trained skill with what it does, then what
+              your abilities and company can do), Quests, Effects, and
+              Pet when you have one.
   <ansi fg="yellow">Company</ansi>     Status (formation and each member), Inventory (everyone's
               gear, your horses, and the cargo), and Camp.
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
@@ -52,7 +54,7 @@ button in them just types a command for you.
 
 <ansi fg="yellow-bold">What the buttons and menus send</ansi>
 
-  Inventory: click cargo gear to compare or equip a living member.
+  Inventory: tap a member's slot, or click cargo gear, to compare or equip a living member; drag cargo onto a member.
   Character > Gear: select a slot, choose a compatible cargo item, review
   Current → After and Equip item. Preview removal then Remove equipment
   returns the exact worn item to cargo. Unavailable choices explain why. Eat, drink and use items from
@@ -62,9 +64,13 @@ button in them just types a command for you.
 
   Camp: Make camp, Light fire, Rest, Break camp, and Inn appear only
   when they would work (<ansi fg="command">camp</ansi>, <ansi fg="command">inn</ansi>); Meal is always there.
+  Under the buttons, "Around the fire" shows your companions' latest talk
+  (<ansi fg="command">help banter</ansi>).
 
-  Menus work from the keyboard too: Enter opens one, the arrow keys move,
-  Enter chooses, and Escape closes it.
+  Click a stat, a skill, your race, or your points on the Character tab
+  to open its help page; Escape closes it and puts you back where you
+  were. Menus work from the keyboard too: Enter opens one, the arrow keys
+  move, Enter chooses, and Escape closes it.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
   or where they stand (<ansi fg="command">formation</ansi>). A guardian's menu picks whom it
@@ -129,7 +135,7 @@ See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help compan
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
-Company Inventory shows shared cargo once. Worn gear is in Character Gear.
+Company Inventory shows shared cargo once, plus each member's gear slots (tap or drag to equip). Character Gear previews any member's changes.
 
 Company Status separates active effects, wounds and persistent bonuses.
 Character Skills separates trained ranks, automatic combat abilities,

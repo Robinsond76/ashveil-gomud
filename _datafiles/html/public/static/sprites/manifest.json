@@ -582,6 +582,28 @@
     72
    ]
   },
+  "battle/units/arbalist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit arbalist"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/arcanist/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -4273,6 +4295,48 @@
    ]
   },
   "map/units/alchemist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/arbalist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/arbalist/walk.png": {
    "frames": 4,
    "frame_ms": 120,
    "kind": "map-unit",

@@ -24,6 +24,7 @@ func (m *CompanyModule) onUserPurged(e events.Event) events.ListenerReturn {
 	}
 	delete(m.instances, leader)
 	delete(m.anchors, leader)
+	m.banter.forget(leader)
 	for key, c := range m.pendingTierUps {
 		if c.leaderUserID == leader {
 			delete(m.pendingTierUps, key)

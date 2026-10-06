@@ -277,7 +277,7 @@ func TestFormationDefaultsHelp(t *testing.T) {
 	}
 	text, err = GetHelpContents("company-inventory")
 	require.NoError(t, err)
-	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Worn equipment lives in Character Gear")
+	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "every member's equipment slots")
 }
 
 // Phase 38a: the Witch and hexes pages render, are indexed (hexes under
@@ -364,7 +364,9 @@ func TestClassHelpTopics(t *testing.T) {
 		"archmage":      {"Overchannel", "Quick casting", "Arcane Barrage", "Archmage's Storm", "Deep Reserves"},
 		"necromancer":   {"Raise the Fallen", "Deeper drain", "Grave Chill", "Death's Harvest", "Lich's Bargain", "help thrall"},
 		"thrall":        {"risen", "60%", "never saved", "help necromancer"},
-		"wizard-routes": {"Theurgist", "Arcanist", "Warlock", "Life Drain", "help archon"},
+		"wizard-routes": {"Theurgist", "Arcanist", "Warlock", "Sorcerer", "Arcane Lance", "Life Drain", "help archon", "help high-sorcerer"},
+		// Phase 38d: the Sorcerer's elite.
+		"high-sorcerer": {"High Lance", "Gathered chant", "Unbroken chant", "Twin Lance", "Searing lance", "Bottomless well", "Instant Lance", "Deep Reserves"},
 		"wise-one":      {"Hearthward", "Deep Slumber", "Mend Charm", "Cleansing ward", "Hearth's Peace", "Ward of Life"},
 		"coven-mother":  {"Coven's Will", "Lasting hexes", "Cheaper hexes", "Breaking the boss", "Twin Hex", "Coven Circle"},
 		"crone-of-ash":  {"Ashen Curse", "Rotting Miasma", "Quick curses", "Lingering Curse", "Soul Rot", "Crone's Doom"},
@@ -388,7 +390,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"elites": "elite", "elite-class": "elite", "warlords": "warlord", "battle-cry": "warlord",
 		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
 		"counterspell": "archon", "overchannel": "archmage", "raise-the-fallen": "necromancer", "thralls": "thrall",
-		"theurgist": "wizard-routes", "warlock": "wizard-routes", "hearthward": "wise-one", "coven-circle": "coven-mother",
+		"theurgist": "wizard-routes", "warlock": "wizard-routes", "sorcerer": "wizard-routes", "arcane-lance": "wizard-routes", "twin-lance": "high-sorcerer", "instant-lance": "high-sorcerer", "hearthward": "wise-one", "coven-circle": "coven-mother",
 		"crone": "crone-of-ash", "soul-rot": "crone-of-ash", "hag": "witch-routes", "coven-sage": "witch-routes",
 		"dolls": "dollmaster", "tangle": "dollmaster", "puppeteer": "dollmaster-routes", "marionettist": "dollmaster-routes",
 		"mend-doll": "doll",

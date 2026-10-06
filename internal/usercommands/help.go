@@ -82,6 +82,12 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		helpTxt, err = GetHelpContents(rest)
 		if err != nil {
+			// Ashveil: an admin command's own page answers `help [command]`
+			// for those who may use it; anyone else sees no such topic.
+			if adminTxt, ok := adminHelpContents(rest, user); ok {
+				user.SendText(adminTxt)
+				return true, nil
+			}
 			user.SendText(fmt.Sprintf(`No help found for "%s"`, rest))
 			return true, err
 		}
@@ -221,4 +227,30 @@ func resolveHelpTopic(input string) string {
 // asked about itself. `help help` once answered "No help found" (Phase 44).
 func isHelpIndexRequest(args []string) bool {
 	return len(args) == 0 || (len(args) == 1 && strings.EqualFold(args[0], "help"))
+}
+
+// adminHelpContents is the page of an admin command (admincommands/help/
+// command.[name]) for a user allowed to run it, when the help topic is
+// listed under admin and has no player page.
+func adminHelpContents(input string, user *users.UserRecord) (string, bool) {
+	fields := strings.Fields(strings.ToLower(input))
+	if len(fields) == 0 {
+		return "", false
+	}
+	name := keywords.TryHelpAlias(fields[0])
+	admin := false
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Command == name {
+			admin = topic.AdminOnly
+			break
+		}
+	}
+	if !admin || !user.HasRolePermission(name, true) {
+		return "", false
+	}
+	text, err := templates.Process("admincommands/help/command."+name, nil, user.UserId)
+	if err != nil {
+		return "", false
+	}
+	return text, true
 }

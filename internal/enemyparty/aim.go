@@ -217,6 +217,7 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 			Chanting:   m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
 			Caster:     len(m.Character.SpellBook) > 0,
 			Healer:     strategy.Role(m.EnemyRole()) == strategy.Healer,
+			Armor:      m.Character.GetDefense(),
 		}
 		// Members are ranked toughest first: the first standing is the
 		// leader, and the next steps up when it falls.

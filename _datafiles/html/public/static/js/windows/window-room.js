@@ -174,9 +174,11 @@
             border: 1px solid var(--t-exit-open-border);
         }
 
-        .rw-exit-badge.open:hover {
-            background: var(--t-exit-open-hover);
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            .rw-exit-badge.open:hover {
+                background: var(--t-exit-open-hover);
+                color: var(--t-text);
+            }
         }
 
         .rw-exit-badge.locked {
@@ -185,9 +187,11 @@
             border: 1px solid var(--t-exit-locked-border);
         }
 
-        .rw-exit-badge.locked:hover {
-            background: var(--t-exit-locked-hover);
-            color: var(--t-exit-locked-hover-text);
+        @media (hover: hover) and (pointer: fine) {
+            .rw-exit-badge.locked:hover {
+                background: var(--t-exit-locked-hover);
+                color: var(--t-exit-locked-hover-text);
+            }
         }
 
         .rw-exit-badge.secret {
@@ -196,9 +200,11 @@
             border: 1px solid var(--t-exit-secret-border);
         }
 
-        .rw-exit-badge.secret:hover {
-            background: var(--t-exit-secret-hover);
-            color: var(--t-exit-secret-hover-text);
+        @media (hover: hover) and (pointer: fine) {
+            .rw-exit-badge.secret:hover {
+                background: var(--t-exit-secret-hover);
+                color: var(--t-exit-secret-hover-text);
+            }
         }
 
         /* ---- scroll body (exits + contents together) ---- */
@@ -270,10 +276,14 @@
 
         .rw-row:last-child { border-bottom: none; }
 
-        .rw-row:hover { background: var(--t-bg-surface-alt); }
+        @media (hover: hover) and (pointer: fine) {
+            .rw-row:hover { background: var(--t-bg-surface-alt); }
+        }
 
         .rw-row.aggro { background: var(--t-aggro-bg); }
-        .rw-row.aggro:hover { background: var(--t-aggro-hover); }
+        @media (hover: hover) and (pointer: fine) {
+            .rw-row.aggro:hover { background: var(--t-aggro-hover); }
+        }
 
         .rw-row-name {
             flex: 1;
@@ -674,6 +684,9 @@
     let gatherTimer = null;
     let gatherHide  = null;
     let gatherRequested = false;
+
+    // Phase 47: a reconnect (copyover) is a new session; ask again.
+    window.addEventListener('vwin:connected', function() { gatherRequested = false; });
 
     function gatherCapitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 

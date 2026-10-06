@@ -6,9 +6,11 @@
  *   Overview - name, race/class, level, alignment, stats grid, point
  *              badges, then Worth (window-status.js: XP, gold)
  *   Gear     - worn and carried items (window-gear.js)
- *   Skills   - trained ranks, automatic and field/camp capabilities, the
- *              companions' optional skills and training points (Phase 35c,
- *              read-only), then jobs (profession completion and proficiency)
+ *   Skills   - trained ranks with what each skill does, automatic and
+ *              field/camp capabilities, the companions' optional skills and
+ *              training points (Phase 35c, read-only). The stock "jobs"
+ *              (profession titles derived from skills) are not shown: a
+ *              class names a character in Ashveil (Phase 57)
  *   Quests   - in-progress quest log, click to expand
  *   Effects  - active effects, wounds and persistent bonuses with durations
  *   Pet      - only while the player has a pet (window-pet.js)
@@ -23,8 +25,7 @@
  *                  route/tier/rank/promotion (the promoted class, Phase 38c1)
  *   Char.Stats   - six core stats
  *   Char.Quests  - quest progress
- *   Char.Skills  - skill names, levels, max flag
- *   Char.Jobs    - profession completion and proficiency
+ *   Char.Skills  - skill names, titles, descriptions, levels, max flag
  *   Char.Affects - active buffs/debuffs
  *   Company      - members' optional skills and training points (35c)
  *
@@ -33,7 +34,6 @@
  *   Client.GMCPStructs.Char.Stats
  *   Client.GMCPStructs.Char.Quests
  *   Client.GMCPStructs.Char.Skills
- *   Client.GMCPStructs.Char.Jobs
  *   Client.GMCPStructs.Char.Affects
  */
 
@@ -76,9 +76,11 @@
             border-right: none;
         }
 
-        #character-window .cw-tab-btn:hover {
-            background: var(--t-border);
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            #character-window .cw-tab-btn:hover {
+                background: var(--t-border);
+                color: var(--t-text);
+            }
         }
 
         #character-window .cw-tab-btn.active {
@@ -106,34 +108,53 @@
         #cw-overview {
             padding: 8px 10px;
             gap: 5px;
+            font-size: 0.8em;
         }
 
         #cw-char-name {
-            font-size: 0.88em;
-            color: var(--t-text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
         }
+
+        #cw-char-name .cw-id-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--t-text);
+            overflow-wrap: anywhere;
+        }
+
+        #cw-char-name .cw-id-sub,
+        #cw-char-name .cw-id-promo {
+            color: var(--t-text-secondary);
+            overflow-wrap: anywhere;
+        }
+
+        #cw-char-name .cw-id-promo { color: var(--t-accent); }
 
         #cw-char-name .cw-char-race {
             cursor: help;
+            text-decoration: underline dotted;
+            text-underline-offset: 2px;
         }
 
-        #cw-char-name .cw-char-race:hover {
-            color: var(--t-accent);
-        }
+        #cw-char-name .cw-char-race:focus-visible { outline: 2px solid var(--t-accent); }
 
-        #cw-char-level {
-            font-size: 0.74em;
+        #cw-id-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
             color: var(--t-text-muted);
+            padding-bottom: 2px;
         }
 
-        #cw-char-alignment {
-            font-size: 0.7em;
-            font-style: italic;
-            margin-bottom: 2px;
-        }
+        #cw-char-alignment { font-style: italic; text-transform: capitalize; }
+        #cw-char-alignment:empty { display: none; }
+        #cw-char-alignment:not(:empty)::before { content: '\\00b7'; margin-right: 6px; color: var(--t-text-muted); font-style: normal; }
+
+        /* The Worth block (window-status.js) sits flush with the rest */
+        #cw-overview #status-window { padding: 4px 0 0; gap: 6px; }
 
         .cw-align-good    { color: var(--t-good-align); }
         .cw-align-neutral { color: var(--t-neutral-align);    }
@@ -157,27 +178,31 @@
             cursor: help;
         }
 
-        .cw-stat-cell:hover .cw-stat-abbr,
-        .cw-stat-cell:hover .cw-stat-num {
-            color: var(--t-accent);
+        .cw-stat-cell:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
+
+        @media (hover: hover) and (pointer: fine) {
+            .cw-stat-cell:hover .cw-stat-abbr,
+            .cw-stat-cell:hover .cw-stat-num {
+                color: var(--t-accent);
+            }
         }
 
         .cw-stat-abbr {
-            font-size: 0.64em;
+            font-size: 0.8em;
             color: var(--t-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
 
         .cw-stat-num {
-            font-size: 0.78em;
+            font-size: 1em;
             color: var(--t-text);
             font-weight: bold;
             text-align: right;
         }
 
         .cw-stat-mod {
-            font-size: 0.68em;
+            font-size: 0.85em;
             color: var(--t-text-secondary);
             font-weight: normal;
             cursor: help;
@@ -207,12 +232,14 @@
             gap: 4px;
         }
 
-        .cw-point-badge:hover {
-            background: var(--t-border);
+        @media (hover: hover) and (pointer: fine) {
+            .cw-point-badge:hover {
+                background: var(--t-border);
+            }
         }
 
         .cw-point-badge-label {
-            font-size: 0.62em;
+            font-size: 0.8em;
             color: var(--t-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.04em;
@@ -220,7 +247,7 @@
         }
 
         .cw-point-badge-value {
-            font-size: 0.8em;
+            font-size: 1em;
             color: var(--t-text);
             font-weight: bold;
         }
@@ -312,9 +339,12 @@
             flex-shrink: 0;
         }
 
-        #cw-quests .cq-item:hover,
         #cw-quests .cq-item.expanded {
             background: var(--t-bg-surface);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            #cw-quests .cq-item:hover { background: var(--t-bg-surface); }
         }
 
         #cw-quests .cq-header {
@@ -361,10 +391,13 @@
             opacity: 0.6;
         }
 
-        #cw-quests .cq-item.complete:hover,
         #cw-quests .cq-item.complete.expanded {
             opacity: 1;
             background: var(--t-bg-surface-alt);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            #cw-quests .cq-item.complete:hover { opacity: 1; background: var(--t-bg-surface-alt); }
         }
 
         #cw-quests .cq-item.complete .cq-name {
@@ -397,7 +430,10 @@
         #character-window .cw-sub {
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
+
+        #character-window .cw-capability { font-size: 0.8em; line-height: 1.35; padding: 2px 0; overflow-wrap: anywhere; }
 
         #character-window .cw-subhead {
             margin: 6px 6px 0;
@@ -414,160 +450,79 @@
             display: none !important;
         }
 
-        /* ---- Skills tab ---- */
-        #cw-skills {
-            padding: 4px 6px;
-            gap: 3px;
-        }
+        /* ---- Skills tab (Phase 57): compact cards in Company's type scale ---- */
+        #cw-skills-tab { padding-bottom: 6px; font-size: 0.8em; }
+        #cw-skills-tab .cw-subhead { font-size: 0.82em; margin: 8px 6px 3px; }
+        #cw-skills-tab .cw-subhead:first-child { margin-top: 6px; }
 
-        #cw-skills .csk-empty {
+        #cw-skills, #cw-capabilities, #cw-company-skills { gap: 4px; padding: 0 6px; }
+
+        #cw-skills .csk-empty, .csk-none {
             color: var(--t-text-secondary);
-            font-size: 0.78em;
             font-style: italic;
-            text-align: center;
-            padding: 12px 0;
+            padding: 2px 0;
         }
 
-        .csk-row {
+        .csk-card {
             display: flex;
-            align-items: center;
-            gap: 6px;
-            min-height: 20px;
-            border-bottom: 1px solid var(--t-border-faint);
-            padding: 3px 2px;
+            flex-direction: column;
+            gap: 2px;
             flex-shrink: 0;
-        }
-
-        .csk-row:last-child { border-bottom: none; }
-
-        .csk-name {
-            flex: 1;
-            font-size: 0.78em;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+            font: inherit;
             color: var(--t-text);
-            text-transform: capitalize;
+            background: var(--t-bg-surface-alt);
+            border: 1px solid var(--t-accent-dim);
+            border-radius: 4px;
+            padding: 4px 6px;
+            overflow-wrap: anywhere;
         }
 
-        .csk-pips {
-            display: flex;
-            gap: 3px;
-            flex-shrink: 0;
-        }
+        button.csk-card { cursor: pointer; }
+        button.csk-card:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
+
+        /* A long status badge wraps under the name instead of squeezing it to one
+           letter a line (Phase 57 review: "Missing recipe ingredients..."). */
+        .csk-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 6px; }
+        .csk-name { font-weight: bold; color: var(--t-text); }
+        .csk-side { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; min-width: 0; max-width: 100%; }
+        .csk-rank { color: var(--t-text-secondary); font-size: 0.9em; white-space: nowrap; }
+        .csk-desc { color: var(--t-text-secondary); font-size: 0.92em; line-height: 1.35; }
+        .csk-meta { color: var(--t-text-secondary); opacity: 0.85; font-size: 0.88em; line-height: 1.3; }
+
+        .csk-pips { display: flex; gap: 2px; flex-shrink: 0; }
 
         .csk-pip {
-            width: 9px;
-            height: 9px;
+            width: 7px;
+            height: 7px;
             border-radius: 2px;
             border: 1px solid var(--t-accent-dim);
             background: var(--t-bg-surface-alt);
         }
 
-        .csk-pip.filled {
-            background: var(--t-accent);
-            border-color: var(--t-accent);
-        }
-
-        .csk-pip.filled.max {
-            background: var(--t-warning);
-            border-color: var(--t-warning);
-        }
+        .csk-pip.filled { background: var(--t-accent); border-color: var(--t-accent); }
+        .csk-pip.filled.max { background: var(--t-warning); border-color: var(--t-warning); }
 
         .csk-badge {
-            font-size: 0.58em;
-            padding: 1px 4px;
+            font-size: 0.85em;
+            padding: 0 4px;
             border-radius: 3px;
-            flex-shrink: 0;
-            background: var(--t-quest-badge-bg);
-            color: var(--t-warning);
-            border: 1px solid var(--t-quest-badge-border);
-        }
-
-        /* ---- Jobs tab ---- */
-        #cw-jobs {
-            padding: 4px 6px;
-            gap: 5px;
-        }
-
-        #cw-jobs .cjb-empty {
+            flex-shrink: 1;
+            min-width: 0;
+            background: var(--t-bg-surface);
             color: var(--t-text-secondary);
-            font-size: 0.78em;
-            font-style: italic;
-            text-align: center;
-            padding: 12px 0;
-        }
-
-        .cjb-item {
-            background: var(--t-bg-surface-alt);
             border: 1px solid var(--t-accent-dim);
-            border-radius: 4px;
-            padding: 5px 7px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex-shrink: 0;
         }
 
-        .cjb-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 6px;
-        }
+        .csk-badge.ready { color: var(--t-accent); border-color: var(--t-accent); }
+        .csk-badge.max   { color: var(--t-warning); border-color: var(--t-quest-badge-border); background: var(--t-quest-badge-bg); }
 
-        .cjb-name {
-            font-size: 0.82em;
-            color: var(--t-text);
-            font-weight: bold;
-            text-transform: capitalize;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .csk-note { color: var(--t-text-secondary); font-style: italic; line-height: 1.35; padding: 2px 6px 0; }
 
-        .cjb-meta {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-shrink: 0;
-        }
-
-        .cjb-proficiency {
-            font-size: 0.68em;
-            color: var(--t-text-secondary);
-            text-transform: capitalize;
-        }
-
-        .cjb-pct {
-            font-size: 0.7em;
-            color: var(--t-text-secondary);
-        }
-
-        .cjb-bar-track {
-            width: 100%;
-            height: 5px;
-            background: var(--t-bg-row);
-            border-radius: 3px;
-            overflow: hidden;
-            border: 1px solid var(--t-party-hp-border);
-        }
-
-        .cjb-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            background: linear-gradient(to right, var(--t-progress-from), var(--t-progress-to));
-            transition: width 0.4s ease-out;
-        }
-
-        .cjb-item.complete .cjb-name {
-            color: var(--t-warning);
-        }
-
-        .cjb-item.complete .cjb-pct {
-            color: var(--t-warning);
-            font-weight: bold;
-        }
-
-        .cjb-bar-fill.complete {
-            background: var(--t-warning);
+        @media (hover: hover) and (pointer: fine) {
+            button.csk-card:hover { background: var(--t-bg-surface); border-color: var(--t-accent); }
         }
 
         /* ---- Effects tab ---- */
@@ -720,12 +675,12 @@
     // Data definitions
     // -----------------------------------------------------------------------
     const STAT_DEFS = [
-        { key: 'strength',   abbr: 'STR' },
-        { key: 'speed',      abbr: 'SPD' },
-        { key: 'smarts',     abbr: 'SMT' },
-        { key: 'vitality',   abbr: 'VIT' },
-        { key: 'mysticism',  abbr: 'MYS' },
-        { key: 'perception', abbr: 'PER' },
+        { key: 'strength',   abbr: 'STR', name: 'Strength' },
+        { key: 'speed',      abbr: 'SPD', name: 'Speed' },
+        { key: 'smarts',     abbr: 'SMT', name: 'Smarts' },
+        { key: 'vitality',   abbr: 'VIT', name: 'Vitality' },
+        { key: 'mysticism',  abbr: 'MYS', name: 'Mysticism' },
+        { key: 'perception', abbr: 'PER', name: 'Perception' },
     ];
 
     // -----------------------------------------------------------------------
@@ -733,7 +688,7 @@
     // -----------------------------------------------------------------------
     function buildStatsGrid() {
         const cells = STAT_DEFS.map(d =>
-            '<div class="cw-stat-cell">' +
+            '<div class="cw-stat-cell" role="button" tabindex="0" title="' + d.name + ': open its help page">' +
                 '<span class="cw-stat-abbr">' + d.abbr + '</span>' +
                 '<span class="cw-stat-num" id="cw-stat-' + d.key + '">\u2014</span>' +
                 '<span class="cw-stat-mod" id="cw-stat-mod-' + d.key + '"></span>' +
@@ -766,8 +721,7 @@
 
             '<div class="cw-tab-panel active" id="cw-overview">' +
                 '<div id="cw-char-name">\u2014</div>' +
-                '<div id="cw-char-level">Level \u2014</div>' +
-                '<div id="cw-char-alignment"></div>' +
+                '<div id="cw-id-row"><span id="cw-char-level">Level \u2014</span><span id="cw-char-alignment"></span></div>' +
                 buildStatsGrid() +
             '</div>' +
 
@@ -783,10 +737,6 @@
                 '<div class="cw-sub" id="cw-capabilities"></div>' +
                 '<h4 class="cw-subhead">Company training</h4>' +
                 '<div class="cw-sub" id="cw-company-skills"></div>' +
-                '<h4 class="cw-subhead">Jobs</h4>' +
-                '<div class="cw-sub" id="cw-jobs">' +
-                    '<div class="cjb-empty">No job progress</div>' +
-                '</div>' +
             '</div>' +
 
             '<div class="cw-tab-panel" id="cw-effects">' +
@@ -806,7 +756,11 @@
         STAT_DEFS.forEach(d => {
             const cell  = el.querySelector('.cw-stat-cell:has(#cw-stat-' + d.key + ')');
             if (cell) {
-                cell.addEventListener('click', () => Client.GMCPRequest('Help', d.key));
+                const open = () => Client.GMCPRequest('Help', d.key);
+                cell.addEventListener('click', open);
+                cell.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+                });
             }
             const modEl = el.querySelector('#cw-stat-mod-' + d.key);
             if (modEl) {
@@ -857,29 +811,31 @@
         const nameEl = document.getElementById('cw-char-name');
         nameEl.innerHTML = '';
 
+        // The name on its own line, then class, lineage and race beneath it.
         // Phase 38c1: the promoted class, its tier and the rank reached.
         const route = info.route
             ? info.route + (info.tier === 'elite' ? ' (elite)' : '') + (info.rank ? ', rank ' + info.rank : '')
-              + (info.promotion === 'ready' ? ' \u2014 promotion ready' : '')
-              + (info.promotion === 'waiting-gate' ? ' \u2014 promotion waits on alignment' : '')
-            : (info.promotion === 'ready' ? 'promotion ready' : '');
-        const parts = [info.name, info.class, route].filter(Boolean);
-        if (parts.length) {
-            nameEl.appendChild(document.createTextNode(parts.join(' \u00b7 ')));
-        }
-
-        if (info.race) {
-            if (parts.length) {
-                nameEl.appendChild(document.createTextNode(' \u00b7 '));
+            : '';
+        const promo = info.promotion === 'ready' ? 'Promotion ready'
+            : info.promotion === 'waiting-gate' ? 'Promotion waits on alignment' : '';
+        if (info.name) { node('div', 'cw-id-name', info.name, nameEl); }
+        const subParts = [info.class, route].filter(Boolean);
+        if (subParts.length || info.race) {
+            const sub = node('div', 'cw-id-sub', subParts.join(' \u00b7 '), nameEl);
+            if (info.race) {
+                if (subParts.length) { sub.appendChild(document.createTextNode(' \u00b7 ')); }
+                const raceSpan = node('span', 'cw-char-race', info.race, sub);
+                raceSpan.tabIndex = 0;
+                raceSpan.setAttribute('role', 'button');
+                raceSpan.title = 'Open the help page for ' + info.race;
+                const openRace = () => Client.GMCPRequest('Help', 'race ' + info.race.toLowerCase());
+                raceSpan.addEventListener('click', openRace);
+                raceSpan.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRace(); }
+                });
             }
-            const raceSpan = document.createElement('span');
-            raceSpan.className   = 'cw-char-race';
-            raceSpan.textContent = info.race;
-            raceSpan.addEventListener('click', () => {
-                Client.GMCPRequest('Help', 'race ' + info.race.toLowerCase());
-            });
-            nameEl.appendChild(raceSpan);
         }
+        if (promo) { node('div', 'cw-id-promo', promo, nameEl); }
 
         if (!nameEl.textContent) {
             nameEl.textContent = '\u2014';
@@ -927,6 +883,21 @@
         });
     }
 
+    // A small element builder; every server string goes in as text.
+    function node(tag, cls, text, parent) {
+        const n = document.createElement(tag);
+        if (cls) { n.className = cls; }
+        if (text !== undefined && text !== '') { n.textContent = text; }
+        if (parent) { parent.appendChild(n); }
+        return n;
+    }
+
+    // "dual-wield" -> "Dual Wield" when the server sent no display title.
+    function skillTitle(skill) {
+        if (skill.title) { return skill.title; }
+        return String(skill.name || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     function updateSkills() {
         const skillList = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Skills;
         const panel = document.getElementById('cw-skills');
@@ -938,45 +909,31 @@
         }
 
         const focusedSkill = panel.contains(document.activeElement) ? document.activeElement.dataset.skill : null;
-        const sorted = [...skillList].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        const sorted = [...skillList].sort((a, b) => skillTitle(a).localeCompare(skillTitle(b)));
         panel.innerHTML = '';
 
         sorted.forEach(function(skill) {
             const level   = skill.level   || 0;
             const isMax   = skill.maximum || false;
             const MAX_LVL = Math.max(1, Math.min(20, skill.max_level || 4));
+            const title   = skillTitle(skill);
 
-            const row = document.createElement('button');
+            const row = node('button', 'csk-card csk-row');
             row.type = 'button';
             row.dataset.skill = skill.name || '';
-            row.style.color = 'var(--t-text)';
-            row.style.background = 'transparent';
-            row.style.width = '100%';
-            row.className = 'csk-row';
-            row.setAttribute('aria-label', (skill.name || '') + ', rank ' + level + ' of ' + MAX_LVL + ', help');
-            row.style.cursor = 'help';
+            row.setAttribute('aria-label', title + ', rank ' + level + ' of ' + MAX_LVL + ', help');
+            row.title = 'Open the help page for ' + title;
 
-            const nameEl = document.createElement('span');
-            nameEl.className   = 'csk-name';
-            nameEl.textContent = skill.name || '';
-
-            const pipsEl = document.createElement('span');
-            pipsEl.className = 'csk-pips';
-            for (var i = 1; i <= MAX_LVL; i++) {
-                const pip = document.createElement('span');
-                pip.className = 'csk-pip' + (i <= level ? ' filled' + (isMax ? ' max' : '') : '');
-                pipsEl.appendChild(pip);
+            const head = node('span', 'csk-head', '', row);
+            node('span', 'csk-name', title, head);
+            const side = node('span', 'csk-side', '', head);
+            if (isMax) { node('span', 'csk-badge max', 'MAX', side); }
+            node('span', 'csk-rank', level + '/' + MAX_LVL, side);
+            const pipsEl = node('span', 'csk-pips', '', side);
+            for (let i = 1; i <= MAX_LVL; i++) {
+                node('span', 'csk-pip' + (i <= level ? ' filled' + (isMax ? ' max' : '') : ''), '', pipsEl);
             }
-
-            row.appendChild(nameEl);
-            row.appendChild(pipsEl);
-
-            if (isMax) {
-                const badge = document.createElement('span');
-                badge.className   = 'csk-badge';
-                badge.textContent = 'MAX';
-                row.appendChild(badge);
-            }
+            if (skill.description) { node('span', 'csk-desc', skill.description, row); }
 
             row.addEventListener('click', function() {
                 Client.GMCPRequest('Help', (skill.name || '').toLowerCase().replace(/\s+/g, '-'));
@@ -987,12 +944,23 @@
     }
 
     function capabilityText(panel, text, heading) {
-        const node = document.createElement(heading ? 'h4' : 'div');
-        node.className = heading ? 'cw-subhead' : 'cw-capability';
-        node.style.overflowWrap = 'anywhere';
-        node.style.color = 'var(--t-text)';
-        node.textContent = text;
-        panel.appendChild(node);
+        const n = node(heading ? 'h4' : 'div', heading ? 'cw-subhead' : 'cw-capability', text, panel);
+        n.style.overflowWrap = 'anywhere';
+        return n;
+    }
+
+    // One capability as a card: name and status chip, what it does, and its
+    // terms (skill, trigger, cooldown) in a quieter line.
+    function capabilityCard(panel, c, o) {
+        const card = node('div', 'csk-card csk-capability', '', panel);
+        const head = node('div', 'csk-head', '', card);
+        node('span', 'csk-name', c.name, head);
+        const side = node('span', 'csk-side', '', head);
+        if (o.manual) { node('span', 'csk-badge', 'Manual', side); }
+        node('span', 'csk-badge' + (c.enabled ? ' ready' : ''), o.status, side);
+        const desc = CompanyData.sentence(c.description).replace(/^./, ch => ch.toUpperCase());
+        if (desc) { node('div', 'csk-desc', desc, card); }
+        if (o.meta.length) { node('div', 'csk-meta', o.meta.join(' \u00b7 '), card); }
     }
 
     function updateCapabilities() {
@@ -1000,22 +968,24 @@
         if (!panel) { return; }
         panel.textContent = '';
         const caps = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Capabilities;
-        if (!caps) { capabilityText(panel, 'Current capabilities unavailable'); return; }
-        capabilityText(panel, 'Automatic combat abilities', true);
-        (caps.automatic || []).forEach(c => {
-            capabilityText(panel, [c.name + ' — ' + (c.enabled ? 'Enabled' : c.reason || 'Disabled') + '.',
-                'Uses ' + c.skill + '.', CompanyData.sentence(c.description), CompanyData.sentence(c.when ? 'When ' + c.when : ''),
-                c.cooldown > 0 ? 'Cooldown: ' + c.cooldown + ' combat rounds.' : ''].filter(Boolean).join(' '));
-        });
-        if (!(caps.automatic || []).length) { capabilityText(panel, 'No trained automatic combat abilities'); }
+        if (!caps) { node('div', 'csk-none', 'Current capabilities unavailable', panel); return; }
+        capabilityText(panel, 'Automatic combat abilities', true).style.margin = '8px 0 0';
+        (caps.automatic || []).forEach(c => capabilityCard(panel, c, {
+            status: c.enabled ? 'Ready' : (c.reason || 'Disabled'),
+            meta: ['Uses ' + c.skill, c.when ? 'When ' + c.when : '', c.cooldown > 0 ? 'Cooldown ' + c.cooldown + ' rounds' : ''].filter(Boolean),
+        }));
+        if (!(caps.automatic || []).length) { node('div', 'csk-none', 'No trained automatic combat abilities', panel); }
         ['field', 'camp'].forEach(group => {
-            capabilityText(panel, group === 'field' ? 'Field capabilities' : 'Camp capabilities', true);
+            capabilityText(panel, group === 'field' ? 'Field capabilities' : 'Camp capabilities', true).style.margin = '8px 0 0';
             const list = (caps.utility || []).filter(c => c.group === group);
-            list.forEach(c => capabilityText(panel, [c.name + (c.mode === 'manual' ? ' (Manual)' : ' (Automatic)') + ' — ' + (c.enabled ? 'Eligible' : c.reason || 'Unavailable') + '.',
-                c.skill + ' rank ' + c.rank + (c.description ? ':' : '.'), CompanyData.sentence(c.description)].filter(Boolean).join(' ')));
-            if (!list.length) { capabilityText(panel, 'No current capabilities'); }
+            list.forEach(c => capabilityCard(panel, c, {
+                manual: c.mode === 'manual',
+                status: c.enabled ? 'Eligible' : (c.reason || 'Unavailable'),
+                meta: [c.skill.replace(/^./, ch => ch.toUpperCase()) + ' rank ' + c.rank, c.mode === 'manual' ? '' : 'automatic'].filter(Boolean),
+            }));
+            if (!list.length) { node('div', 'csk-none', 'No current capabilities', panel); }
         });
-        capabilityText(panel, 'The best eligible company specialist performs automatic field and camp work when its conditions hold. Camp Cooking is manual: camp cook. See help specialists and help cooking.');
+        node('div', 'csk-note', 'The best eligible company specialist does automatic field and camp work when its conditions hold. Camp Cooking is manual: camp cook. See help specialists and help cooking.', panel);
     }
 
     // Phase 35c: each companion's optional skills and training points, read
@@ -1026,58 +996,18 @@
         panel.textContent = '';
         const company = Client.GMCPStructs.Company;
         const members = (company && Array.isArray(company.members)) ? company.members : [];
-        if (!members.length) { capabilityText(panel, 'No companions'); return; }
+        if (!members.length) { node('div', 'csk-none', 'No companions', panel); return; }
         members.forEach(m => {
             const skills = m.skills || {};
             const ranks = Object.keys(skills).sort().map(id => id.charAt(0).toUpperCase() + id.slice(1) + ' rank ' + skills[id]);
             const points = typeof m.training_points === 'number' ? m.training_points : 0;
-            capabilityText(panel, (m.name || m.key) + ' — ' + (ranks.length ? ranks.join(', ') : 'no optional skills') +
-                '; ' + points + ' training point' + (points === 1 ? '' : 's') + '.');
+            const card = node('div', 'csk-card', '', panel);
+            const head = node('div', 'csk-head', '', card);
+            node('span', 'csk-name', m.name || m.key, head);
+            node('span', 'csk-badge' + (points > 0 ? ' ready' : ''), points + ' training point' + (points === 1 ? '' : 's'), head);
+            node('div', 'csk-desc', ranks.length ? ranks.join(', ') : 'No optional skills', card);
         });
-        capabilityText(panel, 'Companions learn optional skills with company train. See help company-train.');
-    }
-
-    function updateJobs() {
-        const jobs  = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Jobs;
-        const panel = document.getElementById('cw-jobs');
-        if (!panel) { return; }
-
-        if (!Array.isArray(jobs) || jobs.length === 0) {
-            panel.innerHTML = '<div class="cjb-empty">No job progress</div>';
-            return;
-        }
-
-        const sorted = [...jobs].sort(function(a, b) {
-            if (b.completion !== a.completion) { return b.completion - a.completion; }
-            return (a.name || '').localeCompare(b.name || '');
-        });
-
-        panel.innerHTML = '';
-
-        sorted.forEach(function(job) {
-            const pct      = Math.max(0, Math.min(100, job.completion || 0));
-            const complete = pct >= 100;
-
-            const item = document.createElement('div');
-            item.className    = 'cjb-item' + (complete ? ' complete' : '');
-            item.style.cursor = 'help';
-            item.innerHTML =
-                '<div class="cjb-header">' +
-                    '<span class="cjb-name">' + (job.name || '') + '</span>' +
-                    '<div class="cjb-meta">' +
-                        '<span class="cjb-proficiency">' + (job.proficiency || '') + '</span>' +
-                        '<span class="cjb-pct">' + pct + '%</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="cjb-bar-track">' +
-                    '<div class="cjb-bar-fill' + (complete ? ' complete' : '') + '" style="width:' + pct + '%"></div>' +
-                '</div>';
-
-            item.addEventListener('click', function() {
-                Client.GMCPRequest('Help', (job.name || '').toLowerCase().replace(/\s+/g, '-'));
-            });
-            panel.appendChild(item);
-        });
+        node('div', 'csk-note', 'Companions learn optional skills with company train. See help company-train.', panel);
     }
 
     function updateQuests() {
@@ -1169,7 +1099,6 @@
         updateSkills();
         updateCapabilities();
         updateCompanySkills();
-        updateJobs();
         updateEffects();
     }
 

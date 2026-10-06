@@ -1,0 +1,23 @@
+roomid: 90010
+zone: Test Area Road
+title: Thieves' Road Camp
+description: >-
+  A camp on a lonely road. Every rest here draws thieves and raiders for certain, unless you string bells and trip lines first. Use it to test camp theft, raiders, watches and poisons.
+biome: road
+tags:
+  - lit
+  - camping
+exits:
+  west:
+    roomid: 90003
+resources:
+  - water
+  - forage
+  - firewood
+  - herbs
+  - game
+  - shelter
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true

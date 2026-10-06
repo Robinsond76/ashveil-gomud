@@ -682,6 +682,9 @@ func (c *Character) GetDefense() int {
 	reduction += c.ClassEffects().Int(classes.Armor)
 	if c.RT != nil {
 		reduction += c.RT.Bark
+		// Phase 39h: an Arbalist's sundering bolts wear armor down for the
+		// battle.
+		reduction = max(0, reduction-c.RT.Shred)
 	}
 
 	if reduction > 100 {

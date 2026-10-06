@@ -12,9 +12,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"os"
@@ -445,6 +447,7 @@ func init() {
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -877,6 +880,10 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	}
 	if started {
 		m.settlePrepared(user.UserId, funded)
+		// Phase 49: the company talks as it settles in.
+		if said := company.CampBanter(user.UserId, banter.CtxCamp); len(said) > 0 {
+			text += "\n\n" + banter.Format(said)
+		}
 	}
 	return text
 }
@@ -1247,7 +1254,12 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 		if camp.Rest.Bells && camp.Rest.Raid == nil {
 			text += " The bells hung quiet."
 		}
-		m.sendToLeader(leaderUserID, text+" The fire has burned down to embers.")
+		text += " The fire has burned down to embers."
+		// Phase 49: and talks as the rest ends.
+		if said := company.CampBanter(leaderUserID, banter.CtxRested); len(said) > 0 {
+			text += "\n\n" + banter.Format(said)
+		}
+		m.sendToLeader(leaderUserID, text)
 	}
 	return nil
 }

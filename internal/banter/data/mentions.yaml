@@ -1,0 +1,27 @@
+# Phase 49: lines that talk about another member of the company or the
+# player. {other} is another speaker, {fallen} a member who just fell,
+# {leader} the player.
+
+- {text: "{other} snores like a bear in a barrel. I am not complaining. I am just saying.", ctx: [camp], pers: [wry, cheerful]}
+- {text: "I would trust {other} with my life. I think I already have, a few times.", ctx: [camp, win], align: [good, neutral]}
+- {text: "{other} always knows where the dry wood is. How does that happen?", ctx: [camp], pers: [cheerful, wry]}
+- {text: "Pass the pot, {other}. You are hogging it.", ctx: [camp], pers: [boastful, wry, cheerful]}
+- {text: "{other}, you have the first watch. Do not look at me like that.", ctx: [camp], pers: [stoic, grim]}
+- {text: "{other} tells a better story than most bards. Do not tell them I said so.", ctx: [camp], pers: [wry, cheerful]}
+- {text: "I will say this for {other}: they never complain. Not loud enough to hear, anyway.", ctx: [camp], pers: [stoic, grim, wry]}
+- {text: "{other} is the steadiest hand I know. I feel safer at night with them awake.", ctx: [camp], pers: [stoic, devout], when: [night]}
+- {text: "I follow {leader}, and I stay for {other}. That is the order of it.", ctx: [camp], pers: [cheerful, devout, stoic]}
+- {text: "{leader} keeps us all moving. I do not say it enough.", ctx: [camp, rested], align: [good]}
+- {text: "Say what you like about {leader}, they pay on time.", ctx: [camp], pers: [wry, boastful], align: [neutral, evil]}
+- {text: "{leader} could have left us a dozen times. Yet here we sit.", ctx: [camp], pers: [grim, stoic]}
+- {text: "{other} did well out there. I saw what they did, and it was neatly done.", ctx: [win, flawless], pers: [stoic, cheerful, devout]}
+- {text: "{other} was brilliant just then. I want to say so before I forget.", ctx: [win, flawless], pers: [cheerful, devout]}
+- {text: "Keep up, {other}, or you will miss the best bits.", ctx: [win], pers: [boastful]}
+- {text: "I thought {other} was done for. I am glad I was wrong.", ctx: [close], pers: [cheerful, devout, stoic]}
+- {text: "{other}, that was a bad moment. Please do not do that again.", ctx: [close], pers: [grim, wry, stoic]}
+- {text: "You pulled me out of that, {other}. I will not forget it.", ctx: [close], pers: [stoic, devout, cheerful]}
+- {text: "{other}, I am sorry about {fallen}. I know they were close to you.", ctx: [fall], pers: [devout, cheerful, stoic], align: [good, neutral]}
+- {text: "{fallen} would laugh at us standing around like this. Let us get them to a church and hear it.", ctx: [fall], pers: [cheerful, wry]}
+- {text: "{leader}, tell us we can bring {fallen} back. Tell us there is a way.", ctx: [fall], pers: [devout, cheerful]}
+- {text: "{other}, hold on to something and breathe. {fallen} would tell you the same.", ctx: [fall], pers: [stoic, grim]}
+- {text: "Thank you, {leader}. I would not have lasted without you.", ctx: [close], pers: [cheerful, devout]}

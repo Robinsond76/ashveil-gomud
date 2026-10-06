@@ -54,9 +54,11 @@
             border-right: none;
         }
 
-        #comm-output .tab-button:hover {
-            background: var(--t-border);
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            #comm-output .tab-button:hover {
+                background: var(--t-border);
+                color: var(--t-text);
+            }
         }
 
         #comm-output .tab-button.active {

@@ -35,14 +35,51 @@
             background: var(--t-bg);
         }
 
+        /* ---- Equipment editor (Phase 57: Company's type scale and cards) ---- */
+        #gw-worn.gw-editing { padding: 6px 8px 8px; gap: 4px; font-size: 0.8em; flex-shrink: 0; }
         .gw-editor-slots, .gw-editor-choices { display: flex; flex-wrap: wrap; gap: 4px; }
-        #gw-worn button { font: inherit; color: var(--t-text); background: var(--t-bg-surface); border: 1px solid var(--t-border); padding: 5px; text-align: left; overflow-wrap: anywhere; }
-        #gw-worn button[aria-pressed="true"] { border-color: var(--t-accent); }
-        #gw-worn button:focus-visible { outline: 2px solid var(--t-accent); }
-        #gw-worn p, #gw-worn h4 { margin: 4px 0; overflow-wrap: anywhere; }
-        .gw-editor-stats { width: 100%; font-size: 0.8em; border-collapse: collapse; }
+        .gw-editor-members { padding-bottom: 4px; border-bottom: 1px solid var(--t-border-faint); }
+        #gw-worn.gw-editing button {
+            font: inherit;
+            font-size: 0.95em;
+            color: var(--t-text);
+            background: var(--t-bg-surface);
+            border: 1px solid var(--t-accent-dim);
+            border-radius: 3px;
+            padding: 2px 8px;
+            text-align: left;
+            overflow-wrap: anywhere;
+            cursor: pointer;
+        }
+        #gw-worn.gw-editing button[aria-pressed="true"] { border-color: var(--t-accent); background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); font-weight: bold; }
+        #gw-worn.gw-editing button:disabled { opacity: 0.5; cursor: default; }
+        #gw-worn.gw-editing button:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
+        @media (hover: hover) and (pointer: fine) {
+            #gw-worn.gw-editing button:not(:disabled):hover { border-color: var(--t-accent); }
+        }
+        #gw-worn.gw-editing .gw-apply { align-self: flex-start; margin-top: 4px; border-color: var(--t-accent); color: var(--t-accent); }
+        #gw-worn.gw-editing p { margin: 2px 0; line-height: 1.35; color: var(--t-text-secondary); overflow-wrap: anywhere; }
+        #gw-worn.gw-editing p.gw-editor-note { font-style: italic; }
+        #gw-worn.gw-editing p.gw-editor-help { font-size: 0.9em; font-style: italic; margin-top: 4px; }
+        #gw-worn.gw-editing h4 {
+            margin: 6px 0 2px;
+            font-size: 0.82em;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--t-text-secondary);
+            border-bottom: 1px solid var(--t-accent-dim);
+            overflow-wrap: anywhere;
+        }
+        .gw-editor-stats { width: 100%; font-size: 0.95em; border-collapse: collapse; }
+        .gw-editor-stats th, .gw-editor-stats td { padding: 1px 3px; border-bottom: 1px solid var(--t-border-faint); }
         .gw-editor-stats th { text-align: left; font-weight: normal; color: var(--t-text-secondary); }
-        .gw-editor-stats td { text-align: right; }
+        .gw-editor-stats thead th { font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.04em; border-bottom-color: var(--t-accent-dim); }
+        .gw-editor-stats thead th:not(:first-child) { text-align: right; }
+        .gw-editor-stats td { text-align: right; color: var(--t-text); }
+        .gw-editor-stats td + td { color: var(--t-text-secondary); }
+        .gw-editor-stats td.changed { color: var(--t-accent); font-weight: bold; }
+        #gear-window.gw-editor .gw-tab-bar { display: none; }
         /* ---- tab chrome ---- */
         #gear-window .gw-tab-bar {
             display: flex;
@@ -67,9 +104,11 @@
 
         #gear-window .gw-tab-btn:last-child { border-right: none; }
 
-        #gear-window .gw-tab-btn:hover {
-            background: var(--t-border);
-            color: var(--t-text);
+        @media (hover: hover) and (pointer: fine) {
+            #gear-window .gw-tab-btn:hover {
+                background: var(--t-border);
+                color: var(--t-text);
+            }
         }
 
         #gear-window .gw-tab-btn.active {
@@ -111,7 +150,9 @@
 
         .gw-equip-row:last-child { border-bottom: none; }
 
-        .gw-equip-row:hover { background: var(--t-bg-surface-alt); }
+        @media (hover: hover) and (pointer: fine) {
+            .gw-equip-row:hover { background: var(--t-bg-surface-alt); }
+            }
 
         .gw-equip-slot {
             width: 54px;
@@ -133,7 +174,6 @@
 
         .gw-equip-name.empty     { color: var(--t-text-secondary); font-style: italic; }
         .gw-equip-row.empty       { cursor: default; }
-        .gw-equip-row.empty:hover { background: transparent; }
         .gw-equip-name.cursed { color: var(--t-cursed-text); }
         .gw-equip-name.quest  { color: var(--t-quest-text); }
 
@@ -208,7 +248,9 @@
 
         .gw-bp-row:last-child { border-bottom: none; }
 
-        .gw-bp-row:hover { background: var(--t-bg-surface-alt); }
+        @media (hover: hover) and (pointer: fine) {
+            .gw-bp-row:hover { background: var(--t-bg-surface-alt); }
+        }
 
         .gw-bp-type {
             width: 54px;
@@ -723,6 +765,8 @@
     // This view never calculates combat or capacity rules.
     let editorSlot = 'weapon';
     let editorChoice = '';
+    // Phase 48: whose gear the editor shows: 'me' or a companion '#N'.
+    let editorMember = 'me';
     function editorNode(tag, text, parent) {
         const node = document.createElement(tag);
         if (text !== undefined) { node.textContent = text; }
@@ -739,8 +783,33 @@
         tabs[0].textContent = 'Equipment';
         tabs[1].hidden = true;
         document.getElementById('gw-backpack').classList.remove('active');
-        panel.classList.add('active');
+        panel.classList.add('active', 'gw-editing');
+        document.getElementById('gear-window').classList.add('gw-editor');
         tabs[0].classList.add('active');
+        const members = view.members || [];
+        if (editorMember !== 'me' && members.length && !members.some(mm => mm.ref === editorMember)) {
+            editorMember = 'me';
+            editorChoice = '';
+            announceGear();
+        }
+        if (members.length > 1) {
+            const bar = editorNode('div', undefined, panel);
+            bar.className = 'gw-editor-slots gw-editor-members';
+            bar.setAttribute('role', 'group');
+            bar.setAttribute('aria-label', 'Whose gear');
+            members.forEach(mm => {
+                const b = editorNode('button', mm.ref === 'me' ? mm.name + ' (you)' : mm.name, bar);
+                b.type = 'button';
+                b.dataset.gearFocus = 'member:' + mm.ref;
+                b.setAttribute('aria-pressed', String(mm.ref === editorMember));
+                b.addEventListener('click', () => { editorMember = mm.ref; editorChoice = ''; announceGear(); updateEditor(view); });
+            });
+        }
+        if (view.member && view.member !== editorMember) {
+            // The server has not caught up with the member just chosen.
+            editorNode('p', 'Loading gear…', panel).setAttribute('role', 'status');
+            return;
+        }
         const note = editorNode('p', view.available ? 'Select a slot, then an exact cargo item to preview.' : view.reason, panel);
         note.className = 'gw-editor-note';
         const slots = editorNode('div', undefined, panel);
@@ -810,20 +879,21 @@
             const row = editorNode('tr', undefined, body);
             editorNode('th', label, row).scope = 'row';
             editorNode('td', valueText(view.current[key]), row);
-            if (after) { editorNode('td', valueText(after[key]), row); }
+            if (after) { editorNode('td', valueText(after[key]), row).className = valueText(after[key]) !== valueText(view.current[key]) ? 'changed' : ''; }
         });
         Object.keys(view.current.stats || {}).forEach(key => {
             const row = editorNode('tr', undefined, body);
             editorNode('th', key, row).scope = 'row';
             editorNode('td', String(view.current.stats[key]), row);
-            if (after) { editorNode('td', String(after.stats[key]), row); }
+            if (after) { editorNode('td', String(after.stats[key]), row).className = String(after.stats[key]) !== String(view.current.stats[key]) ? 'changed' : ''; }
         });
-        editorNode('p', 'Burden reduces dodge. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. A poison coating (time and hits left) may leave a poison on a foe your blade wounds. The foe and combat conditions affect actual damage.', panel);
+        editorNode('p', 'Burden reduces dodge. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. A poison coating (time and hits left) may leave a poison on a foe your blade wounds. The foe and combat conditions affect actual damage.', panel).className = 'gw-editor-help';
         if (candidate) {
             if (candidate.returned && candidate.returned.length) { editorNode('p', 'Returns to cargo: ' + candidate.returned.join(', '), panel); }
             if (!candidate.allowed) { const reason = editorNode('p', candidate.reason, panel); reason.setAttribute('role', 'status'); }
             const apply = editorNode('button', selected.key.startsWith('remove:') ? 'Remove equipment' : 'Equip item', panel);
             apply.type = 'button';
+            apply.className = 'gw-apply';
             apply.disabled = !candidate.allowed;
             apply.dataset.gearFocus = 'apply';
             apply.addEventListener('click', () => Client.SendInput(candidate.command));
@@ -867,11 +937,24 @@
         const shown = !!el && el.getClientRects().length > 0 && document.visibilityState === 'visible';
         // The open message names the selected slot: only its choices are
         // previewed, so a newly selected slot is announced too.
-        const say = shown ? 'open ' + editorSlot : 'closed';
+        const say = shown ? 'open ' + editorSlot + ' ' + editorMember : 'closed';
         if (say === gearSaid) { return; }
         gearSaid = say;
         Client.GMCPRequest('Company.Equipment', say);
     }
+    // GearEditor.show lets the Company panel open the editor on a member's
+    // slot (Phase 48): it selects them and brings the Gear tab forward.
+    window.GearEditor = {
+        show(member, slot) {
+            editorMember = member || 'me';
+            if (slot) { editorSlot = slot; }
+            editorChoice = '';
+            gearSaid = null;
+            const tab = document.querySelector('.cw-tab-btn[data-panel="cw-hosted-gear"]');
+            if (tab) { tab.click(); }
+            announceGear();
+        },
+    };
     setInterval(announceGear, 1000);
     document.addEventListener('visibilitychange', announceGear);
     document.addEventListener('click', () => setTimeout(announceGear, 0));
