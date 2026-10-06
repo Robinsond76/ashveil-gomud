@@ -31,7 +31,7 @@ chant-breaking blow broke the cast, so about 1 try in 20 went off and 60
 straight failures came up in about 1 run in 30; chants are now held against
 ordinary blows, and a try succeeds about 28% of the time); and a nil map
 panic in `TestRosterThroughPluginsLoad` (an event queued by an earlier test
-fired before the test reset its message map). Not reproduced: the
+fired before the test reset its message map); and `TestAttemptConversation_UsesPluginFile`, which was a real engine bug: the conversation sweep pruned a conversation that had not yet been stepped (its `LastRound` is 0) whenever the round count was past ten, so a fresh conversation could vanish (now aged from its start). Not reproduced: the
 `modules/archetype` failure (25 shuffled runs clean; the test is unnamed) and
 `TestAlliedFinalEnemyPaysAfterCombatClosesBattle` (failed once in one
 shuffled run, clean on the same seed afterwards).
