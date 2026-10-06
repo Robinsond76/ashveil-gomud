@@ -850,6 +850,9 @@ when Sweep has no second foe); stale 80% comments. Checked and fine: mob
 fight's class state; no economy surface. Balance re-run (40 fights a cell):
 the Halberdier is within 5 points of the Warrior everywhere but level 20
 five-foe groups (90% vs 72%), its intended crowd strength; Sweep stays 90%.
+After the 40a3/40b/40s5 master merge, one race run failed
+`TestAimedShotGrowsWithLevel` (35b's ranger test, weapon dice: level 1 rolled
+21); it passed 8 of 8 reruns and is left for the flaky-test phase (37c).
 
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
