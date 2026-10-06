@@ -2,6 +2,7 @@ package company
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"math"
 )
 
 // Alignment and loyalty bounds. Alignment uses the engine's −100..100
@@ -74,7 +75,13 @@ func DisplayAlignment(alignment int) int {
 
 // AlignmentBand is the engine's name for an alignment (neutral, good, ...).
 func AlignmentBand(alignment int) string {
-	return characters.AlignmentToString(int8(ClampAlignment(alignment)))
+	clamped := ClampAlignment(alignment)
+	// ClampAlignment already bounds to [-100, 100]; the explicit check keeps
+	// the int8 conversion provably in range for static analysis.
+	if clamped < math.MinInt8 || clamped > math.MaxInt8 {
+		return characters.AlignmentToString(0)
+	}
+	return characters.AlignmentToString(int8(clamped))
 }
 
 // AverageAlignment is the mean of values rounded half away from zero, or 0
