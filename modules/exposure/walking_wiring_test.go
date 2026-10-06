@@ -72,7 +72,9 @@ func (a *ailmentRecorder) CatchAilment(leader int, key survival.MemberKey, kind 
 	return true, nil
 }
 
-func (a *ailmentRecorder) CureAilment(int, survival.MemberKey, string) (bool, error) { return false, nil }
+func (a *ailmentRecorder) CureAilment(int, survival.MemberKey, string) (bool, error) {
+	return false, nil
+}
 
 // TestWalkingOutdoorsWhileFrozenCatchesAChill (Phase 55): a real exposure
 // value read through the climate seam by the real walking module gives a
