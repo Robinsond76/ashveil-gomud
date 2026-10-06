@@ -1,0 +1,11 @@
+itemid: 40
+name: firewood bundle
+namesimple: firewood
+description: A tied bundle of dry deadfall, enough to light one camp fire. Gathered
+  in the wild (gather firewood) or bought from a provisioner. Used up when a fire
+  is lit away from any deadfall (camp fire).
+type: object
+subtype: mundane
+uses: 1
+value: 3
+weight: 2000

@@ -238,3 +238,20 @@ func TestSpendSupplyThroughTheProvider(t *testing.T) {
 		assert.NotContains(t, []int{bandageItemID, splintItemID}, itm.ItemId)
 	}
 }
+
+// Phase 40a2: the camp fire's firewood and a fishing line come from the
+// company through company.CompanyItemCount / SpendCompanyItem.
+func TestItemSupplyThroughTheProvider(t *testing.T) {
+	b := newBrawl(t)
+	b.aria.Character.CompanyCargo = false
+	cargo := &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: bandageItemID, Count: 1}}}
+	useCargo(t, cargo)
+	b.aria.Character.StoreItem(items.New(bandageItemID))
+	assert.Equal(t, 2, domain.CompanyItemCount(7, bandageItemID), "the cargo and the pack")
+	assert.Zero(t, domain.CompanyItemCount(7, 12345))
+	assert.True(t, domain.SpendCompanyItem(7, bandageItemID))
+	assert.Equal(t, []int{bandageItemID}, cargo.consumed, "the cargo first")
+	assert.True(t, domain.SpendCompanyItem(7, bandageItemID), "then the pack")
+	assert.False(t, domain.SpendCompanyItem(7, bandageItemID))
+	assert.Zero(t, domain.CompanyItemCount(99, bandageItemID), "an unknown leader has nothing")
+}

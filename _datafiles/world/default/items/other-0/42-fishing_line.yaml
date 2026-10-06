@@ -1,0 +1,9 @@
+itemid: 42
+name: fishing line
+namesimple: line
+description: A coil of waxed line with a bone hook. Without one a company cannot
+  fish (fish). Now and then a line snaps and is lost.
+type: object
+subtype: mundane
+value: 5
+weight: 50

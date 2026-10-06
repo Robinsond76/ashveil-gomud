@@ -23,7 +23,11 @@ what it offers). Turn the dots off under the map's settings button.
 Forage and shelter only matter to a camp rest, so they are marked only in
 rooms where you can make camp (<ansi fg="command">help camp</ansi>).
 
-Herbs, firewood, fishing, and game will join them in a later update.
+  <ansi fg="yellow">Herbs</ansi> (teal), <ansi fg="yellow">Firewood</ansi> (orange), <ansi fg="yellow">Fishing</ansi> (cyan), <ansi fg="yellow">Game</ansi> (red)
+  Things your company can gather: <ansi fg="command">gather herbs</ansi>, <ansi fg="command">gather firewood</ansi>, <ansi fg="command">fish</ansi> and
+  <ansi fg="command">hunt</ansi>. Each room holds only so much, and a resource that has been picked
+  clean says "(picked clean)" on the "Here:" line and is drawn hollow with
+  a slash on the map until it grows back (<ansi fg="command">help gathering</ansi>).
 
 <ansi fg="yellow-bold">Water commands</ansi>
 
@@ -50,5 +54,5 @@ Herbs, firewood, fishing, and game will join them in a later update.
 
 None of these work during a battle (<ansi fg="command">help combat</ansi>).
 
-See also: <ansi fg="command">help drink</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help forage</ansi>,
+See also: <ansi fg="command">help gathering</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help forage</ansi>,
 <ansi fg="command">help company meal</ansi>, <ansi fg="command">help webclient</ansi>.
