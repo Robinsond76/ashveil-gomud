@@ -271,3 +271,14 @@ func TestBattlePayloadOutlook(t *testing.T) {
 	raw, _ = json.Marshal(buildBattle(f))
 	assert.NotContains(t, string(raw), "outlook", "the dark hides it, as scout")
 }
+
+// Phase 35e: the payload says when the default focus is on the healer.
+func TestBattlePayloadHealersFirst(t *testing.T) {
+	p := buildBattle(battleFacts{InBattle: true, HealersFirst: true}).(battlePayload)
+	if !p.HealersFirst {
+		t.Fatal("healers_first is sent")
+	}
+	if q := buildBattle(battleFacts{InBattle: true}).(battlePayload); q.HealersFirst {
+		t.Fatal("healers_first is absent by default")
+	}
+}

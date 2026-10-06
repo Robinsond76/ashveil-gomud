@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/stretchr/testify/assert"
@@ -112,4 +113,80 @@ func TestNoDefaultGuardWithoutAHealer(t *testing.T) {
 	b := newBrawl(t)
 	b.withArchetypesFor("", map[int]string{1: "warrior", 2: "ranger", 3: "warrior", 4: "ranger"})
 	assert.Equal(t, strategy.Fighter, enemyparty.MemberStrategy(7, domain.CompanionMemberKey(1)).Role)
+}
+
+// Phase 35e wiring: from level 5 the company's default goes for an enemy
+// healer first, through a real attack and in its battle text; a set focus
+// (none included) wins, and below level 5 nothing changes.
+func healerAims(t *testing.T, level int, setup func(b *brawl)) (aim, healer, bruiser int, out string) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.unplaced()
+	_, bruiser, slinger, _, _ := b.shapeBandits()
+	// The slinger is the group's healer.
+	mobs.GetInstance(slinger).Role = "healer"
+	b.cmd("strategy", "tamsin strongest")
+	b.aria.Character.Level = level
+	if setup != nil {
+		setup(b)
+	}
+	b.cmd("attack", fmt.Sprintf("#%d", bruiser))
+	return aimOf(&b.companion(1).Character), slinger, bruiser, b.cmd("company", "tactics")
+}
+
+func TestCompanyDefaultGoesForTheEnemyHealer(t *testing.T) {
+	aim, healer, bruiser, out := healerAims(t, 5, nil)
+	assert.Equal(t, healer, aim, "level 5: Tamsin, set to the strongest, goes for the healer by default")
+	assert.Contains(t, out, "whenever the enemy has a healer within reach")
+
+	aim, healer, _, _ = healerAims(t, 12, nil)
+	assert.Equal(t, healer, aim, "level 12: the healers default beats the weakest default")
+
+	aim, _, bruiser, _ = healerAims(t, 4, nil)
+	assert.Equal(t, bruiser, aim, "level 4: no healers default")
+
+	aim, _, bruiser, _ = healerAims(t, 12, func(b *brawl) {
+		require.Contains(t, b.cmd("company", "tactics focus none"), "focus is now none")
+	})
+	assert.Equal(t, bruiser, aim, "a focus of none wins over the healers default")
+
+	aim, _, bruiser, out = healerAims(t, 12, func(b *brawl) { b.saveTactics(strategy.Tactics{Focus: strategy.Strongest}) })
+	assert.Equal(t, bruiser, aim, "a set focus wins over the healers default")
+	assert.NotContains(t, out, "whenever the enemy has a healer within reach")
+
+	aim, healer, _, _ = healerAims(t, 3, func(b *brawl) { b.saveTactics(strategy.Tactics{Focus: strategy.Healers}) })
+	assert.Equal(t, healer, aim, "an explicit healers focus works at any level")
+}
+
+func TestCompanyHealersDefaultWithoutAHealer(t *testing.T) {
+	aim, bruiser, _ := aimsAtLevel(t, 5, nil)
+	assert.Equal(t, bruiser, aim, "no enemy healer: level 5 keeps Tamsin's own rule")
+}
+
+func TestHealersDefaultInTheBattleSurfaces(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.aria.Character.Level = 6
+	assert.True(t, enemyparty.HealersDefault(7))
+	assert.Contains(t, b.cmd("company", "tactics"), "[default: whenever the enemy has a healer within reach, everyone goes for it first]")
+	assert.Contains(t, b.cmd("company", "tactics focus default"), "Whenever the enemy has a healer within reach")
+	b.cmd("company", "tactics focus healers")
+	assert.False(t, enemyparty.HealersDefault(7), "a set focus ends the default")
+	assert.Contains(t, b.cmd("company", "tactics"), "Focus:   healers (everyone goes for their healers first")
+}
+
+// The leader who rejoins a battle by the healers default is told why.
+func TestHealersDefaultSaysWhyTheLeaderTurns(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.unplaced()
+	_, bruiser, slinger, _, _ := b.shapeBandits()
+	mobs.GetInstance(slinger).Role = "healer"
+	b.aria.Character.Level = 6
+	b.cmd("attack", fmt.Sprintf("#%d", bruiser))
+	b.toughen()
+	b.aria.Character.EndAggro()
+	got := b.fight()
+	assert.Contains(t, got, "Your company marks the bandit slinger as a healer and goes for it first.")
+	assert.NotContains(t, got, "You turn toward")
 }
