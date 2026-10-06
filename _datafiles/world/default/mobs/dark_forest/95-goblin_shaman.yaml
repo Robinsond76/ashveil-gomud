@@ -1,8 +1,10 @@
 # Ashveil Phase 37b: a raiding band's healer (help coordination, help
 # encounters). She mends a raider below 60% of its health; a blow that draws
-# blood breaks the chant. Only the Dark Forest's goblin-raiders band carries
+# blood breaks the chant. Only the Dark Forest's goblin-mending-band carries
 # one (about one group in six).
 mobid: 95
+# Shares the hexer's art until a shaman sprite is drawn.
+sprite: goblin-hexer
 zone: Dark Forest
 itemdropchance: 5
 hostile: true

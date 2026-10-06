@@ -227,7 +227,8 @@ casters' lower rates saturating the edge at high levels does not break
 at-level fights. Follow-ups: the rating uses the player's own level, not a
 company average; the web header's rating refreshes only on the next room
 update after a level-up; boss quiet is keyed by composition id, so two zones
-sharing a lair id would share it.
+sharing a lair id would share it; the new goblin shaman borrows the
+goblin-hexer battle sprite until its own is drawn (art follow-up).
 
 **Phase 37 complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) (2026-10-06):** Dark Forest (band 5-7) and the
 Catacombs (band 10-12) spring 2-3 foe battles (sometimes 4) in opted-in
