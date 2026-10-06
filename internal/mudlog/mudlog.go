@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	"github.com/natefinch/lumberjack"
 )
@@ -15,9 +16,14 @@ var (
 	logLevel = new(slog.LevelVar) // goroutine safe way to change log levels
 
 	// slogInstance logs to stderr until SetupLogger replaces it, so a caller
-	// (a test, a tool) that never sets up logging can't hit a nil logger.
-	slogInstance = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	// (a test, a tool) that never sets up logging can't hit a nil logger. It is
+	// atomic so a goroutine already logging never races SetupLogger.
+	slogInstance atomic.Pointer[slog.Logger]
 )
+
+func init() {
+	slogInstance.Store(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel})))
+}
 
 type teeLogger interface {
 	Println(level string, v ...any)
@@ -45,9 +51,9 @@ func SetupLogger(inGameLogger teeLogger, logLevel string, logPath string, colorL
 
 	// No filepath? Write to Stderr.
 	if logPath == `` {
-		slogInstance = slog.New(
+		slogInstance.Store(slog.New(
 			getLogHandler(os.Stderr, inGameLogger, colorLogs),
-		)
+		))
 		return
 	}
 
@@ -76,24 +82,24 @@ func SetupLogger(inGameLogger teeLogger, logLevel string, logPath string, colorL
 		Compress:   true, // Compress rotated files
 	}
 
-	slogInstance = slog.New(
+	slogInstance.Store(slog.New(
 		getLogHandler(lj, inGameLogger, colorLogs),
-	)
+	))
 
 }
 
 func Debug(msg string, args ...any) {
-	slogInstance.Log(context.Background(), slog.LevelDebug, msg, args...)
+	slogInstance.Load().Log(context.Background(), slog.LevelDebug, msg, args...)
 }
 
 func Info(msg string, args ...any) {
-	slogInstance.Log(context.Background(), slog.LevelInfo, msg, args...)
+	slogInstance.Load().Log(context.Background(), slog.LevelInfo, msg, args...)
 }
 
 func Warn(msg string, args ...any) {
-	slogInstance.Log(context.Background(), slog.LevelWarn, msg, args...)
+	slogInstance.Load().Log(context.Background(), slog.LevelWarn, msg, args...)
 }
 
 func Error(msg string, args ...any) {
-	slogInstance.Log(context.Background(), slog.LevelError, msg, args...)
+	slogInstance.Load().Log(context.Background(), slog.LevelError, msg, args...)
 }

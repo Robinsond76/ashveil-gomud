@@ -37,7 +37,7 @@ type teeLogger interface {
 Interface for additional log destinations, enabling in-game log display.
 
 ### Global State
-- **slogInstance**: `*slog.Logger` - Global logger instance
+- **slogInstance**: `atomic.Pointer[slog.Logger]` - Global logger instance (stderr until `SetupLogger`)
 - **logLevel**: `*slog.LevelVar` - Thread-safe log level control
 
 ## Core Functions
