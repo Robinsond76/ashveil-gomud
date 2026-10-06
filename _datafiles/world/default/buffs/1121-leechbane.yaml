@@ -1,0 +1,14 @@
+buffid: 1121
+name: Leechbane
+description: "Leechbane thins your blood. Healing you receive is cut by a quarter."
+secret: false
+# Phase 43b: a weapon poison, ticked by the combat round (see
+# internal/status), never by game rounds; it clears when the fight ends.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 4
+flags:
+  - combat-status
+  - poison
+  - weapon-poison
+  - leechbane

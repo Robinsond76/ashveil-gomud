@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -33,7 +34,7 @@ func equipmentStats(c *characters.Character, load encumbrance.Load) domain.Equip
 	if c.Equipment.Offhand.GetSpec().Type == items.Weapon {
 		offhandDamage = offhand.DiceRoll
 	}
-	return domain.EquipmentStats{EdgeBonus: edgeBonus, EdgeStrikes: edgeStrikes, OffhandEdgeBonus: offhandEdgeBonus, OffhandEdgeStrikes: offhandEdgeStrikes, Hands: c.HandsRequired(c.Equipment.Weapon), Reach: c.Equipment.Weapon.GetSpec().Reach, Shield: c.HasShield(), HealthMax: c.HealthMax.Value, ManaMax: c.ManaMax.Value, Damage: weapon.DiceRoll, OffhandDamage: offhandDamage, Defense: c.GetDefense(), WornG: c.PersonalGrams(), Burden: c.BurdenWord(), DodgePct: combat.DodgeRetentionPct(c), PackCapacityG: c.Equipment.Pack.CarryBonusGrams(), CapacityG: load.CapacityGrams, CargoG: load.TotalGrams(), Stats: map[string]int{
+	return domain.EquipmentStats{EdgeBonus: edgeBonus, EdgeStrikes: edgeStrikes, OffhandEdgeBonus: offhandEdgeBonus, OffhandEdgeStrikes: offhandEdgeStrikes, WeaponCoat: c.Equipment.Weapon.CoatSummary(time.Now()), OffhandCoat: c.Equipment.Offhand.CoatSummary(time.Now()), Hands: c.HandsRequired(c.Equipment.Weapon), Reach: c.Equipment.Weapon.GetSpec().Reach, Shield: c.HasShield(), HealthMax: c.HealthMax.Value, ManaMax: c.ManaMax.Value, Damage: weapon.DiceRoll, OffhandDamage: offhandDamage, Defense: c.GetDefense(), WornG: c.PersonalGrams(), Burden: c.BurdenWord(), DodgePct: combat.DodgeRetentionPct(c), PackCapacityG: c.Equipment.Pack.CarryBonusGrams(), CapacityG: load.CapacityGrams, CargoG: load.TotalGrams(), Stats: map[string]int{
 		"strength": c.Stats.Strength.ValueAdj, "speed": c.Stats.Speed.ValueAdj, "smarts": c.Stats.Smarts.ValueAdj, "vitality": c.Stats.Vitality.ValueAdj, "mysticism": c.Stats.Mysticism.ValueAdj, "perception": c.Stats.Perception.ValueAdj}}
 }
 

@@ -56,6 +56,9 @@ type Mob struct {
 	DeathProcessed     bool    `yaml:"-"`
 	Temperament        string  `yaml:"temperament,omitempty"`
 	NeverBreak         bool    `yaml:"neverbreak,omitempty"`
+	// Phase 43b: how weapon poison takes on this creature: "" normal,
+	// "resistant" (delivery chance halved) or "immune". Marked per template.
+	PoisonSusceptibility string `yaml:"poison,omitempty"`
 	// Boss (Phase 38a): a hex resists it 25 points more and holds it half as long.
 	Boss           bool `yaml:"boss,omitempty"`
 	MobId          MobId

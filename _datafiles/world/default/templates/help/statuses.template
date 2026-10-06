@@ -47,6 +47,15 @@ gets through also leaves a wound, from any weapon, fists and bites too:
                   not break it. A Witch's Binding Hex, 1 round (2 from level 20).
   <ansi fg="yellow">Blighted</ansi>      healing it receives is halved, for 3 rounds. A Witch's
                   Blight, cast at enemy healers.
+  <ansi fg="yellow">Bitterleaf</ansi>    1 damage each combat round, for 3 rounds. A weapon poison.
+  <ansi fg="yellow">Leechbane</ansi>     healing it receives is cut by a quarter, for 3 rounds. A
+                  weapon poison.
+  <ansi fg="yellow">Leadroot</ansi>      its physical blows do 15% less damage, for 2 rounds. A
+                  weapon poison.
+  <ansi fg="yellow">Mirethorn</ansi>     its dodge chance is 10 points lower, for 2 rounds. A weapon
+                  poison.
+                  A foe carries one weapon poison at a time (<ansi fg="command">help poisons</ansi>); a
+                  cleric's cleansing takes it off.
   <ansi fg="yellow">Overloaded</ansi>    casts poorly (-30 to its chance to cast) and moves slowly
                   (-3 speed), for 3 rounds. Shower of Sparks overloads what
                   it sears.
