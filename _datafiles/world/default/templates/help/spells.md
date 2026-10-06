@@ -12,4 +12,6 @@ Damage and healing spells grow with your level and Mysticism; ~help spell [spell
 
 Minor Heal All targets your present company even without a player party. Single-target help uses the named patient; other players are never automatically included. Targets are rechecked when the chant finishes. See ~help friendly-effects~ for scope, eligibility and costs.
 
-**See also:** ~help cast~
+~cast sigil of [kind]~ is not a spell but a set-up: it lays a sigil before a fight (see ~help sigils~).
+
+**See also:** ~help cast~, ~help sigils~

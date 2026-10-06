@@ -5,6 +5,7 @@ name: Fire Flask
 description: A flask of fire burns the foe aimed at and one beside it for 2+1d4, plus 1 per 12 levels. It costs one flask, no mana and no chant
 type: harmmulti
 school: alchemy
+element: fire # Phase 54: a fire sigil strengthens it and leaves the foe burning
 cost: 0
 flask: 1
 waitrounds: 0

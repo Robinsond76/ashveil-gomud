@@ -168,6 +168,7 @@ func TestAlliedFinalEnemyPaysAfterCombatClosesBattle(t *testing.T) {
 	gameplay.XPScale = 100
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	finalID := b.bandits["bandit captain"][0]
+	captainMobId := int(mobs.GetInstance(finalID).MobId)
 	for _, m := range b.livingBandits() {
 		if m.InstanceId != finalID {
 			_, err := mobcommands.Suicide("vanish", m, b.road)
@@ -196,8 +197,16 @@ func TestAlliedFinalEnemyPaysAfterCombatClosesBattle(t *testing.T) {
 	require.False(t, active)
 	assert.Greater(t, b.aria.Character.Experience, before7)
 	assert.Greater(t, ally.Character.Experience, before8)
-	require.Len(t, b.road.Corpses, 1)
-	assert.Contains(t, []int{7, 8}, b.road.Corpses[0].ClaimUserId)
+	// Review (54): a companion the captain fells leaves a corpse too, so
+	// only the captain's is counted (this flaked under -race).
+	var spoils []int
+	for _, c := range b.road.Corpses {
+		if c.MobId == captainMobId {
+			spoils = append(spoils, c.ClaimUserId)
+		}
+	}
+	require.Len(t, spoils, 1)
+	assert.Contains(t, []int{7, 8}, spoils[0])
 }
 
 func TestAlliedSupportRespectsIntegratedBattleBoundary(t *testing.T) {

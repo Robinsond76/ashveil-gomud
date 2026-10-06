@@ -30,6 +30,13 @@ const OtherBattlePatient = `That one is caught up in another battle; you can't h
 
 func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 54: `cast sigil of [kind]` lays a sigil before a fight.
+	// A leader without the Cast skill has a caster companion draw it.
+	if f := strings.Fields(strings.ToLower(rest)); len(f) > 0 && f[0] == `sigil` {
+		castSigil(strings.Join(f[1:], ` `), user, room)
+		return true, nil
+	}
+
 	skillLevel := user.Character.GetSkillLevel(`cast`)
 
 	if skillLevel == 0 {

@@ -104,7 +104,7 @@ func strategyPass() {
 			// Phase 30b: a wounded ally is healed only to its limit.
 			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthLimit(), Downed: a.who.userId > 0 && a.char.Health < 1}
 			if rt := a.char.RT; rt != nil {
-				allies[i].Warded, allies[i].Barked, allies[i].Rejuv, allies[i].Blessed = rt.Ward > 0, rt.Bark > 0, rt.Rejuv > 0, rt.Bless > 0
+				allies[i].Warded, allies[i].Barked, allies[i].Rejuv, allies[i].Blessed = rt.Ward > 0 && !rt.WardSigil, rt.Bark > 0, rt.Rejuv > 0, rt.Bless > 0
 			}
 			// Phase 39g: poison or bleeding an Alchemist's antidote takes off.
 			allies[i].Afflicted = a.char.HasBuffFlag("poison") || a.char.HasBuffFlag("bleeding")

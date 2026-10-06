@@ -1,0 +1,46 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">sigils</ansi>
+
+A sigil is chalk and a whispered word laid on the ground before a fight.
+Every battle your company fights in that room while the sigil lasts is
+shaped by it. Nobody casts or chooses anything in the fight; the sigil acts
+on its own, like the rest of your set-up (<ansi fg="command">help combat</ansi>).
+
+<ansi fg="yellow-bold">Laying one</ansi>
+
+  <ansi fg="command">cast sigil of</ansi> [kind]   fire, ward, stillness or mending
+  <ansi fg="command">cast sigil</ansi>             lists the kinds, and what your company has laid
+
+A sigil costs mana and one <ansi fg="yellow">sigil chalk</ansi>, from your own pack. Chalk is sold at
+markets (<ansi fg="command">help market</ansi>) for a few gold and is never bought back. A caster
+draws it: you, if you have the Cast skill, or else the first companion with
+you who casts spells, from its own mana. You cannot lay one in a battle. It
+lasts 15 real minutes, through a restart or copyover too, and never moves
+the world's clock. A company keeps one sigil to a room, and one at a time: laying a new
+one somewhere else lets the old one fade.
+
+<ansi fg="yellow-bold">The four sigils</ansi>
+
+  <ansi fg="yellow">Fire</ansi>        12 mana   Fire spells (Shower of Sparks, Fire Flask) hit 25%
+                         harder and leave the foe burning.
+  <ansi fg="yellow">Ward</ansi>        15 mana   Each member of the company starts the battle under a
+                         small ward, which takes up to about a third of your level
+                         plus four from the first blow it meets. A healer's own
+                         ward replaces it.
+  <ansi fg="yellow">Stillness</ansi>   15 mana   Every foe starts the battle windchilled for 3 rounds:
+                         its chants and sling shots take a round longer.
+  <ansi fg="yellow">Mending</ansi>     12 mana   Heals your company casts land 25% stronger.
+
+<ansi fg="yellow-bold">What shows</ansi>
+
+<ansi fg="command">look</ansi> shows a laid sigil to everyone in the room, with the minutes it has
+left. The web client's Room panel carries it as a badge, and a battle fought
+in it names it in the battle screen's header and the Combat tab. A battle
+keeps the sigil it began with, even if it fades mid-fight. Enemies never lay
+sigils, and a sigil is not a spell: nothing in it can be dispelled.
+
+<ansi fg="yellow-bold">Raiders at your camp</ansi>
+
+A fight at your camp counts like any other: lay a sigil in the camp's room
+before the rest and a raid there meets it (<ansi fg="command">help camp</ansi>).
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help battlefield</ansi>, <ansi fg="command">help camp</ansi>

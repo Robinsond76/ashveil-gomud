@@ -319,6 +319,15 @@ Markets:
         StartStock: 4
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      - ItemId: 30060 # sigil chalk (Phase 54)
+        BasePrice: 6
+        MinPrice: 4
+        MaxPrice: 12
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 36c: the 36b trade goods, so a hauled load has somewhere to go.
       # Town pays best for materials and valuables; the road post is glutted
       # with trophies and salvage, so carrying them to Dunmar pays.
@@ -625,6 +634,15 @@ Markets:
         MaxStock: 4
         TargetStock: 2
         StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30060 # sigil chalk (Phase 54)
+        BasePrice: 8
+        MinPrice: 5
+        MaxPrice: 16
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
       - ItemId: 28 # wolf hide

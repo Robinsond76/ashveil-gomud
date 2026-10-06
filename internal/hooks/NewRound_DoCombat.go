@@ -291,6 +291,7 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 				}
 			}
 
+			fireBurn(leaderOfCaster(user.UserId, 0), spellInfo.SpellId, spellInfo.TargetMobInstanceIds) // Phase 54
 			emitCast(combatstream.CastComplete, userRef(user), spellInfo.SpellId, combatstream.OutcomeCast, roomId)
 			spellTargetsBefore.emitResults(userRef(user), spellInfo.SpellId, roomId)
 
@@ -901,6 +902,7 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 				}
 			}
 
+			fireBurn(leaderOfCaster(0, mob.InstanceId), spellInfo.SpellId, spellInfo.TargetMobInstanceIds) // Phase 54
 			emitCast(combatstream.CastComplete, mobRef(mob), spellInfo.SpellId, combatstream.OutcomeCast, mob.Character.RoomId)
 			spellTargetsBefore.emitResults(mobRef(mob), spellInfo.SpellId, mob.Character.RoomId)
 
