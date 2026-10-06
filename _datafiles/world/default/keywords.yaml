@@ -149,6 +149,7 @@ help:
     combat:
       - tempo
       - battlefield
+      - sigils
       - ambush
       - abilities
       - armor
@@ -292,6 +293,7 @@ help-aliases:
   storage: [store, unstore]
   progression: [stat-steps, stat steps, leveling]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
+  sigils: [sigil, cast sigil, cast-sigil, sigil chalk, chalk, ward sigil, fire sigil, stillness sigil, mending sigil]
   ambush: [surprise, surprised]
   equipment: [company-equipment, company equip, company remove, company compare]
   treasury: [company-treasury, company treasury]

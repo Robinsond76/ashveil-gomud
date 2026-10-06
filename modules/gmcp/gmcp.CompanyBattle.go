@@ -17,6 +17,7 @@ package gmcp
 import (
 	"encoding/json"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"sort"
 	"strconv"
@@ -70,6 +71,8 @@ type battleFacts struct {
 	Faltering bool
 	// Phase 39c: the weather a Shaman has called into the battle, if any.
 	Weather *battleWeather
+	// Phase 54: the sigil the company stands in, if any.
+	Sigil *battleSigil
 	// Phase 39d: the Doll Masters' dolls standing in the player's company.
 	Dolls []battleDoll
 }
@@ -97,6 +100,16 @@ type battleWeather struct {
 	Name   string `json:"name"`
 	Rounds int    `json:"rounds"`
 	Effect string `json:"effect"`
+}
+
+// battleSigil is the sigil a battle was fought in (Phase 54): its kind
+// ("fire", "ward", "stillness", "mending"), the name the lines use, what it
+// does in a few words, and the Unix second it fades.
+type battleSigil struct {
+	Kind    string `json:"kind"`
+	Name    string `json:"name"`
+	Effect  string `json:"effect"`
+	Expires int64  `json:"expires"`
 }
 
 // allyFact is one allied company in the battle: its leader and the members
@@ -232,6 +245,9 @@ type battlePayload struct {
 	// Phase 39c: the battle's weather (the battle screen's banner and the
 	// Battle view's note); omitted while the sky is clear.
 	Weather *battleWeather `json:"weather,omitempty"`
+	// Phase 54: the sigil the company stands in (the battle screen's banner
+	// and the Battle view's note); omitted without one.
+	Sigil *battleSigil `json:"sigil,omitempty"`
 	// Phase 39d: the company's standing dolls (the Combat tab's fighters
 	// and the battle screen's units); omitted when there are none.
 	Dolls []battleDoll `json:"dolls,omitempty"`
@@ -278,9 +294,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Dolls: f.Dolls}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Dolls: f.Dolls}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -388,6 +404,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	}
 	f.Guards = gatherGuards(user, room)
 	f.Weather = weatherFact(b.Weather)
+	f.Sigil = sigilFact(b)
 	f.Faltering = companyFaltering(b)
 	f.Allies = gatherAllies(user, b)
 	f.Dolls = gatherDolls(user.UserId, room.RoomId)
@@ -805,4 +822,12 @@ func weatherFact(w battle.Weather) *battleWeather {
 		return nil
 	}
 	return &battleWeather{Kind: string(w.Kind), Name: w.Kind.Name(), Rounds: max(1, w.Left-1), Effect: w.Kind.Effect()}
+}
+
+// sigilFact is the sigil the battle began in, for the feed: nil without one.
+func sigilFact(b battle.Battle) *battleSigil {
+	if b.Sigil == sigils.None {
+		return nil
+	}
+	return &battleSigil{Kind: string(b.Sigil), Name: b.Sigil.Name(), Effect: b.Sigil.Effect(), Expires: b.SigilExpires}
 }

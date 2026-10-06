@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/status"
@@ -768,6 +769,12 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 	if len(a.characterRecord.GetBuffs(status.Fogbound)) > 0 {
 		factor *= float64(100-stormcraft.FogSpellPct) / 100
 	}
+	// Phase 54: a fire sigil under the company strengthens its fire spells.
+	if agg := a.characterRecord.Aggro; agg != nil && agg.Type == characters.SpellCast {
+		if sp := spells.GetSpell(agg.SpellInfo.SpellId); sp != nil && sp.Element == "fire" && battle.SigilOf(a.battleLeader()) == sigils.Fire {
+			factor *= 1 + float64(sigils.FirePct)/100
+		}
+	}
 	return factor
 }
 
@@ -790,7 +797,12 @@ func (a ScriptActor) HealFactor() float64 {
 	if a.characterRecord == nil {
 		return 1
 	}
-	return 1 + float64(a.characterRecord.HealingBonusPct())/100
+	pct := a.characterRecord.HealingBonusPct()
+	// Phase 54: a mending sigil under the company strengthens its heals.
+	if battle.SigilOf(a.battleLeader()) == sigils.Mending {
+		pct += sigils.MendingPct
+	}
+	return 1 + float64(pct)/100
 }
 
 // WoundNote is the text a heal adds when the actor's wound limit held some

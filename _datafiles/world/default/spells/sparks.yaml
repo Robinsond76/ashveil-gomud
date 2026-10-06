@@ -3,6 +3,7 @@ name: Shower of Sparks
 description: Hurts for 4+1d4, plus 1 per 15 caster levels and 1 per 25 Mysticism, scaled by skill
 type: harmmulti
 school: conjuration
+element: fire # Phase 54: a fire sigil strengthens it and leaves the foe burning
 cost: 10
 waitrounds: 1
 difficulty: 50

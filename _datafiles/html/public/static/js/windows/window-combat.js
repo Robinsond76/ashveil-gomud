@@ -607,6 +607,13 @@
             note.title = 'A Shaman\'s weather, this battle only (help shaman)';
             root.appendChild(note);
         }
+        // Phase 54: the sigil the company stands in (help sigils).
+        if (battle.sigil && battle.sigil.name) {
+            const sg = battle.sigil;
+            const note = el('div', 'cbt-note cbt-sigil', 'Sigil: ' + sg.name + ' (' + sg.effect + ')');
+            note.title = 'Laid before the fight with cast sigil of [kind] (help sigils)';
+            root.appendChild(note);
+        }
         if (battle.outlook && battle.outlook.text) {
             const outlook = el('div', 'cbt-note cbt-outlook cbt-risk-' + String(battle.outlook.risk || '').replace(/[^a-z]/g, ''),
                 'Outlook: ' + battle.outlook.text);

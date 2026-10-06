@@ -47,6 +47,12 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	spellName := args[0]
 	args = args[1:]
 
+	// Ashveil Phase 54: `cast sigil of [kind]` lays a sigil before a fight.
+	if spellName == `sigil` {
+		castSigil(strings.Join(args, ` `), user, room)
+		return true, nil
+	}
+
 	if len(args) > 1 {
 		if args[0] == `on` {
 			args = args[1:]

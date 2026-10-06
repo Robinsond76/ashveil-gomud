@@ -642,6 +642,10 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	for _, line := range camping.CampLines(camping.RoomCamps(room.RoomId), user.UserId, characterName) {
 		user.SendText(line)
 	}
+	// Phase 54: sigils laid here are shown to everyone.
+	for _, line := range sigilLines(room.RoomId, user.UserId) {
+		user.SendText(line)
+	}
 	for _, line := range company.RecruiterLines(user.UserId, room.RoomId) {
 		user.SendText(line)
 	}

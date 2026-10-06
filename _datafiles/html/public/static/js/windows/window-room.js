@@ -102,6 +102,7 @@
         .rw-badge.root      { background: var(--t-badge-root-bg); color: var(--t-badge-root-text); border: 1px solid var(--t-badge-root-border); }
         .rw-badge.resource  { background: transparent; color: var(--t-text-heading); border: 1px solid var(--t-border); }
         .rw-badge.resource.depleted { opacity: 0.55; border-style: dashed; }
+        .rw-badge.sigil { background: transparent; color: var(--t-text-heading); border: 1px solid var(--t-border); border-style: double; }
         .rw-badge.resource::before { content: ''; display: inline-block; width: 0.7em; height: 0.7em; margin-right: 4px; border-radius: 50%; background: var(--rw-res-color, #aaaaaa); vertical-align: -0.05em; }
 
         /* ---- gathering progress (Phase 45) ---- */
@@ -549,6 +550,18 @@
                 badge.textContent = BADGE_LABELS[d];
                 badge.style.cursor = 'help';
                 badge.addEventListener('click', function() { Client.GMCPRequest('Help', d); });
+                badgesEl.appendChild(badge);
+            });
+            // Phase 54: sigils laid here, until they fade.
+            (room.sigils || []).forEach(function(sg) {
+                if (sg.expires && sg.expires * 1000 <= Date.now()) { return; }
+                const badge = document.createElement('span');
+                badge.className   = 'rw-badge sigil';
+                badge.textContent = sg.name;
+                const mins = sg.expires ? Math.max(1, Math.ceil((sg.expires * 1000 - Date.now()) / 60000)) : 0;
+                badge.title       = (sg.mine ? 'Your company\'s' : sg.owner + '\'s') + ' ' + sg.name + ': ' + sg.effect + (mins ? ' (' + mins + ' min left; help sigils)' : ' (help sigils)');
+                badge.style.cursor = 'help';
+                badge.addEventListener('click', function() { Client.GMCPRequest('Help', 'sigils'); });
                 badgesEl.appendChild(badge);
             });
             const pickedClean = room.depleted || [];
