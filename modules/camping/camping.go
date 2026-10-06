@@ -30,6 +30,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -42,7 +43,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp break | camp sharpen [status | auto on|off]"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp break | camp sharpen [status | auto on|off] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -64,6 +65,8 @@ type Registry struct {
 	// Phase 23b: leaders whose company sharpens its blades when a camp
 	// rest's Rested grant is made.
 	AutoSharpen map[int]bool `yaml:"auto_sharpen,omitempty"`
+	// Phase 43b: each leader's camp poison preparation list.
+	PoisonPlans map[int][]PoisonAssign `yaml:"poison_plans,omitempty"`
 	// Phase 33f3: a completed, unbroken camp rest whose Forage and Vigil
 	// are still owed, by leader (the rest's operation ID and camp room),
 	// and when each leader's company last earned them (once per
@@ -83,6 +86,7 @@ func NewRegistry() *Registry {
 		RestedPending:      map[int]bool{},
 		Owed:               map[int]map[int]camping.OwedGrant{},
 		AutoSharpen:        map[int]bool{},
+		PoisonPlans:        map[int][]PoisonAssign{},
 		CampRewards:        map[int]campReward{},
 		LastCampRewards:    map[int]time.Time{},
 	}
@@ -119,6 +123,7 @@ func (r Registry) Clone() Registry {
 		RestedPending:      cloneBools(r.RestedPending),
 		Owed:               cloneOwed(r.Owed),
 		AutoSharpen:        cloneBools(r.AutoSharpen),
+		PoisonPlans:        clonePlans(r.PoisonPlans),
 		CampRewards:        make(map[int]campReward, len(r.CampRewards)),
 		LastCampRewards:    make(map[int]time.Time, len(r.LastCampRewards)),
 	}
@@ -210,6 +215,17 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	for leaderUserID, on := range wire.AutoSharpen {
 		if leaderUserID > 0 && on {
 			loaded.AutoSharpen[leaderUserID] = true
+		}
+	}
+	for leaderUserID, plan := range wire.PoisonPlans {
+		var kept []PoisonAssign
+		for _, a := range plan {
+			if _, ok := items.PoisonByID(a.Poison); ok && (a.Hand == "main" || a.Hand == "off") && a.Member >= 0 {
+				kept = append(kept, a)
+			}
+		}
+		if leaderUserID > 0 && len(kept) > 0 {
+			loaded.PoisonPlans[leaderUserID] = kept
 		}
 	}
 	for leaderUserID, reward := range wire.CampRewards {
@@ -320,6 +336,7 @@ type CampingModule struct {
 	restedPending      map[int]bool
 	owed               map[int]map[int]camping.OwedGrant
 	autoSharpen        map[int]bool
+	poisonPlans        map[int][]PoisonAssign
 	innTimers          map[int]Timer
 	innTimerGeneration map[int]uint64
 	innCfg             innSettings
@@ -424,6 +441,7 @@ func init() {
 	m.plug.AddUserCommand("camp", m.userCommand, false, false)
 	m.plug.AddUserCommand("inn", m.innCommand, false, false)
 	m.plug.AddUserCommand("sharpen", m.sharpenCommand, false, false)
+	m.plug.AddUserCommand("coat", m.coatCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
@@ -540,6 +558,7 @@ func (m *CampingModule) saveLocked() error {
 		RestedPending:      m.restedPending,
 		Owed:               m.owed,
 		AutoSharpen:        m.autoSharpen,
+		PoisonPlans:        m.poisonPlans,
 		CampRewards:        m.campRewards,
 		LastCampRewards:    m.lastRewards,
 	}
@@ -590,6 +609,9 @@ func (m *CampingModule) load() {
 	}
 	if loaded.AutoSharpen != nil {
 		m.autoSharpen = loaded.AutoSharpen
+	}
+	if loaded.PoisonPlans != nil {
+		m.poisonPlans = loaded.PoisonPlans
 	}
 	if loaded.CampRewards != nil {
 		m.campRewards = loaded.CampRewards
@@ -1387,6 +1409,10 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(text)
 	case "sharpen":
 		user.SendText(m.sharpenArgs(user, args[1:]))
+	case "coat":
+		user.SendText(m.coatArgs(user, args[1:]))
+	case "poison":
+		user.SendText(m.poisonArgs(user, args[1:]))
 	case "fire":
 		user.SendText(m.lightFire(user, room))
 	case "rest":

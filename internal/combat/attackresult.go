@@ -28,6 +28,9 @@ type AttackResult struct {
 	// EdgeSpent is how many strikes of each attacking weapon's Phase 23b
 	// edge the round spent, by equipment slot.
 	EdgeSpent map[items.ItemType]int
+	// PoisonSpent is how many contacts of each attacking weapon's Phase 43b
+	// poison coating the round spent, by equipment slot.
+	PoisonSpent map[items.ItemType]int
 	// WoundsToTarget is the wounds the round's strikes left on a woundable
 	// target (Phase 30b), applied with the damage.
 	WoundsToTarget []wounds.Wound

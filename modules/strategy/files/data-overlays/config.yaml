@@ -21,6 +21,8 @@
 #   siphon      drains a foe and heals the most hurt ally
 #   summon      calls the class summon (Angel, Demon) as the battle opens
 #   raise       raises a fallen foe as a thrall (a Necromancer)
+#   weather     a Shaman's weather call (fog, chill wind, rain), when none is up (Phase 39c)
+#   storm       a Shaman's Lightning, ahead of its attack spell (Phase 39c)
 # A character casts the first listed spell of a use that it knows and can
 # pay for. Unknown spells are dropped at load with a warning.
 AutoSpells:
@@ -56,3 +58,12 @@ AutoSpells:
   - { Spell: bindfiend, Use: summon }
   # Phase 38c3: a Necromancer raises a fallen foe as a thrall.
   - { Spell: raisefallen, Use: raise }
+  # Phase 39c: a Shaman (role caster) calls a weather first when none is up,
+  # in the order tried (Rain only once it knows Lightning, fog and a chill
+  # only against foes that shoot or cast), then Lightning, then Gust.
+  - { Spell: rain, Use: weather }
+  - { Spell: chillwind, Use: weather }
+  - { Spell: callfog, Use: weather }
+  - { Spell: lightning, Use: storm }
+  - { Spell: gust, Use: attack }
+  - { Spell: stoneskin, Use: bark }

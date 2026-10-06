@@ -84,6 +84,9 @@ const (
 	Camped
 	CampRest
 	InnStay
+	// Gathering is a gather, fish or hunt in progress (Phase 45); Detail
+	// names it and Percent is its progress.
+	Gathering
 )
 
 // Activity is what the company is doing, with its progress or time left.
@@ -93,6 +96,8 @@ type Activity struct {
 	Remaining time.Duration
 	// Route is the journey's route name, when travelling.
 	Route string
+	// Detail is the work's name when gathering ("gathering herbs").
+	Detail string
 }
 
 // Label is the activity in a few words; "" when idle.
@@ -108,6 +113,8 @@ func (a Activity) Label() string {
 		return "Resting " + FormatRemaining(a.Remaining)
 	case InnStay:
 		return "At inn " + FormatRemaining(a.Remaining)
+	case Gathering:
+		return fmt.Sprintf("%s %d%%, %s left", capitalize(a.Detail), a.Percent, FormatRemaining(a.Remaining))
 	}
 	return ""
 }
@@ -144,4 +151,11 @@ func WarnCluster(words []string) string {
 		n++
 	}
 	return b.String()
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }

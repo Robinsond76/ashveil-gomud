@@ -72,6 +72,7 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	rooms.LoadBiomeDataFiles()
 	mobs.LoadDataFiles()
 	keywords.LoadAliases()
+	freshDunmarRooms(t)
 	inn := rooms.LoadRoom(2003)
 	require.NotNil(t, inn)
 
@@ -113,7 +114,10 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 		module.registry = *domain.NewRegistry()
 		module.instances = map[int]map[int]int{}
 	})
-	var byUser map[int][]string
+	// Non-nil from the start: events a previous test left queued fire into
+	// this listener at the first ProcessEvents, before run resets the map
+	// (a shuffled run panicked on the nil map, 37c).
+	byUser := map[int][]string{}
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		msg := e.(events.Message)
 		byUser[msg.UserId] = append(byUser[msg.UserId], msg.Text)

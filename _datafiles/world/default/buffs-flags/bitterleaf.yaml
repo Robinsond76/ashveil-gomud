@@ -1,0 +1,5 @@
+flag: bitterleaf
+name: "Bitterleaf"
+description: "1 damage each combat round."
+locked: true
+harmful: true

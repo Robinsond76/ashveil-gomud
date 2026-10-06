@@ -22,12 +22,16 @@ const (
 	UseSiphon  Use = "siphon"   // drains a foe and heals the most hurt ally
 	UseSummon  Use = "summon"   // calls the class summon at the start of a battle
 	UseRaise   Use = "raise"    // raises a fallen foe as a thrall (a Necromancer, Phase 38c3)
+
+	// Phase 39c: a Shaman's spells.
+	UseWeather Use = "weather" // calls a battle weather: Fog, Chill Wind or Rain
+	UseStorm   Use = "storm"   // Lightning, a heavy bolt at one foe (a second for a Stormcaller)
 )
 
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise, UseWeather, UseStorm:
 		return u, true
 	}
 	return "", false
@@ -73,6 +77,14 @@ func DefaultAutoSpells() []Spell {
 		{ID: "callhost", Use: UseSummon},
 		{ID: "bindfiend", Use: UseSummon},
 		{ID: "raisefallen", Use: UseRaise},
+		// Phase 39c: the Shaman's weather, in the order tried (Rain first, as
+		// Lightning feeds on it), then Lightning, then Gust.
+		{ID: "rain", Use: UseWeather},
+		{ID: "chillwind", Use: UseWeather},
+		{ID: "callfog", Use: UseWeather},
+		{ID: "lightning", Use: UseStorm},
+		{ID: "gust", Use: UseAttack},
+		{ID: "stoneskin", Use: UseBark},
 	}
 }
 
@@ -129,6 +141,12 @@ type Situation struct {
 	// at: one that doesn't already carry its status, isn't immune to it,
 	// and (Blight) heals. Nil means every hex may be cast.
 	CanHex func(spellID string) bool
+	// Weather (Phase 39c) is the battle's weather now ("" for none); a
+	// Shaman calls one only when none is up. CanWeather reports whether a
+	// weather spell is worth casting (a fog or chill needs a foe that
+	// shoots or casts; rain needs Lightning to feed). Nil means always.
+	Weather    string
+	CanWeather func(spellID string) bool
 }
 
 // ActionKind is what a character does this round.
@@ -146,6 +164,8 @@ const (
 	Drain                       // Siphon at the foes it reaches
 	Summon                      // call the class summon (the caster is its own target)
 	Raise                       // raise a fallen foe as a thrall (the caster is its own target)
+	Weather                     // call a battle weather (the caster stands for it; Phase 39c)
+	Storm                       // Lightning at a foe, and a second for a chain (Phase 39c)
 )
 
 // Action is a role's decision. Spell is the spell to cast (for all but
@@ -267,11 +287,24 @@ func Decide(s Situation) Action {
 		if s.Foes < 1 {
 			return Action{Kind: Swing}
 		}
-		// Phase 38b: a Theurgist wards the company before it casts.
 		spare := func(sp Spell) bool {
 			return s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana
 		}
-		if act, ok := tryBuffs(s, affordable, spare, UseWard); ok {
+		// Phase 39c: a Shaman calls a weather first, when none is up.
+		if s.Weather == "" {
+			for _, sp := range s.Spells {
+				if sp.Use != UseWeather || s.Knows == nil || !s.Knows(sp.ID) || s.Mana < sp.Cost || !spare(sp) {
+					continue
+				}
+				if s.CanWeather != nil && !s.CanWeather(sp.ID) {
+					continue
+				}
+				return Action{Kind: Weather, Spell: sp.ID}
+			}
+		}
+		// Phase 38b: a Theurgist wards the company before it casts; Phase
+		// 39c: an Earthspeaker turns Stoneskin on an ally.
+		if act, ok := tryBuffs(s, affordable, spare, UseWard, UseBark); ok {
 			return act
 		}
 		// Phase 38c3: a Warlock's Life Drain, while an ally is hurt enough to
@@ -282,6 +315,10 @@ func Decide(s Situation) Action {
 					return Action{Kind: Drain, Spell: sp.ID, Ally: -1}
 				}
 			}
+		}
+		// Phase 39c: Lightning, the Shaman's heavy bolt.
+		if sp, ok := affordable(UseStorm); ok {
+			return Action{Kind: Storm, Spell: sp.ID}
 		}
 		if s.Foes >= 2 {
 			if sp, ok := affordable(UseAttackAll); ok {

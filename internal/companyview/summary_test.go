@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -302,6 +303,24 @@ func TestSummaryTacticsShowLevelDefaultFocus(t *testing.T) {
 	assert.Equal(t, strategy.NoFocus, src.summary(u).Tactics.Focus)
 }
 
+// TestCompanyLevelAveragesLeaderAndCompanions (37c): the level a zone band
+// is rated against is the rounded average of everyone, the fallen included.
+func TestCompanyLevelAveragesLeaderAndCompanions(t *testing.T) {
+	mk := func(known bool, leader int, companions ...int) Summary {
+		s := Summary{CompanyKnown: known, Leader: Member{Level: leader}}
+		for _, l := range companions {
+			s.Companions = append(s.Companions, Member{Level: l})
+		}
+		return s
+	}
+	assert.Equal(t, 8, CompanyLevel(mk(true, 8)), "a leader alone")
+	assert.Equal(t, 8, CompanyLevel(mk(true, 6, 8, 10)))
+	assert.Equal(t, 11, CompanyLevel(mk(true, 6, 12, 12, 12, 12)), "10.8 rounds up")
+	assert.Equal(t, 6, CompanyLevel(mk(true, 12, 5, 5, 5, 5)), "6.4 rounds down")
+	assert.Equal(t, 12, CompanyLevel(mk(false, 12, 1, 1, 1)), "unreadable company: the leader alone")
+	assert.Equal(t, 1, CompanyLevel(mk(true, 0)), "never below 1")
+}
+
 // Phase 38c1: the summary names each member's class, tier, rank and
 // promotion state, derived from lineage, class, level and alignment.
 func TestSummaryMemberClasses(t *testing.T) {
@@ -348,4 +367,38 @@ func TestSummaryCarriesPromotedClass(t *testing.T) {
 	require.NotEmpty(t, s.Companions)
 	assert.Equal(t, "druid", s.Companions[0].Class)
 	assert.Equal(t, "", s.Companions[1].Class)
+}
+
+// TestSummaryRankNamesThePromotedClass (Phase 45): a member's rank reads as
+// its class with its lineage once promoted, else the archetype alone.
+func TestSummaryRankNamesThePromotedClass(t *testing.T) {
+	classes.SetProvider(fakeClasses{class: "priest"})
+	t.Cleanup(func() { classes.SetProvider(nil) })
+	src := fullSources()
+	src.archetype = func(int) (string, bool) { return "cleric", true }
+	src.archetypeReporting = func() bool { return true }
+	src.name = func(id string) (string, bool) {
+		return map[string]string{"cleric": "Cleric", "warrior": "Warrior"}[id], true
+	}
+	members, _ := src.members(1)
+	members[0].Class = "knight"
+	src.members = func(int) ([]company.MemberView, bool) { return members, true }
+	s := src.summary(testUser())
+	assert.Equal(t, "Priest (Cleric)", s.Leader.RankName())
+	assert.Equal(t, "Knight (Warrior)", s.Companions[0].RankName())
+	assert.Equal(t, "", s.Companions[1].RankName(), "no archetype, no class")
+	assert.Equal(t, "Warrior", Member{Archetype: "Warrior"}.RankName(), "unpromoted: the archetype alone")
+}
+
+// TestSummaryGatheringIsTheActivity (Phase 45): a gather in progress is what
+// the company is doing, ahead of a camp.
+func TestSummaryGatheringIsTheActivity(t *testing.T) {
+	src := fullSources()
+	src.gather = func(int) (gathering.Progress, bool) {
+		return gathering.Progress{Kind: gathering.Herbs, Label: "gathering herbs", Total: 20 * time.Second, Remaining: 10 * time.Second}, true
+	}
+	s := src.summary(testUser())
+	assert.True(t, s.ActivityKnown)
+	assert.Equal(t, Gathering, s.Activity.Kind)
+	assert.Equal(t, "Gathering herbs 50%, 10s left", s.Activity.Label())
 }

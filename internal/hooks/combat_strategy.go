@@ -142,6 +142,9 @@ func strategyPass() {
 				CanHex: hexReady(a, foes),
 				// Phase 38c3: a Necromancer raises a foe that has fallen.
 				CanRaise: canRaise(a, uid),
+				// Phase 39c: a Shaman calls a weather when none is up.
+				Weather:    string(b.Weather.Kind),
+				CanWeather: weatherReady(a, foes),
 			})
 			info, ok := autoSpellTargets(action, a, side, g, foes)
 			if !ok {
@@ -299,7 +302,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 			return info, false
 		}
 		add(side[action.Ally])
-	case strategy.Summon, strategy.Raise:
+	case strategy.Summon, strategy.Raise, strategy.Weather:
 		add(a) // the call has no target; the caster stands for it
 	case strategy.Row:
 		if action.Ally < 0 || action.Ally >= len(side) {
@@ -322,7 +325,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 				}
 			}
 		}
-	case strategy.Attack:
+	case strategy.Attack, strategy.Storm:
 		att := a.att
 		att.Spell = true // a spell reaches anyone
 		id, ok := enemyparty.Aim(g, att)
@@ -330,8 +333,10 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 			return info, false
 		}
 		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, id)
-		// Phase 38c3: an Archmage's Arcane Barrage reaches a second foe.
-		if action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage) {
+		// Phase 38c3: an Archmage's Arcane Barrage reaches a second foe; Phase 39c:
+		// a Stormcaller's Lightning chains to a second foe.
+		if (action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage)) ||
+			(action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0) {
 			for _, other := range foes {
 				if other != id {
 					info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, other)
@@ -460,7 +465,7 @@ func coverHeal(allies []strategy.Ally, action strategy.Action) {
 			switch action.Spell {
 			case "ward", "arcaneward":
 				allies[action.Ally].Warded = true
-			case "barkskin":
+			case "barkskin", "stoneskin":
 				allies[action.Ally].Barked = true
 			case "bless":
 				allies[action.Ally].Blessed = true

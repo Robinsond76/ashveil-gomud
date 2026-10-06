@@ -287,3 +287,14 @@ func TestStatusShowsLevelAndGearView(t *testing.T) {
 	assert.Contains(t, legacy.gearView(7, "#1"), "recorded the next time")
 	assert.Contains(t, legacy.status(7), "level ?")
 }
+
+// A companion that levels up in a fight shows its new level in `company
+// status` at once, not after the next autosave (phase 44b live finding).
+func TestStatusShowsALevelGainedSinceTheLastSave(t *testing.T) {
+	m, runtime, _ := liveModule(t)
+	assert.Contains(t, m.status(7), "level 3")
+
+	runtime.liveState[101] = geared(4)
+	assert.Contains(t, m.status(7), "level 4")
+	assert.NotContains(t, m.status(7), "level 3")
+}

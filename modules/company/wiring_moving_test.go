@@ -66,6 +66,7 @@ func TestCompanyMovesAsOneThroughGo(t *testing.T) {
 	rooms.LoadBiomeDataFiles()
 	mobs.LoadDataFiles()
 	keywords.LoadAliases()
+	freshDunmarRooms(t)
 	inn, gate := rooms.LoadRoom(2003), rooms.LoadRoom(2001)
 	require.NotNil(t, inn)
 	require.NotNil(t, gate)

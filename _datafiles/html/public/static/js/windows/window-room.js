@@ -104,6 +104,36 @@
         .rw-badge.resource.depleted { opacity: 0.55; border-style: dashed; }
         .rw-badge.resource::before { content: ''; display: inline-block; width: 0.7em; height: 0.7em; margin-right: 4px; border-radius: 50%; background: var(--rw-res-color, #aaaaaa); vertical-align: -0.05em; }
 
+        /* ---- gathering progress (Phase 45) ---- */
+        #rw-gather {
+            display: none;
+            flex-shrink: 0;
+            padding: 5px 10px 6px;
+            background: var(--t-bg-surface);
+            border-bottom: 1px solid var(--t-border);
+            font-size: 0.7em;
+            color: var(--t-text);
+        }
+        #rw-gather.shown { display: block; }
+        #rw-gather-label { display: flex; justify-content: space-between; gap: 8px; }
+        #rw-gather-left { color: var(--t-text-secondary); white-space: nowrap; }
+        #rw-gather-track {
+            height: 6px;
+            margin-top: 4px;
+            border-radius: 3px;
+            background: var(--t-border);
+            overflow: hidden;
+        }
+        #rw-gather-fill {
+            height: 100%;
+            width: 0;
+            background: var(--t-accent, #6a9);
+        }
+        #rw-gather.finished #rw-gather-track { display: none; }
+        #rw-gather-result { margin-top: 3px; color: var(--t-text-secondary); }
+        #rw-gather-result:empty { display: none; }
+        @media (prefers-reduced-motion: reduce) { #rw-gather-fill { transition: none !important; } }
+
         /* ---- exits ---- */
         #rw-exits {
             padding: 5px 10px 6px;
@@ -322,6 +352,15 @@
                 '<div id="rw-badges"></div>' +
             '</div>';
 
+        const gather = document.createElement('div');
+        gather.id = 'rw-gather';
+        gather.setAttribute('role', 'status');
+        gather.innerHTML =
+            '<div id="rw-gather-label"><span id="rw-gather-what"></span><span id="rw-gather-left"></span></div>' +
+            '<div id="rw-gather-track"><div id="rw-gather-fill"></div></div>' +
+            '<div id="rw-gather-result"></div>';
+        el.appendChild(gather);
+
         const body = document.createElement('div');
         body.id = 'rw-body';
 
@@ -490,7 +529,7 @@
                 bandEl.textContent = '\u00b7 Lv ' + band.low + '\u2013' + band.high;
                 bandEl.className = band.rating || '';
                 bandEl.title = 'Foes here are levels ' + band.low + ' to ' + band.high +
-                    (band.rating ? ' (' + band.rating + ' at your level)' : '');
+                    (band.rating ? ' (' + band.rating + ' at your company\'s level)' : '');
             } else {
                 bandEl.textContent = '';
                 bandEl.className = '';
@@ -616,12 +655,64 @@
     }
 
     // -----------------------------------------------------------------------
+    // Gathering progress (Phase 45): Room.Gather starts a bar that fills over
+    // the work's length, then shows what the company brought back.
+    // -----------------------------------------------------------------------
+    let gatherTimer = null;
+    let gatherHide  = null;
+
+    function gatherCapitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+    function updateGather(g) {
+        if (!g) { return; }
+        const box = document.getElementById('rw-gather');
+        if (!box) { return; }
+        const what   = document.getElementById('rw-gather-what');
+        const left   = document.getElementById('rw-gather-left');
+        const fill   = document.getElementById('rw-gather-fill');
+        const result = document.getElementById('rw-gather-result');
+        clearInterval(gatherTimer);
+        clearTimeout(gatherHide);
+
+        if (g.phase === 'start') {
+            const total = Math.max(1, g.seconds || 1);
+            const ends  = Date.now() + total * 1000;
+            box.className = 'shown';
+            what.textContent = gatherCapitalize(g.label || 'working') + '\u2026';
+            result.textContent = '';
+            fill.style.transition = 'none';
+            fill.style.width = '0%';
+            void fill.offsetWidth;
+            fill.style.transition = 'width ' + total + 's linear';
+            fill.style.width = '100%';
+            const tick = function() {
+                const secs = Math.max(0, Math.ceil((ends - Date.now()) / 1000));
+                left.textContent = secs + 's left';
+            };
+            tick();
+            gatherTimer = setInterval(tick, 500);
+            return;
+        }
+
+        // done or stopped
+        box.className = 'shown finished';
+        what.textContent = g.phase === 'done' ? gatherCapitalize(g.label || 'work') + ' finished' : 'Work stopped';
+        left.textContent = '';
+        fill.style.transition = 'none';
+        fill.style.width = g.phase === 'done' ? '100%' : '0%';
+        result.textContent = (g.lines || []).join(' ');
+        gatherHide = setTimeout(function() { box.className = ''; }, 15000);
+    }
+
+    // -----------------------------------------------------------------------
     // Registration
     // -----------------------------------------------------------------------
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Room.Info'],
-        onGMCP() { update(); },
+        gmcpHandlers: ['Room.Info', 'Room.Gather'],
+        onGMCP(ns, body) {
+            if (ns === 'Room.Gather') { updateGather(body); } else { update(); }
+        },
     });
 
 })();

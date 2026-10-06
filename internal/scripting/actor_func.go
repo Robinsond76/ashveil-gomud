@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -762,6 +763,10 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 	}
 	if r := target.characterRecord.Aura.SpellResolve; r > 0 {
 		factor *= 1 - float64(min(r, 100))/100
+	}
+	// Phase 39c: a fogbound caster's spells hit weaker.
+	if len(a.characterRecord.GetBuffs(status.Fogbound)) > 0 {
+		factor *= float64(100-stormcraft.FogSpellPct) / 100
 	}
 	return factor
 }

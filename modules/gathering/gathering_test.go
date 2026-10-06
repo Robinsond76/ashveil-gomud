@@ -424,13 +424,14 @@ func TestFirewoodYieldAndWeather(t *testing.T) {
 	w.weapons = []items.Item{{ItemId: 20002}} // an axe
 	w.fieldSmith = true
 	w.start(gathering.Firewood)
-	w.finishAfter(gathering.Firewood)
+	got := w.finishAfter(gathering.Firewood)
 	assert.Equal(t, 5, w.packCount(idFirewood), "an axe doubles it and a Field Smith adds one")
+	assert.Contains(t, got, "5 firewood bundles", "a haul of several reads as a plural (phase 44b live finding)")
 
 	w = newWorld(t, "firewood")
 	w.weather = "rain"
 	w.start(gathering.Firewood)
-	got := w.finishAfter(gathering.Firewood)
+	got = w.finishAfter(gathering.Firewood)
 	assert.Equal(t, 1, w.packCount(idFirewood))
 	assert.Equal(t, 1, w.packCount(idDamp), "heavy rain: half come back damp")
 	assert.Contains(t, got, "damp")
@@ -531,6 +532,8 @@ func TestTypedCommandsCancelTheWork(t *testing.T) {
 		cancel bool
 	}{
 		{"look", false}, {"l", false}, {"conditions", false}, {"gather herbs", false}, {"fish", false}, {"hunt", false},
+		// Phase 45: the status sheet shows the progress, so reading it keeps the work going.
+		{"status", false}, {"score", false}, {"STAT", false}, {"status train", true},
 		{"say hello", true}, {"go north", true}, {"attack rat", true}, {"inventory", true}, {"camp", true}, {"n", true},
 	}
 	for _, c := range cases {
@@ -781,7 +784,7 @@ func TestTheCommandsStartTheWork(t *testing.T) {
 	for verb, kind := range map[string]gathering.Kind{"herbs": gathering.Herbs, "wood": gathering.Firewood, "fish": gathering.Fishing, "game": gathering.Game} {
 		w.m.cancel(7, "")
 		got := w.heard(func() { _, _ = w.m.gatherCommand(verb, w.user, w.room, 0) })
-		assert.Contains(t, got, "Any command other than look or conditions stops the work", verb)
+		assert.Contains(t, got, "Any command other than look, conditions or status stops the work", verb)
 		cur, busy := w.m.Active(7)
 		assert.True(t, busy, verb)
 		assert.Equal(t, kind, cur, verb)

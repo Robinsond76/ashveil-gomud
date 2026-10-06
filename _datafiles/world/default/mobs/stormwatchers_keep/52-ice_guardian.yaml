@@ -4,6 +4,8 @@ zone: Stormwatchers Keep
 itemdropchance: 4
 activitylevel: 30
 maxwander: 0
+# Phase 43b: weapon poison finds nothing to take hold of.
+poison: immune
 character:
   name: ice guardian
   description: A guardian of the ice, this creature is a formidable foe.

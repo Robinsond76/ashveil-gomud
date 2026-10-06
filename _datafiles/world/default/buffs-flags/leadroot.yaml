@@ -1,0 +1,5 @@
+flag: leadroot
+name: "Leadroot"
+description: "Physical blows the holder deals do 15% less damage."
+locked: true
+harmful: true

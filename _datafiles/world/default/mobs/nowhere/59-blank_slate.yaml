@@ -4,6 +4,8 @@ itemdropchance: 0
 hostile: false
 maxwander: 0
 activitylevel: 10
+# Phase 43b: weapon poison finds nothing to take hold of.
+poison: immune
 character:
   name: blank slate
   description: 'A blank slate.'

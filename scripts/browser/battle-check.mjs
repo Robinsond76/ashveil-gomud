@@ -5,7 +5,9 @@
 // Phase 40g2 adds allied formations, the pace the feed sends, the company's
 // nerve, pixel-font role letters and the unseen presence's cell.
 //
-//   NODE_PATH=$(npm root -g) node scripts/browser/battle-check.mjs [screenshot.png]
+//   NODE_PATH=$(npm root -g) node scripts/browser/battle-check.mjs [screenshot.png [watching.png]]
+// Phase 45 adds watching an allied company full size and dropping blows
+// with no figure to land on.
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +16,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 const here = path.dirname(fileURLToPath(import.meta.url));
 const shot = process.argv[2];
+const watchShot = process.argv[3];
 
 let failures = 0;
 function check(ok, what) {
@@ -283,6 +286,7 @@ const ally = (leader, name, members) => ({ id: 'a:' + leader, name, members: mem
 const allied = {
   ...battle,
   nerve: 'faltering',
+  weather: { kind: 'fog', name: 'fog', rounds: 2, effect: 'foe ranged attacks and spells weaker' },
   allies: [
     ally(8, 'Brannoc', [['leader', 'Brannoc', 'warrior', 0, 1, 'unhurt'], ['companion:2', 'Cael', 'cleric', 1, 2, 'wounded'], ['companion:3', 'Dun', 'ranger', 1, 0, 'unhurt']]),
     ally(9, 'Maren', [['leader', 'Maren', 'wizard', 0, 0, 'scratched'], ['companion:1', 'Pell', 'rogue', 2, 1, 'near death']]),
@@ -303,6 +307,8 @@ check(!s.units.some(u => u.id.startsWith('a:10')), 'a company past the second is
 const banners = await page.evaluate(() => document.querySelector('#battle-screen .bs-banners').textContent);
 check(banners.includes('company faltering') && banners.includes('allies: Brannoc, Maren, Tove'), 'the header names the allies and a faltering company: ' + banners);
 check(s.nerve === 'faltering', 'the nerve of the company is known to the screen');
+// Phase 39c: a Shaman's weather is named in the header with its rounds and effect.
+check(banners.includes('fog (2 rounds: foe ranged attacks and spells weaker)') && s.weather === 'fog', 'the header names the battle\'s weather: ' + banners);
 // An ally's own blows and falls play, at its own place, with no lunge across the field.
 await events({ fight: 2, round: 10, pace: 'slow', events: [{ seq: 200, kind: 'attack', src: 'a:8:leader', tgt: 'm:1', outcome: 'hit', damage: 5, weapon: 'slashing' }] });
 s = await state();
@@ -324,6 +330,46 @@ check(s.allies.list.length === 1 && s.allies.more === 0, 'one allied company is 
 check(s.pace === 'slow', 'the pace is the one the server sent: ' + s.pace);
 await events({ fight: 2, round: 12, pace: 'fast', events: [{ seq: 203, kind: 'attack', src: 'leader', tgt: 'm:2', outcome: 'hit', damage: 2 }] });
 check((await state()).pace === 'fast', 'a new pace replaces it');
+// --- Phase 45: watch an allied company full size; blows on nothing are dropped ---
+await gmcp('Company.Battle', allied);
+const canvasPoint = async (at, lift) => {
+  const b = await page.locator('#battle-screen canvas').boundingBox();
+  return { x: b.x + at.x * b.width / 320, y: b.y + (at.y - lift) * b.height / 180 };
+};
+s = await state();
+const maren = unitOf(s, 'a:9:leader');
+const mp = await canvasPoint(maren.at, 12);
+await page.mouse.click(mp.x, mp.y);
+s = await state();
+check(s.watching === 1, 'tapping an allied formation watches it: ' + s.watching);
+const watched = unitOf(s, 'a:9:leader');
+check(watched.pose.scale === 1 && watched.at.x < 160 && watched.at.y >= 120, 'the watched ally stands in the company\'s place at full size');
+check(unitOf(s, 'leader').pose.scale === 0.5 && unitOf(s, 'leader').at.y < 90, 'the player\'s own company stands small in the ally\'s place');
+check(unitOf(s, 'a:8:leader').pose.scale === 0.5, 'the other allied company stays small');
+const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption') ? document.querySelector('#battle-screen .bs-caption').textContent : '');
+check(!cap || cap.includes('Watching Maren'), 'the caption says whom you are watching: ' + cap);
+// Mid-battle inputs are unchanged: retreat and focus still work while watching.
+if (watchShot) { await page.waitForTimeout(300); await page.locator('#battle-screen').screenshot({ path: watchShot }); }
+// Tapping the shrunken company returns to the usual view.
+const own = unitOf(await state(), 'leader');
+const op = await canvasPoint(own.at, 12);
+await page.mouse.click(op.x, op.y);
+check((await state()).watching === null, 'tapping the small company returns to the usual view');
+await page.evaluate(() => window.BattleScreen.watch(0));
+check((await state()).watching === 0, 'watch(index) selects a company');
+await gmcp('Company.Battle', { ...allied, allies: [] });
+check((await state()).watching === null, 'the view returns when the watched company leaves the fight');
+await gmcp('Company.Battle', allied);
+// An ally's blow on a foe the player is not fighting, or by a company that is not drawn, has no figure: dropped.
+const before = (await state()).lastBlow;
+await events({ fight: 2, round: 14, events: [
+  { seq: 300, kind: 'attack', src: 'a:8:leader', tgt: 'm:99', outcome: 'hit', damage: 7, weapon: 'slashing' },
+  { seq: 301, kind: 'attack', src: 'a:10:leader', tgt: 'm:1', outcome: 'hit', damage: 8, weapon: 'slashing' },
+] });
+await page.waitForTimeout(300);
+s = await state();
+check(s.lastBlow === before && !s.digits.includes('7') && !s.digits.includes('8'), 'blows with no figure to land on are dropped: ' + s.lastBlow);
+check(unitOf(s, 'a:8:leader').pose.dx === 0, 'and the ally does not swing at nothing');
 // Allies on a phone are pennants.
 await page.setViewportSize({ width: 360, height: 700 });
 await page.evaluate(() => window.dispatchEvent(new Event('resize')));

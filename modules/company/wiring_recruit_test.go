@@ -63,6 +63,7 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	rooms.LoadBiomeDataFiles()
 	mobs.LoadDataFiles()
 	keywords.LoadAliases()
+	freshDunmarRooms(t)
 	inn := rooms.LoadRoom(2003)
 	require.NotNil(t, inn)
 

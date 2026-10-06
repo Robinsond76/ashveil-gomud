@@ -1,0 +1,5 @@
+flag: windchilled
+name: "Windchilled"
+description: "The holder's spell chants and sling shots take a round longer."
+locked: true
+harmful: true
