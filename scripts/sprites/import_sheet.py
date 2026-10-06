@@ -3,10 +3,11 @@
 
     python3 scripts/sprites/import_sheet.py SHEET UNIT_ID [--density 4]
 
-SHEET is a grid of figures on a plain light background: one row per
-direction (down, up, side facing right) and the same number of frames in
-each row.  The figures are cut out, scaled to one consistent size, given
-their feet on the spec's baseline and packed into `idle.png` and
+SHEET is a grid of figures on a transparent (or plain light) background:
+one row per direction (down, up, side facing right), each row 2 idle then
+6 walk frames (docs/art/00-standards.md, section 4).  The figures are
+cut out, scaled to one consistent size, given their feet on the spec's
+baseline and packed into `idle.png` and
 `walk.png` under `scripts/sprites/imported/map/units/UNIT_ID/`.  Their
 manifest entries go to `scripts/sprites/imported/imported.json`, which
 `generate.py` copies over its own output.
@@ -122,15 +123,24 @@ def main(argv=None):
     ap.add_argument("sheet")
     ap.add_argument("unit")
     ap.add_argument("--density", type=int, default=4)
-    ap.add_argument("--cols", type=int, default=6, help="frames per row in the source")
-    ap.add_argument("--idle", default="0,0", help="source columns for the 2 idle frames")
+    ap.add_argument("--cols", type=int, default=8, help="frames per row in the source")
+    ap.add_argument("--idle", default="0,1", help="source columns for the 2 idle frames")
+    ap.add_argument("--walk", default="2,3,4,5,6,7", help="source columns for the walk frames")
+    ap.add_argument("--source-figure", type=int, default=224,
+                    help="height in source pixels of a standing figure without raised weapons "
+                         "(the A0 lineup's 224); 0 fits each sheet's tallest frame instead")
     args = ap.parse_args(argv)
 
     d = args.density
     frame, feet = BASE_FRAME * d, BASE_FEET * d
     figs = cut_figures(args.sheet, len(DIRECTIONS), args.cols)
+    # One fixed scale for every sheet keeps bodies the same size across
+    # classes; fitting each sheet's tallest frame would shrink a figure
+    # whose halberd, spear or crest rises above its head.
     tallest = max(f.height for row in figs for f, _ in row)
-    scale = BASE_FIGURE * d / tallest
+    scale = BASE_FIGURE * d / (args.source_figure or tallest)
+    if tallest * scale > feet:
+        print(f"warning: {args.unit}: tallest frame is {round(tallest * scale)} px, above the frame top")
 
     def sheet(columns):
         img = Image.new("RGBA", (frame * len(columns), frame * len(DIRECTIONS)), (0, 0, 0, 0))
@@ -147,7 +157,7 @@ def main(argv=None):
             "source": "imported"}
     entries = {}
     for name, columns, ms in (("idle", [int(c) for c in args.idle.split(",")], 500),
-                              ("walk", list(range(args.cols)), 120)):
+                              ("walk", [int(c) for c in args.walk.split(",")], 120)):
         img = sheet(columns)
         rel = f"{rel_dir}/{name}.png"
         img.save(os.path.join(IMPORTED, rel), optimize=True)
