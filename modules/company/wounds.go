@@ -167,11 +167,31 @@ func companyFighting(user *users.UserRecord, members []woundMember) bool {
 		return true
 	}
 	for _, w := range members {
-		if w.char.Aggro != nil {
+		if hasLiveFoe(w.char) {
 			return true
 		}
 	}
 	return false
+}
+
+// hasLiveFoe reports whether char's aggro still has someone to act on. An
+// aggro aimed at a foe who has fallen or left the room (an archer still
+// taking aim when the last bandit dies) is stale until the next round's
+// combat pass clears it, as that pass does, and is not a fight.
+func hasLiveFoe(char *characters.Character) bool {
+	aggro := char.Aggro
+	if aggro == nil {
+		return false
+	}
+	if aggro.MobInstanceId > 0 {
+		foe := mobs.GetInstance(aggro.MobInstanceId)
+		return foe != nil && foe.Character.Health >= 1 && foe.Character.RoomId == char.RoomId
+	}
+	if aggro.UserId > 0 {
+		foe := users.GetByUserId(aggro.UserId)
+		return foe != nil && foe.Character != nil && foe.Character.Health >= 1 && foe.Character.RoomId == char.RoomId
+	}
+	return true
 }
 
 func (m *CompanyModule) healCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {

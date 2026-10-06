@@ -58,7 +58,7 @@ func (m *CompanyModule) onBattleEnded(e events.Event) events.ListenerReturn {
 // allies (33d) fight on after the player's own battle has ended.
 func companionsFighting(members []woundMember) bool {
 	for _, w := range members {
-		if !w.leader() && w.char.Aggro != nil {
+		if !w.leader() && hasLiveFoe(w.char) {
 			return true
 		}
 	}

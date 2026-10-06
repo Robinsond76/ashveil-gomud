@@ -165,6 +165,29 @@ func TestBattleEndPatchWaitsWhileTheCompanyFights(t *testing.T) {
 	assert.Greater(t, tamsin.Character.Health, 10, "patched once the fighting stops")
 }
 
+// Merge review regression (the battle-end patch flake): an archer still
+// taking aim at a bandit who fell in the battle's last round holds a stale
+// aggro until the next round's combat pass; it does not stop the patch,
+// from the battle's end or from `company patch`.
+func TestPatchIgnoresAimAtAFallenFoe(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	oswin := b.companion(2)
+	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
+	tamsin := b.companion(1)
+	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	fallen := b.livingBandits()[0]
+	fallen.Character.Health = 0
+	ysolde := b.companion(4)
+	ysolde.Character.Aggro = &characters.Aggro{MobInstanceId: fallen.InstanceId, RoundsWaiting: 1}
+	events.AddToQueue(events.BattleEnded{UserId: b.aria.UserId, Outcome: "victory"})
+	events.ProcessEvents()
+	assert.GreaterOrEqual(t, tamsin.Character.Health, 80, "patched though Ysolde still aims at the fallen bandit")
+
+	tamsin.Character.Health = 10
+	assert.Contains(t, b.cmd("company", "patch"), "Your company patches itself up.")
+}
+
 // Phase 35b review: a player's patch heals only their own company; an
 // allied player's (33d) hurt companion keeps its health, and its healer
 // its mana.
