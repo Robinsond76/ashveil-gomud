@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -50,6 +51,16 @@ type Character struct {
 	// Runtime inputs copied from authored mob templates or the companion record.
 	HPPerLevel  float64 `yaml:"-"`
 	HPArchetype string  `yaml:"-"`
+	// Phase 38b: a companion's class and talents, from its company record
+	// (a player's come from the archetype registry), and the derived effects
+	// cached against them.
+	HPClass   string   `yaml:"-"`
+	HPTalents []string `yaml:"-"`
+	fx        classes.Effects
+	fxClass   string
+	fxLevel   int
+	fxTalents []string
+	fxValid   bool
 	// Phase 35a2: an enemy template's Attack and Evasion offsets (±5).
 	AttackOffset  int `yaml:"-"`
 	EvasionOffset int `yaml:"-"`
@@ -645,6 +656,9 @@ func (c *Character) GetDefense() int {
 	if c.HasBuffFlag("armor-broken") {
 		reduction /= 2
 	}
+	// Phase 38b: a class's own protection (a Druid's Barkskin, a summon's
+	// hide) stacks on the worn armor.
+	reduction += c.ClassEffects().Int(classes.Armor)
 
 	if reduction > 100 {
 		reduction = 100
@@ -1707,7 +1721,10 @@ func (c *Character) RecalculateStats() {
 	// This relies on the above stats so has to be calculated afterwards
 	cfgProg := configs.GetProgressionConfig()
 	c.HealthMax.NoCap = true
+	classFx := c.ClassEffects()
 	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel(), c.HPStart()), c.StatMod(string(statmods.HealthMax)))
+	// Phase 38b: a talent's percent more health, on the worked-out total.
+	c.HealthMax.Mods = classPct(c.HealthMax.Mods, classFx.Int(classes.HealthPct))
 
 	c.ManaMax.NoCap = true
 	manaBase, manaPerLevel := c.ManaRates()
@@ -1715,6 +1732,8 @@ func (c *Character) RecalculateStats() {
 		c.StatMod(string(statmods.ManaMax)) +
 		int(float64(c.Level)*manaPerLevel) +
 		int(float64(c.Stats.Mysticism.ValueAdj)*float64(cfgProg.ManaPerMysticism))
+	// Phase 38b: a talent's percent more mana, on the worked-out total.
+	c.ManaMax.Mods = classPct(c.ManaMax.Mods, classFx.Int(classes.ManaPct))
 
 	// Set max action points
 	c.ActionPointsMax.Mods = 200 // hard coded for now

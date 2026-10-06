@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
@@ -68,14 +69,18 @@ func (c *Character) skillPenalty() int {
 // template's offset, less the untrained-armor loss.
 func (c *Character) AttackSkill() int {
 	rate, _ := c.skillRates()
-	return levelRating(c.Level, rate) + c.AttackOffset - c.skillPenalty()
+	return levelRating(c.Level, rate) + c.AttackOffset - c.skillPenalty() + c.ClassEffects().Int(classes.Attack)
 }
 
 // Evasion is the character's Evasion: floor(level × rate) plus an enemy
 // template's offset, less the untrained-armor loss.
 func (c *Character) Evasion() int {
 	_, rate := c.skillRates()
-	return levelRating(c.Level, rate) + c.EvasionOffset - c.skillPenalty()
+	bonus := c.ClassEffects().Int(classes.Evasion)
+	if c.Aggro != nil && c.Aggro.Type == SpellCast {
+		bonus += c.ClassEffects().Int(classes.ChantEvade) // Phase 38b: Sanctuary
+	}
+	return levelRating(c.Level, rate) + c.EvasionOffset - c.skillPenalty() + bonus
 }
 
 func levelRating(level int, rate float64) int {

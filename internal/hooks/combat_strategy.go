@@ -195,7 +195,8 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 			arch, _ = company.CompanionArchetype(u.UserId, id)
 		}
 		known := map[string]bool{}
-		for _, id := range archetypes.CompanionSpells(arch, m.Character.Level) {
+		class, _ := m.Character.ClassState()
+		for _, id := range archetypes.CompanionKnownSpells(arch, class, m.Character.Level) {
 			known[id] = true
 		}
 		out = append(out, actor{
