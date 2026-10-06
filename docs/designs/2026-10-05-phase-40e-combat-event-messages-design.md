@@ -60,7 +60,7 @@ allied party member in the same fight, or — for a companion's events —
 the companion's leader.
 
 ```json
-{"fight": 12, "round": 341, "events": [
+{"fight": 12, "round": 341, "fight_round": 3, "events": [
   {"seq": 5501, "kind": "attack", "src": "me", "tgt": "m:88",
    "outcome": "hit", "damage": 6, "crit": true, "weapon": "slashing",
    "defenses": [], "status": "bleeding"},

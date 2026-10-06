@@ -54,6 +54,84 @@ camp is made and refreshed at `camp fire` and `camp rest`. Not folded in: the
 40a2 follow-ups (gather progress as a web panel, a redraw on regrowth) are
 about gathering and the map, not camp gear; both stay open (the map redraw
 belongs with 40b).
+**Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
+drops a state change (a collapse applies every unfired op in order) and
+catches up after a round of backlog, that reduced motion drops lunges,
+travel, tints and shake, and that an unseen foe stays unseen. Accepted and
+fixed: (1) **the title showed the server's round counter** ("round 48213"),
+since the feed's `round` is global; `Company.Battle.Event` now also sends
+`fight_round` (from 1, from the fight's start round or, for a fight-end, its
+summary) and the screen shows that (Go wiring test and gmcp unit test
+assert it). (2) **The outcome and the victory pose came before the last
+blow** while animation was behind: the fight's end now waits for every unit,
+and the outcome (with its reason, read while the last snapshot stands) shows
+when it plays; the empty snapshot that follows no longer shows "The battle is
+over" first or closes the screen early. A fight-start in the same batch as
+deaths no longer clears their hold. (3) **Spells were named by id** ("Ysolde's
+mm strikes"): the feed carries `spell_name` and the last-blow line and chant
+mark use it; an unseen caster's spell is neither named in the line nor
+coloured in its glow. (4) The help page no longer promises the picture never
+falls behind (it skips ahead after a round) and says the outcome follows the
+last blow. Tests: Node planner tests for the end-wait and hidden spells,
+browser checks for the outcome order, spell names and fight rounds (the
+harness now sends a server-sized `round`). Rejected: none. UI check: at each
+setting a player can follow who did what (last-blow line, digits, icons) and
+why the fight ended; `off` keeps the 40f picture. **Follow-ups:** 40g2
+allied formations (an allied relay in the 40e feed plus a third formation on
+the canvas; not small, so not folded in); a `pace` field on `Company.Battle`
+to replace pace inference; morale not drawn; role letters blurry; a `?`
+presence can overlap a visible foe. Gates: one full race run failed once in
+`modules/company` (its output was not kept); three package reruns and a
+second full race run passed, so it is likely one of the known company
+flakes, unidentified.
+
+**Phase 40g built: battle animation and effects (2026-10-06, PR #40):**
+the battle screen now plays each 40e event. A pure planner,
+`static/js/battle-timeline.js`, turns an event batch into steps (lunge,
+strike, shoot, chant, hurt, block, parry, dodge, windup, guard, tackle,
+yield, flee, fall, victory) with hit effects, projectiles, glows, digits and
+feedback icons, and a `Scheduler` queues them per unit (units overlap, one
+unit's actions do not), fires state changes when their step starts or ends,
+and when more than a round of work is queued collapses the older steps to
+their end state. `window-battle.js` plays them (S4 sheets at
+`battle/units/<key>/<pose>.png` and `battle/effects/...` when the manifest
+lists them; otherwise the idle figure nudges and effects are drawn in code).
+New on screen: the round in the title, a "last blow" line ("Wren hits the
+second wolf (6)"), a named outcome reason ("Victory: no foe is left
+standing"), a zone backdrop lookup (`battle/backgrounds/zone-<slug>.png` by
+`Room.Info.area`), and an **Animation** menu (`full`, `reduced`, `off`;
+`ashveil-battle-animations` in `localStorage`; default reduced when the
+system asks for reduced motion). `off` is the 40f path unchanged. Tests:
+`scripts/js/battle-timeline.test.mjs` (Node, new `make js-test`, run by
+`make test` and CI) and the animated section of
+`scripts/browser/battle-check.mjs`; screenshot `screens/40g-battle.png`.
+`help battlescreen` gained the Animation section. Decisions (delegated):
+(1) **Pace is inferred, not sent:** the feed carries no pace, so the client
+reads it from how batches arrive (whole-round batches mean pacing off, else
+the gap between batches: under 0.9 s fast, over 2.5 s slow); the budgets are
+the design's 1.2 s action and 0.6 s reaction, half for fast, 1.5x for slow,
+0.3 s for off. A `pace` field on `Company.Battle` would make this exact
+(follow-up, small). (2) **S4 art is not drawn** (40s4 is not on master), so
+every pose uses its fallback and effects are code-drawn; art lands with no
+code change. (3) **Allied reserve formations stay deferred:** they still
+need an allied relay in the 40e feed (a Go change to combat events, out of
+scope for a client polish phase). (4) **Crit digits are large, not
+"12!"** (the narration style has no exclamation marks) in animated modes;
+`off` keeps the 40f text. (5) A fall or exit waits for its animation: a
+`Company.Battle` snapshot arriving mid-fall does not lay the unit down or
+drop it early (`holding`). (6) The outcome hold waits up to 6 s more for the
+last animations. (7) Sound stays out of scope, per the roadmap. (8) **Review follow-ups folded in:** bars, role
+letters and statuses now draw in a second pass over every figure, so a large
+unit in front no longer hides the health of those behind it; a hit tints the
+figure's own shape for art units (a box for code figures). The flaky
+`TestSpellEventsThroughTheRealRound` ("mm never went off") is hardened:
+Aria did not own Minor Heal or Magic Missile, so each try rolled a success
+chance beside the bandits' interrupts and 60 misses in a row could happen;
+she now learns both (an owned spell never fizzles in battle, 35b) and has
+100 tries. Probable cause, not reproduced alone (25 and 15 clean runs
+before and after). Still open: morale (nerve) is not drawn; role letters
+are still blurry at the canvas font size; a `?` presence can overlap a
+visible foe.
 
 **Phase 44 complete: live smoke playtest (2026-10-06):** `make smoke` builds
 the server, copies the shipped world and plays a new Warrior over telnet

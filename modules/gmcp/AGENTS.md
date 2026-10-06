@@ -73,4 +73,6 @@
   statuses are also dropped). Never add enemy health, unshown numbers, or
   secret statuses. Sent only to the web client, or a client that listed the
   module in `Core.Supports.Set`. The web client does not store it:
-  `Client.onBattleEvents`.
+  `Client.onBattleEvents`. `round` is the server's round counter;
+  `fight_round` (40g review) counts the fight's own rounds from 1, for
+  display, and `spell_name` is a spell's display name beside its id.
