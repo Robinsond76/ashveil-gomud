@@ -94,7 +94,7 @@ func Check(lineageID, current, target string, level, alignment int) (Class, erro
 	// class first and may take the elite one in the same visit.
 	if normalize(current) == "" && c.Tier == TierElite && c.Lineage == normalize(lineageID) {
 		if parent, ok := Get(c.Parent); ok {
-			return Class{}, fmt.Errorf("%w: a %s continues from a %s; take the %s first (class promote %s), then the %s in the same visit", ErrNotAvailable, c.Name, parent.Name, parent.Name, parent.ID, c.Name)
+			return Class{}, fmt.Errorf("%w: a %s continues from a %s; take the %s first, then the %s in the same visit", ErrNotAvailable, c.Name, parent.Name, parent.Name, c.Name)
 		}
 	}
 	if normalize(current) != "" {
@@ -188,6 +188,7 @@ func ReadinessNote(lineageID, current string, level, alignment int, who, name st
 			if who != "" {
 				cmd += " " + who
 			}
+			cmd += " " + o.Class.ID
 			where := "Visit a camp or town and type " + cmd + "."
 			return fmt.Sprintf("Elite promotion ready: %s -> %s. %s", cur.Name, o.Class.Name, where)
 		case o.Waiting:

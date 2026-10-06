@@ -667,6 +667,10 @@ func refusal(s classSubject, want classes.Class, err error) string {
 	switch {
 	case errors.Is(err, classes.ErrFinalRoute):
 		return fmt.Sprintf("%s %s on a final route (%s); there is nothing further to promote to.", s.label(), s.are(), className(s.class))
+	case errors.Is(err, classes.ErrNotAvailable) && s.class == "" && want.Tier == classes.TierElite:
+		// Phase 38c1 review: name the subject's own command for the
+		// advanced step (a companion's carries its selector).
+		return fmt.Sprintf("%s can't become a %s yet: %v. Type class promote%s %s.", s.label(), want.Name, err, selectorSuffix(s), want.Parent)
 	case errors.Is(err, classes.ErrNotAvailable):
 		return fmt.Sprintf("%s can't become a %s: %v. Routes are final; see class paths.", s.label(), want.Name, err)
 	}
@@ -704,6 +708,8 @@ func (m *CompanyModule) pickTalent(user *users.UserRecord, room *rooms.Room, res
 				return fmt.Sprintf("%s %s no talent to choose now. The next comes at level %d.", s.label(), strings.Replace(s.are(), "are", "have", 1), next)
 			}
 			return fmt.Sprintf("%s %s chosen every talent there is.", s.label(), strings.Replace(s.are(), "are", "have", 1))
+		case errors.Is(err, classes.ErrEliteTalent):
+			return fmt.Sprintf("%s is an elite talent: it opens to an elite class from level 35. Type talent list to see the talents open now.", t.Name)
 		case errors.Is(err, classes.ErrTalentMaxed):
 			return fmt.Sprintf("%s already has %s as many times as it can be taken.", s.label(), t.Name)
 		}

@@ -388,9 +388,9 @@ func TestPromotionStateAndReadinessNote(t *testing.T) {
 	assert.Equal(t, "", PromotionState("warrior", "paladin", 60, 90), "an elite has nothing further")
 	assert.Equal(t, "", PromotionState("rogue", "scout", 30, 90), "a planned elite is not offered")
 
-	assert.Equal(t, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote.",
+	assert.Equal(t, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin.",
 		ReadinessNote("warrior", "knight", 30, 41, "", ""))
-	assert.Equal(t, "Elite promotion ready: Mercenary -> Warlord. Visit a camp or town and type class promote #2.",
+	assert.Equal(t, "Elite promotion ready: Mercenary -> Warlord. Visit a camp or town and type class promote #2 warlord.",
 		ReadinessNote("warrior", "mercenary", 30, 0, "#2", "Tamsin"))
 	assert.Equal(t, "Paladin needs alignment +30 (yours: +22). You keep your Knight ranks and can promote once it rises.",
 		ReadinessNote("warrior", "knight", 30, 22, "", ""))

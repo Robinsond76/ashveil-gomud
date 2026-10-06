@@ -83,7 +83,14 @@ func TestGrantXPLevelReport(t *testing.T) {
 			assert.Equal(t, [2]int{1, target}, [2]int{ev.AttackBefore, ev.AttackAfter})
 			assert.Equal(t, [2]int{1, target}, [2]int{ev.EvasionBefore, ev.EvasionAfter})
 			assert.Contains(t, messages, fmt.Sprintf("Attack 1 -> %d   Evasion 1 -> %d", target, target))
-			assert.Contains(t, messages, "(coming)")
+			// 38c1 shipped the level 5 talent, so only the level 2 report
+			// still names an unshipped milestone next.
+			assert.Contains(t, messages, " Next: ")
+			if target == 2 {
+				assert.Contains(t, messages, "(coming)")
+			} else {
+				assert.NotContains(t, messages, "level 5: talent (coming)")
+			}
 			// Phase 35b review: the report renders each scaling spell's growth.
 			messages = ""
 			ev.PowerLines = []string{"Magic Missile 8-13 -> 9-14", "Shower of Sparks 5-8"}
@@ -92,10 +99,10 @@ func TestGrantXPLevelReport(t *testing.T) {
 			assert.Contains(t, messages, " Magic Missile 8-13 -> 9-14\n Shower of Sparks 5-8")
 			// Phase 38c1: the class notes render in the report.
 			messages = ""
-			ev.ClassNotes = []string{"Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote."}
+			ev.ClassNotes = []string{"Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin."}
 			SendLevelNotifications(ev)
 			events.ProcessEvents()
-			assert.Contains(t, messages, " Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote.\n")
+			assert.Contains(t, messages, " Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin.\n")
 			assert.Contains(t, messages, "stat train")
 			assert.NotContains(t, messages, "stat step")
 			assert.Equal(t, round, util.GetRoundCount())
@@ -176,7 +183,7 @@ func TestGrantXPLevelReportNamesElitePromotionAndRanks(t *testing.T) {
 		alignment int8
 		want      string
 	}{
-		{"ready", "knight", 29, 41, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote."},
+		{"ready", "knight", 29, 41, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin."},
 		{"waiting", "knight", 29, 22, "Paladin needs alignment +30 (yours: +22). You keep your Knight ranks and can promote once it rises."},
 		{"warlord rank", "warlord", 34, 0, "Rank 35 Warlord: Battle Cry."},
 	} {

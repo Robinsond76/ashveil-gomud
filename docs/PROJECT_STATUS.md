@@ -57,6 +57,36 @@ Verification: `make generate`, `make validate`, `go test -race ./...`,
 battle-canvas hover timeout is unrelated). Independent review: Opus review
 thread.
 
+**Phase 38c1 reviewed (2026-10-06, PR #46, Opus review thread):** checked
+the Warlord ranks, elite talent gating, catch-up ranks, runtime-only state
+and the cleric elites (Hierarch, Elder Druid, Demonologist: promotion,
+catch-up, Font of Grace through the command, help). Accepted and fixed:
+(1) **the Elder Druid never cast Grove**: it waited for three allies below the
+healing threshold, which a fight almost never shows, so it played as a Druid.
+An idle Elder Druid now sows a Grove once two allies are below 85% without
+Rejuvenation (`strategy.GroveBelow`), a hurt company needs two (`GroveHurt`),
+and Grove chants 1 round (from 2) and blooms, healing half its share at once
+(`TestElderDruidSowsAGroveEarly`; help and the rank text say so). Boss
+mirror, 40 fights a cell: L35 Elder Druid 37% / 79% HP lost vs Druid 10% /
+96%; L45 55% / 66% vs 40% / 83% (+27 and +15 wins). (2) **The level-up "promotion
+ready" line named a command that failed** (`class promote` with no class);
+it now names the class (`class promote #2 warlord`). (3) **The base-to-elite
+refusal sent companions to the player's command**; the error no longer
+carries a command and the refusal adds the subject's own (`class promote #1
+mercenary`). (4) **`status` never showed the class**: the Character panel
+gains Class (name and tier) and Promote (ready) rows (`TestStatusShowsTheClass`).
+(5) A raw "that talent is for elite characters" error now reads like the
+other refusals. (6) `TestGrantXPLevelReport/4` failed since 38c1 shipped the
+level 5 talent (no "(coming)" left at level 4); the test now expects that, so
+the build's green-suite claim above was wrong for that one test.
+Rejected: the Warlord's Command counting members present rather than fallen
+(a companion leaves a battle only by falling or with the whole company's
+retreat, so a shrinking count is a fall); the always-"ready" promotion
+preview (only reached after the check passes).
+Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
+in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
+a "Druid tuning" pass belongs with 39i or a small phase.
+
 **Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
 drops a state change (a collapse applies every unfired op in order) and
 catches up after a round of backlog, that reduced motion drops lunges,

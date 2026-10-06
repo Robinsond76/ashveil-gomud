@@ -24,7 +24,7 @@ func TestCompanionLevelLineNamesRanksAndElitePromotion(t *testing.T) {
 		want      []string
 		not       []string
 	}{
-		{"ready", "mercenary", 29, 30, 0, []string{"Elite promotion ready: Mercenary -> Warlord.", "class promote #2"}, nil},
+		{"ready", "mercenary", 29, 30, 0, []string{"Elite promotion ready: Mercenary -> Warlord.", "class promote #2 warlord"}, nil},
 		{"waiting", "knight", 29, 30, 22, []string{"Paladin needs alignment +30 (theirs: +22).", "Tamsin keeps their Knight ranks"}, []string{"promotion ready"}},
 		{"rank up", "warlord", 34, 35, 0, []string{"Rank 35 Warlord: Battle Cry. At the start of each battle"}, nil},
 		{"below 30", "knight", 28, 29, 90, nil, []string{"Elite promotion", "needs alignment"}},

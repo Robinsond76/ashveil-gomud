@@ -289,7 +289,7 @@ func TestUnpromotedHighLevelCharacterKeepsItsBase(t *testing.T) {
 	// Elite needs an advanced class first, and says so.
 	refused := w.cmd("class", "promote hierarch confirm")
 	assert.Contains(t, refused, "can't become a Hierarch")
-	assert.Contains(t, refused, "take the Priest first (class promote priest), then the Hierarch in the same visit")
+	assert.Contains(t, refused, "take the Priest first, then the Hierarch in the same visit. Type class promote priest.")
 }
 
 func TestTalentsThroughTheCommand(t *testing.T) {
@@ -463,6 +463,9 @@ func TestEliteCompanionPromotionKeepsTheClassAcrossARestart(t *testing.T) {
 	setCompanionAlignment(t, 1, 0)
 	w.respawn()
 	require.Equal(t, 31, w.companion(1).Character.Level)
+	// Phase 38c1 review: a base companion asking for the elite is sent to
+	// its own advanced step, with its selector.
+	assert.Contains(t, w.cmd("class", "promote tamsin warlord confirm"), "take the Mercenary first, then the Warlord in the same visit. Type class promote #1 mercenary.")
 	require.NoError(t, module.registry.SetCompanionClass(7, 1, "mercenary"))
 	w.respawn()
 
@@ -511,7 +514,7 @@ func TestEliteTalentsThroughTheCommand(t *testing.T) {
 	w, store := classBrawl(t, 34, 0)
 	w.withArchetypes("warrior")
 	store.state = classes.State{Class: "warlord", Talents: []string{"toughness", "toughness", "keen-edge"}}
-	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "elite characters from level 35", "level 34")
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "Iron Hide is an elite talent: it opens to an elite class from level 35.", "level 34")
 
 	w.aria.Character.Level = 35
 	menu := w.cmd("talent", "")
@@ -532,7 +535,7 @@ func TestEliteTalentsThroughTheCommand(t *testing.T) {
 	store.state = classes.State{Class: "mercenary", Talents: []string{"toughness", "toughness", "keen-edge"}}
 	w.aria.Character.Level = 35
 	assert.NotContains(t, w.cmd("talent", ""), "Iron Hide")
-	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "elite characters from level 35")
+	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "is an elite talent")
 	store.state = classes.State{Class: "hierarch", Talents: []string{"deep-well", "deep-well", "mending-hands"}}
 	w.withArchetypes("cleric")
 	assert.Contains(t, w.cmd("talent", "pick iron-hide confirm"), "can't take Iron Hide")

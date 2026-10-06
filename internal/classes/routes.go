@@ -110,7 +110,7 @@ func init() {
 	register(Class{ID: "elder-druid", Name: "Elder Druid", Lineage: "cleric", Tier: TierElite, Parent: "druid", Gate: GateAny,
 		Role: "heals whole rows at once",
 		Ranks: []Rank{
-			teaches(rank(30, "Grove", "Rejuvenation on a whole formation row at 100% each", Grove, 1, GrovePct, 100), "grove"),
+			teaches(rank(30, "Grove", "Rejuvenation on a whole formation row at 100% each, half of it healed at once; chant 1, cost 8", Grove, 1, GrovePct, 100), "grove"),
 			rank(35, "Nature's patience", "after-battle patching costs 20% less mana", PatchCost, 20),
 			rank(40, "Deep grove", "Grove at 130%", GrovePct, 130),
 			teaches(rank(45, "Entangle", "one foe is hobbled for 2 rounds; chant 1, cost 10", Entangle, 1), "entangle"),
