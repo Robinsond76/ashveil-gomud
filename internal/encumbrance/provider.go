@@ -180,18 +180,6 @@ func UnifyCargo(id int) error {
 	return nil
 }
 
-// EquipmentCapacityDelta is the capacity change from adjusted Strength when
-// assigning gear. Packs stay in cargo; only the member's Strength changes.
-func EquipmentCapacityDelta(before, after int) int {
-	providerMu.RLock()
-	p := provider
-	providerMu.RUnlock()
-	if cp, ok := p.(interface{ StrengthCapacityGrams() int }); ok {
-		return (max(0, after) - max(0, before)) * cp.StrengthCapacityGrams()
-	}
-	return 0
-}
-
 func ConsumeCargoItemUse(id int, itm items.Item) error {
 	providerMu.RLock()
 	p := provider

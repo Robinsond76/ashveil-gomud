@@ -10,10 +10,7 @@
     overflow: hidden;
 }
 
-/* Hide maximize, fullscreen, minimize, and close controls - windows are managed via settings */
-.vw-max  { display: none; }
-.vw-full { display: none; }
-.vw-min  { display: none; }
+/* Hide the close control - windows are managed via settings */
 .vw-close { display: none; }
 
 /* -------------------------------------------------------------------------

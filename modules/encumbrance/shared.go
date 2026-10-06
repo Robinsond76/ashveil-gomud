@@ -188,24 +188,6 @@ func (m *EncumbranceModule) sharedDeposit(u *users.UserRecord, op string, stacks
 	return nil
 }
 
-// sharedPackBonus assigns the largest available packs to living members;
-// a physical pack contributes only once, regardless of the item owner field.
-func sharedPackBonus(carried []items.Item, members int) int {
-	bonuses := []int{}
-	for _, itm := range carried {
-		if b := itm.CarryBonusGrams(); b > 0 {
-			bonuses = append(bonuses, b)
-		}
-	}
-	slices.Sort(bonuses)
-	total := 0
-	for i := len(bonuses) - 1; i >= 0 && members > 0; i-- {
-		total += bonuses[i]
-		members--
-	}
-	return total
-}
-
 func (m *EncumbranceModule) StrengthCapacityGrams() int {
 	m.mu.Lock()
 	defer m.mu.Unlock()
