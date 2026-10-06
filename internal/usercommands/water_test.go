@@ -228,3 +228,54 @@ func TestResourcesHelpRendersAndIsIndexed(t *testing.T) {
 		assert.Contains(t, text, "resources", "help %s points at help resources", topic)
 	}
 }
+
+// Phase 43a: the last glug leaves an empty skin, which a fill turns back
+// into a full one.
+func registerSkins(t *testing.T) (full, empty items.ItemSpec) {
+	t.Helper()
+	full = skinSpec()
+	full.ItemId = 9301
+	full.EmptyItemId = 9302
+	empty = items.ItemSpec{ItemId: 9302, Name: "empty waterskin", NameSimple: "empty waterskin", Refillable: "water", FilledItemId: 9301}
+	items.SetTestItemSpec(&full)
+	items.SetTestItemSpec(&empty)
+	t.Cleanup(func() { items.RemoveTestItemSpec(9301); items.RemoveTestItemSpec(9302) })
+	return full, empty
+}
+
+func TestDrinkingTheLastGlugLeavesAnEmptyWaterskin(t *testing.T) {
+	useFakeProvisioner(t, thirstyProvisioner())
+	full, _ := registerSkins(t)
+	user := userWithItem(t, 17, full)
+	user.Character.Items[0].Uses = 1
+
+	_, err := Drink("waterskin", user, testRoom(), 0)
+	require.NoError(t, err)
+	require.Len(t, user.Character.Items, 1, "the skin is not destroyed")
+	assert.Equal(t, 9302, user.Character.Items[0].ItemId)
+	assert.Zero(t, user.Character.Items[0].Uses)
+}
+
+func TestFillTurnsAnEmptyWaterskinIntoAFullOne(t *testing.T) {
+	full, empty := registerSkins(t)
+	user := userWithItem(t, 17, empty)
+	user.Character.Items[0].Uses = 0
+	_ = full
+
+	assert.Equal(t, 5, func() int { n, _ := RefillableUses(empty); return n }(), "an empty skin fills to the full one's uses")
+	out := heard(t, func() {
+		_, err := Fill("", user, waterRoom(), 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "You fill")
+	assert.Equal(t, 9301, user.Character.Items[0].ItemId)
+	assert.Equal(t, 5, user.Character.Items[0].Uses)
+
+	// Named, and refused away from water.
+	user.Character.Items[0] = items.New(9302)
+	out = heard(t, func() { _, _ = Fill("empty", user, testRoom(), 0) })
+	assert.Contains(t, out, "no fresh water")
+	assert.Equal(t, 9302, user.Character.Items[0].ItemId)
+	heard(t, func() { _, _ = Fill("empty", user, waterRoom(), 0) })
+	assert.Equal(t, 9301, user.Character.Items[0].ItemId)
+}

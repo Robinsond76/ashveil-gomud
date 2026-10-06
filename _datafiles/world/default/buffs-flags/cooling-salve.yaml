@@ -1,0 +1,5 @@
+flag: cooling-salve
+name: "Cooling Salve"
+description: "Cuts the heat exposure the character takes on by a quarter."
+locked: true
+helpful: true

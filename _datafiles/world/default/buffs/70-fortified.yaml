@@ -1,0 +1,10 @@
+# Phase 43a: fortifying broth (help campsupplies). Four sizes, picked by the
+# drinker's maximum health so the bonus is about 5% of it (rounded up).
+buffid: 70
+name: Fortified
+description: "Hot broth steadies you: your health limit is 2 higher."
+secret: false
+triggerrate: 15 real minutes
+triggercount: 1
+statmods:
+  healthmax: 2

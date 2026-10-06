@@ -497,9 +497,9 @@ func (m *EncumbranceModule) ConsumeCargoUse(leaderUserID, itemId int) error {
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
-	fullUses := 0
+	fullUses, emptyID := 0, 0
 	if spec, ok := m.itemSpec(itemId); ok {
-		fullUses = spec.Uses
+		fullUses, emptyID = spec.Uses, spec.EmptyItemId
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -507,7 +507,7 @@ func (m *EncumbranceModule) ConsumeCargoUse(leaderUserID, itemId int) error {
 	if !ok {
 		return encumbrance.ErrInsufficientCargo
 	}
-	updated, err := cargo.ConsumeUse(itemId, fullUses)
+	updated, err := cargo.ConsumeUseLeaving(itemId, fullUses, emptyID)
 	if err != nil {
 		return err
 	}
