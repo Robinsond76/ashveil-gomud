@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -23,6 +24,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -320,6 +322,9 @@ type balanceFightOptions struct {
 	// Classes overrides companions' archetypes (Phase 35b: a wizard for
 	// the mana run); the rest keep the shipped ones.
 	Classes map[int]string
+	// Sigil is the sigil the leader laid in the room before the fight
+	// (Phase 54); empty for none.
+	Sigil sigils.Kind
 }
 
 func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, enemyLevels ...int) *balanceFight {
@@ -494,6 +499,10 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 				break
 			}
 		}
+	}
+	if opts.Sigil != sigils.None {
+		b.aria.Character.Sigil = sigils.Lay(opts.Sigil, b.road.RoomId, time.Now())
+		t.Cleanup(func() { b.aria.Character.Sigil = sigils.Laid{} })
 	}
 	b.cmd("attack", fmt.Sprintf("#%d", opening))
 	// Spread starts with one distinct opponent per fighter. Strategies keep

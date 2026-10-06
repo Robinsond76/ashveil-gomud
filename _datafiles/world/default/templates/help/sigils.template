@@ -11,10 +11,11 @@ on its own, like the rest of your set-up (<ansi fg="command">help combat</ansi>)
   <ansi fg="command">cast sigil</ansi>             lists the kinds, and what your company has laid
 
 A sigil costs mana and one <ansi fg="yellow">sigil chalk</ansi>, from your own pack. Chalk is sold at
-markets (<ansi fg="command">help market</ansi>) for a few gold and is never bought back. You need
-the Cast skill, and you cannot lay one in a battle. It lasts 15 real
-minutes, through a restart or copyover too, and never moves the world's
-clock. A company keeps one sigil to a room, and one at a time: laying a new
+markets (<ansi fg="command">help market</ansi>) for a few gold and is never bought back. A caster
+draws it: you, if you have the Cast skill, or else the first companion with
+you who casts spells, from its own mana. You cannot lay one in a battle. It
+lasts 15 real minutes, through a restart or copyover too, and never moves
+the world's clock. A company keeps one sigil to a room, and one at a time: laying a new
 one somewhere else lets the old one fade.
 
 <ansi fg="yellow-bold">The four sigils</ansi>

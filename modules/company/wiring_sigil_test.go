@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/status"
-	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -228,12 +227,34 @@ func TestNothingIsLaidInABattleOrWithoutTheCastSkill(t *testing.T) {
 	assert.Contains(t, b.cmd("cast", "sigil of fire"), "The battle is under way")
 	assert.False(t, b.aria.Character.Sigil.Live(time.Now()))
 
+	// A leader without the Cast skill and no caster companion lays nothing.
 	b2 := sigilBrawl(t)
+	b2.withArchetypesFor("", map[int]string{1: "warrior", 2: "warrior", 3: "warrior", 4: "ranger"})
 	b2.aria.Character.SetSkill("cast", 0)
 	b2.aria.Character.StoreItem(items.New(sigils.ChalkItemID))
-	_, err := usercommands.TryCommand("cast", "sigil of fire", b2.aria.UserId, events.CmdSkipScripts)
-	assert.Error(t, err, "no Cast skill, no sigil")
+	assert.Contains(t, b2.cmd("cast", "sigil of fire"), "needs a caster")
 	assert.False(t, b2.aria.Character.Sigil.Live(time.Now()))
+	assert.Equal(t, 300, b2.aria.Character.Mana)
+}
+
+// Review: a leader without the Cast skill has a caster companion standing
+// with it draw the sigil, from the companion's mana.
+func TestACasterCompanionDrawsTheSigilForALeaderWhoCannotCast(t *testing.T) {
+	b := sigilBrawl(t)
+	b.withArchetypesFor("", map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+	b.aria.Character.SetSkill("cast", 0)
+	b.aria.Character.StoreItem(items.New(sigils.ChalkItemID))
+	oswin := &b.companion(2).Character
+	oswin.ManaMax.Value, oswin.Mana = 50, 5
+	assert.Contains(t, b.cmd("cast", "sigil of ward"), "doesn't have enough mana")
+	assert.False(t, b.aria.Character.Sigil.Live(time.Now()))
+
+	oswin.Mana = 50
+	out := b.cmd("cast", "sigil of ward")
+	assert.Contains(t, out, "who kneels and draws a ward sigil")
+	assert.Equal(t, 50-sigils.Ward.ManaCost(), oswin.Mana, "the companion pays the mana")
+	assert.Equal(t, 300, b.aria.Character.Mana, "the leader pays none")
+	assert.True(t, b.aria.Character.Sigil.In(b.road.RoomId, time.Now()))
 }
 
 // Small aliases for the company domain, so this file reads shortly.

@@ -5,9 +5,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -59,8 +63,8 @@ func castSigil(words string, user *users.UserRecord, room *rooms.Room) {
 		return
 	}
 	cost := kind.ManaCost()
-	if user.Character.Mana < cost {
-		user.SendText(fmt.Sprintf(`You don't have enough mana to lay the %s (%d needed).`, kind.Name(), cost))
+	drawer, ok := sigilDrawer(user, room, cost)
+	if !ok {
 		return
 	}
 	var chalk items.Item
@@ -77,16 +81,59 @@ func castSigil(words string, user *users.UserRecord, room *rooms.Room) {
 	if !user.Character.RemoveItem(chalk) {
 		return
 	}
-	user.Character.Mana -= cost
+	drawer.Mana -= cost
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 	elsewhere := user.Character.Sigil.Live(now)
 	user.Character.Sigil = sigils.Lay(kind, room.RoomId, now)
-	user.SendText(fmt.Sprintf(`You kneel and draw a %s in chalk, whispering over it. It will hold for %d minutes. (%s)`, kind.Name(), sigils.Minutes, kind.Effect()))
+	if drawer == user.Character {
+		user.SendText(fmt.Sprintf(`You kneel and draw a %s in chalk, whispering over it. It will hold for %d minutes. (%s)`, kind.Name(), sigils.Minutes, kind.Effect()))
+	} else {
+		user.SendText(fmt.Sprintf(`You hand the chalk to %s, who kneels and draws a %s, whispering over it. It will hold for %d minutes. (%s)`, drawer.Name, kind.Name(), sigils.Minutes, kind.Effect()))
+	}
 	if elsewhere {
 		user.SendText(`The sigil you laid before fades.`)
 	}
 	events.AddToQueue(events.RoomResourcesChanged{RoomId: room.RoomId}) // resends Room.Info with the sigil
-	room.SendText(fmt.Sprintf(`%s kneels and draws a %s in chalk on the ground.`, user.Character.Name, kind.Name()), user.UserId)
+	room.SendText(fmt.Sprintf(`%s kneels and draws a %s in chalk on the ground.`, drawer.Name, kind.Name()), user.UserId)
+}
+
+// sigilDrawer is who draws the company's sigil and pays its mana: the
+// leader when it has the Cast skill, otherwise the first caster companion
+// standing with it that has the mana. It says why when nobody can.
+func sigilDrawer(user *users.UserRecord, room *rooms.Room, cost int) (*characters.Character, bool) {
+	if user.Character.GetSkillLevel(`cast`) > 0 {
+		if user.Character.Mana < cost {
+			user.SendText(fmt.Sprintf(`You don't have enough mana to lay the sigil (%d needed).`, cost))
+			return nil, false
+		}
+		return user.Character, true
+	}
+	short := ``
+	for _, id := range company.LivingCompanionIDs(user.UserId) {
+		inst, ok := company.InstanceFor(user.UserId, id)
+		if !ok {
+			continue
+		}
+		m := mobs.GetInstance(inst)
+		if m == nil || m.Character.Health < 1 || m.Character.RoomId != room.RoomId {
+			continue
+		}
+		arch, _ := company.CompanionArchetype(user.UserId, id)
+		if len(archetypes.CompanionSpells(arch, m.Character.Level)) == 0 || m.Character.ManaMax.Value < 1 {
+			continue
+		}
+		if m.Character.Mana < cost {
+			short = m.Character.Name
+			continue
+		}
+		return &m.Character, true
+	}
+	if short != `` {
+		user.SendText(fmt.Sprintf(`%s doesn't have enough mana to lay the sigil (%d needed).`, short, cost))
+		return nil, false
+	}
+	user.SendText(`A sigil needs a caster to draw it: you need the Cast skill, or a companion who casts spells standing with you (<ansi fg="command">help sigils</ansi>).`)
+	return nil, false
 }
 
 // sigilLines is what look shows for the sigils lit in a room: one line each.

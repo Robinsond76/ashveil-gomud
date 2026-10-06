@@ -11,8 +11,10 @@ page records how it was built and the decisions the owner delegated.
 - **State:** a company's sigil is saved with its leader's character
   (`Character.Sigil`). Expiry is a wall-clock Unix second, so it survives
   restart and copyover and never moves game time. Nobody ticks it.
-- **Laying:** `cast sigil of [kind]` (in `Cast`, before spell lookup). Needs
-  the Cast skill, mana and one *sigil chalk* (item 30060) from the player's
+- **Laying:** `cast sigil of [kind]` (in `Cast`, before the Cast-skill
+  check). A caster draws it: the leader with the Cast skill, else the first
+  living caster companion in the room, from its own mana (review). Needs
+  mana and one *sigil chalk* (item 30060) from the player's
   own pack; refused in battle. One sigil to a room (a second in the same room
   is refused at no cost); one at a time per company (laying elsewhere lets
   the old one fade).
