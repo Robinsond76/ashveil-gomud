@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/ansitags"
 )
 
 // ////////////////////////////////////////////////////////////////////
@@ -51,6 +52,7 @@ func init() {
 		return events.Continue
 	})
 	events.RegisterListener(events.RoomResourcesChanged{}, g.resourcesChangedHandler)
+	events.RegisterListener(events.GatherProgress{}, g.gatherProgressHandler)
 
 }
 
@@ -66,6 +68,34 @@ type GMCPRoomUpdate struct {
 }
 
 func (g GMCPRoomUpdate) Type() string { return `GMCPRoomUpdate` }
+
+// GMCPRoomGatherPayload is Room.Gather (Phase 45): a gather, fish or hunt
+// starting (Phase "start", with Seconds), finishing ("done") or being stopped
+// ("stopped"); Lines are what the leader was told.
+type GMCPRoomGatherPayload struct {
+	Phase   string   `json:"phase"`
+	Kind    string   `json:"kind"`
+	Label   string   `json:"label"`
+	Seconds int      `json:"seconds,omitempty"`
+	Lines   []string `json:"lines,omitempty"`
+}
+
+// gatherProgressHandler sends the leader's web client the work's progress.
+func (g *GMCPRoomModule) gatherProgressHandler(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.GatherProgress)
+	if !ok {
+		return events.Continue
+	}
+	// The lines carry colour tags for the terminal; the panel shows plain text.
+	var lines []string
+	for _, l := range evt.Lines {
+		lines = append(lines, ansitags.Parse(l, ansitags.StripTags))
+	}
+	events.AddToQueue(GMCPOut{UserId: evt.UserId, Module: `Room.Gather`, Payload: GMCPRoomGatherPayload{
+		Phase: evt.Phase, Kind: evt.Kind, Label: evt.Label, Seconds: evt.Seconds, Lines: lines,
+	}})
+	return events.Continue
+}
 
 // resourcesChangedHandler (Phase 40a2) resends Room.Info to everyone in a
 // room whose gatherable resources were picked clean, so the map and the Room

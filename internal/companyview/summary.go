@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -135,6 +136,7 @@ type sources struct {
 	journey   func(leaderUserID int) (expedition.Progress, bool)
 	rest      func(leaderUserID int) (camping.RestActivity, bool)
 	tier      func(userID int) (camping.Tier, time.Duration, bool)
+	gather    func(userID int) (gathering.Progress, bool)
 	exposure  func(leaderUserID int, memberKey string) (int, bool)
 	light     func(user *users.UserRecord) (int, bool)
 	archetype func(userID int) (string, bool)
@@ -158,6 +160,7 @@ func nativeSources() sources {
 		journey:            expedition.JourneyProgress,
 		rest:               camping.LeaderRest,
 		tier:               camping.RestTierOf,
+		gather:             gathering.ProgressOf,
 		exposure:           climate.ExposureOf,
 		light:              nativeLight,
 		archetype:          archetypes.PlayerArchetype,
@@ -289,7 +292,12 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.LoadKnown, s.Load, s.LoadLabel = true, load, LoadLabel(load, band)
 	}
 
-	if p, ok := src.journey(uid); ok {
+	if g, ok := src.gatherProgress(uid); ok {
+		// Phase 45: a gather, fish or hunt in progress (it ends if the
+		// company travels, rests or fights).
+		s.ActivityKnown = true
+		s.Activity = Activity{Kind: Gathering, Percent: g.Percent(), Remaining: g.Remaining, Detail: g.Label}
+	} else if p, ok := src.journey(uid); ok {
 		s.ActivityKnown = true
 		s.Activity = Activity{Kind: Travelling, Percent: p.Percent, Remaining: p.Remaining, Route: p.Route}
 		if p.Interrupted {
@@ -412,4 +420,24 @@ func LevelFor(user *users.UserRecord) int {
 		return 1
 	}
 	return CompanyLevel(For(user))
+}
+
+// RankName is the member's class line as players read it: the promoted
+// class with its lineage ("Priest (Cleric)"), else the archetype alone, or
+// "" when neither is known (Phase 45).
+func (m Member) RankName() string {
+	if c, ok := classes.Get(m.Class); ok && m.Class != "" {
+		if m.Archetype != "" && m.Archetype != c.Name {
+			return c.Name + " (" + m.Archetype + ")"
+		}
+		return c.Name
+	}
+	return m.Archetype
+}
+
+func (src sources) gatherProgress(uid int) (gathering.Progress, bool) {
+	if src.gather == nil {
+		return gathering.Progress{}, false
+	}
+	return src.gather(uid)
 }
