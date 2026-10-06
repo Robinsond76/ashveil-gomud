@@ -1,0 +1,56 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">samurai</ansi>
+
+The Samurai is a duelist who wins a fight in its first moment. It opens a
+battle half a turn ahead of everyone else, its first strike hits harder and
+crits more often, and it grows deadlier the longer no one lands a blow on it.
+After that opening it is an ordinary front-line fighter in medium armor with
+a good critical chance. It has no creed: no alignment gate stands in front of
+any of its routes.
+
+<ansi fg="yellow-bold">What the Samurai is</ansi>
+
+  Health      6 to start, 0.85 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 1.0 and Evasion 1.0 a level, like a warrior (<ansi fg="command">help evasion</ansi>)
+  Gear        medium armor, no shield, swords only (<ansi fg="command">help armor</ansi>)
+  Stats       speed 4, strength 3, perception 2, smarts 1 (<ansi fg="command">help growth</ansi>)
+  Starter kit an iron shortsword, a padded jack, a leather cap, worn boots,
+              food, a waterskin and a knapsack
+  Utility     Camp Watch (<ansi fg="command">help campwatch</ansi>)
+
+<ansi fg="yellow-bold">Ranks of the Samurai</ansi>
+
+  Level 1   <ansi fg="yellow">Iaijutsu</ansi>  the Samurai starts every battle with half a turn on its action
+            meter, so it acts sooner (<ansi fg="command">help tempo</ansi>). Its first strike of the battle
+            deals 50% more damage with +10% critical chance. The strike is
+            spent by that swing, hit or miss, and comes back with the next
+            battle.
+  Level 3   <ansi fg="yellow">Focus</ansi>     +3% critical chance for each round in a row in which no blow
+            lands on the Samurai, up to +9%. A blow that lands resets it.
+  Level 8   <ansi fg="yellow">Zanshin</ansi>   when the Samurai fells a foe, its action meter gains half a turn
+            (once a round), so it is ready for the next one sooner.
+
+Level 5 brings the first talent: Keen Edge, Footwork, Heavy Hands, Toughness
+or Sharp Eye (+3% critical chance on every blow) (<ansi fg="command">help talents</ansi>). At level 10 a
+Samurai promotes to a Kensai, Hatamoto or Ronin (<ansi fg="command">help samurai-routes</ansi>).
+
+<ansi fg="yellow-bold">How a Samurai fights</ansi>
+
+A battle plays out on its own, so everything above happens without a command.
+A Samurai's default target rule is <ansi fg="command">strongest</ansi>: it goes for the foe with the most
+health left, which is where a first strike counts most. <ansi fg="command">strategy me [rule]</ansi>
+changes that (<ansi fg="command">help strategy</ansi>). Put it in the front or middle row (<ansi fg="command">help formation</ansi>);
+Focus rewards a Samurai that is not the one being struck, so a guardian beside
+it (<ansi fg="command">help guardian</ansi>) helps.
+
+It may use only swords. The shipped swords are the iron shortsword, the steel
+arming sword and the tempered sabre (<ansi fg="command">help equipmenttiers</ansi>).
+
+<ansi fg="yellow-bold">Other Samurai</ansi>
+
+A Samurai companion fights the same way, by its strategy, and promotes and
+chooses talents like any other (<ansi fg="command">help company</ansi>). Recruits are hired like any
+other and arrive with an iron shortsword.
+
+Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">talent</ansi>, <ansi fg="command">strategy</ansi>.
+
+See also: <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help combat</ansi>.

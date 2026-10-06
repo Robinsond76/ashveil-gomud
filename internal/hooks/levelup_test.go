@@ -88,6 +88,13 @@ func TestGrantXPLevelReport(t *testing.T) {
 			SendLevelNotifications(ev)
 			events.ProcessEvents()
 			assert.Contains(t, messages, " Magic Missile 8-13 -> 9-14\n Shower of Sparks 5-8")
+			assert.Empty(t, ev.ClassRanks, "a character with no lineage ranks gains none")
+			// 39b review: the report names each rank the new levels gave.
+			messages = ""
+			ev.ClassRanks = []string{"New rank: Focus, +3% critical chance."}
+			SendLevelNotifications(ev)
+			events.ProcessEvents()
+			assert.Contains(t, messages, "New rank: Focus, +3% critical chance.")
 			assert.Contains(t, messages, "stat train")
 			assert.NotContains(t, messages, "stat step")
 			assert.Equal(t, round, util.GetRoundCount())

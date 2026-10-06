@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -127,6 +128,7 @@ func fillTempo(who caster, c *characters.Character) {
 		(len(fights) > 0 || len(st.fights) > 0) && !sharesTempoFight(fights, st.fights) ||
 		len(fights) == 0 && st.epoch != c.CombatEpoch {
 		st = &tempoState{char: c}
+		st.meter.Bonus = float64(c.ClassEffects().Int(classes.OpenMeter)) // Phase 39b: Iaijutsu
 		tempoMeters[who] = st
 	}
 	st.epoch, st.fights = c.CombatEpoch, fights
