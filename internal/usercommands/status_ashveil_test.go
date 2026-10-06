@@ -99,6 +99,24 @@ func TestStatusAshveilSheet(t *testing.T) {
 	}
 }
 
+// Phase 38c1 review: the status sheet names the class, its tier, and a
+// promotion that is ready.
+func TestStatusShowsTheClass(t *testing.T) {
+	useWorld(t, "default")
+	s := sampleSummary()
+	s.Leader.Archetype, s.Leader.ClassName, s.Leader.ClassTier, s.Leader.ClassRank = "Warrior", "Mercenary", "advanced", 25
+	s.Leader.Promotion = "ready"
+	useSummary(t, s)
+	text := statusText(t, users.NewUserRecord(7, 1), "")
+	assert.Regexp(t, `(Cls|Class): +Mercenary \(advanced\)`, text)
+	assert.Regexp(t, `(Prm|Promote): +ready \(class\)`, text)
+	s.Leader.ClassName, s.Leader.ClassTier, s.Leader.Promotion = "Warlord", "elite", ""
+	useSummary(t, s)
+	text = statusText(t, users.NewUserRecord(7, 1), "")
+	assert.Regexp(t, `(Cls|Class): +Warlord \(elite\)`, text)
+	assert.NotRegexp(t, `(Prm|Promote): `, text)
+}
+
 // TestStatusUnknownsAreLeftOut: with nothing known, no survival or company
 // row pretends to a value.
 func TestStatusUnknownsAreLeftOut(t *testing.T) {

@@ -527,6 +527,9 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			SkillPoints:    user.Character.StatPoints,
 			TrainingPoints: user.Character.TrainingPoints,
 		}
+		lineage, _ := archetypes.PlayerArchetype(user.UserId)
+		route := classes.Describe(lineage, classes.PlayerClass(user.UserId).Class, user.Character.Level, int(user.Character.Alignment))
+		payload.Info.Route, payload.Info.Tier, payload.Info.Rank, payload.Info.Promotion = route.Name, route.Tier, route.Rank, route.Promotion
 
 		if !all {
 			return payload.Info, `Char.Info`
@@ -988,6 +991,14 @@ type GMCPCharModule_Payload_Info struct {
 	Role           string `json:"role"`
 	SkillPoints    int    `json:"skillpoints"`
 	TrainingPoints int    `json:"trainingpoints"`
+	// Route is the advanced or elite class promoted into (Phase 38c1:
+	// "Paladin"), Tier "advanced" or "elite", Rank the highest rank level
+	// reached, and Promotion "ready" or "waiting-gate"; each omitted when
+	// empty. (Class above is the skill profession.)
+	Route     string `json:"route,omitempty"`
+	Tier      string `json:"tier,omitempty"`
+	Rank      int    `json:"rank,omitempty"`
+	Promotion string `json:"promotion,omitempty"`
 }
 
 // /////////////////

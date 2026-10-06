@@ -302,6 +302,34 @@ func TestSummaryTacticsShowLevelDefaultFocus(t *testing.T) {
 	assert.Equal(t, strategy.NoFocus, src.summary(u).Tactics.Focus)
 }
 
+// Phase 38c1: the summary names each member's class, tier, rank and
+// promotion state, derived from lineage, class, level and alignment.
+func TestSummaryMemberClasses(t *testing.T) {
+	user := testUser()
+	user.Character.Level = 30
+	user.Character.Alignment = 41
+	src := fullSources()
+	src.members = func(int) ([]company.MemberView, bool) {
+		return []company.MemberView{
+			{ID: 1, Name: "Bran", Status: company.MemberPresent, Level: 52, Archetype: "warrior", Class: "warlord", Alignment: 0},
+			{ID: 2, Name: "Tamsin", Status: company.MemberPresent, Level: 30, Archetype: "warrior", Class: "knight", Alignment: 29},
+			{ID: 3, Name: "Oswin", Status: company.MemberPresent, Level: 30, Archetype: "warrior", Class: "mercenary", Alignment: -80},
+			{ID: 4, Name: "Ysolde", Status: company.MemberPresent, Level: 12, Archetype: "cleric"},
+		}, true
+	}
+	s := src.summary(user)
+	assert.Empty(t, s.Leader.Class, "no class record: unpromoted")
+	warlord := s.Companions[0]
+	assert.Equal(t, [4]string{"warlord", "Warlord", "elite", ""}, [4]string{warlord.Class, warlord.ClassName, warlord.ClassTier, warlord.Promotion})
+	assert.Equal(t, 50, warlord.ClassRank)
+	waiting := s.Companions[1]
+	assert.Equal(t, "advanced", waiting.ClassTier)
+	assert.Equal(t, 25, waiting.ClassRank)
+	assert.Equal(t, "waiting-gate", waiting.Promotion, "+29 does not meet the Knight's gate")
+	assert.Equal(t, "ready", s.Companions[2].Promotion, "a Mercenary has no gate")
+	assert.Equal(t, "ready", s.Companions[3].Promotion, "a base character at level 12 may take an advanced route")
+}
+
 type fakeClasses struct{ class string }
 
 func (f fakeClasses) PlayerClass(int) classes.State { return classes.State{Class: f.class} }

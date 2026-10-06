@@ -1,0 +1,51 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">elite</ansi>
+
+An elite class is the second promotion of a route. At level 30 a character
+with an advanced class may promote again, to the elite class that continues
+its route. Elite classes keep every rank of the advanced class and add their
+own, up to level 60. Companions promote the same way.
+
+<ansi fg="yellow-bold">How</ansi>
+
+  <ansi fg="command">class</ansi>                              shows "promote ready" or what it waits on
+  <ansi fg="command">class promote [member] [class]</ansi>     preview: gate, role, the ranks you have already
+                                     reached, the next one
+  <ansi fg="command">class promote [member] [class] confirm</ansi>   make it
+
+Routes are final: an elite class continues the route you took at level 10, and
+there is no switching. A character must hold the advanced class first; a
+level 30 character who never promoted can take both steps in one visit
+(<ansi fg="command">class promote priest confirm</ansi>, then <ansi fg="command">class promote hierarch confirm</ansi>). The elite
+class's ranks that your level has already reached start at once.
+
+<ansi fg="yellow-bold">The gate</ansi>
+
+A good route needs alignment +30 or higher at the moment you promote, an evil
+route -30 or lower, and a neutral route nothing. If your alignment is not yet
+right, <ansi fg="command">class</ansi> says the promotion is waiting; you keep your ranks and promote
+when your alignment recovers (<ansi fg="command">help alignment</ansi>). The company window shows the same
+as "Promotion ready" or "Promotion waiting on alignment".
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+From level 35 an elite character's talent slots (35, 45, 55) offer a second
+list, the elite talents, beside the lineage's usual five. See <ansi fg="command">help talents</ansi>.
+
+<ansi fg="yellow-bold">The elite classes</ansi>
+
+  <ansi fg="yellow-bold">Warrior</ansi>
+  Paladin         good      Knight route: heals, auras and Smite    <ansi fg="command">help warrior-routes</ansi>
+  Warlord         neutral   Mercenary route: marks foes, quickens   <ansi fg="command">help warlord</ansi>
+  Dread Knight    evil      Blackguard route: Aura of Dread, Terror <ansi fg="command">help warrior-routes</ansi>
+  <ansi fg="yellow-bold">Cleric</ansi>
+  Hierarch        good      Priest route: Call the Host             <ansi fg="command">help summoning</ansi>
+  Elder Druid     neutral   Druid route: groves and healing         <ansi fg="command">help cleric-routes</ansi>
+  Demonologist    evil      Blood Priest route: Bind the Fiend      <ansi fg="command">help summoning</ansi>
+
+The other lineages' elite classes (Pathfinder, Swordmaster, Nightblade,
+Sentinel, Marksman, Ravager, Archon, Archmage, Necromancer, Wise One, Coven
+Mother, Crone of Ash, and the Samurai's Sword Saint, Shogun and Kenshi) are
+still to come; until they arrive those characters keep their advanced class's
+ranks.
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help alignment</ansi>.
