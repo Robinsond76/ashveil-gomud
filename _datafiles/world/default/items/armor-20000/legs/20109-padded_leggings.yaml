@@ -1,0 +1,11 @@
+itemid: 20109
+name: padded leggings
+namesimple: leggings
+description: 'Layers of stitched linen and wool wadding, light enough to travel in. It is leg armor of the cloth path.'
+type: legs
+subtype: wearable
+bulk: light
+tier: 1
+family: cloth
+damagereduction: 1
+weight: 400

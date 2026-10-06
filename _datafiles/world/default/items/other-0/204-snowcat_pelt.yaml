@@ -1,0 +1,9 @@
+itemid: 204
+name: snowcat pelt
+namesimple: pelt
+description: 'A thick, pale snowcat pelt, soft as a blanket.'
+type: commodity
+subtype: mundane
+goods: trophy
+value: 20
+weight: 1800

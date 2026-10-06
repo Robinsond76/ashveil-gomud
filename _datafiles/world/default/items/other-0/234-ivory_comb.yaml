@@ -1,0 +1,9 @@
+itemid: 234
+name: ivory comb
+namesimple: comb
+description: 'A fine ivory comb carved with a pattern of leaves.'
+type: commodity
+subtype: mundane
+goods: valuable
+value: 45
+weight: 80

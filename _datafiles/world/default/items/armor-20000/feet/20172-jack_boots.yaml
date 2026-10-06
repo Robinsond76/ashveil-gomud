@@ -1,0 +1,11 @@
+itemid: 20172
+name: jack boots
+namesimple: boots
+description: 'Padded canvas with iron rivets, a middle weight between leather and mail. It is footwear of the medium path.'
+type: feet
+subtype: wearable
+bulk: medium
+tier: 1
+family: medium
+damagereduction: 2
+weight: 1200

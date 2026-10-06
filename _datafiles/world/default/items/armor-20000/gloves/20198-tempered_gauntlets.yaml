@@ -1,0 +1,11 @@
+itemid: 20198
+name: tempered gauntlets
+namesimple: gauntlets
+description: 'Tempered steel plate, fitted and padded, the best a town smith can make. It is hand protection of the heavy path.'
+type: gloves
+subtype: wearable
+bulk: heavy
+tier: 3
+family: heavy
+damagereduction: 5
+weight: 900

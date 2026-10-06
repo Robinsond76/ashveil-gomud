@@ -1,0 +1,11 @@
+itemid: 20131
+name: cured leather cap
+namesimple: cap
+description: 'Leather boiled and cured to a firm, supple finish. It is headgear of the leather path.'
+type: head
+subtype: wearable
+bulk: light
+tier: 2
+family: leather
+damagereduction: 3
+weight: 500

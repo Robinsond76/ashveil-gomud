@@ -1,0 +1,11 @@
+itemid: 20191
+name: steel helm
+namesimple: helm
+description: 'Steel plate and mail, the armor of professional soldiers. It is headgear of the heavy path.'
+type: head
+subtype: wearable
+bulk: heavy
+tier: 2
+family: heavy
+damagereduction: 6
+weight: 2000

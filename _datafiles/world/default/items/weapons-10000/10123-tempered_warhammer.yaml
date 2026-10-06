@@ -1,0 +1,13 @@
+itemid: 10123
+name: tempered warhammer
+namesimple: warhammer
+description: 'A tempered steel warhammer with a spike opposite the face, a favourite of men who fight in mail.'
+type: weapon
+hands: 1
+subtype: bludgeoning
+weaponclass: mace
+tier: 3
+family: mace
+damage:
+  diceroll: 1d6+2
+weight: 1900

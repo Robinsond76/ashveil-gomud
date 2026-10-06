@@ -1,0 +1,9 @@
+itemid: 221
+name: steel ingot
+namesimple: ingot
+description: 'A bar of good steel, ready for a smith''s forge.'
+type: commodity
+subtype: mundane
+goods: material
+value: 45
+weight: 2500

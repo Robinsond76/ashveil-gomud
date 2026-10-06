@@ -1,0 +1,14 @@
+itemid: 10143
+name: tempered war spear
+namesimple: spear
+description: 'A tempered war spear on a laminated shaft, the long reach of a pikeman with the balance of a lance.'
+type: weapon
+hands: 2
+subtype: stabbing
+weaponclass: spear
+tier: 3
+family: war spear
+reach: true
+damage:
+  diceroll: 1d10+3
+weight: 2400

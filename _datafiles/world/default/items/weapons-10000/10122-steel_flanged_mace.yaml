@@ -1,0 +1,13 @@
+itemid: 10122
+name: steel flanged mace
+namesimple: mace
+description: 'A steel mace with flanges that bite through padding and bone.'
+type: weapon
+hands: 1
+subtype: bludgeoning
+weaponclass: mace
+tier: 2
+family: mace
+damage:
+  diceroll: 1d6+1
+weight: 1800

@@ -1,4 +1,6 @@
 itemid: 10012
+tier: 1
+family: improvised
 name: crowbar
 namesimple: crowbar
 description: A long and thin bar of iron. Useful for prying.

@@ -1,0 +1,9 @@
+itemid: 240
+name: sealed letter
+namesimple: letter
+description: 'A letter under an unbroken wax seal. Someone may pay to know what it says, or to keep it unread.'
+type: commodity
+subtype: mundane
+goods: curio
+value: 25
+weight: 30

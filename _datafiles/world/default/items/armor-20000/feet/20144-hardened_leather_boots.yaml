@@ -1,0 +1,11 @@
+itemid: 20144
+name: hardened leather boots
+namesimple: boots
+description: 'Leather hardened in wax and stitched in overlapping plates, stiff as wood and quiet to wear. It is footwear of the leather path.'
+type: feet
+subtype: wearable
+bulk: light
+tier: 3
+family: leather
+damagereduction: 3
+weight: 700

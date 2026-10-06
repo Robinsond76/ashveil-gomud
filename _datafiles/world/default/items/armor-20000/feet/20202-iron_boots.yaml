@@ -1,0 +1,11 @@
+itemid: 20202
+name: iron boots
+namesimple: boots
+description: 'Riveted iron rings and plates, heavy and sure. It is footwear of the heavy path.'
+type: feet
+subtype: wearable
+bulk: heavy
+tier: 1
+family: heavy
+damagereduction: 3
+weight: 1800

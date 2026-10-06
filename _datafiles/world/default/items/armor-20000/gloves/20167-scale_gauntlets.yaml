@@ -1,0 +1,11 @@
+itemid: 20167
+name: scale gauntlets
+namesimple: gauntlets
+description: 'Overlapping steel scales sewn to a backing, flexible and sturdy. It is hand protection of the medium path.'
+type: gloves
+subtype: wearable
+bulk: medium
+tier: 2
+family: medium
+damagereduction: 3
+weight: 600

@@ -1,0 +1,13 @@
+itemid: 10132
+name: steel short spear
+namesimple: spear
+description: 'A short spear with a socketed steel head and a cross-guard against over-penetration.'
+type: weapon
+hands: 1
+subtype: stabbing
+weaponclass: spear
+tier: 2
+family: spear
+damage:
+  diceroll: 1d8
+weight: 1400

@@ -1,0 +1,9 @@
+itemid: 233
+name: gilded goblet
+namesimple: goblet
+description: 'A gilded goblet with a worn crest, plainly looted from a better household.'
+type: commodity
+subtype: mundane
+goods: valuable
+value: 90
+weight: 450

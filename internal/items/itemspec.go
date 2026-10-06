@@ -242,6 +242,51 @@ type ItemSpec struct {
 	Bulk            string            `yaml:"bulk,omitempty"`        // Armor bulk (Phase 35a2): light, medium or heavy; defaulted from weight at load
 	ShieldSize      string            `yaml:"shieldsize,omitempty"`  // A shield's size (Phase 35a2): buckler, shield or tower; defaulted to shield
 	WeaponClass     string            `yaml:"weaponclass,omitempty"` // A weapon's class (Phase 35a2), e.g. mace, staff, rod, club, improvised
+	Family          string            `yaml:"family,omitempty"`      // Phase 36b: catalog family, e.g. glaive, leather, kite shield; shown on look, never inferred from the name
+	Goods           string            `yaml:"goods,omitempty"`       // Phase 36b: trade goods category (trophy, salvage, material, valuable, provision, curio)
+}
+
+// Trade goods categories (Phase 36b). Goods are sold, not worn: they make
+// pack capacity a choice.
+const (
+	GoodsTrophy    = "trophy"
+	GoodsSalvage   = "salvage"
+	GoodsMaterial  = "material"
+	GoodsValuable  = "valuable"
+	GoodsProvision = "provision"
+	GoodsCurio     = "curio"
+)
+
+// GoodsCategories lists every valid goods category in display order.
+func GoodsCategories() []string {
+	return []string{GoodsTrophy, GoodsSalvage, GoodsMaterial, GoodsValuable, GoodsProvision, GoodsCurio}
+}
+
+// MaxTier is the highest equipment tier (Relic).
+const MaxTier = 6
+
+var tierNames = [MaxTier + 1]string{"Common", "Common", "Steel", "Tempered", "Masterwork", "Runeforged", "Relic"}
+
+// TierName is a tier's name: 1 Common, 2 Steel, 3 Tempered, 4 Masterwork,
+// 5 Runeforged, 6 Relic. An unset tier (0) is Common.
+func TierName(tier int) string {
+	if tier < 0 || tier > MaxTier {
+		return ""
+	}
+	return tierNames[tier]
+}
+
+// IsGoods reports whether the spec is a trade good.
+func (i ItemSpec) IsGoods() bool { return i.Goods != "" }
+
+// GoodsValuePerKg is a good's value for each kilogram it weighs, as the
+// player sees it when deciding what a full pack should hold. Zero for an
+// item with no weight.
+func (i ItemSpec) GoodsValuePerKg() float64 {
+	if i.Weight <= 0 {
+		return 0
+	}
+	return float64(i.Value) * 1000 / float64(i.Weight)
 }
 
 // Armor bulk (Phase 35a2) and the weights that set it when an item names
@@ -577,6 +622,25 @@ func (i *ItemSpec) Validate() error {
 	}
 	if i.WeaponClass != `` && i.Type != Weapon {
 		return fmt.Errorf("weapon class requires a weapon")
+	}
+
+	// Phase 36b: tier, family and goods category, checked.
+	if i.Tier < 0 || i.Tier > MaxTier {
+		return fmt.Errorf("tier %d is outside 0 to %d", i.Tier, MaxTier)
+	}
+	i.Family = strings.ToLower(strings.TrimSpace(i.Family))
+	i.Goods = strings.ToLower(strings.TrimSpace(i.Goods))
+	if i.Goods != `` {
+		valid := false
+		for _, c := range GoodsCategories() {
+			valid = valid || c == i.Goods
+		}
+		if !valid {
+			return fmt.Errorf("unknown goods category %q", i.Goods)
+		}
+		if i.Type == Weapon || i.Type == Pack || i.IsArmor() {
+			return fmt.Errorf("goods cannot be equipment")
+		}
 	}
 
 	if i.CarryBonus < 0 || (i.Type == Pack && (i.CarryBonus <= 0 || i.Subtype != Wearable || len(i.StatMods) > 0 || len(i.WornBuffIds) > 0 || i.DamageReduction != 0)) {

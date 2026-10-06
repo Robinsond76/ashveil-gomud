@@ -1,0 +1,11 @@
+itemid: 20170
+name: scale chausses
+namesimple: chausses
+description: 'Overlapping steel scales sewn to a backing, flexible and sturdy. It is leg armor of the medium path.'
+type: legs
+subtype: wearable
+bulk: medium
+tier: 2
+family: medium
+damagereduction: 6
+weight: 2200

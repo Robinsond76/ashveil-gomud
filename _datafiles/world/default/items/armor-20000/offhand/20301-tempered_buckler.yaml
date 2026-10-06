@@ -1,0 +1,12 @@
+itemid: 20301
+name: tempered buckler
+namesimple: buckler
+description: 'A tempered steel buckler with a rolled rim, quick enough for a duelist.'
+type: offhand
+subtype: wearable
+shieldsize: buckler
+bulk: light
+tier: 3
+family: buckler
+damagereduction: 7
+weight: 1700

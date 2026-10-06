@@ -1,0 +1,11 @@
+itemid: 20197
+name: steel gauntlets
+namesimple: gauntlets
+description: 'Steel plate and mail, the armor of professional soldiers. It is hand protection of the heavy path.'
+type: gloves
+subtype: wearable
+bulk: heavy
+tier: 2
+family: heavy
+damagereduction: 4
+weight: 900

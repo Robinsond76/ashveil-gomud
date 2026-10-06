@@ -1,0 +1,9 @@
+itemid: 223
+name: ashwood plank
+namesimple: plank
+description: 'A seasoned ashwood plank, straight-grained enough for a bow or a spear shaft.'
+type: commodity
+subtype: mundane
+goods: material
+value: 14
+weight: 2000

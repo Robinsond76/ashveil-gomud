@@ -1,0 +1,11 @@
+itemid: 20108
+name: layered gloves
+namesimple: gloves
+description: 'Many layers of fine cloth stitched together, light and surprisingly hard to cut. It is hand protection of the cloth path.'
+type: gloves
+subtype: wearable
+bulk: light
+tier: 3
+family: cloth
+damagereduction: 1
+weight: 150

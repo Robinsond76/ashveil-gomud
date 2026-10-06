@@ -1,0 +1,11 @@
+itemid: 20112
+name: padded shoes
+namesimple: shoes
+description: 'Layers of stitched linen and wool wadding, light enough to travel in. It is footwear of the cloth path.'
+type: feet
+subtype: wearable
+bulk: light
+tier: 1
+family: cloth
+damagereduction: 1
+weight: 300

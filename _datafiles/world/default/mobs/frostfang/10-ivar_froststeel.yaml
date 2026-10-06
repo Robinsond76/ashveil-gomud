@@ -26,6 +26,28 @@ character:
       quantitymax: 5
     - itemid: 10002
       quantitymax: 5
+    - itemid: 10101
+      quantitymax: 3
+    - itemid: 10111
+      quantitymax: 3
+    - itemid: 10121
+      quantitymax: 3
+    - itemid: 10131
+      quantitymax: 3
+    - itemid: 10151
+      quantitymax: 2
+    - itemid: 10171
+      quantitymax: 3
+    - itemid: 10181
+      quantitymax: 2
+    - itemid: 20304
+      quantitymax: 3
+    - itemid: 20133
+      quantitymax: 3
+    - itemid: 20163
+      quantitymax: 2
+    - itemid: 20193
+      quantitymax: 2
   equipment:
     weapon:
       itemid: 10006

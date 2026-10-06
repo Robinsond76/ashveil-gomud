@@ -1,0 +1,11 @@
+itemid: 20173
+name: scale boots
+namesimple: boots
+description: 'Overlapping steel scales sewn to a backing, flexible and sturdy. It is footwear of the medium path.'
+type: feet
+subtype: wearable
+bulk: medium
+tier: 2
+family: medium
+damagereduction: 3
+weight: 1200

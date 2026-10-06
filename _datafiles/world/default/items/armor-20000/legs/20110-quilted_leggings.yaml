@@ -1,0 +1,11 @@
+itemid: 20110
+name: quilted leggings
+namesimple: leggings
+description: 'Quilted wool and linen, stitched in channels that turn a glancing cut. It is leg armor of the cloth path.'
+type: legs
+subtype: wearable
+bulk: light
+tier: 2
+family: cloth
+damagereduction: 2
+weight: 400

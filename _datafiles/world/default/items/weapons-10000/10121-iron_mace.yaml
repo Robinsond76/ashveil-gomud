@@ -1,0 +1,13 @@
+itemid: 10121
+name: iron mace
+namesimple: mace
+description: 'A knobbed iron mace on an ash haft. It does not care what armor it hits.'
+type: weapon
+hands: 1
+subtype: bludgeoning
+weaponclass: mace
+tier: 1
+family: mace
+damage:
+  diceroll: 1d6
+weight: 1500

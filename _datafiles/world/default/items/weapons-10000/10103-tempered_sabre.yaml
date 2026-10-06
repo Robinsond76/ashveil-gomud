@@ -1,0 +1,13 @@
+itemid: 10103
+name: tempered sabre
+namesimple: sabre
+description: 'A curved sabre of tempered steel, quenched until it sings. It keeps an edge through a long march.'
+type: weapon
+hands: 1
+subtype: slashing
+weaponclass: sword
+tier: 3
+family: sword
+damage:
+  diceroll: 1d8+1
+weight: 1300

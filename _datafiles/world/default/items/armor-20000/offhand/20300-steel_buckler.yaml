@@ -1,0 +1,12 @@
+itemid: 20300
+name: steel buckler
+namesimple: buckler
+description: 'A small round steel buckler, strapped to the forearm. It parries more than it covers.'
+type: offhand
+subtype: wearable
+shieldsize: buckler
+bulk: light
+tier: 2
+family: buckler
+damagereduction: 5
+weight: 1600

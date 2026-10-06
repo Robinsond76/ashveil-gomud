@@ -1,0 +1,11 @@
+itemid: 20111
+name: layered leggings
+namesimple: leggings
+description: 'Many layers of fine cloth stitched together, light and surprisingly hard to cut. It is leg armor of the cloth path.'
+type: legs
+subtype: wearable
+bulk: light
+tier: 3
+family: cloth
+damagereduction: 2
+weight: 400

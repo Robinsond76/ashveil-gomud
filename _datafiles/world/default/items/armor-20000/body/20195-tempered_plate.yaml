@@ -1,0 +1,11 @@
+itemid: 20195
+name: tempered plate
+namesimple: plate
+description: 'Tempered steel plate, fitted and padded, the best a town smith can make. It is body armor of the heavy path.'
+type: body
+subtype: wearable
+bulk: heavy
+tier: 3
+family: heavy
+damagereduction: 20
+weight: 8000

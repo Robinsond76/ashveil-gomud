@@ -1,0 +1,11 @@
+itemid: 20194
+name: steel breastplate
+namesimple: breastplate
+description: 'Steel plate and mail, the armor of professional soldiers. It is body armor of the heavy path.'
+type: body
+subtype: wearable
+bulk: heavy
+tier: 2
+family: heavy
+damagereduction: 15
+weight: 8000

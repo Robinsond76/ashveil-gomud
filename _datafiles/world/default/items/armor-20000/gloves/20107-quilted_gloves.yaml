@@ -1,0 +1,11 @@
+itemid: 20107
+name: quilted gloves
+namesimple: gloves
+description: 'Quilted wool and linen, stitched in channels that turn a glancing cut. It is hand protection of the cloth path.'
+type: gloves
+subtype: wearable
+bulk: light
+tier: 2
+family: cloth
+damagereduction: 1
+weight: 150

@@ -1,0 +1,9 @@
+itemid: 201
+name: elk antlers
+namesimple: antlers
+description: 'A broad pair of elk antlers, prized by carvers and worth the awkward carrying.'
+type: commodity
+subtype: mundane
+goods: trophy
+value: 15
+weight: 2500

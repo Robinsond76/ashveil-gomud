@@ -1,0 +1,11 @@
+itemid: 20169
+name: jack chausses
+namesimple: chausses
+description: 'Padded canvas with iron rivets, a middle weight between leather and mail. It is leg armor of the medium path.'
+type: legs
+subtype: wearable
+bulk: medium
+tier: 1
+family: medium
+damagereduction: 4
+weight: 2200

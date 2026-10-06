@@ -1,0 +1,13 @@
+itemid: 10173
+name: laminated longbow
+namesimple: bow
+description: 'A longbow laminated from horn and ash, drawn harder and farther than a plain stave.'
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: bow
+tier: 3
+family: bow
+damage:
+  diceroll: 1d10+1
+weight: 1100

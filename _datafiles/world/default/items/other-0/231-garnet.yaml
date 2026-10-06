@@ -1,0 +1,9 @@
+itemid: 231
+name: garnet
+namesimple: garnet
+description: 'A deep red garnet, cut and polished.'
+type: gemstone
+subtype: mundane
+goods: valuable
+value: 70
+weight: 40

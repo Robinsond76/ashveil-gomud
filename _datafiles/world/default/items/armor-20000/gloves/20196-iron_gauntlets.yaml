@@ -1,0 +1,11 @@
+itemid: 20196
+name: iron gauntlets
+namesimple: gauntlets
+description: 'Riveted iron rings and plates, heavy and sure. It is hand protection of the heavy path.'
+type: gloves
+subtype: wearable
+bulk: heavy
+tier: 1
+family: heavy
+damagereduction: 3
+weight: 900

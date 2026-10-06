@@ -1,0 +1,9 @@
+itemid: 214
+name: splintered shields
+namesimple: shields
+description: 'Splintered shield boards and rusted bosses, tied with cord.'
+type: commodity
+subtype: mundane
+goods: salvage
+value: 4
+weight: 3000

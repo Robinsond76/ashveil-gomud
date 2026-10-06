@@ -33,6 +33,12 @@ character:
       restockrate: 1 hour
     - itemid: 30015
       quantitymax: 2
+    - itemid: 212
+      quantitymax: 4
+    - itemid: 220
+      quantitymax: 4
+    - itemid: 225
+      quantitymax: 4
   equipment:
     weapon:
       itemid: 10005

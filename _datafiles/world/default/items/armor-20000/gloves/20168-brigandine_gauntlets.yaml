@@ -1,0 +1,11 @@
+itemid: 20168
+name: brigandine gauntlets
+namesimple: gauntlets
+description: 'Steel plates riveted inside a fabric coat, protection without the full weight of plate. It is hand protection of the medium path.'
+type: gloves
+subtype: wearable
+bulk: medium
+tier: 3
+family: medium
+damagereduction: 4
+weight: 600

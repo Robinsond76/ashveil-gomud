@@ -1,0 +1,14 @@
+itemid: 10163
+name: ironbound staff
+namesimple: staff
+description: 'A laminated staff bound in iron bands, heavy enough to be a real weapon in a scholar''s hands.'
+type: weapon
+hands: 2
+subtype: bludgeoning
+weaponclass: staff
+tier: 3
+family: staff
+parry: 7
+damage:
+  diceroll: 1d8+1
+weight: 2000

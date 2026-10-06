@@ -1,0 +1,9 @@
+itemid: 225
+name: tanned leather
+namesimple: leather
+description: 'A stiff, tanned hide of good leather, ready for cutting.'
+type: commodity
+subtype: mundane
+goods: material
+value: 16
+weight: 800

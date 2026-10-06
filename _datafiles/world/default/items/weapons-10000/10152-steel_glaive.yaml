@@ -1,0 +1,14 @@
+itemid: 10152
+name: steel glaive
+namesimple: glaive
+description: 'A steel glaive with a socketed, single-edged blade. Two hands, and a shield is left behind.'
+type: weapon
+hands: 2
+subtype: slashing
+weaponclass: glaive
+tier: 2
+family: glaive
+reach: true
+damage:
+  diceroll: 2d6
+weight: 3200

@@ -1,0 +1,14 @@
+itemid: 10141
+name: iron war spear
+namesimple: spear
+description: 'A long iron war spear held in two hands. Its reach lets the second rank fight past the first.'
+type: weapon
+hands: 2
+subtype: stabbing
+weaponclass: spear
+tier: 1
+family: war spear
+reach: true
+damage:
+  diceroll: 1d8+1
+weight: 2200

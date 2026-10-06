@@ -1,0 +1,13 @@
+itemid: 10182
+name: heavy crossbow
+namesimple: crossbow
+description: 'A heavy crossbow with a steel prod, spanned with a belt claw.'
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: crossbow
+tier: 2
+family: crossbow
+damage:
+  diceroll: 1d8+2
+weight: 3500
