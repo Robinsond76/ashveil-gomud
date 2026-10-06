@@ -61,6 +61,12 @@
         return (info && Array.isArray(info.resources)) ? info.resources : [];
     }
 
+    // Phase 40a2: gathering resources picked clean for now ("depleted").
+    function depletedFor(roomId) {
+        var info = roomInfoStore.get(roomId);
+        return (info && Array.isArray(info.depleted)) ? info.depleted : [];
+    }
+
     var mapSettings = (function () {
         try {
             var stored = JSON.parse(localStorage.getItem(MAP_SETTINGS_KEY) || 'null');
@@ -279,8 +285,10 @@
         }
 
         if (Array.isArray(info.resources) && info.resources.length > 0) {
+            var gone = Array.isArray(info.depleted) ? info.depleted : [];
             var resNames = info.resources.map(function (r) {
-                return (RESOURCE_INFO[r] && RESOURCE_INFO[r].label) || r;
+                var label = (RESOURCE_INFO[r] && RESOURCE_INFO[r].label) || r;
+                return gone.indexOf(r) !== -1 ? label + ' (picked clean)' : label;
             });
             html += '<hr class="tt-divider"><div class="tt-row">' +
                     '<span class="tt-label">Here</span>' +
@@ -997,6 +1005,7 @@
                 ctx.fillText(room.symbol || '\u2022', p.px, p.py);
                 if (mapSettings.showResources) {
                     var resIds = resourcesFor(id);
+                    var goneIds = depletedFor(id);
                     if (resIds.length > 0) {
                         var dot   = Math.max(3, scaledSize * 0.16);
                         var shown = resIds.slice(0, RESOURCE_ICON_MAX);
@@ -1012,10 +1021,23 @@
                                 dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
                                 dy = p.py - half * 0.62;
                             }
+                            var picked = goneIds.indexOf(rid) !== -1;
                             ctx.beginPath();
                             ctx.arc(dx, dy, dot, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.stroke();
+                            if (picked) {
+                                // depleted: the dot is hollow with a slash through it
+                                ctx.fillStyle = mapSettings.mapBackground;
+                                ctx.fill();
+                                ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.moveTo(dx - dot, dy + dot);
+                                ctx.lineTo(dx + dot, dy - dot);
+                                ctx.stroke();
+                            } else {
+                                ctx.fill();
+                                ctx.stroke();
+                            }
                         });
                         if (resIds.length > RESOURCE_ICON_MAX) {
                             ctx.fillStyle = symColor;

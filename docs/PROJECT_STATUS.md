@@ -29,6 +29,84 @@ payload sends (no new event); the sprite loader does not yet replace the
 battle screen's own loader (follow-up, no behaviour change). Not changed: other
 players do not appear on the map, no race variants (owner deferrals).
 
+**Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
+firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
+and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
+run a real-time timed action (20s herbs and firewood, 30s fish and game) kept in
+memory and resolved on the round tick with the real clock; it never touches the
+world clock. A typed command (other than look and a few reads), a move, a fight
+or death cancels it with nothing gained. Each room resource has a pool (herbs 3,
+firewood 4, fishing 4, game 2) shared by every company, regrowing one charge per
+20 minutes (game 40); only pools in recovery are saved (plugin `pools`, computed
+on read, so a restart never refills early). Depleted resources show "(picked
+clean)" in `look`, GMCP `Room.Info`/`World.Map` (`depleted`), the room panel
+(dimmed badge) and the map (hollow dot with a slash). Herbs use the zone's
+table; a company without a Forage specialist risks bitter weed; a knife, a
+Forage specialist and a Scribe (rarer herb, 10%) add finds; darkness halves
+them. Firewood doubles with an axe (+1 Field Smith) and half is damp in rain
+or storm. Fishing needs a line (5% break) and costs half effort; game needs a
+bow or sets snares (half chance), adds +10 to the room's encounter chance, and
+hands a haul to cargo (leader's pack on `ErrNoCargo`). Effort goes through
+`walking.Effort`; the encounter roll is `encounters.Attempt`; supplies through
+`company.CompanyItemCount/SpendCompanyItem`. Camp fire rule: a fire needs a
+firewood room (free) or one dry bundle; a damp bundle needs two tries and
+lights a smoky fire with light but no warmth (`Camp.Damp`,
+`RoomWarmedByFire`). New items 40-44 (firewood, damp firewood, fishing line,
+raw fish, bitter weed) and grilled fish (30024, Dunmar hearth, cooking 1);
+firewood and line sell at the Dunmar and Old Kings Road markets; 152 rooms
+tagged (Dark Forest, Frost Lake, Fernhollow, Old Kings Road, tutorial).
+Help: new `help gathering` (indexed under `road`; aliases gather, herbs,
+firewood, fish, hunt, snares, deadfall, picked-clean) and updates to
+resources, camp, forage, cooking, survival and webclient; tutorial hints in
+the Survival and Camp lessons. Tests: rules, module, wiring through
+`plugins.Load` and `TryCommand`, camp fuel, the three seams, help.
+Design: [40a2](designs/2026-10-05-phase-40a2-gathering-design.md).
+Decisions (builder, owner delegation): (1) room 2002 (the lightning-split oak)
+and tutorial room 905 are firewood rooms, so the existing camp flows and the
+tutorial keep working with no change to the starter kit; (2) ephemeral
+(tutorial) rooms use a memory-only ledger and never deplete; (3) the encounter
+roll happens after the haul, so an ambush never costs the work; (4) the damp
+first try is in memory only (a restart gives another first try); (5) the
+Forage specialist stands in for "Ranger" and a knife is any bladed weapon;
+(6) raw fish has no spoilage (the game has no spoilage mechanic). Not folded
+in: the 40a follow-up that a waterskin is destroyed by its last sip (belongs
+with consumables, still open). Follow-ups: regrowth does not push a GMCP
+redraw (the panel updates on the next room refresh); S1 `depleted` art
+replaces the slashed dot. Browser check: `/mnt/project-files/screens/40a2-gathering-panel.png`.
+Review (Opus review thread), exploit search against the 36c economy:
+**Accepted:** (1) gather-and-sell: with an axe and a Field Smith a room gave
+16-20 firewood bundles in 80 seconds, each sold back at about 3-5 gold to a
+market whose stock drifts back every round, several times what a fight pays
+at low level; lines and bundles also carried a haggled 1-gold margin from
+Dunmar to the road post. Markets now take `SupplyOnly: true` (sold, never
+bought back; `market` shows "never", `market sell` says so) for firewood and
+fishing lines (`TestMarketNeverBuysBackASupplyOnlyGood`,
+`TestShippedFirewoodAndLinesAreSupplyOnly`, `TestBidForStockClosedForSupplyOnly`).
+Hunting (about 6 gold a hunt, 2 a room per 40 minutes) and herbs (about 3
+gold a pick, 3 a room) stay sellable: fair. (2) Fishing lines were sold only
+in Dunmar and at the road post, yet the help and refusal said
+"provisioners"; the old fisherman at Frost Lake (where the fishing rooms
+are) now sells them at 12, above every market. (3) UI: `camp` and
+`camp status` now say what a fire would burn (free deadfall, N bundles, damp
+only, or none and where to get some) before `camp fire` fails, and a damp
+fire's status says it gives no warmth (`TestFuelLineSaysWhatAFireWouldBurn`,
+`TestCampCommandsShowFuelUntilTheFireIsLit`); a bare `gather` says when a
+picked-clean resource regrows. (4) The memory-only ledger for tutorial
+copies grew with every gather and was never read; it is gone, and tutorial
+copies record nothing. **Checked, no change:** `camp fire` stays free in the
+tutorial camp (905) and at the starter road's oak (2002), where the 44 smoke
+script and the tutorial flows camp; inns are untouched; everywhere else a
+fire now needs a bundle, as designed. **Rejected:**
+the tutorial's never-depleting rooms let a new character leave with one
+load of herbs before playing (bounded by carry weight, once); the 40a
+waterskin follow-up is not small (an item at 0 uses is refilled to full by
+`Validate`, so an empty skin needs a new representation; left for 43a camp
+consumables). Master fix carried with this merge: 37b's goblin shaman and
+38b's summoned Angel both used mob id 95, so loading the world panicked
+(`TestShippedEncounterContentIsValid` red on master); the shaman is now mob
+97. Follow-ups: a gather in progress shows only in text (no
+GMCP/panel progress); regrowth still does not push a redraw.
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene

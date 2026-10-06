@@ -101,3 +101,31 @@ func TestShopkeepersNeverUndercutMarketsOnTradedGoods(t *testing.T) {
 	}))
 	assert.Positive(t, checked, "Brynja's goods are checked")
 }
+
+// Phase 40a2 review: firewood (free to gather) and fishing lines are sold
+// in every shipped market but never bought back.
+func TestShippedFirewoodAndLinesAreSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	seen := 0
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if g.ItemId == 40 || g.ItemId == 42 {
+				assert.True(t, g.SupplyOnly, "%s item %d", m.Zone, g.ItemId)
+				seen++
+			}
+		}
+	}
+	assert.Equal(t, 4, seen, "firewood and lines in Dunmar and on the Old Kings Road")
+}

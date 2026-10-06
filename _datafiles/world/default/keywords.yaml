@@ -82,6 +82,7 @@ help:
       - cooking
       - resources
       - worldmap
+      - gathering
     communication:
       - emote
       - say
@@ -316,6 +317,7 @@ help-aliases:
   camp:             [camping, campfire]
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
+  gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]

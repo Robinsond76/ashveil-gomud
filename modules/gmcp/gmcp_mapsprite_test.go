@@ -27,7 +27,9 @@ func (f fakeArchetypes) PlayerArchetype(userID int) (string, bool) {
 
 type fakeClasses struct{ class map[int]string }
 
-func (f fakeClasses) PlayerClass(userID int) classes.State { return classes.State{Class: f.class[userID]} }
+func (f fakeClasses) PlayerClass(userID int) classes.State {
+	return classes.State{Class: f.class[userID]}
+}
 
 // TestMapSpriteKeys (Phase 40b): Char.Info and Party vitals carry the
 // lineage and class ids the map sprite is chosen by.

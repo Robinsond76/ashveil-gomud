@@ -11,8 +11,8 @@ import (
 // `resources` field. The vocabulary is validated when a room loads; look,
 // survival, camping and the map all read it through the helpers here.
 
-// Resource ids. The first three are shown and wired in 40a; the rest are
-// accepted in data now and appear when 40a2 gives them their rules.
+// Resource ids. Water, forage and shelter are wired in 40a; herbs, firewood,
+// fishing and game in 40a2 (modules/gathering).
 const (
 	ResourceWater    = `water`
 	ResourceForage   = `forage`
@@ -35,10 +35,10 @@ var resourceTable = []resourceInfo{
 	{ResourceWater, `fresh water`, true, false},
 	{ResourceForage, `forage`, true, true},
 	{ResourceShelter, `shelter`, true, true},
-	{ResourceHerbs, `herbs`, false, false},
-	{ResourceFirewood, `firewood`, false, false},
-	{ResourceFishing, `fishing`, false, false},
-	{ResourceGame, `game`, false, false},
+	{ResourceHerbs, `herbs`, true, false},
+	{ResourceFirewood, `firewood`, true, false},
+	{ResourceFishing, `fishing`, true, false},
+	{ResourceGame, `game`, true, false},
 }
 
 func lookupResource(id string) (resourceInfo, bool) {
@@ -148,7 +148,46 @@ func (r *Room) ShownResources() []string {
 	return out
 }
 
+var (
+	depletedMu sync.RWMutex
+	depleted   func(roomID int, resource string) bool
+)
+
+// SetDepletedCheck registers the rule for whether a gathering resource in a
+// room is picked clean for now (modules/gathering, Phase 40a2). nil clears
+// it; with none set nothing is ever depleted.
+func SetDepletedCheck(check func(roomID int, resource string) bool) {
+	depletedMu.Lock()
+	defer depletedMu.Unlock()
+	depleted = check
+}
+
+// IsDepleted reports whether a shown gathering resource here is picked
+// clean right now.
+func (r *Room) IsDepleted(id string) bool {
+	if r == nil {
+		return false
+	}
+	depletedMu.RLock()
+	check := depleted
+	depletedMu.RUnlock()
+	return check != nil && r.HasResource(id) && check(r.RoomId, strings.ToLower(strings.TrimSpace(id)))
+}
+
+// DepletedResources is the room's shown resources that are picked clean for
+// now, in display order. Never nil.
+func (r *Room) DepletedResources() []string {
+	out := []string{}
+	for _, id := range r.ShownResources() {
+		if r.IsDepleted(id) {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
 // ResourceLine is look's "Here: ..." line, or "" without shown resources.
+// A picked-clean gathering resource says so.
 func (r *Room) ResourceLine() string {
 	ids := r.ShownResources()
 	if len(ids) == 0 {
@@ -157,6 +196,9 @@ func (r *Room) ResourceLine() string {
 	labels := make([]string, len(ids))
 	for i, id := range ids {
 		labels[i] = ResourceLabel(id)
+		if r.IsDepleted(id) {
+			labels[i] += ` (picked clean)`
+		}
 	}
 	return `Here: ` + strings.Join(labels, `, `) + `.`
 }

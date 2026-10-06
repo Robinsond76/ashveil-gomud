@@ -19,6 +19,8 @@ idlemessages:
 - "304"
 resources:
 - forage
+- herbs
+- game
 mapx: 23
 mapy: 10
 mapz: 0

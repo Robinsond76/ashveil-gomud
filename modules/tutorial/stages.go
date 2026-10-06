@@ -108,6 +108,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">eat <food></ansi> and <ansi fg="command">drink <drink></ansi>, e.g. <ansi fg="command">eat sandwich</ansi> and <ansi fg="command">drink waterskin</ansi>. Add a companion's name to feed them instead: <ansi fg="command">eat sandwich tamsin</ansi>.`,
 				`This yard has a water trough (see the "Here:" line in <ansi fg="command">look</ansi>): <ansi fg="command">drink water</ansi> drinks from it for free, and <ansi fg="command">fill</ansi> tops up your waterskin. <ansi fg="command">company fill</ansi> fills everyone's. <ansi fg="command">help resources</ansi> lists what rooms can offer.`,
+				`This yard also has herbs to pick: <ansi fg="command">gather</ansi> lists what a room offers and <ansi fg="command">gather herbs</ansi> spends about 20 seconds of real time and a little effort to find some. Firewood, fish and game work the same way in the wild, and a room picks clean for a while (<ansi fg="command">help gathering</ansi>).`,
 				`<ansi fg="command">weather</ansi> shows the sky. Storms slow travel and spoil rest.`,
 				`<ansi fg="command">temperature</ansi> shows how warm you are. Try it here in the open, then back in the Waking Hall: shelter, a fire, and warm clothes all help.`,
 				`<ansi fg="command">strain</ansi> shows how worn your company is from walking; <ansi fg="command">cargo</ansi> shows your load. Too heavy a load tires everyone faster, and a full company can't pick up anything more. Each member, a pack, and a horse add room (<ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>).`,
@@ -124,6 +125,7 @@ func init() {
 			Goal:  "Make camp, light a fire, and rest until your company is Rested.",
 			Hints: []string{
 				`<ansi fg="command">camp</ansi> makes camp here, <ansi fg="command">camp fire</ansi> lights the fire, and <ansi fg="command">camp rest</ansi> rests for about a minute. You stay put while you rest.`,
+				`A fire needs fuel. Here the kindling stacked beside the fire ring feeds it for nothing, but away from deadfall <ansi fg="command">camp fire</ansi> burns a firewood bundle from your packs or cargo: buy bundles at a market or <ansi fg="command">gather firewood</ansi> where it grows (<ansi fg="command">help gathering</ansi>).`,
 				`<ansi fg="command">camp status</ansi> shows the rest's progress and everyone's needs; <ansi fg="command">conditions</ansi> shows Rested afterwards.`,
 				`With a whetstone, <ansi fg="command">camp sharpen on</ansi> hones every blade in the company at the end of a rest, using the stone once. Whetstones are sold in markets (<ansi fg="command">help sharpen</ansi>).`,
 				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested. A finished camp rest or inn stay restores everyone's health and mana; on the road, health trickles back only to half, and mana not at all (<ansi fg="command">help readiness</ansi>, <ansi fg="command">help mana</ansi>).`,

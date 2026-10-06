@@ -567,6 +567,25 @@ func TestEntriesSaveTheGraceOnlyWhenItChanges(t *testing.T) {
 	assert.Equal(t, 1, store.saves, "consuming a grace entry is saved")
 }
 
+// Phase 40a2: a company working in place rolls at the room's chance plus a
+// bonus, and learns whether a group sprang.
+func TestAttemptAddsTheBonusAndReportsTheResult(t *testing.T) {
+	w := setup(t)
+	w.user.Character.RoomId = deadRm
+	w.roll = 5 // a 5 in 100 springs only a chance above 5
+	assert.False(t, w.m.Attempt(userID, deadRm, 0), "a 0% room never springs")
+	assert.Empty(t, w.m.active)
+	assert.True(t, w.m.Attempt(userID, deadRm, 10), "the bonus lifts 0% to 10%")
+	assert.Len(t, w.m.active, 1)
+	assert.False(t, w.m.Attempt(userID, deadRm, 100), "one unresolved group per leader")
+
+	w.m.active = map[string]*record{}
+	w.roll = 99
+	assert.True(t, w.m.Attempt(userID, deadRm, 500), "the chance is capped at 100%")
+	w.user.Character.RoomId = startRm
+	assert.False(t, w.m.Attempt(userID, deadRm, 100), "the party must be in the room")
+}
+
 // Phase 37b: a company that beats the boss finds its lair quiet for
 // BossRespawnSeconds of real time, saved with the leader, and the lair
 // springs again after. A fled fight starts no cooldown.
