@@ -196,6 +196,7 @@
         .cbt-fighter:focus-visible { outline: 2px solid var(--t-accent); }
         .cbt-fighter.is-enemy { border-color: var(--t-aggro-text, var(--t-error)); }
         .cbt-fighter.is-you { color: var(--t-party-leader); font-weight: bold; }
+        .cbt-fighter.is-doll { font-style: italic; } /* Phase 39d: a Doll Master's doll */
         .cbt-fighter.is-fallen { opacity: 0.55; border-style: dashed; }
         .cbt-fighter.is-hl { background: var(--t-accent-dim); color: var(--t-text-white); }
         .cbt-fighter .cbt-sub { display: block; font-weight: normal; font-size: 0.85em; color: var(--t-text-secondary); }
@@ -563,7 +564,16 @@
         const o = (battle.others || []).find(x => x.id === id);
         if (o) { return o.name; }
         const m = data.members.find(x => x.key === id);
-        return m ? m.name : '';
+        if (m) { return m.name; }
+        const d = (battle.dolls || []).find(x => x.key === id); // Phase 39d
+        return d ? d.name : '';
+    }
+
+    // dollOwner names a doll's Master: "your" or a companion's name with 's.
+    function dollOwner(d, data) {
+        if (d.master === 'leader') { return 'your'; }
+        const m = data.members.find(x => x.key === d.master);
+        return m ? m.name + '\'s' : 'a';
     }
 
     function renderBattle(root, battle, data) {
@@ -661,6 +671,16 @@
                 node.addEventListener('click', () => pin(m.key));
             }
             return { cell: battle.positions ? battle.positions[m.key] || null : m.cell, node };
+        });
+        // Phase 39d: a Doll Master's dolls stand in cells of their own.
+        (battle.dolls || []).forEach(d => {
+            const hp = d.hp + ' / ' + d.hp_max;
+            const owner = dollOwner(d, data);
+            const sub = el('span', 'cbt-sub', hp + ' · ' + owner + ' doll');
+            const node = fighterButton(d.key, 'is-doll', d.name, sub, d.name + ', ' + owner + ' doll, health ' + d.hp + ' of ' + d.hp_max);
+            node.title = 'A Doll Master\'s doll: it strikes on its Master\'s turn (help doll)';
+            node.addEventListener('click', () => pin(d.key));
+            ours.push({ cell: battle.positions ? battle.positions[d.key] || null : null, node });
         });
         const us = el('div');
         const placed = ours.filter(f => f.cell);

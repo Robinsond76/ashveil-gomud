@@ -103,11 +103,7 @@ func clusterSpell(uid, mid int, info *characters.SpellAggroInfo) bool {
 			}
 			continue
 		}
-		cid, ok := company.CompanionIDFromMemberKey(k)
-		if !ok {
-			continue
-		}
-		id, ok := company.InstanceFor(owner, cid)
+		id, ok := company.InstanceForKey(owner, k)
 		if !ok {
 			continue
 		}

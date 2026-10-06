@@ -36,7 +36,8 @@ a cleric heals, a wizard casts, a witch hexes (<ansi fg="command">help strategy<
 (<ansi fg="command">help shaman</ansi>), a samurai opens a fight half a turn
 ahead (<ansi fg="command">help samurai</ansi>), and a warrior
 tackles, a rogue strikes an opening, a ranger aims a shot, a halberdier sweeps a row
-(<ansi fg="command">help halberdier</ansi>, <ansi fg="command">help abilities</ansi>).
+and a Doll Master fights through a wooden doll
+(<ansi fg="command">help halberdier</ansi>, <ansi fg="command">help dollmaster</ansi>, <ansi fg="command">help abilities</ansi>).
 
 Wizards start with Magic Missile, clerics with Minor Heal, witches with
 Slumber and shamans with Call Fog and Gust, the spells they cast in battle
@@ -59,6 +60,7 @@ neutral or evil route, with ranks and talents of its own (<ansi fg="command">hel
   Wizard    light    none           any
   Witch     light    none           any
   Halberdier medium  none           glaives and spears
+  Doll Master light  none           daggers, rods and staffs
   Shaman    light    none           any
 
 A cleric's holy symbol, carried in the off hand, adds 5% to every heal.
