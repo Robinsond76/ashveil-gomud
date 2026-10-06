@@ -22,6 +22,8 @@ one. Watering a named companion, you're told you provisioned them, or
 their new band.
 See ~help survival~ for what Thirst means and how it's spent.
 
+Beside fresh water (see ~help resources~), ~drink water~ or ~drink source~ drinks from the room itself, for you or a named companion, and uses nothing up. ~fill~ refills a waterskin there.
+
 To water your whole company at once, from the cargo and everyone's packs, type ~company drink~ or ~company meal~ (see ~help company meal~).
 
 Find out more about referring to items by name by typing ~help item-names~.

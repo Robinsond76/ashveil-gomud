@@ -91,6 +91,41 @@ func AimRule(leaderId int, key company.MemberKey) strategy.Rule {
 	return MemberStrategy(leaderId, key).Rule
 }
 
+// HealersDefault reports whether leaderId's company is on the healers
+// default (Phase 35e): no focus ordered for this battle, none saved, and the
+// leader at level 5 or more. It says nothing of whether a healer stands.
+func HealersDefault(leaderId int) bool {
+	if _, set := battle.Focus(leaderId); set {
+		return false
+	}
+	level := 0
+	if u := users.GetByUserId(leaderId); u != nil && u.Character != nil {
+		level = u.Character.Level
+	}
+	return strategy.HealersDefault(leaderId, level)
+}
+
+// HealerFoe reports whether any of foes is a healer the attacker can reach.
+func HealerFoe(foes []strategy.Foe) bool {
+	for _, f := range foes {
+		if f.Healer && f.Reachable {
+			return true
+		}
+	}
+	return false
+}
+
+// RuleVs is the rule a company member aims by against foes: rule, or the
+// healers rule when its company is on the healers default and a healer it
+// can reach stands among them (Phase 35e). Reach comes first: with no
+// healer in reach the member keeps its usual rule.
+func RuleVs(leaderId int, rule strategy.Rule, foes []strategy.Foe) strategy.Rule {
+	if rule != strategy.Healers && leaderId > 0 && HealersDefault(leaderId) && HealerFoe(foes) {
+		return strategy.Healers
+	}
+	return rule
+}
+
 // MemberStrategy is a company member's strategy, resolved against its
 // archetype's default.
 func MemberStrategy(leaderId int, key company.MemberKey) strategy.Strategy {
@@ -177,6 +212,7 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 			StrikesPct: StrikesPct(m.Character.Aggro, a.LeaderId),
 			Chanting:   m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
 			Caster:     len(m.Character.SpellBook) > 0,
+			Healer:     strategy.Role(m.EnemyRole()) == strategy.Healer,
 		}
 		// Members are ranked toughest first: the first standing is the
 		// leader, and the next steps up when it falls.
@@ -231,7 +267,8 @@ func StrikesPct(a *characters.Aggro, leaderId int) int {
 // choice among the foes it can reach, else the nearest it can reach, else
 // the front-most. ok is false when no member stands.
 func Aim(g Group, a Attacker) (int, bool) {
-	return strategy.Pick(a.Rule, Foes(g, a), a.AssistId, a.Spell)
+	foes := Foes(g, a)
+	return strategy.Pick(RuleVs(a.LeaderId, a.Rule, foes), foes, a.AssistId, a.Spell)
 }
 
 // RuleChoice is the rule's own choice among the foes the attacker can
@@ -246,7 +283,9 @@ func Aim(g Group, a Attacker) (int, bool) {
 func RuleChoice(g Group, a Attacker, current int) (int, bool) {
 	var pool []strategy.Foe
 	pct := map[int]int{}
-	for _, f := range Foes(g, a) {
+	all := Foes(g, a)
+	rule := RuleVs(a.LeaderId, a.Rule, all)
+	for _, f := range all {
 		if f.Reachable {
 			pool = append(pool, f)
 			pct[f.ID] = f.StrikesPct
@@ -255,8 +294,8 @@ func RuleChoice(g Group, a Attacker, current int) (int, bool) {
 	if len(pool) == 0 {
 		return 0, false
 	}
-	choice, ok := strategy.Choose(a.Rule, pool, a.AssistId)
-	if ok && a.Rule == strategy.Defend && choice != current {
+	choice, ok := strategy.Choose(rule, pool, a.AssistId)
+	if ok && rule == strategy.Defend && choice != current {
 		if p, here := pct[current]; here && p >= 0 && p == pct[choice] {
 			return current, true
 		}

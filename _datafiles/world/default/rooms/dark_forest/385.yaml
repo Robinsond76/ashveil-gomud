@@ -16,6 +16,8 @@ exits:
 mutators:
 - mutatorid: wildfire
   spawnedround: 1596848
+resources:
+- forage
 mapx: 19
 mapy: -1
 mapz: 0

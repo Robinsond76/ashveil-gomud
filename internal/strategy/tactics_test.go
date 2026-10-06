@@ -81,8 +81,8 @@ func TestParseFocus(t *testing.T) {
 			t.Errorf("ParseFocus(%q) should refuse", in)
 		}
 	}
-	if len(FocusRules) != 7 || FocusRules[0] != NoFocus {
-		t.Errorf("seven focus values, none first: %v", FocusRules)
+	if len(FocusRules) != 8 || FocusRules[0] != NoFocus {
+		t.Errorf("eight focus values, none first: %v", FocusRules)
 	}
 }
 
@@ -214,5 +214,67 @@ func TestEnemyPick(t *testing.T) {
 	}
 	if _, ok := EnemyPick(Weakest, company, 0, never); ok {
 		t.Error("none reachable: nothing")
+	}
+}
+
+// Phase 35e: the healers rule, a chanting healer first, then the weakest
+// idle healer, then the casters order; reach comes first.
+func TestHealersRule(t *testing.T) {
+	if r, ok := ParseFocus("healers"); !ok || r != Healers {
+		t.Fatalf("healers is a focus, got %q %v", r, ok)
+	}
+	if r, ok := ParseRule("healer"); !ok || r != Healers {
+		t.Errorf("healer reads as the rule, got %q %v", r, ok)
+	}
+	if _, ok := ParseRole("healers"); ok {
+		t.Error("healers is a rule, not a role")
+	}
+	fs := []Foe{
+		{ID: 1, HP: 10, MaxHP: 10, Row: 0, Col: 0, Reachable: true},
+		{ID: 2, HP: 9, MaxHP: 10, Row: 0, Col: 1, Reachable: true, Healer: true, Caster: true},
+		{ID: 3, HP: 5, MaxHP: 10, Row: 1, Col: 0, Reachable: true, Healer: true, Caster: true},
+		{ID: 4, HP: 10, MaxHP: 10, Row: 1, Col: 1, Reachable: true, Caster: true, Chanting: true},
+	}
+	if got, _ := Pick(Healers, fs, 0, false); got != 3 {
+		t.Errorf("the weakest idle healer: got %d", got)
+	}
+	fs[1].Chanting = true
+	if got, _ := Pick(Healers, fs, 0, false); got != 2 {
+		t.Errorf("a chanting healer before an idle one: got %d", got)
+	}
+	fs[1].Chanting = false
+	if got, _ := Pick(Healers, fs, 0, false); got == 4 {
+		t.Errorf("a chanting non-healer outranks a healer")
+	}
+	// Reach first: the healers out of reach, the casters order among the rest.
+	fs[1].Reachable, fs[2].Reachable = false, false
+	if got, _ := Pick(Healers, fs, 0, false); got != 4 {
+		t.Errorf("no healer in reach falls to the casters order: got %d", got)
+	}
+	// No healer at all: the casters order, then the weakest.
+	for i := range fs {
+		fs[i].Healer, fs[i].Reachable, fs[i].Caster, fs[i].Chanting = false, true, false, false
+	}
+	if got, _ := Pick(Healers, fs, 0, false); got != 3 {
+		t.Errorf("no healer, no caster: the weakest, got %d", got)
+	}
+}
+
+func TestHealersDefaultFromLevelFive(t *testing.T) {
+	f := &fakeTactics{stored: map[int]Tactics{}}
+	SetTacticsProvider(f)
+	t.Cleanup(func() { SetTacticsProvider(nil) })
+	for level, want := range map[int]bool{1: false, 4: false, 5: true, 9: true, 10: true, 30: true} {
+		if got := HealersDefault(1, level); got != want {
+			t.Errorf("HealersDefault(level %d) = %v, want %v", level, got, want)
+		}
+	}
+	f.stored[1] = Tactics{Focus: NoFocus}
+	if HealersDefault(1, 12) {
+		t.Error("an explicit none beats the default")
+	}
+	f.stored[1] = Tactics{Focus: Weakest}
+	if HealersDefault(1, 12) {
+		t.Error("an explicit focus beats the default")
 	}
 }

@@ -18,6 +18,8 @@ spawninfo:
   respawnrate: 2 real minutes
 - mobid: 56
   respawnrate: 2 real minutes
+resources:
+- forage
 mapx: 35
 mapy: -7
 mapz: 0

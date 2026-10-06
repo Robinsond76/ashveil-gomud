@@ -12,6 +12,8 @@ battle (the healing threshold), and how far they patch everyone up after it
   <ansi fg="command">leader</ansi>     their leader, the toughest of them
   <ansi fg="command">casters</ansi>    casters first: one chanting a spell first, then any caster,
              then the weakest foe once none is left
+  <ansi fg="command">healers</ansi>    healers first: one chanting a heal first, then any healer
+             (the weakest of them), then the casters order once none is left
   <ansi fg="command">nearest</ansi>    the front-most foe
   <ansi fg="command">weakest</ansi>    the foe with the least health left
   <ansi fg="command">strongest</ansi>  the foe with the most health left
@@ -24,7 +26,18 @@ default focus follows your level, as the enemy's coordination does:
   level 10 and up  <ansi fg="command">weakest</ansi>: everyone goes for the foe with the least health
   level 25 and up  <ansi fg="command">casters</ansi>: casters first, then the weakest
 
-Setting a focus, <ansi fg="command">none</ansi> included, always wins over the default.
+<ansi fg="yellow">From level 5, a healer on the other side changes the default.</ansi> While you have
+set no focus, your company goes for an enemy <ansi fg="command">healer</ansi> first whenever one
+stands within reach, at any level from 5 up, and then goes back to the
+level's default once the healer falls. A healer's heals can undo a whole
+company's work, so the first blows go to it, a chanting one before an idle
+one. Reach still comes first: whoever can't reach the healer keeps going
+for the foe the level's default picks (or its own strategy).
+<ansi fg="command">company tactics</ansi> says when this default is in force, and the battle shows
+"Your company marks the goblin shaman as a healer and goes for it first."
+
+Setting a focus, <ansi fg="command">none</ansi> included, always wins over the default (and so does a
+focus you call in a battle).
 <ansi fg="command">company tactics focus default</ansi> goes back to the default for your level, and
 <ansi fg="command">company tactics</ansi> says when the default is in force. Also by default, the
 first warrior among your companions <ansi fg="yellow">guards your healer</ansi> when it has no role

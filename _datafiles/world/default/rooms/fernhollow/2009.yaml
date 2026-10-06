@@ -21,6 +21,8 @@ spawninfo:
   respawnrate: 5 real minutes
 mapsymbol: +
 maplegend: Shaman
+resources:
+- shelter
 mapx: -2
 mapy: -1
 mapz: 0

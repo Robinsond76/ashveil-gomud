@@ -13,6 +13,8 @@ tags:
 exits:
   west:
     roomid: 902
+resources:
+- water
 mapx: -7
 mapy: 0
 mapz: -99

@@ -33,6 +33,8 @@ skilltraining:
   dual-wield:
     min: 1
     max: 4
+resources:
+- shelter
 mapx: 27
 mapy: 6
 mapz: 0

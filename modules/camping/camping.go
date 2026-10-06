@@ -421,6 +421,9 @@ func init() {
 	camping.SetAbandonProvider(m)
 	camping.SetCampAbandoner(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
+	// Phase 40a: forage and shelter act on a camp rest, so the room shows
+	// them only where a camp can be made.
+	rooms.SetCampableCheck(func(r *rooms.Room) bool { return roomEligible(r, m.roomTag()) })
 	// Phase 32a: look shows the camps in a room.
 	camping.SetRoomCampsReader(m.RoomCamps)
 	// A lit campfire also warms its room (Phase 15).
@@ -712,6 +715,9 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	text := fmt.Sprintf("You settle in by the fire to rest. (%s)", camping.RestDuration)
 	if scaled {
 		text += fmt.Sprintf("\nThe %s makes for a poorer rest.", condition.Name)
+		if room.HasResource(rooms.ResourceShelter) {
+			text += " The shelter here softens it."
+		}
 	}
 	return text
 }
