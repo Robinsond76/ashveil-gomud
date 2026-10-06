@@ -36,10 +36,12 @@ func wired(t *testing.T, roll int) *ArchetypeModule {
 	m.now = util.GetRoundCount
 	m.cast = nativeCast
 	archetypes.SetProvider(m)
+	restore := walking.SuspendListeners() // the init() module's listener rolls real dice
 	remove := walking.AddStepListener(m.onStep)
 	t.Cleanup(func() {
 		archetypes.SetProvider(nil)
 		remove()
+		restore()
 	})
 	return m
 }

@@ -127,3 +127,20 @@ func Arrived(userID, fromRoomID, toRoomID int) {
 		fn(userID, fromRoomID, toRoomID)
 	}
 }
+
+// SuspendListeners sets aside every registered step and arrival listener,
+// including the ones module init() wires, and returns a function that
+// restores them. Tests use it so only the listener under test hears a step:
+// a module's production listener would otherwise roll real dice alongside
+// the test's fixed ones.
+func SuspendListeners() (restore func()) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	steps, arrivals := listeners, arrivalListeners
+	listeners, arrivalListeners = map[int]StepListener{}, map[int]ArrivalListener{}
+	return func() {
+		providerMu.Lock()
+		defer providerMu.Unlock()
+		listeners, arrivalListeners = steps, arrivals
+	}
+}

@@ -133,6 +133,8 @@ func setup(t *testing.T) *world {
 	w.m.clock = func() time.Time { return w.now }
 	w.m.rng = func(n int) int { return w.roll % n } // 0 springs a chance roll; the weighted picks have one entry
 	w.m.graces[userID] = encounters.Grace{}         // past grace, unless a test says otherwise
+	restore := walking.SuspendListeners()           // the init() module's listeners use real dice
+	t.Cleanup(restore)
 	remove := walking.AddStepListener(w.m.onStep)
 	t.Cleanup(remove)
 	removeArrival := walking.AddArrivalListener(w.m.onArrival)
