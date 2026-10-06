@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"strconv"
 	"strings"
@@ -417,6 +418,10 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		payload.MapSymbol = room.GetMapSymbol()
 		payload.MapLegend = room.MapLegend
 		payload.Details = []string{}
+		if cfg := rooms.GetZoneConfig(room.Zone); cfg != nil && cfg.Encounters.Band.Valid() {
+			b := cfg.Encounters.Band
+			payload.LevelBand = &GMCPRoomModule_Payload_LevelBand{Low: b.Low, High: b.High, Rating: encounters.Rating(user.Character.Level, b)}
+		}
 
 		// Coordinates
 		payload.Coordinates = room.Zone
@@ -563,7 +568,17 @@ type GMCPRoomModule_Payload struct {
 	ExitsV2     map[string]GMCPRoomModule_Payload_Contents_ExitInfo `json:"exitsv2"`
 	Details     []string                                            `json:"details"`
 	Resources   []string                                            `json:"resources,omitempty"` // Phase 40a: shown room resources, omitted when none
-	Contents    GMCPRoomModule_Payload_Contents                     `json:"Contents"`
+	// LevelBand is the zone's recommended level band (Phase 37b) and how
+	// it rates against this player's level: easy, fair, risky or
+	// dangerous. Absent in zones with no band.
+	LevelBand *GMCPRoomModule_Payload_LevelBand `json:"levelband,omitempty"`
+	Contents  GMCPRoomModule_Payload_Contents   `json:"Contents"`
+}
+
+type GMCPRoomModule_Payload_LevelBand struct {
+	Low    int    `json:"low"`
+	High   int    `json:"high"`
+	Rating string `json:"rating"`
 }
 
 type GMCPRoomModule_Payload_Contents_ExitInfo struct {

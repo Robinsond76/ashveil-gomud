@@ -7,7 +7,7 @@ musicfile: static/audio/music/catacombs.mp3
 defaultbiome: dungeon
 
 # Phase 37 pilot: see the Dark Forest's note. A healer group (the grave
-# chanter) holds one in five of the crypt table's weight and never joins a
+# chanter) holds one in six of the crypt table's weight and never joins a
 # four-foe group or a boss's escorts.
 encounters:
   band:
@@ -17,14 +17,12 @@ encounters:
   tables:
     crypt:
       - id: skeleton-patrol
-        kind: undead
         weight: 45
         text: Dry bones clatter in the dark, and a patrol of skeletons shambles toward your company.
         members:
           - mobid: 15
             count: 3
       - id: bone-guard
-        kind: undead
         weight: 20
         text: A bone warden steps from a burial niche, skeletons behind it.
         members:
@@ -33,15 +31,13 @@ encounters:
           - mobid: 15
             count: 2
       - id: crypt-horde
-        kind: undead
         weight: 15
         text: A crowd of skeletons pulls itself out of the walls.
         members:
           - mobid: 15
             count: 4
       - id: chanter-pack
-        kind: undead
-        weight: 20
+        weight: 16
         text: A grave chanter's dirge rises, and skeletons answer it.
         members:
           - mobid: 93
@@ -50,7 +46,6 @@ encounters:
             count: 2
     lair:
       - id: lich-court
-        kind: undead
         weight: 100
         boss: true
         text: Cold light gathers. A lich rises from its bier, its bone wardens falling in beside it.
