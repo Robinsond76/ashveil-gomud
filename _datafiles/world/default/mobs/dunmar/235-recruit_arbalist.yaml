@@ -1,0 +1,22 @@
+mobid: 235
+zone: Dunmar
+# Phase 39h recruit base (arbalist). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Arbalist
+  description: A siege-camp crossbowman out of work, looking for a company to shoot for, with a heavy crossbow and a patient eye for armor.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10181
+    head:
+      itemid: 20020
+    body:
+      itemid: 20163
+    feet:
+      itemid: 20003

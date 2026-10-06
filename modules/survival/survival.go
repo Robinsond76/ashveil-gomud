@@ -11,6 +11,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"strconv"
 	"strings"
@@ -149,6 +150,7 @@ func init() {
 	m.plug.AddUserCommand("survival", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.flush(); err != nil {
 			mudlog.Error("survival: save", "error", err)

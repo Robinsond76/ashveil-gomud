@@ -55,6 +55,9 @@ foe it wounds can lose a chant (<ansi fg="command">help interrupts</ansi>). A do
 down loses its strike, as any fighter does (<ansi fg="command">help statuses</ansi>). Turn abilities off
 with <ansi fg="command">strategy [member] abilities off</ansi>.
 
+A doll has no will of its own: if its Master falls, its strings go slack and
+it goes limp and leaves the battle, even if it was standing.
+
 <ansi fg="yellow-bold">Mending</ansi>
 
 Doll parts mend dolls. Each part mends a doll for 10 health plus 3 for each

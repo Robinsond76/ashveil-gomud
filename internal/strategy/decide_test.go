@@ -121,7 +121,7 @@ func TestDefaultAutoSpells(t *testing.T) {
 		"greaterheal": UseBigHeal, "rejuvenation": UseRejuv, "grove": UseGrove, "siphon": UseSiphon,
 		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon, "raisefallen": UseRaise,
 		"rain": UseWeather, "chillwind": UseWeather, "callfog": UseWeather, "lightning": UseStorm, "gust": UseAttack, "stoneskin": UseBark,
-		"draught": UseHeal, "antidote": UseCure, "tonic": UseBless, "fireflask": UseFlame}
+		"draught": UseHeal, "antidote": UseCure, "tonic": UseBless, "fireflask": UseFlame, "arcanelance": UseBurst}
 	got := DefaultAutoSpells()
 	if len(got) != len(want) {
 		t.Fatalf("DefaultAutoSpells = %+v", got)

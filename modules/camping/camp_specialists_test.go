@@ -654,6 +654,8 @@ func TestTutorialCampsAreNeverRaided(t *testing.T) {
 	cfg := shippedCampSettings(t)
 	_, raided := cfg.Raids["Tutorial"]
 	assert.False(t, raided)
-	assert.Len(t, cfg.Raids, 1, "only the Old Kings Road")
+	assert.Len(t, cfg.Raids, 2, "the Old Kings Road and the admin Test Area Road")
+	_, road := cfg.Raids["Old Kings Road"]
+	assert.True(t, road)
 	assert.Equal(t, 15*time.Minute, cfg.RewardCooldown)
 }

@@ -1,0 +1,16 @@
+roomid: 90009
+zone: Test Area
+title: Ambush Thicket
+description: >-
+  A dense thicket where foes can lie hidden; fights called here may begin with an ambush.
+biome: forest
+tags:
+  - lit
+  - ambush-cover
+exits:
+  west:
+    roomid: 90002
+mapx: 1
+mapy: -1
+mapz: 0
+hascoordinates: true

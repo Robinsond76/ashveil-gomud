@@ -9,6 +9,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"strings"
 	"sync"
@@ -229,6 +230,7 @@ func init() {
 		}
 	})
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	domain.SetProvider(m)
 	domain.SetTacticsProvider(m)
 	module = m

@@ -87,6 +87,12 @@ func (c *Character) SpellCost(sp *spells.SpellData) int {
 		}
 		return max(1, cost-(cost*fx.Int(classes.SpellCost)+50)/100)
 	}
+	if sp.SpellId == "arcanelance" {
+		// Phase 38d: the Lance's rank sets its cost, then the spell discount.
+		if n := fx.Int(classes.LanceCost); n > 0 {
+			cost = n
+		}
+	}
 	pct := fx.Int(classes.SpellCost)
 	// Phase 38c3: a Coven Mother's hexes cost less again.
 	if _, isHex := hexes.For(sp.SpellId); isHex {
@@ -144,6 +150,7 @@ type ClassRT struct {
 	Summoned      bool        // this character has called its summon this battle
 	Summon        *SummonInfo // set on a summoned creature
 	Doll          *DollInfo   // set on a Doll Master's doll (Phase 39d)
+	Beast         *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
 	Bless         int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.
@@ -173,12 +180,32 @@ type ClassRT struct {
 	DollGuards int
 	Spliced    bool
 	SpliceTurn bool
+	// The Arbalist's lineage (Phase 39h): a bolt just loosed leaves its next
+	// turn to the winding (Reload); BoltFired is the first bolt of the battle
+	// spent; AimStruck is a blow landing on the holder since its last bolt
+	// (Steady Aim); BlowPierce, when set, is the percent of the target's armor
+	// the blow being resolved ignores and is cleared at once. On a foe,
+	// Shred is the armor its bolts have taken off it this battle.
+	Reload     bool
+	BoltFired  bool
+	AimStruck  bool
+	BlowPierce int
+	Shred      int
+	// The Beast Tamer's lineage (Phase 39e): the Attack Sic gives its beast
+	// this round, the Evasion Pack Sense gives the Tamer while the beast
+	// stands, and the Rally heals spent this battle.
+	Sic       int
+	PackSense int
+	Rallies   int
+	// Benched is a wounded beast's sitting-out told this battle (review fix).
+	Benched bool
 
 	// Phase 38c3: the Wizard's elites. Overchannel and the once-a-battle
 	// gifts of the Archon, Archmage and Necromancer.
 	OverRound   uint64 // the combat round of its last Overchannel
 	OverSpent   bool   // Overchannel has been used this battle
 	StormUsed   bool   // Archmage's Storm has been spent
+	LanceFreed  bool   // the High Sorcerer's Instant Lance has been spent
 	AegisUsed   bool   // Archon's Aegis has been spent
 	ReflectUsed bool   // Reflection has been spent
 	Raised      int    // thralls raised this battle

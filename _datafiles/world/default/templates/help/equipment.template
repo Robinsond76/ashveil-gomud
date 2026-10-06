@@ -34,8 +34,10 @@ Nothing is duplicated or automatically upgraded. There are no equipment presets.
 
 The legacy equip/wear/wield and remove commands manage the leader only.
 gearup directs you to deliberate assignment rather than choosing by price.
-In Company > Inventory, click cargo gear to compare or assign it to a member;
-Character > Gear is your equipment editor. Select a slot (including Pack),
+In Company > Inventory, every member's slots are listed: tap a slot to pick from
+the cargo that fits, or drag cargo onto a member (help companion-gear).
+Character > Gear is the equipment editor for you and each companion (choose
+whose gear at the top). Select a slot (including Pack),
 then a compatible exact cargo item to preview it. Current → After shows weapon
 damage dice, active edge bonus/remaining strikes for each hand, hands, reach, shield, protection, worn weight, burden, dodge retained,
 core stats, maximum health/mana and company capacity/cargo. Actual damage still
@@ -43,7 +45,8 @@ depends on the foe and combat conditions; burden reduces dodge, not combat speed
 Displaced gear is listed before you apply the change. Preview removal to see its
 impact, then choose Remove equipment. Empty slots and unavailable choices show
 why; if an item changes or leaves cargo, select again. Commands revalidate the
-exact item when you act. Companion gear remains managed through company commands.
+exact item when you act. Gear you give a companion returns to your cargo if
+they leave (help companion-gear).
 Text and browser use the same checks.
 
 Gear can come with a quality, a rarity, affixes and a level requirement
@@ -55,4 +58,4 @@ steel and tempered gear: <ansi fg="command">help equipmenttiers</ansi>. Goods yo
 
 See also: <ansi fg="command">help equipmenttiers</ansi>, <ansi fg="command">help goods</ansi>, <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help quality</ansi>,
 <ansi fg="command">help affixes</ansi>, <ansi fg="command">help identify</ansi>,
-<ansi fg="command">help defense</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>.
+<ansi fg="command">help defense</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help companion-gear</ansi>.

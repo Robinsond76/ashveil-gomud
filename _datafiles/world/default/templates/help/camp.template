@@ -122,6 +122,9 @@ Camping in the wilds isn't always safe: raiders may come during a rest
 brings a ranger's forage (<ansi fg="command">help forage</ansi>) and a cleric's vigil
 (<ansi fg="command">help vigil</ansi>).
 
+Your companions talk as a rest begins and ends, and the web client's Camp tab
+shows their latest words (<ansi fg="command">help banter</ansi>).
+
 In the web client, Company > Camp shows your camp and a rest's progress,
 with buttons for what you can do right now (<ansi fg="command">help webclient</ansi>).
 
@@ -130,6 +133,6 @@ fire and a sleeping mark while you rest. The camps of your own party show
 as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
 
 See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help poisons</ansi>, <ansi fg="command">help survival</ansi>,
-<ansi fg="command">help weather</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.
+<ansi fg="command">help weather</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help banter</ansi>.
 
 A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

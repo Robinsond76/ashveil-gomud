@@ -1,8 +1,10 @@
 package company
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
@@ -53,10 +55,12 @@ func FormationFor(leaderUserID int) (Formation, bool) {
 	p := formationProvider
 	formationProviderMu.RUnlock()
 	if p == nil {
-		return overlayDolls(leaderUserID, Formation{}, false)
+		f, ok := overlayDolls(leaderUserID, Formation{}, false)
+		return overlayBeasts(leaderUserID, f, ok)
 	}
 	f, ok := p.FormationFor(leaderUserID)
-	return overlayDolls(leaderUserID, f, ok) // Phase 39d: a Master's live dolls stand in cells
+	f, ok = overlayDolls(leaderUserID, f, ok) // Phase 39d: a Master's live dolls stand in cells
+	return overlayBeasts(leaderUserID, f, ok) // Phase 39e: a Tamer's live beast
 }
 
 // InstanceFor calls through to the registered FormationProvider. See
@@ -79,6 +83,9 @@ func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
 		return leader, key, true
 	}
 	if e, ok := DollOf(instanceId); ok { // Phase 39d
+		return e.Leader, e.Key, true
+	}
+	if e, ok := BeastOf(instanceId); ok { // Phase 39e
 		return e.Leader, e.Key, true
 	}
 	formationProviderMu.RLock()
@@ -724,4 +731,84 @@ func CompanionClassState(leaderUserID, companionID int) (string, []string, bool)
 		return "", nil, false
 	}
 	return cp.CompanionClassState(leaderUserID, companionID)
+}
+
+// AdminProvider is optionally implemented by the registered
+// FormationProvider: the admin test area's company tools (modules/testarea).
+// Both bypass the allow list, the alignment gate, the price and the claim,
+// which is why only an admin command calls them.
+type AdminProvider interface {
+	// AdminRecruit adds a companion of a class (a base archetype or an
+	// advanced or elite class id) at a level, in the leader's room.
+	AdminRecruit(leaderUserID, roomID int, class string, level int) (string, error)
+	// AdminSetMember changes a companion's class and/or level (blank class
+	// or level 0 leaves it) and respawns it from the new record.
+	AdminSetMember(leaderUserID, roomID int, selector, class string, level int) (string, error)
+}
+
+// ErrAdminUnavailable is returned when no company module is loaded.
+var ErrAdminUnavailable = errors.New("the company tools are unavailable right now")
+
+func adminProvider() (AdminProvider, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	ap, ok := p.(AdminProvider)
+	return ap, ok
+}
+
+// AdminRecruit is AdminProvider.AdminRecruit.
+func AdminRecruit(leaderUserID, roomID int, class string, level int) (string, error) {
+	ap, ok := adminProvider()
+	if !ok {
+		return "", ErrAdminUnavailable
+	}
+	return ap.AdminRecruit(leaderUserID, roomID, class, level)
+}
+
+// AdminSetMember is AdminProvider.AdminSetMember.
+func AdminSetMember(leaderUserID, roomID int, selector, class string, level int) (string, error) {
+	ap, ok := adminProvider()
+	if !ok {
+		return "", ErrAdminUnavailable
+	}
+	return ap.AdminSetMember(leaderUserID, roomID, selector, class, level)
+}
+
+// BanterProvider is optionally implemented by the registered
+// FormationProvider (Phase 49): the company's camp talk, so the camping
+// module can show it without importing modules/company.
+type BanterProvider interface {
+	// CampBanter is an exchange for the leader's camp, in context
+	// banter.CtxCamp (a rest begins) or banter.CtxRested (it is over). It
+	// returns nil when the leader has banter off, the roll does not come
+	// up, or too few members can talk.
+	CampBanter(leaderUserID int, context string) []banter.Said
+	// LastBanter is the latest exchange the company had, for the web
+	// client's Camp tab; nil before the first.
+	LastBanter(leaderUserID int) []banter.Said
+}
+
+func banterProvider() BanterProvider {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	bp, _ := p.(BanterProvider)
+	return bp
+}
+
+// CampBanter calls through to the provider; nil without one.
+func CampBanter(leaderUserID int, context string) []banter.Said {
+	if bp := banterProvider(); bp != nil {
+		return bp.CampBanter(leaderUserID, context)
+	}
+	return nil
+}
+
+// LastBanter calls through to the provider; nil without one.
+func LastBanter(leaderUserID int) []banter.Said {
+	if bp := banterProvider(); bp != nil {
+		return bp.LastBanter(leaderUserID)
+	}
+	return nil
 }

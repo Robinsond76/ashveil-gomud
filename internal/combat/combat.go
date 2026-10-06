@@ -203,6 +203,9 @@ func MobWounds(m *mobs.Mob) (woundable, lightOnly bool) {
 	if m.Character.RT != nil && m.Character.RT.Doll != nil {
 		return false, false // Phase 39d: a doll breaks; it takes no wounds
 	}
+	if m.Character.RT != nil && m.Character.RT.Beast != nil {
+		return false, false // Phase 39e: a beast is wounded by its record, not by a blow
+	}
 	if _, _, companion := company.LeaderAndKeyForInstance(m.InstanceId); companion {
 		return true, false
 	}
@@ -741,6 +744,10 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
 				attackTargetDamage = leadrootDamage(&sourceChar, attackTargetDamage)
 				defense := targetChar.GetDefense()
+				// Phase 39h: a Piercing Bolt ignores part of the armor.
+				if p := sourceChar.RT; p != nil && p.BlowPierce > 0 && hit {
+					defense -= defense * min(p.BlowPierce, 100) / 100
+				}
 				if strikeIai && hit {
 					defense -= defense * min(iaiFx.Int(classes.IaiPierce), 100) / 100
 				}

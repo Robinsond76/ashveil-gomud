@@ -44,6 +44,9 @@ help:
       - dollmaster
       - dollmaster-routes
       - doll
+      - beasttamer
+      - beasttamer-routes
+      - beast
       - classes
       - promotion
       - talents
@@ -53,6 +56,7 @@ help:
       - warlord
       - archon
       - archmage
+      - high-sorcerer
       - necromancer
       - thrall
       - wizard-routes
@@ -76,6 +80,8 @@ help:
       - gryphon-rider-routes
       - alchemist
       - alchemist-routes
+      - arbalist
+      - arbalist-routes
       - brew
       - summoning
       - creatures
@@ -90,6 +96,7 @@ help:
       - readiness
       - separation
       - equipment
+      - companion-gear
       - gearup
       - loot
       - rarity
@@ -124,6 +131,7 @@ help:
       - gathering
       - campgear
       - campsupplies
+      - banter
     communication:
       - emote
       - say
@@ -282,6 +290,7 @@ help:
       - spawn
       - spell
       - syslogs
+      - testarea
       - teleport
       - unmute
       - zap
@@ -295,6 +304,7 @@ help-aliases:
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   ambush: [surprise, surprised]
   equipment: [company-equipment, company equip, company remove, company compare]
+  companion-gear: [companion gear, companion-equipment, companion equipment, buff companions, company gear, disband gear]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]
   encounters: [encounter, random-encounter, random-encounters, random encounter, random encounters, danger, dangerous, dangerous rooms, bosses, boss, escorts, cache, caches, spoils, personal loot, personal-loot, grace, breathing room]
@@ -348,7 +358,8 @@ help-aliases:
   archmage:         [archmages, overchannel, storm, arcane-barrage, barrage]
   necromancer:      [necromancers, raise-the-fallen, raise the fallen, raisefallen, lich, liches, death-harvest]
   thrall:           [thralls, risen]
-  wizard-routes:    [theurgist, arcanist, warlock, life-drain, wizard-class, wizard-classes]
+  wizard-routes:    [theurgist, arcanist, warlock, life-drain, sorcerer, arcane-lance, lance, wizard-class, wizard-classes]
+  high-sorcerer:    [high-sorcerers, high-lance, twin-lance, instant-lance, gathered-chant, unbroken-chant]
   wise-one:         [wise-ones, hearthward, hearth-ward, mend-charm, ward-of-life, deep-slumber]
   coven-mother:     [coven-mothers, covens-will, coven-circle, twin-hex, lasting-hexes]
   crone-of-ash:     [crone, crones, ashen-curse, soul-rot, lingering-curse, crones-doom]
@@ -362,6 +373,8 @@ help-aliases:
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
   gryphon-rider:    [gryphon rider, gryphon, gryphons, rider, dive, talons, skirmisher, skirmish, power-dive]
   gryphon-rider-routes: [gryphon-knight, gryphon knight, skyscout, wyvern-rider, wyvern rider, gryphon-lord, gryphon lord, falcon-marshal, falcon marshal, wyvern-lord, wyvern lord, lance-charge, eagle-eye, hawk-s-mark]
+  arbalist:         [arbalists, crossbowman, crossbowmen, piercing-bolt, piercing bolt, bolt, bolts, winding, armor-breaker, crippling-bolt]
+  arbalist-routes:  [siegebreaker, sharpshooter, warden-of-the-wall, warden of the wall, siege-master, siege master, deadeye, bastion, pavise, sundering-bolts, keen-sight]
   samurai-routes:   [kensai, hatamoto, ronin, sword-saint, sword saint, shogun, kenshi, bodyguard, vengeance]
   shaman:           [shamans, weather-caller, stormcraft, call-fog, callfog, gust, chill-wind, chillwind, lightning, battle-weather, fogbound, windchilled]
   shaman-routes:    [stormcaller, mistweaver, earthspeaker, tempest-lord, tempest lord, veil-mother, veil mother, mountain-speaker, mountain speaker, stoneskin, chain-lightning]
@@ -373,6 +386,9 @@ help-aliases:
   alchemist-routes: [apothecary, bombardier, mutagenist, panacean, grenadier, transmuter, mutagen, potent-draughts, splash-draught, wide-throw, pitch-and-tar]
   brew:             [brewing-flasks, refill-flasks]
   doll:             [mend-doll, doll-parts, doll-mend]
+  beasttamer:       [beast-tamer, beast tamer, beast-tamers, beasttamers, taming, sic, rally, pack-sense, pack sense, bonded-beast, bonded beast, wolf, whip]
+  beasttamer-routes: [houndmaster, bearward, dragon-tamer, dragon tamer, packlord, beastlord, dragon-lord, dragon lord, warhound, war-bear, war bear, drake, breath, hobble]
+  beast:            [beast-name, beast-rest]
   halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]
@@ -419,6 +435,7 @@ help-aliases:
   poisons:          [poison, coat, coating, coatings, weapon-poison, weapon-poisons, bitterleaf, leechbane, leadroot, mirethorn, vial, vials]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
+  banter:           [camp-talk, chatter, companion-talk, comrades]
   tempo:            [actions, turns]
   stat-edge:        [stat-edges, hit-chance, to-hit, crit-chance, critical-chance]
   burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]

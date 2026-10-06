@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -36,6 +37,15 @@ type campPayload struct {
 	// the viewer's party. Never a camp of a company outside the party.
 	RoomID      int          `json:"room_id"`
 	AlliedCamps []alliedCamp `json:"allied_camps"`
+	// Phase 49: the company's latest exchange (camp talk or after a
+	// battle), shown on the Camp tab; absent before the first.
+	Banter []banterLine `json:"banter,omitempty"`
+}
+
+type banterLine struct {
+	Name string `json:"name"`
+	Verb string `json:"verb"`
+	Text string `json:"text"`
 }
 
 // alliedCamp is a party member's camp, drawn on the map as an ally tent.
@@ -77,6 +87,9 @@ func campExtra(state func(leaderUserID, roomID int, tags []string) (camping.Camp
 			return nil
 		}
 		p := campPayloadOf(s)
+		for _, l := range company.LastBanter(user.UserId) {
+			p.Banter = append(p.Banter, banterLine{Name: l.Name, Verb: l.Verb, Text: l.Text})
+		}
 		if allies != nil {
 			if a := allies(user); a != nil {
 				p.AlliedCamps = a

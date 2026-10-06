@@ -46,10 +46,11 @@ const (
 	Assist    Rule = "assist"    // the player's own target (FF12's "party leader's target")
 	Defend    Rule = "defend"    // the foe striking our most hurt (FF12's "foe targeting ally")
 	Crowded   Rule = "crowded"   // the foe in the row with the most foes, for a sweep (Phase 39a)
+	Armored   Rule = "armored"   // the foe with the most armor, for an armor-piercing bolt (Phase 39h)
 )
 
 // Rules in the order they are listed.
-var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend, Crowded}
+var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend, Crowded, Armored}
 
 var roleAliases = map[string]Role{
 	"fight": Fighter, "fighter": Fighter, "melee": Fighter,
@@ -66,6 +67,7 @@ var ruleAliases = map[string]Rule{
 	"near": Nearest, "front": Nearest, "far": Furthest, "back": Furthest,
 	"focus": Assist, "protect": Defend,
 	"row": Crowded, "rows": Crowded, "sweep": Crowded,
+	"armor": Armored, "armour": Armored, "armoured": Armored, "tank": Armored, "tanks": Armored,
 	"mages": Casters, "spellcasters": Casters,
 	"healer": Healers, "medics": Healers,
 }
@@ -136,6 +138,8 @@ func DefaultRule(archetype string) Rule {
 		return Strongest
 	case "halberdier":
 		return Crowded
+	case "arbalist":
+		return Armored // Phase 39h: the crossbow goes for the heaviest armor
 	case "gryphon-rider":
 		return Healers // Phase 39f: the skirmisher dives on healers, then casters
 	case "hound":
@@ -204,6 +208,10 @@ func (r Rule) Describe() string {
 		return "whatever you are striking"
 	case Defend:
 		return "the foe striking whichever of you is most hurt"
+	case Crowded:
+		return "the foe in the row with the most foes, for a sweep"
+	case Armored:
+		return "the most heavily armored foe"
 	}
 	return string(r)
 }

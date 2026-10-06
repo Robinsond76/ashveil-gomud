@@ -128,7 +128,9 @@ var _ domain.CarryProvider = (*CompanyModule)(nil)
 
 // CompanionCarry implements company.CarryProvider (Phase 32f): each
 // companion CompanionGearGrams weighs carries its share. A live one brings
-// its Strength and its largest pack; one not out brings its recorded pack
+// its Strength and its largest pack (in unified-cargo mode a companion one
+// move behind its leader still counts, so a step never flashes Overloaded);
+// one not out brings its recorded pack
 // (or its template's) and no Strength. Game loop only.
 func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 	if m.persistenceAvailable() != nil {
@@ -145,7 +147,7 @@ func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 				continue // Phase 38e: a creature carries nothing and adds no capacity
 			}
 			inst, tracked := m.instance(leaderUserID, c.ID)
-			if c.Dead() || c.PendingReturn || !tracked || !m.runtime.IsLive(inst) || !m.runtime.IsAttached(leaderUserID, inst) || !m.runtime.WithLeader(leaderUserID, inst) || m.runtime.CharmedByOther(leaderUserID, inst) {
+			if c.Dead() || c.PendingReturn || !tracked || !m.runtime.IsLive(inst) || !m.runtime.IsAttached(leaderUserID, inst) || !m.runtime.Trailing(leaderUserID, inst) || m.runtime.CharmedByOther(leaderUserID, inst) {
 				continue
 			}
 			if hp, _, ok := m.runtime.Vitals(inst); !ok || hp < 1 {

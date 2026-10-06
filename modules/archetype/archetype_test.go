@@ -122,7 +122,7 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	for _, a := range m.table.List() {
 		got = append(got, a.ID)
 	}
-	assert.Equal(t, []string{"alchemist", "cleric", "dollmaster", "gryphon-rider", "halberdier", "hound", "ranger", "rogue", "samurai", "shaman", "stone-golem", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
+	assert.Equal(t, []string{"alchemist", "arbalist", "beasttamer", "cleric", "dollmaster", "gryphon-rider", "halberdier", "hound", "ranger", "rogue", "samurai", "shaman", "stone-golem", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
 
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)

@@ -723,6 +723,8 @@
     // This view never calculates combat or capacity rules.
     let editorSlot = 'weapon';
     let editorChoice = '';
+    // Phase 48: whose gear the editor shows: 'me' or a companion '#N'.
+    let editorMember = 'me';
     function editorNode(tag, text, parent) {
         const node = document.createElement(tag);
         if (text !== undefined) { node.textContent = text; }
@@ -741,6 +743,30 @@
         document.getElementById('gw-backpack').classList.remove('active');
         panel.classList.add('active');
         tabs[0].classList.add('active');
+        const members = view.members || [];
+        if (editorMember !== 'me' && members.length && !members.some(mm => mm.ref === editorMember)) {
+            editorMember = 'me';
+            editorChoice = '';
+            announceGear();
+        }
+        if (members.length > 1) {
+            const bar = editorNode('div', undefined, panel);
+            bar.className = 'gw-editor-slots gw-editor-members';
+            bar.setAttribute('role', 'group');
+            bar.setAttribute('aria-label', 'Whose gear');
+            members.forEach(mm => {
+                const b = editorNode('button', mm.ref === 'me' ? mm.name + ' (you)' : mm.name, bar);
+                b.type = 'button';
+                b.dataset.gearFocus = 'member:' + mm.ref;
+                b.setAttribute('aria-pressed', String(mm.ref === editorMember));
+                b.addEventListener('click', () => { editorMember = mm.ref; editorChoice = ''; announceGear(); updateEditor(view); });
+            });
+        }
+        if (view.member && view.member !== editorMember) {
+            // The server has not caught up with the member just chosen.
+            editorNode('p', 'Loading gear…', panel).setAttribute('role', 'status');
+            return;
+        }
         const note = editorNode('p', view.available ? 'Select a slot, then an exact cargo item to preview.' : view.reason, panel);
         note.className = 'gw-editor-note';
         const slots = editorNode('div', undefined, panel);
@@ -867,11 +893,24 @@
         const shown = !!el && el.getClientRects().length > 0 && document.visibilityState === 'visible';
         // The open message names the selected slot: only its choices are
         // previewed, so a newly selected slot is announced too.
-        const say = shown ? 'open ' + editorSlot : 'closed';
+        const say = shown ? 'open ' + editorSlot + ' ' + editorMember : 'closed';
         if (say === gearSaid) { return; }
         gearSaid = say;
         Client.GMCPRequest('Company.Equipment', say);
     }
+    // GearEditor.show lets the Company panel open the editor on a member's
+    // slot (Phase 48): it selects them and brings the Gear tab forward.
+    window.GearEditor = {
+        show(member, slot) {
+            editorMember = member || 'me';
+            if (slot) { editorSlot = slot; }
+            editorChoice = '';
+            gearSaid = null;
+            const tab = document.querySelector('.cw-tab-btn[data-panel="cw-hosted-gear"]');
+            if (tab) { tab.click(); }
+            announceGear();
+        },
+    };
     setInterval(announceGear, 1000);
     document.addEventListener('visibilitychange', announceGear);
     document.addEventListener('click', () => setTimeout(announceGear, 0));

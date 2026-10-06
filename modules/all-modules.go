@@ -24,6 +24,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/standing"
 	_ "github.com/GoMudEngine/GoMud/modules/strategy"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
+	_ "github.com/GoMudEngine/GoMud/modules/testarea"
 	_ "github.com/GoMudEngine/GoMud/modules/tutorial"
 	_ "github.com/GoMudEngine/GoMud/modules/walking"
 	_ "github.com/GoMudEngine/GoMud/modules/walkto"

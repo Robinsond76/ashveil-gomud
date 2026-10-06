@@ -71,3 +71,38 @@ func moduleSource(t *testing.T, dir string) string {
 	}
 	return b.String()
 }
+
+// transientOrAccountOnly are the modules that handle a purge but keep no
+// per-user state worth snapshotting for the admin test area: what they hold
+// is a running action, a connection, or a tutorial replay. Each needs its
+// reason.
+var transientOrAccountOnly = map[string]string{
+	"gmcp":      "per-connection client state",
+	"tutorial":  "tutorial replays and lessons, not the character's play state",
+	"gathering": "a running gathering action; room resources are world state",
+	"walkto":    "a running route",
+	"testarea":  "holds the trips themselves",
+}
+
+// TestEveryModuleWithUserStateIsSnapshotted: the admin test area (modules/
+// testarea) puts a user's whole state back on return, so a module that holds
+// state by user (it handles events.UserPurged{}) must register a
+// userstate.Contributor, unless it is listed with its reason.
+func TestEveryModuleWithUserStateIsSnapshotted(t *testing.T) {
+	dirs, err := os.ReadDir(".")
+	require.NoError(t, err)
+	for _, d := range dirs {
+		if !d.IsDir() {
+			continue
+		}
+		source := moduleSource(t, d.Name())
+		if !strings.Contains(source, "events.UserPurged{}") {
+			continue
+		}
+		if reason, ok := transientOrAccountOnly[d.Name()]; ok {
+			assert.False(t, strings.Contains(source, "userstate.Register("), "%s is listed as transient (%s) but registers a contributor", d.Name(), reason)
+			continue
+		}
+		assert.True(t, strings.Contains(source, "userstate.Register("), "module %s keeps state by user but registers no userstate.Contributor (add userstate.go, or list it with a reason)", d.Name())
+	}
+}

@@ -130,6 +130,16 @@ func abilityPass() {
 				abilityTurns[a.who] = true
 				continue
 			}
+			// Phase 39h: an Arbalist's turn after a bolt is the winding.
+			if reloadTurn(a) {
+				continue
+			}
+			// Phase 39e: a Beast Tamer's turn sends its beast in (and the
+			// Tamer still strikes), and a drake breathes in place of a bite.
+			sicBeast(a, u, foes, room)
+			if drakeBreath(a, u, foes, room) {
+				continue
+			}
 			// Phase 39d: a Doll Master's turn is its dolls' strike.
 			if dollStrike(a, u, foes, room) {
 				continue
@@ -278,6 +288,8 @@ func abilityCooldown(c *characters.Character, id strategy.Ability, base int) int
 		cut = fx.Int(classes.SweepCD) // Phase 39a
 	case strategy.Dive:
 		cut = fx.Int(classes.DiveCD) // Phase 39f
+	case strategy.PiercingBolt:
+		cut = fx.Int(classes.BoltCD) // Phase 39h
 	}
 	return max(1, base-cut)
 }
@@ -321,6 +333,8 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		useBrace(a, room)
 	case strategy.Dive:
 		useDive(a, u, foe, room)
+	case strategy.PiercingBolt:
+		useBolt(a, u, foe, room)
 	case strategy.Tackle:
 		abilityTurns[a.who] = true
 		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj, characters.SkillEdge(a.char.AttackSkill(), foe.Character.Evasion()))

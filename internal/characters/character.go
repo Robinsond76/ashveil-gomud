@@ -134,6 +134,7 @@ type Character struct {
 	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
 	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
 	Dolls               []DollState                    `yaml:"dolls,omitempty"`            // Ashveil Phase 39d: a Doll Master's durable dolls
+	Beast               *BeastState                    `yaml:"beast,omitempty"`            // Ashveil Phase 39e: a Beast Tamer's bonded beast
 	FlasksSpent         int                            `yaml:"flasksspent,omitempty"`      // Ashveil Phase 39g: flasks an Alchemist has thrown since it last brewed (0 is a full satchel)
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
@@ -426,6 +427,10 @@ func (c *Character) GetDefaultDiceRoll() (attacks int, dCount int, dSides int, b
 		s := c.RT.Summon // Phase 38b: a summon's own blade or claws
 		return 1, s.Dice, s.Sides, 0, nil
 	}
+	if c.RT != nil && c.RT.Beast != nil && c.RT.Beast.Sides > 0 {
+		b := c.RT.Beast // Phase 39e: a beast's own teeth or claws
+		return 1, b.Dice, b.Sides, b.Bonus, nil
+	}
 
 	dCount += int(math.Floor((float64(c.Stats.Speed.ValueAdj) / 50)))
 	dSides += int(math.Floor((float64(c.Stats.Strength.ValueAdj) / 12)))
@@ -675,6 +680,9 @@ func (c *Character) GetDefense() int {
 	reduction += c.ClassEffects().Int(classes.Armor)
 	if c.RT != nil {
 		reduction += c.RT.Bark
+		// Phase 39h: an Arbalist's sundering bolts wear armor down for the
+		// battle.
+		reduction = max(0, reduction-c.RT.Shred)
 	}
 
 	if reduction > 100 {
@@ -1764,6 +1772,10 @@ func (c *Character) RecalculateStats() {
 	// Phase 39d: a doll's health is its own share of a warrior's.
 	if c.RT != nil && c.RT.Doll != nil && c.RT.Doll.HPPct > 0 {
 		c.HealthMax.Mods = c.HealthMax.Mods * c.RT.Doll.HPPct / 100
+	}
+	// Phase 39e: a bonded beast's health is its own share of a warrior's.
+	if c.RT != nil && c.RT.Beast != nil && c.RT.Beast.HPPct > 0 {
+		c.HealthMax.Mods = c.HealthMax.Mods * c.RT.Beast.HPPct / 100
 	}
 
 	c.ManaMax.NoCap = true

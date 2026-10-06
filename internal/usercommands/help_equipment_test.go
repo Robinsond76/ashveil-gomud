@@ -51,7 +51,7 @@ func TestGearEditorHelpRenders(t *testing.T) {
 	useWorld(t, "default")
 	keywords.LoadAliases()
 	for topic, wants := range map[string][]string{
-		"equipment":         {"Current → After", "Preview removal", "dodge", "not combat speed", "[exact-reference] [slot]", "Companion gear"},
+		"equipment":         {"Current → After", "Preview removal", "dodge", "not combat speed", "[exact-reference] [slot]", "returns to your cargo"},
 		"equip":             {"select a slot", "Pack"},
 		"company-inventory": {"compatible item", "preview removal"},
 		"webclient":         {"Unavailable choices", "Remove equipment"},

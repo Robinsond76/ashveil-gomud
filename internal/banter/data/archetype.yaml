@@ -1,0 +1,87 @@
+# Phase 49: lines by archetype or archetype family (martial, arcane,
+# faith, skirmisher). A line names one or more archetypes in arch.
+
+# --- martial: warrior, halberdier, samurai ---
+- {text: "I will sharpen my blade by the fire. It is the one thing I never skip.", ctx: [camp], arch: [martial]}
+- {text: "Give me a shield wall and a long night and I am content.", ctx: [camp], arch: [martial]}
+- {text: "My shoulders ache from the pack. My blade, at least, is light.", ctx: [camp], arch: [martial]}
+- {text: "Somebody has to stand in front. I would rather it be me.", ctx: [camp], arch: [martial]}
+- {text: "Check your straps and your buckles. A loose one gets you killed.", ctx: [camp], arch: [martial]}
+- {text: "I like it when the line holds. There is nothing finer.", ctx: [camp], arch: [martial]}
+- {text: "My arms are rested. I could hold a door against a flood.", ctx: [rested], arch: [martial]}
+- {text: "Armor on, edge sharp. I am ready.", ctx: [rested], arch: [martial]}
+- {text: "Steel wins. It always does, in the end.", ctx: [win], arch: [martial]}
+- {text: "Hold the front, they said. I held it. Nobody said it would be easy.", ctx: [win], arch: [martial]}
+- {text: "I will mend this dent in my armor before it becomes a hole.", ctx: [win], arch: [martial]}
+- {text: "I felt that line bend. Let us never let it break.", ctx: [close], arch: [martial]}
+- {text: "I should have been in front of {fallen}. I will not make that mistake again.", ctx: [fall], arch: [martial]}
+- {text: "The line held all through it. Nobody even had to retreat.", ctx: [flawless], arch: [martial]}
+
+# --- arcane: wizard, witch, dollmaster ---
+- {text: "The stars are sharp tonight. Good weather for thinking.", ctx: [camp], arch: [arcane], when: [night]}
+- {text: "I am reviewing my notes while the light holds. Old habits.", ctx: [camp], arch: [arcane]}
+- {text: "Do not touch my pack. Nothing in it is dangerous. Mostly.", ctx: [camp], arch: [arcane]}
+- {text: "The fire is steady. The flame has a pattern, if you watch it long enough.", ctx: [camp], arch: [arcane]}
+- {text: "My head is full of half-finished spells. Rest might finish them.", ctx: [camp], arch: [arcane]}
+- {text: "I could light that fire with a thought. But the matches are more fun.", ctx: [camp], arch: [arcane]}
+- {text: "My mind is clear. The theory is solid. I am ready to try it.", ctx: [rested], arch: [arcane]}
+- {text: "I dreamed in equations. They were beautiful. I have forgotten them.", ctx: [rested], arch: [arcane]}
+- {text: "A well-aimed spell is worth ten blades. Do not tell the others I said so.", ctx: [win], arch: [arcane]}
+- {text: "My reserves are low. Another fight like that and I will be useless.", ctx: [win], arch: [arcane]}
+- {text: "I will note the timing of that for later. It will matter someday.", ctx: [win], arch: [arcane]}
+- {text: "I was nearly out of power at the end there. Too close. Far too close.", ctx: [close], arch: [arcane]}
+- {text: "I could have cast quicker. {fallen} would still be standing.", ctx: [fall], arch: [arcane]}
+- {text: "Each cast landed true. I could not have asked for more.", ctx: [flawless], arch: [arcane]}
+
+# --- faith: cleric, shaman ---
+- {text: "I will tend to any wounds before we sleep. Show me where it hurts.", ctx: [camp], arch: [faith]}
+- {text: "Even the road is holy, if you walk it with care.", ctx: [camp], arch: [faith]}
+- {text: "The spirits are restless tonight. Or perhaps it is only the wind.", ctx: [camp], arch: [faith], when: [night]}
+- {text: "Let me bless the camp. It is a small thing, and it helps me sleep.", ctx: [camp], arch: [faith]}
+- {text: "Take your rest. I will keep a quiet vigil.", ctx: [camp], arch: [faith]}
+- {text: "I feel the strength in all of you. It is a comfort.", ctx: [rested], arch: [faith]}
+- {text: "The rest has mended more than your bruises. Walk well.", ctx: [rested], arch: [faith]}
+- {text: "Let me see to the wounded. Sit still, all of you.", ctx: [win], arch: [faith]}
+- {text: "I felt every blow you took. I will make it right.", ctx: [win], arch: [faith]}
+- {text: "My strength is not what it was. Rest, soon, or I cannot heal anyone.", ctx: [win], arch: [faith]}
+- {text: "I called everything I had. It was almost not enough.", ctx: [close], arch: [faith]}
+- {text: "I could not reach {fallen} in time. I will carry that.", ctx: [fall], arch: [faith]}
+- {text: "No wounds to tend. Strange. I almost miss the work.", ctx: [flawless], arch: [faith]}
+
+# --- skirmisher: rogue, ranger, gryphon-rider ---
+- {text: "I scouted a bit around the camp. Nothing close, but I will check again.", ctx: [camp], arch: [skirmisher]}
+- {text: "Fire is a beacon. We should keep it small.", ctx: [camp], arch: [skirmisher]}
+- {text: "I like a fire I can slip away from. Habit.", ctx: [camp], arch: [skirmisher]}
+- {text: "There is a trail nearby. Something has been using it. I will look at first light.", ctx: [camp], arch: [skirmisher], when: [night]}
+- {text: "Keep your voices down. Sound carries farther than you think.", ctx: [camp], arch: [skirmisher]}
+- {text: "I have set a few little warnings around the edge. Step carefully if you wander.", ctx: [camp], arch: [skirmisher]}
+- {text: "I slept with one eye open. Out of habit, and because I am not an idiot.", ctx: [rested], arch: [skirmisher]}
+- {text: "I have already looked around. All quiet. Let us go before it is not.", ctx: [rested], arch: [skirmisher]}
+- {text: "I picked my moment and I took it. That is all there is to it.", ctx: [win], arch: [skirmisher]}
+- {text: "Stay light, stay quick, and nobody lands a clean hit. That is the trick.", ctx: [win], arch: [skirmisher]}
+- {text: "I did not like how that went. I almost had no room to move.", ctx: [close], arch: [skirmisher]}
+- {text: "I saw it coming, and I was too slow. {fallen} paid for it.", ctx: [fall], arch: [skirmisher]}
+- {text: "Nothing touched us. Footwork and a lucky wind.", ctx: [flawless], arch: [skirmisher]}
+
+# --- single archetypes ---
+- {text: "A rogue's secret: the best lock is a friendly guard. Not that I would ever need to know.", ctx: [camp], arch: [rogue]}
+- {text: "Every pouch I touch is just a pouch I am admiring. For the record.", ctx: [camp], arch: [rogue]}
+- {text: "Tell me what is in the next room and I will tell you how to enter it quietly.", ctx: [camp], arch: [rogue]}
+- {text: "One clean strike in the right place beats a hundred wild ones.", ctx: [win], arch: [rogue]}
+- {text: "A good arrow is a patient thing. So is a good ranger.", ctx: [camp], arch: [ranger]}
+- {text: "I know a good tracker's rule: the ground does not lie.", ctx: [camp], arch: [ranger]}
+- {text: "A fine shot. The best ones feel like they are already in the target.", ctx: [win], arch: [ranger]}
+- {text: "Every wizard is a student. Some of us just admit it.", ctx: [camp], arch: [wizard]}
+- {text: "A spell is a sentence. Say it wrong and the whole thing comes out funny.", ctx: [camp], arch: [wizard]}
+- {text: "A witch keeps her own counsel and her own kettle. Both are boiling, always.", ctx: [camp], arch: [witch]}
+- {text: "Herbs, bones, and a kind word. The best recipe I know.", ctx: [camp], arch: [witch]}
+- {text: "My dolls do not argue. That is why I prefer them to people. Sorry.", ctx: [camp], arch: [dollmaster]}
+- {text: "A well-made doll is a loyal one. Mine would walk through a wall for me.", ctx: [win], arch: [dollmaster]}
+- {text: "A halberd gives you reach and a line. Respect both.", ctx: [camp], arch: [halberdier]}
+- {text: "The blade is only half the discipline. The other half is the waiting.", ctx: [camp], arch: [samurai]}
+- {text: "A calm mind cuts truer than a hot one.", ctx: [win], arch: [samurai]}
+- {text: "The spirits keep their own counsel. I only listen.", ctx: [camp], arch: [shaman]}
+- {text: "A good cleric knows when to heal and when to pray. And when to do both.", ctx: [camp], arch: [cleric]}
+- {text: "A strong arm and a plain mind. That has gotten me this far.", ctx: [camp], arch: [warrior]}
+- {text: "The wind is good for a long glide tomorrow. My wings itch for it.", ctx: [camp], arch: [gryphon-rider]}
+- {text: "My mount sat out the fighting this time, but she watched. She never misses a thing.", ctx: [win], arch: [gryphon-rider]}

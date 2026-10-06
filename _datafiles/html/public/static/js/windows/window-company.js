@@ -141,6 +141,14 @@
         }
 
         button.cmp-item { cursor: pointer; }
+        /* Phase 48: a member's equipment slots; drop targets for cargo */
+        .cmp-equip-member { margin-bottom: 6px; }
+        .cmp-equip-member h5 { margin: 4px 0 2px; font-size: 1em; display: flex; justify-content: space-between; gap: 6px; }
+        .cmp-slot .cmp-name { overflow-wrap: anywhere; flex: 1; text-align: left; }
+        .cmp-slot .cmp-slotname { color: var(--t-text-secondary); min-width: 4.5em; }
+        .cmp-slot.empty .cmp-name { color: var(--t-text-secondary); font-style: italic; }
+        .cmp-drop { outline: 2px dashed var(--t-accent); outline-offset: -2px; }
+        .cmp-away { opacity: 0.6; }
         button.cmp-item:hover { background: var(--t-accent-dim); color: var(--t-text-white); }
         button.cmp-item:focus-visible { outline: 2px solid var(--t-accent); }
         .cmp-item .cmp-meta { color: var(--t-text-secondary); white-space: nowrap; }
@@ -820,9 +828,10 @@
         return menu;
     }
 
-    function itemRow(i, menu) {
+    function itemRow(i, menu, drag) {
         const li = el('li');
         const row = el(menu ? 'button' : 'div', 'cmp-item');
+        if (drag) { draggable(row, drag(i)); }
         if (menu) {
             row.type = 'button';
             row.setAttribute('aria-haspopup', 'menu');
@@ -836,9 +845,9 @@
         return li;
     }
 
-    function itemList(items, menuFor) {
+    function itemList(items, menuFor, drag) {
         const ul = el('ul', 'cmp-items');
-        items.forEach(i => ul.appendChild(itemRow(i, menuFor ? () => menuFor(i) : null)));
+        items.forEach(i => ul.appendChild(itemRow(i, menuFor ? () => menuFor(i) : null, drag)));
         return ul;
     }
 
@@ -863,6 +872,123 @@
         if (!shared) { block.appendChild(el('div', 'cmp-sub', 'Carrying'));
         block.appendChild(m.carried.length ? itemList(m.carried, isYou ? (i => yourItemMenu(i, false)) : null) : el('div', 'cmp-note', 'nothing')); }
         return block;
+    }
+
+    // --- Equipment slots (Phase 48) ---
+
+    // fitsSlot: whether a cargo item can go in a slot (the server decides
+    // for real; this only offers sensible picks).
+    function fitsSlot(i, slot) {
+        const type = (i.type || '').toLowerCase();
+        return type === slot || (slot === 'offhand' && type === 'weapon');
+    }
+
+    function equipCommand(sel, i, slot) {
+        // A slot can be named only with an exact (instance) reference.
+        return 'company equip ' + sel + ' ' + i.ref + (i.ref && i.ref.charAt(0) === '!' && i.ref.indexOf(':') > 0 ? ' ' + slot : '');
+    }
+
+    function dragRef(e) {
+        try { return JSON.parse(e.dataTransfer.getData('application/x-ashveil-gear') || 'null'); } catch (err) { return null; }
+    }
+
+    // dropTarget makes node accept a dragged gear item when ok(drag) says so,
+    // calling onDrop(drag).
+    function dropTarget(node, ok, onDrop) {
+        node.addEventListener('dragover', e => {
+            const types = Array.from(e.dataTransfer && e.dataTransfer.types || []);
+            if (!types.includes('application/x-ashveil-gear')) { return; }
+            e.preventDefault();
+            node.classList.add('cmp-drop');
+        });
+        node.addEventListener('dragleave', () => node.classList.remove('cmp-drop'));
+        node.addEventListener('drop', e => {
+            node.classList.remove('cmp-drop');
+            const drag = dragRef(e);
+            if (!drag) { return; }
+            e.preventDefault();
+            // A drop on the wrong spot does nothing; it never falls through
+            // to the member or cargo behind it.
+            e.stopPropagation();
+            if (ok(drag)) { onDrop(drag); }
+        });
+    }
+
+    function draggable(node, payload) {
+        node.draggable = true;
+        node.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('application/x-ashveil-gear', JSON.stringify(payload));
+            e.dataTransfer.effectAllowed = 'move';
+        });
+    }
+
+    function equipmentSection(inv) {
+        const section = el('section', 'cmp-block');
+        section.setAttribute('aria-label', 'Equipment');
+        section.appendChild(el('h4', null, 'Equipment'));
+        section.appendChild(el('div', 'cmp-note', 'Tap a slot to pick from cargo, or drag a cargo item onto a member. Changes are refused in battle.'));
+        const slots = Array.isArray(inv.slots) ? inv.slots : [];
+        inv.members.forEach((m, idx) => {
+            const isYou = idx === 0;
+            const sel = memberSelector(m.key);
+            const ready = isYou || m.available;
+            const box = el('div', 'cmp-equip-member' + (ready ? '' : ' cmp-away'));
+            box.setAttribute('role', 'group');
+            box.setAttribute('aria-label', m.name + (isYou ? ' (you)' : '') + ' equipment');
+            const h = el('h5');
+            h.appendChild(el('span', null, m.name + (isYou ? ' (you)' : '')));
+            h.appendChild(el('span', 'cmp-weight', m.fallen ? 'fallen' : CompanyData.kg(m.grams)));
+            box.appendChild(h);
+            if (m.fallen) {
+                box.appendChild(el('div', 'cmp-note', 'Fallen: their gear is with the body.'));
+                section.appendChild(box);
+                return;
+            }
+            if (m.unrecorded) {
+                box.appendChild(el('div', 'cmp-note', 'Gear not yet recorded.'));
+                section.appendChild(box);
+                return;
+            }
+            if (!ready) { box.appendChild(el('div', 'cmp-note', 'Away from you: gear can change when they rejoin.')); }
+            const ul = el('ul', 'cmp-items');
+            slots.forEach(slot => {
+                const worn = (m.worn || []).find(w => w.slot === slot.slot);
+                const picks = ready ? (inv.cargo || []).filter(i => fitsSlot(i, slot.slot)) : [];
+                const menu = () => {
+                    const out = [];
+                    if (worn) {
+                        out.push({ label: 'Look', cmd: 'look ' + worn.ref });
+                        out.push({ label: 'Remove to cargo', cmd: 'company remove ' + sel + ' ' + slot.slot });
+                    }
+                    picks.forEach(i => out.push({ label: (worn ? 'Swap in ' : 'Equip ') + label(i), cmd: equipCommand(sel, i, slot.slot) }));
+                    if (worn && window.GearEditor) { out.push({ label: 'Compare in Gear', fn: () => window.GearEditor.show(sel, slot.slot) }); }
+                    return out;
+                };
+                const interactive = ready && (worn || picks.length);
+                const li = el('li');
+                const row = el(interactive ? 'button' : 'div', 'cmp-item cmp-slot' + (worn ? '' : ' empty'));
+                if (interactive) {
+                    row.type = 'button';
+                    row.setAttribute('aria-haspopup', 'menu');
+                    row.addEventListener('click', e => uiMenu(e, menu()));
+                    row.setAttribute('data-focus', 'slot|' + sel + '|' + slot.slot);
+                }
+                row.appendChild(el('span', 'cmp-slotname', slot.label));
+                row.appendChild(el('span', 'cmp-name', worn ? label(worn) : 'empty'));
+                row.appendChild(el('span', 'cmp-meta', worn ? CompanyData.kg(worn.grams) : ''));
+                if (worn) { row.title = itemTip(worn); }
+                if (ready && worn && worn.slot !== 'pack') { draggable(row, { from: 'worn', member: sel, slot: slot.slot, ref: worn.ref }); }
+                if (ready) {
+                    dropTarget(row, d => d.from === 'cargo' && fitsSlot(d, slot.slot), d => send(equipCommand(sel, d, slot.slot)));
+                }
+                li.appendChild(row);
+                ul.appendChild(li);
+            });
+            box.appendChild(ul);
+            if (ready) { dropTarget(box, d => d.from === 'cargo' && (d.type || '') !== '', d => send('company equip ' + sel + ' ' + d.ref)); }
+            section.appendChild(box);
+        });
+        return section;
     }
 
     function horseMenu(h, yourItems) {
@@ -957,6 +1083,7 @@
             if (!(inv.containers || []).length) { containers.appendChild(el('div', 'cmp-note', 'No assigned packs. Equip a pack from shared cargo (help pack).')); }
             pad.appendChild(containers);
         }
+        if (inv.shared) { pad.appendChild(equipmentSection(inv)); }
         const you = inv.members[0];
         if (!inv.shared) { inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, false))); }
 
@@ -979,8 +1106,13 @@
         if (inv.load) { ch.appendChild(el('span', 'cmp-weight', CompanyData.kg(inv.load.cargo_g))); }
         cargo.appendChild(ch);
         cargo.appendChild(inv.cargo && inv.cargo.length
-            ? itemList(inv.cargo, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }])
+            ? itemList(inv.cargo, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }],
+                inv.shared ? (i => ({ from: 'cargo', ref: i.ref, type: (i.type || '').toLowerCase() })) : null)
             : el('div', 'cmp-note', 'empty'));
+        if (inv.shared) {
+            // Dropping worn gear on the cargo takes it off, back to cargo.
+            dropTarget(cargo, d => d.from === 'worn', d => send('company remove ' + d.member + ' ' + d.slot));
+        }
         pad.appendChild(cargo);
     }
 
@@ -1043,6 +1175,21 @@
         }
         if (data.live && data.live.rest && data.live.rest.tier && data.live.rest.tier !== 'none') {
             pad.appendChild(el('div', 'cmp-line', data.live.rest.tier + ' for ' + CompanyData.formatSeconds(data.live.rest.seconds) + '.'));
+        }
+
+        // Phase 49: the company's latest talk, at camp or after a battle.
+        if (Array.isArray(camp.banter) && camp.banter.length) {
+            const talk = el('div', 'cmp-banter');
+            talk.setAttribute('role', 'log');
+            talk.setAttribute('aria-label', 'Company talk');
+            talk.appendChild(el('div', 'cmp-note', 'Around the fire'));
+            camp.banter.forEach(line => {
+                const row = el('div', 'cmp-line');
+                row.appendChild(el('b', null, line.name));
+                row.appendChild(document.createTextNode(' ' + (line.verb || 'says') + ', \u201c' + line.text + '\u201d'));
+                talk.appendChild(row);
+            });
+            pad.appendChild(talk);
         }
 
         // Each button only when it would work.

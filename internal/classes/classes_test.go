@@ -12,15 +12,21 @@ var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wi
 
 // neutralLineages have no good or evil route (Phase 39b): every route is open
 // to any alignment, at level 10 and level 30.
-var neutralLineages = []string{"alchemist", "dollmaster", "gryphon-rider", "halberdier", "samurai", "shaman"}
+var neutralLineages = []string{"alchemist", "arbalist", "beasttamer", "dollmaster", "gryphon-rider", "halberdier", "samurai", "shaman"}
+
+// extraAdvanced counts the advanced routes a lineage has beyond its good,
+// unrestricted and evil three (the catalogue bundles of Phase 38d).
+var extraAdvanced = map[string]int{"wizard": 1}
 
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Equal(t, []string{"alchemist", "cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, Lineages())
+	assert.Equal(t, []string{"alchemist", "arbalist", "beasttamer", "cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, Lineages())
 	for _, l := range baseLineages {
 		adv := Advanced(l)
-		require.Len(t, adv, 3, l)
+		// Phase 38d: the catalogue bundles add routes; the wizard has the
+		// Sorcerer beside its three.
+		require.Len(t, adv, 3+extraAdvanced[l], l)
 		gates := map[Gate]bool{}
 		for _, c := range adv {
 			gates[c.Gate] = true
@@ -103,7 +109,7 @@ func TestRankTablesAreOrdered(t *testing.T) {
 func TestFaithRoutesAreOpenAndTheRestPlanned(t *testing.T) {
 	open := map[string]bool{"warlord": true, "paladin": true, "dread-knight": true, "hierarch": true, "elder-druid": true, "demonologist": true,
 		"archon": true, "archmage": true, "necromancer": true, "wise-one": true, "coven-mother": true, "crone-of-ash": true,
-		"pathfinder": true, "swordmaster": true, "nightblade": true, "sentinel": true, "marksman": true, "ravager": true}
+		"high-sorcerer": true, "pathfinder": true, "swordmaster": true, "nightblade": true, "sentinel": true, "marksman": true, "ravager": true}
 	for _, c := range All() {
 		if c.Tier != TierElite {
 			continue
@@ -466,7 +472,7 @@ func TestEveryOpenEliteRankAppliesFromItsLevel(t *testing.T) {
 		assert.Equal(t, 11, len(RanksReached(c.ID, 60)), c.ID+": four advanced and seven elite ranks")
 		assert.Equal(t, 4, len(RanksReached(parent.ID, 59)), parent.ID+" gains nothing from the elite table")
 	}
-	assert.Equal(t, 18, open, "warrior, cleric, rogue, ranger, wizard and witch elites are open")
+	assert.Equal(t, 19, open, "warrior, cleric, rogue, ranger, wizard (with the High Sorcerer) and witch elites are open")
 }
 
 func rankNames(rs []Rank) []string {
