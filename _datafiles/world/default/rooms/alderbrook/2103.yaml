@@ -1,0 +1,13 @@
+roomid: 2103
+zone: Alderbrook
+title: Bat Gallery
+description: A narrow gallery where the roof is furred with sleeping bats. It dead-ends in a
+  collapse of rock.
+biome: cave
+exits:
+  north:
+    roomid: 2102
+mapx: 8
+mapy: 2
+mapz: -1
+hascoordinates: true

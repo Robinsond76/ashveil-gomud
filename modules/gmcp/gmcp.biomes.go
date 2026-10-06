@@ -21,6 +21,10 @@ type GMCPBiomeEntry struct {
 	Symbol          string                    `json:"symbol"`
 	Color           GMCPBiomeColor            `json:"color"`
 	SymbolOverrides map[string]GMCPBiomeColor `json:"overrides,omitempty"`
+	// Phase 40d: under a roof or in the dark, the sky does not reach it, so
+	// the map's day/night shading leaves it alone.
+	Indoor bool `json:"indoor,omitempty"`
+	Dark   bool `json:"dark,omitempty"`
 }
 
 // ansi256ToHex converts an ANSI 256-color index to a CSS hex string.
@@ -77,6 +81,8 @@ func buildBiomeTable() map[string]GMCPBiomeEntry {
 				FG: ansi256ToHex(b.Color.FGColor),
 				BG: ansi256ToHex(b.Color.BGColor),
 			},
+			Indoor: b.Indoor,
+			Dark:   b.DarkArea,
 		}
 
 		if len(b.SymbolOverrides) > 0 {

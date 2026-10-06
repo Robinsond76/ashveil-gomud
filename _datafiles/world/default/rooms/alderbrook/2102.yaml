@@ -1,0 +1,17 @@
+roomid: 2102
+zone: Alderbrook
+title: Under the Hill
+description: The fissure drops into a low cave of wet black stone. Water drips somewhere in the
+  dark.
+biome: cave
+exits:
+  south:
+    roomid: 2103
+  up:
+    roomid: 2118
+resources:
+- water
+mapx: 8
+mapy: 1
+mapz: -1
+hascoordinates: true

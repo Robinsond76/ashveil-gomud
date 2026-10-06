@@ -365,6 +365,110 @@ await tick(page, 300);
 check(glowing !== await campView(), 'a camp pitched without a tent draws the rough camp, not the tent');
 await page.close();
 
+
+// --- Phase 40d: resource icons, the walk path, click-to-walk, day and night ---
+const withRes = (resByRoom, biomes) => ({ biomes: biomes || {}, rooms: mixed.rooms.map(r => resByRoom[r.num] ? Object.assign({}, r, resByRoom[r.num]) : r) });
+
+// Resource icons replace the dots in the tiles style, and keep them in the classic one.
+page = await gotoMixed(null);
+await gmcp(page, 'World.Map', withRes({ [mid(1, 1)]: { resources: ['water', 'forage', 'herbs', 'game'] }, [mid(0, 1)]: { resources: ['fishing'], depleted: ['fishing'] } }));
+await tick(page, 400);
+s = await state(page);
+check(s.drawn.icons === 4 && s.drawn.dots === 0, 'the tiles style draws resource icons (3 in a corner plus the lone one), no dots: ' + JSON.stringify(s.drawn));
+const iconsOn = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await page.close();
+page = await gotoMixed({ style: 'classic' });
+await gmcp(page, 'World.Map', withRes({ [mid(1, 1)]: { resources: ['water', 'forage'] } }));
+await tick(page, 300);
+s = await state(page);
+check(s.drawn.icons === 0 && s.drawn.dots === 2, 'the classic style keeps the coloured dots: ' + JSON.stringify(s.drawn));
+await page.close();
+page = await open({ width: 1280, height: 900 }, null, '**/map/resources/*.png');
+await gmcp(page, 'Room', { Info: mixed.rooms[5] });
+await gmcp(page, 'World.Map', withRes({ [mid(0, 1)]: { resources: ['water'] } }));
+await tick(page, 500);
+s = await state(page);
+check(s.drawn.icons === 0 && s.drawn.dots === 1, 'an icon that fails to load falls back to its dot: ' + JSON.stringify(s.drawn));
+await page.close();
+
+// The walk path: breadcrumbs ahead, the flag on the target, cleared by {}.
+page = await gotoMixed(null);
+await gmcp(page, 'Walkto', { target: mid(3, 0), path: [mid(2, 1), mid(3, 1), mid(3, 0)] });
+await tick(page, 400);
+s = await state(page);
+check(s.drawn.path === 3 && s.walk && s.walk.target === mid(3, 0), 'a walk draws a marker on each room ahead: ' + JSON.stringify(s.drawn));
+const withPath = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await gmcp(page, 'Walkto', { target: mid(3, 0), path: [mid(3, 0)] });
+await tick(page, 300);
+s = await state(page);
+check(s.drawn.path === 1, 'the path shortens as the walker advances: ' + s.drawn.path);
+await gmcp(page, 'Walkto', {});
+await tick(page, 300);
+s = await state(page);
+check(s.drawn.path === 0 && s.walk === null, 'an empty Walkto clears the path');
+check(withPath !== await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL()), 'clearing the path repaints the map');
+await page.close();
+
+// Click-to-walk: a click on another room offers the walk, one pick sends it.
+page = await gotoMixed(null);
+await page.evaluate(() => { window.sent.length = 0; });
+s = await state(page);
+const at = (id) => page.evaluate(i => window.MapView.pointOf(i), id);
+await page.mouse.click((await at(mid(2, 1))).x, (await at(mid(2, 1))).y);   // the room east of you
+let items = await page.locator('[role=menuitem]').allTextContents();
+check(items.length === 1 && /^Walk to /.test(items[0]), 'a click on another room offers one pick, to walk there: ' + JSON.stringify(items));
+await page.locator('[role=menuitem]').first().click();
+check((await page.evaluate(() => window.sent)).join('|') === 'walkto ' + mid(2, 1), 'the pick sends walkto <room>: ' + (await page.evaluate(() => window.sent)).join('|'));
+await page.mouse.click((await at(mid(1, 1))).x, (await at(mid(1, 1))).y);   // your own room
+check(await page.locator('[role=menuitem]').count() === 0, 'a click on your own room offers nothing');
+await gmcp(page, 'Walkto', { target: mid(3, 1), path: [mid(2, 1), mid(3, 1)] });
+await page.mouse.click((await at(mid(2, 1))).x, (await at(mid(2, 1))).y);
+items = await page.locator('[role=menuitem]').allTextContents();
+check(items.length === 2 && items[1] === 'Stop walking', 'while walking the menu also offers Stop walking: ' + JSON.stringify(items));
+await page.keyboard.press('Escape');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', role: 'admin' });
+await page.mouse.click((await at(mid(2, 1))).x, (await at(mid(2, 1))).y);
+items = await page.locator('[role=menuitem]').allTextContents();
+check(items.some(t => /^teleport /.test(t)) && items.some(t => /^Walk to /.test(t)), 'an admin keeps the teleport menu beside the walk: ' + JSON.stringify(items));
+await page.keyboard.press('Escape');
+await page.close();
+
+// Day and night: outdoor tiles are shaded by the game's clock; indoor ones are not.
+page = await gotoMixed(null);
+const clock = (hour24, minute = 0) => ({ hour24, minute, day_start: 6, night_start: 20, night: hour24 >= 20 || hour24 < 6 });
+await gmcp(page, 'Gametime', clock(12));
+await tick(page, 300);
+s = await state(page);
+check(s.night === 0 && s.drawn.shaded === 0, 'noon draws no shading: ' + JSON.stringify([s.night, s.drawn.shaded]));
+const noon = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await gmcp(page, 'Gametime', clock(19, 30));
+await tick(page, 200);
+s = await state(page);
+check(s.night > 0.4 && s.night < 0.6 && s.drawn.shaded > 0, 'half an hour before nightfall is half dark: ' + s.night);
+await gmcp(page, 'Gametime', clock(23));
+await tick(page, 200);
+s = await state(page);
+const allShaded = s.drawn.shaded;
+check(s.night === 1 && allShaded >= 7, 'midnight is full night on every outdoor tile: ' + JSON.stringify([s.night, allShaded]));
+check(noon !== await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL()), 'night changes the picture');
+await gmcp(page, 'Gametime', clock(6, 30));
+await tick(page, 200);
+s = await state(page);
+check(s.night > 0.4 && s.night < 0.6, 'half an hour after dawn is half dark: ' + s.night);
+await gmcp(page, 'Gametime', clock(23));
+await gmcp(page, 'World.Map', { biomes: { moonbog: { name: 'Moonbog', indoor: true }, forest: { dark: true } }, rooms: mixed.rooms });
+await tick(page, 300);
+s = await state(page);
+check(s.drawn.shaded < allShaded, 'indoor and dark biomes are left unshaded: ' + JSON.stringify([allShaded, s.drawn.shaded]));
+await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-night.png') : '/tmp/40d-night.png' });
+await page.close();
+page = await gotoMixed({ dayNight: false });
+await gmcp(page, 'Gametime', clock(23));
+await tick(page, 300);
+s = await state(page);
+check(s.drawn.shaded === 0, 'with day/night off nothing is shaded');
+await page.close();
+
 await browser.close();
 server.close();
 console.log(failures ? failures + ' check(s) failed' : 'all checks passed');

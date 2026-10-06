@@ -1,0 +1,24 @@
+roomid: 2140
+zone: Alderbrook
+title: Plank Bridge
+description: A plank bridge on stone piers carries the path across the stream. The water runs
+  quick and clear beneath, and fish hang in the shadow of the boards.
+biome: shore
+exits:
+  east:
+    roomid: 2141
+  north:
+    roomid: 2134
+  south:
+    roomid: 2143
+  west:
+    roomid: 2139
+mapsymbol: B
+maplegend: Bridge
+resources:
+- water
+- fishing
+mapx: 4
+mapy: 5
+mapz: 0
+hascoordinates: true
