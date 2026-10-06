@@ -55,7 +55,7 @@ screen lane first, with code-generated pixel art. Open questions in the
 40a–40g and loot designs are decided there, each with a reason.
 Documentation only. Verification: links and the diff checked.
 
-**Phase 40e built: structured combat events (2026-10-06):** the web client
+**Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
 now receives `Company.Battle.Event`, one entry per combat happening of its
 fight (attack, spell, heal, status, wind-up, guard, yield, flee, death, fight
 start and end), released in step with the paced narration. No visible player
