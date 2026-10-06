@@ -457,7 +457,7 @@ func TestCookpotAddsOnePortionToMultiIngredientDishes(t *testing.T) {
 			for _, id := range tc.inputs {
 				cargo.stacks[id]++
 			}
-			text := w.m.cook(w.user, w.room)
+			text := w.m.cook(w.user, w.room, nil)
 			assert.Contains(t, text, "cargo")
 			assert.Equal(t, tc.want, cargo.stacks[30020], text)
 			if tc.want == 2 {

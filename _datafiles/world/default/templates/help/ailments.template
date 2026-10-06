@@ -49,9 +49,16 @@ it always has.
   Gut-ache    thyme and mushroom tisane  1 wild thyme, 1 mushroom
   Fever       cooling fever draught      1 glacial mint, 1 wild thyme
 
+Thyme tea is common knowledge. You make the other two only once you have
+worked them out: <ansi fg="command">camp prepare remedy with</ansi> [herb] [herb] tries exactly that mix of
+herbs on your ailing company. The right mix for someone who is ill cures the
+first member it helps (one mix is one dose) and goes into your recipe book (<ansi fg="command">help recipes</ansi>), so you never name it again. Any
+other mix, or the right one when nobody needs it, only uses up its herbs. A
+plain <ansi fg="command">camp prepare remedy</ansi> makes only the remedies you know.
+
 Wild thyme and mushrooms grow in most places, and glacial mint most often on
 the Frost Lake, and now and then as a rare find elsewhere (<ansi fg="command">help gathering</ansi>).
-A remedy is used up as it is made: you cannot carry one, and nobody buys one. <ansi fg="command">camp supplies</ansi> lists the herbs each remedy takes and
+A remedy is used up as it is made: you cannot carry one, and nobody buys one. <ansi fg="command">camp supplies</ansi> lists the herbs each remedy you know takes and
 how many you carry. The rules are those of <ansi fg="command">help camp supplies</ansi>: an established
 camp in the room, no rest running and no fight.
 

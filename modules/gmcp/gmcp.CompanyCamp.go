@@ -50,6 +50,8 @@ type campPayload struct {
 	// running rest has fixed them.
 	Duties       []dutyRow `json:"duties"`
 	DutiesLocked bool      `json:"duties_locked"`
+	// Phase 56: the dishes the leader has learned, one line each.
+	Recipes []string `json:"recipes"`
 }
 
 // dutyRow is one member's rest duty for the Camp tab's picker. Command is
@@ -104,6 +106,10 @@ func campPayloadOf(s camping.CampState) campPayload {
 	for _, d := range s.Duties {
 		duties = append(duties, dutyRow{Key: d.Key, Name: d.Name, Command: d.Command, Duty: d.Duty, Options: d.Options})
 	}
+	recipes := s.Recipes
+	if recipes == nil {
+		recipes = []string{}
+	}
 	tents := make([]tentRow, 0, len(s.Tents))
 	for _, t := range s.Tents {
 		tents = append(tents, tentRow{Kind: string(t.Kind), Name: t.Name, Effect: t.Effect, Pitched: t.Pitched, Command: "camp tent " + camping.TentOf(t.Kind).Short})
@@ -113,7 +119,7 @@ func campPayloadOf(s camping.CampState) campPayload {
 		spec := camping.TentOf(s.TentKind)
 		tentKind, tentName = string(spec.Kind), spec.Name
 	}
-	return campPayload{Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	return campPayload{Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

@@ -3,6 +3,9 @@ package camping
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,6 +49,19 @@ func ailingWorld(t *testing.T, herbs stock, needs survival.Needs) (*raidWorld, *
 	w, _, _ := prepWorld(t, herbs)
 	f := &cureFake{fakeSurvival: &fakeSurvival{needs: []survival.MemberNeeds{{Key: survival.LeaderMemberKey, Name: w.user.Character.Name, Needs: needs}}}}
 	w.m.survival = f
+	for _, spec := range []*items.ItemSpec{
+		{ItemId: thymeID, Name: "wild thyme", NameSimple: "thyme", Type: items.Botanical},
+		{ItemId: mushroomID, Name: "mushroom", Type: items.Food},
+		{ItemId: mintID, Name: "glacial mint", NameSimple: "mint", Type: items.Botanical},
+	} {
+		items.SetTestItemSpec(spec)
+		id := spec.ItemId
+		t.Cleanup(func() { items.RemoveTestItemSpec(id) })
+	}
+	// Phase 56: these tests are about the cure, so the leader knows every remedy.
+	for _, kind := range []string{survival.AilmentChill, survival.AilmentGutAche, survival.AilmentFever} {
+		cookbook.LearnRemedy(w.user.Character, kind)
+	}
 	return w, f
 }
 
@@ -111,4 +127,95 @@ func TestSuppliesAndStatusMentionRemediesAndAilments(t *testing.T) {
 	supplies := w.m.suppliesCommand(w.user)
 	assert.Contains(t, supplies, "thyme tea for chill: 2 wild thyme (you carry wild thyme 1/2)")
 	assert.Contains(t, prepare(w, "status"), "has a chill (2 battles left): camp prepare remedy")
+}
+
+// Phase 56: remedies are discovered like dishes. The chill's thyme tea is
+// common knowledge; the rest must be worked out with a mix of herbs.
+func forgetRemedies(w *raidWorld) { w.user.Character.SetMiscData(cookbook.BookKey, "") }
+
+func TestABareRemedyOnlyMakesKnownRemediesAndSaysSo(t *testing.T) {
+	n := fit()
+	n.GutAche, n.Chill = 2, 2
+	herbs := stock{thymeID: 4, mushroomID: 1}
+	w, f := ailingWorld(t, herbs, n)
+	forgetRemedies(w)
+	text := prepare(w, "remedy")
+	assert.Contains(t, text, "no remedy for it", "gut-ache is not known yet")
+	assert.Contains(t, text, "thyme tea", "the chill's tea is common knowledge")
+	assert.Equal(t, stock{thymeID: 2, mushroomID: 1}, herbs, "only the chill's herbs went")
+	require.Len(t, f.cured, 1)
+	assert.Greater(t, f.needs[0].Needs.GutAche, 0)
+}
+
+func TestTryingTheRightMixCuresAndLearnsTheRemedyOnce(t *testing.T) {
+	n := fit()
+	n.GutAche = 2
+	herbs := stock{thymeID: 2, mushroomID: 2}
+	w, f := ailingWorld(t, herbs, n)
+	forgetRemedies(w)
+	text := prepare(w, "remedy", "with", "thyme", "mushroom")
+	assert.Contains(t, text, "breaks")
+	assert.Contains(t, text, "worked out a new remedy")
+	assert.Equal(t, stock{thymeID: 1, mushroomID: 1}, herbs)
+	require.Len(t, f.cured, 1)
+	assert.True(t, cookbook.KnowsRemedy(w.user.Character, survival.AilmentGutAche, false))
+	// The next ailment is cured without naming herbs.
+	f.needs[0].Needs.GutAche = 3
+	assert.Contains(t, prepare(w, "remedy"), "tisane")
+	assert.Equal(t, stock{thymeID: 0, mushroomID: 0}, herbs)
+}
+
+func TestAWrongMixSpendsItsHerbsAndTeachesNothing(t *testing.T) {
+	n := fit()
+	n.GutAche = 2
+	herbs := stock{thymeID: 2, mushroomID: 1}
+	w, f := ailingWorld(t, herbs, n)
+	forgetRemedies(w)
+	text := prepare(w, "remedy", "with", "thyme", "thyme", "mushroom")
+	assert.Contains(t, text, "does nothing")
+	assert.Equal(t, stock{thymeID: 0, mushroomID: 0}, herbs)
+	assert.Empty(t, f.cured)
+	assert.False(t, cookbook.KnowsRemedy(w.user.Character, survival.AilmentGutAche, false))
+}
+
+func TestTheRightMixForNobodyIllIsAlsoSpentAndNotLearned(t *testing.T) {
+	herbs := stock{thymeID: 1, mushroomID: 1}
+	w, f := ailingWorld(t, herbs, fit())
+	forgetRemedies(w)
+	assert.Contains(t, prepare(w, "remedy", "with", "thyme", "mushroom"), "does nothing")
+	assert.Equal(t, stock{thymeID: 0, mushroomID: 0}, herbs, "a guess always costs")
+	assert.Empty(t, f.cured)
+	assert.False(t, cookbook.KnowsRemedy(w.user.Character, survival.AilmentGutAche, false))
+}
+
+func TestSuppliesListOnlyKnownRemedies(t *testing.T) {
+	n := fit()
+	w, _ := ailingWorld(t, stock{thymeID: 1}, n)
+	forgetRemedies(w)
+	supplies := w.m.suppliesCommand(w.user)
+	assert.Contains(t, supplies, "thyme tea")
+	assert.NotContains(t, supplies, "tisane")
+	assert.NotContains(t, supplies, "fever draught")
+}
+
+// 56 review: a mix is one dose. With two members ill, the right mix cures
+// the first and spends exactly the herbs named, never more, and never
+// refuses in a way that would confirm the mix for free.
+func TestAMixIsOneDoseForOneMember(t *testing.T) {
+	n := fit()
+	n.GutAche = 2
+	herbs := stock{thymeID: 1, mushroomID: 1}
+	w, f := ailingWorld(t, herbs, n)
+	forgetRemedies(w)
+	mira := &characters.Character{Name: "Mira", RoomId: w.user.Character.RoomId}
+	w.m.companionsOf = func(int) (map[int]*characters.Character, []int) {
+		return map[int]*characters.Character{1: mira}, []int{1}
+	}
+	f.needs = append(f.needs, survival.MemberNeeds{Key: survival.CompanionMemberKey(1), Name: "Mira", Needs: n})
+	text := prepare(w, "remedy", "with", "thyme", "mushroom")
+	assert.Contains(t, text, "breaks")
+	assert.NotContains(t, text, "Nothing was used")
+	assert.Equal(t, stock{thymeID: 0, mushroomID: 0}, herbs, "exactly the named herbs")
+	assert.Len(t, f.cured, 1, "one dose, one member")
+	assert.True(t, cookbook.KnowsRemedy(w.user.Character, survival.AilmentGutAche, false))
 }

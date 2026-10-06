@@ -111,7 +111,7 @@ round count; a rest takes real time, not game time.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 
-  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">recipes</ansi> | <ansi fg="command">camp break</ansi>
   <ansi fg="command">camp tent</ansi> [<ansi fg="command">canvas</ansi>|<ansi fg="command">fur</ansi>|<ansi fg="command">camouflaged</ansi>|<ansi fg="command">large</ansi>|<ansi fg="command">clear</ansi>]
   <ansi fg="command">camp duties</ansi> [member|all] [<ansi fg="command">sleep</ansi>|<ansi fg="command">watch</ansi>|<ansi fg="command">tend</ansi>|<ansi fg="command">forage</ansi>|<ansi fg="command">cook</ansi>|<ansi fg="command">brew</ansi>] | <ansi fg="command">camp duties clear</ansi>
   <ansi fg="command">camp poison</ansi> [<ansi fg="command">assign</ansi>|<ansi fg="command">unassign</ansi>|<ansi fg="command">preview</ansi>|<ansi fg="command">apply</ansi>]
@@ -119,9 +119,10 @@ round count; a rest takes real time, not game time.
 
 <ansi fg="yellow-bold">Cooking, raids, and camp specialists</ansi>
 
-  <ansi fg="command">camp cook</ansi>
-  With your camp's fire lit, cook a meal from what your pack and the
-  company cargo hold (<ansi fg="command">help cooking</ansi>).
+  <ansi fg="command">camp cook</ansi> [ingredient ...]
+  With your camp's fire lit, cook a dish you know from what your pack and
+  the company cargo hold, or name ingredients to try a new mix
+  (<ansi fg="command">help cooking</ansi>, <ansi fg="command">help recipes</ansi>).
 
   <ansi fg="command">camp supplies</ansi>, <ansi fg="command">camp prepare</ansi> [supply] [member]
   Fortifying broth, a warming draught, a cooling salve, or watch incense,

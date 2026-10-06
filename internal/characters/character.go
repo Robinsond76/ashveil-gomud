@@ -181,12 +181,15 @@ func New() *Character {
 		Items:          []items.Item{},
 		Buffs:          buffs.New(),
 		Equipment:      Worn{},
-		MiscData:       make(map[string]any),
-		roomHistory:    make([]int, 0, 10),
-		KeyRing:        make(map[string]string),
-		Created:        time.Now(),
-		PlayerDamage:   map[int]int{},
-		Timers:         map[string]gametime.RoundTimer{},
+		// Phase 56 review: an empty recipe book (cookbook.BookKey) marks a
+		// character made after recipe discovery; a saved character without
+		// the key predates it and keeps every dish (cookbook.Legacy).
+		MiscData:     map[string]any{"recipebook": ""},
+		roomHistory:  make([]int, 0, 10),
+		KeyRing:      make(map[string]string),
+		Created:      time.Now(),
+		PlayerDamage: map[int]int{},
+		Timers:       map[string]gametime.RoundTimer{},
 	}
 }
 

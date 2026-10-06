@@ -225,6 +225,9 @@ type CampState struct {
 	// (its duties are fixed then).
 	Duties       []DutyRow
 	DutiesLocked bool
+	// Recipes (Phase 56) are the dishes the leader has learned, one line
+	// each ("Hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)").
+	Recipes []string
 }
 
 // DutyRow is one member's rest duty for the Camp tab's picker.

@@ -234,6 +234,7 @@ type ItemSpec struct {
 	KeyLockId       string            `yaml:"keylockid,omitempty"`   // Example: `778-north` - If it's a key, what lock does it open? roomid-exitname etc.
 	Nutrition       int               `yaml:"nutrition,omitempty"`   // Survival hunger benefit when eaten; zero keeps ordinary food behavior
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
+	Recipe          int               `yaml:"recipe,omitempty"`      // Phase 56: a recipe page teaches this dish (an item ID) when used; never resold
 	Meal            string            `yaml:"meal,omitempty"`        // Phase 50: a cooked meal's buff kind (survival.MealKinds), given when eaten
 	Ailment         string            `yaml:"ailment,omitempty"`     // Phase 55: an ailment kind (survival.AilmentKinds) eating this gives (raw game meat's Gut-ache)
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
@@ -662,6 +663,10 @@ func (i *ItemSpec) Validate() error {
 
 	if i.Hydration < 0 {
 		return fmt.Errorf("item hydration cannot be negative")
+	}
+
+	if i.Recipe < 0 || (i.Recipe > 0 && i.Subtype != Usable) {
+		return fmt.Errorf("recipe page must be usable and name a dish")
 	}
 
 	if i.Type == Weapon {

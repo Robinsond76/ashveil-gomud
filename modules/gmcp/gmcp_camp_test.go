@@ -20,7 +20,7 @@ func TestCompanyCampPayload(t *testing.T) {
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, map[string]any{"has_camp": true, "here": true, "room": "", "fire_lit": true, "resting": true, "rested": false,
-		"embers": false, "tent": false, "tents": []any{}, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}, "duties": []any{}, "duties_locked": false}, got)
+		"embers": false, "tent": false, "tents": []any{}, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}, "duties": []any{}, "duties_locked": false, "recipes": []any{}}, got)
 
 	// Phase 40a3: a finished rest leaves embers, and a pitched tent shows.
 	state = camping.CampState{HasCamp: true, Here: true, Rested: true, Embers: true, Tent: true}
@@ -51,6 +51,10 @@ func TestCompanyCampPayload(t *testing.T) {
 		map[string]any{"key": "leader", "name": "Aria", "command": "me", "duty": "sleep", "options": []any{"sleep", "watch"}},
 		map[string]any{"key": "companion:1", "name": "Mira", "command": "Mira", "duty": "watch", "options": []any{"sleep", "watch"}},
 	}, got["duties"])
+	// Phase 56: the dishes the leader has learned.
+	state = camping.CampState{Recipes: []string{"hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)"}}
+	require.NoError(t, json.Unmarshal(extra.build(u), &got))
+	assert.Equal(t, []any{"hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)"}, got["recipes"])
 	state = camping.CampState{HasCamp: true, Here: true, FireLit: true, Resting: true, RestPercent: 25, RestSeconds: 45}
 
 	none := campExtra(func(int, int, []string) (camping.CampState, bool) { return camping.CampState{}, false }, nil)
