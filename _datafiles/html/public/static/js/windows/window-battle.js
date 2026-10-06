@@ -859,6 +859,10 @@
             if (battle.narrow) { banners.push('narrow'); }
             if (battle.retreat) { banners.push('withdrawing ' + battle.retreat.exit); }
             if (battle.nerve === 'faltering') { banners.push('company faltering'); }
+            // Phase 39c: a Shaman's weather over the battle.
+            if (battle.weather && battle.weather.name) {
+                banners.push(battle.weather.name + ' (' + battle.weather.rounds + (battle.weather.rounds === 1 ? ' round' : ' rounds') + ': ' + battle.weather.effect + ')');
+            }
             if ((battle.allies || []).length) { banners.push('allies: ' + battle.allies.map(a => a.name).join(', ')); }
             if (battle.waiting && battle.waiting.length) { banners.push('waiting: ' + battle.waiting.join(', ')); }
         }
@@ -1614,6 +1618,7 @@
                 motion: motion(),
                 pace: feedPace,
                 nerve: battle && battle.nerve ? battle.nerve : '',
+                weather: battle && battle.weather ? battle.weather.kind : '',
                 allies: allyGroups(),
                 compact: compactAllies(),
                 backlog: sched.backlog(Date.now()),

@@ -22,7 +22,7 @@ func TestShamanHelp(t *testing.T) {
 		}
 	}
 	for topic, wants := range map[string][]string{
-		"shaman":        {"Call Fog", "Chill Wind", "Rain", "Lightning", "Gust", "Long Weather", "help shaman-routes"},
+		"shaman":        {"Call Fog", "Chill Wind", "Rain", "Lightning", "Gust", "Long Weather", "help shaman-routes", "help battlescreen"},
 		"shaman-routes": {"Stormcaller", "Chain lightning", "Mistweaver", "Veil of mist", "Earthspeaker", "Stoneskin", "Mountain Speaker"},
 	} {
 		assert.Contains(t, listed, topic, "help index lists %s", topic)
@@ -46,8 +46,8 @@ func TestShamanHelp(t *testing.T) {
 	}
 	for topic, want := range map[string]string{
 		"archetype": "Shaman", "classes": "shaman-routes", "promotion": "Shaman", "talents": "Long Weather",
-		"combat": "help shaman", "strategy": "help shaman", "statuses": "Fogbound", "progression": "shaman 2",
-		"specialists": "shamans", "weather": "shaman", "mana": "shamans",
+		"combat": "help shaman", "strategy": "help shaman", "statuses": "Fogbound", "progression": "a shaman the same",
+		"specialists": "shamans", "weather": "shaman", "mana": "shamans", "battlescreen": "help shaman",
 	} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)

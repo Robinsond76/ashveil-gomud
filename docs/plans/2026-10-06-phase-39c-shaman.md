@@ -40,8 +40,8 @@ A starting lineage with no alignment gate that calls a battle-local weather.
   every strategy surface; the weather use is a new Use inside Caster).
 - **Statuses for Fog and Chill** are real buffs counted in combat rounds, so
   they show in `conditions` and the battle events with no new display code.
-- **Fire halving in Rain** exists as `stormcraft.FireDamage` and in the help,
-  but nothing deals fire damage with a spell yet, so it has no effect today.
+- **Fire halving in Rain** was dropped in review: nothing in the game deals
+  fire damage, so Rain only feeds Lightning (see PROJECT_STATUS).
 - **Fog's -10 to hit** applies to ranged weapon attacks only; spells take the
   10% cut through the spell factor.
 - **Mistweaver Veil of mist** gives +5 Evasion to every ally, not only

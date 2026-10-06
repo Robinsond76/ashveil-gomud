@@ -205,10 +205,10 @@ Archetypes:
   # state) that changes both sides' odds, then casts wind and lightning; it
   # casts as a wizard does (role caster) and uses mana.
   - ArchetypeId: shaman
-    HPPerLevel: 0.6
-    HPStart: 2
+    HPPerLevel: 0.5
+    HPStart: 0
     AttackRate: 0.7
-    EvasionRate: 0.8
+    EvasionRate: 0.75
     ArmorTraining: light
     ShieldSizes: [none]
     ManaBase: 40
@@ -233,9 +233,9 @@ Archetypes:
     Utility: [weather]
     Growth:
       - { Stat: mysticism, Weight: 4 }
-      - { Stat: vitality, Weight: 2 }
+      - { Stat: smarts, Weight: 3 }
       - { Stat: perception, Weight: 2 }
-      - { Stat: smarts, Weight: 2 }
+      - { Stat: speed, Weight: 1 }
     CompanionLevels: [1, 10, 20, 30]
     # An ash staff, a hooded robe, and one minor mana draught.
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 38]

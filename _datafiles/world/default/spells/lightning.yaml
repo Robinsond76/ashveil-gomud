@@ -2,14 +2,14 @@
 # chains to a second foe.
 spellid: lightning
 name: Lightning
-description: Hurts for 10+1d6, plus 1 per 8 caster levels and 1 per 12 Mysticism, scaled by skill; 50% more in Rain
+description: Hurts for 9+1d6, plus 1 per 8 caster levels and 1 per 12 Mysticism, scaled by skill; 50% more in Rain
 type: harmmulti
 school: stormcraft
 cost: 12
 waitrounds: 1
 difficulty: 75
 power:
-  base: 10
+  base: 9
   dice: 1d6
   leveldiv: 8
   mysticismdiv: 12

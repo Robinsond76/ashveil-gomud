@@ -22,6 +22,9 @@ change the company's focus.
   of you. The first time it happens in a fight, companions of weak loyalty
   may hesitate or flee (<ansi fg="command">help morale</ansi>). A companion who hesitates loses its action, and the
   last-blow line says so. A foe that yields or runs is marked the same way.
+- When a Shaman calls a weather (<ansi fg="command">help shaman</ansi>), the header names it, the
+  rounds it has left and what it does, such as <ansi fg="yellow">fog (3 rounds: foe ranged
+  attacks and spells weaker)</ansi>. The Combat tab's Battle view shows it too.
 - Enemy health is shown in five steps, never as numbers: unhurt, scratched,
   wounded, badly wounded, near death. Hover or tap a figure to read its
   name and health, and to see whom it strikes.

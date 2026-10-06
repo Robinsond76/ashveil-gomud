@@ -12,7 +12,7 @@ const (
 	None  Kind = ""
 	Fog   Kind = "fog"   // dims the foes' ranged attacks and spells
 	Chill Kind = "chill" // slows the foes' chants and sling shots
-	Rain  Kind = "rain"  // damps fire and feeds lightning
+	Rain  Kind = "rain"  // feeds lightning
 )
 
 // Kinds are the weathers a Shaman can call.
@@ -29,8 +29,6 @@ const (
 	FogSpellPct = 10
 	// RainLightningPct is the extra damage Lightning deals in Rain.
 	RainLightningPct = 50
-	// RainFirePct is the share of fire damage that gets through the rain.
-	RainFirePct = 50
 	// ChainPct is the share of its damage a chained bolt deals the second foe.
 	ChainPct = 50
 )
@@ -57,6 +55,19 @@ func (k Kind) Name() string {
 	return ""
 }
 
+// Effect is what the weather does, in a few words, for the battle screen.
+func (k Kind) Effect() string {
+	switch k {
+	case Fog:
+		return "foe ranged attacks and spells weaker"
+	case Chill:
+		return "foe chants and sling shots a round slower"
+	case Rain:
+		return "Lightning 50% stronger"
+	}
+	return ""
+}
+
 // EndLine is the line that tells a weather has passed.
 func (k Kind) EndLine() string {
 	switch k {
@@ -74,14 +85,6 @@ func (k Kind) EndLine() string {
 func LightningDamage(dmg int, k Kind) int {
 	if k == Rain {
 		return dmg + dmg*RainLightningPct/100
-	}
-	return dmg
-}
-
-// FireDamage is a fire's damage in the weather: rain halves it.
-func FireDamage(dmg int, k Kind) int {
-	if k == Rain {
-		return dmg * RainFirePct / 100
 	}
 	return dmg
 }

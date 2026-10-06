@@ -16,7 +16,7 @@ Each archetype leans toward the stats it needs, by these weights out of 10:
   Samurai   speed 4, strength 3, perception 2, smarts 1
   Witch     mysticism 4, smarts 3, perception 2, vitality 1
   Halberdier strength 4, vitality 3, speed 2, perception 1
-  Shaman    mysticism 4, vitality 2, perception 2, smarts 2
+  Shaman    mysticism 4, smarts 3, perception 2, speed 1
   Cleric    mysticism 3, vitality 3, smarts 2, strength 2
   Ranger    perception 4, speed 3, strength 2, vitality 1
 

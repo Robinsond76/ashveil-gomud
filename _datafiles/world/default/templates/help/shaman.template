@@ -7,11 +7,11 @@ stands in front of any of its routes.
 
 <ansi fg="yellow-bold">What the Shaman is</ansi>
 
-  Health      2 to start, 0.6 a level to level 20 (<ansi fg="command">help health</ansi>)
-  Skill       Attack 0.7 and Evasion 0.8 a level (<ansi fg="command">help evasion</ansi>)
+  Health      none to start, 0.5 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.7 and Evasion 0.75 a level (<ansi fg="command">help evasion</ansi>)
   Gear        light armor, no shield (<ansi fg="command">help armor</ansi>)
   Mana        40, plus 10 a level (<ansi fg="command">help mana</ansi>)
-  Stats       mysticism 4, vitality 2, perception 2, smarts 2 (<ansi fg="command">help growth</ansi>)
+  Stats       mysticism 4, smarts 3, perception 2, speed 1 (<ansi fg="command">help growth</ansi>)
   Starter kit an ash staff, a hooded robe, a student's amulet, food, a
               waterskin, a knapsack and one minor mana draught
   Utility     Weather Sense, which forecasts the world's weather (<ansi fg="command">help forecast</ansi>)
@@ -24,12 +24,11 @@ Stormcraft is the Shaman's school; only a Shaman may learn it.
   Call Fog       1      6     1     for 3 rounds, foes' ranged attacks lose 10
                                     points of accuracy and their spells hit
                                     10% weaker (they are fogbound)
-  Gust           1      5     2     a small wind spell, about 80% of Magic Missile
-  Chill Wind     3      8     2     for 3 rounds, foes' spell chants and sling
+  Gust           1      5     2     a small wind spell, about 70% of Magic Missile
+  Chill Wind     3     12     2     for 3 rounds, foes' spell chants and sling
                                     shots take one extra round to begin, as in
                                     the cold (they are windchilled)
-  Rain           6     10     2     for 3 rounds, fire damage is halved on both
-                                    sides and Lightning strikes 50% harder
+  Rain           6     10     2     for 3 rounds, Lightning strikes 50% harder
   Lightning      8     12     2     a heavy bolt at one foe, 50% more in Rain
 
 At level 5 the Shaman chooses its first talent, and at level 10 it promotes to
@@ -46,8 +45,10 @@ call is not marked by it. Weather never advances the world's clock.
 
 The battle tells you when a weather is called, what it does, and when it
 passes: <ansi fg="command">A gray fog rolls over the battle. (3 rounds, foe ranged attacks and
-spells weaker)</ansi>, then <ansi fg="command">The fog thins and lifts.</ansi>. <ansi fg="command">conditions</ansi> shows the mark on a
-foe you consider, and <ansi fg="command">help statuses</ansi> lists Fogbound and Windchilled.
+spells weaker)</ansi>, then <ansi fg="command">The fog thins and lifts.</ansi>. In the web client the battle
+screen's header and the Combat tab name the weather and its rounds left
+(<ansi fg="command">help battlescreen</ansi>). <ansi fg="command">conditions</ansi> shows the mark on a foe you consider, and
+<ansi fg="command">help statuses</ansi> lists Fogbound and Windchilled.
 
 <ansi fg="yellow-bold">How a Shaman fights</ansi>
 

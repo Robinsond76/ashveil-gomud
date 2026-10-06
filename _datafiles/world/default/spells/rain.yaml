@@ -1,7 +1,7 @@
-# Phase 39c: a Shaman's weather. Rain feeds Lightning and damps fire.
+# Phase 39c: a Shaman's weather. Rain feeds Lightning.
 spellid: rain
 name: Rain
-description: Calls rain into the battle for 3 rounds. Fire damage is halved on both sides, and Lightning strikes 50% harder. Replaces any other weather.
+description: Calls rain into the battle for 3 rounds. Lightning strikes 50% harder while it falls. Replaces any other weather.
 type: helpsingle
 school: stormcraft
 cost: 10
