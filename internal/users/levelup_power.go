@@ -73,9 +73,6 @@ func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntr
 			out = append(out, powerEntry{name: "Dive", size: fmt.Sprintf("%d%% of a blow", 100+c.ClassEffects().Int(classes.DiveDmg))})
 		}
 	}
-	if chance := strategy.HookChance(c.Level); chance > 0 && c.ArchetypeID() == "halberdier" {
-		out = append(out, powerEntry{name: "Hook", size: fmt.Sprintf("%d%% to trip a leaper", chance)})
-	}
 	// Phase 39g: an Alchemist's satchel grows a flask every three levels.
 	if flasks.IsAlchemist(c) {
 		out = append(out, powerEntry{name: "Flask satchel", size: fmt.Sprintf("%d flasks", flasks.Capacity(c))})
