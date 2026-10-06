@@ -36,8 +36,11 @@ type Member struct {
 	// when no provider can say (the leader only).
 	Archetype      string
 	ArchetypeKnown bool
-	HasHP          bool
-	HP, HPMax      int
+	// Lineage and ClassID are the archetype and class ids a companion's
+	// map sprite is picked by (Phase 40c); blank when unknown.
+	Lineage, ClassID string
+	HasHP            bool
+	HP, HPMax        int
 	// HPLimit is the wound limit (Phase 30b): HPMax when unwounded.
 	HPLimit int
 	// HasMP is false when the member has no mana to show: none at all, or
@@ -237,6 +240,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
+			m.Lineage, m.ClassID = v.Archetype, v.Class
 			m.Strategy = src.strategy(uid, m.Key)
 			m.Abilities = strategy.CompanionAbilities(v.Archetype)
 			switch v.Status {

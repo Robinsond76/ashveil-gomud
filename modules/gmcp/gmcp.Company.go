@@ -76,6 +76,8 @@ type companyMember struct {
 	Status    string       `json:"status"`
 	Level     int          `json:"level"`
 	Archetype *string      `json:"archetype"`
+	Lineage   string       `json:"lineage,omitempty"` // Phase 40c: base archetype id, for the map sprite
+	ClassID   string       `json:"classid,omitempty"` // Phase 40c: current class id
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -202,6 +204,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	out := companyMember{Key: string(m.Key), ID: m.ID, Name: m.Name, Status: statusName(m.Status), Level: m.Level}
 	if !m.Leader || m.ArchetypeKnown {
 		out.Archetype = strPtr(m.Archetype)
+	}
+	if !m.Leader {
+		out.Lineage, out.ClassID = m.Lineage, m.ClassID
 	}
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}

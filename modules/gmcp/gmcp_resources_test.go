@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -89,4 +90,45 @@ func TestWorldMapEntriesCarryShownResources(t *testing.T) {
 	assert.Equal(t, []string{"game"}, depleted[spring.RoomId])
 	assert.Empty(t, got[bare.RoomId])
 	assert.Len(t, got, 2)
+}
+
+// Phase 40c: a resource change reaches every player online as World.Resources,
+// so a map redraws a room its player is not standing in.
+func TestWorldResourcesGoToEveryoneOnline(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "gmcpres2", Name: "Meadow", LitArea: true})
+	t.Cleanup(func() { rooms.RemoveTestBiome("gmcpres2") })
+	spring := &rooms.Room{RoomId: 990411, Zone: "Meadow", Biome: "gmcpres2", Resources: []string{"herbs", "water"}}
+	rooms.SetTestRoom(spring)
+	t.Cleanup(func() { rooms.RemoveTestRoom(990411) })
+	rooms.SetDepletedCheck(func(roomID int, resource string) bool { return roomID == 990411 && resource == "herbs" })
+	t.Cleanup(func() { rooms.SetDepletedCheck(nil) })
+
+	far := users.NewUserRecord(990412, 1) // standing somewhere else entirely
+	far.Character.RoomId = 1
+	users.SetTestUser(far)
+	t.Cleanup(func() { users.RemoveTestUser(far.UserId) })
+
+	var got []GMCPWorldResources_Payload
+	var to []int
+	id := events.RegisterListener(GMCPOut{}, func(e events.Event) events.ListenerReturn {
+		if out := e.(GMCPOut); out.Module == `World.Resources` {
+			got = append(got, out.Payload.(GMCPWorldResources_Payload))
+			to = append(to, out.UserId)
+			return events.Cancel
+		}
+		return events.Continue
+	}, events.First)
+	t.Cleanup(func() { events.UnregisterListener(GMCPOut{}, id) })
+
+	(&GMCPWorldModule{}).resourcesChangedHandler(events.RoomResourcesChanged{RoomId: 990411})
+	events.ProcessEvents()
+	require.Contains(t, to, far.UserId)
+	i := 0
+	for n, u := range to {
+		if u == far.UserId {
+			i = n
+		}
+	}
+	assert.Equal(t, GMCPWorldResources_Payload{Id: 990411, Resources: []string{"water", "herbs"}, Depleted: []string{"herbs"}}, got[i])
 }

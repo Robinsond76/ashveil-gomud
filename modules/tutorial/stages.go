@@ -131,7 +131,7 @@ func init() {
 				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested. A finished camp rest or inn stay restores everyone's health and mana; on the road, health trickles back only to half, and mana not at all (<ansi fg="command">help readiness</ansi>, <ansi fg="command">help mana</ansi>).`,
 				`A finished camp rest knits a broken bone for each splint and a cut for each bandage you carry, and an inn stay every wound. After a fight, <ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the hurt (<ansi fg="command">help wounds</ansi>).`,
 				`<ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>, and <ansi fg="command">help cooking</ansi> explain resting and cooking in full.`,
-				`Playing in the web client? Your camp appears on the map window as a tent with its fire, and a sleeping mark while you rest (<ansi fg="command">help worldmap</ansi>).`,
+				`Playing in the web client? The map window draws terrain tiles, and your camp appears on it as a tent with its fire, and a sleeping mark while you rest (<ansi fg="command">help worldmap</ansi>).`,
 				`Companions earn their keep at camp: a warrior keeps watch for raiders (<ansi fg="command">help campwatch</ansi>), a ranger forages, a cleric keeps a vigil, and <ansi fg="command">camp cook</ansi> cooks over your own fire.`,
 				`Companions can learn Cooking: <ansi fg="command">company train</ansi> spends a companion's training points at your camp, and at <ansi fg="command">camp cook</ansi> the best cook with you does the cooking (<ansi fg="command">help company-train</ansi>).`,
 			},

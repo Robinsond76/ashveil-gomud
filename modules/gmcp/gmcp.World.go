@@ -25,7 +25,50 @@ func init() {
 	}
 
 	events.RegisterListener(GMCPWorldUpdate{}, g.buildAndSendGMCPPayload)
+	events.RegisterListener(events.RoomResourcesChanged{}, g.resourcesChangedHandler)
 
+}
+
+// GMCPWorldResources_Payload is the World.Resources update (Phase 40c): one
+// room's shown resources and the ones picked clean, so a map redraws a room
+// the player is not standing in when it is picked clean or regrows.
+type GMCPWorldResources_Payload struct {
+	Id        int      `json:"num"`
+	Resources []string `json:"resources"`
+	Depleted  []string `json:"depleted"`
+}
+
+// buildWorldResources reads a room's current resource state.
+func buildWorldResources(room *rooms.Room) GMCPWorldResources_Payload {
+	p := GMCPWorldResources_Payload{Id: room.RoomId, Resources: []string{}, Depleted: []string{}}
+	if shown := room.ShownResources(); len(shown) > 0 {
+		p.Resources = shown
+		if gone := room.DepletedResources(); len(gone) > 0 {
+			p.Depleted = gone
+		}
+	}
+	return p
+}
+
+// resourcesChangedHandler sends World.Resources to every player online when a
+// room's resources change (a gather picks a pool clean; a regrown charge
+// clears the mark). The payload is tiny and carries no more than the map
+// already shows for any room a player has visited; a client ignores rooms it
+// has not seen.
+func (g *GMCPWorldModule) resourcesChangedHandler(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.RoomResourcesChanged)
+	if !ok {
+		return events.Continue
+	}
+	room := rooms.LoadRoom(evt.RoomId)
+	if room == nil {
+		return events.Continue
+	}
+	payload := buildWorldResources(room)
+	for _, uId := range users.GetOnlineUserIds() {
+		events.AddToQueue(GMCPOut{UserId: uId, Module: `World.Resources`, Payload: payload})
+	}
+	return events.Continue
 }
 
 type GMCPWorldModule struct {
