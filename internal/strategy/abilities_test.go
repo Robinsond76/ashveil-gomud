@@ -113,3 +113,18 @@ func TestStrategyIsZeroCountsTheNewFields(t *testing.T) {
 	assert.True(t, r.NoAbilities)
 	assert.Equal(t, 20, r.Reserve)
 }
+
+// Phase 35b: abilities grow with level.
+func TestAbilityScaling(t *testing.T) {
+	for _, c := range []struct{ level, opening, aimed int }{{1, 2, 2}, {6, 3, 4}, {12, 4, 6}, {30, 7, 12}} {
+		if got := OpeningStrikeBonus(c.level); got != c.opening {
+			t.Errorf("OpeningStrikeBonus(%d) = %d, want %d", c.level, got, c.opening)
+		}
+		if got := AimedShotBonus(c.level); got != c.aimed {
+			t.Errorf("AimedShotBonus(%d) = %d, want %d", c.level, got, c.aimed)
+		}
+	}
+	if TackleExtraRounds(19) != 0 || TackleExtraRounds(20) != 1 || TackleExtraRounds(45) != 1 {
+		t.Error("a tackle's knockdown lasts one round more from level 20")
+	}
+}

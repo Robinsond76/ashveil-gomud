@@ -28,7 +28,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 
 	deathRecoveryRoomId := int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom)
 
-	// Ashveil Phase 32d/33h2: companions regain mana and health as players do.
+	// Ashveil Phase 32d/33h2: companions regain health as players do.
+	// Phase 35b: neither regains mana, and health only trickles back to
+	// half of max (TrickleHeal).
 	regenCompanionVitals(company.LeaderAndKeyForInstance)
 	// Ashveil Phase 33i2: an enemy that lived through a fight recovers.
 	regenEnemyVitals(evt.RoundNumber, company.LeaderAndKeyForInstance, battle.Engaged)
@@ -70,10 +72,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		} else {
 
 			if user.Character.Health > 0 {
-				user.Character.Heal(
-					user.Character.HealthPerRound(),
-					user.Character.ManaPerRound(),
-				)
+				user.Character.TrickleHeal(user.Character.HealthPerRound())
 			}
 		}
 
@@ -92,11 +91,13 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
-// regenCompanionVitals gives each living companion out of combat its mana
-// (Phase 32d) and health (Phase 33h2) per round, on the same every-third-
-// round beat as players, while its leader is online. Mobs otherwise never
-// recover: a companion's vitals are saved (33h2), so without this one hurt
-// in a battle would stay hurt. Health stops at the wound limit (Heal).
+// regenCompanionVitals gives each living companion out of combat its
+// health (Phase 33h2) per round, on the same every-third-round beat as
+// players, while its leader is online. Mobs otherwise never recover: a
+// companion's vitals are saved (33h2), so without this one hurt in a
+// battle would stay hurt. Phase 35b: health trickles back only to half of
+// max (TrickleHeal), and mana never returns this way: only a rest, an inn
+// or a draught refills it.
 func regenCompanionVitals(leaderOf func(instanceId int) (int, company.MemberKey, bool)) {
 	for _, instanceId := range mobs.GetAllMobInstanceIds() {
 		mob := mobs.GetInstance(instanceId)
@@ -110,16 +111,7 @@ func regenCompanionVitals(leaderOf func(instanceId int) (int, company.MemberKey,
 		if _, inBattle := battle.Current(leaderId); inBattle {
 			continue // between blows in a battle is still the battle
 		}
-		hp, mana := 0, 0
-		if mob.Character.Health < mob.Character.HealthLimit() {
-			hp = mob.Character.HealthPerRound()
-		}
-		if mob.Character.Mana < mob.Character.ManaMax.Value {
-			mana = mob.Character.ManaPerRound()
-		}
-		if hp > 0 || mana > 0 {
-			mob.Character.Heal(hp, mana)
-		}
+		mob.Character.TrickleHeal(mob.Character.HealthPerRound())
 	}
 }
 

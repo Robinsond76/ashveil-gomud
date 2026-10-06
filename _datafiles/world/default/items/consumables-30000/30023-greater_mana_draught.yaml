@@ -1,0 +1,11 @@
+itemid: 30023
+name: greater mana draught
+namesimple: draught
+description: A heavy crystal vial of deep blue draught that hums softly against the hand. Drinking it restores 60% of your mana (help draughts).
+type: potion
+subtype: drinkable
+uses: 1
+value: 350
+buffids:
+- 44
+weight: 250

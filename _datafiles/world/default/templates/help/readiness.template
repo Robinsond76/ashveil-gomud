@@ -25,19 +25,21 @@ a level.
 <ansi fg="yellow-bold">How they recover</ansi>
 
   <ansi fg="yellow">On the move.</ansi> Out of a fight, while you're logged in, companions regain
-  health and mana just as you do: a little every few seconds, up to their
-  wound limit. Nobody recovers while you're logged out, and no game time
-  passes for it.
+  health just as you do: a little every few seconds, up to half their
+  maximum (or their wound limit, if lower). Nobody regains mana this way.
+  Nobody recovers while you're logged out, and no game time passes for it.
 
-  <ansi fg="yellow">Healers and packs.</ansi> <ansi fg="command">heal wounds</ansi> spends your clerics' mana and your
-  bandages and splints (<ansi fg="command">help heal</ansi>).
+  <ansi fg="yellow">Healers and packs.</ansi> After every battle your healers patch the company up
+  (<ansi fg="command">help patch</ansi>). <ansi fg="command">heal wounds</ansi> spends your clerics' mana and your
+  bandages and splints (<ansi fg="command">help heal</ansi>). A mana draught refills some of
+  a caster's mana (<ansi fg="command">help draughts</ansi>).
 
   <ansi fg="yellow">An inn.</ansi> A finished night at an inn knits every wound and restores you
   and every companion with you to full health and mana (<ansi fg="command">help inn</ansi>).
 
-  <ansi fg="yellow">A camp.</ansi> A camp rest knits wounds with your splints and bandages, but
-  doesn't restore health or mana itself: the company recovers on the
-  move while it rests (<ansi fg="command">help camp</ansi>).
+  <ansi fg="yellow">A camp.</ansi> A finished camp rest knits wounds with your splints and
+  bandages, then restores you and every companion with you to full health
+  (up to the wound limit) and mana (<ansi fg="command">help camp</ansi>).
 
 <ansi fg="yellow-bold">Death, flight, and separation</ansi>
 

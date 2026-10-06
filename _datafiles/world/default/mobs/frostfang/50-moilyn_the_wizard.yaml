@@ -16,8 +16,11 @@ character:
   level: 29
   gold: 10
   shop:
+    # Phase 35b: minor and lesser mana draughts (the greater is loot only).
     - itemid: 30014
       quantitymax: 3
+    - itemid: 30022
+      quantitymax: 2
     - itemid: 24
       quantitymax: 1
 

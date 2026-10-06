@@ -68,6 +68,12 @@ type Archetype struct {
 	ArmorTraining string
 	ShieldSizes   []string
 	WeaponClasses []string
+	// Phase 35b: the mana pool's base and gain a level (zero uses the
+	// progression defaults), and the spells a player of this archetype
+	// learns from a character level.
+	ManaBase     int
+	ManaPerLevel float64
+	LevelSpells  []LevelSpell
 }
 
 // GrowthStatNames are the stats a Growth weight may name.
@@ -154,6 +160,15 @@ func (a *Archetype) Validate() error {
 		spells = append(spells, ls)
 	}
 	a.CompanionSpells = spells
+	levelSpells := make([]LevelSpell, 0, len(a.LevelSpells))
+	for _, ls := range a.LevelSpells {
+		ls.Spell = strings.ToLower(strings.TrimSpace(ls.Spell))
+		if ls.Spell == "" || ls.Level < 1 {
+			return fmt.Errorf("%w: %q has a level spell %q at level %d", ErrInvalidArchetype, a.ID, ls.Spell, ls.Level)
+		}
+		levelSpells = append(levelSpells, ls)
+	}
+	a.LevelSpells = levelSpells
 	growth := make(map[string]int, len(a.Growth))
 	for stat, weight := range a.Growth {
 		stat = strings.ToLower(strings.TrimSpace(stat))
@@ -214,6 +229,40 @@ func (a *Archetype) FilterCompanionSpells(schoolOf func(spellID string) (school 
 	}
 	a.CompanionSpells = kept
 	return errs
+}
+
+// FilterLevelSpells keeps the level spells that exist and that this
+// archetype may learn (Phase 35b), and reports each one dropped.
+func (a *Archetype) FilterLevelSpells(schoolOf func(spellID string) (school string, ok bool)) []error {
+	var errs []error
+	kept := a.LevelSpells[:0:0]
+	for _, ls := range a.LevelSpells {
+		school, ok := schoolOf(ls.Spell)
+		if !ok {
+			errs = append(errs, fmt.Errorf("%w: %q lists unknown level spell %q", ErrInvalidArchetype, a.ID, ls.Spell))
+			continue
+		}
+		school = strings.ToLower(strings.TrimSpace(school))
+		if school != "" && !contains(a.Schools, school) {
+			errs = append(errs, fmt.Errorf("%w: %q lists level spell %q from unclaimed school %q", ErrInvalidArchetype, a.ID, ls.Spell, school))
+			continue
+		}
+		kept = append(kept, ls)
+	}
+	a.LevelSpells = kept
+	return errs
+}
+
+// PlayerSpellsAtLevel is the level spells a player of this archetype owns
+// at a character level (Phase 35b), in the order configured.
+func (a Archetype) PlayerSpellsAtLevel(level int) []string {
+	var out []string
+	for _, ls := range a.LevelSpells {
+		if level >= ls.Level {
+			out = append(out, ls.Spell)
+		}
+	}
+	return out
 }
 
 // SpellsAtLevel is the companion spells known at a character level, in

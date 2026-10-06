@@ -29,6 +29,7 @@ func TestAWizardCompanionCastsSingleThenArea(t *testing.T) {
 	b.unplaced()
 	captain, _, _, _, _ := b.shapeBandits()
 	garrick := b.companion(3)
+	garrick.Character.Level = 1 // Phase 35b: Shower of Sparks comes at level 3
 	garrick.Character.ManaMax.Value, garrick.Character.Mana = 40, 40
 
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
@@ -50,8 +51,8 @@ func TestAWizardCompanionCastsSingleThenArea(t *testing.T) {
 	assert.Equal(t, characters.DefaultAttack, garrick.Character.Aggro.Type)
 	assert.Equal(t, aim, aimOf(&garrick.Character), "back to his foe")
 
-	// At level 5 he knows Shower of Sparks: five foes stand, so the area spell.
-	garrick.Character.Level = 5
+	// At level 3 he knows Shower of Sparks: five foes stand, so the area spell.
+	garrick.Character.Level = 3
 	b.toughen()
 	b.fight()
 	require.NotNil(t, garrick.Character.Aggro)

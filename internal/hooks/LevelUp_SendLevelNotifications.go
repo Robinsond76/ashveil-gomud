@@ -36,6 +36,7 @@ func SendLevelNotifications(e events.Event) events.ListenerReturn {
 		"trainingPoints": evt.TrainingPoints,
 		"statPoints":     evt.StatPoints,
 		"livesUp":        evt.LivesGained,
+		"powerLines":     evt.PowerLines,
 	}
 	levelUpStr, _ := templates.Process("character/levelup", levelUpData, user.UserId)
 

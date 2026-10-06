@@ -13,7 +13,9 @@ may break it</ansi>:
   it about <ansi fg="yellow">40%</ansi> of the time, and a blow that takes <ansi fg="yellow">a quarter of their health</ansi>
   (or more) <ansi fg="yellow">90%</ansi>. The chance is 40% plus 2% for each percent of the
   caster's maximum health the blow took, so a frail healer's chant breaks
-  more easily than a sturdy one's.
+  more easily than a sturdy one's. A harder spell is more fragile: add a
+  fifth of its difficulty (Minor Heal 0, Minor Heal All +2, Withering Hex
+  +8, Shower of Sparks +10, Magic Missile +15), still at most 90%.
 - When the chant holds, the caster flinches and chants on:
   <ansi fg="command">Brother Oswin flinches, but the chant holds. (Minor Heal, chant held)</ansi>
   <ansi fg="command">You flinch, but your chant holds. (Minor Heal, chant held)</ansi>

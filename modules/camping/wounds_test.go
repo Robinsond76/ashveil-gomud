@@ -107,7 +107,7 @@ func TestUnsavedRestHealsNoWounds(t *testing.T) {
 }
 
 // Phase 33h2: an inn stay restores the leader and the companions to their
-// wound limit and full mana, after the wounds knit; a camp rest doesn't.
+// wound limit and full mana, after the wounds knit.
 func TestInnStayRestoresVitals(t *testing.T) {
 	e, user := heroEnv(t)
 	supplies(e, 0, 0)
@@ -124,18 +124,34 @@ func TestInnStayRestoresVitals(t *testing.T) {
 	}
 }
 
-func TestCampRestRestoresNoVitals(t *testing.T) {
+// Phase 35b: a finished camp rest also restores the leader and the
+// companions to their wound limit and full mana (mana comes back only
+// through a rest, an inn or a draught), once: a later round, or a save
+// that failed and retried, never refills it a second time.
+func TestCampRestRestoresVitalsOnce(t *testing.T) {
 	e, user := heroEnv(t)
 	supplies(e, 0, 0)
 	for _, c := range []*characters.Character{user.Character, e.companion} {
 		c.Validate()
 		c.Health, c.Mana = 1, 0
 	}
+	e.companion.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "leg", Points: 4}}
 	e.completeCamp(t, user)
+	e.store.saveErr = assert.AnError
 	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.Equal(t, 0, user.Character.Mana, "an unsaved rest refills nothing yet")
+	e.store.saveErr = nil
+	e.module.onNewRound(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, e.companion.HealthLimit(), e.companion.Health, "to the wound limit: a camp rest knits no wound without supplies")
+	assert.Less(t, e.companion.Health, e.companion.HealthMax.Value)
 	for _, c := range []*characters.Character{user.Character, e.companion} {
-		assert.Equal(t, 1, c.Health, c.Name)
-		assert.Equal(t, 0, c.Mana, c.Name)
+		assert.Equal(t, c.ManaMax.Value, c.Mana, c.Name)
+		c.Mana = 0
+	}
+	e.module.onNewRound(events.NewRound{RoundNumber: 3})
+	e.module.onNewRound(events.NewRound{RoundNumber: 4})
+	for _, c := range []*characters.Character{user.Character, e.companion} {
+		assert.Equal(t, 0, c.Mana, "%s: one rest refills once", c.Name)
 	}
 }
 

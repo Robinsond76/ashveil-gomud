@@ -52,7 +52,7 @@ func GetStatMods() map[StatName]string {
 		CastingPrefix:     "Increases casting success chance for a specific school of magic. Format: `casting-restoration`.",
 		XPScale:           "Scales experience gained from kills by this percentage (stacks additively with the server XPScale setting).",
 		HealthRecovery:    "Extra HP recovered each round during natural regeneration.",
-		ManaRecovery:      "Extra MP recovered each round during natural regeneration.",
+		ManaRecovery:      "Extra MP recovered each round during natural regeneration (enemies only: Ashveil 35b gives players and companions no passive mana).",
 		Attacks:           "Additional attacks granted per combat round.",
 		Damage:            "Flat bonus damage added to every successful hit.",
 		Healing:           "Percent added to every heal the wearer casts (a holy symbol adds 5).",

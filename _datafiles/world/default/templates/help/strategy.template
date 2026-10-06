@@ -29,15 +29,15 @@ Each character starts with its archetype's role: clerics heal, wizards
 cast, everyone else fights. Nobody starts as a guardian. A healer or
 caster casts only the spells it knows. Wizards start with Magic Missile and clerics with Minor Heal; a
 companion knows its archetype's spells for its level (a cleric learns
-Minor Heal All at level 5, a wizard Shower of Sparks).
+Minor Heal All at level 3, a wizard Shower of Sparks, as players do).
 
-Spells in a battle are real casts: they cost mana, take their chanting
-rounds, and can fizzle. A weapon blow that draws blood on the caster
+Spells in a battle are real casts: they cost mana and take their chanting
+rounds, but a spell the caster knows never fizzles. A weapon blow that draws blood on the caster
 may break the chant, with half the mana back (<ansi fg="command">help interrupts</ansi>), so keep
 healers and casters out of reach. Two healers never heal the same member
 at once: one heal being chanted covers its patient. After a spell, the caster turns back to
-the foe it was fighting. Mana comes back out of combat, not during a
-battle; your companions' comes back too, while you are online. A healer
+the foe it was fighting. Mana doesn't come back on its own, in a battle or
+out of one: only a camp rest, an inn or a draught refills it (<ansi fg="command">help mana</ansi>). A healer
 heals you even when you are down and bleeding out.
 
 <ansi fg="yellow-bold">Target rules</ansi>

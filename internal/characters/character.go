@@ -51,13 +51,16 @@ type Character struct {
 	HPPerLevel  float64 `yaml:"-"`
 	HPArchetype string  `yaml:"-"`
 	// Phase 35a2: an enemy template's Attack and Evasion offsets (±5).
-	AttackOffset   int      `yaml:"-"`
-	EvasionOffset  int      `yaml:"-"`
-	CompanyCargo   bool     `yaml:"companycargo,omitempty"` // Items are shared cargo, excluded from personal burden.
-	CargoMigrated  bool     `yaml:"cargomigrated,omitempty"`
-	CompanyAssetOp string   `yaml:"companyassetop,omitempty"`
-	CargoApplied   []string `yaml:"cargoapplied,omitempty"`
-	AutoLoot       bool     `yaml:"autoloot,omitempty"`
+	AttackOffset  int `yaml:"-"`
+	EvasionOffset int `yaml:"-"`
+	// Phase 35b: an enemy template's mana pool (0: the progression default).
+	ManaBaseOverride     int      `yaml:"-"`
+	ManaPerLevelOverride float64  `yaml:"-"`
+	CompanyCargo         bool     `yaml:"companycargo,omitempty"` // Items are shared cargo, excluded from personal burden.
+	CargoMigrated        bool     `yaml:"cargomigrated,omitempty"`
+	CompanyAssetOp       string   `yaml:"companyassetop,omitempty"`
+	CargoApplied         []string `yaml:"cargoapplied,omitempty"`
+	AutoLoot             bool     `yaml:"autoloot,omitempty"`
 	// CombatWithdrawn is transient surrender/flight protection, never saved.
 	CombatWithdrawn bool `yaml:"-"`
 
@@ -194,6 +197,12 @@ func (c *Character) TrackPlayerDamage(userId int, damageAmt int) {
 	c.PlayerDamage[userId] = c.PlayerDamage[userId] + damageAmt
 	c.LastPlayerDamage = roundNow
 
+}
+
+// CastFails reports whether a 1-100 cast roll fails against a success
+// chance (Phase 35b): it fails only above the chance, so 100% never fails.
+func CastFails(roll, successChance int) bool {
+	return roll > successChance
 }
 
 /*
@@ -1514,7 +1523,9 @@ func (c *Character) LevelUp() (bool, stats.Statistics) {
 	statsDelta.Perception.Value -= statsBefore.Perception.Value
 
 	c.Health = c.CapHealing(c.Health, c.HealthMax.Value)
-	c.Mana = c.ManaMax.Value
+	// Phase 35b: mana comes only from rest, an inn or a draught; a level
+	// only clamps it to the new pool.
+	c.Mana = min(c.Mana, c.ManaMax.Value)
 
 	return true, statsDelta
 }
@@ -1538,6 +1549,24 @@ func (c *Character) LoseLevel() (from, to int) {
 		c.Mana = c.ManaMax.Value
 	}
 	return from, c.Level
+}
+
+// TrickleLimit is how far passive recovery restores health (Phase 35b):
+// half of max health, and never past the wound limit.
+func (c *Character) TrickleLimit() int {
+	return min(c.HealthMax.Value/2, c.HealthLimit())
+}
+
+// TrickleHeal is passive recovery for players and companions (Phase 35b):
+// up to hp health while below TrickleLimit, stopping at it, and no mana.
+// It returns the health restored.
+func (c *Character) TrickleHeal(hp int) int {
+	limit := c.TrickleLimit()
+	if hp < 1 || c.Health < 1 || c.Health >= limit {
+		return 0
+	}
+	gained, _ := c.Heal(min(hp, limit-c.Health), 0)
+	return gained
 }
 
 func (c *Character) Heal(hp int, mana int) (int, int) {
@@ -1676,9 +1705,10 @@ func (c *Character) RecalculateStats() {
 	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel(), c.HPStart()), c.StatMod(string(statmods.HealthMax)))
 
 	c.ManaMax.NoCap = true
-	c.ManaMax.Mods = int(cfgProg.ManaBase) +
+	manaBase, manaPerLevel := c.ManaRates()
+	c.ManaMax.Mods = manaBase +
 		c.StatMod(string(statmods.ManaMax)) +
-		int(float64(c.Level)*float64(cfgProg.ManaPerLevel)) +
+		int(float64(c.Level)*manaPerLevel) +
 		int(float64(c.Stats.Mysticism.ValueAdj)*float64(cfgProg.ManaPerMysticism))
 
 	// Set max action points

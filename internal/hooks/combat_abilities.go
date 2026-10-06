@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -257,7 +258,8 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 		a.holder.say(fmt.Sprintf(`You tackle %s to the ground.`, target.tag()),
 			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down)`)
 		abilityDown[foe.InstanceId] = true
-		foe.AddBuff(status.KnockedDown, `combat`)
+		// Phase 35b: from level 20 the knockdown lasts a round longer.
+		events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`, ExtraTriggers: strategy.TackleExtraRounds(a.char.Level)})
 		// A tackle is heavy force: it breaks a chant (an enemy starts
 		// again) and a wind-up, as a knockdown blow would.
 		if !interruptsOff && target.chanting() {
@@ -275,7 +277,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 			a.holder.say(fmt.Sprintf(`You see an opening on %s.`, target.tag()),
 				`%s sees an opening on `+verbatim(target.tag())+`.`, ` (opening strike)`)
 		} else {
-			a.char.Aggro.StrikeBonus = 0
+			a.char.Aggro.StrikeBonus = strategy.AimedShotBonus(a.char.Level) // Phase 35b
 			a.holder.say(fmt.Sprintf(`You take careful aim at %s.`, target.tag()),
 				`%s takes careful aim at `+verbatim(target.tag())+`.`, ` (aimed shot)`)
 		}

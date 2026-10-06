@@ -46,9 +46,11 @@ round count; a rest takes real time, not game time.
   it up (<ansi fg="command">help wounds</ansi>): a birch splint for each broken bone, and a
   linen bandage for each cut or puncture:
   <ansi fg="command">Your broken arm has knit. (wound healed; a splint used)</ansi>. Without them
-  a camp heals no wounds: that takes an inn or a physician. A camp rest
-  doesn't restore health or mana itself: your company recovers as it
-  rests, as it would anywhere out of a fight (<ansi fg="command">help readiness</ansi>).
+  a camp heals no wounds: that takes an inn or a physician. Then the
+  finished rest restores you and every companion with you to full health
+  (up to each wound limit) and full mana, once per rest; a rest that
+  raiders break restores neither
+  (<ansi fg="command">help readiness</ansi>, <ansi fg="command">help mana</ansi>).
 
   Foul weather makes for a poorer rest: the Fatigue you recover is
   scaled down (never increased) by how bad conditions are where you've

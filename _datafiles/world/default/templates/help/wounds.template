@@ -17,6 +17,10 @@ which close when the fight ends, and a few creatures take none
                   brackets say so: <ansi fg="command">(critical hit, 6 damage, bleeding, wounded)</ansi>.
                   Lasting wounds stay after the fight, through logout and
                   restarts, until they are treated or rested away.
+                  A foe 3 or more levels below you is no real threat: its
+                  critical hit leaves no wound while you stay at half your
+                  health or more, and below that only a light wound of a
+                  quarter of the hit.
   <ansi fg="yellow">Light wounds</ansi>    A crushing blow (one hit of a quarter of your maximum
                   health or more), or a bleed that runs its full course,
                   leaves one. Light wounds close when the fight ends.

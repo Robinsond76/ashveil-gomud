@@ -11,10 +11,11 @@ ward again.
 
 <ansi fg="yellow-bold">Guards</ansi>
 
-- A guardian has <ansi fg="yellow">2 guards</ansi> in each battle. Each blow it steps in for spends
-  one.
-- While any guard is spent, one comes back every <ansi fg="yellow">2 combat rounds</ansi>, up to 2.
-  A new battle starts with both.
+- A guardian has <ansi fg="yellow">2 guards</ansi> in each battle, and 1 more for every 10 levels (3
+  at level 10, 4 at level 20), counted from its level as the battle begins.
+  Each blow it steps in for spends one.
+- While any guard is spent, one comes back every <ansi fg="yellow">2 combat rounds</ansi>, up to
+  its most. A new battle starts with them all.
 - Only weapon blows are guarded, not spells. A guardian keeps a healer's
   chant whole: the blow that might have broken it lands on the guardian
   (and may break the guardian's own chant, if it was chanting;

@@ -12,7 +12,7 @@ without a player party. Temporary charms and pets are not company targets.
   <ansi fg="command">cast healall</ansi>
   Minor Heal All costs 6 mana and restores a little over half that to
   each patient. A holy symbol in the healer's off hand adds 5% to both.
-  Both take two rounds of chanting. Healers choose them automatically in
+  Minor Heal takes one round of chanting, Minor Heal All two. Healers choose them automatically in
   battle, with the same eligibility and costs; cast by hand outside battle.
 
 Healing stops at each patient's wound limit. Minor Heal, Minor Heal All

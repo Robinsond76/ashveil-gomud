@@ -213,8 +213,12 @@ func (m *CampingModule) grantPendingTiers() {
 			user.SendText(line)
 		}
 		// Phase 33h2: a night at the inn restores everyone with the leader
-		// to their (now raised) wound limit and full mana.
-		if tier == camping.TierWellRested {
+		// to their (now raised) wound limit and full mana. Phase 35b: so
+		// does a finished camp rest, the only other way mana comes back
+		// besides a draught. campRest is true only for the save that
+		// cleared the rest's marker, so a rest refills once, even across
+		// a crash or copyover.
+		if tier == camping.TierWellRested || campRest {
 			restoreVitals(user.Character, live)
 		}
 		// Review fix: the leader's limit may have risen.
@@ -234,7 +238,8 @@ func (m *CampingModule) grantPendingTiers() {
 }
 
 // restoreVitals brings the leader and the live companions to their wound
-// limit and full mana (Phase 33h2, an inn stay). It never lowers anyone.
+// limit and full mana (Phase 33h2, an inn stay; Phase 35b, a camp rest).
+// It never lowers anyone.
 func restoreVitals(leader *characters.Character, live map[int]*characters.Character) {
 	restore := func(c *characters.Character) {
 		if c == nil || c.Health < 1 {

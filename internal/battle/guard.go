@@ -1,13 +1,15 @@
 package battle
 
 // Phase 30c2: a guardian's guards. Each guardian on a player's side has
-// MaxGuards guards in a battle; a spent guard comes back one per
-// GuardRefillRounds combat rounds, up to MaxGuards (the owner's decision
-// 9). The counts live on the battle, runtime only: a new battle, or one
+// MaxGuards guards in a battle (Phase 35b: MaxGuardsFor its level,
+// captured when its guards are first read); a spent guard comes back one
+// per GuardRefillRounds combat rounds, up to that most (the owner's
+// decision 9). The counts live on the battle, runtime only: a new battle, or one
 // rebuilt after a restart or copyover, starts full.
 
 const (
-	// MaxGuards is the guards a guardian has in a battle.
+	// MaxGuards is the guards a guardian has in a battle before its level
+	// adds more (Phase 35b: MaxGuardsFor).
 	MaxGuards = 2
 	// GuardRefillRounds is the combat rounds a spent guard takes to come
 	// back.
@@ -21,12 +23,45 @@ type Guard struct {
 	Charge int
 }
 
+// MaxGuardsFor is a guardian's guards a battle at its level (Phase 35b):
+// 2, and 1 more each 10 levels.
+func MaxGuardsFor(level int) int {
+	return MaxGuards + max(level, 0)/10
+}
+
+// maxOf is the member's most guards in b: as captured, else MaxGuards.
+func maxOf(b *Battle, key string) int {
+	if n, ok := b.GuardMax[key]; ok {
+		return n
+	}
+	return MaxGuards
+}
+
+// CaptureGuards fixes the member's most guards in the player's battle from
+// its level, the first time only: a level gained mid-battle waits for the
+// next battle. No battle does nothing.
+func CaptureGuards(userId int, key string, level int) {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	if !ok {
+		return
+	}
+	if _, set := b.GuardMax[key]; set {
+		return
+	}
+	if b.GuardMax == nil {
+		b.GuardMax = map[string]int{}
+	}
+	b.GuardMax[key] = MaxGuardsFor(level)
+}
+
 // guardOf is the member's guards in b, full when it has spent none.
 func guardOf(b *Battle, key string) Guard {
 	if g, ok := b.Guards[key]; ok {
 		return g
 	}
-	return Guard{Left: MaxGuards}
+	return Guard{Left: maxOf(b, key)}
 }
 
 // GuardsLeft is the guards the member (by member key) has left in the
@@ -70,7 +105,8 @@ func TickGuards() {
 	defer mu.Unlock()
 	for _, b := range battles {
 		for key, g := range b.Guards {
-			if g.Left >= MaxGuards {
+			top := maxOf(b, key)
+			if g.Left >= top {
 				continue
 			}
 			g.Charge++
@@ -78,7 +114,7 @@ func TickGuards() {
 				g.Left++
 				g.Charge = 0
 			}
-			if g.Left >= MaxGuards {
+			if g.Left >= top {
 				delete(b.Guards, key) // full again: as if none were spent
 				continue
 			}

@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -743,6 +744,19 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 		return 1
 	}
 	return 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+}
+
+// SpellPower is one roll of a spell's size for this caster (Phase 35b),
+// from the spell's `power` block (internal/spellpower), before skill or
+// gear: base + dice + level and Mysticism bonuses, times its share. It is
+// 0 for a spell without one. Scripts multiply it by SpellFactor or
+// HealFactor and round down.
+func (a ScriptActor) SpellPower(spellId string) float64 {
+	sp := spells.GetSpell(spellId)
+	if a.characterRecord == nil || sp == nil || sp.Power == nil {
+		return 0
+	}
+	return sp.Power.Raw(a.characterRecord.Level, a.characterRecord.Stats.Mysticism.ValueAdj, util.Rand)
 }
 
 // HealFactor is what the actor's heals are multiplied by (Phase 35a2): 1

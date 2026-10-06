@@ -1,0 +1,11 @@
+itemid: 30022
+name: lesser mana draught
+namesimple: draught
+description: A stoppered vial of clear blue draught that glows faintly in the dark. Drinking it restores 40% of your mana (help draughts).
+type: potion
+subtype: drinkable
+uses: 1
+value: 150
+buffids:
+- 43
+weight: 250

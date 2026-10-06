@@ -90,6 +90,29 @@ func Crushing(damage, maxHealth int, roll Roll) (Wound, bool) {
 	return Wound{Kind: Bruise, Place: place(Bruise, roll), Points: max(1, (damage+3)/4), Light: true}, true
 }
 
+// EasyFightGap is how many levels below its target an attacker must be for
+// the fight to count as easy for the target (Phase 35b).
+const EasyFightGap = 3
+
+// EasyFight reports whether a blow comes from a foe EasyFightGap or more
+// levels below its target.
+func EasyFight(attackerLevel, targetLevel int) bool {
+	return targetLevel-attackerLevel >= EasyFightGap
+}
+
+// EasyCrit is what a crit from a much weaker foe leaves (Phase 35b): no
+// wound when the target stays at or above half its max health after the
+// blow, else a light wound of a crushing blow's size in place of a lasting
+// one. ok is false for no wound.
+func EasyCrit(w Wound, damage, healthAfter, maxHealth int) (Wound, bool) {
+	if healthAfter*2 >= maxHealth {
+		return Wound{}, false
+	}
+	w.Points = max(1, (damage+3)/4)
+	w.Light = true
+	return w, true
+}
+
 // Bled is the light wound a bleed of stacks leaves when it runs its course.
 func Bled(stacks int, roll Roll) Wound {
 	return Wound{Kind: Cut, Place: place(Cut, roll), Points: max(1, stacks), Light: true}
@@ -256,6 +279,10 @@ type Patient struct {
 	Key         string
 	Health, Max int
 	Wounds      []Wound
+	// Bleeding marks a downed player (Health below 1 but alive), whom
+	// after-battle patching heals back to their feet (Phase 35b). A fallen
+	// companion is not bleeding: it needs a resurrection.
+	Bleeding bool
 }
 
 // Limit is the patient's wound limit.
@@ -272,24 +299,15 @@ type Healer struct {
 	Key        string
 	Mana       int
 	Tend, Heal bool
-	// HealBonus is added to each heal's dice: HealBase plus level/6, as
-	// heal.js adds it (Phase 35a2; HealBonusFor).
+	// HealBonus is added to each heal's dice: the heal spell's flat part
+	// at the healer's level (Phase 35b: spellpower.Power.Flat).
 	HealBonus int
 	// HealPct is the percent the healer's gear adds to each heal (a holy
 	// symbol's 5), as heal.js's HealFactor.
 	HealPct int
-}
-
-// HealBase and HealLevelDiv are heal.js's flat part (Phase 35a2): 8 +
-// level/6 on top of its 2d4.
-const (
-	HealBase     = 8
-	HealLevelDiv = 6
-)
-
-// HealBonusFor is a healer's flat heal bonus at a level, as heal.js adds it.
-func HealBonusFor(level int) int {
-	return HealBase + max(level, 0)/HealLevelDiv
+	// Reserve is the mana a healer keeps when patching (Phase 35b: its
+	// strategy's mana reserve); Plan ignores it.
+	Reserve int
 }
 
 // Stock is the treatment items the company can reach.
@@ -303,7 +321,8 @@ type Rules struct {
 	TendDice, HealDice [2]int // quantity, sides
 }
 
-// DefaultRules match tend.yaml/tend.js and heal.yaml/heal.js.
+// DefaultRules match tend.yaml/tend.js and heal.yaml's power dice; callers
+// read the live costs and dice from the spell files (Phase 35b).
 var DefaultRules = Rules{TendCost: 4, HealCost: 3, TendDice: [2]int{2, 3}, HealDice: [2]int{2, 4}}
 
 // StepKind is one kind of treatment.
@@ -477,6 +496,59 @@ func Plan(patients []Patient, healers []Healer, stock Stock, rules Rules, roll R
 		}
 	}
 
+	res.Patients = ps
+	res.Healers = hs
+	return res
+}
+
+// HealTarget is the health a patch heals a patient to (Phase 35b): the
+// healing threshold's percent of the wound limit, rounded up.
+func HealTarget(p Patient, healBelow int) int {
+	healBelow = min(max(healBelow, 0), 100)
+	return (p.Limit()*healBelow + 99) / 100
+}
+
+// Patch is after-battle patching up (Phase 35b): heal spells only, no tend
+// and no items. Each patient below the healing threshold (healBelow, a
+// percent of their wound limit) is healed, most hurt first, until they
+// reach it; each healer, most mana first, stops when a heal would take it
+// below its Reserve. Nothing is changed but the returned copies.
+func Patch(patients []Patient, healers []Healer, rules Rules, healBelow int, roll Roll) Result {
+	ps := make([]Patient, len(patients))
+	for i, p := range patients {
+		p.Wounds = append([]Wound(nil), p.Wounds...)
+		ps[i] = p
+	}
+	Order(ps)
+	hs := append([]Healer(nil), healers...)
+	sort.SliceStable(hs, func(i, j int) bool { return hs[i].Mana-hs[i].Reserve > hs[j].Mana-hs[j].Reserve })
+
+	res := Result{}
+	caster := func() *Healer {
+		for i := range hs {
+			if h := &hs[i]; h.Heal && h.Mana-rules.HealCost >= max(h.Reserve, 0) {
+				return h
+			}
+		}
+		return nil
+	}
+	for i := range ps {
+		p := &ps[i]
+		if p.Health < 1 && !p.Bleeding {
+			continue
+		}
+		target := HealTarget(*p, healBelow)
+		for p.Health < target {
+			h := caster()
+			if h == nil {
+				break
+			}
+			h.Mana -= rules.HealCost
+			amt := min((dice(rules.HealDice, roll)+h.HealBonus)*(100+max(h.HealPct, 0))/100, p.Limit()-p.Health)
+			p.Health += amt
+			res.Steps = append(res.Steps, Step{Kind: StepHeal, Healer: h.Key, Patient: p.Key, Healed: amt, Health: p.Health, Limit: p.Limit(), Max: p.Max, HealerMana: h.Mana})
+		}
+	}
 	res.Patients = ps
 	res.Healers = hs
 	return res

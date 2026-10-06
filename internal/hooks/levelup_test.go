@@ -82,6 +82,12 @@ func TestGrantXPLevelReport(t *testing.T) {
 			assert.Equal(t, [2]int{1, target}, [2]int{ev.EvasionBefore, ev.EvasionAfter})
 			assert.Contains(t, messages, fmt.Sprintf("Attack 1 -> %d   Evasion 1 -> %d", target, target))
 			assert.Contains(t, messages, "(coming)")
+			// Phase 35b review: the report renders each scaling spell's growth.
+			messages = ""
+			ev.PowerLines = []string{"Magic Missile 8-13 -> 9-14", "Shower of Sparks 5-8"}
+			SendLevelNotifications(ev)
+			events.ProcessEvents()
+			assert.Contains(t, messages, " Magic Missile 8-13 -> 9-14\n Shower of Sparks 5-8")
 			assert.Contains(t, messages, "stat train")
 			assert.NotContains(t, messages, "stat step")
 			assert.Equal(t, round, util.GetRoundCount())

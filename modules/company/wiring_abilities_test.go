@@ -470,3 +470,26 @@ func TestAQueuedTackleOpensNoStrikeThisPass(t *testing.T) {
 	require.Len(t, opening, 1)
 	assert.Equal(t, "Opening Strike", opening[0].Status)
 }
+
+// Phase 35b review: from level 20, a tackle keeps its foe down 1 round
+// longer, through the real round and the buff listener.
+func TestATackleAtLevel20KeepsTheFoeDownLonger(t *testing.T) {
+	down := func(level int) (left int) {
+		t.Run(fmt.Sprint(level), func(t *testing.T) {
+			b, _ := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+			b.cmd("strategy", "garrick abilities off")
+			b.cmd("strategy", "ysolde abilities off")
+			b.start()
+			tamsin := b.companion(1)
+			tamsin.Character.Level = level // the level the tackle reads, nothing else
+			foe := mobs.GetInstance(aimOf(&tamsin.Character))
+			require.NotNil(t, foe)
+			require.Regexp(t, `Tamsin Reed tackles the .* to the ground\. \(knocked down\)`, b.fight())
+			left = foe.Character.Buffs.TriggersLeft(status.KnockedDown)
+		})
+		return left
+	}
+	low, high := down(1), down(20)
+	require.Positive(t, low)
+	assert.Equal(t, low+1, high)
+}

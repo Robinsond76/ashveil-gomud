@@ -49,6 +49,7 @@ declare interface ActorObject {
     GetHealthLimit(): number;
     HasLastingWound(): boolean;
     SpellFactor(target: ActorObject): number;
+    SpellPower(spellId: string): number;
     HealFactor(): number;
     WoundNote(rolled: number, healed: number): string;
     TendWound(points: number): { closed: number; wound: string; limit: number; max: number };

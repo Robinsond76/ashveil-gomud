@@ -1,16 +1,8 @@
-
-// Phase 35a2: one average weapon hit, 8 + 2d4 + level/6 (about 13 / 15 /
-// 18 at levels 1 / 10 / 30), times the healer's HealFactor (a holy
-// symbol's +5%).
-HEAL_BASE = 8;
-HEAL_DICE_QTY = 2;
-HEAL_DICE_SIDES = 4;
-HEAL_LEVEL_DIV = 6;
-
+// Phase 35b: the heal's size is its power block (heal.yaml, read through
+// SpellPower), times the healer's HealFactor (a holy symbol's +5%).
 // healRoll is one patient's heal before any wound limit.
 function healRoll(sourceActor) {
-    var roll = HEAL_BASE + UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() / HEAL_LEVEL_DIV);
-    return Math.floor(roll * sourceActor.HealFactor());
+    return Math.max(1, Math.floor(sourceActor.SpellPower('heal') * sourceActor.HealFactor()));
 }
 
 SPELL_NAME = 'Minor Heal';

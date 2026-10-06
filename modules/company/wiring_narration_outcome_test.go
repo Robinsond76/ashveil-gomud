@@ -38,8 +38,10 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	// 30g6a updated one target-change event (the next foe is selected on
 	// the kill round). Recaptured for 30g6: stat edges, Strength damage and
 	// the HP shape change every roll and the fight's length; the same kinds
-	// of events, deaths and rewards remain. This remains an outcome lock
-	// for subsequent narration-only changes.
+	// of events, deaths and rewards remain. Recaptured for 35b: the hit,
+	// dodge, parry and block chances, Minor Heal's one-round chant and
+	// spell power change the rolls and the fight's length. This remains an
+	// outcome lock for subsequent narration-only changes.
 	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
 	// chanting for ever as a placeholder: blows breaking chants would
 	// change what it records.

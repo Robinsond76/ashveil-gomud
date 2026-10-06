@@ -117,10 +117,14 @@ Statuses last a few combat rounds and end with the fight.
 <ansi fg="yellow-bold">Wounds (</ansi><ansi fg="command">help wounds</ansi><ansi fg="yellow-bold">)</ansi>
 
 A critical hit on you or a companion also leaves a wound, which stops
-healing short of your maximum until it is treated. After the fight,
-<ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the company;
+healing short of your maximum until it is treated. A foe 3 or more levels
+below the one it strikes wounds only lightly, and only when the blow
+leaves them under half their health. After the fight, your healers patch
+everyone up to your healing threshold on their own (<ansi fg="command">help patch</ansi>);
+<ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the company fully;
 an inn stay knits what is left, and a camp rest one wound per splint or
-bandage.
+bandage. Spells cost mana that only a rest, an inn or a draught brings
+back (<ansi fg="command">help mana</ansi>, <ansi fg="command">help draughts</ansi>).
 
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -151,6 +155,7 @@ and your company's health.
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
+  <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
   <ansi fg="command">help campwatch</ansi>    raiders at camp, and the watch that spots them
   <ansi fg="command">light</ansi>             how well you can see here
@@ -187,7 +192,7 @@ Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect bat
 
 Speed, personal burden and armor bulk set your turns each round: <ansi fg="command">help tempo</ansi>.
 
-Natural health and mana recovery pauses throughout a battle, including between blows.
+Natural health recovery pauses throughout a battle, including between blows.
 Healers still heal by spells; ordinary buffs keep their real-time durations.
 
 Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).

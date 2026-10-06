@@ -8,5 +8,8 @@
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">{{ .Type.TargetTypeString }}</ansi>
 <ansi fg="yellow">Mana Cost:   </ansi> <ansi fg="white-bold">{{ .Cost }}</ansi>
 <ansi fg="yellow">Wait Time:   </ansi> <ansi fg="white-bold">{{ .WaitRounds }} rounds</ansi>
+{{- if .Power }}
+<ansi fg="yellow">Power:       </ansi> <ansi fg="white-bold">{{ .Power.Base }} + {{ .Power.Dice }}{{ if .Power.LevelDiv }}, +1 per {{ .Power.LevelDiv }} levels{{ end }}{{ if .Power.MysticismDiv }}, +1 per {{ .Power.MysticismDiv }} Mysticism{{ end }}{{ if .Power.Percent }}, {{ .Power.Percent }}% per patient{{ end }}</ansi>
+{{- end }}
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>

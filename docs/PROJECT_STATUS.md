@@ -127,8 +127,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35a2 skill over hit points built, in review as PR #18, owner chose to merge and retune balance in 35b; 35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design approved (alignment wait at elite, broken binding and hungry dark healing kept, routes final); visual client milestone and sprite specification added; roadmap reprioritized; 35b pending implementation)
-- **Latest completed slices:** 35c, companion training; 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-06 (35b caster power, mana and recovery complete with retuned combat chances; 35a2 skill over hit points merged via PR #18; 35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design approved (alignment wait at elite, broken binding and hungry dark healing kept, routes final); visual client milestone and sprite specification added; roadmap reprioritized)
+- **Latest completed slices:** 35b, caster power; 35a2, skill over hit points; 35c, companion training; 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -201,8 +201,8 @@ implemented (handoff rule 20).
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
 | 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), complete (PR #15) | Level impact §1, §4.1 | — |
-| 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md); built, in review as [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18) ([measurements](plans/2026-10-05-phase-35a2-measurements.md)); owner chose to merge and retune three balance rows in 35b | Owner direction 2026-10-05 | 35a |
-| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation; spell, heal and HP numbers wait on 35a2 | Level impact §2, §4 | 35a, 35a2 |
+| 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md); complete, merged via [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18) ([measurements](plans/2026-10-05-phase-35a2-measurements.md)); three balance rows retuned in 35b | Owner direction 2026-10-05 | 35a |
+| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), complete ([measurements](plans/2026-10-05-phase-35b-measurements.md)) | Level impact §2, §4 | 35a, 35a2 |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
@@ -243,10 +243,60 @@ app.
 
 **Phase 35 delivery (2026-10-05):** 35a is complete and merged
 ([PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)). 35c is
-complete and merged ([PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16)). 35b remains pending implementation. Plans and approved scope are in
+complete and merged ([PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16)). 35a2 and 35b are complete. Plans and approved scope are in
 [the phase 35 handoff](plans/2026-10-05-phase-35-handoff.md).
 
 ## Current position
+
+**35b caster power, mana and recovery (2026-10-05), complete:** owned spells
+never fizzle in a battle, and a 100% cast never fails anywhere. Spell and
+ability power comes from one `spellpower` table per spell (YAML `power`
+blocks, read by the scripts and `heal wounds`), growing with level and
+Mysticism. The level-up report lists each scaling spell's new range, and
+level spells (Shower of Sparks, Minor Heal All at 3) are taught on level-up.
+Wizards and clerics have deep mana pools (40 + 10 a level, 36 + 9), and mana
+never regenerates for players or companions. It comes back only from a
+finished camp rest, an inn night, a mana draught (25/40/60%, sold by Moilyn,
+refused in battle), half a broken chant, or death's return. HP trickles back
+only to half. After a won battle, and on `company patch`, healers cast Minor
+Heal to the healing threshold, stopping at their mana reserve. Chant breaks
+add difficulty/5. Aimed Shot and guard counts grow with level; Tackle holds 1
+round longer from 20. A crit from a foe 3+ levels below leaves no wound
+above half health. New `help patch` and `help draughts`, 21 pages updated,
+and tutorial hints.
+
+**Balance:** [measurements](plans/2026-10-05-phase-35b-measurements.md).
+Retuned: to-hit 75 (was 60), dodge and parry 8 (12), block 28 (20),
+`SkillEdgeSpan` 14 (16), Minor Heal chant 1 round (2). Met: tank ratio
+0.70×, skill wins (L10 beats 2×L20 20%), mismatches, no fizzles. Changed
+under the owner's balance latitude: the 5v5 mirror runs 11–15 rounds
+(asserted ≤16; hit size makes 8–12 unreachable). Coordinated tiers are beaten
+with tactics (L10: tier 2 83%, tier 3 47–63%; untactical 48%/32%). The mana
+run also tends wounds between fights. Zone bands meet win rate, HP lost and
+≤12 rounds at band middle and low. **Settled per owner (2026-10-05, "settle for
+the best you achieved"):** reported, not asserted, for phase 37's encounter
+tuning: members fallen against 4 foes (1.4–2.3, target ≤1); band 18+
+fights with nobody down (46–60%, target ≥85%); bosses (38–74%, target 70–85%,
+about 30 rounds); a company 3 levels under band (93–98% wins, target 30–60%).
+
+**Review:** an independent full-diff reviewer found 7 issues to fix and 8
+nits. Accepted and fixed with regression tests: patching skipped a
+downed leader (now healed back to their feet); the battle-end patch ignored
+a companion still fighting (now waits); a level spell was missing from the
+level-up report (granted before the report is measured); help patch,
+wounds, friendly-effects, combat, mana and camp were wrong or stale;
+`TestBalanceZoneBands` asserted nothing (it now asserts the rows that hold);
+measurements and status missing (written); coverage for the report through
+GrantXP, Tackle at 20, allied patching and enemy template mana (added); the
+simulator ignored template mana (copied); a test wrote a user file into the
+shipped world (temp folder). The race run caught `TestAimedShotGrowsWithLevel`
+flaking (two brawls in one test shared listeners; each now runs in its own
+subtest, 30/30 passes). The full harness also caught a skill-gap regression
+(L10 beat 2×L20 48%), fixed by the span change. Rejected: updating the Go
+config defaults to the shipped combat chances (they stay GoMud's engine
+values; the shipped config sets every key and tests pin the defaults);
+deriving the milestone list from the archetype overlay (two casters today;
+revisit when phase 38 adds classes).
 
 **35a2 skill over hit points (2026-10-05), built, in review as [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18):**
 Attack and Evasion are derived from level and class (warrior 1/1, rogue

@@ -195,7 +195,7 @@ func Experience(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	realXPNow, realXPTNL := user.Character.XPTNLActual()
 	xpInfo := map[string]any{
-		"NextMilestone": milestones.Next(user.Character.Level),
+		"NextMilestone": milestones.Next(user.Character.Level, user.Character.ArchetypeID()),
 		"Level":         user.Character.Level,
 		"Exp":           realXPNow,
 		"Tnl":           realXPTNL,

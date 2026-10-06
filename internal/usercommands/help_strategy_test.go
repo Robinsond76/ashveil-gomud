@@ -48,7 +48,7 @@ func TestStrategyHelp(t *testing.T) {
 		"flee":      "flee [exit] works too",
 		"break":     "is refused",
 		"cast":      "by their strategy",
-		"mana":      "each of your companions",
+		"mana":      "for you or your companions",
 		"formation": "can't be changed during a battle",
 		"archetype": "Wizards start with Magic Missile",
 	} {

@@ -117,6 +117,9 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 			continue
 		}
 		s := enemyparty.MemberStrategy(leader.UserId, g.key)
+		if s.Role == strategy.Guardian {
+			battle.CaptureGuards(leader.UserId, string(g.key), g.char.Level) // Phase 35b
+		}
 		if s.Role != strategy.Guardian || !ableToGuard(g) || battle.GuardsLeft(leader.UserId, string(g.key)) < 1 {
 			continue
 		}

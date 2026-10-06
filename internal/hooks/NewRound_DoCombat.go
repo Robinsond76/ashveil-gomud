@@ -232,9 +232,11 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 				continue
 			}
 
+			// Phase 35b: an owned spell never fizzles in battle; elsewhere a
+			// 100% chance never fails.
 			roll := util.RollDice(1, 100)
 			successChance := user.Character.GetBaseCastSuccessChance(user.Character.Aggro.SpellInfo.SpellId)
-			if roll >= successChance {
+			if !playerCastsSure(user, user.Character.Aggro.SpellInfo.SpellId) && characters.CastFails(roll, successChance) {
 
 				// fail
 				user.SendText(fmt.Sprintf(`<ansi fg="spell-text">The words slip away from you, and your spell <ansi fg="magenta">fizzles</ansi>. (rolled %d against a %d%% chance)</ansi>`, roll, successChance))
@@ -855,8 +857,9 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 				continue
 			}
 
+			// Phase 35b: as for players.
 			successChance := mob.Character.GetBaseCastSuccessChance(mob.Character.Aggro.SpellInfo.SpellId)
-			if util.RollDice(1, 100) >= successChance {
+			if !mobCastsSure(mob, mob.Character.Aggro.SpellInfo.SpellId) && characters.CastFails(util.RollDice(1, 100), successChance) {
 
 				// fail
 				mobRoom.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s falters, and the spell <ansi fg="magenta">fizzles</ansi>.`, util.Article(mobTag(mobName(mob.InstanceId))))))

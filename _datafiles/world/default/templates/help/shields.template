@@ -26,7 +26,7 @@ use, it was moved from the hand to your carried items, and you were told.
 <ansi fg="yellow-bold">How a block works</ansi>
 
 The chance is {{ config "GamePlay.Combat.BlockChanceEven" }}% plus the shield's own armor when you and the
-attacker are even, so an iron shield blocks 30% and a buckler 23%. Your
+attacker are even, so an iron shield blocks 38% and a buckler 31%. Your
 Evasion against the attacker's Attack, and your Strength against theirs,
 move it between {{ config "GamePlay.Combat.BlockChanceMin" }}% and {{ config "GamePlay.Combat.BlockChanceMax" }}% (<ansi fg="command">help evasion</ansi>). A blocked blow does no
 damage, and a blocked melee blow may be slammed back with a shield bash

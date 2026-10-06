@@ -212,6 +212,8 @@ func init() {
 	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
+	events.RegisterListener(events.LevelUp{}, m.onLevelUp)
+	users.RegisterLevelGrant(m.levelGrant)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	archetypes.SetProvider(m)
 }
@@ -328,6 +330,9 @@ func (m *ArchetypeModule) buildTable(list []archetypes.Archetype) archetypes.Tab
 			}
 			for _, err := range a.FilterCompanionSpells(m.schoolOf) {
 				mudlog.Warn("archetype: companion spell dropped", "error", err)
+			}
+			for _, err := range a.FilterLevelSpells(m.schoolOf) {
+				mudlog.Warn("archetype: level spell dropped", "error", err)
 			}
 		}
 		a.Kit = m.resolveKit(a)
@@ -556,6 +561,21 @@ func applyGrants(user *users.UserRecord, a archetypes.Archetype) {
 	for _, spell := range a.GrantSpells {
 		user.Character.LearnSpell(spell)
 	}
+	grantLevelSpells(user, a)
+}
+
+// grantLevelSpells teaches the user the archetype's level spells their
+// level has reached (Phase 35b). Owning the spell is the marker, so it is
+// idempotent: LearnSpell never resets a spell already in the book, and
+// nothing takes one away when a death costs a level.
+func grantLevelSpells(user *users.UserRecord, a archetypes.Archetype) []string {
+	var learned []string
+	for _, spell := range a.PlayerSpellsAtLevel(user.Character.Level) {
+		if user.Character.LearnSpell(spell) {
+			learned = append(learned, spell)
+		}
+	}
+	return learned
 }
 
 // choose records a first archetype choice. Without confirm it only previews.
@@ -660,6 +680,41 @@ func (m *ArchetypeModule) resetChoice(userID int) (string, error) {
 		return "", err
 	}
 	return "Archetype cleared.", nil
+}
+
+// levelGrant teaches a player the level spells their level reaches, if they
+// have chosen an archetype. GrantXP runs it before measuring the level-up
+// report (users.RegisterLevelGrant); onLevelUp runs it again, a no-op then.
+func (m *ArchetypeModule) levelGrant(user *users.UserRecord) []string {
+	m.mu.Lock()
+	id, chosen := m.registry.Players[user.UserId]
+	a, known := m.table.Get(id)
+	m.mu.Unlock()
+	if !chosen || !known {
+		return nil
+	}
+	return grantLevelSpells(user, a)
+}
+
+// onLevelUp teaches a player the level spells their new level reaches
+// (Phase 35b) and says so.
+func (m *ArchetypeModule) onLevelUp(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.LevelUp)
+	if !ok {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+	for _, spell := range append(evt.SpellsLearned, m.levelGrant(user)...) {
+		name := spell
+		if sp := spells.GetSpell(spell); sp != nil {
+			name = sp.Name
+		}
+		user.SendText(fmt.Sprintf(`You have learned a new spell: <ansi fg="spellname">%s</ansi>. (help spell %s)`, name, spell))
+	}
+	return events.Continue
 }
 
 // onPlayerDeath clears the archetype on a permanent death: the engine
@@ -844,6 +899,8 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 			ArmorTraining:   configString(fields["armortraining"]),
 			ShieldSizes:     stringList(fields["shieldsizes"]),
 			WeaponClasses:   stringList(fields["weaponclasses"]),
+			ManaBase:        configInt(fields["manabase"]),
+			ManaPerLevel:    configFloat(fields["manaperlevel"]),
 		}
 		if spells, ok := fields["companionspells"].([]any); ok {
 			for _, sp := range spells {
@@ -852,6 +909,15 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 					continue
 				}
 				a.CompanionSpells = append(a.CompanionSpells, archetypes.LevelSpell{Spell: configString(sf["spell"]), Level: configInt(sf["level"])})
+			}
+		}
+		if spells, ok := fields["levelspells"].([]any); ok {
+			for _, sp := range spells {
+				sf := stringMap(sp)
+				if sf == nil {
+					continue
+				}
+				a.LevelSpells = append(a.LevelSpells, archetypes.LevelSpell{Spell: configString(sf["spell"]), Level: configInt(sf["level"])})
 			}
 		}
 		if growth, ok := fields["growth"].([]any); ok {

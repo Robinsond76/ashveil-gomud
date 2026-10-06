@@ -208,6 +208,7 @@ func init() {
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
 	m.plug.AddUserCommand("heal", m.healCommand, false, false)       // Phase 30b
 	m.plug.AddUserCommand("tactics", m.tacticsCommand, false, false) // Phase 30c: company tactics
+	m.plug.AddUserCommand("patch", m.patchUserCommand, false, false) // Phase 35b: company patch
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.
@@ -222,6 +223,7 @@ func init() {
 	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
+	events.RegisterListener(events.BattleEnded{}, m.onBattleEnded) // Phase 35b
 	module = m
 	survival.SetRosterProvider(m)
 	domain.SetFormationProvider(m)
@@ -283,7 +285,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill]"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -856,6 +858,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.growth(user, args[1:])) // Phase 33h1
 	case "train", "training":
 		user.SendText(m.train(user, room, args[1:])) // Phase 35c
+	case "patch":
+		user.SendText(m.patchCommand(user)) // Phase 35b
 	case "archetype":
 		if len(args) < 3 {
 			user.SendText(companyUsage)
