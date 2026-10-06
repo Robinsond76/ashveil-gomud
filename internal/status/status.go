@@ -26,6 +26,8 @@ const (
 	Asleep      = 1109 // Phase 38a: the Witch's hexes
 	Paralyzed   = 1110
 	Blighted    = 1111
+	Fogbound    = 1112 // Phase 39c: a Shaman's weather on foes
+	Windchilled = 1113
 	// Phase 43b: weapon poisons (items.Poisons), one at a time per victim.
 	Bitterleaf = 1120
 	Leechbane  = 1121
@@ -40,11 +42,13 @@ const (
 	FlagLoseFirstAction = "lose-first-action" // loses its next action only
 	FlagArmorBroken     = "armor-broken"
 	FlagExposed         = "exposed"
-	FlagNoDodge         = "no-dodge" // no active defense at all: block, parry, or dodge (stunned)
-	FlagNoBlock         = "no-block" // can't block with a shield (stunned)
-	FlagAsleep          = "asleep"   // blows against it hit more often; damage wakes it (38a)
-	FlagBlighted        = "blighted" // healing it receives is halved (38a)
-	FlagPoison          = "poison"   // curepoison and cleansing take it off
+	FlagNoDodge         = "no-dodge"    // no active defense at all: block, parry, or dodge (stunned)
+	FlagNoBlock         = "no-block"    // can't block with a shield (stunned)
+	FlagAsleep          = "asleep"      // blows against it hit more often; damage wakes it (38a)
+	FlagBlighted        = "blighted"    // healing it receives is halved (38a)
+	FlagFogbound        = "fogbound"    // its ranged attacks and spells are dimmed (39c)
+	FlagWindchilled     = "windchilled" // its chants and sling shots take a round longer (39c)
+	FlagPoison          = "poison"      // curepoison and cleansing take it off
 	FlagWeaponPoison    = "weapon-poison"
 	FlagLeechbane       = "leechbane" // healing it receives is cut by a quarter (43b)
 	FlagLeadroot        = "leadroot"  // physical damage it deals is cut by 15% (43b)
@@ -103,6 +107,10 @@ var specs = map[int]*Spec{
 		EndYou: "Your limbs answer you again.", EndOther: "%s's limbs answer again."},
 	Blighted: {Id: Blighted, Word: "blighted",
 		EndYou: "The blight lifts from you.", EndOther: "The blight lifts from %s."},
+	Fogbound: {Id: Fogbound, Word: "fogbound",
+		EndYou: "The fog thins around you.", EndOther: "The fog thins around %s."},
+	Windchilled: {Id: Windchilled, Word: "windchilled",
+		EndYou: "The cold wind dies on you.", EndOther: "The cold wind dies on %s."},
 	Bitterleaf: {Id: Bitterleaf, Word: "bitterleaf", Damage: 1,
 		TickYou: "Bitterleaf burns in your veins.", TickOther: "Bitterleaf burns in %s's veins.",
 		EndYou: "The bitterleaf runs out of your blood.", EndOther: "The bitterleaf runs out of %s's blood."},
@@ -116,7 +124,7 @@ var specs = map[int]*Spec{
 
 // Ids lists every status's buff id.
 func Ids() []int {
-	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted, Bitterleaf, Leechbane, Leadroot, Mirethorn}
+	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted, Fogbound, Windchilled, Bitterleaf, Leechbane, Leadroot, Mirethorn}
 }
 
 // Get is the status with buff id, or nil for a buff that is not one.

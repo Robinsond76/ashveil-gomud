@@ -22,8 +22,9 @@ the company.
 <ansi fg="yellow-bold">The alignment gate</ansi>
 
 Good routes need alignment +30 or higher and evil routes -30 or lower when
-you promote. Neutral routes need nothing, and the Samurai lineage (Kensai,
-Hatamoto, Ronin) has only neutral routes. If your alignment is not yet right,
+you promote. Neutral routes need nothing, and the Samurai (Kensai,
+Hatamoto, Ronin) and Shaman (Stormcaller, Mistweaver, Earthspeaker) lineages
+have only neutral routes. If your alignment is not yet right,
 <ansi fg="command">class</ansi> says the promotion is waiting; you keep your ranks and promote once your
 alignment recovers (see <ansi fg="command">help alignment</ansi>). A class is never lowered.
 
@@ -34,4 +35,4 @@ took the advanced class can take both steps in one visit. A promotion starts the
 has already reached. Spells those ranks teach are learned immediately. A class
 changes how you fight but never takes anything away.
 
-See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>.
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help shaman-routes</ansi>.

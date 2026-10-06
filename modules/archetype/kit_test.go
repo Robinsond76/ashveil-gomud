@@ -278,7 +278,7 @@ func TestListAndPreviewShowKit(t *testing.T) {
 func TestCreationChoicesAndChooseAtCreation(t *testing.T) {
 	m, _ := testModule(t)
 	choices := m.CreationChoices()
-	require.Len(t, choices, 8)
+	require.Len(t, choices, 9)
 	assert.Equal(t, "cleric", choices[0].ID)
 	assert.Contains(t, choices[0].Kit, "small red potion (x2)")
 
@@ -386,4 +386,21 @@ func TestSpawnPutsAwayClassGearOnce(t *testing.T) {
 	events.ProcessEvents()
 	assert.Equal(t, 1, saves, "nothing to save the second time")
 	assert.NotContains(t, strings.Join(heard, "\n"), "shields")
+}
+
+// A character made at the creation prompt starts at full health: the engine
+// seeds 10 health and the archetype's head start raises only the maximum
+// (phase 44b live finding: a Warrior woke at 11/59 after skipping the
+// tutorial).
+func TestChooseAtCreationStartsAtFullHealth(t *testing.T) {
+	m, _ := testModule(t)
+	u := newUser(214)
+	users.SetTestUser(u)
+	t.Cleanup(func() { users.RemoveTestUser(214) })
+	u.Character.Health = 1 // the engine's seed, below whatever the class's maximum is
+
+	_, ok := m.ChooseAtCreation(214, "warrior")
+	require.True(t, ok)
+	require.Greater(t, u.Character.HealthMax.Value, 1)
+	assert.Equal(t, u.Character.HealthMax.Value, u.Character.Health)
 }

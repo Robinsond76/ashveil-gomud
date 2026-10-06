@@ -57,6 +57,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 30c2: spent guards come back, one per two combat
 	// rounds.
 	guardPass()
+	weatherPass() // Phase 39c: a Shaman's weather runs down
 
 	// Ashveil Phase 30c: a focus ordered since the last round turns the
 	// company at this round's upkeep.

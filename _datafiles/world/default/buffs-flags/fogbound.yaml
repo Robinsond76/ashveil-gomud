@@ -1,0 +1,5 @@
+flag: fogbound
+name: "Fogbound"
+description: "The holder's ranged attacks and spells are weaker."
+locked: true
+harmful: true

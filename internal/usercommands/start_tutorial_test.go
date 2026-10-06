@@ -78,6 +78,11 @@ func TestStartHandsTheTutorialToTheProvider(t *testing.T) {
 // the zone full).
 func TestStartFallsBackWithoutTheTutorial(t *testing.T) {
 	tutorial.SetProvider(nil)
+	// No tutorial rooms, whatever world an earlier test loaded (37c review:
+	// after TestDefenseHelp loaded the default world, the copies were made).
+	special := configs.GetSpecialRoomsConfig()
+	special.TutorialRooms = nil
+	t.Cleanup(configs.SetTestSpecialRoomsConfig(special))
 	_, text := startToTutorial(t, 4102)
 	assert.Contains(t, text, "fully occupied")
 }

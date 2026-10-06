@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
@@ -140,7 +141,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
 	fatigue := mobFatigue(mob.InstanceId)
-	penalty += fatigue
+	penalty += fatigue + fogPenalty(&mob.Character)
 	sourceChar := mobCombatCharacter(mob)
 	attackResult := calculateCombatPower(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId), mobPower(mob))
 	fatigueText(&attackResult, fatigue, fmt.Sprintf("m%d", mob.InstanceId))
@@ -170,7 +171,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
 	fatigue := mobFatigue(mobAtk.InstanceId)
-	penalty += fatigue
+	penalty += fatigue + fogPenalty(&mobAtk.Character)
 	sourceChar := mobCombatCharacter(mobAtk)
 	targetChar := mobCombatCharacter(mobDef)
 	attackResult := calculateCombatPower(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobPower(mobAtk), mobDef)
@@ -928,4 +929,13 @@ func darknessPenalty(room *rooms.Room, target *characters.Character, visibilityO
 		return -bonus
 	}
 	return rooms.HitPenaltyForVisibility(visibilityOf(room), targetCarriesLight(target)) - bonus
+}
+
+// fogPenalty is a fogbound attacker's to-hit penalty with a ranged weapon
+// (Phase 39c: a Shaman's Call Fog); a melee blow ignores the fog.
+func fogPenalty(c *characters.Character) int {
+	if len(c.GetBuffs(status.Fogbound)) > 0 && c.Equipment.Weapon.GetSpec().Subtype == items.Shooting {
+		return stormcraft.FogHit
+	}
+	return 0
 }

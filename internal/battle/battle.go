@@ -45,6 +45,9 @@ type Battle struct {
 	EnemyGuards  int
 	Opening      int    // -1: company surprised; +1: enemy surprised; opening round only
 	EnemyFocus   string // the member key the group's leader last aimed it at
+
+	// Phase 39c: the weather a Shaman has called into this battle.
+	Weather Weather
 }
 
 // Has reports whether instanceId is one of the battle's enemies.

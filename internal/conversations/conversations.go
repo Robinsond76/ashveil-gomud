@@ -206,7 +206,9 @@ func getConversation(conversationId int) *Conversation {
 	if util.Rand(50) == 0 { // 2% chance to do a quick maintenance
 		rNow := util.GetRoundCount()
 		for id, info := range conversations {
-			if rNow-info.LastRound > 10 {
+			// A conversation not yet stepped has no LastRound: age it from
+			// its start, or a fresh one is pruned in a later round (37c).
+			if rNow-max(info.LastRound, info.StartRound) > 10 {
 				delete(conversations, id)
 			}
 		}
