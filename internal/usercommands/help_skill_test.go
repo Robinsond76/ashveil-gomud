@@ -23,8 +23,8 @@ func TestSkillOverHPHelp(t *testing.T) {
 
 	pages := map[string][]string{
 		"evasion": {"Help for evasion", "Attack", "Evasion", "Attack 12 -> 13   Evasion 11 -> 12",
-			"1/14 of a full edge", "To hit        88%       10%     95%", "Dodge         8%       3%      40%",
-			"Block         28% + shield  8%      55%", "hits 93% of the time", "32% of the time and meets a 30% dodge", "costs 10 Attack"},
+			"1/8 of a full edge", "To hit        88%       10%     95%", "Dodge         8%       3%      40%",
+			"Block         28% + shield  8%      55%", "hits 95% of the time and meets a 3% dodge", "hits only 10% of the time and meets a 40%\ndodge", "costs 10 Attack"},
 		"shields": {"Help for shields", "Buckler", "Tower", "bucklers only", "Cleric, Rogue, Wizard",
 			"staffs, rods and maces", "may carry a holy", "an iron shield blocks 38% and a buckler 31%", "between 8% and 55%"},
 		"armor": {"(5 damage, 2 absorbed)", "8% fewer turns, 20% less dodge", "20% fewer turns, 50% less dodge",

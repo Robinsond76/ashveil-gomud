@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
@@ -71,8 +72,8 @@ func scoutList(room *rooms.Room, user *users.UserRecord) string {
 	if len(lines) == 0 {
 		if room.Encounter != nil && room.Encounter.Enabled {
 			out := `You see no enemies here, but the place feels dangerous: a fight could find you.`
-			if cfg := rooms.GetZoneConfig(room.Zone); cfg != nil && cfg.Encounters.Band.Valid() {
-				out += fmt.Sprintf(` Foes in %s are of levels %d to %d.`, cfg.Name, cfg.Encounters.Band.Low, cfg.Encounters.Band.High)
+			if note := zoneBandNote(user, room); note != `` {
+				out += ` ` + note
 			}
 			return out
 		}
@@ -177,4 +178,32 @@ func burdenedLine(members []*mobs.Mob) string {
 		return ``
 	}
 	return `Burdened: ` + strings.Join(parts, `, `) + `. A burdened fighter dodges less.`
+}
+
+// ratingPhrases say how a zone's band weighs on the viewer's level
+// (encounters.Rating): the owner's rule that difficulty comes only from
+// entering a zone above your level.
+var ratingPhrases = map[string]string{
+	encounters.RatingEasy:      `Your company should manage.`,
+	encounters.RatingFair:      `A fair test at your level.`,
+	encounters.RatingRisky:     `Risky at your level: expect losses.`,
+	encounters.RatingDangerous: `Dangerous at your level: prepare carefully.`,
+}
+
+// zoneBandNote is the zone's level band for look and scout: "Foes in the
+// Dark Forest are of levels 5 to 7." and how that weighs on the viewer's
+// level. Empty for a zone with no band (towns, unfinished zones).
+func zoneBandNote(user *users.UserRecord, room *rooms.Room) string {
+	cfg := rooms.GetZoneConfig(room.Zone)
+	if cfg == nil || !cfg.Encounters.Band.Valid() {
+		return ``
+	}
+	b := cfg.Encounters.Band
+	out := fmt.Sprintf(`Foes in %s are of levels %d to %d.`, cfg.Name, b.Low, b.High)
+	if user != nil && user.Character != nil {
+		if phrase := ratingPhrases[encounters.Rating(user.Character.Level, b)]; phrase != `` {
+			out += ` ` + phrase
+		}
+	}
+	return out
 }

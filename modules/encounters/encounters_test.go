@@ -102,7 +102,7 @@ func setup(t *testing.T) *world {
 	zone := &rooms.ZoneConfig{Name: zoneName, Encounters: encounters.ZoneConfig{
 		Band: encounters.Band{Low: 8, High: 10},
 		Tables: map[string][]encounters.Composition{
-			"woods": {{ID: "wolves", Kind: "beast", Weight: 1, Text: "Wolves!", Members: []encounters.Member{{MobID: 96101, Count: 3}}}},
+			"woods": {{ID: "wolves", Weight: 1, Text: "Wolves!", Members: []encounters.Member{{MobID: 96101, Count: 3}}}},
 			"lair":  {{ID: "ogre-court", Boss: true, Weight: 1, Members: []encounters.Member{{MobID: 96104, Count: 1}, {MobID: 96101, Count: 2}}}},
 		},
 	}}
@@ -339,11 +339,11 @@ func TestBossGroupShape(t *testing.T) {
 	require.Len(t, rec.Foes, 3)
 	boss := mobs.GetInstance(rec.Foes[0])
 	assert.True(t, boss.Boss, "flagged so a hex resists it (38a)")
-	assert.Equal(t, 10, boss.Character.Level, "two over the band's low")
+	assert.Equal(t, 8+encounters.BossLevelBonus, boss.Character.Level, "over the band's low by the boss bonus")
 	assert.False(t, boss.Solitary, "the lone template leads a group here")
-	ordinary := mobs.NewMobById(96101, woodRm, 10)
+	ordinary := mobs.NewMobById(96101, woodRm, 8+encounters.BossLevelBonus)
 	t.Cleanup(func() { mobs.DestroyInstance(ordinary.InstanceId) })
-	assert.InDelta(t, float64(ordinary.Character.HealthMax.Value)*1.75, float64(boss.Character.HealthMax.Value), 2, "1.75x the HP of a foe of its level")
+	assert.InDelta(t, float64(ordinary.Character.HealthMax.Value)*(1+encounters.BossHPBonus), float64(boss.Character.HealthMax.Value), 2, "the boss bonus over the HP of a foe of its level")
 	assert.Equal(t, boss.Character.HealthMax.Value, boss.Character.Health)
 	for _, id := range rec.Foes {
 		foe := mobs.GetInstance(id)
@@ -511,24 +511,31 @@ type memStore struct{ saved *Registry }
 
 func (s *memStore) Load(r *Registry) error {
 	if s.saved == nil {
-		*r = Registry{Graces: map[int]encounters.Grace{}}
+		*r = Registry{Graces: map[int]encounters.Grace{}, Bosses: map[int]map[string]time.Time{}}
 		return nil
 	}
-	cp := Registry{Graces: map[int]encounters.Grace{}}
-	for k, v := range s.saved.Graces {
-		cp.Graces[k] = v
-	}
-	*r = cp
+	*r = copyRegistry(*s.saved)
 	return nil
 }
 
 func (s *memStore) Save(r Registry) error {
-	cp := Registry{Graces: map[int]encounters.Grace{}}
+	cp := copyRegistry(r)
+	s.saved = &cp
+	return nil
+}
+
+func copyRegistry(r Registry) Registry {
+	cp := Registry{Graces: map[int]encounters.Grace{}, Bosses: map[int]map[string]time.Time{}}
 	for k, v := range r.Graces {
 		cp.Graces[k] = v
 	}
-	s.saved = &cp
-	return nil
+	for k, comps := range r.Bosses {
+		cp.Bosses[k] = map[string]time.Time{}
+		for id, t := range comps {
+			cp.Bosses[k][id] = t
+		}
+	}
+	return cp
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }
@@ -558,4 +565,96 @@ func TestEntriesSaveTheGraceOnlyWhenItChanges(t *testing.T) {
 	w.back(t)
 	w.walk(t, "north")
 	assert.Equal(t, 1, store.saves, "consuming a grace entry is saved")
+}
+
+// Phase 37b: a company that beats the boss finds its lair quiet for
+// BossRespawnSeconds of real time, saved with the leader, and the lair
+// springs again after. A fled fight starts no cooldown.
+func TestBossLairStaysQuietAfterTheBossFalls(t *testing.T) {
+	w := setup(t)
+	store := &memStore{}
+	w.m.store = store
+	w.walk(t, "up")
+	require.Len(t, w.m.active, 1)
+	var rec *record
+	for _, r := range w.m.active {
+		rec = r
+	}
+	// Fleeing leaves the boss standing: no cooldown, the lair may roll again.
+	w.user.Character.RoomId = startRm
+	w.m.settleLocked(true)
+	assert.Empty(t, w.m.active)
+	assert.Empty(t, w.m.bosses[userID], "a fled boss fight starts no cooldown")
+	w.m.graces[userID] = encounters.Grace{}
+	w.user.Character.RoomId = lairRm
+	w.m.Entered(userID, lairRm)
+	require.Len(t, w.m.active, 1, "the boss is still there to meet again")
+	for _, r := range w.m.active {
+		rec = r
+	}
+
+	// The boss falls (its escorts may stand): the lair goes quiet.
+	boss := mobs.GetInstance(rec.Foes[0])
+	boss.Character.Health = 0
+	w.m.settleLocked(false)
+	ready, ok := w.m.bosses[userID]["ogre-court"]
+	require.True(t, ok)
+	assert.Equal(t, w.now.Add(encounters.BossRespawnSeconds*time.Second), ready)
+	require.NotNil(t, store.saved)
+	assert.Equal(t, ready, store.saved.Bosses[userID]["ogre-court"], "saved with the leader")
+	w.user.Character.RoomId = startRm // the escorts are cleared once the company leaves
+	w.m.settleLocked(true)
+	assert.Empty(t, w.m.active)
+
+	// The lair is quiet however often the company comes back.
+	for i := 0; i < 10; i++ {
+		w.m.graces[userID] = encounters.Grace{}
+		w.back(t)
+		w.walk(t, "up")
+	}
+	assert.Empty(t, w.m.active, "no boss farming inside the cooldown")
+	// Ordinary rooms are unaffected.
+	w.back(t)
+	w.m.graces[userID] = encounters.Grace{}
+	w.walk(t, "north")
+	assert.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		r.Remove()
+	}
+	w.m.active = map[string]*record{}
+
+	// A restart keeps the cooldown, and it expires on the real clock.
+	reborn := newModule()
+	reborn.store = store
+	reborn.clock = w.m.clock
+	reborn.load()
+	assert.True(t, reborn.bossCoolingLocked(userID, "ogre-court"))
+	w.now = w.now.Add((encounters.BossRespawnSeconds + 1) * time.Second)
+	assert.False(t, reborn.bossCoolingLocked(userID, "ogre-court"))
+	w.back(t)
+	w.m.graces[userID] = encounters.Grace{}
+	w.walk(t, "up")
+	require.Len(t, w.m.active, 1, "the lair wakes again")
+}
+
+func TestBossCooldownCoversThePartyAndPurgeForgetsIt(t *testing.T) {
+	w := setup(t)
+	other := users.NewUserRecord(userID+1, userID+1)
+	other.Character.Name = "Follower"
+	other.Character.Health = 50
+	other.Character.RoomId = startRm
+	users.SetTestUser(other)
+	p := parties.New(userID)
+	p.InvitePlayer(userID + 1)
+	p.AcceptInvite(userID + 1)
+	w.walk(t, "up")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		mobs.GetInstance(r.Foes[0]).Character.Health = 0
+	}
+	w.m.settleLocked(false)
+	assert.True(t, w.m.bossCoolingLocked(userID, "ogre-court"))
+	assert.True(t, w.m.bossCoolingLocked(userID+1, "ogre-court"), "a party cannot rotate its leader to farm the boss")
+	w.m.onUserPurged(events.UserPurged{UserId: userID})
+	assert.False(t, w.m.bossCoolingLocked(userID, "ogre-court"))
 }

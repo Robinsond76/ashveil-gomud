@@ -50,6 +50,16 @@
             gap: 6px;
         }
 
+        #rw-band {
+            font-size: 0.65em;
+            white-space: nowrap;
+            cursor: help;
+        }
+        #rw-band.easy      { color: var(--t-success, #6c6); }
+        #rw-band.fair      { color: var(--t-warning, #db5); }
+        #rw-band.risky     { color: var(--t-warning, #e93); }
+        #rw-band.dangerous { color: var(--t-danger, #e55); }
+
         #rw-area {
             font-size: 0.65em;
             color: var(--t-text-secondary);
@@ -303,6 +313,7 @@
                 '<div id="rw-room-name">\u2014</div>' +
                 '<div id="rw-room-meta">' +
                     '<span id="rw-area"></span>' +
+                    '<span id="rw-band"></span>' +
                     '<span id="rw-env"></span>' +
                 '</div>' +
                 '<div id="rw-badges"></div>' +
@@ -456,6 +467,22 @@
         const envEl  = document.getElementById('rw-env');
         if (nameEl) { nameEl.textContent = room.name || '\u2014'; }
         if (areaEl) { areaEl.textContent = room.area || ''; }
+        // Phase 37b: the zone's level band, coloured by how it rates against
+        // the player's own level (easy, fair, risky, dangerous).
+        const bandEl = document.getElementById('rw-band');
+        if (bandEl) {
+            const band = room.levelband;
+            if (band) {
+                bandEl.textContent = '\u00b7 Lv ' + band.low + '\u2013' + band.high;
+                bandEl.className = band.rating || '';
+                bandEl.title = 'Foes here are levels ' + band.low + ' to ' + band.high +
+                    (band.rating ? ' (' + band.rating + ' at your level)' : '');
+            } else {
+                bandEl.textContent = '';
+                bandEl.className = '';
+                bandEl.title = '';
+            }
+        }
         if (envEl)  { envEl.textContent  = room.environment ? '\u00b7 ' + room.environment : ''; }
 
         // Detail badges

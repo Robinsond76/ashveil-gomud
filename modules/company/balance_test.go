@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"math"
 	"os"
 	"path/filepath"
@@ -41,8 +42,8 @@ import (
 const balanceMaxRounds = 200
 
 // balanceBossHPBonus is the boss's extra health over an ordinary foe of its
-// level: 0.75 makes 1.75x (35d; it was 1.5, a 2.5x boss).
-const balanceBossHPBonus = 0.75
+// level, the game's own number (35d; 37b retuned it).
+const balanceBossHPBonus = encounters.BossHPBonus
 
 // balanceGroup is the mirror group's spawn group (non-hostile mobs group
 // only by a spawn group, Phase 32d).
@@ -384,7 +385,7 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 		}
 		enemyLevel = max(enemyLevel, 1)
 		if opts.Boss && i == 0 {
-			enemyLevel += 2
+			enemyLevel += encounters.BossLevelBonus
 		}
 		mob := mobs.NewMobById(mobs.MobId(m.id), b.road.RoomId)
 		require.NotNil(t, mob, m.name)
@@ -1169,7 +1170,7 @@ func TestBalanceZoneOptions(t *testing.T) {
 				if i == 0 {
 					want = 9
 					if n == 5 {
-						want += 2
+						want += encounters.BossLevelBonus
 					}
 				}
 				assert.Equal(t, want, m.Character.Level)

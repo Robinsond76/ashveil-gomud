@@ -1,0 +1,29 @@
+# Ashveil Phase 37b: a raiding band's healer (help coordination, help
+# encounters). She mends a raider below 60% of its health; a blow that draws
+# blood breaks the chant. Only the Dark Forest's goblin-raiders band carries
+# one (about one group in six).
+mobid: 95
+zone: Dark Forest
+itemdropchance: 5
+hostile: true
+maxwander: 0
+groups:
+  - forest-creature
+role: healer
+idlecommands:
+  - 'emote hums a low tune over a bundle of moss and herbs.'
+activitylevel: 40
+character:
+  name: goblin shaman
+  description: 'A bent goblin hung with bundles of moss and dried herbs. She hums as she walks, a flat, tuneless sound, and wherever a raider has been cut, her gnarled hands are already there, knitting the wound with spit and mud.'
+  raceid: 5
+  pronouns: she
+  level: 18
+  gold: 10
+  spellbook:
+    heal: 250 # some practice: +5 to its chance to cast
+  equipment:
+    head:
+      itemid: 20020
+    body:
+      itemid: 20030

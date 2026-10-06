@@ -618,6 +618,11 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 
 	user.SendText(buildRoomDescPanel(details))
 
+	// Phase 37b: the zone's level band and how it weighs on your level.
+	if note := zoneBandNote(user, room); note != `` {
+		user.SendText(`<ansi fg="yellow">` + note + `</ansi>`)
+	}
+
 	// Purely additive: the sky as seen from this room (weather, or a glimpse
 	// through an exit when indoors, plus the moon at night), never replacing
 	// the room rendering above.

@@ -337,7 +337,10 @@ GamePlay:
     # Skill edge (35a2): the gap between the attacker's Attack and the
     # defender's Evasion over this span. It is added to the stat edge of
     # every opposed chance except crits, and the sum is held to -1..1.
-    SkillEdgeSpan: 14
+    # 37b: 8 (was 14) so a zone above the company's level is hard: five
+    # members five levels under a band win about half their fights, two
+    # under about nine in ten.
+    SkillEdgeSpan: 8
     # Rating per level for characters without a class (enemies).
     DefaultAttackRate: 1.0
     DefaultEvasionRate: 1.0
