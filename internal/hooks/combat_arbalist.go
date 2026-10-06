@@ -34,7 +34,7 @@ func reloadTurn(a actor) bool {
 	rt.Reload = false
 	abilityTurns[a.who] = true
 	a.holder.say("You wind the crossbow for the next bolt.", "%s winds the crossbow for the next bolt.", " (reloading)")
-	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: a.char.RoomId, Source: a.ref, Status: "Reload", Outcome: combatstream.OutcomeSucceeded})
+	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: a.char.RoomId, Source: a.ref, Status: "Winding the crossbow", Outcome: combatstream.OutcomeSucceeded})
 	return true
 }
 

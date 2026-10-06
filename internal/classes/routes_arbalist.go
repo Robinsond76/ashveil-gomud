@@ -37,7 +37,7 @@ func init() {
 		Role: "a crossbow that is ready again at once", Planned: true})
 
 	register(Class{ID: "warden-of-the-wall", Name: "Warden of the Wall", Lineage: "arbalist", Tier: TierAdvanced, Gate: GateAny,
-		Role: "sets a pavise: the row behind it takes less damage",
+		Role: "sets a pavise: its row takes less damage",
 		Ranks: []Rank{
 			rank(10, "Pavise", "allies in the Warden's row take 10% less damage (the Arbalist included; auras don't stack within a row)", AuraResolv, 10),
 			rank(15, "Padded coat", "+4 armor", Armor, 4),

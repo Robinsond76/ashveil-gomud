@@ -62,7 +62,7 @@ func (b *brawl) arbalistRound(stream *[]combatstream.Event, foe *mobs.Mob) (bolt
 	n := len(*stream)
 	out = b.fight()
 	round := since(*stream, n)
-	return boltCount(round, "Piercing Bolt"), boltCount(round, "Reload"), len(halberdTargets(round, "Tamsin Reed")), out
+	return boltCount(round, "Piercing Bolt"), boltCount(round, "Winding the crossbow"), len(halberdTargets(round, "Tamsin Reed")), out
 }
 
 func TestAnArbalistLoosesABoltThenWindsTheCrossbow(t *testing.T) {

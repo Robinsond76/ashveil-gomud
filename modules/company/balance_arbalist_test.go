@@ -63,11 +63,12 @@ func TestPhase39hArbalist(t *testing.T) {
 					Classes: map[int]string{3: c.archetype},
 				})
 				// Garrick's sellsword blade is the kit of the warrior cells; the
-				// shooting classes carry their own weapon (the shipped bow and the
-				// hunting crossbow).
+				// shooting classes carry the tier-1 weapon of their kind (the
+				// shortbow and the hunting crossbow). The Ranger's starting sling
+				// shoots every other round, so it would not be a fair mirror.
 				switch c.archetype {
 				case "ranger":
-					f.brawl.companion(3).Character.Equipment.Weapon = items.New(10014)
+					f.brawl.companion(3).Character.Equipment.Weapon = items.New(10171) // shortbow
 				case "arbalist":
 					f.brawl.companion(3).Character.Equipment.Weapon = items.New(10181)
 				}
