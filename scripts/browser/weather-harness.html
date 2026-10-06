@@ -1,0 +1,52 @@
+<!doctype html>
+<!--
+  Weather browser check harness: the real web client core and the Time and
+  Date window, fed Gametime payloads by weather-check.mjs. Not served by the
+  game.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather check</title>
+<link id="theme-css" rel="stylesheet" href="../../_datafiles/html/public/static/css/theme-brooding.css">
+<link rel="stylesheet" href="../../_datafiles/html/public/static/css/windows.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--t-bg); color: var(--t-text); font-family: 'DejaVu Sans Mono', monospace; }
+  #main-container { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
+  #terminal { flex: 1; min-width: 0; }
+</style>
+<script src="../../_datafiles/html/public/static/js/xterm/xterm.4.19.0.js"></script>
+<script src="../../_datafiles/html/public/static/js/xterm/xterm-addon-fit.js"></script>
+<script src="../../_datafiles/html/public/static/js/mp3.js"></script>
+<script src="../../_datafiles/html/public/static/js/vwin.js"></script>
+<script src="../../_datafiles/html/public/static/js/webclient-core.js"></script>
+<script>
+  window.sent = [];
+  Client.SendInput = function(cmd) { window.sent.push(cmd); };
+  Client.GMCPRequest = function() {};
+  // As Client's own store: nest on dots, then dispatch.
+  window.gmcp = function(namespace, body) {
+    const parts = namespace.split('.');
+    const last = parts.pop();
+    let cursor = Client.GMCPStructs;
+    parts.forEach(seg => { cursor = cursor[seg] = cursor[seg] || {}; });
+    cursor[last] = body;
+    VirtualWindows.handleGMCP(namespace, body);
+  };
+</script>
+<script src="../../_datafiles/html/public/static/js/windows/window-gametime.js"></script>
+</head>
+<body>
+<div id="main-container">
+  <div id="dock-left"></div>
+  <div id="terminal"><input id="command-input" aria-label="Command"></div>
+  <div id="dock-right"></div>
+</div>
+<script>
+  DockSlots.left  = new DockSlot('left');
+  DockSlots.right = new DockSlot('right');
+  VirtualWindows.openAll();
+</script>
+</body>
+</html>

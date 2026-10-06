@@ -8,7 +8,8 @@
  * Responds to GMCP namespaces:
  *   Gametime  - full gametime update
  *
- * Reads: Client.GMCPStructs.Gametime
+ * Reads: Client.GMCPStructs.Gametime (including its optional weather
+ * object, drawn as cloud, rain, storm or fog over the sky)
  */
 
 'use strict';
@@ -36,6 +37,21 @@
             display: block;
             width: 100%;
             height: 100%;
+        }
+
+        #gametime-weather {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            padding: 1px 7px;
+            border-radius: 9px;
+            background: rgba(0, 0, 0, 0.45);
+            color: #e8eef5;
+            font-family: monospace;
+            font-size: 0.72em;
+            letter-spacing: 0.03em;
+            pointer-events: auto;
+            display: none;
         }
 
         #gametime-labels {
@@ -181,6 +197,10 @@
         const canvas = document.createElement('canvas');
         canvas.id = 'gametime-canvas';
         sky.appendChild(canvas);
+
+        const wx = document.createElement('div');
+        wx.id = 'gametime-weather';
+        sky.appendChild(wx);
 
         const labels = document.createElement('div');
         labels.id = 'gametime-labels';
@@ -468,6 +488,133 @@
         return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')';
     }
 
+
+    // -----------------------------------------------------------------------
+    // Weather layer
+    //
+    // Drawn over the sky from the room's weather in the Gametime payload
+    // (data.weather: name, cloud_cover 0-3, visibility 0..-2). Cloud, rain,
+    // storm and fog are all animated from the wall clock, so they keep
+    // moving between GMCP ticks.
+    // -----------------------------------------------------------------------
+    const WEATHER_LABELS = {
+        'clear': 'Clear',
+        'overcast': 'Overcast',
+        'rain': 'Rain',
+        'storm': 'Storm',
+        'fog': 'Fog',
+        'thick-fog': 'Thick fog',
+        'mist': 'Mist',
+    };
+
+    function weatherLabel(name) {
+        if (WEATHER_LABELS[name]) { return WEATHER_LABELS[name]; }
+        const s = String(name || '').replace(/-/g, ' ');
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function setWeatherLabel(wx) {
+        const el = document.getElementById('gametime-weather');
+        if (!el) { return; }
+        if (!wx) {
+            el.style.display = 'none';
+            return;
+        }
+        el.style.display = 'block';
+        el.textContent = weatherLabel(wx.name) + (wx.indoor ? ' (outside)' : '');
+        el.title = wx.description || '';
+    }
+
+    // Soft cloud: a few overlapping translucent ellipses.
+    function drawCloud(ctx, x, y, size, rgb, alpha) {
+        ctx.fillStyle = 'rgba(' + rgb + ',' + alpha + ')';
+        const puffs = [[0, 0, 1, 0.55], [-0.7, 0.15, 0.7, 0.4], [0.75, 0.12, 0.8, 0.45], [0.2, -0.25, 0.7, 0.4]];
+        puffs.forEach(function(p) {
+            ctx.beginPath();
+            ctx.ellipse(x + p[0] * size, y + p[1] * size, p[2] * size, p[3] * size, 0, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    function drawWeather(ctx, w, h, wx, night) {
+        if (!wx) { return; }
+        const t     = performance.now() / 1000;
+        const cover = wx.cloud_cover || 0;
+        const name  = wx.name || '';
+        const rainy = name === 'rain' || name === 'storm';
+        const foggy = (wx.visibility || 0) < 0 || name === 'mist';
+        const cloudRgb = rainy ? (night ? '40,46,58' : '96,106,120')
+                               : (night ? '58,66,82' : '226,232,240');
+
+        // Overcast greys the whole sky.
+        if (cover > 0) {
+            ctx.fillStyle = 'rgba(' + (night ? '10,14,24' : '120,130,142') + ',' + (0.16 * cover + (rainy ? 0.12 : 0)) + ')';
+            ctx.fillRect(0, 0, w, h);
+        }
+
+        // Drifting clouds: more, bigger and darker with cover.
+        if (cover > 0) {
+            const count = 2 + cover * 2;
+            const rng = seededRNG(0xC10D5 + cover);
+            for (let i = 0; i < count; i++) {
+                const speed = 4 + rng() * 6;
+                const size  = h * (0.28 + rng() * 0.22) * (0.8 + cover * 0.2);
+                const span  = w + size * 4;
+                const x     = ((rng() * span + t * speed) % span) - size * 2;
+                const y     = h * (0.12 + rng() * 0.38);
+                drawCloud(ctx, x, y, size, cloudRgb, 0.28 + cover * 0.14);
+            }
+        }
+
+        // Fog and mist: slow pale bands low in the sky.
+        if (foggy) {
+            const dense = (wx.visibility || 0) <= -2 ? 0.55 : (wx.visibility < 0 ? 0.38 : 0.22);
+            const fogRgb = night ? '120,130,150' : '235,240,245';
+            const g = ctx.createLinearGradient(0, 0, 0, h);
+            g.addColorStop(0, 'rgba(' + fogRgb + ',' + (dense * 0.35) + ')');
+            g.addColorStop(1, 'rgba(' + fogRgb + ',' + dense + ')');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, w, h);
+            for (let i = 0; i < 3; i++) {
+                const bx = ((t * (5 + i * 3) + i * w * 0.4) % (w * 1.6)) - w * 0.3;
+                ctx.fillStyle = 'rgba(' + fogRgb + ',' + (dense * 0.6) + ')';
+                ctx.beginPath();
+                ctx.ellipse(bx, h * (0.55 + i * 0.15), w * 0.35, h * 0.14, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Rain and storm: slanted streaks falling past the clouds.
+        if (rainy) {
+            const storm  = name === 'storm';
+            const drops  = Math.round(Math.min(90, w / 4) * (storm ? 1.6 : 1));
+            const slant  = storm ? 0.45 : 0.18;
+            const len    = h * (storm ? 0.3 : 0.22);
+            const fall   = storm ? 1.8 : 1.1;
+            const rng    = seededRNG(0x4A17);
+            ctx.strokeStyle = night ? 'rgba(170,190,220,0.55)' : 'rgba(205,220,240,0.7)';
+            ctx.lineWidth   = 1;
+            ctx.beginPath();
+            for (let i = 0; i < drops; i++) {
+                const fx = rng(), fy = rng(), sp = 0.7 + rng() * 0.6;
+                const y  = (((fy + t * fall * sp) % 1) * (h + len)) - len;
+                const x  = ((fx * (w + h) - y * slant) % (w + h) + (w + h)) % (w + h) - h * 0.5;
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - len * slant, y + len);
+            }
+            ctx.stroke();
+
+            // Storm: an occasional flash lights the sky.
+            if (storm) {
+                const cycle = (t % 7);
+                if (cycle < 0.25) {
+                    ctx.fillStyle = 'rgba(255,255,240,' + (0.35 * (1 - cycle / 0.25)) + ')';
+                    ctx.fillRect(0, 0, w, h);
+                }
+            }
+        }
+    }
+
     function drawSky(data, debug) {
         const canvas = document.getElementById('gametime-canvas');
         if (!canvas) { return; }
@@ -647,7 +794,16 @@
         }
 
         // Blit the centre slice of the wide canvas onto the visible canvas.
+        // Cloud dims the sun and, when overcast, hides the moon (as the
+        // server's room text does).
+        const wx    = data.weather || null;
+        const cover = wx ? (wx.cloud_cover || 0) : 0;
+        ctx.save();
+        ctx.globalAlpha = night ? (cover >= 3 ? 0 : 1 - 0.3 * cover) : 1 - 0.22 * cover;
         ctx.drawImage(offscreen, pad, 0, w, h, 0, 0, w, h);
+        ctx.restore();
+
+        drawWeather(ctx, w, h, wx, night);
 
         // --- debug overlays ---
         if (debug) {
@@ -792,6 +948,8 @@
             const w = canvas ? (canvas.parentElement.clientWidth || 300) : 300;
             _starOffset = (_starOffset + 2) % w;
         }
+
+        setWeatherLabel(data.weather || null);
 
         // Update labels on real GMCP ticks only.
         const timeEl = document.getElementById('gametime-time');
