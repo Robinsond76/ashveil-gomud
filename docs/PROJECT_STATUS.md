@@ -1,5 +1,17 @@
 # Ashveil Project Status
 
+**Remaining roadmap planned (2026-10-06):** the owner handed over the rest
+of the roadmap, delegating design approval and the visual direction. The
+[remaining roadmap](plans/2026-10-06-remaining-roadmap.md) maps every
+unmerged phase with its dependencies and adds 35e (focus the healer), 37b
+(encounter tuning), 36d, 38c-d to 38e, 39i, 40a4 (camp theft), art sets
+40s1–40s5, 41–42 (world building), 43a–43b (camp consumables, weapon
+poisons) and 44 (live smoke playtest). Can start now beside 37 and 38b:
+35e, 40e, 40a, 40s1, 44 and the 38c-d design. Visual choice: the battle
+screen lane first, with code-generated pixel art. Open questions in the
+40a–40g and loot designs are decided there, each with a reason.
+Documentation only. Verification: links and the diff checked.
+
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
 crossbows, four armor paths, shields), 24 trade goods with value-per-kg
@@ -317,11 +329,14 @@ Items 1 and 2 can be designed in parallel. Item 1 ships first because the
 loot and encounter tuning depend on its numbers. Earlier items, including the
 30g mirror target, remain as stress checks, not the tuning goal.
 
-### Phase sequence (proposed, 2026-10-05)
+### Phase sequence (proposed 2026-10-05, extended 2026-10-06)
 
 Each phase gets its execution plan in `docs/plans/` and the usual
-review gate. Each design needs the owner's approval before its first phase is
-implemented (handoff rule 20).
+review gate. Since 2026-10-06 the owner has delegated design approval
+(handoff rule 20): a design or review thread decides open questions and
+records each decision with its reason. The full map of remaining phases,
+their dependencies and those decisions is the
+[remaining roadmap](plans/2026-10-06-remaining-roadmap.md).
 
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
@@ -335,9 +350,21 @@ implemented (handoff rule 20).
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
-| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
-| 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
-| 39a–39h | Neutral base classes, one per phase: Halberdier, Samurai, Shaman, Doll Master, Beast Tamer, Gryphon Rider, Alchemist, Arbalist | [Neutral classes design](designs/2026-10-05-neutral-classes-design.md) | 38b (39a and 39h also 36b; 39e also 39d) |
+| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). **Can start now** | Roadmap 2026-10-06 (owner's difficulty rule) | — |
+| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
+| 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
+| 38c-d | Elite routes design for the six lineages (docs only; cleric and warrior elites are in the faith routes design). **Can start now** | Branching design | — |
+| 38c | Elite promotions at level 30, ranks 30–60 for the six lineages | Branching; faith routes | 38b, 38c-d |
+| 38d | Expanded class catalogue bundles, Sorcerer first | Expanded catalogue | 38c |
+| 38e | Creature recruits, Hound and Stone Golem pilot | Expanded catalogue | 38d, 39e |
+| 36d | Tier 4–6 gear, Legendary signatures and Set bonuses | Loot slice 5 | 36c, 38c |
+| 39a–39h | Neutral base classes, one per phase: Halberdier, Samurai, Shaman, Doll Master, Beast Tamer, Gryphon Rider, Alchemist, Arbalist; at most two building at once | [Neutral classes design](designs/2026-10-05-neutral-classes-design.md) | 38b (39e also 39d) |
+| 39i | Elite ranks 30–60 for the eight neutral lineages | Neutral classes design §12 | 38c, 39a–39h |
+| 41 | World building, levels 1–15, tile-ready | Owner 2026-10-05 | 40d, 37b |
+| 42 | Zones 15–30+, elite content, tier 4–6 placement | Roadmap 2026-10-06 | 41, 38c, 36d |
+| 43a | Camp consumables | [Design](designs/2026-10-01-camp-consumables-design.md) | 40a2 |
+| 43b | Weapon poisons | [Design](designs/2026-10-01-weapon-poisons-design.md) | 43a |
 
 World building (zones for levels 1–15) now waits until the visual client
 milestone below is in place (owner, 2026-10-05). A small showcase area for
@@ -345,8 +372,12 @@ the new map features may be built in 40d.
 
 ### Next milestone: visual client (Phase 40, owner 2026-10-05)
 
-Starts once the phase sequence above is finished. Art can be produced
-earlier, because it touches no code. See the [milestone design](designs/2026-10-05-visual-client-milestone-design.md)
+Since 2026-10-06 it runs beside the sequence above: 40e, 40a and art set
+40s1 can start now. The battle screen lane (40e, 40f, 40g) has priority,
+and art is code-generated pixel art built by art threads one step ahead of
+the code ([roadmap](plans/2026-10-06-remaining-roadmap.md#visual-direction-owner-asked-for-a-recommendation)).
+The 40a–40g designs are approved under the owner's delegation. See the
+[milestone design](designs/2026-10-05-visual-client-milestone-design.md)
 and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 
 | Phase | Scope | Art set |
@@ -354,6 +385,8 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
 | [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Design approved** | S1 |
+| 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
+| 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
 | [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
 | [40d](designs/2026-10-05-phase-40d-tile-region-travel-design.md) | Tile-ready pilot region and click-to-walk | S2 |
@@ -363,9 +396,9 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 | 40h | Advanced class art (after 38b) | S5 |
 | 40i | Touch layout and installable web app | S1 |
 
-Open owner questions are listed in the design: other players on the map,
-the resource list, tile-ready world building, race variants, and a store
-app.
+The milestone's owner questions were answered on 2026-10-05; the phase
+designs' remaining questions were decided on 2026-10-06 (roadmap,
+"Decisions on open questions").
 
 **Phase 35 delivery (2026-10-05):** 35a is complete and merged
 ([PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)). 35c is
