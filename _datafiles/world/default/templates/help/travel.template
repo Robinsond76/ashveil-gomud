@@ -59,6 +59,9 @@ chance to return early.
   <ansi fg="command">travel resume</ansi> | <ansi fg="command">travel return</ansi>
   Only work while a route is paused by an interruption.
 
+Arriving can spring a random encounter, like an ordinary step into a
+dangerous room (<ansi fg="command">help encounters</ansi>).
+
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help strain</ansi>,
 <ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help go</ansi>.
 

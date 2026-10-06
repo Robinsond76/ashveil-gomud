@@ -111,6 +111,7 @@ help:
       - cast
       - chemistry
       - combat
+      - encounters
       - combatpace
       - consider
       - coordination
@@ -243,6 +244,7 @@ help-aliases:
   equipment: [company-equipment, company equip, company remove, company compare]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]
+  encounters: [encounter, random-encounter, random-encounters, random encounter, random encounters, danger, dangerous, dangerous rooms, bosses, boss, escorts, cache, caches, spoils, personal loot, personal-loot, grace, breathing room]
   rarity: [rare, epic, legendary, unidentified, level requirement, level-requirement, set items, uncommon]
   quality: [crude, worn, fine, superior, exquisite, workmanship]
   itemlevel: [item level, ilvl, item-level]

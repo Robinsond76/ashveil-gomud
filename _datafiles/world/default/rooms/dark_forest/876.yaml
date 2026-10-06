@@ -22,3 +22,7 @@ mapx: 41
 mapy: 5
 mapz: -1
 hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 20

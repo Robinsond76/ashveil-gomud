@@ -4,3 +4,67 @@ mutators:
   - mutatorid: forest-mist
 musicfile: static/audio/music/dark-forest.mp3
 defaultbiome: forest
+
+# Phase 37 pilot: random room encounters. The tables enable no room by
+# themselves; a room opts in with an `encounter:` block. Enemy levels come
+# from the band, never from the player. Placeholder bands until world
+# building (docs/plans/2026-10-06-phase-37-random-encounters.md).
+encounters:
+  band:
+    low: 5
+    high: 7
+  entrychance: 15
+  tables:
+    woodland:
+      - id: wolf-pack
+        kind: beast
+        weight: 35
+        text: Gray shapes slip between the trunks, and a pack of timber wolves closes around your company.
+        members:
+          - mobid: 56
+            count: 3
+      - id: wolf-pack-large
+        kind: beast
+        weight: 10
+        text: A big pack of timber wolves breaks cover, circling your company.
+        members:
+          - mobid: 56
+            count: 4
+      - id: spider-brood
+        kind: beast
+        weight: 25
+        text: Webs shiver overhead as spiders drop onto the road.
+        members:
+          - mobid: 36
+            count: 2
+          - mobid: 35
+            count: 1
+      - id: imp-gang
+        kind: spirit
+        weight: 15
+        text: Cackling forest imps tumble out of the mist.
+        members:
+          - mobid: 33
+            count: 3
+      - id: goblin-raiders
+        kind: humanoid
+        weight: 15
+        text: Goblin raiders rush out of the undergrowth, a hexer chanting behind them.
+        members:
+          - mobid: 70
+            count: 2
+          - mobid: 33
+            count: 1
+    lair:
+      - id: forest-ogre-and-pack
+        kind: beast
+        weight: 100
+        boss: true
+        text: The trees shudder. A forest ogre lumbers into the open, its wolves slinking at its heels.
+        members:
+          - mobid: 85
+            count: 1
+          - mobid: 56
+            count: 2
+          - mobid: 33
+            count: 1
