@@ -30,6 +30,8 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/archetype"
 	_ "github.com/GoMudEngine/GoMud/modules/camping"
 	_ "github.com/GoMudEngine/GoMud/modules/company"
+	_ "github.com/GoMudEngine/GoMud/modules/death"
+	_ "github.com/GoMudEngine/GoMud/modules/encounters"
 	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
 	_ "github.com/GoMudEngine/GoMud/modules/expedition"
 	_ "github.com/GoMudEngine/GoMud/modules/exposure"
@@ -145,6 +147,9 @@ func newTrip(t *testing.T) *trip {
 	user.Character.Validate()
 	users.SetTestUser(user)
 	require.NoError(t, rooms.MoveToRoom(user.UserId, 2001))
+	// Arriving has its effects (a checkpoint at a church, say) before the
+	// trip, as it does in play.
+	events.ProcessEvents()
 	t.Cleanup(func() {
 		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
 			room.RemovePlayer(user.UserId)

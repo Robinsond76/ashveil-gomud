@@ -197,7 +197,7 @@ func TestRoadCampAlwaysDrawsThievesAndRaiders(t *testing.T) {
 
 // TestEveryModuleStateIsSnapshotted: the contributors a trip captures.
 func TestEveryModuleStateIsSnapshotted(t *testing.T) {
-	assert.Subset(t, userstate.Names(), []string{"archetype", "camping", "company", "encumbrance", "expedition", "exposure", "mount", "strategy", "survival", "walking"})
+	assert.Subset(t, userstate.Names(), []string{"archetype", "camping", "company", "encumbrance", "expedition", "exposure", "mount", "strategy", "survival", "walking", "encounters", "death"})
 }
 
 // TestHelpPages: the command's own help and `help testarea` both render and

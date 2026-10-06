@@ -9,6 +9,7 @@ package death
 import (
 	"embed"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"strconv"
 	"strings"
 	"sync"
@@ -88,6 +89,7 @@ func init() {
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	domain.SetProvider(m)
 	module = m
 }
