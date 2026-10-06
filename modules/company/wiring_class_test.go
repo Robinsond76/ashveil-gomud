@@ -280,6 +280,10 @@ func TestNeutralElitesPromoteThroughTheClassCommand(t *testing.T) {
 		{"samurai", "kensai", "sword-saint", "Sword Saint"},
 		{"shaman", "earthspeaker", "mountain-speaker", "Mountain Speaker"},
 		{"dollmaster", "golemancer", "golem-lord", "Golem Lord"},
+		{"beasttamer", "dragon-tamer", "dragon-lord", "Dragon Lord"},
+		{"gryphon-rider", "skyscout", "falcon-marshal", "Falcon Marshal"},
+		{"alchemist", "apothecary", "panacean", "Panacean"},
+		{"arbalist", "sharpshooter", "deadeye", "Deadeye"},
 	} {
 		t.Run(c.to, func(t *testing.T) {
 			w, store := classBrawl(t, 30, -100)

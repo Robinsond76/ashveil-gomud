@@ -40,7 +40,7 @@ cost merge order, not a dependency.
 | 38d | Expanded class catalogue bundles, Sorcerer first | 38c | Later |
 | 38e | Creature recruits (Hound and Stone Golem pilot) | 38d, 39e | Later |
 | 39i | Elite ranks for Halberdier, Samurai, Shaman and Doll Master, plus the balance items (**in review**) | 38c, 39a–39h | PR open |
-| 39i2 | Elite ranks for Beast Tamer, Gryphon Rider, Alchemist and Arbalist (new, split from 39i) | 39i | Next |
+| 39i2 | Elite ranks for Beast Tamer, Gryphon Rider, Alchemist and Arbalist (new, split from 39i) | 39i | Built, in review |
 | 36d | Tier 4–6 gear, Legendary signatures, Set bonuses (loot slice 5) | 36c, 38c | Later |
 | 40a2 | Gathering | 40a | After 40a |
 | 40a3 | Camp gear (already approved) | 40a2 | After 40a2 |
