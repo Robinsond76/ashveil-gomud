@@ -274,8 +274,9 @@ Go through every file:
 
 ## 9. Delivering
 
-- Deliver to the **shared art folder**: the Google Drive folder "Ashveil
-  Art Masters" (the owner gives you its link). **Never commit
+- Deliver to the **shared art folder**: the Google Drive folder
+  [Ashveil Art Masters](https://drive.google.com/drive/folders/1BgQaAZfopzUVc4mKYthn5ygdMqSapAza), in the phase's subfolder (`A0`, `A1` and
+  so on). Ask the owner for access. **Never commit
   art to the git repository.** In the phase files, `art/source/` means the
   root of that folder. Use the exact relative names the phase file gives:
   for example, `A1/map/units/warrior.png` goes in the folder `A1/map/units/`.
