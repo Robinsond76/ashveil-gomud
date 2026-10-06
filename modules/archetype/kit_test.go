@@ -278,7 +278,7 @@ func TestListAndPreviewShowKit(t *testing.T) {
 func TestCreationChoicesAndChooseAtCreation(t *testing.T) {
 	m, _ := testModule(t)
 	choices := m.CreationChoices()
-	require.Len(t, choices, 10)
+	require.Len(t, choices, 11)
 	assert.Equal(t, "cleric", choices[0].ID)
 	assert.Contains(t, choices[0].Kit, "small red potion (x2)")
 

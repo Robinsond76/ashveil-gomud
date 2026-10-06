@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">gryphon-rider</ansi>
+
+The Gryphon Rider is a skirmisher. It dives from the sky past the enemy's
+front line onto the rows behind it, and its default aim is the healers and
+casters that stand there. Between dives it fights on as an ordinary spear or
+sword fighter in medium armor with a buckler. It has no creed: no alignment
+gate stands in front of any of its routes.
+
+<ansi fg="yellow-bold">What the Gryphon Rider is</ansi>
+
+  Health      5 to start, 0.8 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 1.0 and Evasion 1.0 a level, like a warrior (<ansi fg="command">help evasion</ansi>)
+  Gear        medium armor, a buckler or no shield, spears and swords
+              (<ansi fg="command">help armor</ansi>, <ansi fg="command">help shields</ansi>)
+  Stats       speed 4, strength 3, perception 2, vitality 1 (<ansi fg="command">help growth</ansi>)
+  Starter kit an iron short spear, a leather buckler, a padded jack, a leather
+              cap, worn boots, food, a waterskin and a knapsack
+  Utility     Keen Eye (<ansi fg="command">help specialists</ansi>)
+
+<ansi fg="yellow-bold">Ranks of the Gryphon Rider</ansi>
+
+  Level 1   <ansi fg="yellow">Dive</ansi>        the rider's whole turn, once every 3 combat rounds: a stooping
+            blow that may pass a standing front-row foe to strike the middle
+            or back row, as long as the foe stands in the rider's column or
+            the next. A foe's guardian can still step in for it. The rider
+            has -10 Evasion until its next turn.
+  Level 3   <ansi fg="yellow">Talons</ansi>      a Dive that lands leaves the foe bleeding (<ansi fg="command">help statuses</ansi>).
+  Level 8   <ansi fg="yellow">Power dive</ansi>  a Dive deals 25% more damage.
+
+Level 5 brings the first talent: Keen Edge, Footwork, Toughness, Sharp Eye
+(+3% critical chance on every blow) or Wing Drill (Dive ready a round
+sooner; once) (<ansi fg="command">help talents</ansi>). At level 10 a Gryphon Rider promotes to a
+Gryphon Knight, Skyscout or Wyvern Rider (<ansi fg="command">help gryphon-rider-routes</ansi>).
+
+<ansi fg="yellow-bold">Where it can fly</ansi>
+
+The gryphon needs open sky. Indoors, in caves and on narrow ground (the
+battle says when the ground folds both lines into two columns) it cannot
+fly: there is no Dive, and the rider fights as an ordinary spear fighter.
+A Dive also needs a melee weapon in hand.
+
+<ansi fg="yellow-bold">How a Gryphon Rider fights</ansi>
+
+A battle plays out on its own, so everything above happens without a command.
+The rider's default target rule is <ansi fg="command">healers</ansi>: healers first, then casters, then
+the weakest foe (<ansi fg="command">help strategy</ansi>). It can aim at any foe within a column of
+its own because of the Dive; on the rounds the Dive is not ready, a blow at a
+foe behind a standing front-liner is caught by the front-liner, as any blow
+is (<ansi fg="command">help formation</ansi>). A Dive is the rider's turn: it does not also swing. Put
+it in the front or middle row, with a guardian beside it (<ansi fg="command">help guardian</ansi>)
+to cover the Evasion it spends. <ansi fg="command">strategy me abilities off</ansi> keeps the rider
+on the ground.
+
+<ansi fg="yellow-bold">Other Gryphon Riders</ansi>
+
+A Gryphon Rider companion fights the same way, by its strategy, and promotes
+and chooses talents like any other (<ansi fg="command">help company</ansi>). Recruits are hired like
+any other and arrive with an iron short spear and a buckler. The gryphon
+itself is not a mount you stable or feed; it is the rider's own.
+
+Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">talent</ansi>, <ansi fg="command">strategy</ansi>.
+
+See also: <ansi fg="command">help gryphon-rider-routes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help combat</ansi>.
