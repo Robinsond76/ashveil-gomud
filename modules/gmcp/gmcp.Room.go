@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -332,11 +334,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	if all || g.wantsGMCPPayload(`Room.Info.Contents.Items`, gmcpModule) {
 		payload.Contents.Items = []GMCPRoomModule_Payload_Contents_Item{}
 		for _, itm := range room.Items {
-			payload.Contents.Items = append(payload.Contents.Items, GMCPRoomModule_Payload_Contents_Item{
-				Id:        itm.ShorthandId(),
-				Name:      itm.Name(),
-				QuestFlag: itm.GetSpec().QuestToken != ``,
-			})
+			payload.Contents.Items = append(payload.Contents.Items, roomContentsItem(itm))
 		}
 
 		if `Room.Info.Contents.Items` == gmcpModule {
@@ -623,6 +621,25 @@ type GMCPRoomModule_Payload_Contents_Item struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
 	QuestFlag bool   `json:"quest_flag"`
+	// Phase 36c: a rolled item's name as players see it.
+	Label        string `json:"label,omitempty"`
+	Rarity       string `json:"rarity,omitempty"`
+	Unidentified bool   `json:"unidentified,omitempty"`
+}
+
+// roomContentsItem is one floor item as the room payload lists it.
+func roomContentsItem(itm items.Item) GMCPRoomModule_Payload_Contents_Item {
+	entry := GMCPRoomModule_Payload_Contents_Item{
+		Id:        itm.ShorthandId(),
+		Name:      itm.Name(),
+		QuestFlag: itm.GetSpec().QuestToken != ``,
+	}
+	if itm.IsRolled() {
+		entry.Label = company.PlainLabel(itm)
+		entry.Rarity = string(itm.RollRarity())
+		entry.Unidentified = !itm.IsIdentified()
+	}
+	return entry
 }
 
 type GMCPRoomModule_Payload_Contents_Container struct {

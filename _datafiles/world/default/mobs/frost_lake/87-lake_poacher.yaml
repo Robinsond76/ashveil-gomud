@@ -2,6 +2,7 @@
 # together, but loosely: each keeps its own aim and a third of their turns
 # go astray. Their bonesetter heals only the badly hurt, one at a time.
 mobid: 87
+sprite: poacher
 zone: Frost Lake
 itemdropchance: 3
 lootcategory: humanoid

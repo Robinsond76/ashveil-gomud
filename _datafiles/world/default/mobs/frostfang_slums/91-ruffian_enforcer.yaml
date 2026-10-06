@@ -1,6 +1,7 @@
 # Ashveil Phase 33i2: a band's guardian (help coordination). He steps in
 # front of a hurt ruffian beside him, once a battle.
 mobid: 91
+sprite: ruffian-enforcer
 zone: Frostfang Slums
 itemdropchance: 2
 lootcategory: humanoid

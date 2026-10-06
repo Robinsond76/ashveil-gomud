@@ -183,7 +183,7 @@ func TestGearCatalogHelp(t *testing.T) {
 
 	for alias, topic := range map[string]string{
 		"tier": "equipmenttiers", "tiers": "equipmenttiers", "glaive": "equipmenttiers", "equipment tiers": "equipmenttiers",
-		"trade goods": "goods", "salvage": "goods", "value per kg": "goods",
+		"trade goods": "goods", "trophies": "goods", "value per kg": "goods",
 	} {
 		want, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)

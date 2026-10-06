@@ -3,8 +3,8 @@
 Rare and better gear is found <ansi fg="yellow">unidentified</ansi>. You can see what it is, its tier, its
 quality and its rarity, but not its affixes (<ansi fg="command">help affixes</ansi>). An unread item
 gives only its base numbers, so there is always a reason to read it
-before you commit to wearing it. Rolled gear can't be sold to merchants
-yet; keep it, wear it, or leave it.
+before you commit to wearing it. Merchants buy unread gear at a discount,
+priced by rarity alone (<ansi fg="command">help sell</ansi>).
 
 <ansi fg="yellow-bold">Ways to read an item</ansi>
 
@@ -18,11 +18,14 @@ yet; keep it, wear it, or leave it.
   reveals itself, with no Scribe needed. Wear the item, rest, and you
   will know what it is.
 
+  <ansi fg="yellow">A merchant, for a fee</ansi>
+  <ansi fg="command">appraise [item]</ansi> at any merchant reads an unidentified item for gold:
+  60 for a Rare, 150 for an Epic, 400 for a Legendary or Set. It reveals
+  the item for good, so it is a way to spend gold on a find, not a toll
+  you pay again (<ansi fg="command">help appraise</ansi>).
+
 Uncommon gear shows its single affix from the start, and common gear has
 none, so neither needs reading.
-
-Sages and merchants who read gear for a fee, and identification scrolls,
-arrive with the market update.
 
 <ansi fg="yellow-bold">What rank covers what</ansi>
 
@@ -30,5 +33,5 @@ arrive with the market update.
   Rank 2  Epic          Rank 4  the same, and shows each affix's tier and
                                 range, and where the item came from
 
-Usage: <ansi fg="command">scribe</ansi>, <ansi fg="command">scribe [item]</ansi>, <ansi fg="command">scribe [member] [item]</ansi>, <ansi fg="command">autoskill scribe on|off</ansi>
-See also: <ansi fg="command">help scribe</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help camp</ansi>.
+Usage: <ansi fg="command">scribe</ansi>, <ansi fg="command">scribe [item]</ansi>, <ansi fg="command">scribe [member] [item]</ansi>, <ansi fg="command">autoskill scribe on|off</ansi>, <ansi fg="command">appraise [item]</ansi>
+See also: <ansi fg="command">help scribe</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help sell</ansi>.

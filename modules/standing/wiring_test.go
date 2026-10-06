@@ -102,10 +102,10 @@ func TestStandingThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, out, "Frostfang: distrusted")
 	out = run(2004, "market", "")
 	assert.Regexp(t, `wolf hide\s+33 gold\s+17 gold\s+scarce`, out, "shipped stock 4: 27/22 base, marked 20%")
-	assert.Contains(t, run(2004, "market", "buy hide"), "for 33 gold")
+	assert.Contains(t, run(2004, "market", "buy wolf hide"), "for 33 gold")
 	assert.Equal(t, 967, user.Character.Gold)
 	assert.Contains(t, run(2003, "inn", ""), "Your company is distrusted here, so the room costs 50% more.")
-	assert.Contains(t, run(2006, "market", "buy hide"), "for 28 gold", "the black market serves the distrusted at stock 3's base price")
+	assert.Contains(t, run(2006, "market", "buy wolf hide"), "for 28 gold", "the black market serves the distrusted at stock 3's base price")
 	assert.Equal(t, 939, user.Character.Gold)
 
 	// Shunned: gap 140.

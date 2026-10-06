@@ -1,4 +1,5 @@
 mobid: 14
+sprite: lich
 zone: Catacombs
 itemdropchance: 15
 hostile: true

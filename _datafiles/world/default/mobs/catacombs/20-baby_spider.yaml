@@ -1,4 +1,5 @@
 mobid: 20
+sprite: spider-hatchling
 zone: Catacombs
 itemdropchance: 5
 hostile: false

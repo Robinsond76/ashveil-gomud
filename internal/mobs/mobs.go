@@ -88,6 +88,7 @@ type Mob struct {
 	Targeting       string               `yaml:"targeting,omitempty"`      // Ashveil (Phase 30c): the rule it re-aims by as an enemy; overrides its race's
 	TargetingNoise  int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
 	WindUps         map[string]int       `yaml:"windups,omitempty"`        // Ashveil (Phase 30d2): wind-up ability id -> percent of its turns it starts one (enemies only)
+	Sprite          string               `yaml:"sprite,omitempty"`         // Ashveil (Phase 40f): its battle-screen sprite key (e.g. wolf-timber); blank falls back by race
 	Role            string               `yaml:"role,omitempty"`           // Ashveil (Phase 33i2): its role as an enemy: fighter (default), healer, caster, guardian
 	Coordination    int                  `yaml:"coordination,omitempty"`   // Ashveil (Phase 33i2): sets its group's coordination tier (1-4) outright; 0 is by level
 	WoundsRule      string               `yaml:"wounds,omitempty"`         // Ashveil (Phase 33i2): "none" takes no wounds as an enemy; else light wounds
@@ -488,6 +489,22 @@ func (m *Mob) HasShop() bool {
 	return len(m.Character.Shop) > 0
 }
 
+// IsSmith (Phase 36c) is a merchant who works metal and leather: one whose
+// own wares, not what players have sold them, include a weapon or armor.
+// Smiths salvage gear for materials (help salvage).
+func (m *Mob) IsSmith() bool {
+	for _, si := range m.Character.Shop {
+		if si.ItemId < 1 || si.QuantityMax == characters.StockTemporary {
+			continue
+		}
+		spec := items.GetItemSpec(si.ItemId)
+		if spec != nil && (spec.Type == items.Weapon || spec.IsArmor()) {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *Mob) SetTempData(key string, value any) {
 
 	if m.tempDataStore == nil {
@@ -524,7 +541,8 @@ func (m *Mob) Despawns() bool {
 
 func (m *Mob) GetSellPrice(item items.Item) int {
 
-	if item.IsSpecial() {
+	// Phase 36c: rolled gear sells, priced by its quality and rarity.
+	if item.IsSpecialForSale() {
 		return 0
 	}
 
@@ -547,7 +565,9 @@ func (m *Mob) GetSellPrice(item items.Item) int {
 			newAddition = false // already stocking this item
 			likesType = true
 			likesSubtype = true
-			value = stockItm.Price
+			if !item.IsRolled() { // a rolled item is worth its own roll, not the stocked base price
+				value = stockItm.Price
+			}
 			// Scale down amount willing to pay based on how many there are already in stock
 			priceScale = 1.0 - (float64(stockItm.Quantity) / 20)
 			break
@@ -575,7 +595,7 @@ func (m *Mob) GetSellPrice(item items.Item) int {
 	}
 
 	if value == 0 {
-		value = item.GetSpec().Value
+		value = item.SaleBaseValue()
 	}
 
 	if priceScale < 0 {

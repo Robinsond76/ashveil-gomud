@@ -1,6 +1,7 @@
 package market
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -146,7 +147,9 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	okrBefore, _ := module.zones["Old Kings Road"].Stock(28)
 	dunmarBefore, _ := module.zones["Dunmar"].Stock(28)
 	gold := user.Character.Gold
-	assert.Contains(t, run(2005, "buy", "hide"), "You buy the wolf hide at the market")
+	// Phase 36c: bear hide is traded too, so a bare "hide" is ambiguous.
+	assert.Contains(t, run(2005, "buy", "hide"), "Which do you mean: wolf hide, bear hide?")
+	assert.Contains(t, run(2005, "buy", "wolf hide"), "You buy the wolf hide at the market")
 	okrAfter, _ := module.zones["Old Kings Road"].Stock(28)
 	dunmarAfter, _ := module.zones["Dunmar"].Stock(28)
 	assert.Equal(t, okrBefore-1, okrAfter)
@@ -184,6 +187,56 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	left, carried := user.Character.FindInBackpack("whetstone")
 	require.True(t, carried)
 	assert.Equal(t, 9, left.Uses, "the used one is kept")
+
+	// Phase 36c: the 36b goods are traded. Selling bear hides into Dunmar's
+	// market saturates it: each sale pays no more than the last, and the
+	// market stops buying once it is glutted. The ledger recovers as the
+	// rounds pass, and another market is unaffected.
+	for _, id := range []int{200, 203, 210, 220, 221, 222, 225, 231, 232, 241} {
+		goodFor(t, "Dunmar", id)
+	}
+	for _, id := range []int{200, 210, 220, 225} {
+		goodFor(t, "Old Kings Road", id)
+	}
+	post := goodFor(t, "Old Kings Road", 200)
+	town := goodFor(t, "Dunmar", 200)
+	require.Less(t, post.BasePrice, town.BasePrice, "bear hides are cheaper at the post than in town")
+	for i := 0; i < 30; i++ {
+		user.Character.StoreItem(items.New(200))
+	}
+	postBefore, _ := module.zones["Old Kings Road"].Stock(200)
+	prices := []int{}
+	glutted := false
+	for i := 0; i < 30; i++ {
+		out := run(2004, "sell", "bear hide")
+		if strings.Contains(out, "glutted") {
+			glutted = true
+			break
+		}
+		var price int
+		_, err := fmt.Sscanf(out[strings.Index(out, "for ")+4:], "%d gold", &price)
+		require.NoError(t, err, out)
+		prices = append(prices, price)
+	}
+	require.True(t, glutted, "the market stops buying bear hides")
+	require.NotEmpty(t, prices)
+	for i := 1; i < len(prices); i++ {
+		assert.LessOrEqual(t, prices[i], prices[i-1], "each unit sold pays no more than the last")
+	}
+	assert.Less(t, prices[len(prices)-1], prices[0], "saturation lowered the price")
+	glutStock, _ := module.zones["Dunmar"].Stock(200)
+	assert.Equal(t, town.MaxStock, glutStock)
+	postStock, _ := module.zones["Old Kings Road"].Stock(200)
+	assert.Equal(t, postBefore, postStock, "the post's own ledger is untouched by Dunmar's sales")
+	assert.Less(t, town.DriftStock(glutStock, 0), glutStock, "a glut drifts back toward target as rounds pass")
+	module.mu.Lock()
+	for i := range module.zones["Dunmar"].Goods {
+		if module.zones["Dunmar"].Goods[i].ItemID == 200 {
+			module.zones["Dunmar"].Goods[i].Stock = town.DriftStock(glutStock, 0)
+		}
+	}
+	module.mu.Unlock()
+	assert.Contains(t, run(2004, "sell", "bear hide"), "You sell the bear hide", "and it buys again")
 
 	// A downed player can't trade.
 	user.Character.Health = 0

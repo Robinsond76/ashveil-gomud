@@ -1,5 +1,114 @@
 # Ashveil Project Status
 
+**Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
+battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
+`frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
+ids, and the `unknown-humanoid/-beast/-large` race fallbacks). Accepted and
+fixed: (1) L and XL units covered three formation cells at 1x and hid whole
+units behind them; they are now drawn at 96/128 and shrunk 3/4 to 72/96 with
+the outline re-closed (`roster.shrink`), so they stand about 1.5x a person and
+the test checks each size class's frame; (2) the `lit` status was a white star
+read as `cold`, now a warm brass lantern; `staggered` is a plum spiral (was a
+white one like `hidden`); `hobbled` gained a chain and iron ball so it reads
+apart from `hamstrung`; (3) the forest backdrop's light shafts were bright
+grey dither crossing the units, now sparse green. Rejected: redrawing large
+units natively at 72 (timeboxed; the shrink keeps their silhouettes). UI
+follow-ups for 40f/40g: when a large unit stands in front, the client should
+still mark units it hides (draw their status and health pips above it, or
+ghost it); the crocodile is 71 px long and fills its lane. Gates after
+merging master (40a, 40f) pass; one full race run failed
+`TestSpellEventsThroughTheRealRound` ("mm never went off", modules/company)
+and it passed 5 of 5 reruns and the next full run, so it is a flaky 40e test
+to harden. Battle screen with the real art: `/mnt/project-files/screens/40f-battle-art.png`
+(the browser check needs HTTP, since `file://` skips the sprite manifest).
+
+**Phase 40s2 + 40s3 built: art sets S2 (terrain) and S3 (battle) (2026-10-06):**
+`make sprites` now also writes 179 files: S3 battle art (16 backgrounds
+320x180, 56 battle units with 4-frame idles, 7 formation markers, 47 status,
+role, morale and condition icons) and S2 (19 terrain biomes x 3 variants, 5
+animated overlays, fog, unknown and night-mask tiles, 27 landmark overlays).
+`battle/mapping.json` is the client key table (mob name -> unit id, biome ->
+background, zone overrides, race fallbacks); the manifest lists each unit's
+size class, family, names and baseline. 55 shipped mobs gained `sprite:` keys
+(the field is read by 40f; unknown to master until #35 merges, which ignores
+it). Review the art in [the contact sheet](verification/40s-s2-s3-contact-sheet.png).
+Tests (`go test ./scripts`): spec coverage, unit anchors (feet on row
+frame-2, 4 distinct frames), opaque backgrounds with a quiet ground band,
+quiet terrain tiles with a flat margin and no outline color, mob `sprite:`
+keys name real units. Class battle sprites now have 4-frame idles (ranger
+arrow nocked low, cleric shield, wizard staff glow, witch grave-mist) and the
+S0 style-battle frame uses the real ogre and goblins. Nothing is wired into the
+client yet (40f, 40c, 40g do that), so no help or tutorial change is due.
+Decisions (owner delegated): (1) the palette is already 64 colors, so snow and
+ice use steel/slate/bone ramps and no color was added; (2) terrain animations
+are 4-frame transparent overlays (`overlay: true`, `over:` names the tile) drawn
+on the roomId-chosen variant, so variants survive; fog and the night mask use
+hard-alpha dither, since the tests forbid partial alpha; (3) Winded has no sweat
+drops (art direction bans them); (4) `shadow-master`, `guard-royal` and
+`ruffian-dangerous` differ from their base in gear as well as color; (5) `bats-echo`
+is a floating swarm with no ground baseline; (6) tile and unit feet are aligned in
+`roster.py` so every grounded unit rests on row frame-2. Known soft spots for
+review: L and XL units overlap neighbours in the 3x3 at 1x (the 40f client can
+scale them); several status icons (hobbled, lit, staggered) are plain at 16 px.
+
+**Phase 40f built: battle screen in the web client (2026-10-06):** a battle
+opens as a picture (`window-battle.js`): the company left, the enemy right,
+each in its 3x3 formation on a 320x180 canvas scaled by whole numbers, over
+a biome backdrop (dimmed in the dark). It reads `Company.Battle`, `Company`
+and `.Vitals`, and the 40e event feed (hit and heal flashes with numbers,
+statuses, chant marks, falls, yields, the outcome held for 3 seconds).
+Company health is exact; enemy health is five bands. Retreat and focus send
+the dock's commands; Minimise leaves a badge; a setting (`Open
+automatically`, kept in `localStorage`) and the Combat tab's "Battle screen"
+button cover manual mode. Server: `Company.Battle.enemies[].sprite` (the mob
+spec's new optional `sprite:` key, else `unknown-humanoid`, `-beast` or
+`-large` by race). Help: `help battlescreen`, linked from `help combat` and
+`help webclient`, and the Combat tutorial lesson. Browser check:
+`scripts/browser/battle-check.mjs`; screenshot in the project files
+(`screens/40f-battle.png`). 40e follow-ups done: the roster refreshes from
+every `Company.Battle` snapshot (a fight that grows shows its newcomers);
+every `?` is one unseen presence; a `?` caster's cast shows no spell name;
+the chant mark lasts until `cast-complete`, so the lagging spell results
+(which arrive with the line after the cast) flash when they come.
+Decisions (delegated): (1) **Art:** S3 is not drawn yet, so figures are
+drawn in code (class hues, a beast and a humanoid shape, unseen shadow) and
+the screen loads `battle/units/<key>/idle.png` and
+`battle/backgrounds/<id>.png` as soon as `manifest.json` lists them, with
+no code change; (2) shipped mobs get no `sprite:` keys yet, since the S3 key
+table is not drawn and the race silhouettes cover them; the keys come with
+S3; (3) **allied reserve formations** are left as a follow-up: the 40e feed
+has no allied relay (a fight has one leader), so the half-scale view would
+have no events to animate; (4) per-member Company.Conditions icons are not
+drawn (statuses come from events, which cover enemies too); (5) the
+tutorial-zone and Stormwatchers Keep backdrop overrides wait for S3's
+`training-yard` and `ice-keep` art; (6) the screen is a floating panel, not
+a modal, so the terminal stays usable under it.
+
+**Phase 40f reviewed and merged (2026-10-06, PR #35):** the review
+confirmed the screen sends only `retreat` and `company tactics focus
+[rule]` (both allowed mid-battle, as the Combat tab), and hides what scout
+hides (enemy health in five bands, hidden foes skipped, every `?` one
+shadow, no spell or status for it). Fixed: (1) enemy figures faced away
+from the company (head, eyes and weapon mirrored the wrong way); (2)
+members who fled or were separated still stood in the picture (now
+filtered as the Combat tab does; dead `&& false` code removed); (3) a
+`Company.Battle` snapshot arriving after `fight-end` cleared the outcome,
+and one after the hold could reopen the finished battle and show "The
+battle is over" again (an `ended` flag now holds until the battle clears or
+a `fight-start`); (4) UI: a caption hint says to hover or tap a figure, a
+Help button sends `help battlescreen`, and status ticks (bleeding) flash
+their damage. Regression checks added to `battle-check.mjs`. Rejected: the
+design's "unknown-* at 50% per enemy in the dark" was replaced by one
+shadow on purpose (the 40e rule that `?` foes are one presence). UI
+follow-ups for 40g: show the round and a short "last blow" line so who hit
+whom reads without hovering (after the 35e merge the focus buttons also offer `healers`, as the Combat tab does); a named outcome reason (all fell, the company
+withdrew); role letters are blurry at the canvas font size; a `?` presence
+in a lit battle stands at front centre and can overlap a visible foe, and
+stays until the battle ends; morale (nerve) is not drawn yet. Flaky test seen: `TestBalanceMirrorClericIsACasterWhoCastsNothing`
+(`modules/company`) failed once in the full race run (1 of 5 foes aimed at
+the cleric) and passed alone five times and in a package re-run; this PR
+touches no company code, so it is left as a follow-up to make robust.
+
 **Phase 40a complete, merged via [PR #32](https://github.com/Robinsond76/ashveil-gomud/pull/32): room resources (2026-10-06):** rooms carry a validated
 `resources` list (water, forage, shelter; herbs, firewood, fishing and game
 are accepted in data but hidden until 40a2). `look` prints a "Here:" line,
@@ -175,6 +284,37 @@ cells moved within the sample's noise (55-68% against 67-70%). Rejected: the
 healers default also overriding a member's own `strategy` rule at levels 5-9
 is intended (company-wide default; `company tactics focus none` opts out,
 as `help tactics` says).
+
+**Phase 36c complete: loot economy (2026-10-06):** merchants buy rolled gear
+(priced by quality, unread Rare+ by rarity at a discount), `mark [item] junk`
+and `sell junk`, `salvage` at smiths, identification fees at `appraise`
+(60/150/400), all 24 trade goods in the Dunmar and Trappers' Post markets
+with stock-driven saturation, and GMCP/web labels for rolled names. Plan:
+[36c plan](plans/2026-10-06-phase-36c-loot-economy.md). Decisions and
+deferrals (scrolls) are recorded there.
+Review (PR #37, Opus review thread), exploit search: buy-and-sell of gear
+can't pay (shops sell plain items; merchants pay at most 25%); no shop-sold
+piece salvages into more than its price even at Dunmar's market price
+(scanned every shipped item); appraise-then-sell is a gold sink, not a gain
+(a Rare's fee exceeds what reading adds at tier 1). **Accepted:** Brynja
+sold iron ore and tanned leather (18/16) under Dunmar's target-stock price
+(23/21), a risk-free loop; her prices are now 24/22 and
+`TestShopkeepersNeverUndercutMarketsOnTradedGoods` holds every shipped
+shopkeeper at or above every market's target-stock price for a traded good.
+**Accepted (UI):** `offer` and `sell` now say why a price is low (unread
+gear, or a pile already on hand; `TestSaleNoteExplainsALowPrice`); GMCP
+inventory details carry `junk`, so the web gear window shows the mark; help
+`sell` no longer claims paid reading "usually pays", and `goods`/`market`
+no longer say saturation recovers "as the days pass" (market stock drifts
+every round, so a glut clears within a minute). **Confirmed fair:** the two
+"hide" test updates (bear hide made bare "hide" ambiguous; the tests now
+assert the question and use "wolf hide", same prices). Follow-ups: market
+saturation is weak because stock drifts every 4-second round (37b or a
+market pass could slow drift for the 36c goods); a `salvage` preview of
+what an item would give; legacy weapons with no family (sharp stick, tree
+trunk, sling) salvage as metal; rarity colours in web windows.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
 
 **Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
 now receives `Company.Battle.Event`, one entry per combat happening of its
@@ -542,7 +682,7 @@ their dependencies and those decisions is the
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
-| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, review pending | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
 | 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |

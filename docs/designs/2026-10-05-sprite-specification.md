@@ -156,8 +156,8 @@ that seems to say otherwise.**
 | Small icon | 8×8 | Path dots, the acting arrow |
 | Battle S | 48×48 | Small creatures: rats, bats, hatchlings, floofs, faeries |
 | Battle M | 64×64 | Humanoids and medium beasts. The figure is about 40 px tall, with room to swing a weapon |
-| Battle L | 96×96 | Large: ogre, ent, crocodile, lich, golems |
-| Battle XL | 128×128 | Bosses: spider queen; future drakes |
+| Battle L | 72×72 | Large: ogre, ent, crocodile, lich, golems (drawn at 96 and shrunk 3/4, so they cover two formation cells) |
+| Battle XL | 96×96 | Bosses: spider queen; future drakes (drawn at 128 and shrunk 3/4) |
 | Background | 320×180 | Battle backgrounds (scaled 4x to 1280×720) |
 | Effect | 32×32 or 64×64 | Listed per effect |
 
