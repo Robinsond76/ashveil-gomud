@@ -1,6 +1,82 @@
 # Ashveil Project Status
 
-**Phase 40c built: terrain and landmark tiles (2026-10-06, PR open for review):** the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
+**Phase 40c built: terrain and landmark tiles (2026-10-06, PR open for review):** the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. (3) camps use the 40a3 fields: `embers` draws the low-glowing embers sprite when the fire is not lit and `tent: false` draws the rough camp (bedrolls, no tent) instead of the tent, for your camp and, with the same two fields added to allied camps, your party's. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
+
+**Phase 40a3 complete (2026-10-06, PR #45): camp gear.** The fuel rule
+and six durable camp items. A finished camp rest now burns the fire down to
+**embers** (`Camp.Embers`): embers keep the room warm until the camp is broken
+(a damp fire's embers stay cold) but give no light, and resting again needs
+`camp fire` again, which spends another bundle (or the deadfall in a firewood
+room); the camp then takes a fresh rest session (new operation id), once the
+last rest's recovery is in. A camp saved before this phase burns down on load.
+New items 45-50 (`bedroll` 2.5 kg, 8 gold; `oiled canvas tent` 9 kg, 40;
+`fire steel and tinder` 0.2 kg, 5; `iron cookpot` 3 kg, 12; `camp bells and
+trip lines` 1 kg, 6, 10 uses; `field surgeon's kit` 1.5 kg, 25, 5 uses), sold
+at the Dunmar and Old Kings Road markets (road dearer) as `SupplyOnly`, so none
+buys back. `modules/camping/gear.go` counts the gear through
+`company.CompanyItemCount` (cargo, the leader's pack, present companions'
+packs; separated and dead members' packs are skipped) before `m.mu`, and locks
+it on the rest (`RestSession.Bedrolls/Bells/Kit`, `Camp.Tent`, all saved, so a
+restart or copyover mid-rest keeps them). **Bedrolls:** one per member, leader
+first then companions by number; `survival.ApplyCompanyRestRecoveryBonus` gives
+those members +25% of the rest's fatigue on top (the ledger keeps the base
+amount, so a replay is still a no-op). **Tent:** counts as shelter for the
+weather (never stacks with a shelter room), makes the camp room a heat source
+while resting (no rest-time cold), shows in `look`, `camp status` and GMCP
+`Company.Camp.tent`. **Fire steel:** damp bundles light first time at full
+warmth. **Cookpot:** `camp cook` makes two portions of a dish with two or more
+inputs. **Bells:** a flat 20% spot chance with no watch, +10 points on a watch
+capped at 90, one use worn when a rest starts; their own warning line.
+**Surgeon's kit:** at the end of an unbroken camp rest a healer who knows Tend
+Wounds and has the mana tends the worst lasting wound of the most wounded
+member present (`company.FieldSurgery`), before bandages and splints; one use
+worn only when a wound was treated. The rest start, `camp status` and the
+rest-complete line report the gear in use. Web: the Camp tab shows embers
+("Feed fire"), the tent, and offers Rest again once the fire is fed
+(`/mnt/project-files/screens/40a3-camp-embers.png`); GMCP `Company.Camp` gains
+`embers` and `tent` for 40b's map sprites. Help: new `help camp gear` (indexed
+under `road`; aliases bedroll, tent, cookpot, fire steel, camp bells, trip
+lines, surgeon's kit, embers) and updates to camp, gathering, campwatch,
+cooking and wounds; tutorial: the Survival lesson hands out a bedroll and a
+fire steel with its supplies and the Camp hints explain embers and gear.
+Design: [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md).
+Decisions (builder, owner delegation): (1) gear in the cargo counts without a
+horse check: cargo has no per-horse presence concept and always travels with
+the company, so the design's "cargo with its horse present" is met by the
+existing cargo rules; (2) the bells wear one use at every rest start, raid or
+not (the design's "wears 10 rests"); (3) no restring or restock service: a spent
+set of bells or a kit is bought again (the 3 and 10 gold refill prices were
+dropped; items with uses already model wear and a refill action would be a new
+shop mechanic); (4) gear is sold `SupplyOnly` and is never loot, so nothing
+gathered for free sells for more than a low-level fight pays; (5) the tutorial
+gear is granted with the Survival supplies (same once-only flag) because stage
+entry grants only there; (6) the cookpot is read when cooking, not locked on a
+rest, since `camp cook` is its own command; (7) the tent is pitched when the
+camp is made and refreshed at `camp fire` and `camp rest`. Not folded in: the
+40a2 follow-ups (gather progress as a web panel, a redraw on regrowth) are
+about gathering and the map, not camp gear; both stay open (the map redraw
+belongs with 40b).
+Review (2026-10-06): checked the fuel rule and repeat rests (a new operation
+id per rest, the last rest's recovery settled first, the burn-down of old
+saves), the bedroll ledger, raid spotting with bells, the kit's
+before-refill mana gate, item ids 45-50 (no clash with master or any open
+branch) and the economy (all six `SupplyOnly`; objects never salvage; a
+generic merchant pays at most a quarter of value, so the tutorial's free
+bedroll and fire steel fetch about 2 gold each, once per character:
+accepted). Kept the builder's three decisions: cargo counts without a horse
+check (cargo always travels with the company under 32f), bells wear at every
+rest start (a count the player can predict: "10 rests"), and no restring
+service (rebuying at 6 and 25 gold costs little and needs no new shop
+mechanic). Fixed: `camp status` between rests now lists the gear at hand
+and what it will do (`campGear.lines` was unused, so a player saw the gear
+only once a rest began), with a regression test and the help updated; the
+dock browser check timed out because the 40f battle screen opens over the
+Combat tab, so it now sets the screen to manual (battle-check covers the
+screen), and its focus-bar count was stale (eight buttons, not seven).
+Follow-ups: the web Camp tab and GMCP carry only the tent and embers, not
+bedrolls, bells or the kit (candidate: a gear line in `Company.Camp`);
+the 40b map draws a burned-down camp as a cold fire (candidate: an embers
+sprite from `Company.Camp.embers`).
 
 **Phase 40s5 reviewed and merged (2026-10-06, Opus review thread):** the
 class art, GMCP `class` key and battle-window fallback are sound; promoted
@@ -1107,7 +1183,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
-| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Design approved** | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Done (PR #45)** | S1 |
 | 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |

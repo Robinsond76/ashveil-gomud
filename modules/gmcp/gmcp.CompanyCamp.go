@@ -20,6 +20,8 @@ type campPayload struct {
 	FireLit     bool   `json:"fire_lit"`
 	Resting     bool   `json:"resting"`
 	Rested      bool   `json:"rested"`
+	Embers      bool   `json:"embers"`
+	Tent        bool   `json:"tent"`
 	RestPercent int    `json:"rest_percent"`
 	RestSeconds int    `json:"rest_seconds"`
 	CanCamp     bool   `json:"can_camp"`
@@ -36,11 +38,13 @@ type alliedCamp struct {
 	Leader  string `json:"leader"`
 	FireLit bool   `json:"fire_lit"`
 	Resting bool   `json:"resting"`
+	Embers  bool   `json:"embers"` // Phase 40c: banked embers, drawn when the fire is not lit
+	Tent    bool   `json:"tent"`   // Phase 40c: pitched with a tent; a rough camp without one is drawn otherwise
 }
 
 func campPayloadOf(s camping.CampState) campPayload {
 	return campPayload{AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
-		RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
+		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 
 // campExtra is the feed's Company.Camp message; nothing is sent while no
@@ -91,7 +95,7 @@ func alliedCampsOf(user *users.UserRecord, state func(leaderUserID, roomID int, 
 		if !ok || !s.HasCamp {
 			continue
 		}
-		out = append(out, alliedCamp{RoomID: s.RoomID, Leader: users.CharacterName(uid), FireLit: s.FireLit, Resting: s.Resting})
+		out = append(out, alliedCamp{RoomID: s.RoomID, Leader: users.CharacterName(uid), FireLit: s.FireLit, Resting: s.Resting, Embers: s.Embers, Tent: s.Tent})
 	}
 	return out
 }

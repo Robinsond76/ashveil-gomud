@@ -334,6 +334,8 @@ await tick(page, 300);
 s = await state(page);
 check(s.companions.length === 2 && s.companions.every(c => c.sprite), 'present companions with a class draw as sprites (not the dead, not the unknown): ' + JSON.stringify(s.companions));
 check(s.companySize === 4, 'the badge counts all present members and the leader: ' + s.companySize);
+for (let i = 0; i < 2; i++) { await page.locator('.map-controls button[title="Zoom in"]').click(); }
+await tick(page, 300);
 await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-companions.png') : '/tmp/40c-companions.png' });
 
 // Regrowth: a World.Resources update repaints a room you are not in.
@@ -344,6 +346,23 @@ await gmcp(page, 'World.Resources', { num: mid(1, 1), resources: ['herbs'], depl
 await tick(page, 200);
 const grown = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
 check(picked !== grown, 'a regrown resource redraws a room you are not standing in');
+await page.close();
+
+
+// Phase 40c: a fire burned to embers glows low (no smoke), a camp without a tent shows the rough camp.
+page = await gotoMixed(null);
+const campView = () => page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+const camp = (o) => Object.assign({ has_camp: true, here: false, room: 'x', room_id: mid(3, 1), fire_lit: false, resting: false, allied_camps: [] }, o);
+await gmcp(page, 'Company.Camp', camp({ tent: true, embers: false }));
+await tick(page, 300);
+const cold = await campView();
+await gmcp(page, 'Company.Camp', camp({ tent: true, embers: true }));
+await tick(page, 300);
+const glowing = await campView();
+check(cold !== glowing, 'a camp burned down to embers draws differently from a cold fire pit');
+await gmcp(page, 'Company.Camp', camp({ tent: false, embers: true }));
+await tick(page, 300);
+check(glowing !== await campView(), 'a camp pitched without a tent draws the rough camp, not the tent');
 await page.close();
 
 await browser.close();

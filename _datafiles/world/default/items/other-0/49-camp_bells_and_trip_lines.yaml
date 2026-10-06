@@ -1,0 +1,12 @@
+itemid: 49
+name: camp bells and trip lines
+namesimple: camp bells
+description: Small bells on cords, strung low round the camp. While the company
+  rests they give raiders away. With no watch posted there is a one in five chance
+  of spotting them, and with a watch it adds to the watch's chance. Each rest wears
+  the lines a little, and after ten they are spent (help camp gear).
+type: object
+subtype: mundane
+uses: 10
+value: 6
+weight: 1000

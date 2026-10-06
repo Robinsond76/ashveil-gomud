@@ -215,6 +215,10 @@ type raidOutcome struct {
 	mobID   int
 	spotted bool
 	watch   archetypes.Specialist
+	// hasWatch is whether a watch was posted; bells whether bells and trip
+	// lines were strung (Phase 40a3), so the warning says what raised it.
+	hasWatch bool
+	bells    bool
 }
 
 // fireDueRaids resolves every raid whose time has come (game loop). With
@@ -229,9 +233,11 @@ func (m *CampingModule) fireDueRaids() {
 	cfg := m.campSettings()
 	m.mu.Lock()
 	due := map[int]int{} // leader -> camp room
+	strung := map[int]bool{}
 	for leaderUserID, camp := range m.camps {
 		if camp.Rest != nil && camp.Rest.RaidDue(now) {
 			due[leaderUserID] = camp.RoomID
+			strung[leaderUserID] = camp.Rest.Bells
 		}
 	}
 	m.mu.Unlock()
@@ -254,7 +260,15 @@ func (m *CampingModule) fireDueRaids() {
 		if present && m.specialist != nil {
 			watch, hasWatch = m.specialist(leaderUserID, archetypes.UtilityWatch, roomID)
 		}
-		spotted := hasWatch && m.rollPct() < archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
+		// Phase 40a3: bells and trip lines spot raiders with no watch at all,
+		// and add to a watch's chance.
+		watchPct := 0
+		if hasWatch {
+			watchPct = archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
+		}
+		bells := strung[leaderUserID]
+		chance := spotChance(hasWatch, watchPct, bells)
+		spotted := chance > 0 && m.rollPct() < chance
 
 		m.mu.Lock()
 		camp, ok := m.camps[leaderUserID]
@@ -281,7 +295,7 @@ func (m *CampingModule) fireDueRaids() {
 		}
 		m.mu.Unlock()
 		if present {
-			outcomes = append(outcomes, raidOutcome{leader: leader, roomID: roomID, mobID: raid.MobID, spotted: raid.Spotted, watch: watch})
+			outcomes = append(outcomes, raidOutcome{leader: leader, roomID: roomID, mobID: raid.MobID, spotted: raid.Spotted, watch: watch, hasWatch: hasWatch, bells: bells})
 		}
 	}
 	for _, o := range outcomes {
@@ -299,7 +313,11 @@ func (m *CampingModule) fireDueRaids() {
 		m.trackRaiders(o.leader.UserId, o.roomID, first)
 		if o.spotted {
 			enemyparty.WatchAmbush(o.roomID, first, o.leader.UserId)
-			o.leader.SendText(fmt.Sprintf(`<ansi fg="yellow-bold">%s %s raiders creeping toward the fire and %s the company! Your rest can go on once they're dealt with.</ansi>`, o.watch.Subject(), o.watch.Verb("spot", "spots"), o.watch.Verb("rouse", "rouses")))
+			if o.hasWatch {
+				o.leader.SendText(fmt.Sprintf(`<ansi fg="yellow-bold">%s %s raiders creeping toward the fire and %s the company! Your rest can go on once they're dealt with.</ansi>`, o.watch.Subject(), o.watch.Verb("spot", "spots"), o.watch.Verb("rouse", "rouses")))
+			} else {
+				o.leader.SendText(`<ansi fg="yellow-bold">The bells and trip lines jangle! Raiders are creeping toward the fire, and the company is roused in time. Your rest can go on once they're dealt with.</ansi>`)
+			}
 		} else {
 			o.leader.SendText(`<ansi fg="red-bold">Raiders fall on your sleeping camp! Nobody saw them coming, and the rest is spoiled.</ansi>`)
 		}
@@ -750,19 +768,34 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 			fromCargo[id]++
 		}
 	}
+	// Phase 40a3: an iron cookpot stretches a multi-ingredient dish into
+	// one extra portion.
+	portions := 1
+	pot := len(chosen.Inputs) > 1 && m.gearCount(user.UserId, cookpotItemID) > 0
+	if pot {
+		portions = 2
+	}
 	// The dish may weigh more than what went into it (33f3 review).
 	dishGrams := 0
 	if spec := items.GetItemSpec(chosen.Output); spec != nil {
-		dishGrams = spec.Weight
+		dishGrams = spec.Weight * portions
 	}
 	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, dishGrams-inputGrams); refuse {
 		return text
 	}
+	potNote := ""
+	if pot {
+		potNote = " The iron cookpot stretches it into a second portion."
+	}
 	if user.Character.CompanyCargo {
-		if err := encumbrance.TransformCargo(user.UserId, fromPack, []items.Item{items.New(chosen.Output)}); err != nil {
+		dishes := make([]items.Item, 0, portions)
+		for i := 0; i < portions; i++ {
+			dishes = append(dishes, items.New(chosen.Output))
+		}
+		if err := encumbrance.TransformCargo(user.UserId, fromPack, dishes); err != nil {
 			return "The ingredients couldn't be saved; nothing was cooked."
 		}
-		return fmt.Sprintf("%s %s %s over the campfire; it goes into company cargo.", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output))
+		return fmt.Sprintf("%s %s %s over the campfire; it goes into company cargo.%s", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output), potNote)
 	}
 	// Take from the cargo first, putting back what was taken if any of it
 	// fails, so a failed save never eats ingredients (33f3 review).
@@ -783,14 +816,22 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 		user.Character.RemoveItem(itm)
 	}
 	dish := itemName(chosen.Output)
-	if err := encumbrance.DepositCargo(user.UserId, "", []encumbrance.CargoStack{{ItemId: chosen.Output, Count: 1}}); err != nil {
-		if !user.Character.StoreItem(items.New(chosen.Output)) {
+	if err := encumbrance.DepositCargo(user.UserId, "", []encumbrance.CargoStack{{ItemId: chosen.Output, Count: portions}}); err != nil {
+		stored, dropped := 0, 0
+		for i := 0; i < portions; i++ {
+			if user.Character.StoreItem(items.New(chosen.Output)) {
+				stored++
+				continue
+			}
 			room.AddItem(items.New(chosen.Output), false)
-			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire and %s it down by the fire.`, cook.subject(), cook.verb("cook", "cooks"), dish, cook.verb("set", "sets"))
+			dropped++
 		}
-		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire.`, cook.subject(), cook.verb("cook", "cooks"), dish)
+		if stored == 0 {
+			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire and %s it down by the fire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, cook.verb("set", "sets"), potNote)
+		}
+		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, potNote)
 	}
-	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.`, cook.subject(), cook.verb("cook", "cooks"), dish)
+	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, potNote)
 }
 
 // bestRankText names the best rank present in a skill: "the best in your

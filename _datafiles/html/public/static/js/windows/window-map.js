@@ -697,18 +697,26 @@
 
         // fireAndRest draws a camp's fire (bottom right of the tent, or at
         // <at>) and its resting mark (over the tent).
-        function fireAndRest(cx, cy, mult, lit, resting, now, at) {
+        function fireAndRest(cx, cy, mult, lit, resting, now, at, embers) {
             var fx = at ? at.px : cx + 8 * mult, fy = at ? at.py : cy + 8 * mult;
             if (lit) {
                 drawIcon('map/camp/fire-lit.png', fx, fy, mult, now);
                 drawIcon('map/camp/smoke.png', fx, fy - 12 * mult, mult, now);
+            } else if (embers) {
+                // Phase 40c: a fire burned down to embers glows low, no smoke.
+                if (!drawIcon('map/camp/embers.png', fx, fy, mult, now)) {
+                    drawIcon('map/camp/fire-unlit.png', fx, fy, mult, now);
+                }
             } else {
                 drawIcon('map/camp/fire-unlit.png', fx, fy, mult, now);
             }
             if (resting) { drawIcon('map/camp/resting.png', cx - 8 * mult, cy - 12 * mult, mult, now); }
         }
 
-        function drawCamp(roomId, ally, lit, resting, innRest, now, occupied) {
+        // tent is false for a camp pitched without a tent (Phase 40a3): the
+        // rough camp is drawn instead. A payload that does not say (older
+        // server) is drawn with its tent.
+        function drawCamp(roomId, ally, lit, resting, innRest, now, occupied, embers, tent) {
             var r = rooms.get(roomId);
             if (!r) { return; }
             var p = gridToCanvas(r.x, r.y);
@@ -725,14 +733,16 @@
                 drawIcon('map/camp/inn-rest.png', p.px, p.py, mult, now);
                 return;
             }
-            var tent = ally ? 'map/camp/tent-ally.png' : 'map/camp/tent.png';
-            if (!drawIcon(tent, p.px, p.py, mult, now)) {
+            var pitch = (tent === false)
+                ? (ally ? 'map/camp/camp-rough-ally.png' : 'map/camp/camp-rough.png')
+                : (ally ? 'map/camp/tent-ally.png' : 'map/camp/tent.png');
+            if (!drawIcon(pitch, p.px, p.py, mult, now)) {
                 // no art yet: a small tent triangle
                 var q = getRoomSize() * zoomScale * 0.4;
                 ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
                 ctx.beginPath(); ctx.moveTo(p.px, p.py - q); ctx.lineTo(p.px + q, p.py + q); ctx.lineTo(p.px - q, p.py + q); ctx.closePath(); ctx.fill();
             }
-            fireAndRest(p.px, p.py, mult, lit, resting, now, fire);
+            fireAndRest(p.px, p.py, mult, lit, resting, now, fire, embers);
         }
 
         // drawCamps draws your camp and your party's. spriteOn says your class
@@ -740,11 +750,11 @@
         function drawCamps(now, spriteOn) {
             if (!campInfo || mapSettings.showCamp === false) { return; }
             (campInfo.allied_camps || []).forEach(function (c) {
-                drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, spriteOn && c.room_id === currentRoomId);
+                drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, spriteOn && c.room_id === currentRoomId, !!c.embers, c.tent);
             });
             if (campInfo.has_camp && campInfo.room_id) {
                 var inn = !!(campInfo.here && campInfo.inn && campInfo.resting);
-                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, spriteOn && campInfo.room_id === currentRoomId);
+                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, spriteOn && campInfo.room_id === currentRoomId, !!campInfo.embers, campInfo.tent);
             }
         }
 

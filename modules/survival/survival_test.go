@@ -715,6 +715,32 @@ func TestApplyCompanyRestRecoveryAppliesOnceToCurrentRoster(t *testing.T) {
 	assert.Equal(t, results[0].Needs, replay[0].Needs)
 }
 
+// Phase 40a3: a bedroll gives its member a quarter more of the rest's
+// fatigue; the ledger keeps the base amount, so a replay changes nothing.
+func TestApplyCompanyRestRecoveryBonusGivesBedrollMembersMore(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 10}))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 10}))
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{7: {
+		{Key: domain.LeaderMemberKey, Name: "Hero"},
+		{Key: domain.CompanionMemberKey(1), Name: "Bear"},
+	}}})
+
+	_, err := m.ApplyCompanyRestRecoveryBonus(7, "rest-1", 20, map[domain.MemberKey]int{domain.LeaderMemberKey: 25})
+	require.NoError(t, err)
+	assert.Equal(t, 35, m.registry.MustNeedsFor(7, domain.LeaderMemberKey).Fatigue, "20 + 25% of 20")
+	assert.Equal(t, 30, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)).Fatigue, "no bedroll: the plain 20")
+
+	saves := m.store.(*fakeStore).saveCalls
+	_, err = m.ApplyCompanyRestRecoveryBonus(7, "rest-1", 20, map[domain.MemberKey]int{domain.LeaderMemberKey: 25})
+	require.NoError(t, err)
+	assert.Equal(t, 35, m.registry.MustNeedsFor(7, domain.LeaderMemberKey).Fatigue, "a replay recovers nothing more")
+	assert.Equal(t, saves, m.store.(*fakeStore).saveCalls)
+
+	// The package-level seam forwards to the bonus-aware service.
+	var _ domain.RestBonusService = m
+}
+
 func TestApplyCompanyRestRecoveryRejectsConflictingOperation(t *testing.T) {
 	m := newTestModule(*domain.NewRegistry())
 	_, err := m.ApplyCompanyRestRecovery(7, "rest-1", 20)
