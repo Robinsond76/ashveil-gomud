@@ -16,8 +16,14 @@ func TestGiftsFollowTheRoute(t *testing.T) {
 	g := GiftsFor(fxOf("", 5))
 	assert.Equal(t, Wolf, g.Kind)
 	assert.Equal(t, WolfMobID, g.MobID)
-	assert.Equal(t, BaseHPPct, g.HPPct)
-	assert.Equal(t, 8, g.Sides)
+	assert.Equal(t, 100, g.HPMult)
+	assert.Equal(t, StandardPct(5), g.HPPctAt(5))
+	assert.Less(t, g.HPPctAt(5), g.HPPctAt(20), "the beast grows with its Tamer")
+	assert.Equal(t, BiteSides, g.Sides)
+	assert.Equal(t, 8, StandardPct(1))
+	assert.Equal(t, 19, StandardPct(10))
+	assert.Equal(t, 37, StandardPct(20))
+	assert.Equal(t, 6, BiteBonus(20))
 	assert.False(t, g.Hobble)
 	assert.Zero(t, g.Guards)
 	assert.Zero(t, g.BreathEvery)
@@ -25,25 +31,25 @@ func TestGiftsFollowTheRoute(t *testing.T) {
 	g = GiftsFor(fxOf("houndmaster", 25))
 	assert.Equal(t, Warhound, g.Kind)
 	assert.Equal(t, WarhoundMobID, g.MobID)
-	assert.Equal(t, BaseHPPct*130/100, g.HPPct)
+	assert.Equal(t, 130, g.HPMult)
 	assert.True(t, g.Hobble)
 	assert.Equal(t, 2, g.Attack)
 	assert.Equal(t, 1, g.Damage)
 
 	g = GiftsFor(fxOf("bearward", 10))
 	assert.Equal(t, Bear, g.Kind)
-	assert.Equal(t, BaseHPPct*120/100, g.HPPct, "120% of the standard beast")
+	assert.Equal(t, StandardPct(10)*120/100, g.HPPctAt(10), "120% of the standard beast")
 	assert.Equal(t, 3, g.Guards)
 
 	g = GiftsFor(fxOf("dragon-tamer", 10))
 	assert.Equal(t, Drake, g.Kind)
-	assert.Equal(t, 6, g.Sides)
+	assert.Equal(t, BiteSides-1, g.Sides, "a smaller bite")
 	assert.Equal(t, 3, g.BreathEvery)
 	assert.Equal(t, 2, GiftsFor(fxOf("dragon-tamer", 25)).BreathEvery)
 
 	// Thick Pelt adds percent points to the share.
 	g = GiftsFor(fxOf("bearward", 45, "thick-pelt"))
-	assert.Equal(t, BaseHPPct*(140+10)/100, g.HPPct)
+	assert.Equal(t, 150, g.HPMult)
 }
 
 func TestARecordMendsWithRest(t *testing.T) {
@@ -66,10 +72,10 @@ func TestARecordMendsWithRest(t *testing.T) {
 func TestABeastHasItsOwnShareOfAWarriorsHealth(t *testing.T) {
 	c := &characters.Character{HPArchetype: Lineage, Level: 10}
 	wolf := HealthLimit(c)
-	probe := characters.Character{Level: 10, HPArchetype: "warrior"}
+	probe := characters.Character{Level: 10, HPArchetype: "warrior", RaceId: RaceID}
 	probe.RecalculateStats()
 	assert.Less(t, wolf, probe.HealthLimit())
-	assert.InDelta(t, float64(probe.HealthLimit())*BaseHPPct/100, float64(wolf), 2)
+	assert.InDelta(t, float64(probe.HealthLimit()*StandardPct(10))/100, float64(wolf), 2)
 }
 
 func TestBreathScalesWithTheTamersLevel(t *testing.T) {

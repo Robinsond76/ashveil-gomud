@@ -21,8 +21,9 @@ battle) but the beast, unlike the doll, takes its own turn.
   lays it over the formation in front of its Tamer. It takes no company slot, and
   is dismissed (and synced back to the record) when the battle ends. It takes its
   **own turn** through the ordinary companion paths at 70% tempo, with
-  teeth (1d8; the drake 1d6), 35% of a warrior's health and 90% Attack and Evasion
-  rates. At 0 health it is **wounded**, out of the battle and of later ones until
+  teeth (1d3, the drake 1d2, plus 1 for every 3 Tamer levels), a share of a
+  warrior's health that grows with the Tamer (8% to level 4, 19% at 10, 37% at
+  20; review tuning) and 90% Attack and Evasion rates. At 0 health it is **wounded**, out of the battle and of later ones until
   the company rests; it never dies.
 - **Abilities** (`internal/hooks/combat_beast.go`):
   - **Sic** (rank 1): at the start of the Tamer's turn the beast is pointed at the
@@ -63,19 +64,25 @@ battle) but the beast, unlike the doll, takes its own turn.
   The design says the beast eats a ration a day; feeding is **not built** (see
   follow-ups), because the company food path isn't a hook for a mob outside the
   roster.
-- Beast health is `BaseHPPct` 35 (design: 60) and the Tamer's Attack 0.8 (design:
-  0.9): at the design values the Tamer company won 100% at L10 with a third of
-  the damage taken. With these, the Beast Tamer lands within the noise of the
-  Warrior and Ranger at L5, L10 and L20 (below).
+- The Tamer's Attack is 0.8 (design: 0.9). The build set beast health to a flat
+  35% of a warrior's (design: 60%); at 100 fights a cell the review found that
+  still 94% at L5 against the Ranger's 79%, and the beast's value was its body
+  (soaking blows), not its bite or Sic. The review made the beast grow with its
+  Tamer instead: health 8% of a warrior's to level 4, then 2% + 1.75% a level
+  (`beasts.StandardPct`), and a 1d3 bite (+1 every 3 levels, `BiteBonus`).
 - Beast kinds on the battle screen reuse existing unit art; dedicated beast
   sprites are an art-pass follow-up.
 
 ## Balance
 
-Five-foe groups, Beast Tamer in the third slot, 30 fights a cell, wins:
-L5 80% (warrior 76, ranger 83); L10 96% (86, 90); L20 76% (90, 76). Routes at
-30 fights: L15 houndmaster 83, bearward 76, dragon-tamer 83 (base 70); L25 66, 80,
-76 (base 63). The routes lift the base class as intended.
+Five-foe groups, Beast Tamer in the third slot. Build (30 fights a cell, flat
+35% beast): L5 80% (warrior 76, ranger 83); L10 96% (86, 90); L20 76% (90, 76).
+Review, 100 fights a cell: the flat beast won 94/97/73 (warrior 74/91/78,
+ranger 79/91/74; the build's 90% warrior at L20 was noise). With the growing
+beast (final): Beast Tamer 77/90/76, warrior 84/90/71, ranger 75/82/76. Routes:
+L15 base 82, houndmaster 82, bearward 73, dragon-tamer 77; L25 base 79, 81, 86,
+89. At L25 every route lifts the base; at L15 the Bearward sits 9 points under
+it (its guards spend the bear's health on others), accepted and left for 39i.
 
 ## Follow-ups
 

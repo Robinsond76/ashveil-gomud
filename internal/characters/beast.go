@@ -24,6 +24,7 @@ type BeastInfo struct {
 	OwnerKey            string // the Tamer's company member key
 	HPPct               int    // percent of a warrior's health at its level
 	Dice, Sides         int    // its natural weapon's dice
+	Bonus               int    // damage its level adds to each bite (review tuning)
 	TempoPct            int    // percent of a normal tempo
 	Damage              int    // damage added to each of its blows
 	Hobble              bool   // its bites hobble a wounded foe

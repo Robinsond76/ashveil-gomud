@@ -48,11 +48,15 @@ const (
 // Tamer's level, it takes 70% of a normal tempo, and its Attack and Evasion
 // run at 90% of the warrior's rate.
 const (
-	BaseHPPct    = 35
+	BaseHPPct    = 2 // the beast's health share of a warrior's starts here...
+	MinHPPct     = 8 // ...never below this...
+	HPPctPer4    = 7 // ...and grows this many points every 4 of the Tamer's levels
 	TempoPct     = 70
 	RatePct      = 90
 	HobbleBelow  = 50 // percent health a foe is hobbled below
 	BreathDice   = 6
+	BiteSides    = 3 // a bite is 1d3 (the drake's 1d2) plus BiteBonus
+	BitePerLevel = 3 // a bite adds 1 damage for every this many of the Tamer's levels
 	BreathHalf   = 2 // the Breath adds this share of the Tamer's level: level/BreathHalf
 	RallyDefault = 2
 )
@@ -69,7 +73,7 @@ var (
 type Gifts struct {
 	Kind        string
 	MobID       int
-	HPPct       int // the beast's health as a percent of a warrior's
+	HPMult      int // the route's and talents' percent of the standard beast's health
 	Dice, Sides int
 	Attack      int
 	Damage      int
@@ -115,9 +119,9 @@ func GiftsFor(fx classes.Effects) Gifts {
 	g := Gifts{
 		Kind:   kind,
 		MobID:  WolfMobID,
-		HPPct:  max(1, BaseHPPct*mult/100),
+		HPMult: mult,
 		Dice:   1,
-		Sides:  8,
+		Sides:  BiteSides,
 		Attack: fx.Int(classes.BeastAttack),
 		Damage: fx.Int(classes.BeastDamage),
 		Hobble: fx.Has(classes.BeastHobble),
@@ -129,12 +133,26 @@ func GiftsFor(fx classes.Effects) Gifts {
 	case Bear:
 		g.MobID = BearMobID
 	case Drake:
-		g.MobID, g.Sides = DrakeMobID, 6
+		g.MobID, g.Sides = DrakeMobID, BiteSides-1
 		if every := fx.Int(classes.BeastBreath); every > 0 {
 			g.BreathEvery = max(1, every-fx.Int(classes.BeastBreathCut))
 		}
 	}
 	return g
+}
+
+// StandardPct is the standard beast's (the wolf's) health as a percent of a
+// warrior's at a Tamer's level: a pup at first that grows with its Tamer
+// (review tuning: a flat share made the Tamer far ahead at level 5 and
+// behind at 20). 8% to level 4, 10% at 5, 19% at 10, 37% at 20, 54% at 30.
+func StandardPct(level int) int {
+	return max(MinHPPct, BaseHPPct+max(level, 1)*HPPctPer4/4)
+}
+
+// HPPctAt is a Tamer's beast's health as a percent of a warrior's at the
+// Tamer's level.
+func (g Gifts) HPPctAt(level int) int {
+	return max(1, StandardPct(level)*g.HPMult/100)
 }
 
 // IsTamer reports whether a character is a Beast Tamer.
@@ -242,8 +260,8 @@ func Spawn(t Tamer) (*mobs.Mob, error) {
 	}
 	mob.Character.Name = rec.Name
 	info := &characters.BeastInfo{
-		Kind: g.Kind, OwnerKey: string(t.Key), HPPct: g.HPPct,
-		Dice: g.Dice, Sides: g.Sides, TempoPct: TempoPct, Damage: g.Damage,
+		Kind: g.Kind, OwnerKey: string(t.Key), HPPct: g.HPPctAt(t.Char.Level),
+		Dice: g.Dice, Sides: g.Sides, Bonus: BiteBonus(t.Char.Level), TempoPct: TempoPct, Damage: g.Damage,
 		Hobble: g.Hobble, Guards: g.Guards, BreathEvery: g.BreathEvery,
 	}
 	if t.Key == company.LeaderMemberKey {
@@ -340,7 +358,7 @@ func IsBeast(m *mobs.Mob) bool {
 func HealthLimit(t *characters.Character) int {
 	g := GiftsFor(t.ClassEffects())
 	probe := characters.Character{Level: max(t.Level, 1), HPArchetype: "warrior", RaceId: RaceID} // the beast race's stats, as the live mob has
-	probe.RT = &characters.ClassRT{Beast: &characters.BeastInfo{HPPct: g.HPPct}}
+	probe.RT = &characters.ClassRT{Beast: &characters.BeastInfo{HPPct: g.HPPctAt(t.Level)}}
 	probe.RecalculateStats()
 	return max(1, probe.HealthLimit())
 }
@@ -373,6 +391,12 @@ func Recover(c *characters.Character) bool {
 	c.Beast.Wounded, c.Beast.Damage = false, 0
 	return true
 }
+
+// BiteBonus is the damage a Tamer's level adds to its beast's bite: the
+// beast grows with its Tamer, so it starts small and keeps up late
+// (review tuning: a flat 1d8 bite made the Tamer far ahead at level 5 and
+// behind at 20).
+func BiteBonus(level int) int { return max(level, 0) / BitePerLevel }
 
 // BreathDamage is the roll of a drake's Breath for a Tamer of a level.
 func BreathDamage(level, bonus, roll int) int {

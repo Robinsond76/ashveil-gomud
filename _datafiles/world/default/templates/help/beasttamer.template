@@ -20,9 +20,12 @@ to meet.
 
   Where       it stands in the formation for a battle and takes no company slot
               (<ansi fg="command">help formation</ansi>); it is gone when the battle ends
-  Health      35% of a warrior's at the Tamer's level (a route or talent adds to it)
+  Health      a share of a warrior's that grows with the Tamer: 8% to level 4,
+              10% at 5, 19% at 10, 37% at 20, 54% at 30 (a route or talent
+              adds to it)
   Attack      90% of the Tamer's level, and the same Evasion
-  Turn        its own, at 70% of a normal tempo, with teeth (1d8 to start);
+  Turn        its own, at 70% of a normal tempo, with teeth (1d3, +1 for
+              every 3 of the Tamer's levels);
               it can't wear gear
   Falling     at 0 health it is wounded and out of the battle, never lost: it
               sits out battles until the company rests, and a rest brings it

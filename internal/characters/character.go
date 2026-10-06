@@ -428,7 +428,7 @@ func (c *Character) GetDefaultDiceRoll() (attacks int, dCount int, dSides int, b
 	}
 	if c.RT != nil && c.RT.Beast != nil && c.RT.Beast.Sides > 0 {
 		b := c.RT.Beast // Phase 39e: a beast's own teeth or claws
-		return 1, b.Dice, b.Sides, 0, nil
+		return 1, b.Dice, b.Sides, b.Bonus, nil
 	}
 
 	dCount += int(math.Floor((float64(c.Stats.Speed.ValueAdj) / 50)))

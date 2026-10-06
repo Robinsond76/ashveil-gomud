@@ -25,7 +25,7 @@ beast and adds four ranks (10, 15, 20, 25); a talent adds more
 
 <ansi fg="yellow-bold">Dragon Tamer</ansi>
 
-  10 Drake hatchling    your beast is a drake hatchling (a smaller bite, 1d6);
+  10 Drake hatchling    your beast is a drake hatchling (a smaller bite, 1d2);
                         every 3 rounds, in place of its bite, it breathes
                         fire on its foe and up to two other foes, 1d6 plus
                         half the Tamer's level in damage to each
