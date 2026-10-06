@@ -9,6 +9,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
+// encounterAttackDelay holds a room encounter's attack back a second: the
+// leader's companions move after the leader's step and should be in the
+// room when the fight begins.
+const encounterAttackDelay = 1.0
+
 // Encounter is one spawned random room encounter: its group, the foes and
 // who they are reserved for.
 type Encounter struct {
@@ -67,7 +72,7 @@ func SpawnEncounter(roomID, leaderUserID int, foes []encounters.Foe) (Encounter,
 		}
 		summaries[i] = rooms.GroupSummary(m)
 	}
-	engage(roomID, room, built, leaderUserID, id, mobparty.Generate(summaries).Name, false)
+	engage(roomID, room, built, leaderUserID, id, mobparty.Generate(summaries).Name, false, encounterAttackDelay)
 	enc := Encounter{ID: id, RoomID: roomID, Owner: leaderUserID, Boss: boss}
 	for _, m := range built {
 		enc.Foes = append(enc.Foes, m.InstanceId)

@@ -144,3 +144,32 @@ func TestGraceNeedsTwoEntriesAndThirtySeconds(t *testing.T) {
 	assert.False(t, g.Suppresses(now.Add(31*time.Second)), "both met")
 	assert.Equal(t, 0, g.Entries)
 }
+
+// TestPacingGapBetweenBattles pins the pacing the mana run reasons from: at
+// the default 15% chance, a battle is followed by two skipped entries and
+// then a 15% roll per entry, so about 8.7 eligible entries (a long walk)
+// pass between random battles. A cleric dry by the third fight is therefore
+// about 25 entries into a road: rest points go no further apart than that.
+func TestPacingGapBetweenBattles(t *testing.T) {
+	now := time.Date(2026, 10, 6, 12, 0, 0, 0, time.UTC)
+	state := uint64(12345)
+	rng := func(n int) int { // a small deterministic generator
+		state = state*6364136223846793005 + 1442695040888963407
+		return int((state >> 33) % uint64(n))
+	}
+	g := NewGrace(now)
+	entries, battles := 0, 0
+	for i := 0; i < 200000; i++ {
+		now = now.Add(10 * time.Second) // a step every ten seconds: the 30s never binds
+		entries++
+		if g.Suppresses(now) {
+			continue
+		}
+		if Roll(DefaultEntryChance, rng) {
+			battles++
+			g = NewGrace(now)
+		}
+	}
+	gap := float64(entries) / float64(battles)
+	assert.InDelta(t, 2+100.0/DefaultEntryChance, gap, 0.3, "entries per battle")
+}

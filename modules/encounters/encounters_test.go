@@ -495,6 +495,16 @@ func TestShippedEncounterContentIsValid(t *testing.T) {
 		}
 		assert.Positive(t, enabled, "%s has eligible rooms", zone)
 	}
+	// Phase 37: bosses are flagged (38a's hex resist reads it) and carry the
+	// telegraphed threat the boss shape calls for (35d).
+	for _, id := range []int{14, 25, 34, 37, 85} { // lich, abyssal creeper, ent, spider queen, forest ogre
+		spec := mobs.GetMobSpec(mobs.MobId(id))
+		require.NotNil(t, spec, id)
+		assert.True(t, spec.Boss, spec.Character.Name)
+	}
+	for _, id := range []int{14, 85} { // the pilot lairs' bosses
+		assert.Positive(t, mobs.GetMobSpec(mobs.MobId(id)).WindUps["crushing-blow"], "boss %d telegraphs a threat", id)
+	}
 }
 
 type memStore struct{ saved *Registry }
