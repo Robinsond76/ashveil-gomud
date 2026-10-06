@@ -67,6 +67,10 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	exitName, goRoomId = room.FindExitByName(rest)
 
+	if exitName == `` && companionAlreadyWithLeader(mob) {
+		return true, nil
+	}
+
 	if rest == `home` {
 		mob.Command(`pathto home`)
 		return true, nil
@@ -168,4 +172,21 @@ func companionMovingWithLeader(mob *mobs.Mob, originRoomId, destRoomId int) bool
 	}
 	leader := users.GetByUserId(mob.Character.GetCharmedUserId())
 	return leader != nil && leader.Character.RoomId == destRoomId && originRoomId != destRoomId
+}
+
+// companionAlreadyWithLeader reports whether mob is a company member told to
+// follow its leader through an exit it can no longer find because it is
+// already beside them: something else (a tutorial graduation through its
+// gate) moved the company first. The follow is moot, so the member drops it
+// rather than looking "a little confused (gate )" (found live, Phase 44).
+func companionAlreadyWithLeader(mob *mobs.Mob) bool {
+	if mob.CompanyMoveTo == 0 || !mob.Character.IsCompanion() {
+		return false
+	}
+	leader := users.GetByUserId(mob.Character.GetCharmedUserId())
+	if leader == nil || leader.Character.RoomId != mob.Character.RoomId {
+		return false
+	}
+	mob.CompanyMoveTo = 0
+	return true
 }
