@@ -330,23 +330,24 @@ func (m *CompanyModule) classView(s classSubject) string {
 // ("Priest (cleric)"), for the company roster (Phase 38b review).
 func classLabel(c domain.Companion) string {
 	if cl, ok := classes.Get(c.Class); ok {
-		return fmt.Sprintf("%s (%s)", cl.Name, archetypeLabel(c.Archetype))
+		return fmt.Sprintf("%s (%s %s)", cl.Name, strings.TrimSuffix(tierName(cl.Tier), " class"), strings.ToLower(archetypeLabel(c.Archetype)))
 	}
 	return archetypeLabel(c.Archetype)
 }
 
 // classNote flags what a character can do about its class now: a promotion
-// ready or talents to choose, pointing at the command (Phase 38b review).
+// ready, or waiting on its alignment gate (Phase 38c1), or talents to
+// choose, pointing at the command (Phase 38b review).
 func (m *CompanyModule) classNote(s classSubject) string {
 	if s.lineage == "" {
 		return ""
 	}
 	var notes []string
-	for _, o := range classes.Options(s.lineage, s.class, s.level, s.alignment) {
-		if o.Eligible {
-			notes = append(notes, "promotion ready")
-			break
-		}
+	switch classes.PromotionState(s.lineage, s.class, s.level, s.alignment) {
+	case "ready":
+		notes = append(notes, "promote ready")
+	case "waiting-gate":
+		notes = append(notes, "waiting: alignment")
 	}
 	if owed := classes.TalentsOwed(s.level, s.talents); owed > 0 {
 		notes = append(notes, fmt.Sprintf("%d talent%s to choose", owed, plural(owed)))
@@ -419,7 +420,7 @@ func (m *CompanyModule) talentView(s classSubject, all bool) string {
 	if s.lineage == "" {
 		return fmt.Sprintf("%s %s no archetype yet, so there are no talents to choose.", s.label(), s.are())
 	}
-	menu := classes.TalentsFor(s.lineage)
+	menu := classes.MenuFor(s.lineage, s.class, s.level)
 	if len(menu) == 0 {
 		return fmt.Sprintf("A %s has no talents.", lineageName(s.lineage))
 	}
@@ -552,32 +553,7 @@ func (m *CompanyModule) promote(user *users.UserRecord, room *rooms.Room, rest [
 		return msg
 	}
 	if !confirm {
-		lines := []string{fmt.Sprintf("%s can become a %s: %s.", s.label(), chosen.Name, chosen.Role)}
-		reached := 0
-		for _, r := range chosen.Ranks {
-			if s.level >= r.Level {
-				reached++
-				lines = append(lines, fmt.Sprintf("  Rank %d, %s: %s.", r.Level, r.Name, r.Text))
-			}
-		}
-		if next, ok := nextRankOf(chosen, s.level); ok {
-			lines = append(lines, fmt.Sprintf("  Next, at level %d: %s.", next.Level, next.Name))
-		}
-		_ = reached
-		gate := chosen.Gate
-		if chosen.Tier == classes.TierElite {
-			if p, ok := classes.Get(chosen.Parent); ok {
-				gate = p.Gate
-			}
-		}
-		lines = append(lines, fmt.Sprintf("  Needs %s; %s %s %+d.", gate.Label(), s.label(), strings.Replace(s.are(), "are", "have", 1), s.alignment))
-		if chosen.Tier == classes.TierElite {
-			lines = append(lines, "  An elite promotion keeps every rank so far.")
-		} else {
-			lines = append(lines, "  If the alignment later drifts, the route is kept; the elite step then waits until it recovers.")
-		}
-		lines = append(lines, fmt.Sprintf("Routes are final: there is no switching to another. Type class promote%s %s confirm to promote.", selectorSuffix(s), classKey(chosen)))
-		return strings.Join(lines, "\n")
+		return m.promotionPreview(s, chosen)
 	}
 
 	var cerr error
@@ -594,12 +570,92 @@ func (m *CompanyModule) promote(user *users.UserRecord, room *rooms.Room, rest [
 	if s.player {
 		text = fmt.Sprintf("You are now a %s.", chosen.Name)
 	}
+	if chosen.Tier == classes.TierElite {
+		text += " Your route is final."
+		if !s.player {
+			text = fmt.Sprintf("%s is now a %s (elite). Their route is final.", s.name, chosen.Name)
+		}
+	}
 	for _, r := range classes.RanksReached(chosen.ID, s.level) {
 		if r.Level >= chosen.Ranks[0].Level {
 			text += fmt.Sprintf("\n  Rank %d, %s: %s.", r.Level, r.Name, r.Text)
 		}
 	}
+	// Phase 38c1: the room and the company hear of it.
+	if room != nil {
+		who := s.name
+		if s.player {
+			who = user.Character.Name
+		}
+		room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> has become a %s%s.`, who, chosen.Name, eliteWord(chosen)), user.UserId)
+	}
 	return text
+}
+
+// eliteWord marks an elite promotion in the room's announcement.
+func eliteWord(c classes.Class) string {
+	if c.Tier == classes.TierElite {
+		return " (elite)"
+	}
+	return ""
+}
+
+// promotionPreview is what "class promote" shows before the confirm: the
+// route, its gate, the ranks the character gets at once (catch-up ranks for
+// a late promoter), the next rank, and the elite talents it opens.
+func (m *CompanyModule) promotionPreview(s classSubject, chosen classes.Class) string {
+	from := lineageName(s.lineage)
+	if cur, ok := classes.Get(s.class); ok {
+		from = cur.Name
+	}
+	head := fmt.Sprintf("%s -> %s (%s, %s lineage)", from, chosen.Name, strings.TrimSuffix(tierName(chosen.Tier), " class"), strings.ToLower(lineageName(s.lineage)))
+	if !s.player {
+		head = s.name + ": " + head
+	}
+	gate := chosen.Gate
+	if chosen.Tier == classes.TierElite {
+		if p, ok := classes.Get(chosen.Parent); ok {
+			gate = p.Gate
+		}
+	}
+	yours := "yours"
+	if !s.player {
+		yours = "theirs"
+	}
+	lines := []string{head,
+		fmt.Sprintf("  Gate: %s (%s: %+d)  ready", gate.Label(), yours, s.alignment),
+		"  Role: " + chosen.Role}
+	prefix := "  Now:  "
+	for _, r := range chosen.Ranks {
+		if s.level >= r.Level {
+			lines = append(lines, fmt.Sprintf("%srank %d %s: %s", prefix, r.Level, r.Name, r.Text))
+			prefix = "        "
+		}
+	}
+	if prefix == "  Now:  " {
+		lines = append(lines, "  Now:  no rank yet")
+	}
+	if next, ok := nextRankOf(chosen, s.level); ok {
+		lines = append(lines, fmt.Sprintf("  Next: rank %d (level %d): %s", next.Level, next.Level, next.Name))
+	}
+	if chosen.Tier == classes.TierElite {
+		var names []string
+		for _, t := range classes.EliteTalentsFor(s.lineage) {
+			names = append(names, t.Name)
+		}
+		if len(names) > 0 {
+			lines = append(lines, fmt.Sprintf("  Talents from %d add: %s", classes.EliteTalentLevel, strings.Join(names, ", ")))
+		}
+		lines = append(lines, "  An elite promotion keeps every rank so far.")
+	} else {
+		lines = append(lines, "  If the alignment later drifts, the route is kept; the elite step then waits until it recovers.")
+	}
+	who := "self"
+	if !s.player {
+		who = "#" + strconv.Itoa(s.c.ID)
+	}
+	lines = append(lines, fmt.Sprintf("  Routes are final. Type: class promote %s %s confirm", who, classKey(chosen)))
+	return strings.Join(lines, "\n")
 }
 
 func nextRankOf(c classes.Class, level int) (classes.Rank, bool) {
@@ -615,6 +671,10 @@ func refusal(s classSubject, want classes.Class, err error) string {
 	switch {
 	case errors.Is(err, classes.ErrFinalRoute):
 		return fmt.Sprintf("%s %s on a final route (%s); there is nothing further to promote to.", s.label(), s.are(), className(s.class))
+	case errors.Is(err, classes.ErrNotAvailable) && s.class == "" && want.Tier == classes.TierElite:
+		// Phase 38c1 review: name the subject's own command for the
+		// advanced step (a companion's carries its selector).
+		return fmt.Sprintf("%s can't become a %s yet: %v. Type class promote%s %s.", s.label(), want.Name, err, selectorSuffix(s), want.Parent)
 	case errors.Is(err, classes.ErrNotAvailable):
 		return fmt.Sprintf("%s can't become a %s: %v. Routes are final; see class paths.", s.label(), want.Name, err)
 	}
@@ -643,7 +703,7 @@ func (m *CompanyModule) pickTalent(user *users.UserRecord, room *rooms.Room, res
 	if s.lineage == "" {
 		return fmt.Sprintf("%s %s no archetype yet.", s.label(), s.are())
 	}
-	if err := classes.CanPick(s.lineage, s.talents, s.level, id); err != nil {
+	if err := classes.CanPick(s.lineage, s.class, s.talents, s.level, id); err != nil {
 		switch {
 		case errors.Is(err, classes.ErrUnknownTalent):
 			return fmt.Sprintf("A %s can't take %s. Type talent list to see its talents.", lineageName(s.lineage), t.Name)
@@ -652,6 +712,8 @@ func (m *CompanyModule) pickTalent(user *users.UserRecord, room *rooms.Room, res
 				return fmt.Sprintf("%s %s no talent to choose now. The next comes at level %d.", s.label(), strings.Replace(s.are(), "are", "have", 1), next)
 			}
 			return fmt.Sprintf("%s %s chosen every talent there is.", s.label(), strings.Replace(s.are(), "are", "have", 1))
+		case errors.Is(err, classes.ErrEliteTalent):
+			return fmt.Sprintf("%s is an elite talent: it opens to an elite class from level 35. Type talent list to see the talents open now.", t.Name)
 		case errors.Is(err, classes.ErrTalentMaxed):
 			return fmt.Sprintf("%s already has %s as many times as it can be taken.", s.label(), t.Name)
 		}

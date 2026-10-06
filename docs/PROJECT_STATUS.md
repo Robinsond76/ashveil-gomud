@@ -1,3 +1,5 @@
+# Ashveil Project Status
+
 **Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
 a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
 the foe and its row neighbour, the whole row from level 8), Brace (answers
@@ -23,9 +25,106 @@ After the 40a3/40b/40s5 master merge, one race run failed
 Merged after 39b: both neutral lineages share the help tables, recruit
 lists and `DefaultRule` (Samurai strongest, Halberdier crowded).
 
-# Ashveil Project Status
+**Phase 40a4 reviewed and merged via [PR #50](https://github.com/Robinsond76/ashveil-gomud/pull/50) (2026-10-06, Opus review thread):** builder decisions (1)-(7) kept as reasoned below; (8) changed. Accepted and fixed: (a) breaking camp, or resting again, between a rest's end and the next round dodged its thieves (decision 8 only favoured a player who knew the trick), so `settleTheft` completes a due rest and resolves its theft first in `camp break` and `camp rest` (regression `TestBreakingCampOrRestingAgainDoesNotDodgeThieves`); (b) fairness/UI check: the only warning was help and a tutorial hint, so starting a rest on a road thieves work without bells now says so, and `Company.Camp.theft_risk` drives a Camp tab line "Thieves work this road" (the old "no gear" line, shown even in safe zones, no longer mentions thieves) (`TestThievesAreWarnedOfAtRestStartAndOnTheCampTab`, browser check); (c) `help camp gear` said "no warning" and "the rest report names what is missing"; reworded to match. Browser check `dock-windows-check.mjs` ran to the end (260 checks). Rejected: none. Follow-ups: a watch is only counted if the leader is still at the camp when the theft resolves (it resolves within a round of the rest, so left as is).
 
-**Phase 45 reviewed and merged via [PR #53](https://github.com/Robinsond76/ashveil-gomud/pull/53) (2026-10-06, Opus review thread):** checked that watching an ally full size draws only what the feed already carries for allies (health bands, chant mark; no numbers, statuses or role letters, since the server never sends them), that the tap only swaps the view (inputs stay retreat and company focus), and that the prompt's progress text rides the existing `{activity}` token (refreshed per round like travel, no extra lines). Accepted and fixed: (1) typing `status` cancelled the gather, though the help and tutorial pointed players at `status` to watch it; the bare sheet and its aliases now keep the work (`status train` still stops it), help and the start message updated (`TestTypedCommandsCancelTheWork`); (2) `Room.Gather` result lines carried terminal colour tags (`<ansi fg="itemname">`) that the Room Info panel would print raw; the GMCP handler strips them (`TestRoomGatherCarriesTheWorksProgress`); (3) companion rows on the status sheet did not line up with `Members:`; labels are padded. Follow-ups: a client that reconnects mid-gather gets no bar until the next start (no resend of `Room.Gather` on login).
+**Phase 40a4 built (2026-10-06): camp theft.** A camp rest without camp bells and trip lines may draw thieves. `RestSession.Theft` is rolled when the rest starts (never when bells are strung; a zone needs a `CampTheft` entry, shipped: Old Kings Road 20%) and saved with it. Once the rest is done and the leader is online and out of battle, `resolveCampTheft` (game loop, `modules/camping/theft.go`) marks it done and saves **before** taking anything, so a restart can never rob a rest twice, then `company.CampTheft` removes about 10% (`TheftSharePct`) of the loose goods, at least one item and at most 4 (`TheftMaxItems`), from the cargo and the companions' packs, and the leader reads "When you wake, the packs have been rifled. Missing: ..." with a pointer to `help camp gear`. Never taken: equipped gear, the leader's own pack, the treasury and gold, quest-token items, keys, and camp gear (items 45-50). A posted watch gets its raid-spot chance (25% a level) to catch them: "nothing is missing", nothing taken. Folded in from the 40a3 review: the web Camp tab now lists the camp gear the company carries (GMCP `Company.Camp.gear`, one label per piece, e.g. "Bedrolls 2/3", "Tent"; with none it hints that bells keep thieves out; `/mnt/project-files/screens/40a4-camp-gear.png`). `camp status` bells line says thieves keep out. Help: `help camp gear` gains a Thieves section (aliases thieves, thief, theft, camp theft, stolen) and its stale "nothing is stolen" line is gone; `help camp` and `help campwatch` updated; the tutorial's Camp gear hint mentions that bells keep thieves off. Tests: rolled and saved at rest start (and never with bells or in an unlisted zone), resolved once after the rest with the done flag saved first, reload does not rob twice, offline or in-battle leaders wait, watch catches, empty-handed thieves, settings parse, and the real company provider (cargo plus companion packs, spares quest tokens, keys, protected gear and the leader's pack; share and cap), GMCP gear payload, help render, browser check. Decisions (builder, owner delegation): (1) thieves roll once per rest at start, like raiders, and resolve after the rest, so the report is "noticed on waking"; (2) the leader's own pack is safe (the leader is the one asleep with it), while the cargo and companions' packs are "unattended"; (3) camp gear is never stolen, so a company never loses its bells or tent to the thing they guard against; (4) the chance is zone-based and only configured for Old Kings Road (tutorial and safe-zone camps are never robbed), 20% against raids' 15%; (5) a posted watch protects with its raid-spot chance; (6) stolen goods are gone, no tracking (economy rule: nothing gathered or bought can be reclaimed for profit); (7) a leader offline when the rest ends is robbed on return, so logging out does not dodge it (as raids); (8) a rest started before the theft resolves loses it, which only favours the player. Follow-ups: none needed; thief mobs or tracking stolen goods could be a later quest hook.
+
+**Phase 38c1 built: elite framework, UI and the warrior and cleric elites (2026-10-06):**
+The promotion framework 38b shipped (level 30, gate wait, catch-up ranks) now
+has its rules and UI for all eighteen elites; 38c2 and 38c3 only add routes.
+Task 0 reconcile: Paladin, Dread Knight, Hierarch, Elder Druid and Demonologist
+matched the faith routes design as shipped; the Warlord (Mercenary elite) was
+the only elite left to build. Built:
+
+- **Warlord** (30 Marked for Ruin, 35 Battle Cry, 40 Quicker tackle, 45 Sunder,
+  50 Ruinous mark, 55 Relentless, 60 Warlord's Command) through real combat
+  hooks (`internal/hooks/combat_warlord.go`): marks and cries feed
+  `attackRating`, Relentless and the Command add action-meter points (never an
+  extra turn); all runtime only.
+- **Elite talents** at 35/45/55: `classes.EliteTalentsFor`, offered only to an
+  elite class (warrior: Iron Hide, Second Wind, Veteran's Edge; cleric: Font of
+  Grace, Radiant Healing, Unshaken). `CanPick` and `MenuFor` now take the
+  level; the base lists are unchanged. 38c2/38c3 add rogue, ranger, wizard and
+  witch lists with `offerElite`.
+- **Rules/UI:** a clear refusal for base to elite ("take the Priest first, then
+  the Hierarch in the same visit"); `classes.Describe`/`PromotionState`
+  feed the company roster, the class preview (design format), `class`, level-up
+  and companion level-up lines (`LevelNotes`), GMCP (`Company` members and
+  `Char.Info` gain class, tier, rank, promotion), and the web company and
+  character windows. The milestone schedule now lists the shipped elite ranks
+  (`eliteShipped`; 38c2/38c3 flip theirs).
+- **Help:** `help elite` and `help warlord`, updated promotion, classes,
+  talents, warrior-routes, cleric-routes, alignment, warrior and combat pages,
+  keywords and aliases, a tutorial hint (Departure lesson).
+
+Decisions: (1) the Warlord's mark and Battle Cry add Attack (not damage) so
+they stack with every role; (2) Relentless and the Command push meter points,
+because a free turn would break tempo; (3) elite talents come from a second
+list rather than replacing the lineage's five, so a level 35 pick is never a
+trap; (4) a Grove is cast on three hurt allies, not two, and Grove is now 100%
+and 130% (from 60% and 80%): the 3-round chant with the old numbers lost to
+plain Rejuvenation in the boss mirror. Design text for those numbers is
+superseded.
+
+Balance (`TestPhase38bClassRoutes`, 30 fights a cell, 60 for the druid line;
+wins / company HP lost): fighting healers vs Mercenary: L35 Warlord 80% / 49%
+vs Mercenary 63% / 70%; L45 86% / 46% vs 66% / 58% (+17 and +20 wins);
+Paladin 90/96% and Dread Knight 76/93% stay in the same band (the Paladin
+and Dread Knight are within 5 points at L45). Summoners (boss mirror): Hierarch
+100% vs Priest 53/46%; Demonologist 80/73% vs Blood Priest 43/46%. Missed:
+the Elder Druid did not beat the Druid (27% vs 33% at L35 after tuning, 20% vs
+33% at L45 on the old Grove). Its healing is not what a boss mirror rewards,
+and Entangle is not used by the company strategy. Left as a follow-up
+(candidate phase "Elder Druid tuning": let the strategy cast Entangle, then
+re-measure; a healer elite's gain may belong in a heal-load cell rather than
+a boss one).
+
+Follow-ups for 38c2/38c3: elite talent lists for the other four lineages,
+`eliteShipped` and GMCP `promotion` checks per route, route help pages.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`; the Chromium dock-windows check passes (its pre-existing
+battle-canvas hover timeout is unrelated). Independent review: Opus review
+thread.
+
+**Phase 38c1 reviewed (2026-10-06, PR #46, Opus review thread):** checked
+the Warlord ranks, elite talent gating, catch-up ranks, runtime-only state
+and the cleric elites (Hierarch, Elder Druid, Demonologist: promotion,
+catch-up, Font of Grace through the command, help). Accepted and fixed:
+(1) **the Elder Druid never cast Grove**: it waited for three allies below the
+healing threshold, which a fight almost never shows, so it played as a Druid.
+An idle Elder Druid now sows a Grove once two allies are below 85% without
+Rejuvenation (`strategy.GroveBelow`), a hurt company needs two (`GroveHurt`),
+and Grove chants 1 round (from 2) and blooms, healing half its share at once
+(`TestElderDruidSowsAGroveEarly`; help and the rank text say so). Boss
+mirror, 40 fights a cell: L35 Elder Druid 37% / 79% HP lost vs Druid 10% /
+96%; L45 55% / 66% vs 40% / 83% (+27 and +15 wins). (2) **The level-up "promotion
+ready" line named a command that failed** (`class promote` with no class);
+it now names the class (`class promote #2 warlord`). (3) **The base-to-elite
+refusal sent companions to the player's command**; the error no longer
+carries a command and the refusal adds the subject's own (`class promote #1
+mercenary`). (4) **`status` never showed the class**: the Character panel
+gains Class (name and tier) and Promote (ready) rows (`TestStatusShowsTheClass`).
+(5) A raw "that talent is for elite characters" error now reads like the
+other refusals. (6) `TestGrantXPLevelReport/4` failed since 38c1 shipped the
+level 5 talent (no "(coming)" left at level 4); the test now expects that, so
+the build's green-suite claim above was wrong for that one test.
+Rejected: the Warlord's Command counting members present rather than fallen
+(a companion leaves a battle only by falling or with the whole company's
+retreat, so a shrinking count is a fall); the always-"ready" promotion
+preview (only reached after the check passes).
+Master merge (40s5 class art, 40a3): GMCP `Company` members now follow
+40s5's keys, `class` (id) and `class_name`, plus 38c1's `tier`, `rank` and
+`promotion`; the company card shows the class name in its header and the
+tier and rank beneath (dock-windows check passes in full). With 39b
+(Samurai) merged, a level-up names its ranks once, through 39b's
+`ClassRanks` ("New rank: ..."), and `ClassNotes`/`LevelNotes` carry only
+the elite promotion line (`RankUpLines` removed); `help elite` lists the
+Samurai elites as still to come.
+Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
+in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
+a "Druid tuning" pass belongs with 39i or a small phase.
+
+**Phase 45 reviewed and merged via [PR #53](https://github.com/Robinsond76/ashveil-gomud/pull/53) (2026-10-06, Opus review thread):** checked that watching an ally full size draws only what the feed already carries for allies (health bands, chant mark; no numbers, statuses or role letters, since the server never sends them), that the tap only swaps the view (inputs stay retreat and company focus), and that the prompt's progress text rides the existing `{activity}` token (refreshed per round like travel, no extra lines). Accepted and fixed: (1) typing `status` cancelled the gather, though the help and tutorial pointed players at `status` to watch it; the bare sheet and its aliases now keep the work (`status train` still stops it), help and the start message updated (`TestTypedCommandsCancelTheWork`); (2) `Room.Gather` result lines carried terminal colour tags (`<ansi fg="itemname">`) that the Room Info panel would print raw; the GMCP handler strips them (`TestRoomGatherCarriesTheWorksProgress`); (3) companion rows on the status sheet did not line up with `Members:`; labels are padded. Merged master (38c1 elites): 38c1 added its own promoted-class display (a `Class` row on the sheet and `route`/`tier`/`rank` in `Char.Info`, drawn in the Character window), so 45's duplicate (Path row as "Knight (Warrior)", `Char.Info.class` renamed with `lineage_name` and a hover) was dropped in favour of 38c1's; the Path row is the lineage again and the companion roster rows stay. Follow-ups: a client that reconnects mid-gather gets no bar until the next start (no resend of `Room.Gather` on login).
 
 **Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2
 and 40g2 reviews listed. (1) **Class everywhere.** `status` (the sheet `score`
@@ -1284,7 +1383,7 @@ their dependencies and those decisions is the
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
-| 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
+| 38c1 | Built (PR open). Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
 | 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |
 | 38c3 | Wizard and witch elites (Archon, Archmage, Necromancer with its thrall, Wise One, Coven Mother, Crone of Ash) | Elite routes design | 38c1 |
 | 38d | Expanded class catalogue bundles, Sorcerer first | Expanded catalogue | 38c1 |
@@ -1316,7 +1415,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
 | [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Done (PR #45)** | S1 |
-| 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
+| 40a4 | Camp theft without bells and trip lines, and a web gear line. **Built (review pending)** | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
 | [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
@@ -3073,7 +3172,7 @@ those results. This documentation change does not rerun or supersede them.
   visibility.
 - **Race and gender sprite variants (owner, 2026-10-05):** not for now.
   Revisit with the races review.
-- **Camp theft (owner, 2026-10-05):** a future camp event. A company
+- **Camp theft (owner, 2026-10-05), built in 40a4:** a camp event. A company
   resting **without camp bells and trip lines** may wake to find some loot
   and supplies missing, with no fight and no warning. Details are in the
   [40a3 camp gear](designs/2026-10-05-phase-40a3-camp-gear-design.md)

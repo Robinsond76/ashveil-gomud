@@ -527,13 +527,9 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			SkillPoints:    user.Character.StatPoints,
 			TrainingPoints: user.Character.TrainingPoints,
 		}
-		// Phase 45: a promoted character is named by its class.
-		if classID != lineageID {
-			if c, ok := classes.Get(classID); ok {
-				payload.Info.LineageName = payload.Info.Class
-				payload.Info.Class = c.Name
-			}
-		}
+		lineage, _ := archetypes.PlayerArchetype(user.UserId)
+		route := classes.Describe(lineage, classes.PlayerClass(user.UserId).Class, user.Character.Level, int(user.Character.Alignment))
+		payload.Info.Route, payload.Info.Tier, payload.Info.Rank, payload.Info.Promotion = route.Name, route.Tier, route.Rank, route.Promotion
 
 		if !all {
 			return payload.Info, `Char.Info`
@@ -983,9 +979,6 @@ type GMCPCharModule_Payload_Info struct {
 	Account string `json:"account,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Class   string `json:"class,omitempty"`
-	// Phase 45: LineageName is the base archetype's name, sent only once the
-	// character is promoted (Class then names the promoted class).
-	LineageName string `json:"lineage_name,omitempty"`
 	// Phase 40b: the Ashveil class keys the map sprite is chosen by:
 	// Lineage is the base archetype, ClassID the promoted class (the
 	// archetype until the character promotes). Empty before an archetype
@@ -998,6 +991,14 @@ type GMCPCharModule_Payload_Info struct {
 	Role           string `json:"role"`
 	SkillPoints    int    `json:"skillpoints"`
 	TrainingPoints int    `json:"trainingpoints"`
+	// Route is the advanced or elite class promoted into (Phase 38c1:
+	// "Paladin"), Tier "advanced" or "elite", Rank the highest rank level
+	// reached, and Promotion "ready" or "waiting-gate"; each omitted when
+	// empty. (Class above is the skill profession.)
+	Route     string `json:"route,omitempty"`
+	Tier      string `json:"tier,omitempty"`
+	Rank      int    `json:"rank,omitempty"`
+	Promotion string `json:"promotion,omitempty"`
 }
 
 // /////////////////

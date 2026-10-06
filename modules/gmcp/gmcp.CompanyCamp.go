@@ -14,18 +14,21 @@ import (
 )
 
 type campPayload struct {
-	HasCamp     bool   `json:"has_camp"`
-	Here        bool   `json:"here"`
-	Room        string `json:"room"`
-	FireLit     bool   `json:"fire_lit"`
-	Resting     bool   `json:"resting"`
-	Rested      bool   `json:"rested"`
-	Embers      bool   `json:"embers"`
-	Tent        bool   `json:"tent"`
-	RestPercent int    `json:"rest_percent"`
-	RestSeconds int    `json:"rest_seconds"`
-	CanCamp     bool   `json:"can_camp"`
-	Inn         bool   `json:"inn"`
+	HasCamp bool   `json:"has_camp"`
+	Here    bool   `json:"here"`
+	Room    string `json:"room"`
+	FireLit bool   `json:"fire_lit"`
+	Resting bool   `json:"resting"`
+	Rested  bool   `json:"rested"`
+	Embers  bool   `json:"embers"`
+	Tent    bool   `json:"tent"`
+	// Phase 40a4: the camp gear the company carries, one label each.
+	Gear        []string `json:"gear"`
+	TheftRisk   bool     `json:"theft_risk"`
+	RestPercent int      `json:"rest_percent"`
+	RestSeconds int      `json:"rest_seconds"`
+	CanCamp     bool     `json:"can_camp"`
+	Inn         bool     `json:"inn"`
 	// Phase 40b: the camp's room ID, and the camps of the other leaders in
 	// the viewer's party. Never a camp of a company outside the party.
 	RoomID      int          `json:"room_id"`
@@ -43,7 +46,11 @@ type alliedCamp struct {
 }
 
 func campPayloadOf(s camping.CampState) campPayload {
-	return campPayload{AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	gear := s.Gear
+	if gear == nil {
+		gear = []string{}
+	}
+	return campPayload{Gear: gear, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

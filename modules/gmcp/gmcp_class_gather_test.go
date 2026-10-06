@@ -4,43 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/archetypes"
-	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// TestCharInfoNamesThePromotedClass (Phase 45): Char.Info's class is the
-// promoted class once promoted, with the lineage kept in lineage_name for
-// the Character window's hover; before promotion it is the archetype and no
-// lineage_name is sent.
-func TestCharInfoNamesThePromotedClass(t *testing.T) {
-	archetypes.SetProvider(fakeArchetypes{chosen: map[int]string{94971: "warrior", 94972: "cleric"}})
-	t.Cleanup(func() { archetypes.SetProvider(nil) })
-	classes.SetProvider(fakeClasses{class: map[int]string{94972: "priest"}})
-	t.Cleanup(func() { classes.SetProvider(nil) })
-
-	info := func(uid int) map[string]any {
-		u := users.NewUserRecord(uid, 0)
-		u.Character.Name = "Hero"
-		node, _ := (&GMCPCharModule{}).GetCharNode(u, "Char.Info")
-		raw, err := json.Marshal(node)
-		require.NoError(t, err)
-		var got map[string]any
-		require.NoError(t, json.Unmarshal(raw, &got))
-		return got
-	}
-	plain := info(94971)
-	assert.Equal(t, "warrior", plain["class"], "the archetype name (the fake names it by id)")
-	assert.NotContains(t, plain, "lineage_name")
-
-	promoted := info(94972)
-	assert.Equal(t, "Priest", promoted["class"], "the promoted class names the character")
-	assert.Equal(t, "cleric", promoted["lineage_name"], "and the lineage rides along")
-	assert.Equal(t, "priest", promoted["classid"])
-}
 
 // TestRoomGatherCarriesTheWorksProgress (Phase 45): a GatherProgress event
 // reaches the leader's client as Room.Gather through the real listener.

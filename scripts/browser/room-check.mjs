@@ -25,14 +25,11 @@ await page.goto('file://' + path.join(here, 'room-harness.html'));
 await page.evaluate(() => localStorage.clear());
 await page.reload();
 
-// --- the Character window names the promoted class ---
-await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'Priest', lineage_name: 'Cleric', race: 'Human', level: 12 }));
+// --- the Character window names the promoted class (38c1's route line) ---
+await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'Cleric', route: 'Priest', tier: 'advanced', rank: 6, race: 'Human', level: 12 }));
 const heading = await page.evaluate(() => document.getElementById('cw-char-name').textContent);
-check(heading.includes('Wren') && heading.includes('Priest') && !heading.includes('Cleric'), 'the Character window names the class: ' + heading);
-const hover = await page.evaluate(() => { const s = document.querySelector('#cw-char-name span[title]'); return s ? s.title : ''; });
-check(hover === 'Cleric line', 'and shows its lineage on hover: ' + hover);
-await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'Cleric', race: 'Human', level: 5 }));
-check(await page.evaluate(() => document.querySelector('#cw-char-name span[title]') === null), 'an unpromoted character has no lineage hover');
+check(heading.includes('Wren') && heading.includes('Cleric') && heading.includes('Priest, rank 6'), 'the Character window names lineage and class: ' + heading);
+check(heading.split('Priest').length === 2, 'the class is named once: ' + heading);
 if (outdir) { await page.locator('#cw-char-name').screenshot({ path: path.join(outdir, 'character-class.png') }); }
 
 // --- the Room Info window shows gathering progress ---

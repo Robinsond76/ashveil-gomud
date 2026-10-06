@@ -33,11 +33,19 @@ func addAshveilIdentity(p *templates.Panel, s companyview.Summary) {
 	if !s.Leader.ArchetypeKnown {
 		return
 	}
-	archetype := s.Leader.RankName()
+	archetype := s.Leader.Archetype
 	if archetype == `` {
 		archetype = `<ansi fg="black-bold">none chosen</ansi>`
 	}
 	addRow(p, `Path:   `, `Pth:`, archetype)
+	// Phase 38c1 review: the class and its tier, and a promotion that is
+	// ready (the panel is narrow, so each gets its own row).
+	if s.Leader.ClassName != `` {
+		addRow(p, `Class:  `, `Cls:`, s.Leader.ClassName+` <ansi fg="black-bold">(`+s.Leader.ClassTier+`)</ansi>`)
+	}
+	if s.Leader.Promotion == `ready` {
+		addRow(p, `Promote:`, `Prm:`, `<ansi fg="yellow-bold">ready</ansi> <ansi fg="black-bold">(class)</ansi>`)
+	}
 }
 
 func addAshveilAlignment(p *templates.Panel, s companyview.Summary) {

@@ -99,6 +99,24 @@ func TestStatusAshveilSheet(t *testing.T) {
 	}
 }
 
+// Phase 38c1 review: the status sheet names the class, its tier, and a
+// promotion that is ready.
+func TestStatusShowsTheClass(t *testing.T) {
+	useWorld(t, "default")
+	s := sampleSummary()
+	s.Leader.Archetype, s.Leader.ClassName, s.Leader.ClassTier, s.Leader.ClassRank = "Warrior", "Mercenary", "advanced", 25
+	s.Leader.Promotion = "ready"
+	useSummary(t, s)
+	text := statusText(t, users.NewUserRecord(7, 1), "")
+	assert.Regexp(t, `(Cls|Class): +Mercenary \(advanced\)`, text)
+	assert.Regexp(t, `(Prm|Promote): +ready \(class\)`, text)
+	s.Leader.ClassName, s.Leader.ClassTier, s.Leader.Promotion = "Warlord", "elite", ""
+	useSummary(t, s)
+	text = statusText(t, users.NewUserRecord(7, 1), "")
+	assert.Regexp(t, `(Cls|Class): +Warlord \(elite\)`, text)
+	assert.NotRegexp(t, `(Prm|Promote): `, text)
+}
+
 // TestStatusUnknownsAreLeftOut: with nothing known, no survival or company
 // row pretends to a value.
 func TestStatusUnknownsAreLeftOut(t *testing.T) {
@@ -233,13 +251,14 @@ func TestUntrainedArmorThroughEquipAndStatus(t *testing.T) {
 }
 
 // TestStatusShowsClassesAndCompanyRoster (Phase 45): the sheet names the
-// leader's promoted class with its lineage, lists each companion's class and
+// leader's path and promoted class (38c1's Class row), lists each companion's class and
 // level, and shows a gather in progress as what the company is doing.
 func TestStatusShowsClassesAndCompanyRoster(t *testing.T) {
 	useWorld(t, "default")
 	sum := sampleSummary()
 	sum.Leader.Class = "knight"
 	sum.Leader.Archetype = "Warrior"
+	sum.Leader.ClassName, sum.Leader.ClassTier = "Knight", "advanced"
 	sum.Companions = []companyview.Member{
 		{ID: 1, Name: "Oswin", Level: 6, Archetype: "Cleric", Class: "priest", Status: company.MemberPresent},
 		{ID: 2, Name: "Brant", Level: 4, Archetype: "Warrior", Status: company.MemberPresent},
@@ -249,7 +268,7 @@ func TestStatusShowsClassesAndCompanyRoster(t *testing.T) {
 	useSummary(t, sum)
 	text := statusText(t, users.NewUserRecord(7, 1), "")
 	for _, want := range []string{
-		"Path:", "Knight (Warrior)", "Oswin:", "Priest (Cleric), Lv 6", "Brant:", "Warrior, Lv 4", "Ysolde:", "Mage, Lv 5 (fallen)",
+		"Path:", "Warrior", "Knight (advanced)", "Oswin:", "Priest (Cleric), Lv 6", "Brant:", "Warrior, Lv 4", "Ysolde:", "Mage, Lv 5 (fallen)",
 		"Doing:", "Gathering herbs 40%, 12s left",
 	} {
 		assert.Contains(t, text, want)
