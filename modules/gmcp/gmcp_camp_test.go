@@ -20,7 +20,7 @@ func TestCompanyCampPayload(t *testing.T) {
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, map[string]any{"has_camp": true, "here": true, "room": "", "fire_lit": true, "resting": true, "rested": false,
-		"embers": false, "tent": false, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}, "duties": []any{}, "duties_locked": false}, got)
+		"embers": false, "tent": false, "tents": []any{}, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}, "duties": []any{}, "duties_locked": false}, got)
 
 	// Phase 40a3: a finished rest leaves embers, and a pitched tent shows.
 	state = camping.CampState{HasCamp: true, Here: true, Rested: true, Embers: true, Tent: true}
@@ -64,4 +64,41 @@ func TestCompanyCampPayload(t *testing.T) {
 	f.updateExtras(u)
 	require.Len(t, *out, 2)
 	assert.Equal(t, "Company.Camp", (*out)[1].module)
+}
+
+// Phase 52: the pitched tent and the tents carried, for the Camp tab's
+// picker. A camp saved before tent kinds (Tent, no kind) reads as canvas.
+func TestCompanyCampPayloadCarriesTheTents(t *testing.T) {
+	state := camping.CampState{HasCamp: true, Here: true, Tent: true, TentKind: camping.TentLarge, TentNote: "wake Well Rested",
+		Tents: []camping.TentChoice{
+			{Kind: camping.TentCanvas, Name: "oiled canvas tent", Effect: "shelter"},
+			{Kind: camping.TentLarge, Name: "large pavilion tent", Effect: "wake Well Rested", Pitched: true},
+		}}
+	extra := campExtra(func(int, int, []string) (camping.CampState, bool) { return state, true }, nil)
+	u := users.NewUserRecord(7, 1)
+
+	var got struct {
+		TentKind string `json:"tent_kind"`
+		TentName string `json:"tent_name"`
+		TentNote string `json:"tent_note"`
+		Tents    []struct {
+			Kind    string `json:"kind"`
+			Name    string `json:"name"`
+			Pitched bool   `json:"pitched"`
+			Command string `json:"command"`
+		} `json:"tents"`
+	}
+	require.NoError(t, json.Unmarshal(extra.build(u), &got))
+	assert.Equal(t, "large", got.TentKind)
+	assert.Equal(t, "large pavilion tent", got.TentName)
+	assert.Equal(t, "wake Well Rested", got.TentNote)
+	require.Len(t, got.Tents, 2)
+	assert.Equal(t, "camp tent canvas", got.Tents[0].Command)
+	assert.False(t, got.Tents[0].Pitched)
+	assert.True(t, got.Tents[1].Pitched)
+	assert.Equal(t, "camp tent large", got.Tents[1].Command)
+
+	state = camping.CampState{HasCamp: true, Here: true, Tent: true}
+	require.NoError(t, json.Unmarshal(extra.build(u), &got))
+	assert.Equal(t, "canvas", got.TentKind, "an old camp's tent is canvas")
 }

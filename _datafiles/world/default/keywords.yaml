@@ -131,6 +131,7 @@ help:
       - travel
       - walkto
       - survival
+      - ailments
       - strain
       - weather
       - temperature
@@ -432,6 +433,7 @@ help-aliases:
   fieldsmith:       [field-smith, smith]
   vigil:            [vigils]
   forage:           [foraging]
+  ailments:         [ailment, chill, gut-ache, gutache, fever, sickness, illness, remedy, remedies, camp prepare remedy, raw meat]
   survival:         [needs, hunger, thirst, fatigue, battle-condition, battle condition, going-in]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]
@@ -444,7 +446,7 @@ help-aliases:
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
-  campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
+  campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, tents, camp tent, camp-tent, fur tent, fur-lined tent, camouflaged tent, large tent, pavilion, pavilion tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
   campduties:       [camp duties, camp-duties, duties, duty, rest duties, rest-duties, camp duty, watch duty, tending]
   campsupplies:     [camp supplies, camp-supplies, camp prepare, camp-prepare, supplies, broth, fortifying broth, warming draught, cooling salve, incense, watch incense]
   cooking:          [cook, hearth, recipe, recipes, meal-buff, meal-buffs, meal buff, meal buffs]

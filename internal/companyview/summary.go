@@ -65,6 +65,9 @@ type Member struct {
 	// Fare is what those needs and a meal buff do in the next battle
 	// (Phase 50), as survival's Condition.Summary; "" when nothing.
 	Fare string
+	// Ailments names the member's ailments with the battles each has left
+	// (Phase 55): "Chill (3 battles)".
+	Ailments []string
 	// Warmth is the exposure label ("" when comfortable); WarmthKnown is
 	// false when exposure can't report it.
 	Warmth      string
@@ -257,6 +260,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	if n, ok := needs[company.LeaderMemberKey]; ok {
 		s.Leader.Hunger, s.Leader.Thirst, s.Leader.Fatigue = needsOf(n)
 		s.Leader.Fare = survival.ConditionFor(n).Summary(n.MealBattles)
+		s.Leader.Ailments = survival.AilmentLabels(n)
 	}
 	if e, ok := src.exposure(uid, string(company.LeaderMemberKey)); ok {
 		s.Leader.Warmth, s.Leader.WarmthKnown = WarmthLabel(e), true
@@ -289,6 +293,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 				if n, ok := needs[m.Key]; ok {
 					m.Hunger, m.Thirst, m.Fatigue = needsOf(n)
 					m.Fare = survival.ConditionFor(n).Summary(n.MealBattles)
+					m.Ailments = survival.AilmentLabels(n)
 				}
 				if e, ok := src.exposure(uid, string(m.Key)); ok {
 					m.Warmth, m.WarmthKnown = WarmthLabel(e), true

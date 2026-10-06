@@ -55,6 +55,9 @@ type companyVitals struct {
 	// Fare is the member's battle condition (Phase 50): what its needs and
 	// meal buff do in the next battle, omitted when nothing.
 	Fare string `json:"fare,omitempty"`
+	// Ailments names the member's ailments with battles left (Phase 55),
+	// omitted when none.
+	Ailments []string `json:"ailments,omitempty"`
 }
 
 type companyCell struct {
@@ -220,6 +223,7 @@ func vitalsOf(m companyview.Member) companyVitals {
 		v.Warmth = strPtr(m.Warmth)
 	}
 	v.Fare = m.Fare
+	v.Ailments = m.Ailments
 	return v
 }
 

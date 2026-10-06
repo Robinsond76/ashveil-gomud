@@ -146,7 +146,9 @@ func TestCriticalHitNarration(t *testing.T) {
 				return e.Kind == combatstream.Attack && e.Crit && e.Damage > 0
 			})
 			if crit {
-				assert.Contains(t, strings.Join(lines, "\n"), "(critical hit, ")
+				// A crit can also be glancing or telling (Phase 35d), which
+				// the suffix names first: "(glancing, critical hit, 3 damage)".
+				assert.Regexp(t, `\((glancing, |telling, )?critical hit, `, strings.Join(lines, "\n"))
 			}
 		})
 		if crit {

@@ -39,6 +39,10 @@ type Needs struct {
 	// battles its buff has left. Empty or 0 means no meal buff.
 	Meal        string `yaml:"meal,omitempty"`
 	MealBattles int    `yaml:"meal_battles,omitempty"`
+	// Phase 55: the battles each ailment has left (0 or absent: none).
+	Chill   int `yaml:"chill,omitempty"`
+	GutAche int `yaml:"gutache,omitempty"`
+	Fever   int `yaml:"fever,omitempty"`
 }
 
 // FullNeeds is the default state for a new or missing member record.
@@ -82,6 +86,9 @@ type Benefit struct {
 	// Meal is a cooked meal's kind (Phase 50): eating it gives its buff,
 	// replacing any other. Empty for plain food and drink.
 	Meal string
+	// Ailment is an ailment's kind (Phase 55): eating raw game meat gives a
+	// Gut-ache. Empty for everything else.
+	Ailment string
 }
 
 // ProvisionResult describes the outcome of applying a Benefit to a member.
@@ -92,6 +99,8 @@ type ProvisionResult struct {
 	Hunger  Change
 	Thirst  Change
 	Fatigue Change
+	// Caught is the ailment the member newly caught (Phase 55), if any.
+	Caught string
 }
 
 // Crossed reports whether any need changed band.
@@ -161,6 +170,7 @@ func Normalize(needs Needs) Needs {
 	if spec, ok := MealFor(needs.Meal); ok && needs.MealBattles > 0 {
 		out.Meal, out.MealBattles = needs.Meal, min(needs.MealBattles, spec.Battles)
 	}
+	normalizeAilments(needs, &out)
 	return out
 }
 

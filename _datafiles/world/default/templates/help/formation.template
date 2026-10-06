@@ -87,7 +87,10 @@ Set your formation up before a fight: it's where everyone stands when the
 blows begin, and it can't be changed during a battle (reading it, and
 <ansi fg="command">formation reach</ansi>, still work).
 
-In the web client, the Combat tab draws your formation; click a member
-to move them (<ansi fg="command">help webclient</ansi>).
+In the web client, Company > Status draws your formation: click a member,
+then an empty cell to move them there, or another member to swap places
+(Escape cancels). The Combat tab's Setup also lists every member's menu
+(<ansi fg="command">help webclient</ansi>). Both send the commands above, so the same
+rules hold: no changes in a battle, and the fallen can't be moved.
 
 On narrow ground your combat formation folds into two columns without changing saved placements. Open adjacent front columns expose rear members; some enemies leap past a downed protector. Shower of Sparks hits orthogonal neighbors of its primary target. See help battlefield.

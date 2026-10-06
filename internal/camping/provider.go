@@ -198,6 +198,11 @@ type CampState struct {
 	Embers bool
 	// Tent is an oiled canvas tent pitched at the camp (Phase 40a3).
 	Tent bool
+	// TentKind and TentNote (Phase 52) name the pitched tent and what it
+	// does; Tents are the tents carried, for the Camp tab's picker.
+	TentKind TentKind
+	TentNote string
+	Tents    []TentChoice
 	// Gear is the camp gear the company carries (Phase 40a4), one short
 	// label each, for the web Camp tab.
 	Gear []string
@@ -249,4 +254,13 @@ func CampStateOf(leaderUserID, roomID int, roomTags []string) (CampState, bool) 
 		return CampState{}, false
 	}
 	return cp.CampStateOf(leaderUserID, roomID, roomTags)
+}
+
+// TentChoice is one carried tent on the Camp tab: its kind, name, effect and
+// whether it is the one pitched.
+type TentChoice struct {
+	Kind    TentKind
+	Name    string
+	Effect  string
+	Pitched bool
 }

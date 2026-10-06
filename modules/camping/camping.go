@@ -45,7 +45,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp duties [member] [duty] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp duties [member] [duty] | camp tent [kind] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply|remedy] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -79,6 +79,14 @@ type Registry struct {
 	// grant is for, saved with it, so breaking camp or starting a new rest
 	// before the grant neither drops nor swaps them.
 	RestedDuties map[int]map[string]string `yaml:"rested_duties,omitempty"`
+	// RestedTents (Phase 52) is the tent a pending Rested grant was slept
+	// in (it sets the buff's tier and length), saved with the grant for the
+	// same reason as RestedDuties.
+	RestedTents map[int]camping.TentKind `yaml:"rested_tents,omitempty"`
+	// TentChoices (52 review) is the tent each leader chose with `camp
+	// tent`. Like AutoSharpen it outlives the camp, so a company carrying
+	// two tents need not choose again at every camp.
+	TentChoices map[int]camping.TentKind `yaml:"tent_choices,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -96,6 +104,8 @@ func NewRegistry() *Registry {
 		CampRewards:        map[int]campReward{},
 		LastCampRewards:    map[int]time.Time{},
 		RestedDuties:       map[int]map[string]string{},
+		RestedTents:        map[int]camping.TentKind{},
+		TentChoices:        map[int]camping.TentKind{},
 	}
 }
 
@@ -134,6 +144,14 @@ func (r Registry) Clone() Registry {
 		CampRewards:        make(map[int]campReward, len(r.CampRewards)),
 		LastCampRewards:    make(map[int]time.Time, len(r.LastCampRewards)),
 		RestedDuties:       make(map[int]map[string]string, len(r.RestedDuties)),
+		RestedTents:        make(map[int]camping.TentKind, len(r.RestedTents)),
+		TentChoices:        make(map[int]camping.TentKind, len(r.TentChoices)),
+	}
+	for leaderUserID, kind := range r.TentChoices {
+		out.TentChoices[leaderUserID] = kind
+	}
+	for leaderUserID, kind := range r.RestedTents {
+		out.RestedTents[leaderUserID] = kind
 	}
 	for leaderUserID, duties := range r.RestedDuties {
 		out.RestedDuties[leaderUserID] = duties // replaced whole, never edited
@@ -244,6 +262,16 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			loaded.CampRewards[leaderUserID] = reward
 		}
 	}
+	for leaderUserID, kind := range wire.TentChoices {
+		if _, known := camping.ParseTent(string(kind)); leaderUserID > 0 && known {
+			loaded.TentChoices[leaderUserID] = kind
+		}
+	}
+	for leaderUserID, kind := range wire.RestedTents {
+		if leaderUserID > 0 && kind != "" {
+			loaded.RestedTents[leaderUserID] = kind
+		}
+	}
 	for leaderUserID, duties := range wire.RestedDuties {
 		if leaderUserID > 0 && len(duties) > 0 {
 			loaded.RestedDuties[leaderUserID] = duties
@@ -307,6 +335,12 @@ type cappedSurvival interface {
 	ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int, ceilings map[survival.MemberKey]int) ([]survival.ExertionResult, error)
 }
 
+// curingSurvival ends an ailment (Phase 55); nativeSurvival does it through the
+// survival module.
+type curingSurvival interface {
+	CureAilment(leaderUserID int, key survival.MemberKey, kind string) (bool, error)
+}
+
 type Survival interface {
 	ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error)
 	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
@@ -327,6 +361,11 @@ func (nativeSurvival) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationI
 // ApplyCompanyRestRecoveryCapped is the duty-aware recovery (Phase 51).
 func (nativeSurvival) ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int, ceilings map[survival.MemberKey]int) ([]survival.ExertionResult, error) {
 	return survival.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, ceilings)
+}
+
+// CureAilment ends a member's ailment (Phase 55).
+func (nativeSurvival) CureAilment(leaderUserID int, key survival.MemberKey, kind string) (bool, error) {
+	return survival.CureAilment(leaderUserID, key, kind)
 }
 
 func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {
@@ -406,7 +445,12 @@ type CampingModule struct {
 	// restedDuties (51 review) are the locked duties owed with a pending
 	// Rested grant (Registry.RestedDuties).
 	restedDuties map[int]map[string]string
-	lastRewards  map[int]time.Time
+	// restedTents (Phase 52) is the tent a pending Rested grant was slept in.
+	restedTents map[int]camping.TentKind
+	// tentChoices (52 review) is each leader's chosen tent
+	// (Registry.TentChoices).
+	tentChoices map[int]camping.TentKind
+	lastRewards map[int]time.Time
 	// raiders, and the seams that find, check, and send off raid groups.
 	raiders       map[int]raiders
 	raidGroup     func(roomID, first int) []int
@@ -553,7 +597,7 @@ func (m *CampingModule) refreshLitRoomsLocked() {
 	for _, camp := range m.camps {
 		resting := camp.Rest != nil && camp.Rest.State == camping.Resting
 		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit, Damp: camp.Damp,
-			Embers: camp.Embers, Tent: camp.Tent, Resting: resting})
+			Embers: camp.Embers, Tent: camp.Tent, TentKind: camp.TentKind, Resting: resting})
 	}
 	for _, list := range byRoom {
 		slices.SortFunc(list, func(a, b camping.RoomCamp) int { return a.LeaderUserID - b.LeaderUserID })
@@ -598,6 +642,8 @@ func (m *CampingModule) saveLocked() error {
 		CampRewards:        m.campRewards,
 		LastCampRewards:    m.lastRewards,
 		RestedDuties:       m.restedDuties,
+		RestedTents:        m.restedTents,
+		TentChoices:        m.tentChoices,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -655,6 +701,12 @@ func (m *CampingModule) load() {
 	}
 	if loaded.LastCampRewards != nil {
 		m.lastRewards = loaded.LastCampRewards
+	}
+	if loaded.RestedTents != nil {
+		m.restedTents = loaded.RestedTents
+	}
+	if loaded.TentChoices != nil {
+		m.tentChoices = loaded.TentChoices
 	}
 	if loaded.RestedDuties != nil {
 		m.restedDuties = loaded.RestedDuties
@@ -714,8 +766,9 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
-	tent := m.gearCount(user.UserId, tentItemID) > 0 // read before m.mu: it calls the company module
+	carried := m.tentsCarried(user.UserId) // read before m.mu: it calls the company module
 	m.mu.Lock()
+	tentKind, tent := camping.PickTent(carried, m.tentChoices[user.UserId])
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
 	if !roomEligible(room, m.roomTag()) {
@@ -729,13 +782,14 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 		return "You can't make camp here."
 	}
 	camp.Tent = tent // Phase 40a3
+	camp.TentKind = tentKind
 	m.camps[user.UserId] = camp
 	if err := m.saveLocked(); err != nil {
 		delete(m.camps, user.UserId)
 		return err.Error()
 	}
 	if tent {
-		return "You make camp here, pegging out your oiled canvas tent."
+		return "You make camp here, pegging out your " + camping.TentOf(tentKind).Name + "."
 	}
 	return "You make camp here."
 }
@@ -749,6 +803,7 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 	}
 	m.mu.Lock()
 	camp, ok := m.camps[user.UserId]
+	choice := m.tentChoices[user.UserId]
 	var refusal string
 	switch {
 	case !ok:
@@ -768,7 +823,7 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 	if refusal != "" {
 		return refusal
 	}
-	tent := m.gearCount(user.UserId, tentItemID) > 0 // Phase 40a3
+	tentKind, tent := camping.PickTent(m.tentsCarried(user.UserId), choice) // Phase 40a3
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -786,6 +841,7 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 	}
 	lit.Damp = damp
 	lit.Tent = tent
+	lit.TentKind = tentKind
 	m.camps[user.UserId] = lit
 	if err := m.saveLocked(); err != nil {
 		m.camps[user.UserId] = camp
@@ -962,7 +1018,8 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	}
 	delete(m.recoveryApplied, user.UserId) // the new rest's recovery is not in yet
 	// Phase 16: the weather at the camp scales its recovery, locked now.
-	recovery, condition, scaled := m.campRecovery(room, gear.Tent)
+	tentSpec := camping.TentOf(gear.TentKind)
+	recovery, condition, scaled := m.campRecovery(room, gear.Tent, gear.Tent && tentSpec.FullShelter)
 	rest := *resting.Rest
 	rest.Recovery = recovery
 	rest.Bedrolls = gear.Bedrolls
@@ -973,14 +1030,23 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	rest.Incense = funded.Incense
 	resting.Prepared = funded.clearQueue(resting.Prepared)
 	resting.Tent = gear.Tent
+	if gear.Tent {
+		resting.TentKind = tentSpec.Kind
+		rest.Tent = tentSpec.Kind // Phase 52: locked for the rest
+	}
 	// Phase 51: the duties of the members at the camp, locked now.
 	rest.Duties = camping.LockDuties(camp.Duties, funded.present)
 	// Phase 33f3: whether raiders come, and when, is settled now.
-	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
+	// Phase 52: the pitched tent scales the chance, in the same roll.
+	raidPct, thiefPct := 100, 100
+	if gear.Tent {
+		raidPct, thiefPct = tentSpec.RaidPct, tentSpec.ThiefPct
+	}
+	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC, raidPct)
 	// Phase 40a4: so is whether thieves come; bells and trip lines never
 	// let them.
 	if !gear.Bells {
-		rest.Theft = m.planTheftLocked(room)
+		rest.Theft = m.planTheftLocked(room, thiefPct)
 	}
 	resting.Rest = &rest
 	m.camps[user.UserId] = resting
@@ -1280,6 +1346,12 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 	// the game loop (this can run on a timer goroutine). Phase 33f3: so
 	// are the rest's Forage and Vigil.
 	m.restedPending[leaderUserID] = true
+	// 52: and the tent it was slept in, which sets the buff.
+	if camp.Rest.Tent != "" {
+		m.restedTents[leaderUserID] = camp.Rest.Tent
+	} else {
+		delete(m.restedTents, leaderUserID)
+	}
 	// 51 review: the rest's duties go with the pending grant.
 	if len(camp.Rest.Duties) > 0 {
 		m.restedDuties[leaderUserID] = camp.Rest.Duties
@@ -1432,7 +1504,8 @@ func (m *CampingModule) statusTextLocked(leaderUserID int) string {
 		lines = append(lines, "There is no fire lit.")
 	}
 	if camp.Tent {
-		lines = append(lines, "An oiled canvas tent is pitched here.")
+		tent := camping.TentOf(camp.TentKind)
+		lines = append(lines, fmt.Sprintf("%s is pitched here (%s).", util.CapitalizeFirst(tent.WithArticle()), tent.Effect))
 	}
 	if camp.Rest != nil && camp.Rest.State == camping.Resting {
 		if line := restGearText(camp.Rest, camp.Tent, m.companyMembers(leaderUserID)); line != "" {
@@ -1511,6 +1584,8 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.breakCamp(user, room))
 	case "cook":
 		user.SendText(m.cook(user, room)) // Phase 33f3
+	case "tent":
+		user.SendText(m.tentCommand(user, room, args[1:])) // Phase 52
 	case "duties", "duty":
 		user.SendText(m.dutiesCommand(user, room, args[1:])) // Phase 51
 	case "supplies":
@@ -1614,20 +1689,26 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	_, hasCamp := m.camps[leaderUserID]
 	m.mu.Unlock()
 	var gear, supplies []string
+	var tents []camping.TentChoice
 	bells := false
 	if hasCamp {
 		carried := m.gearOf(leaderUserID)
 		gear, bells = carried.labels(m.companyMembers(leaderUserID)), carried.Bells
 		supplies = m.supplyLabels(leaderUserID)
+		tents = m.tentRows(leaderUserID, carried.TentKind, carried.Tents)
 	}
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]
-	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear, Supplies: supplies}
+	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear, Supplies: supplies, Tents: tents}
 	if !ok {
 		s.CanCamp = has(m.roomTag())
 	} else {
 		s.HasCamp, s.Here, s.FireLit = true, camp.RoomID == roomID, camp.FireLit
 		s.Embers, s.Tent = camp.Embers, camp.Tent
+		s.TentKind = camp.TentKind
+		if camp.Tent {
+			s.TentNote = camping.TentOf(camp.TentKind).Effect
+		}
 		s.RoomID = camp.RoomID
 		if !camp.Prepared.Empty() {
 			s.Prepared = strings.Split(m.queuedTextLocked(leaderUserID, camp.Prepared), ", ")
