@@ -351,6 +351,33 @@
         }
 
         .company-formation td.empty { color: var(--t-text-secondary); }
+        .company-formation td.fallen { color: var(--t-text-secondary); font-style: italic; }
+
+        /* Click a member, then a place: the formation's cells are buttons. */
+        .company-formation td { padding: 0; }
+        .fm-cell {
+            display: block;
+            width: 100%;
+            min-height: 2.2em;
+            padding: 3px 4px;
+            font: inherit;
+            color: inherit;
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            overflow-wrap: anywhere;
+            line-height: 1.25;
+        }
+        @media (hover: hover) { .fm-cell:hover { background: var(--t-bg-surface-alt); } }
+        .fm-cell:focus-visible { outline: 2px solid var(--t-accent); outline-offset: -2px; }
+        .company-formation td.is-moving { outline: 2px solid var(--t-accent); outline-offset: -2px; background: var(--t-bg-surface-alt); }
+        .company-formation.is-picking td.empty .fm-cell,
+        .company-formation.is-picking td.filled:not(.is-moving) .fm-cell { border: 1px dashed var(--t-accent); }
+        .fm-help { font-size: 0.72em; color: var(--t-text-secondary); margin: 3px 0 0; min-height: 1.2em; }
+        .fm-help.is-warn { color: var(--t-warn, var(--t-text)); font-weight: bold; }
+        .fm-unplaced { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; font-size: 0.78em; align-items: center; }
+        .fm-unplaced .fm-cell { display: inline-block; width: auto; min-height: 0; border: 1px solid var(--t-accent-dim); }
+        .fm-unplaced .fm-cell.is-moving { outline: 2px solid var(--t-accent); }
         .company-formation td.is-leader { color: var(--t-party-leader); font-weight: bold; }
 
         .company-members {
@@ -536,27 +563,169 @@
         return parts.join(' \u00b7 ');
     }
 
+    // Phase 58: click (or tap) a member in the drawing, then an empty cell
+    // to move them there, or another member to swap places. The commands
+    // are `formation move` / `formation swap`, so the server's rules stand
+    // (no changes in a battle, no moving the fallen, a solo leader stays at
+    // the centre) and its answer shows in the game text.
+    let movingKey = null;      // the member picked up, by key
+    let formationNote = '';    // the line under the drawing
+    let formationWarn = false;
+
+    function whoArg(m) {
+        return m.key === 'leader' ? 'me' : '#' + m.id;
+    }
+
+    function inBattleNow() {
+        const stored = Client.GMCPStructs.Company;
+        const b = stored && stored.Battle;
+        return !!(b && Array.isArray(b.enemies));
+    }
+
+    function setFormationNote(text, warn) {
+        formationNote = text || '';
+        formationWarn = !!warn;
+        update('local');
+    }
+
+    function pickMember(m, members) {
+        if (movingKey === m.key) {
+            movingKey = null;
+            setFormationNote('');
+            return;
+        }
+        if (inBattleNow()) {
+            setFormationNote('The battle is under way: it plays out as you set it up. Move people before it starts.', true);
+            return;
+        }
+        if (m.status === 'dead') {
+            setFormationNote(m.name + ' has fallen and can\'t be moved until raised.', true);
+            return;
+        }
+        if (members.length < 2) {
+            setFormationNote('You stand at the centre alone. Recruit a companion first (help company).', true);
+            return;
+        }
+        movingKey = m.key;
+        setFormationNote('');
+    }
+
+    function placeMover(target, members) {
+        const mover = members.find(x => x.key === movingKey);
+        if (!mover) { movingKey = null; setFormationNote(''); return; }
+        if (inBattleNow()) {
+            movingKey = null;
+            setFormationNote('The battle is under way: it plays out as you set it up. Move people before it starts.', true);
+            return;
+        }
+        let cmd;
+        let said;
+        if (target.member) {
+            if (target.member.status === 'dead') {
+                setFormationNote(target.member.name + ' has fallen: pick another place.', true);
+                return;
+            }
+            cmd = 'formation swap ' + whoArg(mover) + ' ' + whoArg(target.member);
+            said = 'Swapping ' + mover.name + ' with ' + target.member.name + '.';
+        } else {
+            cmd = 'formation move ' + whoArg(mover) + ' ' + (target.row + 1) + ' ' + (target.col + 1);
+            said = 'Moving ' + mover.name + ' to row ' + (target.row + 1) + ', column ' + (target.col + 1) + '.';
+        }
+        movingKey = null;
+        formationNote = said;
+        formationWarn = false;
+        send(cmd);
+        update('local');
+    }
+
     function formationTable(members) {
         const grid = [[null, null, null], [null, null, null], [null, null, null]];
         members.forEach(m => {
             const c = m && m.cell;
             if (c && c.row >= 0 && c.row < 3 && c.col >= 0 && c.col < 3) { grid[c.row][c.col] = m; }
         });
-        const table = el('table', 'company-formation');
+        const mover = movingKey && members.find(x => x.key === movingKey);
+        if (movingKey && !mover) { movingKey = null; }
+
+        const wrap = el('div', 'company-formation-wrap');
+        const table = el('table', 'company-formation' + (mover ? ' is-picking' : ''));
         table.appendChild(el('caption', null, 'Formation (row 1 is the front)'));
+        table.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && movingKey) {
+                e.preventDefault();
+                movingKey = null;
+                setFormationNote('Move cancelled.');
+            }
+        });
         grid.forEach((row, r) => {
             const tr = el('tr');
             const th = el('th', null, 'Row ' + (r + 1));
             th.setAttribute('scope', 'row');
             tr.appendChild(th);
-            row.forEach(m => {
-                const td = el('td', m ? 'filled' + (m.key === 'leader' ? ' is-leader' : '') : 'empty', m ? m.name : '\u00b7');
-                if (m) { td.title = m.name; } else { td.setAttribute('aria-label', 'empty'); }
+            row.forEach((m, c) => {
+                const cls = m ? 'filled' + (m.key === 'leader' ? ' is-leader' : '') + (m.status === 'dead' ? ' fallen' : '') + (mover && m === mover ? ' is-moving' : '') : 'empty';
+                const td = el('td', cls);
+                const b = el('button', 'fm-cell', m ? m.name : '\u00b7');
+                b.type = 'button';
+                b.setAttribute('data-cell', r + ',' + c);
+                if (m) {
+                    b.title = m.name;
+                    if (mover && m === mover) {
+                        b.setAttribute('aria-pressed', 'true');
+                        b.setAttribute('aria-label', m.name + ', picked up. Choose a place, or press again to cancel.');
+                        b.addEventListener('click', () => pickMember(m, members));
+                    } else if (mover) {
+                        b.setAttribute('aria-label', 'Swap ' + mover.name + ' with ' + m.name);
+                        b.addEventListener('click', () => placeMover({ member: m }, members));
+                    } else {
+                        b.setAttribute('aria-pressed', 'false');
+                        b.setAttribute('aria-label', 'Move ' + m.name + ' (row ' + (r + 1) + ', column ' + (c + 1) + ')');
+                        b.title = 'Click to move ' + m.name;
+                        b.addEventListener('click', () => pickMember(m, members));
+                    }
+                } else if (mover) {
+                    b.setAttribute('aria-label', 'Move ' + mover.name + ' to row ' + (r + 1) + ', column ' + (c + 1));
+                    b.addEventListener('click', () => placeMover({ row: r, col: c }, members));
+                } else {
+                    b.setAttribute('aria-label', 'Empty, row ' + (r + 1) + ', column ' + (c + 1));
+                    b.disabled = true;
+                    b.style.cursor = 'default';
+                }
+                td.appendChild(b);
                 tr.appendChild(td);
             });
             table.appendChild(tr);
         });
-        return table;
+        wrap.appendChild(table);
+
+        // Members the drawing doesn't hold (not placed yet) can be set down too.
+        const unplaced = members.filter(m => m && m.key && !m.cell && m.status !== 'dead');
+        if (unplaced.length) {
+            const row = el('div', 'fm-unplaced');
+            row.appendChild(el('span', null, 'Not placed:'));
+            unplaced.forEach(m => {
+                const b = el('button', 'fm-cell', m.name);
+                b.type = 'button';
+                b.setAttribute('data-cell', 'u:' + m.key);
+                b.setAttribute('aria-pressed', movingKey === m.key ? 'true' : 'false');
+                b.setAttribute('aria-label', 'Place ' + m.name + ' in the formation');
+                if (movingKey === m.key) { b.classList.add('is-moving'); }
+                b.addEventListener('click', () => (mover && mover !== m) ? placeMover({ member: m }, members) : pickMember(m, members));
+                row.appendChild(b);
+            });
+            wrap.appendChild(row);
+        }
+
+        let help = formationNote;
+        let warn = formationWarn;
+        if (!help) {
+            help = mover ? 'Moving ' + mover.name + ': click an empty cell to move there, or a member to swap places. Esc cancels.'
+                : 'Click a member, then a place, to rearrange (help formation).';
+        }
+        const line = el('div', 'fm-help' + (warn ? ' is-warn' : ''), help);
+        line.setAttribute('role', 'status');
+        wrap.appendChild(line);
+        return wrap;
     }
 
     function memberCard(m) {
@@ -748,6 +917,7 @@
         // Keep keyboard focus on the same card across the rebuild.
         const focused    = document.activeElement;
         const focusedKey = (focused && panel.contains(focused) && focused.getAttribute('data-key')) || null;
+        const focusedCell = (focused && panel.contains(focused) && focused.getAttribute('data-cell')) || null;
         const hasParty  = !!(partyData && ((partyData.Members && partyData.Members.length) || (partyData.Vitals && Object.keys(partyData.Vitals).length)));
 
         panel.textContent = '';
@@ -758,7 +928,10 @@
         }
         if (hasParty) { panel.appendChild(playersSection(partyData)); }
 
-        if (focusedKey) {
+        if (focusedCell) {
+            const cell = panel.querySelector('[data-cell="' + focusedCell + '"]');
+            if (cell && !cell.disabled) { cell.focus(); }
+        } else if (focusedKey) {
             const again = panel.querySelector('[data-key="' + (window.CSS && CSS.escape ? CSS.escape(focusedKey) : focusedKey) + '"]');
             if (again) { again.focus(); }
         }

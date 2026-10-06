@@ -94,7 +94,7 @@ func init() {
 			Goal:  "Put one companion in the front row and another behind it.",
 			Hints: []string{
 				`<ansi fg="command">formation</ansi> shows the grid, row by row.`,
-				`<ansi fg="command">formation move <name> <row> <col></ansi> places someone, e.g. <ansi fg="command">formation move tamsin 1 2</ansi>.`,
+				`<ansi fg="command">formation move <name> <row> <col></ansi> places someone, e.g. <ansi fg="command">formation move tamsin 1 2</ansi>. In the web client, click a member in Company > Status, then a cell.`,
 				`<ansi fg="command">formation swap <a> <b></ansi> trades two members' places.`,
 				`<ansi fg="command">help formation</ansi> explains reach and interception in full.`,
 			},
