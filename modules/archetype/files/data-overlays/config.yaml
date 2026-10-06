@@ -224,6 +224,45 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # A plain dagger, a cotton shirt, a leather cap, worn boots, two doll parts.
     Kit: [10004, 20008, 20020, 20003, 30004, 30015, 70, 70, 38]
+  # Phase 39c: the weather caster, a neutral lineage (no alignment gate at 10
+  # or 30). It calls a battle-local weather (internal/stormcraft, battle
+  # state) that changes both sides' odds, then casts wind and lightning; it
+  # casts as a wizard does (role caster) and uses mana.
+  - ArchetypeId: shaman
+    HPPerLevel: 0.5
+    HPStart: 0
+    AttackRate: 0.7
+    EvasionRate: 0.75
+    ArmorTraining: light
+    ShieldSizes: [none]
+    ManaBase: 40
+    ManaPerLevel: 10
+    Name: Shaman
+    Description: Weather-callers who bring fog, a cold wind and rain into a battle to tilt the odds, then answer with wind and lightning; no creed, no alignment gate on their routes.
+    Skills: [cast]
+    Schools: [stormcraft]
+    GrantSkills:
+      - { Skill: cast, Level: 1 }
+    GrantSpells: [callfog, gust]
+    LevelSpells:
+      - { Spell: chillwind, Level: 3 }
+      - { Spell: rain, Level: 6 }
+      - { Spell: lightning, Level: 8 }
+    CompanionSpells:
+      - { Spell: callfog, Level: 1 }
+      - { Spell: gust, Level: 1 }
+      - { Spell: chillwind, Level: 3 }
+      - { Spell: rain, Level: 6 }
+      - { Spell: lightning, Level: 8 }
+    Utility: [weather]
+    Growth:
+      - { Stat: mysticism, Weight: 4 }
+      - { Stat: smarts, Weight: 3 }
+      - { Stat: perception, Weight: 2 }
+      - { Stat: speed, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+    # An ash staff, a hooded robe, and one minor mana draught.
+    Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 38]
   - ArchetypeId: cleric
     HPPerLevel: 0.6
     HPStart: 2

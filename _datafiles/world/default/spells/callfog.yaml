@@ -1,0 +1,11 @@
+# Phase 39c: a Shaman's weather. Fog dims the foes' ranged attacks and spells
+# for 3 rounds (internal/stormcraft); the battle's weather is battle-local.
+spellid: callfog
+name: Call Fog
+description: Calls a fog into the battle for 3 rounds. Foes' ranged attacks lose 10 points of accuracy and their spells hit 10% weaker. Replaces any other weather.
+type: helpsingle
+school: stormcraft
+cost: 6
+waitrounds: 0
+difficulty: 0
+scope: member

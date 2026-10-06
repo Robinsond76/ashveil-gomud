@@ -146,4 +146,9 @@ const (
 	DollNoWear  = "dollnowear"  // a doll that cannot wear armor (a golem's body is its armor)
 	DollAttack  = "dollattack"  // Attack added to each doll's blows
 	DollDamage  = "dolldamage"  // damage added to each doll's blows
+	// The Shaman's lineage (Phase 39c).
+	Chain       = "chain"       // percent of a Lightning bolt a second foe takes
+	FogEvade    = "fogevade"    // Evasion allies gain while its Fog lasts
+	WeatherLong = "weatherlong" // extra rounds its weather calls last
+	Stoneskin   = "stoneskin"   // armor its Stoneskin gives one ally for the battle
 )
