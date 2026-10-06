@@ -382,6 +382,32 @@ await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: tr
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '49-camp-banter.png') }); }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Around the fire'), 'no banter block before any talk (49)');
+// Phase 51: the rest duty picker, a row per member at the camp.
+{
+  const opts = ['sleep', 'watch', 'tend', 'forage', 'cook'];
+  const duties = [
+    { key: 'leader', name: 'Wren', command: 'me', duty: 'sleep', options: opts },
+    { key: 'companion:1', name: 'Brother Oswin', command: 'Brother Oswin', duty: 'watch', options: opts },
+    { key: 'companion:5', name: 'Mira', command: 'Mira', duty: 'brew', options: [...opts, 'brew'] },
+  ];
+  const campWith = (locked) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: locked, rest_percent: 0, rest_seconds: 30, can_camp: false, inn: false, duties, duties_locked: locked });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(false));
+  const rows = await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty')].map(r => ({
+    name: r.querySelector('.cmp-duty-name').textContent,
+    pressed: [...r.querySelectorAll('button[aria-pressed="true"]')].map(b => b.textContent),
+    count: r.querySelectorAll('button').length,
+  })));
+  check(rows.length === 3 && rows[0].name === 'Wren (you)' && rows[1].pressed.join() === 'Watch' && rows[2].pressed.join() === 'Brew' && rows[2].count === 6 && rows[0].count === 5, 'duty rows: one per member, the duty pressed, Brew only for an Alchemist (51)');
+  got = await sentNow(async () => { await page.getByRole('group', { name: 'Brother Oswin duty' }).getByRole('button', { name: 'Cook' }).click(); });
+  check(JSON.stringify(got) === '["camp duties Brother Oswin cook"]', 'a duty button sends camp duties (51)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '51-camp-duties.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the duty picker fits a phone (51)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '51-camp-duties-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(true));
+  check(await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty button')].every(b => b.disabled)) && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('fixed for this rest'), 'duties lock while resting (51)');
+}
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work this road'), 'no bells on a thieves road: the warning (40a4)');

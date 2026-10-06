@@ -138,6 +138,9 @@ func TestDutiesCommandRefusals(t *testing.T) {
 	assert.Contains(t, d.duty(t, "mira", "brew"), "Mira brews")
 	assert.Contains(t, d.duty(t, "all", "tend"), "Bran tends")
 	assert.Equal(t, "tend", d.camp().Duties[string(survival.CompanionMemberKey(2))])
+	// 51 review: a bare duty word is the leader's own.
+	d.duty(t, "watch")
+	assert.Equal(t, "watch", d.camp().Duties[string(survival.LeaderMemberKey)])
 	assert.Contains(t, d.duty(t, "clear"), "sleep through")
 	assert.Empty(t, d.camp().Duties)
 

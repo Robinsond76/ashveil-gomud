@@ -110,8 +110,8 @@
         .cmp-btn:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
         .cmp-btn[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--t-accent); font-weight: bold; }
         .cmp-btn[disabled] { opacity: 0.6; cursor: default; }
-        .cmp-duty { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 3px; }
-        .cmp-duty-name { min-width: 7em; }
+        .cmp-duty { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+        .cmp-duty-name { flex-basis: 100%; }
 
         .cmp-block {
             border: 1px solid var(--t-accent-dim);
@@ -1249,11 +1249,6 @@
             pad.appendChild(talk);
         }
 
-        // Phase 51: who does what during the next rest.
-        if (camp.has_camp && camp.here && Array.isArray(camp.duties) && camp.duties.length) {
-            pad.appendChild(dutiesBlock(camp));
-        }
-
         // Each button only when it would work.
         const actions = el('div', 'cmp-actions');
         if (camp.can_camp) { actions.appendChild(button('Make camp', 'camp', 'Make camp here (camp)')); }
@@ -1263,6 +1258,12 @@
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));
         if (camp.inn) { actions.appendChild(button('Inn', 'inn', 'This inn\'s price and your stay (inn)')); }
         pad.appendChild(actions);
+
+        // Phase 51: who does what during the next rest, under the camp's
+        // own buttons (51 review: above them it pushed Rest off a phone).
+        if (camp.has_camp && camp.here && Array.isArray(camp.duties) && camp.duties.length) {
+            pad.appendChild(dutiesBlock(camp));
+        }
 
         const members = data.members.filter(m => m && m.status !== 'dead');
         if (members.length) {

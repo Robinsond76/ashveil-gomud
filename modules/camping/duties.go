@@ -90,8 +90,13 @@ func (m *CampingModule) dutiesCommand(user *users.UserRecord, room *rooms.Room, 
 	if len(args) == 1 && (args[0] == "clear" || args[0] == "reset") {
 		return m.assignDuties(user, camp, nil, camping.DutySleep, true)
 	}
-	if len(args) < 2 {
-		return dutyUsage()
+	if len(args) == 1 {
+		// 51 review: a bare duty word is the leader's own ("camp duties
+		// watch"), as "camp prepare" takes no member for the leader.
+		if _, ok := camping.ParseDuty(args[0]); !ok {
+			return dutyUsage()
+		}
+		args = []string{"me", args[0]}
 	}
 	duty, valid := camping.ParseDuty(args[len(args)-1])
 	if !valid {
