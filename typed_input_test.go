@@ -20,7 +20,10 @@ func TestTypedInputNeverTakesACombatCause(t *testing.T) {
 	shutdown := make(chan bool)
 	var wg sync.WaitGroup
 	go w.InputWorker(shutdown, &wg)
-	t.Cleanup(func() { close(shutdown) })
+	t.Cleanup(func() {
+		close(shutdown)
+		wg.Wait() // the worker logs as it stops; let it finish before the next test
+	})
 
 	type seen struct {
 		cause uint64

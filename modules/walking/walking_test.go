@@ -196,6 +196,7 @@ func (e *env) addCompanion(leader, id int, name string, roomId int) *characters.
 func captureMessages(t *testing.T) *[]string {
 	t.Helper()
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(ev events.Event) events.ListenerReturn {
 		messages = append(messages, ev.(events.Message).Text)
 		return events.Continue

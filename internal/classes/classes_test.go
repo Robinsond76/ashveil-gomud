@@ -98,10 +98,11 @@ func TestRankTablesAreOrdered(t *testing.T) {
 }
 
 // TestFaithRoutesAreOpenAndTheRestPlanned: the cleric and warrior elite (38c1)
-// routes of the faith design are selectable; the other lineages' elite
-// routes are listed as planned (38c).
+// and the wizard and witch elite (38c3) routes are selectable; the other
+// lineages' elite routes are listed as planned (38c).
 func TestFaithRoutesAreOpenAndTheRestPlanned(t *testing.T) {
 	open := map[string]bool{"warlord": true, "paladin": true, "dread-knight": true, "hierarch": true, "elder-druid": true, "demonologist": true,
+		"archon": true, "archmage": true, "necromancer": true, "wise-one": true, "coven-mother": true, "crone-of-ash": true,
 		"pathfinder": true, "swordmaster": true, "nightblade": true, "sentinel": true, "marksman": true, "ravager": true}
 	for _, c := range All() {
 		if c.Tier != TierElite {
@@ -465,7 +466,7 @@ func TestEveryOpenEliteRankAppliesFromItsLevel(t *testing.T) {
 		assert.Equal(t, 11, len(RanksReached(c.ID, 60)), c.ID+": four advanced and seven elite ranks")
 		assert.Equal(t, 4, len(RanksReached(parent.ID, 59)), parent.ID+" gains nothing from the elite table")
 	}
-	assert.Equal(t, 12, open, "warrior, cleric, rogue and ranger elites are open")
+	assert.Equal(t, 18, open, "warrior, cleric, rogue, ranger, wizard and witch elites are open")
 }
 
 func rankNames(rs []Rank) []string {

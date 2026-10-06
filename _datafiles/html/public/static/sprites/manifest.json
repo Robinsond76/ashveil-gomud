@@ -954,6 +954,51 @@
     64
    ]
   },
+  "battle/units/doll/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "construct",
+   "names": [
+    "doll"
+   ],
+   "note": "a Doll Master's painted wooden puppet (39d)",
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/dollmaster/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit dollmaster"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/dread-knight/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1234,6 +1279,27 @@
     "goblin"
    ],
    "note": "base for the variants and random encounters",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/golemancer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "dollmaster",
+   "note": "dollmaster line",
    "size": [
     256,
     64
@@ -1609,6 +1675,27 @@
     72
    ]
   },
+  "battle/units/marionettist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "dollmaster",
+   "note": "dollmaster line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/mercenary/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1754,6 +1841,27 @@
    "family": "promoted class",
    "variant_of": "cleric",
    "note": "cleric line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/puppeteer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "dollmaster",
+   "note": "dollmaster line",
    "size": [
     256,
     64
@@ -4154,6 +4262,48 @@
     96
    ]
   },
+  "map/units/dollmaster/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/dollmaster/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/dread-knight/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4369,6 +4519,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/golemancer/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "dollmaster",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/golemancer/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "dollmaster",
    "size": [
     128,
     96
@@ -4766,6 +4960,50 @@
     96
    ]
   },
+  "map/units/marionettist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "dollmaster",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/marionettist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "dollmaster",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/mercenary/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4937,6 +5175,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/puppeteer/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "dollmaster",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/puppeteer/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "dollmaster",
    "size": [
     128,
     96

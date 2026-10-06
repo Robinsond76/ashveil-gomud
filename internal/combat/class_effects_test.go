@@ -61,6 +61,34 @@ func TestHexedFoesTakeMoreFromAHag(t *testing.T) {
 	assert.Equal(t, 12, classBlowDamage(hag, foe, 10), "+15%, rounded")
 }
 
+// Phase 38c3 review: a Tackle's exposure or a weapon's poison is not a hex;
+// the same status counts once a hex has laid it on the foe this battle.
+func TestSharedStatusesCountAsAHexOnlyWhenAHexLaidThem(t *testing.T) {
+	defenseSpecs(t)
+	hag := classed("hag", 12)
+	foe := classed("", 12)
+	foe.AddBuff(status.Exposed, true)
+	assert.False(t, hexed(foe), "a tackled foe is not hexed")
+	assert.Equal(t, 10, classBlowDamage(hag, foe, 10))
+	foe.RTState().HexBuffs = map[int]bool{status.Exposed: true}
+	assert.True(t, hexed(foe), "Frailty laid it")
+	assert.Equal(t, 12, classBlowDamage(hag, foe, 10))
+}
+
+// Phase 38c3 review: Ashen Curse raises every ally's blows against a hexed
+// foe, not only the Crone's own.
+func TestAshenCurseRaisesEveryAllysBlows(t *testing.T) {
+	defenseSpecs(t)
+	ally := classed("", 40)
+	foe := classed("", 40)
+	foe.RTState().CurseDmg = 15
+	assert.Equal(t, 10, classBlowDamage(ally, foe, 10), "only while hexed")
+	foe.AddBuff(status.Asleep, true)
+	assert.Equal(t, 12, classBlowDamage(ally, foe, 10), "+15%, rounded")
+	hag := classed("hag", 40)
+	assert.Equal(t, 13, classBlowDamage(hag, foe, 10), "a Hag's own 25% counts instead")
+}
+
 func TestBlockAndParryAddTheClassPoints(t *testing.T) {
 	defenseSpecs(t)
 	stockDefenses(t)

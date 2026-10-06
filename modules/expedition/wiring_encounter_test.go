@@ -1,13 +1,11 @@
 package expedition
 
 import (
-	"path/filepath"
 	"strconv"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -49,11 +47,9 @@ func encounterFoes(t *testing.T, room *rooms.Room, lead int) []*mobs.Mob {
 // its kind, one group of their own; the encounter stays active while either
 // stands. A solitary foe comes alone. Uses the shipped mob files.
 func TestEncounterSpawnsAPair(t *testing.T) {
-	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
-	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	useShippedWorld(t)
 	races.LoadDataFiles()
 	items.LoadDataFiles()
-	rooms.LoadDataFiles()
 	mobs.LoadDataFiles()
 	room := rooms.LoadRoom(2002)
 	require.NotNil(t, room)
@@ -90,11 +86,9 @@ func TestEncounterSpawnsAPair(t *testing.T) {
 // TestShippedBossesStandAlone: the shipped lair of the lich spawns the lich
 // alone: a solitary boss isn't grouped or topped up.
 func TestShippedBossesStandAlone(t *testing.T) {
-	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
-	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	useShippedWorld(t)
 	races.LoadDataFiles()
 	items.LoadDataFiles()
-	rooms.LoadDataFiles()
 	mobs.LoadDataFiles()
 
 	for _, id := range []int{14, 25, 34, 37} { // lich, abyssal creeper, ent, spider queen
@@ -137,11 +131,9 @@ func TestTravelTimerRunsOnTheGameLoop(t *testing.T) {
 }
 
 func TestCancelEncounterRemovesWholeGroupAndPendingSurprise(t *testing.T) {
-	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
-	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	useShippedWorld(t)
 	races.LoadDataFiles()
 	items.LoadDataFiles()
-	rooms.LoadDataFiles()
 	mobs.LoadDataFiles()
 	room := rooms.LoadRoom(2002)
 	require.NotNil(t, room)

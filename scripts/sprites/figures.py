@@ -54,9 +54,15 @@ CLASSES = {
                     wide=1, hair="charcoal"),
     "shaman": dict(trousers="leather", boots="leather", torso="leather", sleeve="leather",
                    hair="charcoal"),
+    # Phase 39d: a puppeteer in a long plum coat, working a wooden doll on strings.
+    "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum",
+                       hair="charcoal"),
     # Phase 39f: a sky skirmisher in a riding jack.
     "gryphon-rider": dict(trousers="leather", boots="leather", torso="ochre", sleeve="leather",
                           hair="leather"),
+    # Phase 39d: the Doll Master, a puppeteer in a long plum frock coat.
+    "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum",
+                       hair="bone"),
     # Phase 39e: handlers in hide and fur, a whip coiled at the belt.
     "beasttamer": dict(trousers="leather", boots="leather", torso="wool", sleeve="wool",
                        hair="ochre", wide=1),
@@ -634,6 +640,34 @@ def draw_shaman(r):
     cv.part(line(hx - 1, tip + r.px(1), hx - r.px(2), tip + r.px(4)), "water", flat="m")
 
 
+def draw_dollmaster(r):
+    """A long plum coat with brass buttons, a cross-bar control and a wooden doll on strings."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("plum")
+    cv.part(rect(r.tx0 - 1, r.yhip - r.px(1), r.tx1 + 1, r.yhip + r.px(4)), "plum", flat="d")  # coat tails
+    if v != "up":
+        for y in range(r.ysh + r.px(2), r.yhip, max(2, r.px(2))):  # a row of brass buttons
+            cv.put(r.cx, y, "brass.l")
+    _belt(r, "leather", r.yhip - r.px(1))
+    r.arms("plum", glove="wool")
+    r.head(hair="charcoal")
+    if v == "up":
+        return
+    hx, hy = r.hand_r
+    bar = hy - r.px(3)
+    cv.part({(x, bar) for x in range(hx - r.px(2), hx + r.px(3))}, "wood", flat="m")  # control bar
+    cv.part({(hx, y) for y in range(bar, hy + 1)}, "wood", flat="m")
+    # The doll hangs below and beside the hand: head, body, two legs.
+    dx = hx + r.px(2) if v == "down" else hx + r.px(3)
+    dy = min(hy + r.px(6), S.W - r.px(5) - 2)
+    for sx in (hx - r.px(2), hx + r.px(2)):  # strings from the bar's ends
+        cv.part(line(sx, bar + 1, dx, dy - 1), "bone", flat="l")
+    cv.part(rect(dx - 1, dy, dx, dy + 1), "wood", flat="l")  # head
+    cv.part(rect(dx - 1, dy + 2, dx, dy + r.px(3)), "oxblood", flat="m")  # body
+    cv.part({(dx - 1, dy + r.px(3) + 1), (dx, dy + r.px(3) + 1)}, "wood", flat="m")  # legs
+
+
 def draw_gryphon_rider(r):
     """A riding jack, a winged helm with tawny feathers, a spear held high."""
     S, cv, v, k = r.S, r.cv, r.view, r.k
@@ -682,7 +716,46 @@ def draw_beasttamer(r):
         cv.part(ellipse(kx, r.yhip, 1 if k == 1 else 2, 1), "leather", flat="m")  # coiled whip
 
 
+
+def draw_dollmaster(r):
+    """A plum frock coat with brass buttons and a bone-white mane, a puppeteer's
+    wooden control bar held up with three strings, and a spool of thread at the belt."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("plum")
+    skirt = r.yhip + r.px(4)
+    if v == "up":
+        cv.part(rect(r.tx0 - 1, r.ysh, r.tx1 + 1, skirt), "plum")
+        cv.part({(r.cx, y) for y in range(r.ysh + 1, skirt)}, "plum", flat="d")
+    else:
+        cv.part(rect(r.tx0 - 1, r.yhip - 1, r.tx1 + 1, skirt), "plum")  # coat tails
+        cv.part({(x, skirt) for x in range(r.tx0 - 1, r.tx1 + 2)}, "brass", flat="m")
+        for y in range(r.ysh + 2, r.yhip - 1, max(2, r.px(3))):  # brass buttons
+            cv.put(r.cx if v == "down" else r.tx1, y, "brass.l")
+        cv.part(rect(r.tx0, r.ysh, r.tx1, r.ysh + 1), "wool", flat="m")  # cravat
+    _belt(r, "leather", r.yhip - r.px(1), "brass.m")
+    if v != "up":
+        sx = r.tx0 + 1 if v == "down" else r.tx0
+        cv.part(rect(sx, r.yhip, sx + 1, r.yhip + r.px(2)), "bone", flat="m")  # thread spool
+    r.arms("plum", glove="bone")
+    r.head(hair="bone")
+    hx, hy = r.hand_r
+    if v == "up":
+        hx = r.cx + r.px(2)
+    elif v == "down":
+        hx += 1
+    top = hy - r.px(9)
+    cv.part(line(hx - r.px(4), top, hx + r.px(4), top), "wood", flat="m")  # control bar
+    cv.part({(hx, top + 1), (hx, top + 2)}, "wood", flat="d")  # grip
+    cv.part(line(hx, top + 2, hx, hy), "wood", flat="m")
+    for dx in (-r.px(4), 0, r.px(4)):  # strings hang slack, ending in little beads
+        end = top + r.px(7)
+        cv.put(hx + dx, top + 1, "bone.m")
+        cv.put(hx + dx, end, "ember.m" if dx == 0 else "bone.l")
+
+
 DRAWERS = {
+    "dollmaster": draw_dollmaster,
     "gryphon-rider": draw_gryphon_rider,
     "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
     "beasttamer": draw_beasttamer,

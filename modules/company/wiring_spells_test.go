@@ -21,6 +21,7 @@ func (b *brawl) ariaHears() *[]string {
 	b.t.Helper()
 	events.ProcessEvents()
 	var heard []string
+	freshEvents(b.t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		m := e.(events.Message)
 		if m.UserId == 7 || (m.UserId == 0 && m.RoomId == b.road.RoomId && !slices.Contains(m.ExcludeUserIds, 7)) {

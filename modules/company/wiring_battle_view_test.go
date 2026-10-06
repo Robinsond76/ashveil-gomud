@@ -30,6 +30,7 @@ func battleViews(t *testing.T) map[int][]map[string]any {
 	events.AddToQueue(events.PlayerSpawn{UserId: 7})
 	events.ProcessEvents()
 	got := map[int][]map[string]any{}
+	freshEvents(t)
 	id := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out, ok := e.(gmcp.GMCPOut); ok && out.Module == "Company.Battle" {
 			var body map[string]any

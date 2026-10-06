@@ -409,6 +409,7 @@ func TestPermadeathClearsChoice(t *testing.T) {
 func TestPermadeathThroughEventQueue(t *testing.T) {
 	m, _ := testModule(t)
 	m.choose(newUser(112), "wizard", true)
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	t.Cleanup(func() { events.UnregisterListener(events.PlayerDeath{}, id) })
 	events.AddToQueue(events.PlayerDeath{UserId: 112, Permanent: true})
@@ -512,6 +513,7 @@ func TestSpawnRegrantThroughEventQueue(t *testing.T) {
 	m.choose(u, "wizard", true)
 	u.Character.UnLearnSpell("floatinglight")
 
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	t.Cleanup(func() { events.UnregisterListener(events.PlayerSpawn{}, id) })
 	events.AddToQueue(events.PlayerSpawn{UserId: 115})
@@ -523,6 +525,7 @@ func TestSpawnRegrantThroughEventQueue(t *testing.T) {
 // were granted gets them at the next login, once.
 func TestExistingCastersGetTheirCombatSpellAtLogin(t *testing.T) {
 	m, _ := testModule(t)
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	t.Cleanup(func() { events.UnregisterListener(events.PlayerSpawn{}, id) })
 	for uid, arch := range map[int]string{116: "wizard", 117: "cleric"} {

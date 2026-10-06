@@ -34,6 +34,7 @@ func TestPacedCombatHoldsTheWebViews(t *testing.T) {
 
 	AcceptGMCPForTest(u.ConnectionId())
 	var vitals int
+	freshEvents(t)
 	id := events.RegisterListener(GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out := e.(GMCPOut); out.UserId == 7 && (out.Module == `Char.Vitals` || out.Module == `Char`) {
 			vitals++

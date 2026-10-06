@@ -59,6 +59,7 @@ func TestSuicideCategoryLootUsesCorpseOrFloor(t *testing.T) {
 				items.RemoveTestItemSpec(987654)
 			}
 			drops := map[int]int{}
+			freshEvents(t)
 			listener := events.RegisterListener(events.MobItemDrop{}, func(event events.Event) events.ListenerReturn {
 				drops[event.(events.MobItemDrop).ItemId]++
 				return events.Continue

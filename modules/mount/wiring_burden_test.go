@@ -58,6 +58,7 @@ func TestMountsAndCargoNeverLightenBurden(t *testing.T) {
 		}
 	})
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.UserId == user.UserId {
 			messages = append(messages, msg.Text)

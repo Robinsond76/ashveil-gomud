@@ -90,6 +90,7 @@ func TestRoomInfoResendsWhenTheCompanyLevelChanges(t *testing.T) {
 		t.Cleanup(func() { rooms.RemoveTestRoom(id) })
 	}
 	var resent []GMCPRoomUpdate
+	freshEvents(t)
 	lid := events.RegisterListener(GMCPRoomUpdate{}, func(e events.Event) events.ListenerReturn {
 		resent = append(resent, e.(GMCPRoomUpdate))
 		return events.Continue

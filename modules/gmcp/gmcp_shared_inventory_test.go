@@ -18,6 +18,7 @@ func TestCommittedSharedAssetsRefreshCharInventoryThroughListeners(t *testing.T)
 	users.SetTestUser(u)
 	AcceptGMCPForTest(u.ConnectionId())
 	var received *GMCPCharModule_Payload_Inventory
+	freshEvents(t)
 	id := events.RegisterListener(GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(GMCPOut)
 		if out.Module == "Char.Inventory" && out.UserId == u.UserId {

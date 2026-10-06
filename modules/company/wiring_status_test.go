@@ -252,6 +252,7 @@ func TestCritThroughTheRealRoundLeavesItsStatus(t *testing.T) {
 func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
+	freshEvents(t)
 	buffId := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffId) })
 	cutthroat := b.bandits["bandit cutthroat"][0]
@@ -303,6 +304,7 @@ func TestPendingFlightIsHeldByHobbled(t *testing.T) {
 func TestStatusLandsOnlyInAFight(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
+	freshEvents(t)
 	buffId := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffId) })
 

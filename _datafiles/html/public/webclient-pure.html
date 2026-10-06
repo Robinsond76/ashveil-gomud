@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#14110f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ .ASSET_BASE_URL }}/static/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ .ASSET_BASE_URL }}/static/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ .ASSET_BASE_URL }}/static/sprites/app/icon-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ .ASSET_BASE_URL }}/static/sprites/app/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ .ASSET_BASE_URL }}/static/images/favicon-16x16.png">
     <link rel="manifest" href="{{ .ASSET_BASE_URL }}/static/images/site.webmanifest">
     <link id="theme-css" rel="stylesheet" href="{{ .ASSET_BASE_URL }}/static/css/theme-brooding.css" />
@@ -1242,6 +1247,7 @@
 
     <link rel="stylesheet" href="{{ .ASSET_BASE_URL }}/static/css/xterm.css" />
     <link rel="stylesheet" href="{{ .ASSET_BASE_URL }}/static/css/windows.css" />
+    <link rel="stylesheet" href="{{ .ASSET_BASE_URL }}/static/css/mobile.css" />
 
     <script src="{{ .ASSET_BASE_URL }}/static/js/xterm/xterm.4.19.0.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/xterm/xterm-addon-fit.js"></script>
@@ -1269,6 +1275,7 @@
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-status.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-tutorial.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-vitals.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/mobile.js"></script>
 
 </head>
 <body onload="init()">

@@ -34,6 +34,7 @@ func TestPartyLeavePrefersAnOnlineSuccessorByName(t *testing.T) {
 		require.True(t, p.AcceptInvite(id))
 	}
 	heard := map[int][]string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		m := e.(events.Message)
 		heard[m.UserId] = append(heard[m.UserId], m.Text)

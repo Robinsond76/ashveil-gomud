@@ -51,6 +51,7 @@ func newPaceRig(t *testing.T) *paceRig {
 		{events.RoomChange{}, FlushPacedOnRoomChange},
 		{events.PlayerDespawn{}, FlushPacedOnDespawn},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })
@@ -266,6 +267,7 @@ func TestRoomGoingsOnWaitBehindHeldLines(t *testing.T) {
 
 func TestChangingPaceSendsHeldLines(t *testing.T) {
 	r := newPaceRig(t)
+	freshEvents(t)
 	id := events.RegisterListener(events.UserSettingChanged{}, FlushPacedOnPaceChange)
 	t.Cleanup(func() { events.UnregisterListener(events.UserSettingChanged{}, id) })
 	r.round(2, "p1", "p2")
@@ -285,6 +287,7 @@ func TestChangingPaceSendsHeldLines(t *testing.T) {
 func TestIdlePlayerIsNotRedrawnEachRound(t *testing.T) {
 	r := newPaceRig(t)
 	var drained []int
+	freshEvents(t)
 	id := events.RegisterListener(events.CombatPaceDrained{}, func(e events.Event) events.ListenerReturn {
 		drained = append(drained, e.(events.CombatPaceDrained).UserId)
 		return events.Continue

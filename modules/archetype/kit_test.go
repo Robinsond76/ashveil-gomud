@@ -369,6 +369,7 @@ func TestSpawnPutsAwayClassGearOnce(t *testing.T) {
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(209) })
 	heard := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		heard = append(heard, e.(events.Message).Text)
 		return events.Continue

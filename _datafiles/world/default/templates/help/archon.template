@@ -1,0 +1,39 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">archon</ansi>
+
+The Archon is the elite class of the Theurgist (good wizard route). It needs
+alignment +30 or higher at level 30. An Archon fights magic with magic: it
+holds its turn to break an enemy chant, and wards its allies.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Counterspell      holds its turn to counter the first enemy chant it sees
+                       (cost 20 mana); see below
+  35 Twin ward         Arcane Ward also covers a second ally
+  40 Mana Shield       allies in the Archon's row take 10% less damage from
+                       spells
+  45 Sharper counter   Counterspell lands 10 points more often, and a countered
+                       caster loses 10% of its mana
+  50 Cheaper counter   Counterspell costs 15 mana
+  55 Reflection        once a battle, a ward that absorbs a blow returns half of
+                       what it took to the attacker
+  60 Archon's Aegis    once a battle, when two or more of the company have no
+                       ward, the Archon wards every ally at once (costs two
+                       wards' mana)
+
+<ansi fg="yellow-bold">Counterspell</ansi>
+
+It is automatic: when a foe is chanting a spell at the start of a round and the
+Archon has 20 mana (15 from level 50), it holds its turn (it does not swing or cast that round) and
+speaks a counter-word. The chance is the hexes' own: 65 in 100 at equal
+Mysticism, one more for each point the Archon has over the caster, never under
+25 or over 90 (a boss caster, 25 less). A countered caster loses that chant and
+starts again on its next turn. A failed counter spends the turn and the mana.
+The Archon is told which it was. Turn it off with <ansi fg="command">strategy [who] abilities off</ansi>.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Wizard elite talents (levels 35, 45, 55): Deep Reserves (+10% maximum mana),
+Focused Will (blows break your chant 25% less often), Spell Edge (+10% spell
+damage). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help wizard-routes</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help abilities</ansi>.

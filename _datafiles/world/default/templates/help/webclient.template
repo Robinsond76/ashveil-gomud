@@ -109,6 +109,12 @@ button in them just types a command for you.
   A guardian shows whom it guards and how many guards it has left under
   its name ("guards you, 1 guard left").
 
+<ansi fg="yellow-bold">On a phone</ansi>
+
+  A narrow screen shows one view at a time (Game, Map, Here, Company) from
+  a bar along the bottom, with a touch bar of directions, Walk to... and
+  common commands above the command box. See <ansi fg="command">help mobile</ansi>.
+
 <ansi fg="yellow-bold">Arranging it</ansi>
 
   The button at the top right of the dock opens the tab you're looking

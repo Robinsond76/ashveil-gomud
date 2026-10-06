@@ -22,6 +22,7 @@ func heard(t *testing.T, fn func()) string {
 	t.Helper()
 	events.ProcessEvents()
 	var got []string
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		got = append(got, e.(events.Message).Text)
 		return events.Continue

@@ -15,9 +15,9 @@ type Milestone struct {
 // Flip Shipped only in the phase that delivers the corresponding choice.
 // Phase 38b delivered talents, promotion and the advanced ranks; the elite
 // step (promotion at 30, ranks and talents to 60) is delivered per lineage:
-// 38c1 for warriors and clerics, 38c2 for rogues and rangers, the others as
-// 38c3 lands.
-var eliteShipped = []string{"warrior", "cleric", "rogue", "ranger"}
+// 38c1 for warriors and clerics, 38c2 for rogues and rangers, 38c3 for
+// wizards and witches.
+var eliteShipped = []string{"warrior", "cleric", "rogue", "ranger", "wizard", "witch"}
 
 var schedule = [...]Milestone{
 	{3, "second class option", false, []string{"wizard", "cleric", "witch", "halberdier", "dollmaster", "beasttamer"}},

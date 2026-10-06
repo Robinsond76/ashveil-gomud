@@ -483,6 +483,7 @@ func TestMercyWaitsForPacedYieldAndSummary(t *testing.T) {
 			sent = append(sent, text)
 		}
 	}))
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, hooks.Message_SendMessage)
 	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
 	for _, m := range b.livingBandits() {

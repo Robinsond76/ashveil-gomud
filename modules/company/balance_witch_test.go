@@ -33,6 +33,7 @@ func TestPhase38aWitchAgainstWizard(t *testing.T) {
 				t.Run(fmt.Sprintf("L%d-%s-%d", level, class, i), func(t *testing.T) {
 					hexes.Default.Reset()
 					t.Cleanup(hexes.Default.Reset)
+					freshEvents(t)
 					l := events.RegisterListener(events.MoraleCheck{}, hooks.DreadCheck)
 					t.Cleanup(func() { events.UnregisterListener(events.MoraleCheck{}, l) })
 					f := newBalanceFightWithOptions(t, level, companyDefault, enemyDefault, balanceFightOptions{

@@ -40,6 +40,7 @@ func keptOnDeath(t *testing.T, dropChance int) (events.MobDeath, map[int]int) {
 	mob.Character.Gold = 7
 
 	var death events.MobDeath
+	freshEvents(t)
 	listener := events.RegisterListener(events.MobDeath{}, func(e events.Event) events.ListenerReturn {
 		death = e.(events.MobDeath)
 		return events.Continue
