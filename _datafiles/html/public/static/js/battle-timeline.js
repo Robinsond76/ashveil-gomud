@@ -66,7 +66,7 @@
 
     // isCompany is true for refs that name the player's own company.
     function isCompany(ref) {
-        return ref === 'me' || ref === 'leader' || /^companion:/.test(ref || '');
+        return ref === 'me' || ref === 'leader' || /^companion:/.test(ref || '') || /^a:/.test(ref || '');
     }
 
     function hitEffect(weapon, srcRef) {
@@ -411,7 +411,9 @@
     };
 
     // inferPace guesses the player's combat pace from how event batches
-    // arrived (the feed does not carry the setting): history is a list of
+    // arrived. It is only the fallback now: the feed carries the setting
+    // (Phase 40g2: `pace` on each Company.Battle.Event message), and a client
+    // that gets it uses it. History is a list of
     // { at, n } for each batch, oldest first. A batch of many events means
     // pacing is off (a round arrives whole); otherwise the gap between
     // batches within a round says fast, normal or slow.
