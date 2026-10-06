@@ -19,7 +19,8 @@ func TestDollMasterHasThreeUngatedRoutes(t *testing.T) {
 		assert.NotEmpty(t, c.Ranks, c.ID)
 		elite, ok := Elite(c.ID)
 		require.True(t, ok, "%s names an elite", c.ID)
-		assert.True(t, elite.Planned, "%s elite opens with 39i", elite.ID)
+		assert.False(t, elite.Planned, "%s elite opened with 39i", elite.ID)
+		assert.Len(t, elite.Ranks, 7, "%s elite has a rank every five levels, 30 to 60", elite.ID)
 	}
 	assert.Equal(t, []string{"puppeteer", "golemancer", "marionettist"}, ids)
 	for _, align := range []int{-100, 0, 100} {

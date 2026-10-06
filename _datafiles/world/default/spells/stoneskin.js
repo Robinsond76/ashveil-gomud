@@ -37,7 +37,9 @@ function tell(sourceActor, target, toSource, toTarget, toRoom) {
 }
 
 function onMagic(sourceActor, single) {
-    var targetActors = [single];
+    // Phase 39i: a Mountain Speaker's Stone cloak covers the target's whole row.
+    var targetActors = sourceActor.ClassEffect('stonerow') > 0 ? single.RowAllies(1) : [single];
+    var landed = false;
     for (var i = 0; i < targetActors.length; i++) {
         var target = targetActors[i];
         var armor = Math.max(1, sourceActor.ClassEffect('stoneskin'));
@@ -46,9 +48,23 @@ function onMagic(sourceActor, single) {
             tell(sourceActor, target, target.GetCombatName(false) + ' already wears stone. (no effect)', '', '');
             continue;
         }
+        landed = true;
         tell(sourceActor, target,
             'Stone hardens over ' + target.GetCombatName(false) + '.' + suffix,
             fill(sourceActor, 'Stone hardens over your skin at %S\'s word.') + suffix,
             'Stone hardens over ' + target.GetCombatName(false) + '.' + suffix);
+    }
+    // Phase 39i: a Mountain Speaker's Tremor. The earth it spoke to shakes under the foes' front row.
+    var tremor = sourceActor.ClassEffect('tremor');
+    if (landed && tremor > 0) {
+        var felled = sourceActor.Tremor(tremor);
+        var line;
+        if (felled.length > 0) {
+            line = 'The ground shakes under the foes\' front row, and ' + felled.join(', ') + (felled.length == 1 ? ' goes' : ' go') + ' down. (tremor, knocked down)';
+        } else {
+            line = 'The ground shakes under the foes\' front row, and they keep their feet. (tremor)';
+        }
+        SendUserMessage(sourceActor.UserId(), line);
+        SendRoomMessage(sourceActor.GetRoomId(), line, sourceActor.UserId());
     }
 }

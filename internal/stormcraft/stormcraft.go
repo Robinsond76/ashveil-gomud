@@ -21,6 +21,11 @@ var Kinds = []Kind{Fog, Chill, Rain}
 // Rounds is how many combat rounds a call lasts (a status counts one more).
 const Rounds = 3
 
+// EndlessRounds is how long a call that lasts the whole battle counts (a
+// Tempest Lord's Rain): more rounds than any battle goes, and the weather
+// ends with the battle all the same.
+const EndlessRounds = 60
+
 // Numbers the weathers move.
 const (
 	// FogHit is the points of accuracy a fogbound foe's ranged attacks lose.
