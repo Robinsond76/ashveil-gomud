@@ -258,6 +258,7 @@ func clearFightStatuses(fi combatstream.FightInfo) {
 		if r.UserId > 0 {
 			dismissSummons(r.UserId) // Phase 38b: a summon lives for one battle
 			dismissDolls(r.UserId)   // Phase 39d: a doll stands for one battle
+			dismissBeasts(r.UserId)  // Phase 39e: a beast stands for one battle
 		}
 	}
 	for _, r := range append(append([]combatstream.Ref{}, fi.Company...), fi.Enemies...) {

@@ -53,10 +53,12 @@ func FormationFor(leaderUserID int) (Formation, bool) {
 	p := formationProvider
 	formationProviderMu.RUnlock()
 	if p == nil {
-		return overlayDolls(leaderUserID, Formation{}, false)
+		f, ok := overlayDolls(leaderUserID, Formation{}, false)
+		return overlayBeasts(leaderUserID, f, ok)
 	}
 	f, ok := p.FormationFor(leaderUserID)
-	return overlayDolls(leaderUserID, f, ok) // Phase 39d: a Master's live dolls stand in cells
+	f, ok = overlayDolls(leaderUserID, f, ok) // Phase 39d: a Master's live dolls stand in cells
+	return overlayBeasts(leaderUserID, f, ok) // Phase 39e: a Tamer's live beast
 }
 
 // InstanceFor calls through to the registered FormationProvider. See
@@ -79,6 +81,9 @@ func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
 		return leader, key, true
 	}
 	if e, ok := DollOf(instanceId); ok { // Phase 39d
+		return e.Leader, e.Key, true
+	}
+	if e, ok := BeastOf(instanceId); ok { // Phase 39e
 		return e.Leader, e.Key, true
 	}
 	formationProviderMu.RLock()

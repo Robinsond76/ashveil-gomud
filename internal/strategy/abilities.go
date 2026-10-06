@@ -39,6 +39,12 @@ const (
 	GuardString  Ability = "guard-string"
 	Tangle       Ability = "tangle"
 	Splice       Ability = "emergency-splice"
+	// The Beast Tamer's three (Phase 39e). Sic is part of the Tamer's own
+	// turn; Rally and Pack Sense are resolved by internal/hooks/combat_beast.go
+	// and listed here so the strategy, company and capability views show them.
+	Sic       Ability = "sic"
+	Rally     Ability = "rally"
+	PackSense Ability = "pack-sense"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -82,6 +88,15 @@ var Abilities = []AbilitySpec{
 	{ID: Splice, Name: "Emergency Splice", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 18,
 		When: "the doll would break",
 		Does: "once a battle the doll stands back up at 25% health, and its Master loses its next turn"},
+	{ID: Sic, Name: "Sic", Archetype: "beasttamer", Skill: "taming",
+		When: "its beast stands and the Tamer has a foe",
+		Does: "sends the beast at the Tamer's foe with +10 Attack on its strike; the Tamer's own blow is still struck, with a whip that reaches like a polearm"},
+	{ID: Rally, Name: "Rally", Archetype: "beasttamer", Skill: "taming", MinLevel: 3,
+		When: "its beast is below the company's healing threshold",
+		Does: "heals the beast for a Minor Heal's worth with no mana, twice a battle"},
+	{ID: PackSense, Name: "Pack Sense", Archetype: "beasttamer", Skill: "taming", MinLevel: 8,
+		When: "always, while its beast stands",
+		Does: "the Tamer has +5 Evasion"},
 }
 
 // SpecOf is an ability's spec.

@@ -114,6 +114,9 @@ func InstanceForKey(leader int, key MemberKey) (int, bool) {
 	if IsDollKey(key) {
 		return DollInstanceFor(leader, key)
 	}
+	if IsBeastKey(key) { // Phase 39e
+		return BeastInstanceFor(leader, key)
+	}
 	cid, ok := CompanionIDFromMemberKey(key)
 	if !ok {
 		return 0, false

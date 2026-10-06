@@ -1,0 +1,19 @@
+mobid: 200
+sprite: wolf
+zone: Summons
+# Phase 39e: a Beast Tamer's bonded beast (a wolf). The beasts package makes it at
+# the Tamer's level when a battle opens, with the health the Tamer's record
+# keeps, and takes it away when the battle ends. It is never a recruit and
+# nothing of it drops.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+wounds: none
+character:
+  name: wolf
+  pronouns: it
+  description: 'A lean grey wolf with a torn ear and a patient, watching stare. It keeps close to its Tamer and bares its teeth at anything that does not.'
+  raceid: 26
+  level: 1
+  alignment: 0

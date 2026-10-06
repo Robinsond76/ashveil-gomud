@@ -44,6 +44,10 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if src.RT != nil && src.RT.Doll != nil && src.RT.Doll.Damage > 0 && dmg > 0 {
 		dmg += src.RT.Doll.Damage
 	}
+	// Phase 39e: a beast's blows carry its Tamer's training.
+	if src.RT != nil && src.RT.Beast != nil && src.RT.Beast.Damage > 0 && dmg > 0 {
+		dmg += src.RT.Beast.Damage
+	}
 	fx := src.ClassEffects()
 	var summon *characters.SummonInfo
 	if src.RT != nil {
@@ -100,6 +104,10 @@ func attackRating(atk, def *characters.Character) int {
 	// Phase 38c1: a foe the Warlord has marked is easier for everyone to hit.
 	if def.RT != nil && def.RT.Mark > 0 {
 		rating += def.RT.Mark
+	}
+	// Phase 39e: Sic sends the beast in with its Tamer's Attack behind it.
+	if atk.RT != nil && atk.RT.Sic > 0 {
+		rating += atk.RT.Sic
 	}
 	if rt := atk.RT; rt != nil && rt.Intim > 0 && def.RT != rt.IntimOwner {
 		rating -= rt.Intim

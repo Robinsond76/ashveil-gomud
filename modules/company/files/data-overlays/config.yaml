@@ -23,6 +23,7 @@ CompanionArchetypes:
   - { MobTemplateId: 130, Archetype: halberdier } # Phase 39a
   - { MobTemplateId: 139, Archetype: samurai } # Phase 39b
   - { MobTemplateId: 160, Archetype: dollmaster } # Phase 39d
+  - { MobTemplateId: 204, Archetype: beasttamer } # Phase 39e
   - { MobTemplateId: 150, Archetype: shaman } # Phase 39c
 # Phase 21a: company alignment. Values are alignment points on the
 # -100..100 scale players see. Out-of-range values fall back to the
@@ -149,6 +150,7 @@ RecruitTemplates:
   - { MobTemplateId: 130, Weight: 1, PricePercent: 105 }
   - { MobTemplateId: 139, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 160, Weight: 1, PricePercent: 110 }
+  - { MobTemplateId: 204, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 150, Weight: 1, PricePercent: 110 }
 RecruitGivenNames: [Hild, Anselm, Tobin, Wren, Edda, Bram, Ilse, Corrin, Maud, Osric, Petra, Aldo, Sabine, Lorn, Nessa, Joren, Thea, Ulric, Brisa, Cade, Fenna, Hugo, Ines, Kester, Liesl, Merrit, Orla, Quill, Rowan, Senna]
 RecruitBynames: [Marrow, Reyes, Ashdown, Thorne, Pike, Holloway, of the Ford, of Dunmar, the Younger, Fletcher, Cobb, Wick, Harrow, Stane]

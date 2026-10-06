@@ -349,6 +349,9 @@ func TestClassHelpTopics(t *testing.T) {
 		"dollmaster":        {"Puppet Strike", "Guard String", "Tangle", "Emergency Splice", "doll parts"},
 		"dollmaster-routes": {"Puppeteer", "Golemancer", "Marionettist", "Two dolls", "Golem"},
 		"doll":              {"doll wield", "doll mend", "doll name", "doll remove"},
+		"beasttamer":        {"Sic", "Rally", "Pack Sense", "bonded beast", "wounded"},
+		"beasttamer-routes": {"Houndmaster", "Bearward", "Dragon Tamer", "Warhound", "War bear", "Drake hatchling"},
+		"beast":             {"beast name", "beast [member]", "wounded"},
 		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
 		"elite":             {"Warlord", "Paladin", "Dread Knight", "Promotion ready", "Elite talents", "Routes are final"},
 		"warlord":           {"Marked for Ruin", "Battle Cry", "Sunder", "Relentless", "Warlord's Command", "Iron Hide"},
@@ -372,6 +375,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
 		"dolls": "dollmaster", "tangle": "dollmaster", "puppeteer": "dollmaster-routes", "marionettist": "dollmaster-routes",
 		"mend-doll": "doll",
+		"sic": "beasttamer", "rally": "beasttamer", "bonded-beast": "beasttamer", "houndmaster": "beasttamer-routes", "bearward": "beasttamer-routes", "dragon-tamer": "beasttamer-routes",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -380,7 +384,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "dollmaster", "promotion", "classes"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "dollmaster", "beasttamer", "promotion", "classes"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)

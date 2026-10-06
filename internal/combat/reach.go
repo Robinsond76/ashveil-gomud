@@ -2,6 +2,7 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
@@ -18,6 +19,10 @@ func ResolveReach(c *characters.Character, innateReach bool) formationcombat.Rea
 			return formationcombat.ReachAny
 		}
 		if spec.Reach {
+			return formationcombat.ReachExtended
+		}
+		// Phase 39e: a Beast Tamer's whip reaches like a polearm.
+		if spec.Subtype == items.Whipping && c.ClassEffects().Has(classes.BeastSic) {
 			return formationcombat.ReachExtended
 		}
 	}

@@ -1,0 +1,19 @@
+mobid: 202
+sprite: bear
+zone: Summons
+# Phase 39e: a Beast Tamer's bonded beast (a war bear). The beasts package makes it at
+# the Tamer's level when a battle opens, with the health the Tamer's record
+# keeps, and takes it away when the battle ends. It is never a recruit and
+# nothing of it drops.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+wounds: none
+character:
+  name: war bear
+  pronouns: it
+  description: 'A great brown bear with a coat matted by old fights and paws like shovels. It lumbers between its Tamer and trouble.'
+  raceid: 26
+  level: 1
+  alignment: 0

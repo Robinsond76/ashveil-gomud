@@ -1,0 +1,65 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">beasttamer</ansi>
+
+The Beast Tamer raises one bonded beast, from level 1, and fights beside it.
+Unlike a doll, the beast is alive: it stands in the formation in front of its
+Tamer and takes a turn of its own. The Tamer keeps its whip and its own blow,
+so a Beast Tamer company has six bodies and six turns, though the beast is a
+little slower than a person. It is a neutral class: it has no alignment gate
+to meet.
+
+<ansi fg="yellow-bold">What the Beast Tamer is</ansi>
+
+  Health      5 to start, 0.8 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.9 and Evasion 0.9 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        medium armor, no shield, whips, spears and daggers (<ansi fg="command">help armor</ansi>)
+  Stats       perception 3, vitality 3, strength 2, smarts 2 (<ansi fg="command">help growth</ansi>)
+  Starts with the Taming skill, which its abilities draw on
+  Starter kit a long whip, a padded jack, a cap, boots, food, a waterskin and a knapsack
+
+<ansi fg="yellow-bold">The bonded beast</ansi>
+
+  Where       it stands in the formation for a battle and takes no company slot
+              (<ansi fg="command">help formation</ansi>); it is gone when the battle ends
+  Health      60% of a warrior's at the Tamer's level (a route changes this)
+  Attack      90% of the Tamer's level, and the same Evasion
+  Turn        its own, at 80% of a normal tempo, with teeth (1d8 to start);
+              it can't wear gear
+  Falling     at 0 health it is wounded and out of the battle, never lost: it
+              sits out battles until the company rests, and a rest brings it
+              back to full health (<ansi fg="command">help camp</ansi>)
+  Persistence it is saved on the Tamer: name, health and wounds survive a restart
+  No mana and no experience of its own; it takes no company slot
+
+<ansi fg="yellow-bold">How a Beast Tamer fights</ansi>
+
+Its abilities need no command and use no mana (<ansi fg="command">help abilities</ansi>):
+
+  <ansi fg="yellow-bold">Sic</ansi>         on every turn the Tamer has, the beast is sent at the Tamer's foe
+              with +10 Attack on its strike. The Tamer still strikes its own
+              blow, and its whip reaches like a polearm.
+  <ansi fg="yellow-bold">Rally</ansi>       from level 3, the Tamer heals a hurt beast (below the company's
+              healing threshold) for a Minor Heal's worth, with no mana.
+              Twice a battle.
+  <ansi fg="yellow-bold">Pack Sense</ansi>  from level 8, the Tamer has +5 Evasion while its beast stands.
+
+Each blow is a real blow: it can miss, be dodged, blocked or parried
+(<ansi fg="command">help combat</ansi>). A beast that is stunned or knocked down loses its turn,
+as any fighter does (<ansi fg="command">help statuses</ansi>). Enemies can aim at the beast like anyone
+else in its cell. Turn abilities off with <ansi fg="command">strategy [member] abilities off</ansi>.
+
+<ansi fg="yellow-bold">Routes</ansi>
+
+At level 10 a Beast Tamer promotes to a Houndmaster (a warhound), a Bearward (a
+war bear) or a Dragon Tamer (a drake hatchling). All three are open at any
+alignment (<ansi fg="command">help beasttamer-routes</ansi>).
+
+<ansi fg="yellow-bold">Companions</ansi>
+
+A Beast Tamer companion fights the same way, with a beast of its own that
+stands in front of it. Recruits are hired like any other (<ansi fg="command">help company</ansi>);
+<ansi fg="command">beast [member]</ansi> shows its beast. Put the Tamer in the middle or back row
+and leave the front of its column free.
+
+Commands: <ansi fg="command">beast</ansi>, <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">help beasttamer-routes</ansi>.
+
+See also: <ansi fg="command">help beast</ansi>, <ansi fg="command">help beasttamer-routes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help combat</ansi>.

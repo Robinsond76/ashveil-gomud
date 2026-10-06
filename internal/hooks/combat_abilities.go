@@ -121,6 +121,12 @@ func abilityPass() {
 			if surprised(a.who.userId, a.who.mobId) {
 				continue
 			}
+			// Phase 39e: a Beast Tamer's turn sends its beast in (and the
+			// Tamer still strikes), and a drake breathes in place of a bite.
+			sicBeast(a, u, foes, room)
+			if drakeBreath(a, u, foes, room) {
+				continue
+			}
 			// Phase 39d: a Doll Master's turn is its dolls' strike.
 			if dollStrike(a, u, foes, room) {
 				continue

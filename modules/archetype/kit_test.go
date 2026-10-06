@@ -278,9 +278,10 @@ func TestListAndPreviewShowKit(t *testing.T) {
 func TestCreationChoicesAndChooseAtCreation(t *testing.T) {
 	m, _ := testModule(t)
 	choices := m.CreationChoices()
-	require.Len(t, choices, 10)
-	assert.Equal(t, "cleric", choices[0].ID)
-	assert.Contains(t, choices[0].Kit, "small red potion (x2)")
+	require.Len(t, choices, 11)
+	assert.Equal(t, "beasttamer", choices[0].ID)
+	assert.Equal(t, "cleric", choices[1].ID)
+	assert.Contains(t, choices[1].Kit, "small red potion (x2)")
 
 	_, ok := m.ChooseAtCreation(213, "wizard")
 	assert.False(t, ok, "an offline user can't choose")

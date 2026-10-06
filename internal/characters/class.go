@@ -135,6 +135,7 @@ type ClassRT struct {
 	Summoned      bool        // this character has called its summon this battle
 	Summon        *SummonInfo // set on a summoned creature
 	Doll          *DollInfo   // set on a Doll Master's doll (Phase 39d)
+	Beast         *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
 	Bless         int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.
@@ -163,6 +164,12 @@ type ClassRT struct {
 	DollGuards int
 	Spliced    bool
 	SpliceTurn bool
+	// The Beast Tamer's lineage (Phase 39e): the Attack Sic gives its beast
+	// this round, the Evasion Pack Sense gives the Tamer while the beast
+	// stands, and the Rally heals spent this battle.
+	Sic       int
+	PackSense int
+	Rallies   int
 }
 
 // RTState is the character's class battle state, made on first use.
