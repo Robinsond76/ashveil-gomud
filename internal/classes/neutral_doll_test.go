@@ -61,9 +61,9 @@ func TestDollMasterRouteEffects(t *testing.T) {
 
 func TestDollMasterTalents(t *testing.T) {
 	assert.Len(t, TalentsFor("dollmaster"), 5)
-	assert.NoError(t, CanPick("dollmaster", nil, 5, "stout-strings"))
-	assert.ErrorIs(t, CanPick("dollmaster", []string{"stout-strings"}, 15, "stout-strings"), ErrTalentMaxed)
-	assert.ErrorIs(t, CanPick("dollmaster", nil, 5, "sweep-drill"), ErrUnknownTalent)
+	assert.NoError(t, CanPick("dollmaster", "", nil, 5, "stout-strings"))
+	assert.ErrorIs(t, CanPick("dollmaster", "", []string{"stout-strings"}, 15, "stout-strings"), ErrTalentMaxed)
+	assert.ErrorIs(t, CanPick("dollmaster", "", nil, 5, "sweep-drill"), ErrUnknownTalent)
 	fx := EffectsForLineage("dollmaster", "", 45, []string{"stout-strings", "hardwood", "fine-carving", "steady-hand"})
 	assert.Equal(t, 4, fx.Int(DollGuards), "3 from rank 8, 1 from the talent")
 	assert.Equal(t, 10, fx.Int(DollHPBonus))
