@@ -39,7 +39,7 @@ func (f *fakeClassStore) PromotePlayer(_ int, class string) error {
 	return nil
 }
 
-func (f *fakeClassStore) PickPlayerTalent(_ int, talent string) error {
+func (f *fakeClassStore) PickPlayerTalent(_, _ int, talent string) error {
 	if f.failing {
 		return errors.New("disk full")
 	}

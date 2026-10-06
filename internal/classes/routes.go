@@ -59,7 +59,7 @@ func init() {
 			rank(35, "Aura of Dread", "foes aimed at the Dread Knight have -5 Attack", AuraDread, 5),
 			rank(40, "Spreading oath", "Blood Oath also heals the next most hurt ally for half as much", OathSecond, 1),
 			rank(45, "Bottomless oath", "Blood Oath: 6 blows a battle", BloodOath, 6),
-			rank(50, "Terror", "its critical hits force a morale check on the target's group", TerrorCrit, 1),
+			rank(50, "Terror", "its critical hits that land also stagger the target, which loses its next action", TerrorCrit, 1),
 			rank(55, "Endless oath", "Blood Oath: 7 blows a battle", BloodOath, 7),
 			rank(60, "Unholy vigor", "Blood Oath heals 100% of the damage dealt", OathPct, 100),
 		}})

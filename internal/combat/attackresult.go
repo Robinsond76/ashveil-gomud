@@ -52,6 +52,11 @@ func (a AttackResult) Blocked() bool {
 	return slices.Contains(a.Defenses, DefenseBlocked)
 }
 
+// Parried reports whether a weapon parried any of the round's strikes.
+func (a AttackResult) Parried() bool {
+	return slices.Contains(a.Defenses, DefenseParried)
+}
+
 func (a *AttackResult) SendToSource(msg string) {
 	a.MessagesToSource = append(a.MessagesToSource, msg)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -752,7 +753,8 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 	if a.characterRecord == nil || target.characterRecord == nil {
 		return 1
 	}
-	return 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+	factor := 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+	return factor * (1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100)
 }
 
 // SpellPower is one roll of a spell's size for this caster (Phase 35b),

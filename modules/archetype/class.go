@@ -89,7 +89,7 @@ func (m *ArchetypeModule) PromotePlayer(userID int, class string) error {
 }
 
 // PickPlayerTalent implements classes.PlayerWriter.
-func (m *ArchetypeModule) PickPlayerTalent(userID int, talent string) error {
+func (m *ArchetypeModule) PickPlayerTalent(userID, level int, talent string) error {
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -101,11 +101,6 @@ func (m *ArchetypeModule) PickPlayerTalent(userID int, talent string) error {
 		return ErrNotPromotable
 	}
 	prev, had := m.registry.Classes[userID]
-	user := users.GetByUserId(userID)
-	level := 0
-	if user != nil {
-		level = user.Character.Level
-	}
 	if err := classes.CanPick(lineage, prev.Talents, level, talent); err != nil {
 		m.mu.Unlock()
 		return err

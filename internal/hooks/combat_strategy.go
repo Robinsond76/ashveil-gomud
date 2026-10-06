@@ -116,7 +116,7 @@ func strategyPass() {
 				Role:   role,
 				Mana:   a.char.Mana,
 				Knows:  a.knows,
-				Spells: autoSpells,
+				Spells: classCosted(a.char, autoSpells),
 				Allies: allies,
 				Foes:   len(foes),
 				// Phase 30c: the company's healing threshold.
@@ -147,6 +147,20 @@ func costedAutoSpells() []strategy.Spell {
 			sp.Cost = data.Cost
 			out = append(out, sp)
 		}
+	}
+	return out
+}
+
+// classCosted is the automatic spells at the caster's own mana costs, which
+// its class may change (Phase 38b). A caster with no class gets the list.
+func classCosted(c *characters.Character, list []strategy.Spell) []strategy.Spell {
+	if c.ClassEffects() == nil {
+		return list
+	}
+	out := make([]strategy.Spell, len(list))
+	for i, sp := range list {
+		out[i] = sp
+		out[i].Cost = c.SpellCost(spells.GetSpell(sp.ID))
 	}
 	return out
 }
@@ -277,7 +291,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 // the cast-start event. The caster's aim is remembered, to turn back to.
 func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId int) bool {
 	sp := spells.GetSpell(spellId)
-	if sp == nil || a.char.Mana < sp.Cost {
+	if sp == nil || a.char.Mana < a.char.SpellCost(sp) {
 		return false
 	}
 	info = effecttargets.Resolve(a.who.userId, a.who.mobId, info)
@@ -297,7 +311,7 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		// Phase 33i2: an enemy aimed at a player turns back to them.
 		enemyCastAims[a.who.mobId] = agg.UserId
 	}
-	a.char.Mana -= sp.Cost
+	a.char.Mana -= a.char.SpellCost(sp)
 	a.char.SetCast(sp.WaitRounds, info)
 	if tempoActive {
 		tempoChanted[a.who], tempoBlocked[a.who] = true, true

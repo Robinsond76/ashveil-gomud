@@ -74,6 +74,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	beginTempoRound()
 	defer func() { tempoActive = false }()
+	auraPass() // Phase 38b: class auras for the round
 	nervePass()
 	strategyPass()
 	// Ashveil Phase 33i2: enemy healers and casters, by their group's

@@ -630,7 +630,7 @@ func (m *CompanyModule) pickTalent(user *users.UserRecord, room *rooms.Room, res
 	}
 	var err error
 	if s.player {
-		err = classes.PickPlayerTalent(user.UserId, t.ID)
+		err = classes.PickPlayerTalent(user.UserId, user.Character.Level, t.ID)
 	} else {
 		err = m.PickCompanionTalent(user.UserId, s.c.ID, t.ID)
 	}

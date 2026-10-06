@@ -76,7 +76,7 @@ func (c *Character) AttackSkill() int {
 // template's offset, less the untrained-armor loss.
 func (c *Character) Evasion() int {
 	_, rate := c.skillRates()
-	bonus := c.ClassEffects().Int(classes.Evasion)
+	bonus := c.ClassEffects().Int(classes.Evasion) + c.Aura.Evasion
 	if c.Aggro != nil && c.Aggro.Type == SpellCast {
 		bonus += c.ClassEffects().Int(classes.ChantEvade) // Phase 38b: Sanctuary
 	}
@@ -201,7 +201,7 @@ func (c *Character) WouldBeUntrained(itm items.Item) bool {
 // HealingBonusPct is the percent a healer's gear adds to its heals (the
 // holy symbol's +5).
 func (c *Character) HealingBonusPct() int {
-	return max(0, c.StatMod("healing"))
+	return max(0, c.StatMod("healing")) + c.ClassEffects().Int(classes.HealPct)
 }
 
 // UnequipDisallowed moves any held shield or weapon the class may not use

@@ -99,5 +99,5 @@ const (
 	OathPct      = "oathpct"      // percent of the damage dealt healed
 	OathSecond   = "oathsecond"   // also heals the next most hurt ally for half
 	Intimidate   = "intimidate"   // Attack a wounded foe loses against its allies
-	TerrorCrit   = "terrorcrit"   // a crit forces a morale check on the target's group
+	TerrorCrit   = "terrorcrit"   // a critical hit that lands also staggers the target
 )

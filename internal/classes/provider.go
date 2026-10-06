@@ -51,7 +51,7 @@ func PlayerClass(userID int) State {
 // rules (Check, CanPick); the writer holds the durable state only.
 type PlayerWriter interface {
 	PromotePlayer(userID int, class string) error
-	PickPlayerTalent(userID int, talent string) error
+	PickPlayerTalent(userID, level int, talent string) error
 }
 
 // PromotePlayer commits a player's promotion.
@@ -65,13 +65,13 @@ func PromotePlayer(userID int, class string) error {
 	return ErrUnavailable
 }
 
-// PickPlayerTalent commits a player's talent pick.
-func PickPlayerTalent(userID int, talent string) error {
+// PickPlayerTalent commits a player's talent pick at their current level.
+func PickPlayerTalent(userID, level int, talent string) error {
 	providerMu.RLock()
 	p := provider
 	providerMu.RUnlock()
 	if w, ok := p.(PlayerWriter); ok {
-		return w.PickPlayerTalent(userID, talent)
+		return w.PickPlayerTalent(userID, level, talent)
 	}
 	return ErrUnavailable
 }

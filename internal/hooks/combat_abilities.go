@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -125,6 +126,7 @@ func abilityPass() {
 				continue
 			}
 			sit := abilitySituation(a, u, foe)
+			sit.Ambush = ambushing(a, b)
 			sit.Close = close
 			id, use := strategy.DecideAbility(sit)
 			if !use {
@@ -210,6 +212,29 @@ func abilitySituation(a actor, u *users.UserRecord, foe *mobs.Mob) strategy.Abil
 	}
 }
 
+// ambushing reports whether an actor's class lets its Opening Strike open
+// any foe now: Ambush N covers the battle's first N rounds (Phase 38b).
+func ambushing(a actor, b battle.Battle) bool {
+	n := a.char.ClassEffects().Int(classes.Ambush)
+	return n > 0 && combatRound.Load() >= b.StartRound && combatRound.Load()-b.StartRound < uint64(n)
+}
+
+// abilityCooldown is an ability's cooldown for an actor: its class may
+// shorten it, never below one round.
+func abilityCooldown(c *characters.Character, id strategy.Ability, base int) int {
+	fx := c.ClassEffects()
+	cut := 0
+	switch id {
+	case strategy.Tackle:
+		cut = fx.Int(classes.TackleCD)
+	case strategy.OpeningStrike:
+		cut = fx.Int(classes.OpenCD)
+	case strategy.AimedShot:
+		cut = fx.Int(classes.AimCD)
+	}
+	return max(1, base-cut)
+}
+
 // wielding is what a character strikes with, and whether it wields a
 // weapon and every weapon it wields can backstab (a blade or claws).
 func wielding(c *characters.Character) (strategy.WeaponKind, bool) {
@@ -237,13 +262,14 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 	if !ok {
 		return
 	}
-	abilityReady[abilityKey{who: a.who, id: id}] = abilityRounds + spec.Cooldown
+	abilityReady[abilityKey{who: a.who, id: id}] = abilityRounds + abilityCooldown(a.char, id, spec.Cooldown)
 	target := mobHolder(foe)
 	event := combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: target.ref, Status: spec.Name}
 	switch id {
 	case strategy.Tackle:
 		abilityTurns[a.who] = true
 		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj, characters.SkillEdge(a.char.AttackSkill(), foe.Character.Evasion()))
+		chance = min(100, chance+a.char.ClassEffects().Int(classes.TackleHit))
 		roll := abilityRoll(100)
 		util.LogRoll(`Tackle`, roll, chance)
 		if roll >= chance {
@@ -259,7 +285,10 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down)`)
 		abilityDown[foe.InstanceId] = true
 		// Phase 35b: from level 20 the knockdown lasts a round longer.
-		events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`, ExtraTriggers: strategy.TackleExtraRounds(a.char.Level)})
+		events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`, ExtraTriggers: strategy.TackleExtraRounds(a.char.Level) + a.char.ClassEffects().Int(classes.TackleHold)})
+		if a.char.ClassEffects().Has(classes.TackleExpo) {
+			events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.Exposed, Source: `combat`})
+		}
 		// A tackle is heavy force: it breaks a chant (an enemy starts
 		// again) and a wind-up, as a knockdown blow would.
 		if !interruptsOff && target.chanting() {
@@ -273,11 +302,11 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 		a.char.Aggro.Type = characters.BackStab
 		emitCombat(event)
 		if id == strategy.OpeningStrike {
-			a.char.Aggro.StrikeBonus = strategy.OpeningStrikeBonus(a.char.Level)
+			a.char.Aggro.StrikeBonus = strategy.OpeningStrikeBonus(a.char.Level) + a.char.ClassEffects().Int(classes.OpenBonus)
 			a.holder.say(fmt.Sprintf(`You see an opening on %s.`, target.tag()),
 				`%s sees an opening on `+verbatim(target.tag())+`.`, ` (opening strike)`)
 		} else {
-			a.char.Aggro.StrikeBonus = strategy.AimedShotBonus(a.char.Level) // Phase 35b
+			a.char.Aggro.StrikeBonus = strategy.AimedShotBonus(a.char.Level) + a.char.ClassEffects().Int(classes.AimBonus) // Phase 35b
 			a.holder.say(fmt.Sprintf(`You take careful aim at %s.`, target.tag()),
 				`%s takes careful aim at `+verbatim(target.tag())+`.`, ` (aimed shot)`)
 		}
