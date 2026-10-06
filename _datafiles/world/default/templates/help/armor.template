@@ -37,6 +37,7 @@ Each class is trained for armor up to a bulk:
 
   <ansi fg="yellow">Warrior</ansi>                    heavy
   <ansi fg="yellow">Ranger</ansi>                     medium
+  <ansi fg="yellow">Halberdier</ansi>                 medium
   <ansi fg="yellow">Samurai</ansi>                    medium
   <ansi fg="yellow">Rogue, Cleric, Wizard, Witch, Shaman</ansi>      light
 

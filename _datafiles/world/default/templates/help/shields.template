@@ -16,7 +16,7 @@ there is, and only warriors and rangers are taught it.
   <ansi fg="yellow">Warrior</ansi>                    any shield
   <ansi fg="yellow">Ranger</ansi>                     bucklers only
   <ansi fg="yellow">Cleric, Rogue, Wizard, Witch, Shaman</ansi>      none
-  <ansi fg="yellow">Samurai</ansi>                    none
+  <ansi fg="yellow">Samurai, Halberdier</ansi>        none
 
 <ansi fg="command">equip</ansi> and <ansi fg="command">company equip</ansi> refuse a shield the class can't use, and say why.
 A cleric fights with staffs, rods and maces only, and may carry a holy

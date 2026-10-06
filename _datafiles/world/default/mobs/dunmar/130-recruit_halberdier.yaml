@@ -1,0 +1,21 @@
+mobid: 130
+sprite: warrior
+zone: Dunmar
+# Phase 39a generated recruit base (halberdier). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Halberdier
+  description: A militia pikeman looking for a company to hold a line with, glaive first.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10151
+    body:
+      itemid: 20103
+    legs:
+      itemid: 20109

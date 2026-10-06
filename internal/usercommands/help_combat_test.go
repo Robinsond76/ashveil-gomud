@@ -339,12 +339,14 @@ func TestClassHelpTopics(t *testing.T) {
 		}
 	}
 	pages := map[string][]string{
-		"classes":        {"Ranks", "class promote", "Hierarch"},
-		"promotion":      {"Level 10", "class promote [class] confirm"},
-		"talents":        {"Mending Hands", "talent pick [talent] confirm"},
-		"cleric-routes":  {"Greater Heal", "Rejuvenation", "Siphon"},
-		"warrior-routes": {"Lay on Hands", "Blood Oath", "Divine shield"},
-		"summoning":      {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
+		"classes":           {"Ranks", "class promote", "Hierarch"},
+		"promotion":         {"Level 10", "class promote [class] confirm"},
+		"talents":           {"Mending Hands", "talent pick [talent] confirm"},
+		"cleric-routes":     {"Greater Heal", "Rejuvenation", "Siphon"},
+		"warrior-routes":    {"Lay on Hands", "Blood Oath", "Divine shield"},
+		"halberdier":        {"Sweep", "Brace", "Hook", "crowded"},
+		"halberdier-routes": {"Sweeper", "Vanguard", "Valkyrie", "Charged Sweep", "Hold the line"},
+		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
 	}
 	for topic, wants := range pages {
 		assert.Contains(t, listed, topic, "help index lists %s", topic)
@@ -361,6 +363,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"priest": "cleric-routes", "druid": "cleric-routes", "paladin": "warrior-routes",
 		"knight": "warrior-routes", "blackguard": "warrior-routes", "angel": "summoning", "demon": "summoning",
 		"hierarch": "summoning", "demonologist": "summoning",
+		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -369,7 +372,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)
@@ -385,7 +388,7 @@ func TestBattleScreenHelp(t *testing.T) {
 	text, err := GetHelpContents("battlescreen")
 	require.NoError(t, err)
 	text = tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "hovering names the class", "help promotion"} {
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion"} {
 		assert.Contains(t, text, want)
 	}
 	for _, hub := range []string{"combat", "webclient"} {

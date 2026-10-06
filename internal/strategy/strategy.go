@@ -45,10 +45,11 @@ const (
 	Healers   Rule = "healers"   // healers, one chanting a heal first, then the casters order (Phase 35e)
 	Assist    Rule = "assist"    // the player's own target (FF12's "party leader's target")
 	Defend    Rule = "defend"    // the foe striking our most hurt (FF12's "foe targeting ally")
+	Crowded   Rule = "crowded"   // the foe in the row with the most foes, for a sweep (Phase 39a)
 )
 
 // Rules in the order they are listed.
-var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend}
+var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend, Crowded}
 
 var roleAliases = map[string]Role{
 	"fight": Fighter, "fighter": Fighter, "melee": Fighter,
@@ -64,6 +65,7 @@ var ruleAliases = map[string]Rule{
 	"weak": Weakest, "strong": Strongest, "hurt": Wounded,
 	"near": Nearest, "front": Nearest, "far": Furthest, "back": Furthest,
 	"focus": Assist, "protect": Defend,
+	"row": Crowded, "rows": Crowded, "sweep": Crowded,
 	"mages": Casters, "spellcasters": Casters,
 	"healer": Healers, "medics": Healers,
 }
@@ -124,10 +126,14 @@ func DefaultRole(archetype string) Role {
 
 // DefaultRule is an archetype's target rule: the weakest foe it can reach
 // (the rule every fight used before 32d), except a Samurai, the duelist
-// (Phase 39b), who goes for the strongest.
+// (Phase 39b), who goes for the strongest, and a Halberdier (Phase 39a),
+// who goes for the most crowded row.
 func DefaultRule(archetype string) Rule {
-	if strings.EqualFold(archetype, "samurai") {
+	switch strings.ToLower(strings.TrimSpace(archetype)) {
+	case "samurai":
 		return Strongest
+	case "halberdier":
+		return Crowded
 	}
 	return Weakest
 }

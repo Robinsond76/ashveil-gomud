@@ -42,6 +42,9 @@ func buildCapabilities(user *users.UserRecord) charCapabilities {
 		if s.NoAbilities {
 			v.Reason = "Automatic abilities disabled by strategy"
 		}
+		if spec.MinLevel > user.Character.Level {
+			v.Enabled, v.Reason = false, fmt.Sprintf("Comes at level %d", spec.MinLevel)
+		}
 		out.Automatic = append(out.Automatic, v)
 	}
 	knows := func(id string) bool {
