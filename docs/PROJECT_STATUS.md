@@ -327,7 +327,9 @@ nearest creature, friend or foe); Hellfire and Thornhide damage gives no kill
 credit and Soul feast fires on any mob death in the room; Quick chant shortens
 every hex, and Swift Host and Mastered binding skip the manual cast path; help
 pages for the 15 other advanced classes; class and talents in score and the
-web client panels.
+web client panels. The race suite surfaced the
+`TestAnEnemysBleedLeavesALightWound` flake (3 in 40 on master: a crushing
+blow's bruise); the test now counts only the bleed's wound.
 Verification: `make generate`, `make validate`, `go test -race ./...`,
 `make js-lint`.
 
