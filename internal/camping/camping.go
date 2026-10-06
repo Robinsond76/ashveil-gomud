@@ -56,6 +56,21 @@ type RestSession struct {
 	Bedrolls []string `yaml:"bedrolls,omitempty"`
 	Bells    bool     `yaml:"bells,omitempty"`
 	Kit      bool     `yaml:"kit,omitempty"`
+	// Theft (Phase 40a4) is the camp theft rolled when a rest without
+	// bells began, if any.
+	Theft *Theft `yaml:"theft,omitempty"`
+}
+
+// Theft is thieves planned at rest start (Phase 40a4): they work unseen
+// while the company sleeps and are noticed on waking. Done is saved before
+// anything is taken, so a restart can never rob a rest twice.
+type Theft struct {
+	Done bool `yaml:"done,omitempty"`
+}
+
+// TheftPending reports whether a finished rest still owes its theft.
+func (s RestSession) TheftPending() bool {
+	return s.State == Completed && s.Theft != nil && !s.Theft.Done
 }
 
 // BedrollBonusPct is the extra fatigue a member on a bedroll recovers from

@@ -350,6 +350,8 @@ func TestClassHelpTopics(t *testing.T) {
 		"dollmaster-routes": {"Puppeteer", "Golemancer", "Marionettist", "Two dolls", "Golem"},
 		"doll":              {"doll wield", "doll mend", "doll name", "doll remove"},
 		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
+		"elite":             {"Warlord", "Paladin", "Dread Knight", "Promotion ready", "Elite talents", "Routes are final"},
+		"warlord":           {"Marked for Ruin", "Battle Cry", "Sunder", "Relentless", "Warlord's Command", "Iron Hide"},
 	}
 	for topic, wants := range pages {
 		assert.Contains(t, listed, topic, "help index lists %s", topic)
@@ -366,6 +368,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"priest": "cleric-routes", "druid": "cleric-routes", "paladin": "warrior-routes",
 		"knight": "warrior-routes", "blackguard": "warrior-routes", "angel": "summoning", "demon": "summoning",
 		"hierarch": "summoning", "demonologist": "summoning",
+		"elites": "elite", "elite-class": "elite", "warlords": "warlord", "battle-cry": "warlord",
 		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
 		"dolls": "dollmaster", "tangle": "dollmaster", "puppeteer": "dollmaster-routes", "marionettist": "dollmaster-routes",
 		"mend-doll": "doll",
@@ -377,7 +380,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "dollmaster"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "dollmaster", "promotion", "classes"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)
@@ -393,7 +396,7 @@ func TestBattleScreenHelp(t *testing.T) {
 	text, err := GetHelpContents("battlescreen")
 	require.NoError(t, err)
 	text = tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion"} {
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion", "watch that company at full size", "your band"} {
 		assert.Contains(t, text, want)
 	}
 	for _, hub := range []string{"combat", "webclient"} {

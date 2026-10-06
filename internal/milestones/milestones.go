@@ -13,14 +13,25 @@ type Milestone struct {
 }
 
 // Flip Shipped only in the phase that delivers the corresponding choice.
+// Phase 38b delivered talents, promotion and the advanced ranks; the elite
+// step (promotion at 30, ranks and talents to 60) is delivered per lineage:
+// 38c1 for warriors and clerics, the others as 38c2 and 38c3 land.
+var eliteShipped = []string{"warrior", "cleric"}
+
 var schedule = [...]Milestone{
 	{3, "second class option", false, []string{"wizard", "cleric", "witch", "halberdier", "dollmaster"}},
-	{5, "talent", false, nil},
-	{10, "class promotion", false, nil},
-	{15, "talent", false, nil},
-	{20, "advanced signature", false, nil},
-	{25, "talent", false, nil},
-	{30, "elite promotion", false, nil},
+	{5, "talent", true, nil},
+	{10, "class promotion", true, nil},
+	{15, "talent", true, nil},
+	{20, "advanced signature", true, nil},
+	{25, "talent", true, nil},
+	{30, "elite promotion", false, eliteShipped},
+	{35, "elite rank and talent", false, eliteShipped},
+	{40, "elite rank", false, eliteShipped},
+	{45, "elite rank and talent", false, eliteShipped},
+	{50, "elite rank", false, eliteShipped},
+	{55, "elite rank and talent", false, eliteShipped},
+	{60, "elite capstone", false, eliteShipped},
 }
 
 // Next is the next milestone after level for a character of the archetype

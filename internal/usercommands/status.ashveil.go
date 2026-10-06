@@ -38,6 +38,14 @@ func addAshveilIdentity(p *templates.Panel, s companyview.Summary) {
 		archetype = `<ansi fg="black-bold">none chosen</ansi>`
 	}
 	addRow(p, `Path:   `, `Pth:`, archetype)
+	// Phase 38c1 review: the class and its tier, and a promotion that is
+	// ready (the panel is narrow, so each gets its own row).
+	if s.Leader.ClassName != `` {
+		addRow(p, `Class:  `, `Cls:`, s.Leader.ClassName+` <ansi fg="black-bold">(`+s.Leader.ClassTier+`)</ansi>`)
+	}
+	if s.Leader.Promotion == `ready` {
+		addRow(p, `Promote:`, `Prm:`, `<ansi fg="yellow-bold">ready</ansi> <ansi fg="black-bold">(class)</ansi>`)
+	}
 }
 
 func addAshveilAlignment(p *templates.Panel, s companyview.Summary) {
@@ -120,6 +128,13 @@ func kg(grams int) string { return fmt.Sprintf(`%.1f`, float64(grams)/1000) }
 
 func addAshveilCompany(p *templates.Panel, s companyview.Summary) {
 	addRow(p, `Members: `, `Mem:`, companyLine(s))
+	// Phase 45: each companion's class, so the sheet shows who is who.
+	for _, m := range s.Companions {
+		if line := companionLine(m); line != `` {
+			// Padded to the Members label so the values line up.
+			addRow(p, fmt.Sprintf(`  %-7s`, companionLabel(m, 6)), companionLabel(m, 3), line)
+		}
+	}
 	if s.LoadKnown {
 		addRow(p, `Load:    `, `Lod:`, fmt.Sprintf(`%s <ansi fg="black-bold">(%s/%s kg)</ansi>`, s.LoadLabel, kg(s.Load.TotalGrams()), kg(s.Load.CapacityGrams)))
 	}
@@ -143,4 +158,37 @@ func restLine(s companyview.Summary) string {
 		return `<ansi fg="black-bold">Not rested</ansi>`
 	}
 	return fmt.Sprintf(`<ansi fg="green">%s</ansi> <ansi fg="black-bold">(%s left)</ansi>`, s.RestTier, companyview.FormatRemaining(s.RestLeft))
+}
+
+// companionLabel is a short row label for a companion: its name cut to
+// width runes to fit the panel's label column.
+func companionLabel(m companyview.Member, width int) string {
+	name := m.Name
+	if name == `` {
+		name = fmt.Sprintf(`#%d`, m.ID)
+	}
+	if r := []rune(name); len(r) > width {
+		name = string(r[:width])
+	}
+	return name + `:`
+}
+
+// companionLine is a companion's class and level, or "" when nothing is
+// known about it (Phase 45).
+func companionLine(m companyview.Member) string {
+	rank := m.RankName()
+	if rank == `` && m.Level == 0 {
+		return ``
+	}
+	line := rank
+	if m.Level > 0 {
+		if line != `` {
+			line += `, `
+		}
+		line += fmt.Sprintf(`Lv %d`, m.Level)
+	}
+	if m.Status == company.MemberDead {
+		line += ` <ansi fg="red">(fallen)</ansi>`
+	}
+	return line
 }

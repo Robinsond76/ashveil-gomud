@@ -42,6 +42,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 29b: every event this round reports is stamped with it.
 	combatRound.Store(evt.RoundNumber)
 	expireIntimidation(evt.RoundNumber) // Phase 38b review: a round, not a battle
+	expireMarks(evt.RoundNumber)        // Phase 38c1: a mark lasts 2 rounds
 	resetRoundExtras()
 	beginBattlefieldRound()
 
@@ -74,13 +75,15 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 30a: statuses tick once per combat round, before any
 	// blow; a fall they cause is resolved at once.
 	statusPass()
+	warlordPass() // Phase 38c1: Relentless and Warlord's Command push the meters below
 
 	// Ashveil Phase 32d: healers and casters cast by their strategies,
 	// before any blow.
 	beginTempoRound()
 	defer func() { tempoActive = false }()
-	auraPass()   // Phase 38b: class auras for the round
-	summonPass() // Phase 38b: Angels and Demons
+	auraPass()       // Phase 38b: class auras for the round
+	secondWindPass() // Phase 38c1: the elite talent
+	summonPass()     // Phase 38b: Angels and Demons
 	nervePass()
 	strategyPass()
 	// Ashveil Phase 33i2: enemy healers and casters, by their group's

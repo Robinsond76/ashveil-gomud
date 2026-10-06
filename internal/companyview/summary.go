@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -37,9 +38,13 @@ type Member struct {
 	// when no provider can say (the leader only).
 	Archetype      string
 	ArchetypeKnown bool
-	// Class is the id of the advanced or elite class it promoted into (Phase
-	// 38b); "" before promotion. The web client draws the class's art.
-	Class string
+	// Class is the advanced or elite class id ("" before promotion),
+	// ClassName its name and ClassTier "advanced" or "elite"; ClassRank is
+	// the highest rank level reached (0 before any), and Promotion is
+	// "ready", "waiting-gate" or "" (Phase 38c1).
+	Class, ClassName, ClassTier string
+	ClassRank                   int
+	Promotion                   string
 	// Lineage is its base archetype id (Phase 40c), for the map sprite.
 	Lineage   string
 	HasHP     bool
@@ -71,6 +76,13 @@ type Member struct {
 	// points it has left to spend on them (Phase 35c).
 	Skills         map[string]int
 	TrainingPoints int
+}
+
+// SetClass fills a member's class fields from its lineage, class, level and
+// alignment: all of them derived, none saved.
+func (m *Member) SetClass(lineage, classID string, level, alignment int) {
+	info := classes.Describe(lineage, classID, level, alignment)
+	m.Class, m.ClassName, m.ClassTier, m.ClassRank, m.Promotion = info.ID, info.Name, info.Tier, info.Rank, info.Promotion
 }
 
 // Summary is a player and their company, as every surface shows them.
@@ -124,6 +136,7 @@ type sources struct {
 	journey   func(leaderUserID int) (expedition.Progress, bool)
 	rest      func(leaderUserID int) (camping.RestActivity, bool)
 	tier      func(userID int) (camping.Tier, time.Duration, bool)
+	gather    func(userID int) (gathering.Progress, bool)
 	exposure  func(leaderUserID int, memberKey string) (int, bool)
 	light     func(user *users.UserRecord) (int, bool)
 	archetype func(userID int) (string, bool)
@@ -147,6 +160,7 @@ func nativeSources() sources {
 		journey:            expedition.JourneyProgress,
 		rest:               camping.LeaderRest,
 		tier:               camping.RestTierOf,
+		gather:             gathering.ProgressOf,
 		exposure:           climate.ExposureOf,
 		light:              nativeLight,
 		archetype:          archetypes.PlayerArchetype,
@@ -224,6 +238,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {
 			s.Leader.Archetype = src.archetypeName(id)
+			s.Leader.SetClass(id, classes.PlayerClass(uid).Class, c.Level, int(c.Alignment))
 		}
 	}
 
@@ -245,6 +260,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Class: v.Class, Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
 			m.Lineage = v.Archetype
+			m.SetClass(v.Archetype, v.Class, v.Level, v.Alignment)
 			m.Strategy = src.strategy(uid, m.Key)
 			m.Abilities = strategy.AtLevel(strategy.CompanionAbilities(v.Archetype), v.Level)
 			switch v.Status {
@@ -276,7 +292,12 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.LoadKnown, s.Load, s.LoadLabel = true, load, LoadLabel(load, band)
 	}
 
-	if p, ok := src.journey(uid); ok {
+	if g, ok := src.gatherProgress(uid); ok {
+		// Phase 45: a gather, fish or hunt in progress (it ends if the
+		// company travels, rests or fights).
+		s.ActivityKnown = true
+		s.Activity = Activity{Kind: Gathering, Percent: g.Percent(), Remaining: g.Remaining, Detail: g.Label}
+	} else if p, ok := src.journey(uid); ok {
 		s.ActivityKnown = true
 		s.Activity = Activity{Kind: Travelling, Percent: p.Percent, Remaining: p.Remaining, Route: p.Route}
 		if p.Interrupted {
@@ -372,4 +393,24 @@ func (s Summary) WarnWords() []string {
 		words = append(words, s.LoadLabel)
 	}
 	return words
+}
+
+// RankName is the member's class line as players read it: the promoted
+// class with its lineage ("Priest (Cleric)"), else the archetype alone, or
+// "" when neither is known (Phase 45).
+func (m Member) RankName() string {
+	if c, ok := classes.Get(m.Class); ok && m.Class != "" {
+		if m.Archetype != "" && m.Archetype != c.Name {
+			return c.Name + " (" + m.Archetype + ")"
+		}
+		return c.Name
+	}
+	return m.Archetype
+}
+
+func (src sources) gatherProgress(uid int) (gathering.Progress, bool) {
+	if src.gather == nil {
+		return gathering.Progress{}, false
+	}
+	return src.gather(uid)
 }

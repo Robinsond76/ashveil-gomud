@@ -19,7 +19,8 @@
  *
  * Responds to GMCP namespaces:
  *   Char         - full character update
- *   Char.Info    - name, race, class, level, alignment, skill/training points
+ *   Char.Info    - name, race, class, level, alignment, skill/training points,
+ *                  route/tier/rank/promotion (the promoted class, Phase 38c1)
  *   Char.Stats   - six core stats
  *   Char.Quests  - quest progress
  *   Char.Skills  - skill names, levels, max flag
@@ -856,7 +857,13 @@
         const nameEl = document.getElementById('cw-char-name');
         nameEl.innerHTML = '';
 
-        const parts = [info.name, info.class].filter(Boolean);
+        // Phase 38c1: the promoted class, its tier and the rank reached.
+        const route = info.route
+            ? info.route + (info.tier === 'elite' ? ' (elite)' : '') + (info.rank ? ', rank ' + info.rank : '')
+              + (info.promotion === 'ready' ? ' \u2014 promotion ready' : '')
+              + (info.promotion === 'waiting-gate' ? ' \u2014 promotion waits on alignment' : '')
+            : (info.promotion === 'ready' ? 'promotion ready' : '');
+        const parts = [info.name, info.class, route].filter(Boolean);
         if (parts.length) {
             nameEl.appendChild(document.createTextNode(parts.join(' \u00b7 ')));
         }

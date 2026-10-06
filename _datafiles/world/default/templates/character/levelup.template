@@ -11,6 +11,7 @@
 {{ range .powerLines }} {{ . }}
 {{ end }}{{ range .classRanks }} <ansi fg="yellow">{{ . }}</ansi>
 {{ end }} Next: {{ .nextMilestone }}
-{{ if .classMilestone }} {{ .classMilestone }}
+{{ range .classNotes }} {{ . }}
+{{ end }}{{ if .classMilestone }} {{ .classMilestone }}
 {{ end }} Type <ansi fg="command">stat train</ansi> to spend your extra Stat Points.
  See <ansi fg="command">help progression</ansi> and <ansi fg="command">help evasion</ansi>.

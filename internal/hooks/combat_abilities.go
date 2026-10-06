@@ -313,6 +313,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		if a.char.ClassEffects().Has(classes.TackleExpo) {
 			events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.Exposed, Source: `combat`})
 		}
+		warlordTackle(a, foe, target) // Phase 38c1
 		// A tackle is heavy force: it breaks a chant (an enemy starts
 		// again) and a wind-up, as a knockdown blow would.
 		if !interruptsOff && target.chanting() {
