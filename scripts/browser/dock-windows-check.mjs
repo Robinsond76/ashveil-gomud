@@ -163,6 +163,54 @@ check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 1
 check(await page.getByRole('listitem', { name: /Wren, level 5, Warden/ }).count() === 1
   && await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-rank').title) === 'Ranger line', 'a promoted member card names its class, its lineage on hover (40s5)');
 check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
+// Phase 58: click a member in the formation drawing, then a place.
+{
+  const sentFm = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  const fmHelp = () => page.locator('.fm-help').textContent();
+  check((await fmHelp()).includes('Click a member, then a place'), 'formation: a hint says how to move');
+  let moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Move Oswin to row 3, column 3' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation move #1 3 3"]', 'formation: pick a member, then an empty cell, sends formation move');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Wren/ }).click();
+    await page.getByRole('button', { name: 'Swap Wren with Oswin' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation swap me #1"]', 'formation: pick a member, then another, swaps them');
+  await page.getByRole('button', { name: /^Move Wren/ }).click();
+  check((await fmHelp()).includes('Moving Wren') && await page.locator('td.is-moving').count() === 1, 'formation: the picked member is marked, with instructions');
+  await page.keyboard.press('Escape');
+  check((await fmHelp()).includes('cancelled') && await page.locator('td.is-moving').count() === 0, 'formation: Escape puts the member back down');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Wren/ }).focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Move Wren to row 2, column 1' }).focus();
+    await page.keyboard.press('Enter');
+  });
+  check(JSON.stringify(moved) === '["formation move me 2 1"]', 'formation: works from the keyboard');
+  moved = await sentFm(async () => { await page.getByRole('button', { name: 'Ysolde' }).click(); });
+  check(moved.length === 0 && (await fmHelp()).includes('fallen'), 'formation: a fallen member is refused with a message, nothing sent');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+    await page.getByRole('button', { name: 'Swap Tamsin with Oswin' }).click();
+  });
+  check(moved.length === 0 && (await fmHelp()).includes('Pick an empty cell to place Tamsin'), 'formation: an unplaced member is not swapped with a placed one (the server refuses that)');
+  moved = await sentFm(async () => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+  });
+  check(moved.length === 0 && await page.locator('.fm-unplaced .fm-cell.is-moving').count() === 1 && (await fmHelp()).includes('Moving Tamsin'), 'formation: with a placed member picked up, an unplaced one is picked up instead of swapped');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: 'Move Tamsin to row 1, column 3' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation move #3 1 3"]', 'formation: an unplaced member can be placed');
+  await page.evaluate(() => { const c = Client.GMCPStructs.Company; c.Battle = { enemies: [{ name: 'x' }] }; });
+  moved = await sentFm(async () => { await page.getByRole('button', { name: /^Move Oswin/ }).click(); });
+  check(moved.length === 0 && (await fmHelp()).includes('battle is under way'), 'formation: in a battle a click is refused with a message, nothing sent');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+}
 await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader', owner_user_id: 7, online: true, follow: false, support: true, autoattack: false }, { Name: '<b>Tamsin</b>', Position: 'member', owner_user_id: 8, online: false, follow: false, support: false, autoattack: false }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
 check((await status()).includes('Travelling with') && (await status()).includes('<b>Tamsin</b>') && await page.locator('#party-panel b').count() === 0, 'a human party under Travelling with, names as text');
 check((await status()).includes('each owner commands their own company') && (await status()).includes('(offline)'), 'alliance authority and offline status appear');
