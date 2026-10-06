@@ -3,6 +3,7 @@ package walking
 import (
 	"sort"
 	"sync"
+	"testing"
 )
 
 // StepProvider is implemented by modules/walking. The user Go command calls
@@ -129,18 +130,22 @@ func Arrived(userID, fromRoomID, toRoomID int) {
 }
 
 // SuspendListeners sets aside every registered step and arrival listener,
-// including the ones module init() wires, and returns a function that
-// restores them. Tests use it so only the listener under test hears a step:
-// a module's production listener would otherwise roll real dice alongside
-// the test's fixed ones.
-func SuspendListeners() (restore func()) {
+// including the ones module init() wires, until tb's test ends. Tests use
+// it so only the listener under test hears a step: a module's production
+// listener would otherwise roll real dice alongside the test's fixed ones.
+// It takes a test handle so game code cannot reach it, and it restores the
+// listeners through tb.Cleanup, after cleanups registered later (such as
+// removing the test's own listener). Not for parallel tests: the listener
+// set is global.
+func SuspendListeners(tb testing.TB) {
+	tb.Helper()
 	providerMu.Lock()
 	defer providerMu.Unlock()
 	steps, arrivals := listeners, arrivalListeners
 	listeners, arrivalListeners = map[int]StepListener{}, map[int]ArrivalListener{}
-	return func() {
+	tb.Cleanup(func() {
 		providerMu.Lock()
 		defer providerMu.Unlock()
 		listeners, arrivalListeners = steps, arrivals
-	}
+	})
 }

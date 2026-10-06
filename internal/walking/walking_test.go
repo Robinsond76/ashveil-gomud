@@ -175,3 +175,28 @@ func TestStepListenersWithoutProvider(t *testing.T) {
 	Stepped(1, 2, 3)
 	assert.Equal(t, 1, heard)
 }
+
+func TestSuspendListenersSilencesAndRestoresThemAfterTheTest(t *testing.T) {
+	steps, arrivals := 0, 0
+	removeStep := AddStepListener(func(int, int, int) { steps++ })
+	t.Cleanup(removeStep)
+	removeArrival := AddArrivalListener(func(int, int, int) { arrivals++ })
+	t.Cleanup(removeArrival)
+
+	t.Run("suspended", func(t *testing.T) {
+		SuspendListeners(t)
+		own := 0
+		remove := AddStepListener(func(int, int, int) { own++ })
+		t.Cleanup(remove)
+		Stepped(1, 2, 3)
+		Arrived(1, 2, 3)
+		assert.Equal(t, 1, own, "a listener added while suspended hears steps")
+		assert.Equal(t, 0, steps, "earlier step listeners are set aside")
+		assert.Equal(t, 0, arrivals, "earlier arrival listeners are set aside")
+	})
+
+	Stepped(1, 2, 3)
+	Arrived(1, 2, 3)
+	assert.Equal(t, 1, steps, "step listeners come back when the test ends")
+	assert.Equal(t, 1, arrivals, "arrival listeners come back when the test ends")
+}
