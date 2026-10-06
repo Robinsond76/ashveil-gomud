@@ -17,6 +17,8 @@ spawninfo:
   respawnrate: 1 real minutes
 mutators:
 - mutatorid: wildfire
+resources:
+- forage
 mapx: 20
 mapy: -2
 mapz: 0

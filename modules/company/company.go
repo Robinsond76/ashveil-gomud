@@ -46,6 +46,9 @@ type Runtime interface {
 	// UseItem takes one use of a carried item from a live mob (Phase 32f's
 	// company meals); false when the mob or the item is gone.
 	UseItem(instanceID int, itm items.Item) bool
+	// SetItemUses sets the uses left on a carried item of a live mob
+	// (Phase 40a's refills); false when the mob or the item is gone.
+	SetItemUses(instanceID int, itm items.Item, uses int) bool
 	// CharmedByOther reports whether a live mob now serves someone else.
 	CharmedByOther(leaderUserID, instanceID int) bool
 	// TemplateState is the state a template starts with, without spawning.
@@ -285,7 +288,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -834,6 +837,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.mealView(user, room, mealEat))
 	case "drink":
 		user.SendText(m.mealView(user, room, mealDrink))
+	case "fill":
+		user.SendText(m.fillView(user, room)) // Phase 40a
 	case "meal":
 		user.SendText(m.mealView(user, room, mealBoth))
 	case "inventory", "inv":

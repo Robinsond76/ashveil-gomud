@@ -21,6 +21,8 @@ idlemessages:
 - "304"
 tags:
 - fishing
+resources:
+- water
 mapx: 32
 mapy: 14
 mapz: 0

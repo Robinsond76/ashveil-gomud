@@ -17,6 +17,8 @@ exits:
     roomid: 367
 idlemessages:
 - "304"
+resources:
+- forage
 mapx: 27
 mapy: 12
 mapz: 0

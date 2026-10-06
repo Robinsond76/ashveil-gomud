@@ -12,6 +12,8 @@ exits:
   southeast:
     roomid: 543
 gold: 30
+resources:
+- forage
 mapx: 37
 mapy: -5
 mapz: 0
