@@ -1,30 +1,34 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">sentinel</ansi>
 
 The Sentinel is the good elite of the Warden (ranger route, alignment +30 at
-promotion). It watches the line: when a foe can reach an ally in the middle or
-back row, the Sentinel holds its turn and shoots the first foe that strikes
-one of them. It needs a shooting weapon.
+promotion). It watches the line: when a foe could strike an ally in the middle
+or back row, the Sentinel holds its turn and shoots the first foe that goes
+for one of them. It needs a shooting weapon.
 
 <ansi fg="yellow-bold">Ranks</ansi>
 
-  30 Overwatch         holds its turn when a foe can reach its middle
-                       or back row; the first foe that strikes one of
+  30 Overwatch         when its Aimed Shot is not ready and a foe
+                       could strike its middle or back row, it holds
+                       its turn; the first foe that goes for one of
                        those allies is shot before the blow resolves,
                        and on a hit the blow lands at half damage
   35 Steady overwatch  the Overwatch shot has +5 Attack
   40 Pull down         an Overwatch hit knocks down a leaping foe
   45 Watchful          back-row allies have +5 Evasion while the
-                       Sentinel stands
+                       Sentinel stands, on top of a row's own
+                       Evasion (such as a Warden's)
   50 Spoil the chant   Overwatch also answers a foe beginning a chant;
                        a hit breaks the chant
   55 Twin watch        Overwatch can fire twice a round; the second
                        shot spends the Sentinel's next turn too
   60 Guardian Arrow    an Overwatch hit stops the blow entirely
 
-Overwatch is a class ability, listed first in <ansi
-fg="command">strategy</ansi> and held back by <ansi fg="command">strategy
-[member] abilities off</ansi>. A held turn that sees no strike is simply
-spent. It never advances the shared clock.
+Overwatch is a class ability, listed after Aimed Shot in <ansi
+fg="command">strategy</ansi> (a ready Aimed Shot comes first) and held back
+by <ansi fg="command">strategy [member] abilities off</ansi>. A held turn
+that sees no foe go for those allies looses its arrow at the Sentinel's own
+foe at the round's end, so the turn is never wasted. It never advances the
+shared clock.
 
 <ansi fg="yellow-bold">Elite talents</ansi>
 

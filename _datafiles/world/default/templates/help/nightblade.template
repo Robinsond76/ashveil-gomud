@@ -7,7 +7,7 @@ poisons the rest.
 <ansi fg="yellow-bold">Ranks</ansi>
 
   30 Death Mark        its first target each battle is marked and takes
-                       25% more damage from it; when that foe falls,
+                       40% more damage from it; when that foe falls,
                        the mark passes to the most hurt foe in reach
   35 Envenom           its blows poison the target a quarter of the
                        time

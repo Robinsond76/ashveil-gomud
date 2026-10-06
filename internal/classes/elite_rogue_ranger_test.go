@@ -35,7 +35,7 @@ func TestRogueAndRangerEliteSignatureRanksAppearAtTheirLevels(t *testing.T) {
 		{"pathfinder", 29, PathEye, 0}, {"pathfinder", 30, PathEye, 1}, {"pathfinder", 49, PathOpens, 1}, {"pathfinder", 50, PathOpens, 2},
 		{"pathfinder", 60, AmbushFlip, 1}, {"pathfinder", 59, AmbushFlip, 0},
 		{"swordmaster", 45, RiposteRound, 2}, {"swordmaster", 44, RiposteRound, 0}, {"swordmaster", 60, RiposteFree, 1},
-		{"nightblade", 30, DeathMark, 25}, {"nightblade", 40, Finisher, 3}, {"nightblade", 60, Coup, 20},
+		{"nightblade", 30, DeathMark, 40}, {"nightblade", 40, Finisher, 3}, {"nightblade", 60, Coup, 20},
 		{"sentinel", 30, Overwatch, 1}, {"sentinel", 54, OverwatchMax, 1}, {"sentinel", 55, OverwatchMax, 2}, {"sentinel", 60, GuardArrow, 1},
 		{"marksman", 30, RangedCrit, 15}, {"marksman", 35, AimCD, 2}, {"marksman", 60, PerfectShot, 1},
 		{"ravager", 30, HuntDown, 75}, {"ravager", 54, FleePenalty, 25}, {"ravager", 55, FleePenalty, 40}, {"ravager", 60, Apex, 1},

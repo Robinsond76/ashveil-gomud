@@ -482,6 +482,8 @@
         case 'yield': return a ? a + ' yields' : '';
         case 'flee': return a ? a + ' flees' : '';
         case 'guard-used': return a && t ? a + ' guards ' + t : '';
+        // An ability names itself (a Sentinel's Overwatch, a Nightblade's Death Mark...).
+        case 'ability': return a && e.status ? a + ': ' + e.status + (t && e.outcome !== 'failed' ? ' on ' + t : (e.outcome === 'failed' ? ' (failed)' : '')) : '';
         default: return '';
         }
     }

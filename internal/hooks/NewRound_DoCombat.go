@@ -99,6 +99,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt, false)
 
 	affectedPlayers2, affectedMobs2 := handleMobCombat(evt, false)
+	looseHeldShots() // Phase 38c2 review: a quiet Overwatch hold still shoots
 
 	// Earned second physical turns reuse the same gates and attribution. Round
 	// upkeep, chants and waits were already processed in the first pass.

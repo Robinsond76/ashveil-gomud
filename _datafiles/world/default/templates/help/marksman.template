@@ -18,9 +18,10 @@ comes back sooner, and a good shot hobbles its target.
   60 Perfect Shot      its first Aimed Shot each battle can not miss or
                        be avoided
 
-These need a shooting weapon in hand. Aimed Shot is already a sure critical
-hit when it lands, so Called Shot works through the Marksman's other shots and
-the extra critical damage.
+Called Shot's extra critical chance needs a shooting weapon in hand; the
+other ranks work with any weapon. Aimed Shot is already a sure critical hit
+when it lands, so Called Shot works through the Marksman's other shots and the
+extra critical damage. The Second Nock's arrow is an ordinary shot.
 
 <ansi fg="yellow-bold">Elite talents</ansi>
 

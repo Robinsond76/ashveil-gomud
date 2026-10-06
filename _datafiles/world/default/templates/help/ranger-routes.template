@@ -11,7 +11,7 @@ They all shoot (Aimed Shot, <ansi fg="command">help abilities</ansi>) from any r
   25 Shelter            allies in the Warden's row take 5% less damage
 
   <ansi fg="yellow-bold">Sentinel</ansi> (30): Overwatch (it holds its turn and shoots the first foe that
-  strikes a middle- or back-row ally), Steady overwatch, Pull down, Watchful,
+  goes for a middle- or back-row ally), Steady overwatch, Pull down, Watchful,
   Spoil the chant, Twin watch and Guardian Arrow. See <ansi fg="command">help sentinel</ansi>.
 
 <ansi fg="yellow-bold">Hunter (neutral)</ansi>

@@ -16,7 +16,8 @@ skill is a different page: <ansi fg="command">help pathfinder</ansi>.)
   40 Scouted ground    every ally's action meter starts the battle 10
                        points higher
   45 Vanish            once a battle, when struck below 30% health, it
-                       has +20 Evasion until its next turn
+                       has +20 Evasion for the rest of that round and
+                       the next
   50 Double opening    Pathfinder's Eye opens a foe that has not acted
                        yet twice a battle
   55 Trailwise         the cache a won random encounter leaves holds

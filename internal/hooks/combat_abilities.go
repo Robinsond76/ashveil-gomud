@@ -341,8 +341,10 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 	case strategy.OpeningStrike, strategy.AimedShot:
 		abilityStrikes[a.who] = true
 		abilityKind[a.who] = id
+		// The Perfect Shot is spent when the shot is loosed (combat), so a
+		// turn lost before it never wastes it (Phase 38c2 review).
 		if rt := a.char.RTState(); id == strategy.AimedShot && a.char.ClassEffects().Has(classes.PerfectShot) && !rt.ShotUsed {
-			rt.ShotUsed, rt.ShotNow = true, true
+			rt.ShotNow = true
 		}
 		a.char.Aggro.Type = characters.BackStab
 		emitCombat(event)

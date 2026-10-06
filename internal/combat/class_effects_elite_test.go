@@ -13,11 +13,12 @@ func TestCoupDeGraceFellsAFoeBelowTwentyPercentAndDoublesAgainstABoss(t *testing
 	defenseSpecs(t)
 	night := classed("nightblade", 60)
 	foe := classed("", 30)
-	assert.Equal(t, 5, coupDamage(night, foe, 5, 30), "a healthy foe takes the blow")
-	assert.Equal(t, 19, coupDamage(night, foe, 5, 19), "below 20% it falls outright")
+	assert.Equal(t, 5, coupDamage(night, foe, 5, 30, false), "a healthy foe takes the blow")
+	assert.Equal(t, 19, coupDamage(night, foe, 5, 19, false), "below 20% it falls outright")
+	assert.Equal(t, 10, coupDamage(night, foe, 5, 19, true), "a boss takes double instead")
 	foe.RTState().Boss = true
-	assert.Equal(t, 10, coupDamage(night, foe, 5, 19), "a boss takes double instead")
-	assert.Equal(t, 5, coupDamage(classed("assassin", 45), foe, 5, 19), "no Coup before the elite's last rank")
+	assert.Equal(t, 10, coupDamage(night, foe, 5, 19, false), "also when only its battle state knows it is a boss")
+	assert.Equal(t, 5, coupDamage(classed("assassin", 45), foe, 5, 19, false), "no Coup before the elite's last rank")
 }
 
 func TestSpoiledBlowsLandAtHalfDamage(t *testing.T) {

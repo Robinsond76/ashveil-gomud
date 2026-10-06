@@ -7,11 +7,11 @@ struck is harder to scare into flight, and its kills shake the survivors.
 <ansi fg="yellow-bold">Ranks</ansi>
 
   30 Hunt Down         its blows open a bleeding wound on a foe at or
-                       below half health and add a stack to one already
+                       below 75% health and add a stack to one already
                        bleeding; a foe it struck this round has 25
                        points less chance to lose its nerve and flee
                        (it can still flee)
-  35 Bloodscent        +10% damage against bleeding foes
+  35 Bloodscent        +20% damage against bleeding foes
   40 Harrow            when a foe it wounded loses its nerve, its whole
                        group is rattled: every ally has +5 Attack
                        against them for 2 rounds

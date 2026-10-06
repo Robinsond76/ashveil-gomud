@@ -60,8 +60,8 @@ var Abilities = []AbilitySpec{
 		When: "its foe is knocked down, stunned, staggered, or exposed, and it wields a blade or claws",
 		Does: "its first blow that lands this round is a critical hit"},
 	{ID: Overwatch, Name: "Overwatch", Cooldown: 1,
-		When: "it is a Sentinel with a shooting weapon, and a foe could strike an ally in its middle or back row",
-		Does: "holds its turn; the first foe that strikes a middle- or back-row ally is shot before the blow resolves, and on a hit the blow lands at half damage"},
+		When: "it is a Sentinel with a shooting weapon, its Aimed Shot is not ready, and a foe could strike an ally in its middle or back row",
+		Does: "holds its turn; the first foe that goes for a middle- or back-row ally is shot before the blow resolves, and on a hit the blow lands at half damage; if none does, the arrow flies at its own foe at the round's end"},
 	{ID: AimedShot, Name: "Aimed Shot", Archetype: "ranger", Skill: "track", Cooldown: 3,
 		When: "it has a shooting weapon and its foe is not already exposed",
 		Does: "its first shot that lands this round is a critical hit, leaving the foe exposed"},
@@ -121,13 +121,15 @@ func PlayerAbilities(skillLevel func(skill string) int) []Ability {
 }
 
 // WithClass adds the abilities a class gives beyond its archetype's (Phase
-// 38c2: the Sentinel's Overwatch, held before it aims). The class's ranks
+// 38c2: the Sentinel's Overwatch, used when its Aimed Shot is not). The class's ranks
 // at the level decide.
 func WithClass(list []Ability, classID string, level int) []Ability {
 	if classID == "" || !classes.EffectsFor(classID, level, nil).Has(classes.Overwatch) || slices.Contains(list, Overwatch) {
 		return list
 	}
-	return append([]Ability{Overwatch}, list...)
+	// After the archetype's own: a ready Aimed Shot comes first (Phase 38c2
+	// review), so the hold never costs the company its exposed foes.
+	return append(slices.Clone(list), Overwatch)
 }
 
 // Names are the abilities' names, in order.

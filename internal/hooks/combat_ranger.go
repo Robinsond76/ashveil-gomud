@@ -139,6 +139,52 @@ func useOverwatch(a actor, room *rooms.Room, u *users.UserRecord, foes map[int]b
 	}
 }
 
+// looseHeldShots looses a Sentinel's held arrow at its own foe once the
+// round's first blows are struck, when no foe gave it a shot (Phase 38c2
+// review): a quiet hold costs the Sentinel its Aimed Shot, never its blow.
+func looseHeldShots() {
+	for _, uid := range battle.Players() {
+		u := users.GetByUserId(uid)
+		if u == nil || u.Character == nil {
+			continue
+		}
+		room := rooms.LoadRoom(u.Character.RoomId)
+		if room == nil {
+			continue
+		}
+		foes, ok := battleFoes(u, room)
+		if !ok {
+			continue
+		}
+		for _, a := range sideActors(u, room) {
+			rt := a.char.RT
+			if rt == nil || rt.Watching < 1 {
+				continue
+			}
+			fired := rt.WatchFired > 0
+			rt.Watching = 0
+			if fired || a.char.Health < 1 || status.Grounded(a.char) || a.char.HasBuffFlag("no-combat") {
+				continue
+			}
+			agg := a.char.Aggro
+			if agg == nil || agg.MobInstanceId == 0 || !foes[agg.MobInstanceId] {
+				continue
+			}
+			foe := mobs.GetInstance(agg.MobInstanceId)
+			if foe == nil || foe.Character.Health < 1 || foe.Character.CombatWithdrawn {
+				continue
+			}
+			if reached, _ := abilityReach(a, u, foe, room); !reached {
+				continue
+			}
+			target := mobHolder(foe)
+			a.holder.say(fmt.Sprintf("No blow comes; you loose your held arrow at %s.", target.tag()),
+				"%s looses a held arrow at "+verbatim(target.tag())+".", "")
+			extraBlow(a, foe, room, 100)
+		}
+	}
+}
+
 // overwatchShot is one held shot at a foe: the Sentinel's weapon blow with
 // the rank's Attack, through the same hit, defense, armor and wound rules as
 // any blow.
@@ -244,8 +290,10 @@ func answerChant(m *mobs.Mob, h actor, u *users.UserRecord, room *rooms.Room) {
 	}
 }
 
-// chantBegun is called when an enemy starts a chant: any Sentinel already
-// holding its shot from last turn may answer it.
+// chantBegun is called when an enemy starts a chant: any Sentinel holding
+// its shot now may answer it. Holds end with the round's first blows
+// (looseHeldShots), so in practice a chant begun before the abilities is
+// answered by useOverwatch's own scan.
 func chantBegun(m *mobs.Mob) {
 	if _, _, companion := company.LeaderAndKeyForInstance(m.InstanceId); companion {
 		return
@@ -313,6 +361,12 @@ func secondNock(attacker, defender statusHolder, rt *characters.ClassRT, round u
 	a.holder.say(fmt.Sprintf("You nock a second arrow and loose it at %s.", target.tag()),
 		"%s nocks a second arrow and looses it at "+verbatim(target.tag())+".", " (second nock)")
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: target.ref, Status: "Second Nock", Outcome: combatstream.OutcomeSucceeded})
+	// The second arrow is a plain shot (Phase 38c2 review): not the Aimed
+	// Shot's sure critical hit and bonus, and it pins no one.
+	delete(abilityKind, a.who)
+	if agg := a.char.Aggro; agg != nil && agg.Type == characters.BackStab {
+		agg.Type = characters.DefaultAttack
+	}
 	extraBlow(a, pick, room, 100)
 }
 

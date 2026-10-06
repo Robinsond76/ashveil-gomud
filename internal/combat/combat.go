@@ -647,7 +647,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				// Phase 38c2: a Marksman's Perfect Shot can't miss or be avoided.
 				perfectShot := !harmless && sourceChar.RT != nil && sourceChar.RT.ShotNow
 				if perfectShot {
-					sourceChar.RT.ShotNow = false
+					sourceChar.RT.ShotNow, sourceChar.RT.ShotUsed = false, true
 					hit, byChemistry = true, false
 				}
 				if harmless {
@@ -762,7 +762,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				// (a boss takes double damage instead).
 				coup := false
 				if attackTargetDamage > 0 {
-					if fell := coupDamage(&sourceChar, &targetChar, attackTargetDamage, targetChar.Health-attackResult.DamageToTarget); fell != attackTargetDamage {
+					if fell := coupDamage(&sourceChar, &targetChar, attackTargetDamage, targetChar.Health-attackResult.DamageToTarget, len(targetMob) > 0 && targetMob[0] != nil && targetMob[0].Boss); fell != attackTargetDamage {
 						attackTargetDamage, coup = fell, true
 					}
 				}
@@ -786,7 +786,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						effect = status.CritEffect(weaponSubType, nil, util.Rand)
 						attackResult.BuffTarget = append(attackResult.BuffTarget, effect...)
 					}
-					critStatuses = status.Words(effect)
+					critStatuses = append(critStatuses, status.Words(effect)...)
 				}
 
 				// Phase 43b: a coated blade's contact, once a blow wounds.

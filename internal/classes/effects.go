@@ -135,7 +135,7 @@ const (
 	PathOpens    = "pathopens"    // Opening Strike opens a foe that hasn't acted yet, this many times a battle
 	ExposeWeak   = "exposeweak"   // an Opening Strike that hits leaves the target exposed for 2 rounds
 	ScoutMeter   = "scoutmeter"   // every ally's opening action meter starts this much higher
-	Vanish       = "vanish"       // once a battle, struck below 30% health: this much Evasion until its next turn
+	Vanish       = "vanish"       // once a battle, struck below 30% health: this much Evasion for the rest of that round and the next
 	TrailGold    = "trailgold"    // percent more gold in the cache a won random encounter leaves
 	TrailLoot    = "trailloot"    // points added to that cache's chance of holding equipment
 	AmbushFlip   = "ambushflip"   // an ambush that would catch the company ambushes instead
@@ -167,7 +167,7 @@ const (
 	NoBlockCrit  = "noblockcrit"  // its critical hits can't be blocked
 	SecondNock   = "secondnock"   // an Aimed Shot that fells its target shoots again, once a round
 	PerfectShot  = "perfectshot"  // its first Aimed Shot each battle can't miss or be avoided
-	HuntDown     = "huntdown"     // its blows open a bleed on a foe at half health and add stacks to a bleeding one
+	HuntDown     = "huntdown"     // its blows open a bleed on a foe at or below this percent of its health and add stacks to a bleeding one
 	HuntBleed    = "huntbleed"    // percent more damage against bleeding foes
 	FleePenalty  = "fleepenalty"  // points off a struck foe's chance to lose its nerve and flee
 	Harrow       = "harrow"       // Attack allies gain against the group of a foe it wounded that breaks

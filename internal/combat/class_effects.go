@@ -131,13 +131,14 @@ func attackRating(atk, def *characters.Character) int {
 // coupDamage is Coup de Grace (Phase 38c2): a blow that lands on a foe
 // whose health, before it, is below the share of its maximum fells it
 // outright; against a boss it deals double damage instead. left is the
-// foe's health still standing when this blow lands.
-func coupDamage(src, tgt *characters.Character, dmg, left int) int {
+// foe's health still standing when this blow lands; boss is true for a boss
+// (read from the mob when the blow code has it, else from the foe's state).
+func coupDamage(src, tgt *characters.Character, dmg, left int, boss bool) int {
 	pct := src.ClassEffects().Int(classes.Coup)
 	if pct <= 0 || dmg <= 0 || tgt.HealthMax.Value <= 0 || left*100 >= tgt.HealthMax.Value*pct {
 		return dmg
 	}
-	if tgt.RT != nil && tgt.RT.Boss {
+	if boss || tgt.RT != nil && tgt.RT.Boss {
 		return dmg * 2
 	}
 	return max(dmg, left)

@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -169,6 +171,40 @@ func TestSentinelHoldsOverwatchAndShootsTheFirstFoeThatStrikesTheBackRow(t *test
 	assert.True(t, sawShot, "and an overwatch arrow flies at a foe striking the line")
 }
 
+// Phase 38c2 review: a hold no foe answers is not a lost turn; the arrow
+// flies at the Sentinel's own foe when the round's first blows are done.
+// The foes go for Oswin but are knocked down, so none strikes.
+func TestSentinelLoosesAQuietHoldAtItsOwnFoe(t *testing.T) {
+	b, stream := eliteBrawl(t, "", 1, "sentinel", 30)
+	for _, mv := range []string{"move #1 1 1", "move me 1 2", "move #3 2 1", "move #2 2 3", "move #4 3 3"} {
+		require.Contains(t, b.cmd("formation", mv), "Placed")
+	}
+	b.cmd("strategy", "tamsin abilities off")
+	b.start()
+	ysolde := b.companion(4)
+	ysolde.Character.Equipment.Weapon = items.New(10014) // a sling
+	loosed, shotAtTheLine := false, false
+	for i := 0; i < 8 && !loosed; i++ {
+		b.toughen()
+		b.hardenBandits()
+		for _, m := range b.livingBandits() {
+			m.Character.SetAggro(0, b.companion(2).InstanceId, characters.DefaultAttack)
+			m.AddBuff(status.KnockedDown, "combat")
+		}
+		n := len(*stream)
+		out := b.fight()
+		held := slices.Contains(statusesOf(since(*stream, n), "Ysolde"), "Overwatch")
+		if strings.Contains(out, "overwatch arrow") {
+			shotAtTheLine = true
+		}
+		if held && strings.Contains(out, "looses a held arrow") {
+			loosed = true
+		}
+	}
+	assert.True(t, loosed, "the held arrow flies at the Sentinel's own foe")
+	assert.False(t, shotAtTheLine, "no foe struck, so no overwatch arrow answered one")
+}
+
 // rangerRounds plays rounds with the aimed foe of Ysolde wounded, so a
 // Ravager's hunt has a foe to open.
 func rangerRounds(b *brawl, stream *[]combatstream.Event, rounds int, wound func()) string {
@@ -261,6 +297,12 @@ func TestSecondNockLoosesAnotherArrowAfterAKilledAimedShot(t *testing.T) {
 	b.companion(4).Character.Equipment.Weapon = items.New(10014)
 	out := rangerRounds(b, stream, 6, isolate(b))
 	assert.True(t, strings.Contains(out, "nocks a second arrow"), "a killed Aimed Shot sends another arrow")
+	// Phase 38c2 review: the second arrow is a plain shot, so nothing it
+	// strikes is pinned before the next Aimed Shot is taken.
+	for _, after := range strings.Split(out, "nocks a second arrow")[1:] {
+		upto, _, _ := strings.Cut(after, "takes careful aim")
+		assert.NotContains(t, upto, "arrow pins", "the second arrow is no Aimed Shot: it pins no one")
+	}
 }
 
 func TestTrailwiseAndAmbushMasterAreCompanyGifts(t *testing.T) {
@@ -391,4 +433,27 @@ func TestPathfindersEyeHalvesAmbushesAndAmbushMasterTurnsThemAround(t *testing.T
 		assert.Equal(t, 1, adv, "the company ambushes instead")
 		assert.Equal(t, "Tamsin Reed", who)
 	})
+}
+
+// Phase 38c2 review: Watchful adds to the back row's Evasion on top of the
+// Warden's own row aura, so a back-row Sentinel's rank is never lost.
+func TestWatchfulAddsToTheBackRowsOwnEvasion(t *testing.T) {
+	for _, tc := range []struct {
+		class string
+		level int
+		want  int
+	}{{"warden", 45, 5}, {"sentinel", 40, 5}, {"sentinel", 45, 10}} {
+		t.Run(fmt.Sprintf("%s-%d", tc.class, tc.level), func(t *testing.T) {
+			b, _ := eliteBrawl(t, "", 1, tc.class, tc.level)
+			for _, mv := range []string{"move #1 1 1", "move me 1 2", "move #3 1 3", "move #2 3 1", "move #4 3 3"} {
+				require.Contains(t, b.cmd("formation", mv), "Placed")
+			}
+			b.cmd("strategy", "tamsin abilities off")
+			b.cmd("strategy", "ysolde abilities off")
+			b.start()
+			b.toughen()
+			b.fight()
+			assert.Equal(t, tc.want, b.companion(2).Character.Aura.Evasion, "Oswin, in the back row with Ysolde")
+		})
+	}
 }

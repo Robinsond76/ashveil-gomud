@@ -167,7 +167,8 @@ func deathMark(a actor, u *users.UserRecord, room *rooms.Room, foes map[int]bool
 	if rt.MarkSet {
 		cur := mobs.GetInstance(rt.MarkedFoe)
 		if cur != nil && cur.Character.Health >= 1 && foes[cur.InstanceId] && !cur.Character.CombatWithdrawn {
-			return // the mark holds
+			rt.DeathMark = cur.Character.RTState() // the mark holds (its state re-read, should it have been remade)
+			return
 		}
 		best := -1.0
 		for id := range foes {
@@ -319,7 +320,7 @@ func vanish(h statusHolder, evade int) {
 		return
 	}
 	rt.Vanished, rt.VanishEvade, rt.VanishRound = true, evade, combatRound.Load()
-	h.say("You slip out of sight.", "%s slips out of sight.", fmt.Sprintf(" (vanish: +%d Evasion until your next turn)", evade))
+	h.say("You slip out of sight.", "%s slips out of sight.", fmt.Sprintf(" (vanish: +%d Evasion this round and the next)", evade))
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: h.char.RoomId, Source: h.ref, Status: "Vanish", Outcome: combatstream.OutcomeSucceeded})
 }
 
