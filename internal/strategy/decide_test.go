@@ -137,7 +137,7 @@ func TestDefaultAutoSpells(t *testing.T) {
 func TestSummonerCallsItsSummonFirstOnceABattle(t *testing.T) {
 	list := []Spell{{ID: "callhost", Use: UseSummon, Cost: 30}, {ID: "heal", Use: UseHeal, Cost: 6}}
 	knows := func(id string) bool { return true }
-	sit := Situation{Role: Healer, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 2,
+	sit := Situation{Role: Healer, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 3,
 		Allies: []Ally{{HP: 100, MaxHP: 100}}}
 	act := Decide(sit)
 	if act.Kind != Summon || act.Spell != "callhost" {
@@ -150,5 +150,29 @@ func TestSummonerCallsItsSummonFirstOnceABattle(t *testing.T) {
 	sit.Summoned, sit.Foes = false, 0
 	if act := Decide(sit); act.Kind == Summon {
 		t.Fatal("no foes, no summon")
+	}
+}
+
+// Phase 38b review: a summon is for a battle worth it (three or more foes,
+// or a boss), and keeps the mana reserve.
+func TestSummonerCallsOnlyForABattleWorthIt(t *testing.T) {
+	list := []Spell{{ID: "bindfiend", Use: UseSummon, Cost: 30}}
+	knows := func(id string) bool { return true }
+	sit := Situation{Role: Healer, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 2,
+		Allies: []Ally{{HP: 100, MaxHP: 100}}}
+	if act := Decide(sit); act.Kind == Summon {
+		t.Fatal("two ordinary foes are not worth a summon")
+	}
+	sit.Boss = true
+	if act := Decide(sit); act.Kind != Summon {
+		t.Fatalf("a boss is worth one: %+v", act)
+	}
+	sit.Boss, sit.Foes, sit.Reserve = false, 3, 80
+	if act := Decide(sit); act.Kind == Summon {
+		t.Fatal("the call would break the mana reserve")
+	}
+	sit.Reserve = 70
+	if act := Decide(sit); act.Kind != Summon {
+		t.Fatalf("the reserve holds after the call: %+v", act)
 	}
 }

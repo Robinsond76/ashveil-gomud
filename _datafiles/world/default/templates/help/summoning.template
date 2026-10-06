@@ -8,8 +8,9 @@ gone, and nothing about it is saved.
 <ansi fg="yellow-bold">How it is called</ansi>
 
 At level 30 a Hierarch learns <ansi fg="command">Call the Host</ansi> and a Demonologist <ansi fg="command">Bind the Fiend</ansi>.
-The caster uses it on its own, first thing when foes stand: you set nothing
-(see <ansi fg="command">help strategy</ansi>). It takes 3 chant rounds and costs a tenth of the
+The caster uses it on its own as a battle opens, when three or more foes stand
+or one is a boss, and only if the call leaves its mana reserve: you set nothing
+(see <ansi fg="command">help strategy</ansi>). It is called in battle only. It takes 3 chant rounds and costs a tenth of the
 caster's maximum mana, and a blow can break the chant (<ansi fg="command">help interrupts</ansi>).
 It can be called once a battle. If the call is broken, the mana is lost and it
 may be tried again.
@@ -39,8 +40,9 @@ may be tried again.
                            5% of its mana
   60  Mastered binding     arrives a chant round sooner
 
-If the Demonologist falls, the binding breaks: the Demon claws the nearest ally
-once and is gone (at 60 it simply vanishes).
+If the Hierarch falls, the Angel departs. If the Demonologist falls, the
+binding breaks: the Demon claws the nearest ally once and is gone (at 60 it
+simply vanishes).
 
 A summon can be struck and can fall; one that falls fades, leaving no body, no
 experience and no loot.

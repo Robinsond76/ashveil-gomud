@@ -111,6 +111,9 @@ type Situation struct {
 	// Summoned (Phase 38b) is whether the character has called its summon
 	// this battle (or has none to call).
 	Summoned bool
+	// Boss (Phase 38b review) is whether a boss stands among the foes: a
+	// summoner calls for a boss even when fewer than SummonFoes stand.
+	Boss bool
 	// HealBelow is the healing threshold, a percent of each ally's wound
 	// limit (Phase 30c tactics); 0 means DefaultHealing.
 	HealBelow int
@@ -173,9 +176,11 @@ func Decide(s Situation) Action {
 		}
 		return sp, true
 	}
-	// Phase 38b: a summoner calls its summon first, as the battle opens.
-	if !s.Summoned && s.Foes >= 1 && (s.Role == Healer || s.Role == Caster || s.Role == Controller) {
-		if sp, ok := affordable(UseSummon); ok {
+	// Phase 38b: a summoner calls its summon first, as the battle opens,
+	// when the battle is worth it (three or more foes, or a boss) and the
+	// call leaves its mana reserve.
+	if !s.Summoned && (s.Foes >= SummonFoes || (s.Boss && s.Foes >= 1)) && (s.Role == Healer || s.Role == Caster || s.Role == Controller) {
+		if sp, ok := affordable(UseSummon); ok && (s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana) {
 			return Action{Kind: Summon, Spell: sp.ID}
 		}
 	}
@@ -269,6 +274,10 @@ func Decide(s Situation) Action {
 	}
 	return Action{Kind: Swing}
 }
+
+// SummonFoes is how many foes make a battle worth a summon (faith routes
+// design: three or more, or a boss).
+const SummonFoes = 3
 
 // BigHealBelow and RejuvAbove are the shares of health (in thousandths) under
 // which a healer reaches for its heavy heal, and from which it prefers a

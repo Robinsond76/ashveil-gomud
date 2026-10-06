@@ -28,8 +28,8 @@ Blackguard also heal.
 <ansi fg="yellow-bold">Blackguard (evil)</ansi>
 
   10 Blood Oath         a melee blow that lands heals the most hurt ally for half
-                        the damage; 3 blows a battle; the foe it wounded has -3
-                        Attack against its allies
+                        the damage; 3 blows a battle; the foe it wounds has -3
+                        Attack against its allies that round and the next
   15 Deeper oath        4 blows a battle
   20 Fearful wounds     the wounded foe has -5 Attack
   25 Deepest oath       5 blows a battle

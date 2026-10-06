@@ -322,6 +322,37 @@ func (m *CompanyModule) classView(s classSubject) string {
 	return strings.Join(lines, "\n")
 }
 
+// classLabel is a companion's archetype, with its class once promoted
+// ("Priest (cleric)"), for the company roster (Phase 38b review).
+func classLabel(c domain.Companion) string {
+	if cl, ok := classes.Get(c.Class); ok {
+		return fmt.Sprintf("%s (%s)", cl.Name, archetypeLabel(c.Archetype))
+	}
+	return archetypeLabel(c.Archetype)
+}
+
+// classNote flags what a character can do about its class now: a promotion
+// ready or talents to choose, pointing at the command (Phase 38b review).
+func (m *CompanyModule) classNote(s classSubject) string {
+	if s.lineage == "" {
+		return ""
+	}
+	var notes []string
+	for _, o := range classes.Options(s.lineage, s.class, s.level, s.alignment) {
+		if o.Eligible {
+			notes = append(notes, "promotion ready")
+			break
+		}
+	}
+	if owed := classes.TalentsOwed(s.level, s.talents); owed > 0 {
+		notes = append(notes, fmt.Sprintf("%d talent%s to choose", owed, plural(owed)))
+	}
+	if len(notes) == 0 {
+		return ""
+	}
+	return fmt.Sprintf(" [%s: class%s]", strings.Join(notes, ", "), selectorSuffix(s))
+}
+
 func tierName(t classes.Tier) string {
 	switch t {
 	case classes.TierAdvanced:
@@ -361,7 +392,7 @@ func (m *CompanyModule) pathsView(s classSubject) string {
 		}
 		lines = append(lines, fmt.Sprintf("  %s%s: %s. Needs %s.", a.Name, mark, a.Role, a.Gate.Label()))
 		for _, r := range a.Ranks {
-			lines = append(lines, fmt.Sprintf("      rank %d, %s", r.Level, r.Name))
+			lines = append(lines, fmt.Sprintf("      rank %d, %s: %s", r.Level, r.Name, r.Text))
 		}
 		if e, ok := classes.Elite(a.ID); ok {
 			if e.Planned {
@@ -375,7 +406,7 @@ func (m *CompanyModule) pathsView(s classSubject) string {
 			}
 		}
 	}
-	lines = append(lines, `Routes are final. See help promotion, and help [class] for a route's ranks.`)
+	lines = append(lines, `Routes are final. See help promotion and help classes; the cleric and warrior routes have their own pages (help cleric-routes, help warrior-routes).`)
 	return strings.Join(lines, "\n")
 }
 

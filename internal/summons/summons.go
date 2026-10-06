@@ -9,6 +9,7 @@ package summons
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -31,10 +32,11 @@ const (
 
 // Why a call fails.
 var (
-	ErrAlready = fmt.Errorf("summons: already called this battle")
-	ErrNoRoom  = fmt.Errorf("summons: no room to call it")
-	ErrNoLead  = fmt.Errorf("summons: no company to call it for")
-	ErrUnknown = fmt.Errorf("summons: no such summon")
+	ErrAlready  = fmt.Errorf("summons: already called this battle")
+	ErrNoRoom   = fmt.Errorf("summons: no room to call it")
+	ErrNoLead   = fmt.Errorf("summons: no company to call it for")
+	ErrUnknown  = fmt.Errorf("summons: no such summon")
+	ErrNoBattle = fmt.Errorf("summons: only in battle")
 )
 
 // Caller is whoever casts the call: a player, or a company mob.
@@ -116,6 +118,11 @@ func Call(by Caller, kind string) (*mobs.Mob, error) {
 	lu := users.GetByUserId(leader)
 	if lu == nil || lu.Character == nil {
 		return nil, ErrNoLead
+	}
+	// Battle only (Phase 38b review): a call in peace would be dismissed at
+	// once and spend the next battle's call.
+	if b, ok := battle.Current(leader); !ok || b.RoomId != c.RoomId {
+		return nil, ErrNoBattle
 	}
 	room := rooms.LoadRoom(c.RoomId)
 	if room == nil {

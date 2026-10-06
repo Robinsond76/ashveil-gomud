@@ -82,7 +82,23 @@ func TestAurasAddEvasionAndArmor(t *testing.T) {
 	base, armor := c.Evasion(), c.GetDefense()
 	c.Aura = characters.ClassAura{Evasion: 3, Resolve: 10}
 	assert.Equal(t, base+3, c.Evasion())
-	assert.Equal(t, armor+10, c.GetDefense())
+	assert.Equal(t, armor, c.GetDefense(), "Resolve is a percent off the blow, not armor")
+}
+
+// Phase 38b review: Aura of Resolve's "10% less damage" is a true 10% off
+// a landed blow (on the armor roll it averaged half).
+func TestAuraOfResolveTakesItsPercentOffABlow(t *testing.T) {
+	defenseSpecs(t)
+	defenseOdds(t, 0, 0, 0)
+	base := strikeAt(armed(edgeSwordID), armed(0))
+	require.True(t, base.Hit)
+	require.Positive(t, base.DamageToTarget)
+	target := armed(0)
+	target.Aura = characters.ClassAura{Resolve: 100}
+	assert.Zero(t, strikeAt(armed(edgeSwordID), target).DamageToTarget, "all of it")
+	target.Aura = characters.ClassAura{Resolve: 50}
+	r := strikeAt(armed(edgeSwordID), target)
+	assert.Equal(t, base.DamageToTarget-(base.DamageToTarget*50+50)/100, r.DamageToTarget, "half of it")
 }
 
 func TestAWardAbsorbsABlowUpToItsSizeAndIsSpent(t *testing.T) {

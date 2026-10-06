@@ -669,7 +669,7 @@ func (c *Character) GetDefense() int {
 	}
 	// Phase 38b: a class's own protection (a Druid's Barkskin, a summon's
 	// hide) stacks on the worn armor.
-	reduction += c.ClassEffects().Int(classes.Armor) + c.Aura.Resolve
+	reduction += c.ClassEffects().Int(classes.Armor)
 	if c.RT != nil {
 		reduction += c.RT.Bark
 	}

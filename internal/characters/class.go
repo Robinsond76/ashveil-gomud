@@ -70,6 +70,14 @@ func (c *Character) SpellCost(sp *spells.SpellData) int {
 	if cost <= 0 || fx == nil {
 		return cost
 	}
+	if sp.SpellId == "siphon" {
+		// Siphon is dark healing's efficient heal (Phase 38b review): its
+		// rank sets its cost and the hungry heal tax doesn't apply.
+		if n := fx.Int(classes.SiphonCost); n > 0 {
+			cost = n
+		}
+		return max(1, cost-(cost*fx.Int(classes.SpellCost)+50)/100)
+	}
 	if pct := fx.Int(classes.SpellCost); pct != 0 {
 		cost -= (cost*pct + 50) / 100
 	}
@@ -110,6 +118,7 @@ type ClassRT struct {
 	OathUsed      int  // Blood Oath blows spent this battle
 	Intim         int  // Attack this foe loses against anyone but IntimOwner
 	IntimOwner    *ClassRT
+	IntimRound    uint64 // the combat round the foe was wounded in
 	Cleansed      map[string]bool
 	Guards        int         // an Angel's Guard uses spent
 	Hands         int         // Lay on Hands uses since the last rest
@@ -190,4 +199,14 @@ type SummonInfo struct {
 	Cleanse               bool // removes a harmful status from every ally on arrival
 	Dread                 int  // the Demon's Dread on arrival: 1 its target's group, 2 every group
 	Arrived               bool // the arrival gifts are given
+}
+
+// KnowsSpell is HasSpell for casting: a class's rank spell counts only
+// while the character's level holds that rank (Phase 38b review).
+func (c *Character) KnowsSpell(spellID string) bool {
+	if !c.HasSpell(spellID) {
+		return false
+	}
+	class, _ := c.ClassState()
+	return !classes.SpellLocked(class, c.Level, spellID)
 }

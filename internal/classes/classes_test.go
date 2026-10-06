@@ -295,3 +295,14 @@ func TestMilestone(t *testing.T) {
 	assert.Equal(t, "Next: a talent at level 35.", Milestone("scout", 25))
 	assert.Equal(t, "", Milestone("hierarch", 60))
 }
+
+// Phase 38b review: a rank spell can't be cast below its rank's level (a
+// player keeps it in the spellbook after a death costs the level).
+func TestSpellLockedBelowItsRank(t *testing.T) {
+	assert.True(t, SpellLocked("priest", 14, "greaterheal"))
+	assert.False(t, SpellLocked("priest", 15, "greaterheal"))
+	assert.False(t, SpellLocked("hierarch", 35, "greaterheal"), "an elite keeps its advanced spells")
+	assert.True(t, SpellLocked("hierarch", 29, "callhost"))
+	assert.False(t, SpellLocked("priest", 1, "heal"), "a spell no rank teaches is never locked")
+	assert.False(t, SpellLocked("", 1, "greaterheal"))
+}

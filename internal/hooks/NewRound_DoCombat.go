@@ -40,6 +40,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	// Ashveil Phase 29b: every event this round reports is stamped with it.
 	combatRound.Store(evt.RoundNumber)
+	expireIntimidation(evt.RoundNumber) // Phase 38b review: a round, not a battle
 	resetRoundExtras()
 	beginBattlefieldRound()
 

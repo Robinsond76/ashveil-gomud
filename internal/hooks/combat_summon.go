@@ -113,6 +113,11 @@ func summonRound(u *users.UserRecord, a actor, side []actor, room *rooms.Room) {
 		brokenBinding(a, sm, side)
 		return
 	}
+	if owner.Health < 1 { // the Angel departs when its Hierarch falls
+		a.holder.say("", "%s bows its head and rises away in a column of light.", "")
+		summons.Dismiss(a.who.mobId)
+		return
+	}
 	if !canFight(a.char) {
 		return
 	}

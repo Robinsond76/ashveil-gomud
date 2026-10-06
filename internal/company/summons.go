@@ -1,6 +1,7 @@
 package company
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -25,8 +26,11 @@ type summonEntry struct {
 	key    MemberKey
 }
 
-// SummonMemberKey is the member key of a leader's summon of a kind.
-func SummonMemberKey(kind string) MemberKey { return MemberKey(SummonKeyPrefix + kind) }
+// SummonMemberKey is the member key of a summon: its kind and instance, so
+// two summoners of a kind in one company keep apart (Phase 38b review).
+func SummonMemberKey(kind string, instanceID int) MemberKey {
+	return MemberKey(fmt.Sprintf("%s%s:%d", SummonKeyPrefix, kind, instanceID))
+}
 
 // IsSummonKey reports whether key names a summon.
 func IsSummonKey(key MemberKey) bool { return strings.HasPrefix(string(key), SummonKeyPrefix) }
@@ -36,7 +40,7 @@ func IsSummonKey(key MemberKey) bool { return strings.HasPrefix(string(key), Sum
 func RegisterSummon(instanceID, leader int, kind string) MemberKey {
 	summonMu.Lock()
 	defer summonMu.Unlock()
-	key := SummonMemberKey(kind)
+	key := SummonMemberKey(kind, instanceID)
 	summoned[instanceID] = summonEntry{leader: leader, key: key}
 	return key
 }

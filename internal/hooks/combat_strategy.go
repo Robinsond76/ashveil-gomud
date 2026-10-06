@@ -126,6 +126,7 @@ func strategyPass() {
 				Foes:   len(foes),
 				// Phase 38b: a summoner calls its summon once a battle.
 				Summoned: a.char.ClassEffects().Int(classes.Summon) == 0 || (a.char.RT != nil && a.char.RT.Summoned),
+				Boss:     anyBoss(foes),
 				// Phase 30c: the company's healing threshold.
 				HealBelow: healBelow,
 				// Phase 33e: the member's mana reserve.
@@ -173,6 +174,16 @@ func classCosted(c *characters.Character, list []strategy.Spell) []strategy.Spel
 }
 
 // standingFoes are the battle group's living, visible members in the room.
+// anyBoss reports whether one of the foes is a boss (Phase 38b review).
+func anyBoss(foes []int) bool {
+	for _, id := range foes {
+		if m := mobs.GetInstance(id); m != nil && m.Boss {
+			return true
+		}
+	}
+	return false
+}
+
 func standingFoes(g enemyparty.Group, room *rooms.Room) []int {
 	var out []int
 	for _, id := range g.Party.Members {
@@ -195,7 +206,7 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 			ref:  userRef(u),
 			key:  company.LeaderMemberKey,
 			knows: func(id string) bool {
-				return u.Character.GetSkillLevel(`cast`) > 0 && u.Character.HasSpell(id)
+				return u.Character.GetSkillLevel(`cast`) > 0 && u.Character.KnowsSpell(id)
 			},
 			att:    enemyparty.PlayerAttacker(u),
 			holder: userHolder(u),

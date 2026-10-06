@@ -270,3 +270,28 @@ func SpellsAt(classID string, level int) []string {
 	}
 	return out
 }
+
+// SpellLocked reports whether a spell is one the class's route teaches at a
+// rank the character's level has not reached (Phase 38b review): a player
+// keeps a rank spell in the spellbook after a death costs the level, but
+// can't cast it until the level is regained.
+func SpellLocked(classID string, level int, spellID string) bool {
+	if classID == "" {
+		return false
+	}
+	taught := false
+	for _, c := range Path(classID) {
+		for _, r := range c.Ranks {
+			for _, id := range r.Spells {
+				if id != spellID {
+					continue
+				}
+				if level >= r.Level {
+					return false
+				}
+				taught = true
+			}
+		}
+	}
+	return taught
+}

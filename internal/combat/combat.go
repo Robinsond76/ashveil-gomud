@@ -679,6 +679,13 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+				// Phase 38b review: an aura's "less damage" is a true percent
+				// off the blow (on the armor roll it averaged half that).
+				if r := targetChar.Aura.Resolve; r > 0 && attackTargetDamage > 0 {
+					cut := (attackTargetDamage*r + 50) / 100
+					attackTargetDamage -= cut
+					attackTargetReduction += cut
+				}
 				// Phase 38b: a Divine Shield turns the first blow of a battle
 				// aside, and a ward takes its share of one.
 				if attackTargetDamage > 0 && targetChar.ShieldBlow() {

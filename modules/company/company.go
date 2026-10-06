@@ -639,7 +639,7 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		if c.Disposition != nil {
 			loyalty = c.Disposition.Loyalty
 		}
-		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, alignment %s, loyalty %d (%s)", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), companionLevel(c), archetypeLabel(c.Archetype), alignmentLabel(m.companionAlignment(c)), loyalty, state))
+		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, alignment %s, loyalty %d (%s)%s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), companionLevel(c), classLabel(c), alignmentLabel(m.companionAlignment(c)), loyalty, state, m.classNote(m.companionSubject(leaderUserID, c))))
 	}
 	if lost := lostLine(record); lost != "" {
 		lines = append(lines, lost)

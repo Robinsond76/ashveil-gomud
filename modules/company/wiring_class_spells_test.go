@@ -12,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/summons"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -298,5 +300,67 @@ func TestASummonThatFallsFadesWithoutALoot(t *testing.T) {
 	_, err := mobcommands.Suicide("", angel, room)
 	require.NoError(t, err)
 	assert.Empty(t, company.SummonInstances())
+	assert.Nil(t, mobs.GetInstance(angel.InstanceId))
+}
+
+// Phase 38b review: a Bless lasts its three rounds, not the whole battle.
+func TestBlessWearsOffAfterItsRounds(t *testing.T) {
+	b := classCaster(t, "", 8, "bless")
+	b.startWitchFight()
+	var blessed *characters.Character
+	for i := 0; i < 4 && blessed == nil; i++ {
+		b.classRounds(1, nil)
+		for _, c := range []*characters.Character{b.aria.Character, &b.companion(1).Character, &b.companion(2).Character, &b.companion(3).Character, &b.companion(4).Character} {
+			if c.RT != nil && c.RT.Bless > 0 {
+				blessed = c
+				break
+			}
+		}
+	}
+	require.NotNil(t, blessed, "someone is blessed")
+	b.aria.Character.Mana = 0 // no new blessings
+	for i := 0; i < 3; i++ {
+		b.hold(nil)
+		b.fight()
+	}
+	assert.Zero(t, blessed.RT.Bless, "the blessing has worn off")
+}
+
+// Phase 38b review: Siphon costs its rank (10, then 8 from 15), free of the
+// Blood Priest's hungry heal tax, which its other heals still pay.
+func TestSiphonCostsItsRankAndOtherHealsPayTheTax(t *testing.T) {
+	b := classCaster(t, "blood-priest", 10)
+	c := b.aria.Character
+	siphon, heal := spells.GetSpell("siphon"), spells.GetSpell("heal")
+	require.NotNil(t, siphon)
+	require.NotNil(t, heal)
+	assert.Equal(t, 10, c.SpellCost(siphon))
+	assert.Greater(t, c.SpellCost(heal), heal.Cost, "dark healing is hungry")
+	c.Level = 15
+	assert.Equal(t, 8, c.SpellCost(siphon), "Cheaper siphon")
+}
+
+// Phase 38b review: a summon is called in battle only, so a call in peace
+// doesn't spend the next battle's.
+func TestASummonCannotBeCalledOutsideBattle(t *testing.T) {
+	t.Cleanup(company.ResetSummonsForTest)
+	b := classCaster(t, "hierarch", 35, "callhost")
+	_, err := summons.Call(summons.Caller{UserID: b.aria.UserId}, summons.Angel)
+	assert.ErrorIs(t, err, summons.ErrNoBattle)
+	assert.Empty(t, company.SummonInstances())
+	assert.False(t, b.aria.Character.RTState().Summoned, "the battle's call is still owed")
+}
+
+// Phase 38b review: the Angel departs when its Hierarch falls.
+func TestTheAngelDepartsWhenItsHierarchFalls(t *testing.T) {
+	t.Cleanup(company.ResetSummonsForTest)
+	b := classCaster(t, "hierarch", 35, "callhost")
+	b.startWitchFight()
+	angel := b.summonRounds(6)
+	require.NotNil(t, angel)
+	b.aria.Character.Health = 0
+	b.hold(nil)
+	b.fight()
+	assert.Empty(t, company.SummonInstances(), "the Angel has gone")
 	assert.Nil(t, mobs.GetInstance(angel.InstanceId))
 }

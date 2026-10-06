@@ -53,7 +53,7 @@ func init() {
 	register(Class{ID: "blackguard", Name: "Blackguard", Lineage: "warrior", Tier: TierAdvanced, Gate: GateEvil,
 		Role: "armored protector who heals by spilling blood",
 		Ranks: []Rank{
-			rank(10, "Blood Oath", "when it lands a melee blow, half the damage heals the most hurt ally (itself if none is hurt); 3 blows a battle. A foe it wounded has -3 Attack against its allies", BloodOath, 3, OathPct, 50, Intimidate, 3),
+			rank(10, "Blood Oath", "when it lands a melee blow, half the damage heals the most hurt ally (itself if none is hurt); 3 blows a battle. A foe it wounds has -3 Attack against its allies that round and the next", BloodOath, 3, OathPct, 50, Intimidate, 3),
 			rank(15, "Deeper oath", "Blood Oath: 4 blows a battle", BloodOath, 4),
 			rank(20, "Fearful wounds", "Intimidation: -5 Attack", Intimidate, 5),
 			rank(25, "Deepest oath", "Blood Oath: 5 blows a battle", BloodOath, 5),

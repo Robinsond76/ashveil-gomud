@@ -55,7 +55,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	spellInfo := spells.GetSpell(spellName)
 
-	if spellInfo == nil || !user.Character.HasSpell(spellName) {
+	if spellInfo == nil || !user.Character.KnowsSpell(spellName) {
 		user.SendText(fmt.Sprintf(`You don't know a spell called <ansi fg="spellname">%s</ansi>.`, spellName))
 		return true, nil
 	}

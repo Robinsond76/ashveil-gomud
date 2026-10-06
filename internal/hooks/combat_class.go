@@ -97,11 +97,17 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 }
 
 // rejuvPass heals each ally that carries Rejuvenation by one round's share
-// of it, and counts the round off. Healing stops at the wound limit.
+// of it, and counts the round off (and a round of Bless). Healing stops at the wound limit.
 func rejuvPass(side []actor) {
 	for _, a := range side {
 		rt := a.char.RT
-		if rt == nil || rt.Rejuv <= 0 {
+		if rt == nil {
+			continue
+		}
+		if rt.Bless > 0 {
+			rt.Bless-- // Phase 38b review: a Bless lasts its rounds, not the battle
+		}
+		if rt.Rejuv <= 0 {
 			continue
 		}
 		rt.Rejuv--
@@ -152,7 +158,8 @@ func oathBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	// The wounded foe turns from the Blackguard's allies.
 	if n := fx.Int(classes.Intimidate); n > 0 && defender.char.Health >= 1 {
 		foe := defender.char.RTState()
-		foe.Intim, foe.IntimOwner = n, rt
+		foe.Intim, foe.IntimOwner, foe.IntimRound = n, rt, combatRound.Load()
+		intimidated = append(intimidated, foe)
 	}
 	if rt.OathUsed >= fx.Int(classes.BloodOath) {
 		return
@@ -181,6 +188,26 @@ func oathBlow(attacker, defender statusHolder, r combat.AttackResult) {
 			}
 		}
 	}
+}
+
+// intimidated are the foes a Blackguard has cowed; expireIntimidation
+// lifts each once the round after its wound is over.
+var intimidated []*characters.ClassRT
+
+// expireIntimidation runs at a round's start: Intimidation lasts the round
+// the foe was wounded in and the next (so the foe's next turn always feels
+// it, whichever side moves first), not the whole battle.
+func expireIntimidation(round uint64) {
+	keep := intimidated[:0]
+	for _, rt := range intimidated {
+		if rt.Intim > 0 && round >= rt.IntimRound && round <= rt.IntimRound+1 {
+			keep = append(keep, rt)
+			continue
+		}
+		rt.Intim, rt.IntimOwner = 0, nil
+	}
+	clear(intimidated[len(keep):])
+	intimidated = keep
 }
 
 // layHands is a Knight's Lay on Hands, taking its whole turn: it heals the
