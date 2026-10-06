@@ -1,6 +1,34 @@
 # Ashveil Project Status
 
-**Phase 40g built: battle animation and effects (2026-10-06, PR pending review):**
+**Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
+drops a state change (a collapse applies every unfired op in order) and
+catches up after a round of backlog, that reduced motion drops lunges,
+travel, tints and shake, and that an unseen foe stays unseen. Accepted and
+fixed: (1) **the title showed the server's round counter** ("round 48213"),
+since the feed's `round` is global; `Company.Battle.Event` now also sends
+`fight_round` (from 1, from the fight's start round or, for a fight-end, its
+summary) and the screen shows that (Go wiring test and gmcp unit test
+assert it). (2) **The outcome and the victory pose came before the last
+blow** while animation was behind: the fight's end now waits for every unit,
+and the outcome (with its reason, read while the last snapshot stands) shows
+when it plays; the empty snapshot that follows no longer shows "The battle is
+over" first or closes the screen early. A fight-start in the same batch as
+deaths no longer clears their hold. (3) **Spells were named by id** ("Ysolde's
+mm strikes"): the feed carries `spell_name` and the last-blow line and chant
+mark use it; an unseen caster's spell is neither named in the line nor
+coloured in its glow. (4) The help page no longer promises the picture never
+falls behind (it skips ahead after a round) and says the outcome follows the
+last blow. Tests: Node planner tests for the end-wait and hidden spells,
+browser checks for the outcome order, spell names and fight rounds (the
+harness now sends a server-sized `round`). Rejected: none. UI check: at each
+setting a player can follow who did what (last-blow line, digits, icons) and
+why the fight ended; `off` keeps the 40f picture. **Follow-ups:** 40g2
+allied formations (an allied relay in the 40e feed plus a third formation on
+the canvas; not small, so not folded in); a `pace` field on `Company.Battle`
+to replace pace inference; morale not drawn; role letters blurry; a `?`
+presence can overlap a visible foe.
+
+**Phase 40g built: battle animation and effects (2026-10-06, PR #40):**
 the battle screen now plays each 40e event. A pure planner,
 `static/js/battle-timeline.js`, turns an event batch into steps (lunge,
 strike, shoot, chant, hurt, block, parry, dodge, windup, guard, tackle,

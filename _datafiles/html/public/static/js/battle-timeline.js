@@ -132,6 +132,10 @@
 
         events.forEach(e => {
             const steps = [];
+            // One the player can't make out casts nothing they can name: its
+            // spell neither labels it nor colours its glow.
+            const spell = e.src === '?' ? '' : (e.spell || '');
+            const spellName = e.src === '?' ? '' : (e.spell_name || e.spell || '');
             const src = e.src || '';
             const tgt = e.tgt || '';
             const strikeAt = Math.round(b.action * 0.5);
@@ -169,8 +173,8 @@
             case 'cast-start':
             case 'cast-progress': {
                 const c = act(src, 'cast', { loop: true, dur: e.kind === 'cast-start' ? b.action : b.reaction });
-                c.fx = [{ kind: 'glow', spell: e.spell || '', at: 0 }];
-                if (e.kind === 'cast-start') { c.ops.push(op('casting', src, { spell: e.src === '?' ? 'a spell' : (e.spell || 'a spell') })); }
+                c.fx = [{ kind: 'glow', spell: spell, at: 0 }];
+                if (e.kind === 'cast-start') { c.ops.push(op('casting', src, { spell: spellName || 'a spell' })); }
                 steps.push(c);
                 break;
             }
@@ -181,7 +185,7 @@
                     c.ops.push(done);
                     steps.push(c);
                 } else if (e.outcome === 'cast') {
-                    const c = act(src, 'cast-release', { fx: [{ kind: 'glow', spell: e.spell || '', at: 0, burst: true }] });
+                    const c = act(src, 'cast-release', { fx: [{ kind: 'glow', spell: spell, at: 0, burst: true }] });
                     c.ops.push(done);
                     steps.push(c);
                 } else {
@@ -196,8 +200,8 @@
                 if (!tgt) { break; }
                 const travel = src && !reduced ? Math.round(b.reaction * 0.5) : 0;
                 const r = react(tgt, 'hurt', { delay: travel, tint: reduced ? '' : COLORS.magic });
-                r.fx = [{ kind: 'hit', id: 'magic-hit', at: travel, spell: e.spell || '' }];
-                if (travel) { r.fx.unshift({ kind: 'projectile', style: 'bolt', from: src, to: tgt, at: 0, dur: travel, spell: e.spell || '' }); }
+                r.fx = [{ kind: 'hit', id: 'magic-hit', at: travel, spell: spell }];
+                if (travel) { r.fx.unshift({ kind: 'projectile', style: 'bolt', from: src, to: tgt, at: 0, dur: travel, spell: spell }); }
                 if (e.damage > 0) { digit(r, e.damage, COLORS.magic); }
                 steps.push(r);
                 break;
@@ -328,7 +332,10 @@
         let collapsed = [];
         if (this.backlog(now) > ROUND_MS) { collapsed = this.collapse(); }
         happenings.forEach(h => {
-            const base = Math.max(now, this.free.get(h.steps[0].unit) || 0);
+            // The fight's end waits for everything before it: the victory
+            // or the fade comes after the last blow, not beside it.
+            const base = h.kind === 'fight-end' ? now + this.backlog(now)
+                : Math.max(now, this.free.get(h.steps[0].unit) || 0);
             h.steps.forEach(s => {
                 const placed = Object.assign({}, s);
                 const start = Math.max(base + (s.delay || 0), now, this.free.get(s.unit) || 0);

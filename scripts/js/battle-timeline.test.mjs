@@ -226,3 +226,22 @@ test('the pace is inferred from how batches arrive', () => {
   assert.equal(TL.inferPace(at(3000, 3200, 2900)), 'slow');
   assert.equal(TL.inferPace([{ at: 0, n: 9 }, { at: 8000, n: 11 }]), 'off', 'whole rounds in a batch mean pacing is off');
 });
+
+test('the fight\'s end waits for every unit: the victory comes after the last blow', () => {
+  const sc = new TL.Scheduler();
+  sc.push(plan([{ seq: 1, kind: 'death', tgt: 'm:1' }]), 0);
+  sc.push(plan([{ seq: 2, kind: 'fight-end', outcome: 'victory' }]), 100);
+  const end = sc.pending.find(s => s.unit === '*company*');
+  const fall = sc.pending.find(s => s.unit === 'm:1');
+  assert.ok(end.start >= fall.end, 'victory at ' + end.start + ', fall ends at ' + fall.end);
+});
+
+test('an unseen caster\'s spell is never named nor coloured; a seen one uses the spell\'s name', () => {
+  const hidden = first([{ seq: 1, kind: 'cast-start', src: '?', spell: 'mm', spell_name: 'Magic Missile' }])[0];
+  assert.equal(hidden.ops[0].spell, 'a spell');
+  assert.equal(hidden.fx[0].spell, '');
+  const bolt = stepFor(first([{ seq: 2, kind: 'spell-hit', src: '?', tgt: 'leader', spell: 'mm', damage: 5 }]), 'leader');
+  assert.ok(bolt.fx.every(f => f.spell === ''));
+  const seen = first([{ seq: 3, kind: 'cast-start', src: 'companion:3', spell: 'mm', spell_name: 'Magic Missile' }])[0];
+  assert.equal(seen.ops[0].spell, 'Magic Missile');
+});

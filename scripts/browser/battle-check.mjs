@@ -63,7 +63,10 @@ await page.reload();
 const state = () => page.evaluate(() => window.BattleScreen.state());
 const unitOf = (s, id) => s.units.find(u => u.id === id);
 const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
-const events = body => page.evaluate(b => Client.dispatchBattleEvents(b), body);
+// As the server sends them: round is its own counter, fight_round the
+// fight's round from 1 (the title must show the latter).
+const events = body => page.evaluate(b => Client.dispatchBattleEvents(b),
+  Object.assign({}, body, { round: body.round + 5000, fight_round: body.round }));
 
 // The 40f section runs with animations off: the screen must behave as it did
 // then (acceptance test 3). The 40g section below turns them on.
@@ -213,6 +216,11 @@ await events({ fight: 2, round: 1, events: [
 ] });
 await until(() => window.BattleScreen.state().shaking && window.BattleScreen.state().digits.includes('12'), 'a critical hit shakes the screen and shows large digits');
 await until(() => window.BattleScreen.state().icons.includes('blocked'), 'a blocked strike shows the blocked icon on the defender');
+// A spell is named by its display name; one cast by an unseen foe is not.
+await events({ fight: 2, round: 1, events: [{ seq: 35, kind: 'spell-hit', src: 'companion:3', tgt: 'm:1', spell: 'mm', spell_name: 'Magic Missile', damage: 7 }] });
+await until(() => window.BattleScreen.state().lastBlow === 'Ysolde\'s Magic Missile strikes the first wolf (7)', 'the last-blow line names the spell');
+await events({ fight: 2, round: 1, events: [{ seq: 36, kind: 'spell-hit', src: '?', tgt: 'companion:3', spell: 'mm', spell_name: 'Magic Missile', damage: 2 }] });
+await until(() => window.BattleScreen.state().lastBlow === 'A spell strikes Ysolde (2)', 'an unseen caster\'s spell goes unnamed');
 // A death plays out: the unit stands until its fall has played, then lies down.
 await events({ fight: 2, round: 2, events: [{ seq: 33, kind: 'death', tgt: 'm:3' }] });
 check(!unitOf(await state(), 'm:3').fallen, 'a death does not lay the unit down until its animation has played');
@@ -224,7 +232,7 @@ await events({ fight: 2, round: 2, events: [{ seq: 34, kind: 'status-applied', t
 await until(() => window.BattleScreen.state().units.find(u => u.id === 'm:4').statuses.includes('bleeding'), 'a status appears');
 // Never fall behind: more than a round of work collapses to its end state.
 const flurry = [];
-for (let i = 0; i < 12; i++) { flurry.push({ seq: 100 + i, kind: 'attack', src: 'companion:2', tgt: 'm:1', outcome: 'hit', damage: 3, weapon: 'slashing' }); }
+for (let i = 0; i < 20; i++) { flurry.push({ seq: 100 + i, kind: 'attack', src: 'companion:2', tgt: 'm:1', outcome: 'hit', damage: 3, weapon: 'slashing' }); }
 await events({ fight: 2, round: 3, events: flurry });
 check((await state()).backlog > 8000, 'a long flurry queues more than a round of work: ' + (await state()).backlog);
 await events({ fight: 2, round: 4, events: [{ seq: 120, kind: 'death', tgt: 'm:2' }, { seq: 121, kind: 'yield', src: 'm:4' }] });
@@ -246,9 +254,16 @@ s = await state();
 check(s.backlog === 0 && s.digits.includes('4') && s.lastBlow === 'Wren hits the first wolf (4)', 'with animations off events take effect at once');
 await page.evaluate(() => window.BattleScreen.setMotion('full'));
 // The outcome hold waits for the last animation, then closes.
-await events({ fight: 2, round: 9, events: [{ seq: 150, kind: 'fight-end', outcome: 'broken-off' }] });
+// The outcome comes after the last blow has played, even when the
+// finished battle's empty snapshot arrives first.
+await events({ fight: 2, round: 9, events: [{ seq: 149, kind: 'death', tgt: 'm:1' }, { seq: 150, kind: 'fight-end', outcome: 'broken-off' }] });
 await gmcp('Company.Battle', {});
-check((await state()).outcome === 'The company breaks off: the battle was broken off', 'a broken-off fight gives its reason: ' + (await state()).outcome);
+s = await state();
+check(s.open && s.outcome === '' && !unitOf(s, 'm:1').fallen, 'the outcome waits while the last fall plays: ' + s.outcome);
+await until(() => window.BattleScreen.state().outcome !== '', 'the outcome shows once the fight\'s end plays', 6000);
+s = await state();
+check(unitOf(s, 'm:1').fallen, 'the last fall has played before the outcome');
+check(s.outcome === 'The company breaks off: the battle was broken off', 'a broken-off fight gives its reason: ' + s.outcome);
 await until(() => !window.BattleScreen.state().open, 'the screen closes after the outcome hold', 8000);
 
 // --- Manual mode ---

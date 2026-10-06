@@ -43,8 +43,9 @@ change the company's focus.
   flashes, shaking or travelling shots, and is the choice already made for
   you if your system asks for reduced motion. <ansi fg="yellow">off</ansi> is the still picture.
   Animation only shows the battle: it never changes or delays it, and it
-  keeps pace with your <ansi fg="command">help combatpace</ansi>, so a long round never leaves the
-  picture behind. The story text is the full record.
+  keeps pace with your <ansi fg="command">help combatpace</ansi>: if a busy fight leaves it more
+  than a round behind, it skips ahead to the present. The story text is
+  the full record.
 
 <ansi fg="yellow-bold">Opening and closing</ansi>
 
@@ -52,7 +53,8 @@ change the company's focus.
   in the corner; the battle goes on. Click the badge, or the Combat tab's
   <ansi fg="yellow">Battle screen</ansi> button, to bring it back.
   Untick <ansi fg="yellow">Open automatically</ansi> to keep it shut until you ask.
-  When the fight ends it shows the outcome for three seconds, then closes.
+  When the fight ends it plays the last blow, shows the outcome for three
+  seconds, then closes.
 
 <ansi fg="yellow-bold">Buttons</ansi>
 

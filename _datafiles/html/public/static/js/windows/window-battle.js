@@ -193,6 +193,7 @@
     let sched = new TL.Scheduler();
     let paceHistory = [];       // how event batches arrived, to infer the combat pace
     let holding = new Set();    // units whose fall or exit is still to play
+    let outcomeQueued = false;  // a fight-end is scheduled: its outcome shows when it plays
     let shakeUntil = 0;
     let endExtra = 0;
 
@@ -360,7 +361,13 @@
             if (e.outcome === 'miss') { return a + ' misses ' + t; }
             if ((e.defenses || []).length && !e.damage) { return t + ' ' + e.defenses[0] + ' ' + a; }
             return a + (e.crit ? ' strikes ' + t + ' hard' : ' hits ' + t) + dmg;
-        case 'spell-hit': return t ? (a ? a + '\'s ' : '') + (e.spell || 'spell') + ' strikes ' + t + dmg : '';
+        case 'spell-hit': {
+            // An unseen caster's spell goes unnamed, as its chant does.
+            const sp = e.src === '?' ? 'a spell' : (e.spell_name || e.spell || 'a spell');
+            if (!t) { return ''; }
+            const who = a && e.src !== '?' ? a + '\'s ' + sp : sp.charAt(0).toUpperCase() + sp.slice(1);
+            return who + ' strikes ' + t + dmg;
+        }
         case 'heal': return t ? (a ? a + ' mends ' : 'Mended: ') + t + (e.amount ? ' (+' + e.amount + ')' : '') : '';
         case 'cast-start': return a ? a + ' begins a chant' : '';
         case 'cast-complete': return a && e.outcome === 'interrupted' ? a + '\'s chant is broken' : '';
@@ -378,7 +385,8 @@
 
     function onEvents(body) {
         const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) }));
-        if (body.round) { roundNo = body.round; paintChrome(); }
+        // fight_round counts this fight's rounds; round is the server's counter.
+        if (body.fight_round) { roundNo = body.fight_round; paintChrome(); }
         paceHistory.push({ at: Date.now(), n: evs.length });
         if (paceHistory.length > 8) { paceHistory.shift(); }
         if (motion() === 'off') {
@@ -399,13 +407,19 @@
 
     // playEvents plans a batch and schedules it. Hidden, or when the screen
     // cannot play (no scheduler time to give), the happenings collapse to
-    // their end state at once. Opening and ending the fight take effect now:
-    // a fight-start clears the picture, and the fight-end timer starts.
+
+
     function playEvents(evs) {
         const now = Date.now();
         evs.forEach(e => {
             // Refs seen for the first time make their units (an unseen '?').
             if (e.src === '?' || e.tgt === '?') { refUnit('?'); }
+        });
+        // Start and end of the fight are not animated: they take effect now
+        // (a fight-start before this batch's happenings are held).
+        evs.forEach(e => {
+            if (e.kind === 'fight-start') { sched.collapse(); holding = new Set(); outcomeQueued = false; applyEvent(e); }
+            else if (e.kind === 'fight-end') { ended = true; paintBadge(); }
         });
         const happenings = TL.plan(evs, {
             pace: TL.inferPace(paceHistory), motion: motion(), has: hasArt,
@@ -417,14 +431,18 @@
                 const line = narrate(e);
                 if (line) { h.steps[0].ops.push({ op: 'log', when: 'start', text: line }); }
             }
+            // The outcome shows when the fight's end plays, after the last
+            // blow; the screen is ended (no more snapshots change it) now.
+            if (h.kind === 'fight-end') {
+                const fe = bySeq.get(h.seq);
+                // Why it ended is read now, while the last snapshot stands.
+                const outcome = fe ? fe.outcome : '';
+                h.steps[0].ops.push({ op: 'outcome', when: 'start', outcome: outcome, why: outcomeReason(outcome) });
+                outcomeQueued = true;
+            }
             h.steps.forEach(st => st.ops.forEach(o => {
                 if (o.op === 'fallen' || o.op === 'remove') { holding.add(o.unit); }
             }));
-        });
-        // Start and end of the fight are not animated: they take effect now.
-        evs.forEach(e => {
-            if (e.kind === 'fight-start') { sched.collapse(); holding = new Set(); applyEvent(e); }
-            else if (e.kind === 'fight-end') { ended = true; beginOutcome(e.outcome); paintBadge(); }
         });
         const collapsed = sched.push(happenings, now);
         collapsed.forEach(applyOp);
@@ -460,6 +478,7 @@
             units.delete(o.unit);
             break;
         case 'log': lastBlow = o.text; paintCaption(); break;
+        case 'outcome': outcomeQueued = false; beginOutcome(o.outcome, o.why); break;
         case 'react': react(o); break;
         default: break;
         }
@@ -505,7 +524,7 @@
             break;
         case 'cast-start':
             // A spell cast by one the player can't make out stays unnamed.
-            if (src) { src.casting = e.src === '?' ? 'a spell' : (e.spell || 'a spell'); wake(); }
+            if (src) { src.casting = e.src === '?' ? 'a spell' : (e.spell_name || e.spell || 'a spell'); wake(); }
             break;
         case 'cast-complete':
         case 'interrupt':
@@ -552,10 +571,10 @@
         return '';
     }
 
-    function beginOutcome(outcome) {
+    function beginOutcome(outcome, reason) {
         if (!isShown()) { return; }
         const head = OUTCOMES[outcome] || 'The battle is over';
-        const why = outcomeReason(outcome);
+        const why = reason === undefined ? outcomeReason(outcome) : reason;
         outcomeText = why ? head + ': ' + why : head;
         if (outcomeTimer) { clearTimeout(outcomeTimer); }
         endExtra = 0;
@@ -586,6 +605,7 @@
         floaters = [];
         sched = new TL.Scheduler();
         holding = new Set();
+        outcomeQueued = false;
         lastBlow = '';
         roundNo = 0;
         userOpened = false;
@@ -1344,6 +1364,7 @@
             floaters = [];
             sched = new TL.Scheduler();
             holding = new Set();
+            outcomeQueued = false;
             paceHistory = [];
             lastBlow = '';
             roundNo = 0;
@@ -1360,8 +1381,9 @@
         } else if (was) {
             // The fight is over. The outcome event normally started the
             // three-second hold; if none came, show a plain ending.
-            if (!outcomeTimer) { beginOutcome(''); }
-            if (!outcomeTimer) { endBattleView(); }
+            // While the fight's end is still to play, its outcome follows.
+            if (!outcomeTimer && !outcomeQueued) { beginOutcome(''); }
+            if (!outcomeTimer && !outcomeQueued) { endBattleView(); }
             paintChrome();
         }
         paintBadge();
