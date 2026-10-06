@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
@@ -731,16 +732,11 @@ func (m *CampingModule) roomTag() string {
 	if m.plug == nil {
 		return defaultRoomTag
 	}
-	tag := strings.TrimSpace(configString(m.plug.Config.Get("RoomTag")))
+	tag := strings.TrimSpace(modconfig.String(m.plug.Config.Get("RoomTag")))
 	if tag == "" {
 		return defaultRoomTag
 	}
 	return tag
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }
 
 func roomEligible(room *rooms.Room, tag string) bool {

@@ -2,6 +2,7 @@ package market
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"sort"
 	"strings"
 
@@ -190,7 +191,7 @@ func configBounded(raw any, name string, lo, hi, def int) int {
 	if raw == nil {
 		return def
 	}
-	n := configInt(raw)
+	n := modconfig.IntOr(raw, 0)
 	if n < lo || n > hi {
 		mudlog.Warn("market: config value out of range; using default", "setting", name, "value", raw, "min", lo, "max", hi, "default", def)
 		return def

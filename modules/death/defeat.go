@@ -9,6 +9,7 @@ package death
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -447,7 +448,7 @@ func (m *DeathModule) clearFoes(user *users.UserRecord, room *rooms.Room) {
 	}
 	c := user.Character
 	group, _ := c.GetMiscData(foeGroupKey).(string)
-	foeID, _ := configInt(c.GetMiscData(foeInstanceKey))
+	foeID, _ := modconfig.Int(c.GetMiscData(foeInstanceKey))
 	for _, id := range room.GetMobs() {
 		mob := mobs.GetInstance(id)
 		if mob == nil {
@@ -573,12 +574,12 @@ func parseScenarios(raw any) []domain.Scenario {
 	var out []domain.Scenario
 	seen := map[string]bool{}
 	for _, entry := range list {
-		f := lowerKeys(entry)
+		f := modconfig.Map(entry)
 		if f == nil {
 			mudlog.Warn("death: scenario entry is not a map; skipped")
 			continue
 		}
-		num := func(key string) int { n, _ := configInt(f[key]); return n }
+		num := func(key string) int { n, _ := modconfig.Int(f[key]); return n }
 		id, _ := f["id"].(string)
 		kind, _ := f["kind"].(string)
 		text, _ := f["text"].(string)

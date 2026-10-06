@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strconv"
 	"strings"
 
@@ -55,17 +56,17 @@ func parsePhysicians(raw any) map[int]physician {
 		return out
 	}
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			mudlog.Warn("company: physician entry is not a map; skipped")
 			continue
 		}
-		roomID, ok := configInt(fields["roomid"])
+		roomID, ok := modconfig.Int(fields["roomid"])
 		if !ok || roomID <= 0 {
 			mudlog.Warn("company: physician without a room; skipped", "roomid", fields["roomid"])
 			continue
 		}
-		price, ok := configInt(fields["priceperwound"])
+		price, ok := modconfig.Int(fields["priceperwound"])
 		if !ok || price < 0 {
 			mudlog.Warn("company: physician with a bad price; skipped", "roomid", roomID)
 			continue

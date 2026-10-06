@@ -1,9 +1,8 @@
 package gathering
 
 import (
-	"strconv"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
-	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -33,31 +32,6 @@ func fieldsOf(raw any) map[string]any {
 	return out
 }
 
-func configInt(raw any) (int, bool) {
-	switch v := raw.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
-	case float64:
-		return int(v), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		return n, err == nil
-	}
-	return 0, false
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
-}
-
-func configDuration(raw any) (time.Duration, bool) {
-	d, err := time.ParseDuration(strings.TrimSpace(configString(raw)))
-	return d, err == nil && d >= 0
-}
-
 // parseSettings reads the module's config over the shipped defaults;
 // malformed entries are skipped with a warning, never fatal.
 func parseSettings(get func(string) any) gathering.Settings {
@@ -66,7 +40,7 @@ func parseSettings(get func(string) any) gathering.Settings {
 		return s
 	}
 	count := func(key string, into *int, lo, hi int) {
-		if n, ok := configInt(get(key)); ok && n >= lo && n <= hi {
+		if n, ok := modconfig.Int(get(key)); ok && n >= lo && n <= hi {
 			*into = n
 		}
 	}
@@ -105,14 +79,14 @@ func parseSettings(get func(string) any) gathering.Settings {
 		"RawMeatItemId":      &s.Items.RawMeat,
 	}
 	for key, into := range items {
-		if n, ok := configInt(get(key)); ok && n > 0 {
+		if n, ok := modconfig.Int(get(key)); ok && n > 0 {
 			*into = n
 		}
 	}
 	if list := listOf(get("WetWeather")); len(list) > 0 {
 		var wet []string
 		for _, v := range list {
-			if name := strings.ToLower(strings.TrimSpace(configString(v))); name != "" {
+			if name := strings.ToLower(strings.TrimSpace(modconfig.String(v))); name != "" {
 				wet = append(wet, name)
 			}
 		}
@@ -121,22 +95,22 @@ func parseSettings(get func(string) any) gathering.Settings {
 	if list := listOf(get("Resources")); len(list) > 0 {
 		for _, entry := range list {
 			f := fieldsOf(entry)
-			kind := gathering.Kind(strings.ToLower(strings.TrimSpace(configString(f["kind"]))))
+			kind := gathering.Kind(strings.ToLower(strings.TrimSpace(modconfig.String(f["kind"]))))
 			if !kind.Valid() {
 				mudlog.Warn("gathering: Resources entry skipped", "entry", entry)
 				continue
 			}
 			rule := s.Rules[kind]
-			if d, ok := configDuration(f["duration"]); ok && d > 0 {
+			if d, ok := modconfig.Duration(f["duration"]); ok && d > 0 {
 				rule.Duration = d
 			}
-			if d, ok := configDuration(f["regrow"]); ok && d > 0 {
+			if d, ok := modconfig.Duration(f["regrow"]); ok && d > 0 {
 				rule.Regrow = d
 			}
-			if n, ok := configInt(f["pool"]); ok && n > 0 && n <= 50 {
+			if n, ok := modconfig.Int(f["pool"]); ok && n > 0 && n <= 50 {
 				rule.PoolMax = n
 			}
-			if n, ok := configInt(f["effortpct"]); ok && n >= 0 && n <= 400 {
+			if n, ok := modconfig.Int(f["effortpct"]); ok && n >= 0 && n <= 400 {
 				rule.EffortPc = n
 			}
 			s.Rules[kind] = rule
@@ -151,12 +125,12 @@ func parseSettings(get func(string) any) gathering.Settings {
 	for key, into := range tables {
 		for _, entry := range listOf(get(key)) {
 			f := fieldsOf(entry)
-			zone := strings.TrimSpace(configString(f["zone"]))
+			zone := strings.TrimSpace(modconfig.String(f["zone"]))
 			var table gathering.Table
 			for _, it := range listOf(f["items"]) {
 				fi := fieldsOf(it)
-				id, okI := configInt(fi["itemid"])
-				w, okW := configInt(fi["weight"])
+				id, okI := modconfig.Int(fi["itemid"])
+				w, okW := modconfig.Int(fi["weight"])
 				if okI && id > 0 && okW && w > 0 {
 					table = append(table, gathering.Weighted{ItemID: id, Weight: w})
 				}

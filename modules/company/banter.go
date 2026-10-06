@@ -8,6 +8,7 @@ package company
 // `set banter off`.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"math/rand"
 	"sync"
 
@@ -84,7 +85,7 @@ func (b *banterState) noteFall(leader, companionID int) {
 
 func (m *CompanyModule) banterPercent(key string, fallback int) int {
 	if m.plug != nil {
-		if n, ok := configInt(m.plug.Config.Get(key)); ok && n >= 0 && n <= 100 {
+		if n, ok := modconfig.Int(m.plug.Config.Get(key)); ok && n >= 0 && n <= 100 {
 			return n
 		}
 	}
