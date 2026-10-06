@@ -65,7 +65,7 @@ help: ## List documented Makefile targets.
 	@printf "\n"
 
 ## Developer Workflow
-.PHONY: build build_local generate module validate test coverage fmt fmtcheck vet mod js-lint lua-lint
+.PHONY: build build_local generate module validate test coverage fmt fmtcheck vet mod js-lint js-test lua-lint
 
 build: validate build_local ## Validate the code and build ./$(BIN).
 
@@ -91,7 +91,7 @@ endif
 
 validate: fmtcheck vet ## Run the standard Go formatting and vet checks.
 
-test: generate js-lint lua-lint ## Run code generation, JavaScript/Lua linting, and Go tests.
+test: generate js-lint js-test lua-lint ## Run code generation, JavaScript/Lua linting, JavaScript tests, and Go tests.
 	@go test -race ./...
 
 coverage: ## Generate and open an HTML Go coverage report.
@@ -132,6 +132,9 @@ js-lint: ## Run JSHint using npx when available, otherwise Docker.
 		echo "js-lint requires npx or docker" >&2; \
 		exit 127; \
 	fi
+
+js-test: ## Run the Node tests of the web client's pure modules (battle timeline).
+	@node --test scripts/js/*.test.mjs
 
 lua-lint: ## Run Luacheck using a local install when available, otherwise Docker.
 	@if [ -z "$(strip $(LUA_LINT_PATHS))" ]; then \

@@ -23,8 +23,28 @@ change the company's focus.
 - A small coloured mark over a figure is a status on it. A bright mark
   means it is chanting a spell. A flash and a number show a blow, a heal,
   or a miss as it lands. A fallen figure lies down.
+- Under the picture, a line tells the latest blow in words ("Wren hits the
+  second wolf (6)"), and the title shows the round. Hovering a figure shows
+  its own name and health instead.
 - In the dark, or against a foe you can't make out, you see one shadow
   instead of the enemy (<ansi fg="command">help light</ansi>).
+
+<ansi fg="yellow-bold">Animation</ansi>
+
+  The picture plays each happening as the story text tells it. A fighter
+  steps in and strikes, an archer shoots, a caster chants and releases. The
+  one struck flinches, or blocks, parries or dodges, with a small sign for
+  which. Statuses appear and vanish as their lines are told, the fallen
+  collapse, the beaten yield and the routed run, and numbers rise from a
+  blow or a heal. A hard hit shakes the picture. A fight that ends shows why
+  it ended: the foe is down, the company has fallen, or it withdrew.
+
+  The <ansi fg="yellow">Animation</ansi> menu has three settings. <ansi fg="yellow">full</ansi> shows all of it. <ansi fg="yellow">reduced</ansi> has no
+  flashes, shaking or travelling shots, and is the choice already made for
+  you if your system asks for reduced motion. <ansi fg="yellow">off</ansi> is the still picture.
+  Animation only shows the battle: it never changes or delays it, and it
+  keeps pace with your <ansi fg="command">help combatpace</ansi>, so a long round never leaves the
+  picture behind. The story text is the full record.
 
 <ansi fg="yellow-bold">Opening and closing</ansi>
 

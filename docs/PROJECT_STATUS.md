@@ -1,5 +1,44 @@
 # Ashveil Project Status
 
+**Phase 40g built: battle animation and effects (2026-10-06, PR pending review):**
+the battle screen now plays each 40e event. A pure planner,
+`static/js/battle-timeline.js`, turns an event batch into steps (lunge,
+strike, shoot, chant, hurt, block, parry, dodge, windup, guard, tackle,
+yield, flee, fall, victory) with hit effects, projectiles, glows, digits and
+feedback icons, and a `Scheduler` queues them per unit (units overlap, one
+unit's actions do not), fires state changes when their step starts or ends,
+and when more than a round of work is queued collapses the older steps to
+their end state. `window-battle.js` plays them (S4 sheets at
+`battle/units/<key>/<pose>.png` and `battle/effects/...` when the manifest
+lists them; otherwise the idle figure nudges and effects are drawn in code).
+New on screen: the round in the title, a "last blow" line ("Wren hits the
+second wolf (6)"), a named outcome reason ("Victory: no foe is left
+standing"), a zone backdrop lookup (`battle/backgrounds/zone-<slug>.png` by
+`Room.Info.area`), and an **Animation** menu (`full`, `reduced`, `off`;
+`ashveil-battle-animations` in `localStorage`; default reduced when the
+system asks for reduced motion). `off` is the 40f path unchanged. Tests:
+`scripts/js/battle-timeline.test.mjs` (Node, new `make js-test`, run by
+`make test` and CI) and the animated section of
+`scripts/browser/battle-check.mjs`; screenshot `screens/40g-battle.png`.
+`help battlescreen` gained the Animation section. Decisions (delegated):
+(1) **Pace is inferred, not sent:** the feed carries no pace, so the client
+reads it from how batches arrive (whole-round batches mean pacing off, else
+the gap between batches: under 0.9 s fast, over 2.5 s slow); the budgets are
+the design's 1.2 s action and 0.6 s reaction, half for fast, 1.5x for slow,
+0.3 s for off. A `pace` field on `Company.Battle` would make this exact
+(follow-up, small). (2) **S4 art is not drawn** (40s4 is not on master), so
+every pose uses its fallback and effects are code-drawn; art lands with no
+code change. (3) **Allied reserve formations stay deferred:** they still
+need an allied relay in the 40e feed (a Go change to combat events, out of
+scope for a client polish phase). (4) **Crit digits are large, not
+"12!"** (the narration style has no exclamation marks) in animated modes;
+`off` keeps the 40f text. (5) A fall or exit waits for its animation: a
+`Company.Battle` snapshot arriving mid-fall does not lay the unit down or
+drop it early (`holding`). (6) The outcome hold waits up to 6 s more for the
+last animations. (7) Sound stays out of scope, per the roadmap. Still
+open: morale (nerve) is not drawn; role letters are still blurry at the
+canvas font size; a `?` presence can overlap a visible foe.
+
 **Phase 40f built: battle screen in the web client (2026-10-06):** a battle
 opens as a picture (`window-battle.js`): the company left, the enemy right,
 each in its 3x3 formation on a 320x180 canvas scaled by whole numbers, over

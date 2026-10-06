@@ -18,6 +18,7 @@
 - Prefer extending existing shared client code before duplicating terminal, GMCP, docking, or modal logic.
 - Ashveil windows (`window-company.js`, `window-combat.js`, `window-vitals.js`'s company rows, `window-tutorial.js`) set every server string with `textContent`, never `innerHTML`, use the theme's secondary text colour rather than `--t-text-dim` for readable muted text, and have a Playwright check in `scripts/browser/` (`dock-check.mjs` for the dock core, `dock-windows-check.mjs` for the dock's windows, `battle-check.mjs` for the battle screen).
 - Layout (Phase 32g): the left column is the world (time, map, room, tutorial); the right is the company dock, one tab group (`tabGroup: 'dock'` in `WINDOW_DOCK_DEFAULTS`, whose order is the tab order; `groupHeader` for the vitals strip). A new player-facing window joins one of the two. Character sub-tabs are hosted through `window.CharacterTabs`; shared company helpers live in `company-data.js`. Menu entries that can't be undone use `uiMenu`'s `confirm`. Menus name items by the server's reference (`!<id>:<uuid>`), never by display name alone, when a command acts on a specific item.
+- Pure client logic that can be tested without a browser (the battle screen's `battle-timeline.js`) lives in `static/js/` as a script that also `module.exports` for Node, with tests in `scripts/js/*.test.mjs` run by `make js-test`.
 - Keep third-party vendored assets vendored. Do not casually replace or reformat them.
 
 ## Verification
