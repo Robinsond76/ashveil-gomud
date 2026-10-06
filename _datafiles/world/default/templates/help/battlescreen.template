@@ -53,6 +53,13 @@ change the company's focus.
   narrow screen (a phone) each allied company is a pennant with a count of
   those still standing.
 
+  Tap an allied formation, or its pennant, to watch that company at full size:
+  it takes your company's place and yours shrinks into its place, labelled
+  "your band". Tap your small band (or the pennant again) to come back. Watching
+  only changes the view. The buttons still act on your company, and the view
+  returns by itself when that company leaves the fight. An ally's blow on a foe
+  that is not in your fight is not drawn.
+
 <ansi fg="yellow-bold">Animation</ansi>
 
   The picture plays each happening as the story text tells it. A fighter
