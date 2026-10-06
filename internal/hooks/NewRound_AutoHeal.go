@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -110,6 +111,11 @@ func regenCompanionVitals(leaderOf func(instanceId int) (int, company.MemberKey,
 		}
 		if _, inBattle := battle.Current(leaderId); inBattle {
 			continue // between blows in a battle is still the battle
+		}
+		// Phase 38e: a construct never mends on its own; it is repaired
+		// with mortar (company repair).
+		if family, creature := creatures.ForArchetype(mob.Character.ArchetypeID()); creature && !family.MendsOnItsOwn() {
+			continue
 		}
 		mob.Character.TrickleHeal(mob.Character.HealthPerRound())
 	}

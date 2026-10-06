@@ -1,0 +1,37 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">hound</ansi>
+
+The Hound is a pursuit hunter: a fast, light creature that runs down foes
+which are already hurt, open or on the ground. It is a biological creature,
+so it is kept like any companion (<ansi fg="command">help creatures</ansi>).
+
+<ansi fg="yellow-bold">What the Hound is</ansi>
+
+  Health      4 to start, 0.8 a level (<ansi fg="command">help health</ansi>)
+  Skill       Attack 1.0 and Evasion 1.1 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        a collar and a harness only (<ansi fg="command">help armor</ansi>)
+  Attack      two bites a turn, 1d4 each
+  Stats       speed 4, strength 3, perception 2, vitality 1 (<ansi fg="command">help growth</ansi>)
+  Upkeep      eats, drinks and tires like the rest of the company, mends in
+              camp and by rest (<ansi fg="command">help survival</ansi>)
+  Loyalty     can lose heart and leave, like any companion (<ansi fg="command">help morale</ansi>)
+  Carries     nothing
+
+<ansi fg="yellow-bold">Ranks of the Hound</ansi>
+
+  Level 1   <ansi fg="yellow">Run down</ansi>        its bites deal +30% damage to a foe that is exposed,
+                            knocked down or hobbled (<ansi fg="command">help statuses</ansi>)
+  Level 5   <ansi fg="yellow">Worry</ansi>           its bites deal +25% damage to a foe at or below half
+                            health
+  Level 10  <ansi fg="yellow">Fleet</ansi>           +3 Evasion
+  Level 20  <ansi fg="yellow">Savage pursuit</ansi>  the Run down bonus grows to +50% in all
+
+A Hound has ranks but no promotion and no talents. Its default target rule
+is <ansi fg="command">wounded</ansi>: it goes for the foe that is already hurt. Put it in the front
+or middle row beside a fighter who knocks foes down (<ansi fg="command">help formation</ansi>, <ansi fg="command">help
+strategy</ansi>).
+
+<ansi fg="yellow-bold">Getting a Hound</ansi>
+
+Brindle is hiring at the Trappers' Post in Dunmar for 90 gold
+(<ansi fg="command">company recruit</ansi>). Its collar and harness are the only gear it can wear:
+<ansi fg="command">company equip [member] [item]</ansi> refuses anything else (<ansi fg="command">help equipment</ansi>).

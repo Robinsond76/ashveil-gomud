@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"os"
 	"strconv"
 	"strings"
@@ -251,6 +252,8 @@ func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 			Name: nameOf(companion, strconv.Itoa(companion.MobTemplateID)),
 			Dead: companion.Dead(),
 			Away: companion.Separated(),
+			// Phase 38e: a construct needs no food, drink or rest.
+			Needless: creatures.KindOf(companion.Archetype) == creatures.Construct,
 		})
 	}
 	return refs
@@ -291,7 +294,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -518,7 +521,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	// Phase 22b: the template gear minted by this spawn becomes the
 	// companion's durable gear in the summon's own save.
 	if state, ok := m.runtime.Snapshot(instanceID); ok {
-		if id := m.starterPackID(); id > 0 {
+		if id := m.starterPackID(); id > 0 && !creatures.Is(companion.Archetype) { // Phase 38e: a creature carries no pack
 			if err := m.giveRecruitPack(&state, id); err != nil {
 				m.runtime.Detach(leaderUserID, instanceID)
 				return domain.Companion{}, errors.Join(err, survival.RemoveCompanyMember(leaderUserID, companion.ID), m.rollbackSummon(leaderUserID, companion.ID, before))
@@ -655,7 +658,11 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		if c.Disposition != nil {
 			loyalty = c.Disposition.Loyalty
 		}
-		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, alignment %s, loyalty %d (%s)%s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), companionLevel(c), classLabel(c), alignmentLabel(m.companionAlignment(c)), loyalty, state, m.classNote(m.companionSubject(leaderUserID, c))))
+		heart := fmt.Sprintf("alignment %s, loyalty %d", alignmentLabel(m.companionAlignment(c)), loyalty)
+		if bound(c) { // Phase 38e: a construct is held by its bond, not by loyalty
+			heart = "bound"
+		}
+		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, %s (%s)%s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), companionLevel(c), classLabel(c), heart, state, m.classNote(m.companionSubject(leaderUserID, c))))
 	}
 	if lost := lostLine(record); lost != "" {
 		lines = append(lines, lost)
@@ -880,6 +887,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.train(user, room, args[1:])) // Phase 35c
 	case "patch":
 		user.SendText(m.patchCommand(user)) // Phase 35b
+	case "repair":
+		user.SendText(m.repair(user, room, args[1:])) // Phase 38e
 	case "archetype":
 		if len(args) < 3 {
 			user.SendText(companyUsage)

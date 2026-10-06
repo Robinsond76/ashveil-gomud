@@ -25,6 +25,8 @@ CompanionArchetypes:
   - { MobTemplateId: 160, Archetype: dollmaster } # Phase 39d
   - { MobTemplateId: 175, Archetype: gryphon-rider } # Phase 39f
   - { MobTemplateId: 150, Archetype: shaman } # Phase 39c
+  - { MobTemplateId: 260, Archetype: hound } # Phase 38e: creature recruits
+  - { MobTemplateId: 261, Archetype: stone-golem }
 # Phase 21a: company alignment. Values are alignment points on the
 # -100..100 scale players see. Out-of-range values fall back to the
 # default.
@@ -86,6 +88,7 @@ Recruiters:
       - { Id: tamsin, MobTemplateId: 61, Tutorial: true }
       - { Id: oswin, MobTemplateId: 62, Tutorial: true }
       - { Id: garrick, MobTemplateId: 63, Price: 120 }
+      - { Id: cairn, MobTemplateId: 261, Price: 180 } # Phase 38e: a stone golem (a construct)
   - RoomId: 901 # the Muster Yard (tutorial; each player's copy resolves here)
     Name: the notched hiring post
     Candidates:
@@ -106,6 +109,7 @@ Recruiters:
       - { Archetype: wizard, Weight: 1 }
     Candidates:
       - { Id: ysolde, MobTemplateId: 64, Price: 80 }
+      - { Id: brindle, MobTemplateId: 260, Price: 90 } # Phase 38e: a war hound (a biological creature)
 # Phase 32a2: per-player recruit rosters. At a Generated recruiter each
 # player sees their own RosterSize (0..8; 0 turns rosters off) generated
 # candidates, below the authored ones; what one player hires never changes

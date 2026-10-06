@@ -1,0 +1,17 @@
+mobid: 261
+zone: Dunmar
+# Phase 38e recruit base (stone golem). A construct wears nothing (its race
+# disables every slot but body), carries nothing, has no gold and drops
+# nothing. It takes no lasting wounds: stone cracks, and a repair closes them
+# with its health. See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+wounds: none
+character:
+  name: Cairn
+  description: A hulking figure of fitted grey stone, a rune cut into its chest, left standing at a quarry gate by a mason who died before finishing the binding. It follows whoever carries mortar.
+  raceid: 16
+  level: 1
+  alignment: 0

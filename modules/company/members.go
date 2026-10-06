@@ -6,6 +6,7 @@ package company
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -135,6 +136,9 @@ func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 	out := []domain.MemberCarry{}
 	if u := users.GetByUserId(leaderUserID); u != nil && u.Character.CompanyCargo {
 		for _, c := range record.Companions {
+			if creatures.Is(c.Archetype) {
+				continue // Phase 38e: a creature carries nothing and adds no capacity
+			}
 			inst, tracked := m.instance(leaderUserID, c.ID)
 			if c.Dead() || c.PendingReturn || !tracked || !m.runtime.IsLive(inst) || !m.runtime.IsAttached(leaderUserID, inst) || !m.runtime.WithLeader(leaderUserID, inst) || m.runtime.CharmedByOther(leaderUserID, inst) {
 				continue
@@ -149,7 +153,7 @@ func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 		return out
 	}
 	for _, c := range record.Companions {
-		if c.Dead() || c.Separated() {
+		if c.Dead() || c.Separated() || creatures.Is(c.Archetype) { // Phase 38e: a creature carries nothing
 			continue
 		}
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {

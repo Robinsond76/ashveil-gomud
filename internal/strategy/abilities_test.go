@@ -167,3 +167,9 @@ func TestGryphonRiderAbilityAndDefaults(t *testing.T) {
 	assert.Equal(t, Fighter, DefaultRole("gryphon-rider"))
 	assert.Equal(t, Healers, Default("Gryphon-Rider").Rule)
 }
+
+// Phase 38e: a hound hunts the wounded, a golem takes the nearest foe.
+func TestCreatureDefaultRules(t *testing.T) {
+	assert.Equal(t, Wounded, DefaultRule("hound"))
+	assert.Equal(t, Nearest, DefaultRule("stone-golem"))
+}

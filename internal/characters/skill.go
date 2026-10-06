@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -192,7 +193,13 @@ func GearOf(spec items.ItemSpec) archetypes.Gear {
 // CanWield applies the character's class rules on shields and weapons
 // (Phase 35a2); reason is player-facing when refused.
 func (c *Character) CanWield(itm items.Item) (bool, string) {
-	return archetypes.CanWield(c.ArchetypeID(), GearOf(itm.GetSpec()))
+	spec := itm.GetSpec()
+	// Phase 38e: a creature wears only gear cut for its species, and nobody
+	// else wears that gear.
+	if ok, reason := creatures.CanWear(c.ArchetypeID(), spec.WornBy); !ok {
+		return false, reason
+	}
+	return archetypes.CanWield(c.ArchetypeID(), GearOf(spec))
 }
 
 // WouldBeUntrained reports whether wearing the item would put the

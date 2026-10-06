@@ -125,6 +125,10 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if p := fx.Int(classes.HuntBleed); p > 0 && status.Live(tgt, status.Bleeding) {
 		pct += p
 	}
+	// Phase 38e: a hound runs down a foe that is down, hobbled or open.
+	if p := fx.Int(classes.Pounce); p > 0 && (status.Live(tgt, status.Exposed) || status.Live(tgt, status.KnockedDown) || status.Live(tgt, status.Hobbled)) {
+		pct += p
+	}
 	if p := fx.Int(classes.RangedPct); p > 0 && src.Shooting() {
 		pct += p
 	}

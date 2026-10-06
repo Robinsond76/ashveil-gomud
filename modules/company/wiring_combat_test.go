@@ -120,7 +120,8 @@ func newBrawl(t *testing.T) *brawl {
 	useDataDir(t, dataDir)
 	copyShipped(t, dataDir, "items", "races", "combat-messages", "biomes", "keywords.yaml", "spells", "skills",
 		"mobs/summons", "mobs/dunmar/61-tamsin_reed.yaml", "mobs/dunmar/62-brother_oswin.yaml",
-		"mobs/dunmar/63-garrick_vane.yaml", "mobs/old_kings_road/64-ysolde.yaml")
+		"mobs/dunmar/63-garrick_vane.yaml", "mobs/old_kings_road/64-ysolde.yaml",
+		"mobs/dunmar/260-brindle.yaml", "mobs/dunmar/261-cairn.yaml")
 	fixtures := map[string]string{
 		"rooms/brawl/zone-config.yaml":          "name: brawl\nroomid: 920101\n",
 		"rooms/brawl/920101.yaml":               "roomid: 920101\nzone: brawl\ntitle: Road\ndescription: A road.\nbiome: road\nexits:\n  east:\n    roomid: 920102\n",
@@ -174,7 +175,7 @@ func newBrawl(t *testing.T) *brawl {
 	require.NoError(t, module.loadErr)
 	previous := configs.Flatten(configs.GetOverrides())
 	flat := configs.Flatten(configs.GetOverrides())
-	flat["Modules.company.AllowedCompanionMobIDs"] = []any{61, 62, 63, 64}
+	flat["Modules.company.AllowedCompanionMobIDs"] = []any{61, 62, 63, 64, 260, 261}
 	require.NoError(t, configs.RestoreOverrides(flat))
 	t.Cleanup(func() { require.NoError(t, configs.RestoreOverrides(previous)) })
 	// Apply after RestoreOverrides, which validates zero XPScale back to 100.

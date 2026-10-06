@@ -21,3 +21,17 @@ func TestSeparatedCompanionsNeitherRestNorPay(t *testing.T) {
 	assert.Equal(t, []int{1}, roster)
 	assert.Equal(t, 2, m.companyMembers(7), "the leader and Bear")
 }
+
+// Phase 38e: a construct is granted no rest and takes no bed; a hound does.
+func TestConstructsNeitherRestNorTakeABed(t *testing.T) {
+	survival.SetRosterProvider(rosterStub{refs: []survival.MemberRef{
+		{Key: survival.LeaderMemberKey, Name: "Hero"},
+		{Key: survival.CompanionMemberKey(1), Name: "Brindle"},
+		{Key: survival.CompanionMemberKey(2), Name: "Cairn", Needless: true},
+	}})
+	t.Cleanup(func() { survival.SetRosterProvider(nil) })
+	m := &CampingModule{}
+	_, roster := m.companions(7)
+	assert.Equal(t, []int{1}, roster)
+	assert.Equal(t, 2, m.companyMembers(7), "the leader and the hound")
+}

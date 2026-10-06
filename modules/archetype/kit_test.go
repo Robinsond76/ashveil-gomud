@@ -2,6 +2,7 @@ package archetype
 
 import (
 	"errors"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"strings"
 	"testing"
 
@@ -310,6 +311,9 @@ func TestShippedKitsLeaveNewCharactersUnencumbered(t *testing.T) {
 			continue
 		}
 		for i, a := range m.table.List() {
+			if creatures.Is(a.ID) {
+				continue // Phase 38e: a creature has no starter kit and is never chosen
+			}
 			u := newUser(400 + i)
 			u.Character.RaceId = race.Id()
 			u.Character.Validate()

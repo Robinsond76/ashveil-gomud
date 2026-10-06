@@ -1,0 +1,9 @@
+itemid: 290
+name: stone mortar
+namesimple: mortar
+description: A lump of grey rune-mortar in a leather wrap, ground fine enough to pack into a golem's cracks. A stone golem is repaired with it, one mortar for half its health (company repair [golem]); it does not heal a person.
+type: object
+subtype: mundane
+uses: 1
+value: 10
+weight: 1500

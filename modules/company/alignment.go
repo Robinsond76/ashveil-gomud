@@ -267,7 +267,7 @@ func (m *CompanyModule) driftTick() {
 		// Phase 25b: the dead neither drift, sway the others, nor desert.
 		var members []domain.MemberAlignment
 		for _, c := range record.Companions {
-			if c.Dead() || c.MoraleDesert {
+			if c.Dead() || c.MoraleDesert || bound(c) { // Phase 38e: a construct is bound, not loyal: it neither drifts nor sways
 				continue
 			}
 			loyalty := domain.MaxLoyalty
@@ -387,9 +387,12 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 	}
 	candidate := m.alignmentWorld().TemplateAlignment(templateID)
 	lines := []string{fmt.Sprintf("%s: alignment %s.", name, alignmentLabel(candidate))}
+	if f, ok := m.templateFamily(templateID); ok { // Phase 38e
+		lines = append(lines, familyLine(f))
+	}
 	average, ok := m.companyAverage(leaderUserID)
 	if !ok {
-		return lines[0]
+		return strings.Join(lines, "\n")
 	}
 	lines = append(lines, fmt.Sprintf("Your company: %s.", alignmentLabel(average)))
 	switch {

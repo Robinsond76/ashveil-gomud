@@ -122,7 +122,7 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	for _, a := range m.table.List() {
 		got = append(got, a.ID)
 	}
-	assert.Equal(t, []string{"cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
+	assert.Equal(t, []string{"cleric", "dollmaster", "gryphon-rider", "halberdier", "hound", "ranger", "rogue", "samurai", "shaman", "stone-golem", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
 
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
@@ -468,7 +468,7 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	m.store = &fakeStore{}
 	m.load()
 
-	assert.Equal(t, 11, m.table.Len())
+	assert.Equal(t, 13, m.table.Len())
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
 	assert.Equal(t, map[string]int{"cast": 1}, wiz.GrantSkills)
@@ -574,4 +574,27 @@ func TestConcurrentRegistryAccess(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "rogue", id)
 	}
+}
+
+// Phase 38e: a creature species is a recruit's archetype, never a player's
+// choice: it is not offered at creation, listed, or chosen.
+func TestCreatureArchetypesAreNotPlayerChoices(t *testing.T) {
+	m, _ := testModule(t)
+	for _, choice := range m.CreationChoices() {
+		assert.NotContains(t, []string{"hound", "stone-golem"}, choice.ID)
+	}
+	list := m.list(40)
+	assert.NotContains(t, list, "Hound")
+	assert.NotContains(t, list, "Stone Golem")
+	u := newUser(40)
+	for _, id := range []string{"hound", "stone-golem"} {
+		assert.Contains(t, m.choose(u, id, true), "no archetype", id)
+		_, chosen := m.PlayerArchetype(40)
+		assert.False(t, chosen, id)
+		_, ok := m.ChooseAtCreation(40, id)
+		assert.False(t, ok, id)
+	}
+	// The species still resolve for a recruit's own use.
+	assert.True(t, m.Exists("hound"))
+	assert.True(t, m.Exists("stone-golem"))
 }

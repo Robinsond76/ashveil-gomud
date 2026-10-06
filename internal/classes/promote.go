@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 )
 
 // Option is one promotion open to a character, or listed with the reason
@@ -149,11 +151,14 @@ func Milestone(current string, level int) string { return MilestoneFor("", curre
 // (a Samurai's Focus and Zanshin) count among what comes next.
 func MilestoneFor(lineageID, current string, level int) string {
 	at := map[int][]string{}
-	if l, ok := NextTalentLevel(level); ok {
+	// Phase 38e: a creature has ranks, but no talents and no promotion.
+	creature := creatures.Is(lineageID)
+	if l, ok := NextTalentLevel(level); ok && !creature {
 		at[l] = append(at[l], "a talent")
 	}
 	cur, has := Get(current)
 	switch {
+	case creature:
 	case !has:
 		at[AdvancedLevel] = append(at[AdvancedLevel], "your class promotion")
 	case cur.Tier == TierAdvanced:

@@ -200,6 +200,45 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # An iron short spear, a leather buckler, a padded jack, a leather cap and worn boots.
     Kit: [10131, 20047, 20163, 20020, 20003, 30004, 30015, 38]
+  # Phase 38e: creature recruits. These are species, not careers: a creature
+  # is only ever recruited (company recruit), never chosen at creation or with
+  # "archetype choose", and it claims one skill (instinct) no player can train.
+  # Family rules (food, repair, bond, carrying) live in internal/creatures; its
+  # signature ranks in internal/classes/routes_creature.go.
+  - ArchetypeId: hound
+    HPPerLevel: 0.8
+    HPStart: 4
+    AttackRate: 1.0
+    EvasionRate: 1.1
+    ArmorTraining: light
+    ShieldSizes: [none]
+    Name: Hound
+    Description: A war hound that runs down foes that are hurt, exposed or knocked down. It eats, drinks and tires like its company, and wears a collar and a harness.
+    Skills: [instinct]
+    GrantSkills:
+      - { Skill: instinct, Level: 1 }
+    Growth:
+      - { Stat: speed, Weight: 4 }
+      - { Stat: strength, Weight: 3 }
+      - { Stat: perception, Weight: 2 }
+      - { Stat: vitality, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+  - ArchetypeId: stone-golem
+    HPPerLevel: 1.3
+    HPStart: 12
+    AttackRate: 0.9
+    EvasionRate: 0.6
+    ArmorTraining: heavy
+    ShieldSizes: [none]
+    Name: Stone Golem
+    Description: A slow, stone-plated anchor that shelters the row it stands in. It needs no food, drink or rest, never loses heart, and is repaired with stone mortar instead of mended.
+    Skills: [instinct]
+    GrantSkills:
+      - { Skill: instinct, Level: 1 }
+    Growth:
+      - { Stat: vitality, Weight: 4 }
+      - { Stat: strength, Weight: 3 }
+    CompanionLevels: [1, 10, 20, 30]
   # Phase 39b: the duelist, a neutral lineage (no alignment gate at 10 or 30).
   # Its first strike each battle is its best (Iaijutsu, internal/classes);
   # medium armor and no shield make it an ordinary front-liner after that.

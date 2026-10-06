@@ -25,6 +25,8 @@ Assign equipment before a fight; no gear changes or item use are allowed in batt
 
 A two-handed weapon removes the offhand; a shield displaces a two-handed
 weapon. Disabled slots, bound gear and curses can prevent an assignment.
+Gear cut for a creature (a hound's collar and harness) fits only that kind of
+creature, and a creature wears only gear cut for it (help creatures).
 Cargo must fit after the change. Capacity-restoring assignments are allowed
 while overloaded; removing a pack preserves cargo and can leave it overloaded.
 Assigned packs add capacity, not combat burden (help pack).

@@ -75,6 +75,10 @@ help:
       - gryphon-rider
       - gryphon-rider-routes
       - summoning
+      - creatures
+      - hound
+      - stone-golem
+      - repair
     company:
       - company
       - growth
@@ -348,6 +352,10 @@ help-aliases:
   witch-routes:     [hedge-witch-route, coven-sage, hag, witch-class, witch-classes]
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
+  creatures:        [creature, creature recruits, familiar, familiars, bound, construct, constructs, beast, beasts]
+  hound:            [hounds, war hound, war-hound, brindle, run-down, savage-pursuit, worry, fleet]
+  stone-golem:      [stone golem, stone-golems, golem recruit, cairn, anchor, granite, bedrock, stone-body]
+  repair:           [repairs, mortar, stone mortar, stone-mortar, company repair, mend a golem]
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
   gryphon-rider:    [gryphon rider, gryphon, gryphons, rider, dive, talons, skirmisher, skirmish, power-dive]
   gryphon-rider-routes: [gryphon-knight, gryphon knight, skyscout, wyvern-rider, wyvern rider, gryphon-lord, gryphon lord, falcon-marshal, falcon marshal, wyvern-lord, wyvern lord, lance-charge, eagle-eye, hawk-s-mark]

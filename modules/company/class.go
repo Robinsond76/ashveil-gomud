@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -288,7 +289,14 @@ func (m *CompanyModule) classView(s classSubject) string {
 	}
 	var lines []string
 	cur, promoted := classes.Get(s.class)
+	creature, isCreature := creatures.ForArchetype(s.lineage) // Phase 38e
 	switch {
+	case isCreature:
+		kind := "creature"
+		if creature.Bound() {
+			kind = "construct"
+		}
+		lines = append(lines, fmt.Sprintf("%s %s a level %d %s (%s). It has ranks but no promotion or talents. Alignment %+d.", s.label(), s.are(), s.level, creature.Name, kind, s.alignment))
 	case promoted:
 		lines = append(lines, fmt.Sprintf("%s %s a level %d %s, a %s (%s). Alignment %+d.", s.label(), s.are(), s.level, lineageName(s.lineage), cur.Name, tierName(cur.Tier), s.alignment))
 	case s.class != "":
@@ -320,7 +328,7 @@ func (m *CompanyModule) classView(s classSubject) string {
 	if next := classes.MilestoneFor(s.lineage, s.class, s.level); next != "" {
 		lines = append(lines, "  "+next)
 	}
-	if owed := classes.TalentsOwed(s.level, s.talents); owed > 0 {
+	if owed := talentsOwed(s); owed > 0 {
 		lines = append(lines, fmt.Sprintf("  %d talent%s to choose: talent pick%s [talent].", owed, plural(owed), selectorSuffix(s)))
 	}
 	return strings.Join(lines, "\n")
@@ -329,10 +337,26 @@ func (m *CompanyModule) classView(s classSubject) string {
 // classLabel is a companion's archetype, with its class once promoted
 // ("Priest (cleric)"), for the company roster (Phase 38b review).
 func classLabel(c domain.Companion) string {
+	if f, ok := familyOf(c); ok { // Phase 38e
+		kind := "creature"
+		if f.Bound() {
+			kind = "construct"
+		}
+		return fmt.Sprintf("%s (%s)", f.Name, kind)
+	}
 	if cl, ok := classes.Get(c.Class); ok {
 		return fmt.Sprintf("%s (%s %s)", cl.Name, strings.TrimSuffix(tierName(cl.Tier), " class"), strings.ToLower(archetypeLabel(c.Archetype)))
 	}
 	return archetypeLabel(c.Archetype)
+}
+
+// talentsOwed is the talents a subject has yet to choose: none for a lineage
+// with no talents to offer (a creature, Phase 38e).
+func talentsOwed(s classSubject) int {
+	if len(classes.TalentsFor(s.lineage)) == 0 {
+		return 0
+	}
+	return classes.TalentsOwed(s.level, s.talents)
 }
 
 // classNote flags what a character can do about its class now: a promotion
@@ -349,7 +373,7 @@ func (m *CompanyModule) classNote(s classSubject) string {
 	case "waiting-gate":
 		notes = append(notes, "waiting: alignment")
 	}
-	if owed := classes.TalentsOwed(s.level, s.talents); owed > 0 {
+	if owed := talentsOwed(s); owed > 0 {
 		notes = append(notes, fmt.Sprintf("%d talent%s to choose", owed, plural(owed)))
 	}
 	if len(notes) == 0 {
