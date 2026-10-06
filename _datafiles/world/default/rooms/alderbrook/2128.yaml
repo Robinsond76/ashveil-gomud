@@ -1,0 +1,27 @@
+roomid: 2128
+zone: Alderbrook
+title: Charcoal Burners' Clearing
+description: A round clearing was cut here by charcoal burners and left to grow back. The old
+  kiln mound is cold and the ground is soft, a good place for a company to stop for
+  the night.
+biome: forest
+tags:
+  - camping
+exits:
+  east:
+    roomid: 2129
+  north:
+    roomid: 2121
+  south:
+    roomid: 2134
+  west:
+    roomid: 2127
+resources:
+- forage
+- firewood
+- herbs
+- game
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true

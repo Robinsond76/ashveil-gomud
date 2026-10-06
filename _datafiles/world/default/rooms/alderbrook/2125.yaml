@@ -1,0 +1,18 @@
+roomid: 2125
+zone: Alderbrook
+title: Heather Slope
+description: Heather and gorse cover the slope, with outcrops of broken rock. The wind is steady.
+biome: cliffs
+exits:
+  north:
+    roomid: 2118
+  south:
+    roomid: 2131
+  west:
+    roomid: 2124
+resources:
+- herbs
+mapx: 8
+mapy: 2
+mapz: 0
+hascoordinates: true

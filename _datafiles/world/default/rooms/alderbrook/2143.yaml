@@ -1,0 +1,19 @@
+roomid: 2143
+zone: Alderbrook
+title: Hermit's Hut
+description: A turf-roofed hut huddles on the south bank, smoke leaking from its crooked chimney.
+  Strings of dried herbs hang on the walls, and an old man with a crow on his shoulder
+  watches the path with mild suspicion.
+biome: house
+exits:
+  north:
+    roomid: 2140
+mapsymbol: H
+maplegend: Hermit
+resources:
+- shelter
+- herbs
+mapx: 4
+mapy: 6
+mapz: 0
+hascoordinates: true

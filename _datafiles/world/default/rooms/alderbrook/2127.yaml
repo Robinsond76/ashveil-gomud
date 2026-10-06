@@ -1,0 +1,20 @@
+roomid: 2127
+zone: Alderbrook
+title: Turnip Field
+description: Rows of turnips run down the slope, the soil dark and well turned.
+biome: farmland
+exits:
+  east:
+    roomid: 2128
+  north:
+    roomid: 2120
+  south:
+    roomid: 2133
+  west:
+    roomid: 2126
+resources:
+- forage
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true

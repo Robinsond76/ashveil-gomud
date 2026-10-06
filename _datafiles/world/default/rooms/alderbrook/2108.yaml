@@ -1,0 +1,18 @@
+roomid: 2108
+zone: Alderbrook
+title: Stony Hillside
+description: Thin turf and grey stone climb the hill. Sheep paths cross the slope.
+biome: cliffs
+exits:
+  east:
+    roomid: 2109
+  south:
+    roomid: 2116
+  west:
+    roomid: 2107
+resources:
+- herbs
+mapx: 6
+mapy: 0
+mapz: 0
+hascoordinates: true

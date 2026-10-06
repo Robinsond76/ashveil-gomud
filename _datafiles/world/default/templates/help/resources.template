@@ -2,8 +2,9 @@
 
 Some rooms provide something your company can use. <ansi fg="command">look</ansi> names it on a
 line that starts with "Here:", and the web client's map marks the room with
-a small coloured dot in the corner of its tile (hover over a room to read
-what it offers). Turn the dots off under the map's settings button.
+a small icon in the corner of its tile (hover over a room to read what it
+offers; on the Classic style and on tiny tiles it is a coloured dot). Turn
+the markers off under the map's settings button.
 
 <ansi fg="yellow-bold">What the markers mean</ansi>
 
@@ -26,8 +27,8 @@ rooms where you can make camp (<ansi fg="command">help camp</ansi>).
   <ansi fg="yellow">Herbs</ansi> (teal), <ansi fg="yellow">Firewood</ansi> (orange), <ansi fg="yellow">Fishing</ansi> (cyan), <ansi fg="yellow">Game</ansi> (red)
   Things your company can gather: <ansi fg="command">gather herbs</ansi>, <ansi fg="command">gather firewood</ansi>, <ansi fg="command">fish</ansi> and
   <ansi fg="command">hunt</ansi>. Each room holds only so much, and a resource that has been picked
-  clean says "(picked clean)" on the "Here:" line and is drawn hollow with
-  a slash on the map until it grows back (<ansi fg="command">help gathering</ansi>).
+  clean says "(picked clean)" on the "Here:" line and has an
+  empty-basket mark on the map until it grows back (<ansi fg="command">help gathering</ansi>).
 
 <ansi fg="yellow-bold">Water commands</ansi>
 

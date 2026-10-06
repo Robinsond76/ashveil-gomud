@@ -1,0 +1,22 @@
+roomid: 2134
+zone: Alderbrook
+title: Buttercup Meadow
+description: Yellow buttercups spangle the meadow. Bees drone low over the clover.
+biome: land
+exits:
+  east:
+    roomid: 2135
+  north:
+    roomid: 2128
+  northeast:
+    roomid: 2129
+  south:
+    roomid: 2140
+  west:
+    roomid: 2133
+resources:
+- forage
+mapx: 4
+mapy: 4
+mapz: 0
+hascoordinates: true
