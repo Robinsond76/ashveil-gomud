@@ -58,6 +58,9 @@ type Runtime interface {
 	// walking with them (32f review: meals and the riding pace count only
 	// members present).
 	WithLeader(leaderUserID, instanceID int) bool
+	// Trailing reports whether a live mob is with its leader or one move
+	// behind (47: a companion mid-step still carries its share).
+	Trailing(leaderUserID, instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
 	// Relocate moves a live, living mob into roomID and out of any fight
