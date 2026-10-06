@@ -115,7 +115,9 @@ func testSpells() []Spell {
 }
 
 func TestDefaultAutoSpells(t *testing.T) {
-	want := map[string]Use{"heal": UseHeal, "healall": UseHealAll, "mm": UseAttack, "sparks": UseAttackAll}
+	want := map[string]Use{"heal": UseHeal, "healall": UseHealAll, "mm": UseAttack, "sparks": UseAttackAll,
+		"binding": UseHex, "slumber": UseHex, "earthbind": UseHex, "frailty": UseHex,
+		"leaden": UseHex, "miasma": UseHex, "dread": UseHex, "blight": UseHex, "hex": UseAttack}
 	got := DefaultAutoSpells()
 	if len(got) != len(want) {
 		t.Fatalf("DefaultAutoSpells = %+v", got)

@@ -67,6 +67,7 @@ type actor struct {
 // strategyPass lets every healer and caster in a battle cast, by its
 // strategy.
 func strategyPass() {
+	defer func() { hexSide = nil }()
 	pruneCastAims()
 	autoSpells := costedAutoSpells()
 	for _, uid := range battle.Players() {
@@ -100,6 +101,7 @@ func strategyPass() {
 		// Phase 33e: a heal already chanting covers its patients, so a
 		// second healer turns to someone else.
 		markPendingHeals(allies, side, autoSpells)
+		hexSide = side
 		for _, a := range side {
 			if !readyToCast(a, u) {
 				continue
@@ -122,6 +124,8 @@ func strategyPass() {
 				// Phase 33e: the member's mana reserve.
 				MaxMana: a.char.ManaMax.Value,
 				Reserve: st.Reserve,
+				// Phase 38a: a hex goes only at a foe worth it.
+				CanHex: hexReady(a, foes),
 			})
 			info, ok := autoSpellTargets(action, a, side, g, foes)
 			if !ok {
@@ -259,6 +263,8 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, id)
 	case strategy.AttackAll:
 		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, foes...)
+	case strategy.Hex:
+		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, hexTargets(action.Spell, a, g, foes)...)
 	default:
 		return info, false
 	}

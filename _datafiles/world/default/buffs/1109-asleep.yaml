@@ -1,0 +1,14 @@
+buffid: 1109
+name: Asleep
+description: You are asleep. You lose your actions until you wake; the first damage you take wakes you.
+secret: false
+# Phase 38a: ticked by the combat round (see internal/status), never by game
+# rounds. A hex sets the count itself (rounds + 1); this is the default,
+# 2 rounds.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 3
+flags:
+  - combat-status
+  - lose-actions
+  - asleep

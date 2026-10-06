@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: leaden
+name: Leaden Curse
+description: "Foes grow heavy-limbed: hobbled, slow, and unable to flee. Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 8
+waitrounds: 1
+difficulty: 40

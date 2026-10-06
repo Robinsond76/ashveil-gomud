@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: earthbind
+name: Earthbind
+description: "Grave-soil drags foes down: they are knocked down and lose their next action. Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 6
+waitrounds: 1
+difficulty: 40

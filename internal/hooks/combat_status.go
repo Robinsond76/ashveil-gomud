@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
@@ -154,6 +155,8 @@ func tickStatuses(h statusHolder) {
 // a restart, or of a flight); the rest tick. Anyone a tick brought down is
 // resolved at once, in the round it happens.
 func statusPass() {
+	// Phase 38a: the hex immunity ledger counts combat rounds.
+	hexes.Default.Tick()
 	members := fightMembers()
 
 	var downPlayers, downMobs []int

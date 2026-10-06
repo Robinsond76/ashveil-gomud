@@ -207,7 +207,7 @@ implemented (handoff rule 20).
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
-| 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
+| 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 38a |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |

@@ -1,0 +1,58 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">hexes</ansi>
+
+A hex is a Witch's spell that takes enemy turns away instead of dealing
+damage (<ansi fg="command">help witch</ansi>). It puts a status on a foe (<ansi fg="command">help statuses</ansi>). Hexes belong to
+the hexcraft school, which only a Witch may learn.
+
+<ansi fg="yellow-bold">The hexes</ansi>
+
+  <ansi fg="yellow">Hex</ansi>               <ansi fg="yellow">level</ansi>  <ansi fg="yellow">mana</ansi>  <ansi fg="yellow">chant</ansi>  <ansi fg="yellow">what it does</ansi>
+  Slumber             1      6     2     asleep for 2 rounds: loses its turns, and
+                                         the first damage wakes it (blows against a
+                                         sleeper hit 25 points more often)
+  Withering Hex       1      8     2     a weak damage curse, for when no hex is
+                                         worth casting
+  Earthbind           3      6     2     knocked down: loses its next action and is
+                                         easier to hit
+  Leaden Curse        5      8     2     hobbled: slow, and unable to flee
+  Miasma              7     10     3     poisons one row of foes; Cure Poison ends it
+  Binding Hex        10     12     3     paralyzed for 1 round, 2 from level 20:
+                                         loses its turns and can't dodge or block;
+                                         damage does not break it. Resisted with
+                                         Vitality
+  Curse of Frailty   12     10     2     exposed: blows against it crit far more
+                                         often
+  Dread Whisper      15     14     3     one morale check on the foe, which may yield
+                                         or flee (<ansi fg="command">help morale</ansi>); unbreakable foes hold
+  Blight             18     12     2     healing it receives is halved for 3 rounds;
+                                         cast only at enemy healers
+
+A Witch learns a hex when it reaches its level, and keeps it for good.
+
+<ansi fg="yellow-bold">How many foes a hex reaches</ansi>
+
+A hex reaches 1 foe at level 1, <ansi fg="yellow">2</ansi> at level 8, <ansi fg="yellow">3</ansi> at level 16, <ansi fg="yellow">4</ansi> at level 24,
+and the whole enemy group from level 30. The first is the one it aims at;
+the rest come from the same row, then the nearest others. Miasma covers one
+row only, up to the same number.
+
+<ansi fg="yellow-bold">Resisting</ansi>
+
+Each foe resists on its own. The Witch's Mysticism is set against the foe's
+Mysticism (its Vitality, for Binding Hex): the hex lands 65 times in 100 at
+equal stats, one more for every point of Mysticism the Witch has over the foe's,
+never under 25 or over 90. A boss resists 25 more, and a status holds it half
+as long, rounding down to at least 1 round. A resisted hex does nothing, and the
+line says <ansi fg="command">(resisted)</ansi>; a foe already under a hex isn't hexed again.
+
+<ansi fg="yellow-bold">No endless holds</ansi>
+
+After a hex lands, that foe can't be put under the same status again until it
+has been over for 2 combat rounds. Together with sleep's 2 rounds and
+paralysis's 1 or 2, no foe is held for more than half of a fight's rounds.
+Sleep ends at the first damage; poison's damage does too.
+
+Statuses count combat rounds, never game rounds, and end when the fight ends.
+<ansi fg="command">help spell [spell]</ansi> shows one spell's numbers.
+
+See also: <ansi fg="command">help witch</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help mana</ansi>, <ansi fg="command">help spells</ansi>.

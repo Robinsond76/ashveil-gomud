@@ -10,12 +10,13 @@ const (
 	UseHealAll   Use = "heal-all"   // heals the company
 	UseAttack    Use = "attack"     // harms one foe
 	UseAttackAll Use = "attack-all" // harms the foe's group
+	UseHex       Use = "hex"        // a Witch's hex, which takes foes' turns away (Phase 38a)
 )
 
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex:
 		return u, true
 	}
 	return "", false
@@ -37,6 +38,16 @@ func DefaultAutoSpells() []Spell {
 		{ID: "healall", Use: UseHealAll},
 		{ID: "mm", Use: UseAttack},
 		{ID: "sparks", Use: UseAttackAll},
+		// Phase 38a: the Witch's hexes, in the order tried, then its curse.
+		{ID: "binding", Use: UseHex},
+		{ID: "slumber", Use: UseHex},
+		{ID: "earthbind", Use: UseHex},
+		{ID: "frailty", Use: UseHex},
+		{ID: "leaden", Use: UseHex},
+		{ID: "miasma", Use: UseHex},
+		{ID: "dread", Use: UseHex},
+		{ID: "blight", Use: UseHex},
+		{ID: "hex", Use: UseAttack},
 	}
 }
 
@@ -77,6 +88,10 @@ type Situation struct {
 	// MaxMana and Reserve (a percent, Phase 33e): an attack spell is cast
 	// only while Reserve percent of MaxMana would remain. Heals ignore it.
 	MaxMana, Reserve int
+	// CanHex (Phase 38a) reports whether a hex has a foe worth casting it
+	// at: one that doesn't already carry its status, isn't immune to it,
+	// and (Blight) heals. Nil means every hex may be cast.
+	CanHex func(spellID string) bool
 }
 
 // ActionKind is what a character does this round.
@@ -88,6 +103,7 @@ const (
 	HealAll                     // heal the side
 	Attack                      // a spell at its target
 	AttackAll                   // a spell at the group
+	Hex                         // a hex at the foes it reaches (Phase 38a)
 )
 
 // Action is a role's decision. Spell is the spell to cast (for all but
@@ -105,6 +121,9 @@ type Action struct {
 //     An ally a heal already covers (Pending) is skipped (Phase 33e);
 //   - a caster casts its area spell when two or more foes stand, else its
 //     single-target spell, else swings;
+//   - a controller casts the first of its hexes that has a foe worth it
+//     (CanHex), else its single-target attack spell (Withering Hex), else
+//     swings (Phase 38a);
 //   - a fighter swings.
 //
 // A spell is cast only when it is configured, known, and paid for, and an
@@ -149,6 +168,22 @@ func Decide(s Situation) Action {
 		}
 		if sp, ok := affordable(UseHealAll); ok {
 			return Action{Kind: HealAll, Spell: sp.ID}
+		}
+	case Controller:
+		if s.Foes < 1 {
+			return Action{Kind: Swing}
+		}
+		for _, sp := range s.Spells {
+			if sp.Use != UseHex || s.Knows == nil || !s.Knows(sp.ID) || s.Mana < sp.Cost {
+				continue
+			}
+			if s.CanHex != nil && !s.CanHex(sp.ID) {
+				continue
+			}
+			return Action{Kind: Hex, Spell: sp.ID}
+		}
+		if sp, ok := affordable(UseAttack); ok {
+			return Action{Kind: Attack, Spell: sp.ID}
 		}
 	case Caster:
 		if s.Foes < 1 {

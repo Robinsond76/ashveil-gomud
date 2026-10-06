@@ -56,56 +56,58 @@ type Mob struct {
 	DeathProcessed     bool    `yaml:"-"`
 	Temperament        string  `yaml:"temperament,omitempty"`
 	NeverBreak         bool    `yaml:"neverbreak,omitempty"`
-	MobId              MobId
-	Zone               string               `yaml:"zone,omitempty"`
-	ItemDropChance     int                  `yaml:"itemdropchance,omitempty"` // chance in 100
-	LootCategory       string               `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
-	ActivityLevel      int                  `yaml:"activitylevel,omitempty"`  // 1-100%
-	InstanceId         int                  `yaml:"-"`
-	HomeRoomId         int                  `yaml:"-"`
-	Hostile            bool                 `yaml:"hostile,omitempty"` // whether they attack on sight
-	Reach              bool                 `yaml:"reach,omitempty"`   // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
-	AmbushOwner        int                  `yaml:"-"`
-	AmbushAdvantage    int                  `yaml:"-"`
-	AmbushObserver     string               `yaml:"-"`
-	Leap               bool                 `yaml:"leap,omitempty"`
-	Sweep              bool                 `yaml:"sweep,omitempty"`
-	Stealth            *int                 `yaml:"stealth,omitempty"`
-	Practice           bool                 `yaml:"practice,omitempty"`       // Ashveil (Phase 27c): a practice foe, beaten without any reward (see mobcommands.Suicide)
-	Solitary           bool                 `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
-	CompanyMoveTo      int                  `yaml:"-"`                        // Ashveil (Phase 32a): the room its leader's one company line announced it moving to (runtime only)
-	SpawnGroup         string               `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
-	GroupNoun          string               `yaml:"groupnoun,omitempty"`      // Ashveil (Phase 32c): overrides its race's collective noun for its group ("patrol")
-	PainReactions      []races.PainReaction `yaml:"painreactions,omitempty"`  // Optional Phase 29e override for this NPC template.
-	Targeting          string               `yaml:"targeting,omitempty"`      // Ashveil (Phase 30c): the rule it re-aims by as an enemy; overrides its race's
-	TargetingNoise     int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
-	WindUps            map[string]int       `yaml:"windups,omitempty"`        // Ashveil (Phase 30d2): wind-up ability id -> percent of its turns it starts one (enemies only)
-	Role               string               `yaml:"role,omitempty"`           // Ashveil (Phase 33i2): its role as an enemy: fighter (default), healer, caster, guardian
-	Coordination       int                  `yaml:"coordination,omitempty"`   // Ashveil (Phase 33i2): sets its group's coordination tier (1-4) outright; 0 is by level
-	WoundsRule         string               `yaml:"wounds,omitempty"`         // Ashveil (Phase 33i2): "none" takes no wounds as an enemy; else light wounds
-	GroupName          string               `yaml:"-"`                        // Ashveil (Phase 32c): its group's name, given when the group formed (runtime only)
-	GroupDesc          string               `yaml:"-"`                        // Ashveil (Phase 32c): an authored group's description (runtime only)
-	LastIdleCommand    uint8                `yaml:"-"`                        // Track what hte last used idlecommand was
-	BoredomCounter     uint8                `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
-	Groups             []string             `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork
-	Hates              []string             `yaml:"hates,omitempty"`          // What NPC groups or races do they hate and probably fight if encountered?
-	IdleCommands       []string             `yaml:"idlecommands,omitempty"`   // Commands they may do while idle (not in combat)
-	AngryCommands      []string             `yaml:"angrycommands,omitempty"`  // randomly chosen to queue when they are angry/entering combat.
-	CombatCommands     []string             `yaml:"combatcommands,omitempty"` // Commands they may do while in combat
-	Character          characters.Character
-	MaxWander          int       `yaml:"maxwander,omitempty"`       // Max rooms to wander from home
-	WanderCount        int       `yaml:"-"`                         // How many times this mob has wandered
-	PreventIdle        bool      `yaml:"-"`                         // Whether they can't possibly be idle
-	ScriptTag          string    `yaml:"scripttag,omitempty"`       // Script for this mob: mobs/frostfang/scripts/{mobId}-{mobname}-{ScriptTag}.js
-	QuestFlags         []string  `yaml:"questflags,omitempty,flow"` // What quest flags are set on this mob?
-	BuffIds            []int     `yaml:"buffids,omitempty"`         // Buff Id's this mob always has upon spawn
-	EliteChance        int       `yaml:"elitechance,omitempty"`     // Percent chance (0-100) this mob spawns as elite
-	IsElite            bool      `yaml:"-"`                         // Runtime flag: true if this instance is elite
-	Path               PathQueue `yaml:"-"`                         // a pre-calculated path the mob is following.
-	tempDataStore      map[string]any
-	conversationId     int              // Identifier of conversation currently involved in.
-	lastCommandTurn    uint64           // The last turn a command was scheduled for
-	playersAttacked    map[int]struct{} // all players this mob has attacked at some point
+	// Boss (Phase 38a): a hex resists it 25 points more and holds it half as long.
+	Boss            bool `yaml:"boss,omitempty"`
+	MobId           MobId
+	Zone            string               `yaml:"zone,omitempty"`
+	ItemDropChance  int                  `yaml:"itemdropchance,omitempty"` // chance in 100
+	LootCategory    string               `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
+	ActivityLevel   int                  `yaml:"activitylevel,omitempty"`  // 1-100%
+	InstanceId      int                  `yaml:"-"`
+	HomeRoomId      int                  `yaml:"-"`
+	Hostile         bool                 `yaml:"hostile,omitempty"` // whether they attack on sight
+	Reach           bool                 `yaml:"reach,omitempty"`   // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
+	AmbushOwner     int                  `yaml:"-"`
+	AmbushAdvantage int                  `yaml:"-"`
+	AmbushObserver  string               `yaml:"-"`
+	Leap            bool                 `yaml:"leap,omitempty"`
+	Sweep           bool                 `yaml:"sweep,omitempty"`
+	Stealth         *int                 `yaml:"stealth,omitempty"`
+	Practice        bool                 `yaml:"practice,omitempty"`       // Ashveil (Phase 27c): a practice foe, beaten without any reward (see mobcommands.Suicide)
+	Solitary        bool                 `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
+	CompanyMoveTo   int                  `yaml:"-"`                        // Ashveil (Phase 32a): the room its leader's one company line announced it moving to (runtime only)
+	SpawnGroup      string               `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
+	GroupNoun       string               `yaml:"groupnoun,omitempty"`      // Ashveil (Phase 32c): overrides its race's collective noun for its group ("patrol")
+	PainReactions   []races.PainReaction `yaml:"painreactions,omitempty"`  // Optional Phase 29e override for this NPC template.
+	Targeting       string               `yaml:"targeting,omitempty"`      // Ashveil (Phase 30c): the rule it re-aims by as an enemy; overrides its race's
+	TargetingNoise  int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
+	WindUps         map[string]int       `yaml:"windups,omitempty"`        // Ashveil (Phase 30d2): wind-up ability id -> percent of its turns it starts one (enemies only)
+	Role            string               `yaml:"role,omitempty"`           // Ashveil (Phase 33i2): its role as an enemy: fighter (default), healer, caster, guardian
+	Coordination    int                  `yaml:"coordination,omitempty"`   // Ashveil (Phase 33i2): sets its group's coordination tier (1-4) outright; 0 is by level
+	WoundsRule      string               `yaml:"wounds,omitempty"`         // Ashveil (Phase 33i2): "none" takes no wounds as an enemy; else light wounds
+	GroupName       string               `yaml:"-"`                        // Ashveil (Phase 32c): its group's name, given when the group formed (runtime only)
+	GroupDesc       string               `yaml:"-"`                        // Ashveil (Phase 32c): an authored group's description (runtime only)
+	LastIdleCommand uint8                `yaml:"-"`                        // Track what hte last used idlecommand was
+	BoredomCounter  uint8                `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
+	Groups          []string             `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork
+	Hates           []string             `yaml:"hates,omitempty"`          // What NPC groups or races do they hate and probably fight if encountered?
+	IdleCommands    []string             `yaml:"idlecommands,omitempty"`   // Commands they may do while idle (not in combat)
+	AngryCommands   []string             `yaml:"angrycommands,omitempty"`  // randomly chosen to queue when they are angry/entering combat.
+	CombatCommands  []string             `yaml:"combatcommands,omitempty"` // Commands they may do while in combat
+	Character       characters.Character
+	MaxWander       int       `yaml:"maxwander,omitempty"`       // Max rooms to wander from home
+	WanderCount     int       `yaml:"-"`                         // How many times this mob has wandered
+	PreventIdle     bool      `yaml:"-"`                         // Whether they can't possibly be idle
+	ScriptTag       string    `yaml:"scripttag,omitempty"`       // Script for this mob: mobs/frostfang/scripts/{mobId}-{mobname}-{ScriptTag}.js
+	QuestFlags      []string  `yaml:"questflags,omitempty,flow"` // What quest flags are set on this mob?
+	BuffIds         []int     `yaml:"buffids,omitempty"`         // Buff Id's this mob always has upon spawn
+	EliteChance     int       `yaml:"elitechance,omitempty"`     // Percent chance (0-100) this mob spawns as elite
+	IsElite         bool      `yaml:"-"`                         // Runtime flag: true if this instance is elite
+	Path            PathQueue `yaml:"-"`                         // a pre-calculated path the mob is following.
+	tempDataStore   map[string]any
+	conversationId  int              // Identifier of conversation currently involved in.
+	lastCommandTurn uint64           // The last turn a command was scheduled for
+	playersAttacked map[int]struct{} // all players this mob has attacked at some point
 }
 
 func MobInstanceExists(instanceId int) bool {

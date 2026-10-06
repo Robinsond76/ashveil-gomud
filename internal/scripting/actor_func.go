@@ -6,16 +6,20 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -329,6 +333,11 @@ func (a ScriptActor) AddGold(amt int, bankAmt ...int) {
 
 func (a ScriptActor) AddHealth(amt int) int {
 	ret := a.characterRecord.ApplyHealthChange(amt)
+
+	// Phase 38a: the first damage wakes a sleeper.
+	if ret < 0 && status.Wake(a.characterRecord) {
+		a.wakeLines()
+	}
 
 	if ret != 0 && a.userId > 0 {
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: a.userId})
@@ -1267,4 +1276,120 @@ func (a ScriptActor) GetHealthAppearance() string {
 		return name + ` has <ansi fg="` + className + `">a few scratches.</ansi>`
 	}
 	return name + ` is in <ansi fg="` + className + `">perfect health.</ansi>`
+}
+
+// wakeLines tells the holder and the room that a sleeper woke.
+func (a ScriptActor) wakeLines() {
+	spec := status.Get(status.Asleep)
+	if a.userRecord != nil {
+		a.userRecord.SendText(spec.EndYou)
+	}
+	if room := rooms.LoadRoom(a.characterRecord.RoomId); room != nil {
+		name := a.GetCombatName(true)
+		if a.userId > 0 {
+			room.SendText(fmt.Sprintf(spec.EndOther, name), a.userId)
+		} else {
+			room.SendText(fmt.Sprintf(spec.EndOther, name))
+		}
+	}
+}
+
+// HexTargets is the foes a hex reaches (Phase 38a): the first of targets,
+// as many as the caster's level allows (hexes.Reach).
+func (a ScriptActor) HexTargets(targets []*ScriptActor) []*ScriptActor {
+	reach := hexes.Reach(a.characterRecord.Level)
+	if reach >= len(targets) {
+		return targets
+	}
+	return targets[:reach]
+}
+
+// hexRoll rolls a hex's resist (0..n-1); tests replace it.
+var hexRoll = util.Rand
+
+// UseHexRollForTest replaces the hex resist roll and returns its restore.
+func UseHexRollForTest(roll func(int) int) (restore func()) {
+	prev := hexRoll
+	hexRoll = roll
+	return func() { hexRoll = prev }
+}
+
+// holderKey names an actor for the hex immunity ledger.
+func (a ScriptActor) holderKey() string {
+	if a.userId > 0 {
+		return fmt.Sprintf(`u%d`, a.userId)
+	}
+	return fmt.Sprintf(`m%d`, a.mobInstanceId)
+}
+
+// CastHex lands a hex on target (Phase 38a), and returns {landed, reason,
+// rounds}: reason is "landed", "already" (it carries the status),
+// "immune" (a hex of this status landed on it lately), "resisted" or
+// "invalid". The caster's Mysticism is set against the target's Mysticism
+// (Vitality for Binding Hex): 65 in 100 at even stats, held to 25..90, and
+// a boss resists 25 more and holds a status half as long. The status is
+// queued as an ordinary buff, so it lands only on someone still in a
+// fight. rounds is the status's length in combat rounds (0 for a hex that
+// shakes morale only).
+func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any {
+	out := map[string]any{`landed`: false, `reason`: `invalid`, `rounds`: 0}
+	h, ok := hexes.For(spellId)
+	if !ok || a.characterRecord == nil || target.characterRecord == nil {
+		return out
+	}
+	tc := target.characterRecord
+	buff := h.Buff
+	if h.Morale {
+		buff = -1
+	}
+	if h.Buff > 0 && tc.HasBuff(h.Buff) {
+		out[`reason`] = `already`
+		return out
+	}
+	holder := target.holderKey()
+	if hexes.Default.Immune(holder, buff) {
+		out[`reason`] = `immune`
+		return out
+	}
+	boss := target.mobRecord != nil && target.mobRecord.Boss
+	mine, theirs := a.characterRecord.Stats.Mysticism.ValueAdj, tc.Stats.Mysticism.ValueAdj
+	if h.Resist == hexes.Vitality {
+		theirs = tc.Stats.Vitality.ValueAdj
+	}
+	if hexRoll(100) >= hexes.LandChance(combat.StatEdge(mine, theirs), boss) {
+		out[`reason`] = `resisted`
+		return out
+	}
+	out[`landed`], out[`reason`] = true, `landed`
+	if h.Morale {
+		leader := a.userId
+		if a.mobInstanceId > 0 {
+			leader, _, _ = company.LeaderAndKeyForInstance(a.mobInstanceId)
+		}
+		events.AddToQueue(events.MoraleCheck{LeaderUserId: leader, MobInstanceId: target.mobInstanceId})
+		hexes.Default.Land(holder, buff, 0)
+		return out
+	}
+	spec := buffs.GetBuffSpec(h.Buff)
+	if spec == nil {
+		out[`landed`], out[`reason`] = false, `invalid`
+		return out
+	}
+	// A status counts one trigger more than it lasts; poison, which counts
+	// game-round triggers, is its trigger count.
+	own, extra := spec.TriggerCount, 0
+	if spec.CombatRounds {
+		own, extra = spec.TriggerCount-1, 1
+	}
+	rounds := h.RoundsAt(a.characterRecord.Level, boss, own)
+	evt := events.Buff{UserId: target.userId, MobInstanceId: target.mobInstanceId, BuffId: h.Buff, Source: `spell`}
+	if rounds > 0 {
+		evt.Triggers = rounds + extra
+	} else {
+		rounds = own
+	}
+	events.AddToQueue(evt)
+	hexes.Default.Land(holder, buff, rounds)
+	out[`rounds`] = rounds
+	return out
 }

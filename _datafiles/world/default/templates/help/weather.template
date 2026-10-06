@@ -43,7 +43,7 @@ the dark (<ansi fg="command">help light</ansi>).
 
 <ansi fg="yellow-bold">Forecasts</ansi>
 
-A wizard in your company reads the sky: <ansi fg="command">weather</ansi> then also
+A wizard or witch in your company reads the sky: <ansi fg="command">weather</ansi> then also
 says what comes next, and at higher levels when, and in the zones next
 door. Forecasts are never wrong (<ansi fg="command">help forecast</ansi>).
 

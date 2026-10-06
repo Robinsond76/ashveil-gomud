@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: slumber
+name: Slumber
+description: "Puts foes to sleep for 2 rounds: they lose their turns, and the first damage wakes them (blows against a sleeper hit more often). Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 6
+waitrounds: 1
+difficulty: 40

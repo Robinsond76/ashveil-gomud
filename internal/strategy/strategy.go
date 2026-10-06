@@ -23,10 +23,13 @@ const (
 	// Guardian swings as a fighter, and steps in to take a blow meant for
 	// its ward (Phase 30c2). Never a default.
 	Guardian Role = "guardian"
+	// Controller hexes foes to take their turns away (Phase 38a: the
+	// Witch), then casts its weak damage curse, else swings.
+	Controller Role = "controller"
 )
 
 // Roles in the order they are listed.
-var Roles = []Role{Fighter, Healer, Caster, Guardian}
+var Roles = []Role{Fighter, Healer, Caster, Guardian, Controller}
 
 // Rule is how a character picks its target.
 type Rule string
@@ -53,6 +56,7 @@ var roleAliases = map[string]Role{
 	// Phase 30c2 (the owner's decision 10): "guard" is the guardian, no
 	// longer the defend rule.
 	"guard": Guardian, "guardian": Guardian, "protector": Guardian,
+	"control": Controller, "controller": Controller, "hex": Controller, "hexer": Controller,
 }
 
 var ruleAliases = map[string]Rule{
@@ -102,14 +106,16 @@ func (s Strategy) IsZero() bool {
 	return s.Role == "" && s.Rule == "" && s.Ward == "" && !s.NoAbilities && s.Reserve == 0
 }
 
-// DefaultRole is an archetype's role: a cleric heals, a wizard casts,
-// everyone else fights.
+// DefaultRole is an archetype's role: a cleric heals, a wizard casts, a
+// witch controls, everyone else fights.
 func DefaultRole(archetype string) Role {
 	switch strings.ToLower(archetype) {
 	case "cleric":
 		return Healer
 	case "wizard":
 		return Caster
+	case "witch":
+		return Controller
 	}
 	return Fighter
 }
@@ -186,6 +192,8 @@ func (r Role) Describe() string {
 		return "casts an attack spell while mana lasts, else fights"
 	case Guardian:
 		return "fights, and steps in to take a blow meant for its ward"
+	case Controller:
+		return "hexes foes to take their turns away, then curses or fights"
 	}
 	return string(r)
 }
