@@ -53,4 +53,9 @@ func TestGMCPItemListsShowRolledNames(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(data), "label")
 
+	// 36c review: a junk-marked item says so in its details.
+	assert.NotContains(t, newInventory_Item(plain).Details, "junk")
+	plain.Junk = true
+	assert.Contains(t, newInventory_Item(plain).Details, "junk")
+
 }

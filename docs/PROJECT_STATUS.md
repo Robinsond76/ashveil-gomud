@@ -182,9 +182,30 @@ and `sell junk`, `salvage` at smiths, identification fees at `appraise`
 (60/150/400), all 24 trade goods in the Dunmar and Trappers' Post markets
 with stock-driven saturation, and GMCP/web labels for rolled names. Plan:
 [36c plan](plans/2026-10-06-phase-36c-loot-economy.md). Decisions and
-deferrals (scrolls, Brynja's goods prices) are recorded there. Review
-pending. Verification: `make generate`, `make validate`,
-`go test -race ./...`, `make js-lint`.
+deferrals (scrolls) are recorded there.
+Review (PR #37, Opus review thread), exploit search: buy-and-sell of gear
+can't pay (shops sell plain items; merchants pay at most 25%); no shop-sold
+piece salvages into more than its price even at Dunmar's market price
+(scanned every shipped item); appraise-then-sell is a gold sink, not a gain
+(a Rare's fee exceeds what reading adds at tier 1). **Accepted:** Brynja
+sold iron ore and tanned leather (18/16) under Dunmar's target-stock price
+(23/21), a risk-free loop; her prices are now 24/22 and
+`TestShopkeepersNeverUndercutMarketsOnTradedGoods` holds every shipped
+shopkeeper at or above every market's target-stock price for a traded good.
+**Accepted (UI):** `offer` and `sell` now say why a price is low (unread
+gear, or a pile already on hand; `TestSaleNoteExplainsALowPrice`); GMCP
+inventory details carry `junk`, so the web gear window shows the mark; help
+`sell` no longer claims paid reading "usually pays", and `goods`/`market`
+no longer say saturation recovers "as the days pass" (market stock drifts
+every round, so a glut clears within a minute). **Confirmed fair:** the two
+"hide" test updates (bear hide made bare "hide" ambiguous; the tests now
+assert the question and use "wolf hide", same prices). Follow-ups: market
+saturation is weak because stock drifts every 4-second round (37b or a
+market pass could slow drift for the 36c goods); a `salvage` preview of
+what an item would give; legacy weapons with no family (sharp stick, tree
+trunk, sling) salvage as metal; rarity colours in web windows.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
 
 **Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
 now receives `Company.Battle.Event`, one entry per combat happening of its

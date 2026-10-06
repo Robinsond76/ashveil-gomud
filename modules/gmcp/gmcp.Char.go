@@ -1095,6 +1095,11 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		d.Details = append(d.Details, `quest`)
 	}
 
+	// 36c review: the junk mark shows in the web gear window too.
+	if itm.Junk {
+		d.Details = append(d.Details, `junk`)
+	}
+
 	if itmSpec.Type == items.Weapon {
 		d.Details = append(d.Details, strconv.Itoa(itmSpec.Hands)+`-handed`)
 	}

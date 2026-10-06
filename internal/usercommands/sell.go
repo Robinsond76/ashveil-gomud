@@ -60,6 +60,7 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			continue
 		}
 
+		note := saleNote(mob, item)
 		completeSale(user, room, mob, item, sellValue)
 
 		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> to <ansi fg="mobname">%s</ansi> for <ansi fg="gold">%d gold</ansi>`, item.DisplayName(), mob.Character.Name, sellValue))
@@ -67,6 +68,9 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(
 			fmt.Sprintf(`You sell a <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>.`, item.DisplayName(), sellValue),
 		)
+		if note != `` {
+			user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notes: %s`, mob.Character.Name, note))
+		}
 		room.SendText(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> sells a <ansi fg="itemname">%s</ansi>.`, user.Character.Name, item.DisplayName()),
 			user.UserId,
@@ -77,6 +81,24 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	return true, nil
 
+}
+
+// saleNote (36c review) is the merchant's reason a price is lower than the
+// item's worth, for offer and sell: unread gear is priced by its rarity
+// alone, and a merchant pays less for each one of the same already in
+// stock. Empty when neither applies.
+func saleNote(mob *mobs.Mob, item items.Item) string {
+	notes := []string{}
+	if item.IsRolled() && !item.IsIdentified() {
+		notes = append(notes, `It's unread, so I pay for its rarity, not for what it might carry.`)
+	}
+	for _, si := range mob.Character.Shop {
+		if si.ItemId == item.ItemId && si.Quantity > 0 {
+			notes = append(notes, fmt.Sprintf(`I've %d of those on hand already, so I pay less.`, si.Quantity))
+			break
+		}
+	}
+	return strings.Join(notes, ` `)
 }
 
 // completeSale moves an item and its gold between the seller and a merchant.

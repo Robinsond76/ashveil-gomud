@@ -19,11 +19,11 @@ the dense ones first and leave the heavy scrap when the pack is full.
 Merchants buy goods like any other item, at a share of its value, and
 only the kind of thing they already trade in. Settlement markets trade in
 goods too: Dunmar's market takes every category and pays most for materials
-and valuables, while the Trappers' Post on the Old Kings Road is glutted with
-trophies and salvage. A market pays more for what it is short of and less for
-what it holds plenty of, so selling a whole pack of one good into one market
-drives its price down and then stops it buying; the price recovers as the
-days pass. Hauling a load from the post to town is where the money is
+and valuables, while the Trappers' Post on the Old Kings Road sells trophies
+and salvage cheaply and pays little for them. A market pays more for what it
+is short of and less for what it holds plenty of, so selling a whole pack of
+one good into one market drives its price down and then stops it buying; the
+price creeps back within a minute or so. Hauling a load from the post to town is where the money is
 (<ansi fg="command">help market</ansi>).
 
 Foes in zones with drop tables carry goods, and a won encounter's cache adds

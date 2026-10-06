@@ -65,8 +65,9 @@ Implements slice 4 of the owner-approved
 
 ## Accepted and deferred
 
-- Frostfang's trader (Brynja) sells goods at her own prices outside any
-  market zone, so a small buy-there, sell-at-market loop exists on tier 1
-  goods; her stock is four units on a one-hour restock. Revisit with 37b.
+- Frostfang's trader (Brynja) sold iron ore and tanned leather under
+  Dunmar's market price, a small buy-there, sell-at-market loop. Fixed in
+  review: her prices sit above every market's target-stock price, held by
+  `TestShopkeepersNeverUndercutMarketsOnTradedGoods`.
 - Rarity colours in web windows (the label carries the words only).
 - Scrolls, smiths raising quality (Field Smith) and crafting from materials.

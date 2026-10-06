@@ -113,6 +113,9 @@ func TestSellRolledGearPricedByQualityAndRarity(t *testing.T) {
 	text := run(t, Sell, "shortsword", seller, room)
 	assert.Contains(t, text, "You sell a ")
 	assert.Equal(t, want, goldFor(t, text))
+	// 36c review: the merchant says why the price is low.
+	assert.Contains(t, text, "Ivar notes: It's unread, so I pay for its rarity", "an unread item's discount is explained")
+	assert.Contains(t, text, "I've 2 of those on hand already, so I pay less.", "saturation is explained")
 	assert.Equal(t, want, seller.Character.Gold)
 	assert.Empty(t, seller.Character.Items, "the sword left the pack")
 
@@ -141,6 +144,15 @@ func TestSellStillRefusesSpecialItems(t *testing.T) {
 	run(t, Sell, "shortsword", seller, room)
 	assert.Len(t, seller.Character.Items, 1)
 	assert.Zero(t, seller.Character.Gold)
+}
+
+// 36c review: offer and sell explain a low price; a read item the merchant
+// doesn't stock gets no note.
+func TestSaleNoteExplainsALowPrice(t *testing.T) {
+	_, _, merchant := shopRoom(t, ironShortSword)
+	assert.Contains(t, saleNote(merchant, rolledSword(items.RarityRare, items.QualityStandard, false)), "It's unread")
+	assert.Equal(t, "I've 2 of those on hand already, so I pay less.", saleNote(merchant, rolledSword(items.RarityRare, items.QualityStandard, true)))
+	assert.Empty(t, saleNote(merchant, items.New(ironShortSpear)))
 }
 
 // offer quotes the same price sell pays.
