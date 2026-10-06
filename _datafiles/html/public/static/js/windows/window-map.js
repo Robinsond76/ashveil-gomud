@@ -443,7 +443,7 @@
         '    border-radius: 3px;',
         '    cursor: pointer;',
         '}',
-        '.map-controls button:hover { background: var(--t-map-controls-hover); color: var(--t-text-white); }',
+        '@media (hover: hover) and (pointer: fine) { .map-controls button:hover { background: var(--t-map-controls-hover); color: var(--t-text-white); } }',
         '.map-controls button.active { background: var(--t-map-controls-active); color: var(--t-text-white); }',
         '.map-settings-panel {',
         '    position: absolute;',
@@ -475,12 +475,12 @@
         '}',
         '.msp-btngroup { display:flex; gap:2px; }',
         '.msp-btngroup button { padding:2px 7px; font-size:0.72em; line-height:1.5; background:var(--t-map-controls-bg); color:var(--t-map-controls-text); border:1px solid var(--t-map-controls-border); border-radius:3px; cursor:pointer; white-space:nowrap; }',
-        '.msp-btngroup button:hover { background: var(--t-map-controls-hover); color: var(--t-text-white); }',
+        '@media (hover: hover) and (pointer: fine) { .msp-btngroup button:hover { background: var(--t-map-controls-hover); color: var(--t-text-white); } }',
         '.msp-btngroup button.active { background: var(--t-map-controls-active); color: var(--t-text-white); border-color: var(--t-map-controls-active); }',
         '.msp-slider { flex: 1; min-width: 80px; cursor: pointer; accent-color: var(--t-map-controls-active); }',
         '.msp-color { width: 32px; height: 20px; padding: 0; border: 1px solid var(--t-map-controls-border); border-radius: 3px; cursor: pointer; background: none; }',
         '.msp-reset { margin-top: 2px; align-self: flex-end; font-size: 0.68em; padding: 1px 6px; background: none; color: var(--t-text-secondary); border: 1px solid var(--t-accent-dim); border-radius: 3px; cursor: pointer; line-height: 1.6; }',
-        '.msp-reset:hover { background: var(--t-map-controls-hover); color: var(--t-text-white); border-color: var(--t-map-controls-hover); }',
+        '@media (hover: hover) and (pointer: fine) { .msp-reset:hover { background: var(--t-map-controls-hover); color: var(--t-text-white); border-color: var(--t-map-controls-hover); } }',
     ].join('\n'));
 
     // =========================================================================

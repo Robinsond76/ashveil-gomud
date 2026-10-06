@@ -4,9 +4,13 @@ skills lists your trained skill ranks. train [skill] raises one rank;
 these ranks are the inputs to your abilities, not separate unlocks for
 every capability they support.
 
-In the web client, Character > Skills groups trained ranks, automatic
-combat abilities, field capabilities and camp capabilities. Trained
-ranks show their actual maximum. Retired skills are no longer listed.
+In the web client, Character > Skills gives each trained skill a card
+with its rank out of its real maximum (the pips and "2/4") and a line on
+what it does; click one for its help page. Below them come automatic
+combat abilities, field capabilities and camp capabilities, each with
+what it does and whether it is ready or why not. Retired skills are no
+longer listed. The web client does not show the jobs the jobs command
+lists: your class is what names you here (help classes).
 
 Automatic combat abilities act when their conditions hold, rather than
 waiting for a manual command. The panel shows their mechanical effect,
