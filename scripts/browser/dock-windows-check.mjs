@@ -193,6 +193,16 @@ check(!(await status()).includes('Travelling with'), 'no human party: no Travell
   check(moved.length === 0 && (await fmHelp()).includes('fallen'), 'formation: a fallen member is refused with a message, nothing sent');
   moved = await sentFm(async () => {
     await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+    await page.getByRole('button', { name: 'Swap Tamsin with Oswin' }).click();
+  });
+  check(moved.length === 0 && (await fmHelp()).includes('Pick an empty cell to place Tamsin'), 'formation: an unplaced member is not swapped with a placed one (the server refuses that)');
+  moved = await sentFm(async () => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+  });
+  check(moved.length === 0 && await page.locator('.fm-unplaced .fm-cell.is-moving').count() === 1 && (await fmHelp()).includes('Moving Tamsin'), 'formation: with a placed member picked up, an unplaced one is picked up instead of swapped');
+  moved = await sentFm(async () => {
     await page.getByRole('button', { name: 'Move Tamsin to row 1, column 3' }).click();
   });
   check(JSON.stringify(moved) === '["formation move #3 1 3"]', 'formation: an unplaced member can be placed');

@@ -378,6 +378,8 @@
         .fm-unplaced { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; font-size: 0.78em; align-items: center; }
         .fm-unplaced .fm-cell { display: inline-block; width: auto; min-height: 0; border: 1px solid var(--t-accent-dim); }
         .fm-unplaced .fm-cell.is-moving { outline: 2px solid var(--t-accent); }
+        /* Phone: 44px targets. */
+        body.mobile .company-formation .fm-cell, body.mobile .fm-unplaced .fm-cell { min-height: 44px; }
         .company-formation td.is-leader { color: var(--t-party-leader); font-weight: bold; }
 
         .company-members {
@@ -625,6 +627,17 @@
                 setFormationNote(target.member.name + ' has fallen: pick another place.', true);
                 return;
             }
+            // `formation swap` needs both members placed: an unplaced
+            // member is picked up instead, and one being placed needs an
+            // empty cell.
+            if (!target.member.cell) {
+                pickMember(target.member, members);
+                return;
+            }
+            if (!mover.cell) {
+                setFormationNote('Pick an empty cell to place ' + mover.name + '.', true);
+                return;
+            }
             cmd = 'formation swap ' + whoArg(mover) + ' ' + whoArg(target.member);
             said = 'Swapping ' + mover.name + ' with ' + target.member.name + '.';
         } else {
@@ -650,7 +663,7 @@
         const wrap = el('div', 'company-formation-wrap');
         const table = el('table', 'company-formation' + (mover ? ' is-picking' : ''));
         table.appendChild(el('caption', null, 'Formation (row 1 is the front)'));
-        table.addEventListener('keydown', e => {
+        wrap.addEventListener('keydown', e => {
             if (e.key === 'Escape' && movingKey) {
                 e.preventDefault();
                 movingKey = null;
@@ -719,7 +732,7 @@
         let help = formationNote;
         let warn = formationWarn;
         if (!help) {
-            help = mover ? 'Moving ' + mover.name + ': click an empty cell to move there, or a member to swap places. Esc cancels.'
+            help = mover ? 'Moving ' + mover.name + ': pick an empty cell to move there, or a member to swap places. Pick ' + mover.name + ' again (or press Esc) to cancel.'
                 : 'Click a member, then a place, to rearrange (help formation).';
         }
         const line = el('div', 'fm-help' + (warn ? ' is-warn' : ''), help);
