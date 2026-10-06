@@ -502,6 +502,30 @@ func (m *TutorialModule) enterStage(user *users.UserRecord, p progress) {
 			user.SendText(fmt.Sprintf(`A warden presses a <ansi fg="item">%s</ansi> into your hands.`, spec.Name))
 		}
 	}
+	// Phase 40a3: the camp lesson's gear, a bedroll and a fire steel, for
+	// whoever lacks them.
+	for _, gearID := range campGearItems {
+		if carriesItem(user, gearID) || !m.giveItem(user, gearID) {
+			continue
+		}
+		if spec := items.GetItemSpec(gearID); spec != nil {
+			user.SendText(fmt.Sprintf(`A warden hands you a <ansi fg="item">%s</ansi> for the camp lesson.`, spec.Name))
+		}
+	}
+}
+
+// campGearItems are the gear the course gives (Phase 40a3): a bedroll
+// and a fire steel and tinder.
+var campGearItems = []int{45, 47}
+
+// carriesItem reports whether a character carries an item of itemID.
+func carriesItem(user *users.UserRecord, itemID int) bool {
+	for _, item := range user.Character.GetAllBackpackItems() {
+		if item.ItemId == itemID {
+			return true
+		}
+	}
+	return false
 }
 
 // carriesProvision reports whether a character carries something to eat

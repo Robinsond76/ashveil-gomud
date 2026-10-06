@@ -341,7 +341,8 @@ type LevelUp struct {
 	SpellsLearned           []string
 	StatsBefore, StatsAfter stats.Statistics
 	NextMilestone           milestones.Milestone
-	ClassMilestone          string // Phase 38b: the class's next promotion, talent or rank
+	ClassMilestone          string   // Phase 38b: the class's next promotion, talent or rank
+	ClassRanks              []string // 39b review: the ranks the new levels gave, as "New rank: ..."
 	StatsDelta              stats.Statistics
 	TrainingPoints          int
 	StatPoints              int

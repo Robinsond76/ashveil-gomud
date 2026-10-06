@@ -36,14 +36,22 @@ func (c *Character) ClassState() (string, []string) {
 // character with neither.
 func (c *Character) ClassEffects() classes.Effects {
 	class, talents := c.ClassState()
-	if class == "" && len(talents) == 0 {
+	// Phase 39b: a neutral lineage's base ranks (the Samurai's Iaijutsu)
+	// count from level 1, before any promotion.
+	lineage := ""
+	if c != nil {
+		if id := c.ArchetypeID(); classes.HasBase(id) {
+			lineage = id
+		}
+	}
+	if class == "" && len(talents) == 0 && lineage == "" {
 		return nil
 	}
-	if c.fxValid && c.fxClass == class && c.fxLevel == c.Level && slices.Equal(c.fxTalents, talents) {
+	if c.fxValid && c.fxClass == class && c.fxLineage == lineage && c.fxLevel == c.Level && slices.Equal(c.fxTalents, talents) {
 		return c.fx
 	}
-	c.fx = classes.EffectsFor(class, c.Level, talents)
-	c.fxClass, c.fxLevel, c.fxTalents, c.fxValid = class, c.Level, slices.Clone(talents), true
+	c.fx = classes.EffectsForLineage(lineage, class, c.Level, talents)
+	c.fxClass, c.fxLineage, c.fxLevel, c.fxTalents, c.fxValid = class, lineage, c.Level, slices.Clone(talents), true
 	return c.fx
 }
 
@@ -105,6 +113,7 @@ type ClassAura struct {
 	Evasion int
 	Resolve int
 	Block   int // block chance points (a Knight guarding a ward)
+	Fallen  int // allies of its company that have fallen (a Ronin's Vengeance)
 }
 
 // ClassRT is a character's class state for the battle it is in: nothing in
@@ -125,6 +134,14 @@ type ClassRT struct {
 	Summoned      bool        // this character has called its summon this battle
 	Summon        *SummonInfo // set on a summoned creature
 	Bless         int         // rounds of Bless left
+	// The Samurai's lineage (Phase 39b).
+	IaiSpent     bool   // the first strike of the battle has been made
+	Quiet        int    // rounds in a row no blow has landed on it (Focus)
+	Struck       bool   // a blow landed on it since the round began
+	QuietStarted bool   // the first round's Focus count has begun
+	ZanshinRound uint64 // the combat round Zanshin last gave its turn back
+	Bodyguards   int    // Bodyguard steps spent this battle
+	SidePeak     int    // the most of its side standing this battle (Vengeance)
 }
 
 // RTState is the character's class battle state, made on first use.
@@ -142,6 +159,26 @@ func (c *Character) EndFightRT() {
 	}
 	c.RT = &ClassRT{Hands: c.RT.Hands}
 	c.Aura = ClassAura{}
+}
+
+// IaiReady reports whether the character's Iaijutsu is waiting: it knows it
+// and has not yet made its first strike of this battle.
+func (c *Character) IaiReady() bool {
+	return c.RT != nil && !c.RT.IaiSpent && c.ClassEffects().Has(classes.Iai)
+}
+
+// ClassCrit is the critical chance points its class adds to a blow now:
+// Crit, and Focus built up over the quiet rounds.
+func (c *Character) ClassCrit() int {
+	fx := c.ClassEffects()
+	if fx == nil {
+		return 0
+	}
+	pts := fx.Int(classes.Crit)
+	if c.RT != nil && c.RT.Quiet > 0 {
+		pts += min(fx.Int(classes.Focus)*c.RT.Quiet, fx.Int(classes.FocusMax))
+	}
+	return pts
 }
 
 // AbsorbWard takes a ward's share of one blow, and returns what is left.

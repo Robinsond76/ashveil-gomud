@@ -1,0 +1,11 @@
+itemid: 46
+name: oiled canvas tent
+namesimple: tent
+description: A small tent of oiled canvas, with pegs, cord and a pole. Pitched at
+  camp, it counts as shelter against the weather and keeps the cold off the company
+  while it rests. One tent covers the whole company, and it is heavy enough that a
+  horse is welcome (help camp gear).
+type: object
+subtype: mundane
+value: 40
+weight: 9000

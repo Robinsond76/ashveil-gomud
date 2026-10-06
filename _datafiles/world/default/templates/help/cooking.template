@@ -45,6 +45,9 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
   fills the cargo with meat and thyme (<ansi fg="command">help forage</ansi>). You can't cook
   in a fight.
 
+An iron cookpot in the company's gear (<ansi fg="command">help camp gear</ansi>) stretches a dish made
+from more than one ingredient into one extra portion.
+
 The best cook is whoever has the highest Cooking among you and the living
 companions at the camp; you win a tie, then the companion with the lowest
 number. The message names them ("Brannoc cooks hunter's stew over the
