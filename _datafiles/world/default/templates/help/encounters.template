@@ -1,0 +1,60 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">encounters</ansi>
+
+Some rooms in wild and dangerous places can spring a battle on you as you
+walk in. There is no command: you step into the room, shapes stir, and a
+normal battle begins with your company set up as it is.
+
+<ansi fg="yellow-bold">When one can happen</ansi>
+  After an ordinary step into a room that allows them, or when a journey
+  ends there (<ansi fg="command">help travel</ansi>). Towns, inns, shops and safe rooms do not allow
+  them, and nothing rolls for looking around, logging in, or being moved
+  by a church or a script. Only the leader's step counts: companions and
+  followers moving with you do not roll again.
+  Each such entry has a chance: about 15 in 100 by default, and a room can
+  set its own, higher or lower or none. <ansi fg="command">scout</ansi> in a room that allows them says
+  so.
+
+<ansi fg="yellow-bold">Breathing room</ansi>
+  After any battle, the next two entries into such rooms roll nothing, and
+  at least 30 real seconds must pass besides. It is saved with you, so
+  crossing a zone, logging out or a restart does not reset it, and a new
+  character starts with it. You never face two random groups at once, and
+  nothing rolls while you are fighting, travelling or camped.
+
+<ansi fg="yellow-bold">Who you meet</ansi>
+  Two or three foes, now and then four, set by the zone's level band and
+  never by your level: a zone for levels 8 to 10 sends foes you can beat at
+  those levels, and a company well under the band risks losing. Foes are
+  drawn from the zone's own kinds, and a healer is in about one group in
+  five and never in a group of four. Four foes come from the band's low
+  end. How well each fights together follows their level
+  (<ansi fg="command">help coordination</ansi>).
+
+<ansi fg="yellow-bold">Bosses</ansi>
+  A boss waits in a lair and comes with two or three escorts at the band's
+  low level. The boss is two levels over them with 1.75 times the health,
+  and the group fights without a strategy: no focus fire, no guard. What
+  makes it frightening is the boss itself, and a hex holds it half as long
+  (<ansi fg="command">help hexes</ansi>).
+
+<ansi fg="yellow-bold">Whose fight it is</ansi>
+  The foes are set on your company alone. They stand in the room where
+  others can see them, but nobody else can start the fight, draw their
+  attention, or take their spoils, unless they are in your party or
+  alliance and fight beside you (<ansi fg="command">help party</ansi>). If your company flees, is
+  beaten, or leaves, the survivors are gone once nobody is fighting them
+  any more. They never become a roaming party, and a restart ends them.
+  Some enemy groups roam the zone in the open: you can scout, avoid or hunt
+  those as you please.
+
+<ansi fg="yellow-bold">Spoils</ansi>
+  Every foe makes its own roll. When the last foe of a group falls, the
+  group's cache adds gold by the zone's level band, a chance of gear and
+  some goods; a boss's roll gives two pieces of gear (one of them Rare or
+  better), three goods rolls and much more gold. Gear is made at the
+  zone's item levels. Allied companies each get their own roll, held in a
+  corpse claimed by that company (<ansi fg="command">help loot</ansi>), and your battle summary lists
+  your spoils (<ansi fg="command">help battle-summary</ansi>).
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help rarity</ansi>,
+<ansi fg="command">help retreat</ansi>, <ansi fg="command">help ambush</ansi>, <ansi fg="command">help travel</ansi>.

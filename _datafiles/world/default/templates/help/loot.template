@@ -21,6 +21,12 @@ Spoils are reserved for the winning company for 2 game hours, open to everyone
 for 2 more game hours, then gone. Allies keep the rotating claim; outside one
 alliance, the company doing the most damage wins it (ties: lowest player id).
 
+Foes in zones with drop tables roll their own gear, a won random encounter
+adds a cache, and a boss rolls much more (<ansi fg="command">help encounters</ansi>). Each allied company
+rolls for itself: its roll is in a corpse claimed by that company, on the
+same 2-and-2 game hour clock. Your battle summary lists what your company
+took.
+
 No pickup or item use during battle. Loot contains actual drops, not gear that
 stays with the body. Your allies' possessions and quest items retain the normal
 ownership and item rules. A restart does not preserve runtime corpses.
@@ -32,4 +38,4 @@ found unidentified until a Scribe reads it: <ansi fg="command">help rarity</ansi
 Gear also comes in families and tiers (<ansi fg="command">help equipmenttiers</ansi>), and goods are things
 you carry to sell (<ansi fg="command">help goods</ansi>).
 
-See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help encounters</ansi>, <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>.

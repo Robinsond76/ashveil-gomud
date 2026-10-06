@@ -180,6 +180,7 @@ func TestStepIntoAnEnabledRoomSpringsAnEncounterOnTheCompany(t *testing.T) {
 		assert.GreaterOrEqual(t, foe.Character.Level, 8, "levels come from the zone's band")
 		assert.LessOrEqual(t, foe.Character.Level, 9, "2-3 foes top out one under the band's top")
 		assert.False(t, foe.Boss)
+		assert.Zero(t, foe.AmbushAdvantage, "a sudden appearance: neither side loses its opening round")
 	}
 	assert.Equal(t, 3, rec.standing())
 	assert.Len(t, rooms.LoadRoom(woodRm).GetMobs(), 3, "they stand in the actual room")

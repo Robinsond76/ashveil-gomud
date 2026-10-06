@@ -21,7 +21,8 @@ type Encounter struct {
 
 // SpawnEncounter spawns a random room encounter (Phase 37) in roomID, set
 // upon leaderUserID's company: the foes of foes (levels already planned from
-// the zone's band), their detection rolled as for any ambush. All or none
+// the zone's band). It is a sudden appearance, not an ambush: no detection
+// roll, and neither side loses its opening round. All or none
 // spawn: a template that will not build rolls back every foe made so far.
 // A boss's group runs no strategy (coordination tier 1, Rabble) and the boss
 // has 1.75x the HP of an ordinary foe of its level (35d). Must run on the
@@ -66,7 +67,7 @@ func SpawnEncounter(roomID, leaderUserID int, foes []encounters.Foe) (Encounter,
 		}
 		summaries[i] = rooms.GroupSummary(m)
 	}
-	engage(roomID, room, built, leaderUserID, id, mobparty.Generate(summaries).Name)
+	engage(roomID, room, built, leaderUserID, id, mobparty.Generate(summaries).Name, false)
 	enc := Encounter{ID: id, RoomID: roomID, Owner: leaderUserID, Boss: boss}
 	for _, m := range built {
 		enc.Foes = append(enc.Foes, m.InstanceId)

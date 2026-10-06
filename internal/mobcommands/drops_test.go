@@ -47,7 +47,11 @@ func newDropWorld(t *testing.T, nUsers int, band encounters.Band) *dropWorld {
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: dropWeaponID, Name: "drop sword", Type: items.Weapon, Subtype: items.Slashing, Hands: 1,
 		Damage: items.Damage{Attacks: 1, DiceCount: 1, SideCount: 6}, Value: 100, Weight: 1200, Tier: 1})
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: dropGoodsID, Name: "drop pelt"})
-	t.Cleanup(func() { items.RemoveTestItemSpec(dropWeaponID); items.RemoveTestItemSpec(dropGoodsID); loot.RemoveTestTable("drop-beast") })
+	t.Cleanup(func() {
+		items.RemoveTestItemSpec(dropWeaponID)
+		items.RemoveTestItemSpec(dropGoodsID)
+		loot.RemoveTestTable("drop-beast")
+	})
 	loot.SetTestTable(loot.Table{Category: "drop-beast", Entries: []loot.WeightedLootEntry{{ItemID: dropGoodsID, Weight: 1}}})
 	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: dropZone, Encounters: encounters.ZoneConfig{Band: band}}))
 

@@ -69,6 +69,9 @@ func scoutList(room *rooms.Room, user *users.UserRecord) string {
 		lines = append(lines, line+`. Type <ansi fg="command">scout `+GroupKeyword(room, g)+`</ansi>.`)
 	}
 	if len(lines) == 0 {
+		if room.Encounter != nil && room.Encounter.Enabled {
+			return `You see no enemies here, but the place feels dangerous: a fight could find you.`
+		}
 		return `You see no enemies here.`
 	}
 	return "Enemies here:\n" + strings.Join(lines, "\n")

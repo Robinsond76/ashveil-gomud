@@ -52,14 +52,16 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 		}
 		groupName = mobparty.Generate(summaries).Name
 	}
-	engage(roomID, room, foes, leaderUserID, group, groupName)
+	engage(roomID, room, foes, leaderUserID, group, groupName, true)
 	return mob.InstanceId, nil
 }
 
 // engage rolls the company's detection of the foes, then sets the foes upon
 // the leader: hostile, unmoving, in their spawn group. Camp raids, travel
 // ambushes and random room encounters (Phase 37) all end here.
-func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, group, groupName string) {
+// A room encounter (surprise false) is a sudden appearance, not an ambush:
+// neither side loses its opening round.
+func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, group, groupName string, surprise bool) {
 	observer, perception, visibility := "you", 0, room.GetVisibility()
 	if u := users.GetByUserId(leaderUserID); u != nil && u.Character != nil {
 		found := u.Character.Health > 0 && u.Character.RoomId == roomID && !u.Character.CombatWithdrawn
@@ -97,7 +99,10 @@ func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, gr
 	if room.HasTag("ambush-cover") {
 		cover = 10
 	}
-	_, advantage := formationcombat.Detection(perception, stealth, visibility, cover, ambushRoll(100), false)
+	advantage := 0
+	if surprise {
+		_, advantage = formationcombat.Detection(perception, stealth, visibility, cover, ambushRoll(100), false)
+	}
 	for _, foe := range foes {
 		foe.AmbushOwner, foe.AmbushAdvantage, foe.AmbushObserver = leaderUserID, advantage, observer
 		foe.Hostile = true
