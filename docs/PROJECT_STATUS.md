@@ -29,6 +29,25 @@ screen lane first, with code-generated pixel art. Open questions in the
 40a–40g and loot designs are decided there, each with a reason.
 Documentation only. Verification: links and the diff checked.
 
+**Phase 35e built: focus the healer (2026-10-06):** a `healers` target rule
+(a chanting healer, else the weakest idle healer, else the casters order) and
+focus. While the player has set no focus and the leader is level 5 or more,
+the company goes for an enemy healer it can reach first (`strategy.HealersDefault`,
+`enemyparty.RuleVs`, wired into `attack` aims, the round upkeep re-aim, and
+target reassignment); an explicit focus, `none` included, or a focus called in
+the battle wins. Player-facing: `company tactics` and its `default` reply say
+the healers default is in force, the leader is told "Your company marks X as a
+healer and goes for it first", GMCP carries `healers_first` (company tactics
+and battle), the web client's focus bar gains a `healers` button and a note,
+`help tactics` and `help strategy` document the rule, `focus the healer` and
+`healers focus` are help aliases, and the tutorial's tactics hint mentions it.
+Decisions: the override applies only when a healer is reachable, so a member
+who can't reach it keeps the level's default instead of the casters order;
+the default is dynamic (no healer standing means the usual default). Tests:
+rule order, default ladder, live `attack` aims at levels 3-12, set-focus and
+`none` overrides, the battle line, tactics text, GMCP payload, help.
+Review and balance results are added by the review thread.
+
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
 crossbows, four armor paths, shields), 24 trade goods with value-per-kg
@@ -367,7 +386,7 @@ their dependencies and those decisions is the
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
-| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). **Can start now** | Roadmap 2026-10-06 (owner's difficulty rule) | — |
+| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Built, in review (see the 35e entry at the top) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
