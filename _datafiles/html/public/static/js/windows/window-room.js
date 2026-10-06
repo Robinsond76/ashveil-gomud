@@ -540,7 +540,7 @@
         // Items - get only (use id for targeting)
         const items = (room.Contents && room.Contents.Items) || [];
         setSection('items', items.map(function(itm) {
-            return makeRow(itm.name, {
+            return makeRow(itm.label || itm.name, {
                 quest:     itm.quest_flag,
                 menuItems: [{ label: 'get ' + itm.name, cmd: 'get ' + itm.id }],
             });

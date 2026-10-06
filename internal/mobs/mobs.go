@@ -488,6 +488,22 @@ func (m *Mob) HasShop() bool {
 	return len(m.Character.Shop) > 0
 }
 
+// IsSmith (Phase 36c) is a merchant who works metal and leather: one whose
+// own wares, not what players have sold them, include a weapon or armor.
+// Smiths salvage gear for materials (help salvage).
+func (m *Mob) IsSmith() bool {
+	for _, si := range m.Character.Shop {
+		if si.ItemId < 1 || si.QuantityMax == characters.StockTemporary {
+			continue
+		}
+		spec := items.GetItemSpec(si.ItemId)
+		if spec != nil && (spec.Type == items.Weapon || spec.IsArmor()) {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *Mob) SetTempData(key string, value any) {
 
 	if m.tempDataStore == nil {
@@ -524,7 +540,8 @@ func (m *Mob) Despawns() bool {
 
 func (m *Mob) GetSellPrice(item items.Item) int {
 
-	if item.IsSpecial() {
+	// Phase 36c: rolled gear sells, priced by its quality and rarity.
+	if item.IsSpecialForSale() {
 		return 0
 	}
 
@@ -547,7 +564,9 @@ func (m *Mob) GetSellPrice(item items.Item) int {
 			newAddition = false // already stocking this item
 			likesType = true
 			likesSubtype = true
-			value = stockItm.Price
+			if !item.IsRolled() { // a rolled item is worth its own roll, not the stocked base price
+				value = stockItm.Price
+			}
 			// Scale down amount willing to pay based on how many there are already in stock
 			priceScale = 1.0 - (float64(stockItm.Quantity) / 20)
 			break
@@ -575,7 +594,7 @@ func (m *Mob) GetSellPrice(item items.Item) int {
 	}
 
 	if value == 0 {
-		value = item.GetSpec().Value
+		value = item.SaleBaseValue()
 	}
 
 	if priceScale < 0 {

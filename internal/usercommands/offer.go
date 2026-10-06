@@ -31,7 +31,7 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		user.Character.CancelBuffsWithFlag("hidden")
 
-		if item.IsSpecial() {
+		if item.IsSpecialForSale() {
 
 			mob.Command(`say I'm afraid I don't buy those.`)
 

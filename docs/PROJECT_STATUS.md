@@ -55,6 +55,16 @@ screen lane first, with code-generated pixel art. Open questions in the
 40a–40g and loot designs are decided there, each with a reason.
 Documentation only. Verification: links and the diff checked.
 
+**Phase 36c complete: loot economy (2026-10-06):** merchants buy rolled gear
+(priced by quality, unread Rare+ by rarity at a discount), `mark [item] junk`
+and `sell junk`, `salvage` at smiths, identification fees at `appraise`
+(60/150/400), all 24 trade goods in the Dunmar and Trappers' Post markets
+with stock-driven saturation, and GMCP/web labels for rolled names. Plan:
+[36c plan](plans/2026-10-06-phase-36c-loot-economy.md). Decisions and
+deferrals (scrolls, Brynja's goods prices) are recorded there. Review
+pending. Verification: `make generate`, `make validate`,
+`go test -race ./...`, `make js-lint`.
+
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
 crossbows, four armor paths, shields), 24 trade goods with value-per-kg
@@ -396,7 +406,7 @@ their dependencies and those decisions is the
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). **Can start now** | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
-| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, review pending | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
 | 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |
