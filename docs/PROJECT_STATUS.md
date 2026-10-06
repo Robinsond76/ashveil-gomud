@@ -1,5 +1,50 @@
 # Ashveil Project Status
 
+**Phase 40a2 built, awaiting review (2026-10-06): gathering.** Herbs,
+firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
+and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
+run a real-time timed action (20s herbs and firewood, 30s fish and game) kept in
+memory and resolved on the round tick with the real clock; it never touches the
+world clock. A typed command (other than look and a few reads), a move, a fight
+or death cancels it with nothing gained. Each room resource has a pool (herbs 3,
+firewood 4, fishing 4, game 2) shared by every company, regrowing one charge per
+20 minutes (game 40); only pools in recovery are saved (plugin `pools`, computed
+on read, so a restart never refills early). Depleted resources show "(picked
+clean)" in `look`, GMCP `Room.Info`/`World.Map` (`depleted`), the room panel
+(dimmed badge) and the map (hollow dot with a slash). Herbs use the zone's
+table; a company without a Forage specialist risks bitter weed; a knife, a
+Forage specialist and a Scribe (rarer herb, 10%) add finds; darkness halves
+them. Firewood doubles with an axe (+1 Field Smith) and half is damp in rain
+or storm. Fishing needs a line (5% break) and costs half effort; game needs a
+bow or sets snares (half chance), adds +10 to the room's encounter chance, and
+hands a haul to cargo (leader's pack on `ErrNoCargo`). Effort goes through
+`walking.Effort`; the encounter roll is `encounters.Attempt`; supplies through
+`company.CompanyItemCount/SpendCompanyItem`. Camp fire rule: a fire needs a
+firewood room (free) or one dry bundle; a damp bundle needs two tries and
+lights a smoky fire with light but no warmth (`Camp.Damp`,
+`RoomWarmedByFire`). New items 40-44 (firewood, damp firewood, fishing line,
+raw fish, bitter weed) and grilled fish (30024, Dunmar hearth, cooking 1);
+firewood and line sell at the Dunmar and Old Kings Road markets; 152 rooms
+tagged (Dark Forest, Frost Lake, Fernhollow, Old Kings Road, tutorial).
+Help: new `help gathering` (indexed under `road`; aliases gather, herbs,
+firewood, fish, hunt, snares, deadfall, picked-clean) and updates to
+resources, camp, forage, cooking, survival and webclient; tutorial hints in
+the Survival and Camp lessons. Tests: rules, module, wiring through
+`plugins.Load` and `TryCommand`, camp fuel, the three seams, help.
+Design: [40a2](designs/2026-10-05-phase-40a2-gathering-design.md).
+Decisions (builder, owner delegation): (1) room 2002 (the lightning-split oak)
+and tutorial room 905 are firewood rooms, so the existing camp flows and the
+tutorial keep working with no change to the starter kit; (2) ephemeral
+(tutorial) rooms use a memory-only ledger and never deplete; (3) the encounter
+roll happens after the haul, so an ambush never costs the work; (4) the damp
+first try is in memory only (a restart gives another first try); (5) the
+Forage specialist stands in for "Ranger" and a knife is any bladed weapon;
+(6) raw fish has no spoilage (the game has no spoilage mechanic). Not folded
+in: the 40a follow-up that a waterskin is destroyed by its last sip (belongs
+with consumables, still open). Follow-ups: regrowth does not push a GMCP
+redraw (the panel updates on the next room refresh); S1 `depleted` art
+replaces the slashed dot. Review: pending. Browser check: `/mnt/project-files/screens/40a2-gathering-panel.png`.
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
