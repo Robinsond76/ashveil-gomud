@@ -187,6 +187,7 @@
     let outcomeTimer = null;
     let ended = false;          // fight-end came: this battle's last snapshots change nothing
     let hover = null;           // the unit id under the pointer
+    let watching = null;        // Phase 45: the allied company index shown full size, or null
     let raf = 0;
     let zone = '';              // Room.Info.area, for a zone's own backdrop
     let roundNo = 0;            // the round of the latest events
@@ -255,8 +256,19 @@
         return { x: ALLY_ANCHORS[index] - row * 16 - col * 3, y: 58 + col * 9 };
     }
 
+    // Watching an allied company (Phase 45) swaps places: the watched ally
+    // stands in the company's own formation at full size, and the player's
+    // company shrinks into the ally's place. View only: no input changes.
+    function isWatched(u) { return watching !== null && u.side === 'ally' && u.ally === watching; }
+    function isShrunk(u) {
+        if (u.side === 'ally') { return !isWatched(u); }
+        return u.side === 'company' && watching !== null;
+    }
+
     // slotOf is where a unit's feet stand.
     function slotOf(u) {
+        if (isWatched(u)) { return slot('company', u.cell.row, u.cell.col); }
+        if (u.side === 'company' && watching !== null) { return allySlot(watching, u.cell.row, u.cell.col); }
         if (u.side === 'ally') { return allySlot(u.ally || 0, u.cell.row, u.cell.col); }
         return slot(u.side, u.cell.row, u.cell.col);
     }
@@ -477,8 +489,22 @@
     // normRef gives events the ids the units are kept by.
     function normRef(ref) { return ref === 'me' ? 'leader' : (ref || ''); }
 
+    // landsOnNothing is true for a happening that involves an allied unit
+    // the screen does not draw (a third company, or a foe the player is not
+    // fighting): there is no figure to act or to be struck, so it is dropped
+    // from the picture (Phase 45). Allies' blows on foes in the fight stay.
+    function isAllyRef(ref) { return /^(a|u):/.test(ref || ''); }
+    function landsOnNothing(e) {
+        const a = isAllyRef(e.src), t = isAllyRef(e.tgt);
+        if (a && !units.get(e.src)) { return true; }
+        if (t && !units.get(e.tgt)) { return true; }
+        if (a && !t && e.tgt && e.tgt !== '?' && !units.get(e.tgt)) { return true; }
+        if (t && !a && e.src && e.src !== '?' && !units.get(e.src)) { return true; }
+        return false;
+    }
+
     function onEvents(body) {
-        const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) }));
+        const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) })).filter(e => !landsOnNothing(e));
         // fight_round counts this fight's rounds; round is the server's counter.
         if (body.fight_round) { roundNo = body.fight_round; paintChrome(); }
         // The feed carries the player's pace; inference from how batches
@@ -879,10 +905,15 @@
         if (!captionNode) { return; }
         lastNode.textContent = battle && !outcomeText ? lastBlow : '';
         const u = hover ? units.get(hover) : null;
-        if (!u) { captionNode.textContent = battle && !outcomeText ? HINT : ''; return; }
+        if (!u) {
+            const al = watching !== null && battle && battle.allies ? battle.allies[watching] : null;
+            captionNode.textContent = battle && !outcomeText ? (al ? 'Watching ' + (al.name || 'an ally') + '\'s company. Tap your band to return.' : HINT) : '';
+            return;
+        }
         let text = u.label;
         if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
+        if (isShrunk(u) && u.side === 'ally') { text += ' (tap to watch)'; }
         if (u.side !== 'company' && u.band) { text += ', ' + u.band; }
         if (u.side !== 'enemy' && u.fallen) { text += ', fallen'; }
         if (u.side === 'company' && !u.fallen && battle && battle.nerve === 'faltering') { text += ', shaken'; }
@@ -909,14 +940,43 @@
         let bestD = 18 * 18;
         const compact = compactAllies();
         units.forEach(u => {
-            if (!u.cell || (compact && u.side === 'ally')) { return; }
+            if (!u.cell || (compact && isShrunk(u))) { return; }
             const p = slotOf(u);
             const d = (p.x - x) * (p.x - x) + (p.y - 12 - y) * (p.y - 12 - y);
             if (d < bestD) { bestD = d; best = u.id; }
         });
+        if (ev.type === 'click') {
+            // Phase 45: tap an allied formation (or its pennant) to watch it
+            // full size; tap the shrunken company to come back.
+            const target = best && units.get(best);
+            const pennant = bannerAt(x, y);
+            if (target && target.side === 'ally' && !isWatched(target)) { watch(target.ally); return; }
+            if (target && target.side === 'company' && watching !== null) { watch(null); return; }
+            if (pennant !== null) { watch(pennant === watching ? null : pennant); return; }
+        }
         hover = ev.type === 'click' && hover === best ? null : best;
         paintCaption();
         draw();
+    }
+
+    // watch shows an allied company full size (index), or the player's own
+    // company again (null). It changes only the view.
+    function watch(index) {
+        const count = Math.min(MAX_ALLIES, ((battle && battle.allies) || []).length);
+        watching = index !== null && index >= 0 && index < count ? index : null;
+        hover = null;
+        paintCaption();
+        draw();
+    }
+
+    // bannerAt is the allied pennant under a canvas point, or null.
+    function bannerAt(x, y) {
+        const g = allyGroups();
+        for (const a of g.list) {
+            const fx = ALLY_ANCHORS[a.index] - 38;
+            if (x >= fx - 2 && x <= fx + 46 && y >= 20 && y <= 42) { return a.index; }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------------
@@ -950,14 +1010,14 @@
     // progress) when the art has it. Without art the idle figure nudges.
     function poseOf(u, p0, now) {
         const dir = u.side !== 'enemy' ? 1 : -1;
-        const pose = { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1, scale: u.side === 'ally' ? ALLY_SCALE : 1 };
+        const pose = { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1, scale: isShrunk(u) ? ALLY_SCALE : 1 };
         const full = motion() === 'full';
         sched.active(now).forEach(st => {
             if (st.unit !== u.id && !(st.unit === '*company*' && u.side === 'company')) { return; }
             const p = Math.max(0, Math.min(1, (now - st.start) / Math.max(1, st.end - st.start)));
             let anim = st.anim;
             // An allied unit, small and far, strikes from where it stands.
-            if (st.lunge && u.side !== 'ally' && units.get(st.lunge) && units.get(st.lunge).cell) {
+            if (st.lunge && !isShrunk(u) && units.get(st.lunge) && units.get(st.lunge).cell) {
                 // Step in toward the target, strike at the middle, step back.
                 const t = units.get(st.lunge);
                 const tp = slotOf(t);
@@ -1181,10 +1241,10 @@
     // drawInfo draws the bar, role badge, statuses and chant mark.
     function drawInfo(u, x, y) {
         if (u.fallen || u.unseen) { return; }
-        if (u.side === 'ally') { drawAllyInfo(u, x, y); return; }
+        if (isShrunk(u)) { drawAllyInfo(u, x, y); return; }
         const w = 18;
         rect(x - w / 2, y + 3, w, 3, '#101014');
-        if (u.side === 'company') {
+        if (u.side === 'company' && !isShrunk(u)) {
             const f = Math.max(0, Math.min(1, u.frac));
             rect(x - w / 2 + 1, y + 4, Math.round((w - 2) * f), 1, f > 0.5 ? '#4fc16a' : (f > 0.25 ? '#e0b030' : '#d84a3a'));
         } else {
@@ -1250,16 +1310,19 @@
         const compact = compactAllies();
         g.list.forEach(a => {
             const ax = ALLY_ANCHORS[a.index];
-            const hue = hashHue(a.name || 'ally');
+            // While one is watched, its place holds the player's company.
+            const mine = watching === a.index;
+            const label = mine ? 'your band' : a.name;
+            const hue = hashHue(label || 'ally');
             const fx = ax - 38;
             rect(fx, 22, 1, 12, '#c8ccd4');
             ctx.fillStyle = 'hsl(' + hue + ',55%,45%)';
             ctx.fillRect(fx + 1, 22, 6, 4);
             if (compact) {
                 pixText(String(a.up), fx + 9, 22, '#ffffff');
-                pixText(a.name.slice(0, 6), fx + 2, 36, '#e8e8f0');
+                pixText(label.slice(0, 6), fx + 2, 36, '#e8e8f0');
             } else {
-                pixText(a.name.slice(0, 9), fx + 9, 22, '#e8e8f0');
+                pixText(label.slice(0, 9), fx + 9, 22, '#e8e8f0');
             }
         });
         if (g.more > 0) {
@@ -1277,9 +1340,9 @@
         drawBackground();
         // Back to front by lane (then row), so nearer units overlap.
         const compact = compactAllies();
-        const list = Array.from(units.values()).filter(u => u.cell && !(compact && u.side === 'ally'));
-        // Allied formations stand behind: they go first, then the lanes.
-        list.sort((a, b) => ((a.side === 'ally' ? 0 : 1) - (b.side === 'ally' ? 0 : 1)) || (a.cell.col - b.cell.col) || (b.cell.row - a.cell.row));
+        const list = Array.from(units.values()).filter(u => u.cell && !(compact && isShrunk(u)));
+        // Small formations stand behind: they go first, then the lanes.
+        list.sort((a, b) => ((isShrunk(a) ? 0 : 1) - (isShrunk(b) ? 0 : 1)) || (a.cell.col - b.cell.col) || (b.cell.row - a.cell.row));
         drawAllyBanners();
         list.forEach(u => {
             const p = slotOf(u);
@@ -1538,7 +1601,10 @@
             roundNo = 0;
             minimised = false;
             userOpened = false;
+            watching = null;
         }
+        // The watched company left the fight: back to the player's own view.
+        if (watching !== null && (!next || watching >= Math.min(MAX_ALLIES, (next.allies || []).length))) { watching = null; }
         if (next && ended) {
             // The fight-end event came first (it rides with the narration):
             // a snapshot of the finished battle neither clears the outcome
@@ -1600,6 +1666,7 @@
         open,
         close,
         setMotion: saveMotion,
+        watch,
         slot,
         // state is what a test reads: the units and where they stand.
         state() {
@@ -1614,6 +1681,7 @@
                 motion: motion(),
                 pace: feedPace,
                 nerve: battle && battle.nerve ? battle.nerve : '',
+                watching,
                 allies: allyGroups(),
                 compact: compactAllies(),
                 backlog: sched.backlog(Date.now()),
