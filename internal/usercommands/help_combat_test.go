@@ -385,7 +385,7 @@ func TestBattleScreenHelp(t *testing.T) {
 	text, err := GetHelpContents("battlescreen")
 	require.NoError(t, err)
 	text = tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "hovering names the class", "help promotion"} {
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion"} {
 		assert.Contains(t, text, want)
 	}
 	for _, hub := range []string{"combat", "webclient"} {
