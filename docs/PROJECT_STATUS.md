@@ -1,5 +1,42 @@
 # Ashveil Project Status
 
+**Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
+`scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
+`_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,
+frames, rows, anchor, timing per file). S0: 64-color palette (`palette.png`,
+`palette.gpl`), the two style frames, proportions sheets and icon sample.
+S1: 9 resource icons, markers, camp pieces, map units (idle and walk, down /
+up / side) for the 6 base classes plus `adventurer`, and app icons. Review
+the art in [the contact sheet](verification/40s1-contact-sheet.png). Tests:
+`go test ./scripts` checks the spec layout, palette-only colors, hard edges,
+the feet-baseline anchor and that committed PNGs equal generator output.
+Nothing is wired into the client yet, so no player help or tutorial change
+is due (40b, 40f and 40i wire it). Decisions (owner delegated): the
+review thread approves S0 against the art direction (roadmap); `palette.png`
+is an 8x8 image, one pixel per color; the here-ring has no outline (a 1 px
+ring would double); the ogre and goblins in `style-battle` are throwaway mocks
+for S3 to replace; battle idle shows one frame, since S3 owns full battle
+sheets; app icons are scaled by whole numbers from a 64 / 48 / 32 grid (the
+192 px version drops detail rather than just downscaling).
+**Review (2026-10-06):** S0 approved against the art direction: muted
+palette, adult 5- and 7-head proportions, grounded gear, natural map. Fixed:
+battle warrior was a red slab with a raised sword (now narrower, split
+surcoat, shield forward edge-on, sword low per the S3 pose); battle rogue was
+one charcoal block (now crouched, leather breeches, reverse-grip blades); far
+legs shade one step darker in battle; committed `__pycache__` removed and
+ignored. Accepted: contact sheet lives in `docs/verification/` rather than
+`sprites/contact/` (keeps review images out of shipped assets); manifest
+carries what 40b (paths, rows, anchor, baseline, timing, `adventurer`
+fallback), 40i (sizes, maskable safe zone) need; S3 extends it for 40f.
+Follow-ups for S3/40s5: real goblin and ogre art drawn side-on (the mocks face
+front; goblins must look feral, not comic); 4-frame battle idle; ranger
+"arrow nocked low", cleric shield and wizard stone glow poses; a 1x
+readability pass on the 3x3 formation with enemy mirroring; a darker
+battle-ground band so unit feet and shadows read on dirt. UI check: the map
+set gives a clear, readable class marker and camp state at 32 px; the gap is
+that S2 terrain must keep tiles quieter than units, and 40b should draw the
+here-ring and badge above terrain so the player's sprite never blends in.
+
 **Phase 37 complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) (2026-10-06):** Dark Forest (band 5-7) and the
 Catacombs (band 10-12) spring 2-3 foe battles (sometimes 4) in opted-in
 rooms, on steps and journey arrivals, with a boss lair (boss at band low+2,
@@ -1065,7 +1102,6 @@ random-hit edge test; targeted rerun and final full run passed. Integration agai
 passed independent review, focused checks, browser checks, generate/validate,
 JS/Lua lint and the full race suite. 34d is complete.
 
-
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
 continue with 33h ahead of 33g's catalog slices. Companion
 training is now derived from level by archetype growth weights plus an
@@ -1942,7 +1978,6 @@ config key and its admin docs stay (engine config, now unused).
 - Next: 33b, company-only friendly-effect correctness first, then allied
   scopes once 33d defines consent. The current tooling has no cloud-session
   creation operation; continue here using the saved phase handoff.
-
 
 ### Company gameplay roadmap and future Phase 33 designs (2026-10-01)
 
