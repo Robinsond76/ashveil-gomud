@@ -143,7 +143,7 @@ func newTestModule(store Store, scheduler Scheduler, surv Survival, clock func()
 }
 
 func eligibleRoom() *rooms.Room {
-	return &rooms.Room{RoomId: 100, Title: "A Clearing", Tags: []string{"camping"}}
+	return &rooms.Room{RoomId: 100, Title: "A Clearing", Tags: []string{"camping"}, Resources: []string{"firewood"}} // deadfall: the fire is free (40a2)
 }
 
 func ineligibleRoom() *rooms.Room {
@@ -573,4 +573,126 @@ func TestLitCampfireSnapshotFollowsFailedSaveRevert(t *testing.T) {
 	module.lightFire(user, eligibleRoom())
 	assert.False(t, module.camps[7].FireLit, "a failed save reverts the fire")
 	assert.False(t, module.RoomHasLitFire(100), "the light snapshot follows the reverted state")
+}
+
+// --- Phase 40a2: a fire needs fuel ---
+
+type fuelBag map[int]int
+
+func (b fuelBag) count(_ int, id int) int { return b[id] }
+func (b fuelBag) spend(_ int, id int) bool {
+	if b[id] < 1 {
+		return false
+	}
+	b[id]--
+	return true
+}
+
+func fuelModule(bag fuelBag) *CampingModule {
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	module.itemCount, module.spendItem = bag.count, bag.spend
+	return module
+}
+
+func bareRoom() *rooms.Room {
+	return &rooms.Room{RoomId: 100, Title: "A Bare Clearing", Tags: []string{"camping"}}
+}
+
+func TestFireInAFirewoodRoomCostsNothing(t *testing.T) {
+	bag := fuelBag{firewoodItemID: 1}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+	module.establish(user, eligibleRoom())
+	assert.Contains(t, module.lightFire(user, eligibleRoom()), "crackling")
+	assert.Equal(t, 1, bag[firewoodItemID], "the room's deadfall fed the fire")
+}
+
+func TestFireElsewhereSpendsOneBundleOrRefuses(t *testing.T) {
+	bag := fuelBag{}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+	module.establish(user, bareRoom())
+
+	msg := module.lightFire(user, bareRoom())
+	assert.Contains(t, msg, "no firewood")
+	assert.Contains(t, msg, "help gathering")
+	assert.False(t, module.camps[7].FireLit)
+
+	bag[firewoodItemID] = 2
+	assert.Contains(t, module.lightFire(user, bareRoom()), "crackling")
+	assert.Equal(t, 1, bag[firewoodItemID], "one bundle spent")
+	assert.True(t, module.RoomWarmedByFire(100))
+	assert.False(t, module.camps[7].Damp)
+}
+
+func TestDampWoodNeedsTwoTriesAndGivesNoWarmth(t *testing.T) {
+	bag := fuelBag{dampFirewoodItemID: 1}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+	module.establish(user, bareRoom())
+
+	assert.Contains(t, module.lightFire(user, bareRoom()), "will not catch")
+	assert.Equal(t, 1, bag[dampFirewoodItemID], "a failed try keeps the bundle")
+	assert.False(t, module.camps[7].FireLit)
+
+	assert.Contains(t, module.lightFire(user, bareRoom()), "smoky")
+	assert.Zero(t, bag[dampFirewoodItemID])
+	assert.True(t, module.camps[7].FireLit)
+	assert.True(t, module.camps[7].Damp)
+	assert.True(t, module.RoomHasLitFire(100), "it still gives light")
+	assert.False(t, module.RoomWarmedByFire(100), "but no warmth")
+
+	lines := camping.CampLines(module.RoomCamps(100), 7, func(int) string { return "Hero" })
+	assert.Contains(t, strings.Join(lines, "\n"), "smoky, sullen fire")
+}
+
+func TestDryBundleIsPreferredOverDamp(t *testing.T) {
+	bag := fuelBag{firewoodItemID: 1, dampFirewoodItemID: 1}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+	module.establish(user, bareRoom())
+	assert.Contains(t, module.lightFire(user, bareRoom()), "crackling")
+	assert.Equal(t, 1, bag[dampFirewoodItemID])
+}
+
+// Phase 40a2 review: making camp and camp status say what a fire here would
+// burn, so a missing bundle is known before "camp fire" fails.
+func TestFuelLineSaysWhatAFireWouldBurn(t *testing.T) {
+	bag := fuelBag{}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+
+	assert.Contains(t, module.fuelLine(user, eligibleRoom()), "deadfall here")
+	assert.Contains(t, module.fuelLine(user, bareRoom()), "Fuel: none")
+	assert.Contains(t, module.fuelLine(user, nil), "Fuel: none")
+	bag[dampFirewoodItemID] = 1
+	assert.Contains(t, module.fuelLine(user, bareRoom()), "1 damp firewood bundle only")
+	bag[firewoodItemID] = 2
+	assert.Contains(t, module.fuelLine(user, bareRoom()), "2 firewood bundles; a fire here burns one")
+}
+
+func TestCampCommandsShowFuelUntilTheFireIsLit(t *testing.T) {
+	bag := fuelBag{}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+	messages := captureMessages(t)
+	runCampCommand := func(rest string) string {
+		before := len(*messages)
+		_, err := module.userCommand(rest, user, bareRoom(), 0)
+		require.NoError(t, err)
+		events.ProcessEvents()
+		return strings.Join((*messages)[before:], "\n")
+	}
+	text := runCampCommand("")
+	assert.Contains(t, text, "You make camp here.")
+	assert.Contains(t, text, "Fuel: none")
+
+	assert.Contains(t, runCampCommand("status"), "Fuel: none")
+
+	bag[dampFirewoodItemID] = 1
+	module.lightFire(user, bareRoom())
+	module.lightFire(user, bareRoom())
+	status := runCampCommand("status")
+	assert.Contains(t, status, "damp wood gives light and no warmth")
+	assert.NotContains(t, status, "Fuel:", "a lit fire needs no fuel line")
 }

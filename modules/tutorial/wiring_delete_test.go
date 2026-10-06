@@ -123,6 +123,7 @@ func TestDeleteCharacterThroughPluginsLoad(t *testing.T) {
 	start := rooms.LoadRoom(1)
 	require.NotNil(t, start)
 	start.Tags = append(start.Tags, "camping")
+	start.Resources = append(start.Resources, "firewood") // deadfall: the fire is free (40a2)
 
 	// A character who skipped the course with Tamsin, on a real connection.
 	conn, wire := replayConnect(t)

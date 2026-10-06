@@ -27,6 +27,9 @@ character:
     feet:
       itemid: 20003
   shop:
+    - itemid: 42 # fishing line (Phase 40a2); at or above every market's price
+      price: 12
+      quantitymax: 5
     - pettype: cat
       price: 1200
       tradeitemid: 27

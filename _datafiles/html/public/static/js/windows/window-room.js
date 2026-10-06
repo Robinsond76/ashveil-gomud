@@ -101,6 +101,7 @@
         .rw-badge.character { background: var(--t-badge-char-bg); color: var(--t-badge-char-text); border: 1px solid var(--t-badge-char-border); }
         .rw-badge.root      { background: var(--t-badge-root-bg); color: var(--t-badge-root-text); border: 1px solid var(--t-badge-root-border); }
         .rw-badge.resource  { background: transparent; color: var(--t-text-heading); border: 1px solid var(--t-border); }
+        .rw-badge.resource.depleted { opacity: 0.55; border-style: dashed; }
         .rw-badge.resource::before { content: ''; display: inline-block; width: 0.7em; height: 0.7em; margin-right: 4px; border-radius: 50%; background: var(--rw-res-color, #aaaaaa); vertical-align: -0.05em; }
 
         /* ---- exits ---- */
@@ -381,6 +382,10 @@
         water:   { label: 'Fresh water', color: '#4aa3ff' },
         forage:  { label: 'Forage',      color: '#7ccf3c' },
         shelter: { label: 'Shelter',     color: '#d1a15f' },
+        herbs:    { label: 'Herbs',      color: '#3fbf8f' },
+        firewood: { label: 'Firewood',   color: '#c8742c' },
+        fishing:  { label: 'Fishing',    color: '#5fd0d0' },
+        game:     { label: 'Game',       color: '#c85a5a' },
     };
 
     function setSection(id, rows) {
@@ -507,12 +512,16 @@
                 badge.addEventListener('click', function() { Client.GMCPRequest('Help', d); });
                 badgesEl.appendChild(badge);
             });
+            const pickedClean = room.depleted || [];
             (room.resources || []).forEach(function(r) {
                 const meta  = RESOURCE_BADGES[r] || { label: r, color: '#aaaaaa' };
+                const gone  = pickedClean.indexOf(r) !== -1;
                 const badge = document.createElement('span');
-                badge.className   = 'rw-badge resource';
-                badge.textContent = meta.label;
-                badge.title       = 'This room provides ' + meta.label.toLowerCase() + ' (help resources)';
+                badge.className   = 'rw-badge resource' + (gone ? ' depleted' : '');
+                badge.textContent = gone ? meta.label + ' (picked clean)' : meta.label;
+                badge.title       = gone
+                    ? 'The ' + meta.label.toLowerCase() + ' here is picked clean for now; it regrows with time (help gathering)'
+                    : 'This room provides ' + meta.label.toLowerCase() + ' (help resources)';
                 badge.style.setProperty('--rw-res-color', meta.color);
                 badge.style.cursor = 'help';
                 badge.addEventListener('click', function() { Client.GMCPRequest('Help', 'resources'); });

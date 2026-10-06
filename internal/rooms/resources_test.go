@@ -30,13 +30,12 @@ func TestRoomLoadsResourcesFromYAMLAndDropsUnknown(t *testing.T) {
 	assert.False(t, room.HasResource(ResourceForage))
 }
 
-func TestShownResourcesHidesReservedOnes(t *testing.T) {
-	room := &Room{Resources: []string{"herbs", "forage", "game", "water"}}
-	assert.Equal(t, []string{"water", "forage"}, room.ShownResources())
-	assert.Equal(t, "Here: fresh water, forage.", room.ResourceLine())
-	assert.True(t, room.HasResource(ResourceHerbs), "reserved ones are kept in data")
+func TestShownResourcesCoverTheGatheringOnes(t *testing.T) {
+	room := &Room{Resources: []string{"game", "herbs", "forage", "water", "fishing", "firewood"}}
+	assert.Equal(t, []string{"water", "forage", "herbs", "firewood", "fishing", "game"}, room.ShownResources())
+	assert.Equal(t, "Here: fresh water, forage, herbs, firewood, fishing, game.", room.ResourceLine())
 
-	only := &Room{Resources: []string{"herbs"}}
+	only := &Room{}
 	assert.NotNil(t, only.ShownResources())
 	assert.Empty(t, only.ShownResources())
 	assert.Equal(t, "", only.ResourceLine())
@@ -88,4 +87,24 @@ func TestCampResourcesShowOnlyWhereACampCanBeMade(t *testing.T) {
 	assert.Equal(t, []string{"water"}, cave.ShownResources())
 	assert.Equal(t, "Here: fresh water.", cave.ResourceLine())
 	assert.True(t, cave.HasResource(ResourceShelter), "the data is kept for when a camp arrives")
+}
+
+// Phase 40a2: a picked-clean gathering resource says so on the Here line and
+// is listed by DepletedResources; nothing is depleted without a check.
+func TestDepletedResourcesAreMarked(t *testing.T) {
+	room := &Room{RoomId: 777001, Resources: []string{"herbs", "firewood", "water"}}
+	assert.Empty(t, room.DepletedResources())
+	assert.False(t, room.IsDepleted("herbs"))
+
+	SetDepletedCheck(func(roomID int, resource string) bool { return roomID == 777001 && resource == "herbs" })
+	t.Cleanup(func() { SetDepletedCheck(nil) })
+	assert.True(t, room.IsDepleted("herbs"))
+	assert.False(t, room.IsDepleted("firewood"))
+	assert.False(t, room.IsDepleted("game"), "a resource the room lacks is never depleted")
+	assert.Equal(t, []string{"herbs"}, room.DepletedResources())
+	assert.Equal(t, "Here: fresh water, herbs (picked clean), firewood.", room.ResourceLine())
+
+	var none *Room
+	assert.False(t, none.IsDepleted("herbs"))
+	assert.NotNil(t, none.DepletedResources())
 }

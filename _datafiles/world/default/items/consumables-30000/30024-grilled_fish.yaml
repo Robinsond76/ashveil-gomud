@@ -1,0 +1,10 @@
+itemid: 30024
+name: grilled fish
+namesimple: fish
+description: A fish grilled over an open fire. Plain, but filling.
+type: food
+subtype: edible
+uses: 1
+value: 8
+nutrition: 40
+weight: 350

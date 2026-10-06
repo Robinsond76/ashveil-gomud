@@ -76,4 +76,5 @@ normal battle begins with your company set up as it is.
   your spoils (<ansi fg="command">help battle-summary</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help rarity</ansi>,
-<ansi fg="command">help retreat</ansi>, <ansi fg="command">help ambush</ansi>, <ansi fg="command">help travel</ansi>.
+<ansi fg="command">help retreat</ansi>, <ansi fg="command">help ambush</ansi>, <ansi fg="command">help travel</ansi>,
+<ansi fg="command">help gathering</ansi> (hunting draws a group 10% more often).

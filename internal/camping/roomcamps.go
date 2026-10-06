@@ -6,6 +6,7 @@ import "sync"
 type RoomCamp struct {
 	LeaderUserID int
 	FireLit      bool
+	Damp         bool // lit with damp wood: no warmth (Phase 40a2)
 }
 
 var (
@@ -45,7 +46,9 @@ func CampLines(camps []RoomCamp, viewerUserID int, nameOf func(userID int) strin
 				whose = name + "'s camp"
 			}
 		}
-		if camp.FireLit {
+		if camp.FireLit && camp.Damp {
+			lines = append(lines, whose+" is pitched here: bedrolls around a smoky, sullen fire of damp wood.")
+		} else if camp.FireLit {
 			lines = append(lines, whose+" is pitched here: bedrolls around a crackling campfire.")
 		} else {
 			lines = append(lines, whose+" is pitched here, around a cold fire pit.")

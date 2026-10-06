@@ -24,6 +24,10 @@ type Good struct {
 	TargetStock int `yaml:"targetstock"` // baseline stock, strictly inside (0, MaxStock)
 	StartStock  int `yaml:"startstock"`  // initial stock on first load
 	DriftStep   int `yaml:"driftstep"`   // maximum stock movement per round
+	// SupplyOnly goods are sold to players but never bought back (Phase
+	// 40a2 review: firewood and fishing lines, so gathering deadfall or
+	// carrying a line between markets is not a money loop).
+	SupplyOnly bool `yaml:"supplyonly,omitempty"`
 }
 
 // Validate requires ItemID > 0, 0 < MinPrice <= BasePrice <= MaxPrice,
@@ -134,8 +138,11 @@ func (g Good) AskForStock(stock int) (int, bool) {
 // stock: the stock price less spreadPct percent, capped one below the ask
 // for the next unit so no buy-then-sell or sell-then-buy round trip can
 // profit. It is unavailable at MaxStock, or when the bid would fall below
-// 1. spreadPct is clamped to [0, 99].
+// 1, and always for a SupplyOnly good. spreadPct is clamped to [0, 99].
 func (g Good) BidForStock(stock, spreadPct int) (int, bool) {
+	if g.SupplyOnly {
+		return 0, false
+	}
 	stock = g.ClampStock(stock)
 	if stock >= g.MaxStock {
 		return 0, false

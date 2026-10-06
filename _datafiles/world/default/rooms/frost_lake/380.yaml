@@ -17,6 +17,7 @@ exits:
     roomid: 379
 resources:
 - forage
+- game
 mapx: 26
 mapy: 15
 mapz: 0

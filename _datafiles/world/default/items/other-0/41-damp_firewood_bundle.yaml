@@ -1,0 +1,11 @@
+itemid: 41
+name: damp firewood bundle
+namesimple: damp firewood
+description: A bundle of wood soaked by rain. It lights only on a second try, and
+  the smoky fire it makes gives light but no warmth. Dry it out by gathering better
+  wood when the weather clears.
+type: object
+subtype: mundane
+uses: 1
+value: 1
+weight: 2400

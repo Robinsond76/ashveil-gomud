@@ -192,10 +192,12 @@ func TestLookShowsWhatARoomProvides(t *testing.T) {
 		}), "")
 	}
 	spring := &rooms.Room{RoomId: 91101, Zone: "Meadow", Biome: "resbiome", Resources: []string{"shelter", "water", "herbs"}}
-	assert.Contains(t, look(spring), "Here: fresh water, shelter.", "table order; reserved herbs are not shown")
+	assert.Contains(t, look(spring), "Here: fresh water, shelter, herbs.", "table order")
 
 	bare := &rooms.Room{RoomId: 91102, Zone: "Meadow", Biome: "resbiome", Resources: []string{"herbs"}}
-	assert.NotContains(t, look(bare), "Here:", "only reserved resources print nothing")
+	rooms.SetDepletedCheck(func(roomID int, resource string) bool { return roomID == 91102 && resource == "herbs" })
+	t.Cleanup(func() { rooms.SetDepletedCheck(nil) })
+	assert.Contains(t, look(bare), "Here: herbs (picked clean).", "a picked-clean resource says so (40a2)")
 	assert.NotContains(t, look(&rooms.Room{RoomId: 91103, Zone: "Meadow", Biome: "resbiome"}), "Here:")
 }
 

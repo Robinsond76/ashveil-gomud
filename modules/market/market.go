@@ -493,10 +493,12 @@ type Quote struct {
 	// (33f2: it caps a haggled sale).
 	Next   int
 	NextOK bool
+	// SupplyOnly: the market sells this good but never buys it back.
+	SupplyOnly bool
 }
 
 func (m *MarketModule) quoteLocked(g market.Good, stock int) Quote {
-	q := Quote{ItemID: g.ItemID, Level: g.StockLevel(stock)}
+	q := Quote{ItemID: g.ItemID, Level: g.StockLevel(stock), SupplyOnly: g.SupplyOnly}
 	q.Buy, q.BuyOK = g.AskForStock(stock)
 	q.Sell, q.SellOK = g.BidForStock(stock, m.spreadPct)
 	if q.SellOK {
@@ -650,7 +652,11 @@ func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quo
 		fmt.Sprintf("  %-*s  %9s  %9s  %s", width, "Good", "You buy", "You sell", "Stock"),
 	}
 	for i, q := range quotes {
-		lines = append(lines, fmt.Sprintf(`  <ansi fg="itemname">%-*s</ansi>  %s  %s  %s`, width, names[i], side(q.Buy, q.BuyOK), side(q.Sell, q.SellOK), q.Level))
+		sell := side(q.Sell, q.SellOK)
+		if q.SupplyOnly {
+			sell = fmt.Sprintf("%9s", "never") // sold here, never bought back
+		}
+		lines = append(lines, fmt.Sprintf(`  <ansi fg="itemname">%-*s</ansi>  %s  %s  %s`, width, names[i], side(q.Buy, q.BuyOK), sell, q.Level))
 	}
 	if pricing.MarkupPct > 0 {
 		lines = append(lines, fmt.Sprintf("Your company is %s here: you pay %d%% more and are paid %d%% less.", pricing.Tier, pricing.MarkupPct, pricing.MarkupPct))
@@ -732,6 +738,7 @@ func parseGoods(zone string, raw any, itemExists func(int) bool) ([]market.Good,
 			TargetStock: configInt(gf["targetstock"]),
 			StartStock:  configInt(gf["startstock"]),
 			DriftStep:   configInt(gf["driftstep"]),
+			SupplyOnly:  configBool(gf["supplyonly"]),
 		}
 		if err := g.Validate(); err != nil {
 			mudlog.Warn("market: invalid good", "zone", zone, "itemid", g.ItemID, "error", err)
@@ -811,6 +818,18 @@ func stringMap(raw any) map[string]any {
 		return out
 	}
 	return nil
+}
+
+// configBool reads a yes/no config value; anything else is false.
+func configBool(raw any) bool {
+	switch value := raw.(type) {
+	case bool:
+		return value
+	case string:
+		b, err := strconv.ParseBool(strings.TrimSpace(value))
+		return err == nil && b
+	}
+	return false
 }
 
 func configInt(raw any) int {
