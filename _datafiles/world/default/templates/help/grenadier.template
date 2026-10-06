@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">grenadier</ansi>
+
+The Grenadier is the neutral elite of the Bombardier (Alchemist route; no
+alignment asked). Its Fire Flask bursts over four foes, then five (a whole
+company), and burns hotter at every other rank.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Grenado            Fire Flask reaches two more foes (four in all)
+  35 Hotter still       Fire Flask burns at 112% of Sparks
+  40 Bandolier          +8 flasks in the satchel (in all)
+  45 Barrage            Fire Flask reaches three more foes (five in all, a
+                        whole company)
+  50 White fire         Fire Flask burns at 126% of Sparks
+  55 Sapper's frame     +10% maximum health
+  60 Arsenal            +12 flasks in the satchel (in all), and Fire Flask
+                        burns at 140% of Sparks
+
+It needs the Bombardier first (<ansi fg="command">help alchemist-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] grenadier confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Alchemist talents (levels 35, 45, 55): Iron Hide (+5 Armor), Master
+Brewer (+4 flasks in the satchel), Potent Flasks (Healing Draught heals 15%
+more and Fire Flask burns 15% harder). See <ansi fg="command">help
+talents</ansi>.
+
+See also: <ansi fg="command">help alchemist-routes</ansi>, <ansi fg="command">help alchemist</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

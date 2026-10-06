@@ -75,11 +75,9 @@ These later choices have arrived:
   Level 5, 15, 25: a talent (<ansi fg="command">help talents</ansi>)
   Level 10: class promotion (<ansi fg="command">help promotion</ansi>)
   Level 20: the advanced signature rank
-  Level 30: elite promotion for warriors and clerics (<ansi fg="command">help elite</ansi>)
+  Level 30: elite promotion (<ansi fg="command">help elite</ansi>)
   Level 35, 45, 55: a talent, with elite talents for an elite
   Level 35 to 60: an elite rank every five levels
-The elite step for rogues, rangers, wizards and witches is still planned
-(coming).
 
 <ansi fg="yellow-bold">Commands</ansi>
   <ansi fg="command">experience</ansi>       your level and the company's progress

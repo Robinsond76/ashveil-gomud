@@ -1,0 +1,27 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">falcon-marshal</ansi>
+
+The Falcon Marshal is the neutral elite of the Skyscout (Gryphon Rider
+route; no alignment asked). A foe its Dive lands on is marked for two
+rounds: every ally strikes it harder.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Marshal's mark     a foe a Dive lands on is marked for 2 rounds: every
+                        ally has +5 Attack against it
+  35 Keen horizon       Eagle eye gives +18 Perception
+  40 Falcon's talons    +4 Attack
+  45 Rallying cry       the mark gives +8 Attack
+  50 Swift wings        a Dive deals 50% more damage
+  55 Marshal's guard    +6 Evasion
+  60 Sky commander      the mark gives +12 Attack
+
+It needs the Skyscout first (<ansi fg="command">help gryphon-rider-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] falcon-marshal confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Gryphon Rider talents (levels 35, 45, 55): Iron Hide (+5 Armor),
+Veteran's Edge (+3 Attack), Shadow Footing (+5 Evasion). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help gryphon-rider-routes</ansi>, <ansi fg="command">help gryphon-rider</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

@@ -19,7 +19,7 @@ func TestGryphonRiderHasThreeUngatedRoutes(t *testing.T) {
 		assert.NotEmpty(t, c.Ranks, c.ID)
 		elite, ok := Elite(c.ID)
 		require.True(t, ok, "%s names an elite", c.ID)
-		assert.True(t, elite.Planned, "%s elite opens with 39i", elite.ID)
+		assert.False(t, elite.Planned, "%s elite opened with 39i2", elite.ID)
 	}
 	assert.Equal(t, []string{"gryphon-knight", "skyscout", "wyvern-rider"}, ids)
 	for _, align := range []int{-100, 0, 100} {

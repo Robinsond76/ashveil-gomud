@@ -1,0 +1,29 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">dragon-lord</ansi>
+
+The Dragon Lord is the neutral elite of the Dragon Tamer (Beast Tamer route;
+no alignment asked). Its drake grows larger, its Breath leaves foes burning
+and reaches four foes, and the first Breath comes in the first round.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Searing breath     foes the drake's Breath strikes are left alight (2
+                        damage a round for 4 rounds)
+  35 Greater drake      the drake has 150% of a wolf's health
+  40 Dragonfire         +4 damage on the drake's bites and its Breath (in all)
+  45 Wide breath        Breath reaches four foes
+  50 Drake ascendant    the drake has 180% of a wolf's health
+  55 Razor claws        +4 Attack on the drake's bites
+  60 Furnace heart      the drake's first Breath comes in the battle's first
+                        round
+
+It needs the Dragon Tamer first (<ansi fg="command">help beasttamer-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] dragon-lord confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Beast Tamer talents (levels 35, 45, 55): Iron Hide (+5 Armor), Pack
+Bond (your beast has 15% more health), Savage Jaws (+2 damage on your
+beast's blows). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help beasttamer-routes</ansi>, <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

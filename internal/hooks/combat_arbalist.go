@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -58,16 +59,37 @@ func useBolt(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 	rt.AimStruck = false
 	a.char.Aura.Attack += atk
 	rt.BlowPierce = fx.Int(classes.BoltPierce)
-	r := extraBlow(a, target, room, strategy.BoltBlowPct+fx.Int(classes.BoltDmg))
+	boltPct := strategy.BoltBlowPct + fx.Int(classes.BoltDmg)
+	r := extraBlow(a, target, room, boltPct)
 	rt.BlowPierce = 0
 	a.char.Aura.Attack -= atk
 
 	// The winding: the next turn, unless this is the first bolt of the battle
 	// and the Arbalist has practiced its loading.
-	if rt.BoltFired || !fx.Has(classes.FirstLoaded) {
-		rt.Reload = true
+	loadBolt(rt, fx)
+	// Phase 39i2: a Deadeye's crossbow is ready again at once after a
+	// critical bolt or one that fells its foe.
+	if rt.Reload && r.Hit && r.DamageToTarget > 0 &&
+		((r.Crit && fx.Has(classes.ReloadCrit)) || (target.Character.Health < 1 && fx.Has(classes.ReloadKill))) {
+		rt.Reload = false
+		a.holder.say(`The crossbow springs back, ready again.`, `%s's crossbow springs back, ready again.`, ` (no winding)`)
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Status: `Hair trigger`, Outcome: combatstream.OutcomeSucceeded})
 	}
-	rt.BoltFired = true
+	// Phase 39i2: a Siege Master's Ballista bolt passes through to the foe
+	// behind its target.
+	if r.Hit && r.DamageToTarget > 0 && fx.Int(classes.BoltThrough) > rt.Through {
+		if behind := foeBehindInColumn(target, room, nil); behind != nil {
+			rt.Through++
+			btag := mobHolder(behind).tag()
+			a.holder.say(fmt.Sprintf(`The bolt passes through and strikes %s behind.`, btag), `The bolt passes through and strikes `+verbatim(btag)+` behind.`, ` (ballista bolt)`)
+			rt.BlowPierce = fx.Int(classes.BoltPierce)
+			// A share of the bolt's own damage (review: it was a share of a
+			// plain blow, a third of what the rank promises).
+			extraBlow(a, behind, room, max(1, boltPct*fx.Int(classes.BoltThroughPct)/100))
+			rt.BlowPierce = 0
+			emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(behind), Status: `Ballista bolt`})
+		}
+	}
 
 	if !r.Hit || r.DamageToTarget < 1 || target.Character.Health < 1 {
 		return
@@ -103,5 +125,73 @@ func arbalistBlow(defender statusHolder, r combat.AttackResult) {
 	}
 	if defender.char.ClassEffects().Has(classes.SteadyAim) {
 		defender.char.RT.AimStruck = true
+	}
+}
+
+// loadBolt is what loosing a bolt does to the crossbow: it needs winding,
+// unless this is the first bolt of the battle and the Arbalist has practiced
+// its loading.
+func loadBolt(rt *characters.ClassRT, fx classes.Effects) {
+	if rt.BoltFired || !fx.Has(classes.FirstLoaded) {
+		rt.Reload = true
+	}
+	rt.BoltFired = true
+}
+
+// bastionAnswer lets a Bastion with a loaded crossbow answer a foe that has
+// just struck its place in the line, or anyone in its column: a bolt at the
+// Covering shot's share of a blow, and the crossbow is unloaded.
+func bastionAnswer(attacker, defender statusHolder) {
+	if attacker.mob == nil || attacker.char.Health < 1 || attacker.char.Aggro == nil {
+		return
+	}
+	if _, _, companion := company.LeaderAndKeyForInstance(attacker.mob.InstanceId); companion || attacker.char.IsCharmed() {
+		return
+	}
+	var u *users.UserRecord
+	var key company.MemberKey
+	if defender.user != nil {
+		u, key = defender.user, company.LeaderMemberKey
+	} else if defender.mob != nil {
+		owner, k, ok := company.LeaderAndKeyForInstance(defender.mob.InstanceId)
+		if !ok {
+			return
+		}
+		u, key = users.GetByUserId(owner), k
+	}
+	if u == nil || u.Character == nil {
+		return
+	}
+	room := rooms.LoadRoom(defender.roomId)
+	if room == nil {
+		return
+	}
+	f, _ := company.FormationFor(u.UserId)
+	_, hitCol, _ := f.Find(key)
+	for _, h := range sideActors(u, room) {
+		rt := h.char.RT
+		fx := h.char.ClassEffects()
+		if rt == nil || !fx.Has(classes.ColumnShot) || rt.ColShots >= fx.Int(classes.ColumnShot) || rt.Reload || h.char.Health < 1 || status.Grounded(h.char) {
+			continue
+		}
+		if kind, _ := wielding(h.char); kind != strategy.Shooting {
+			continue
+		}
+		if h.key != key {
+			if _, col, ok := f.Find(h.key); !ok || col != hitCol {
+				continue
+			}
+		}
+		if reached, _ := abilityReach(h, u, attacker.mob, room); !reached {
+			continue
+		}
+		rt.ColShots++
+		h.holder.say(fmt.Sprintf(`Your held bolt answers %s.`, attacker.tag()),
+			`%s's held bolt answers `+verbatim(attacker.tag())+`.`, ` (covering shot)`)
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: h.ref, Target: mobRef(attacker.mob), Status: `Covering shot`})
+		rt.BlowPierce = fx.Int(classes.BoltPierce)
+		extraBlow(h, attacker.mob, room, fx.Int(classes.ColumnShotPct))
+		rt.BlowPierce = 0
+		loadBolt(rt, fx)
 	}
 }

@@ -33,8 +33,12 @@ beast and adds four ranks (10, 15, 20, 25); a talent adds more
   20 Growing drake      the drake has 120% of a wolf's health
   25 Quick fire         Breath comes every 2 rounds
 
-The elite classes of these routes (Packlord, Beastlord, Dragon Lord) are still
-to come; until then a Beast Tamer keeps its advanced class's ranks.
+<ansi fg="yellow-bold">Elite classes</ansi> (level 30, neutral, any alignment; <ansi fg="command">help elite</ansi>)
+
+  <ansi fg="command">help packlord</ansi>      Houndmaster route: a bite on a hobbled foe leaves it exposed;
+                     hobbles reach healthier foes; first strike
+  <ansi fg="command">help beastlord</ansi>     Bearward route: swipes hit two foes; the bear stands again
+  <ansi fg="command">help dragon-lord</ansi>   Dragon Tamer route: burning Breath that reaches four foes
 
 <ansi fg="yellow-bold">Talents</ansi>
 

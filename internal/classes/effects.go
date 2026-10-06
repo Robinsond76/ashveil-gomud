@@ -324,3 +324,33 @@ const (
 	SplicePlus = "spliceplus" // a second Emergency Splice, standing the doll up at half its health
 	TangleWeak = "tangleweak" // Attack a tangled foe's next attack loses
 )
+
+// The remaining neutral elites (Phase 39i2): the Beast Tamer, Gryphon Rider,
+// Alchemist and Arbalist lineages' elite ranks.
+const (
+	// Beast Tamer.
+	BeastHunt     = "beasthunt"     // a bite that lands on a hobbled foe leaves it exposed
+	BeastHobbleAt = "beasthobbleat" // percent of its health a foe is hobbled below (50 when the beast hobbles)
+	BeastOpen     = "beastopen"     // action meter points the beast starts a battle with
+	BeastSwipe    = "beastswipe"    // percent of a blow's damage the foe beside the beast's target takes too
+	BeastRise     = "beastrise"     // the beast stands back up once a battle at this percent of its health
+	BreathBurn    = "breathburn"    // foes the drake's Breath strikes are left alight
+	BreathFoes    = "breathfoes"    // foes the drake's Breath strikes (3 when absent)
+	BreathFirst   = "breathfirst"   // the drake's first Breath comes at once, not after a full wait
+	// Gryphon Rider.
+	DiveQuake = "divequake" // a Dive that knocks its foe down knocks down the foes beside it
+	DiveMark  = "divemark"  // Attack every ally has against the foe a Dive lands on, for 2 rounds
+	DivePoisX = "divepoisx" // percent more damage a Dive deals a poisoned foe
+	DiveTail  = "divetail"  // percent of the Dive's damage a second foe takes from the wyvern's tail
+	// Alchemist.
+	ElixirSave = "elixirsave" // a blow that would fell an ally leaves it with this percent of its health
+	ElixirUses = "elixiruses" // times a battle the Elixir works
+	MutagenRow = "mutagenrow" // extra allies in its patient's row a Mutagen hardens too (5 covers the whole row)
+	// Arbalist.
+	BoltThrough    = "boltthrough"    // times a battle a Piercing Bolt passes through to the foe behind it
+	BoltThroughPct = "boltthroughpct" // percent of the bolt's damage the foe behind takes
+	ReloadCrit     = "reloadcrit"     // a critical bolt needs no winding
+	ReloadKill     = "reloadkill"     // a bolt that fells its foe needs no winding
+	ColumnShot     = "columnshot"     // times a battle a loaded Arbalist answers a foe that strikes its column
+	ColumnShotPct  = "columnshotpct"  // percent of a blow's damage that answer deals
+)

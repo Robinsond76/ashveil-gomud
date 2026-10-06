@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">beastlord</ansi>
+
+The Beastlord is the neutral elite of the Bearward (Beast Tamer route; no
+alignment asked). Its bear swipes two foes at once, guards more often, and
+once a battle stands back up after it falls.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Cleaving swipe     the bear's blows also strike the foe beside its target
+                        for half the damage
+  35 Great bear         the bear has 160% of a wolf's health
+  40 Heavy paws         +3 damage on the bear's blows (in all)
+  45 Faithful guard     the bear guards six times a battle
+  50 Raking swipe       the bear's second foe takes three quarters of the
+                        damage
+  55 Elder bear         the bear has 190% of a wolf's health
+  60 Stands again       once a battle, a bear that falls stands back up with
+                        half its health
+
+It needs the Bearward first (<ansi fg="command">help beasttamer-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] beastlord confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Beast Tamer talents (levels 35, 45, 55): Iron Hide (+5 Armor), Pack
+Bond (your beast has 15% more health), Savage Jaws (+2 damage on your
+beast's blows). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help beasttamer-routes</ansi>, <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

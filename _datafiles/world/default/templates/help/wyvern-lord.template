@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">wyvern-lord</ansi>
+
+The Wyvern Lord is the neutral elite of the Wyvern Rider (Gryphon Rider
+route; no alignment asked). Foes poisoned by anything take more from its
+Dive, and at the top rank its tail lashes and poisons a second foe.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Rotting venom      a Dive deals 25% more damage to a poisoned foe
+  35 Wyvern scales      +14% maximum health in all
+  40 Barbed tail        +5 Attack in all
+  45 Deep venom         a Dive deals 40% more damage to a poisoned foe
+  50 Wyvern cunning     +7 Evasion in all
+  55 Power dive         a Dive deals 50% more damage
+  60 Lashing tail       a Dive that lands also lashes the foe beside its
+                        target with the wyvern's tail for half the Dive's
+                        damage, and poisons it
+
+It needs the Wyvern Rider first (<ansi fg="command">help gryphon-rider-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] wyvern-lord confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Gryphon Rider talents (levels 35, 45, 55): Iron Hide (+5 Armor),
+Veteran's Edge (+3 Attack), Shadow Footing (+5 Evasion). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help gryphon-rider-routes</ansi>, <ansi fg="command">help gryphon-rider</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

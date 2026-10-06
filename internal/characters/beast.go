@@ -32,6 +32,16 @@ type BeastInfo struct {
 	BreathEvery         int    // rounds between Breaths (the drake), 0 for none
 	BreathNext          uint64 // the combat round of its next Breath
 	Rallied             int    // Rally heals the Tamer has given it this battle
+	// Phase 39i2: what the elite routes give it.
+	HobbleAt    int  // percent of its health a foe is hobbled below (the warhound)
+	Hunt        bool // a bite on a hobbled foe leaves it exposed (the Packlord's hound)
+	Open        int  // action meter points it starts the battle with
+	Swipe       int  // percent of a blow's damage the foe beside its target takes (the Beastlord's bear)
+	Rise        int  // percent of its health it stands back up with, once a battle (0 for never)
+	RiseUsed    bool // that rising has been spent
+	BreathBurn  bool // foes its Breath strikes are left alight
+	BreathFoes  int  // foes its Breath strikes (0 for the standard three)
+	BreathFirst bool // its first Breath comes in the first round
 }
 
 // NewBeastState is a fresh beast: named, whole.

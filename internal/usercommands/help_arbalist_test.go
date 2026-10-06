@@ -36,7 +36,7 @@ func TestArbalistHelp(t *testing.T) {
 	for alias, topic := range map[string]string{
 		"crossbowman": "arbalist", "piercing bolt": "arbalist", "arbalists": "arbalist", "armor-breaker": "arbalist",
 		"siegebreaker": "arbalist-routes", "sharpshooter": "arbalist-routes", "warden of the wall": "arbalist-routes",
-		"deadeye": "arbalist-routes", "bastion": "arbalist-routes",
+		"deadeye": "deadeye", "bastion": "bastion",
 	} {
 		want, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
