@@ -232,6 +232,13 @@ func (m *mudClient) login(user, pass string) {
 // archetype. It answers the tutorial question and stops there.
 func (m *mudClient) register(user, pass, character, archetypeNumber, archetypeName string, skipTutorial bool) {
 	m.t.Helper()
+	m.registerArriving(user, pass, character, archetypeNumber, archetypeName, skipTutorial, `Town Square`)
+}
+
+// registerArriving is register for a world whose start room is not the Town
+// Square: a skipped tutorial waits for the named room.
+func (m *mudClient) registerArriving(user, pass, character, archetypeNumber, archetypeName string, skipTutorial bool, arrival string) {
+	m.t.Helper()
 	m.expect(`Find out more`, 20*time.Second)
 	m.send("")
 	m.expect(`username \(or "new"\)`, 20*time.Second)
@@ -256,7 +263,7 @@ func (m *mudClient) register(user, pass, character, archetypeNumber, archetypeNa
 	m.answer(`Which archetype will you follow`, archetypeNumber, `Become a `+archetypeName+`\?`)
 	m.answer(`Become a `+archetypeName+`\?`, "yes", `skip the tutorial\? \[yes/no\]`)
 	if skipTutorial {
-		m.answer(`skip the tutorial\? \[yes/no\]`, "yes", `Town Square`)
+		m.answer(`skip the tutorial\? \[yes/no\]`, "yes", arrival)
 	} else {
 		m.answer(`skip the tutorial\? \[yes/no\]`, "no", `Tutorial, stage 1 of 8: Your character`)
 	}
@@ -282,7 +289,18 @@ func freePort(t *testing.T) int {
 	return l.Addr().(*net.TCPAddr).Port
 }
 
+// smokeOptions shape a smoke server's private copy of the world.
+type smokeOptions struct {
+	extraConfig string               // appended to the overrides file (YAML)
+	patch       func(dataDir string) // edits the copied world before it starts
+}
+
 func newSmokeServer(t *testing.T) *smokeServer {
+	t.Helper()
+	return newSmokeServerWith(t, smokeOptions{})
+}
+
+func newSmokeServerWith(t *testing.T, opts smokeOptions) *smokeServer {
 	t.Helper()
 	root, err := os.Getwd()
 	if err != nil {
@@ -312,7 +330,12 @@ func newSmokeServer(t *testing.T) *smokeServer {
 	if err := os.MkdirAll(usersDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	overrides := fmt.Sprintf("Network:\n  TelnetPort: [%d]\n  LocalPort: 0\n  HttpPort: 0\n  HttpsPort: 0\n  SSHPort: 0\nTiming:\n  RoundSeconds: 2\n", s.port)
+	// A dev checkout's saved room instances would shadow the shipped rooms.
+	_ = os.RemoveAll(filepath.Join(dir, "_datafiles", "world", "default", "rooms.instances"))
+	if opts.patch != nil {
+		opts.patch(filepath.Join(dir, "_datafiles", "world", "default"))
+	}
+	overrides := fmt.Sprintf("Network:\n  TelnetPort: [%d]\n  LocalPort: 0\n  HttpPort: 0\n  HttpsPort: 0\n  SSHPort: 0\nTiming:\n  RoundSeconds: 2\n", s.port) + opts.extraConfig
 	if err := os.WriteFile(filepath.Join(dir, "overrides.yaml"), []byte(overrides), 0o644); err != nil {
 		t.Fatal(err)
 	}

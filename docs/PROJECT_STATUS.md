@@ -1,5 +1,47 @@
 # Ashveil Project Status
 
+**Phase 44b complete, in review (2026-10-06): world smoke playtest.** `make
+smoke-world` (`live_smoke_world_test.go`) plays a Warrior that skipped the
+tutorial through the world on a real server: recruiting at the Waymark Inn,
+the Old Kings Road journey (the fallen tree and `travel resume`), a random
+encounter fight and its loot, `gather firewood` and a camp, a restart, a
+salvage at the Frostfang armorer, a sale at the Dunmar market and a night at
+the Dunmar inn; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is its
+own target (about four minutes). Three things are bent in the test's own
+copy of the world only: new characters start at Dunmar's West Gate, the Old
+Kings Road gets an always-springing encounter table (two unarmed brigands),
+and the account is made an admin for the restart so it can teleport to
+Frostfang, which no shipped road reaches. Live bugs it found, each fixed with
+a regression test: (1) **a journey that ended in a room that springs random
+encounters froze the whole server**: `moveAndFinishLocked` held the expedition
+lock while the encounter roll asked the expedition module whether the leader
+could move (the arrival is now queued and heard after the lock is released;
+no shipped room was both a journey end and an encounter room, so only this
+run met it); (2) **a new character skipping the tutorial woke at 11/59 HP**
+(the engine seeds 10 health under the archetype's raised maximum; creation
+now starts at full health); (3) `company status` kept a companion's old level
+after it levelled in a fight (it showed the last save's snapshot); (4) "Your
+company gathers 3 firewood bundle" (now plural); (5) the phase 44 open item,
+"The battle is under way" lingering after a fight's summary: an aim at a foe
+already slain counted as a battle until the next round cleared it, so
+`loot`, `go`, `eat` and the rest were refused (it now does not). The fifth
+fix is read-only (the two reverted attempts cleared the aim); the world smoke
+loot step logs how long it waited, and the tutorial run keeps `doAfterBattle`
+as a safety net. Not fixed, noted for later: Dunmar has a market but no
+merchant or smith, and no road joins it to Frostfang, so gear a Dunmar
+company loots can only be sold or salvaged after a trip no shipped route
+makes; the only two camp rooms (the tutorial campground and the Fork) have free
+deadfall, so gathered firewood bundles have no use at a camp in the shipped
+world (a camp elsewhere would burn one) and markets never buy them; `weather`
+in Dunmar and Frostfang (city biomes) says "You can't tell what the weather
+is like here" because only the forest biome has a weather table (a content
+gap, not a code bug); a camp rest was not played in the world run, because the
+Fork's 15% camp-raid roll would make it depend on dice (the tutorial run covers
+a rest). One observation not reproduced: the prompt briefly showed
+"Overloaded" with 12.9 of 30 kg carried after `camp break` and a step.
+Verification: `make generate`, `make validate`, `go test -race ./...`, `make
+js-lint`, `make smoke`, `make smoke-world`.
+
 **Phase 44 complete: live smoke playtest (2026-10-06):** `make smoke` builds
 the server, copies the shipped world and plays a new Warrior over telnet
 through the whole tutorial (a real camp rest and a real battle), the `help`
@@ -898,6 +940,7 @@ their dependencies and those decisions is the
 | 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
+| 44b | World smoke playtest (`make smoke-world`): journey, encounter fight and loot, gathering, camp, restart, salvage, market and inn on a live server; fixed a journey-arrival deadlock and four other live bugs. Complete, in review | Roadmap 2026-10-06 | 44, 37, 36c, 40a2 |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |

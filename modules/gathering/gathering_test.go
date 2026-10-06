@@ -424,13 +424,14 @@ func TestFirewoodYieldAndWeather(t *testing.T) {
 	w.weapons = []items.Item{{ItemId: 20002}} // an axe
 	w.fieldSmith = true
 	w.start(gathering.Firewood)
-	w.finishAfter(gathering.Firewood)
+	got := w.finishAfter(gathering.Firewood)
 	assert.Equal(t, 5, w.packCount(idFirewood), "an axe doubles it and a Field Smith adds one")
+	assert.Contains(t, got, "5 firewood bundles", "a haul of several reads as a plural (phase 44b live finding)")
 
 	w = newWorld(t, "firewood")
 	w.weather = "rain"
 	w.start(gathering.Firewood)
-	got := w.finishAfter(gathering.Firewood)
+	got = w.finishAfter(gathering.Firewood)
 	assert.Equal(t, 1, w.packCount(idFirewood))
 	assert.Equal(t, 1, w.packCount(idDamp), "heavy rain: half come back damp")
 	assert.Contains(t, got, "damp")
