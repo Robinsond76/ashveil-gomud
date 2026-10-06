@@ -1,3 +1,5 @@
+# Ashveil Project Status
+
 **Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
 a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
 the foe and its row neighbour, the whole row from level 8), Brace (answers
@@ -22,8 +24,6 @@ After the 40a3/40b/40s5 master merge, one race run failed
 21); it passed 8 of 8 reruns and is left for the flaky-test phase (37c).
 Merged after 39b: both neutral lineages share the help tables, recruit
 lists and `DefaultRule` (Samurai strongest, Halberdier crowded).
-
-# Ashveil Project Status
 
 **Phase 40a4 reviewed and merged via [PR #50](https://github.com/Robinsond76/ashveil-gomud/pull/50) (2026-10-06, Opus review thread):** builder decisions (1)-(7) kept as reasoned below; (8) changed. Accepted and fixed: (a) breaking camp, or resting again, between a rest's end and the next round dodged its thieves (decision 8 only favoured a player who knew the trick), so `settleTheft` completes a due rest and resolves its theft first in `camp break` and `camp rest` (regression `TestBreakingCampOrRestingAgainDoesNotDodgeThieves`); (b) fairness/UI check: the only warning was help and a tutorial hint, so starting a rest on a road thieves work without bells now says so, and `Company.Camp.theft_risk` drives a Camp tab line "Thieves work this road" (the old "no gear" line, shown even in safe zones, no longer mentions thieves) (`TestThievesAreWarnedOfAtRestStartAndOnTheCampTab`, browser check); (c) `help camp gear` said "no warning" and "the rest report names what is missing"; reworded to match. Browser check `dock-windows-check.mjs` ran to the end (260 checks). Rejected: none. Follow-ups: a watch is only counted if the leader is still at the camp when the theft resolves (it resolves within a round of the rest, so left as is).
 
