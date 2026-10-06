@@ -100,4 +100,13 @@ const (
 	OathSecond   = "oathsecond"   // also heals the next most hurt ally for half
 	Intimidate   = "intimidate"   // Attack a wounded foe loses against its allies
 	TerrorCrit   = "terrorcrit"   // a critical hit that lands also staggers the target
+
+	// The Halberdier's routes (Phase 39a). Hook and the wider Sweep are the
+	// lineage's own, by level, so they have no key.
+	SweepPct    = "sweeppct"    // percent of a blow's damage each foe a Sweep strikes takes (a Sweeper's 100, else 80)
+	SweepCD     = "sweepcd"     // rounds off Sweep's cooldown
+	BraceCol    = "bracecol"    // Brace answers a blow at anyone in the Halberdier's column, not only itself
+	BraceDown   = "bracedown"   // the held blow knocks the foe down when it hits
+	ChargedMana = "chargedmana" // mana a Charged Sweep spends for lightning on every foe it strikes
+	ChargedDice = "chargeddice" // sides of the Charged Sweep's lightning die (1dN)
 )

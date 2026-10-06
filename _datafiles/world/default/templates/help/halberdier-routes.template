@@ -1,0 +1,38 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">halberdier-routes</ansi>
+
+The Halberdier is a neutral lineage. At level 10 it promotes to one of three
+classes, and any alignment may choose any of them. Each class adds four ranks
+(10, 15, 20, 25); a talent adds more (<ansi fg="command">help talents</ansi>).
+
+<ansi fg="yellow-bold">Sweeper</ansi>
+
+  10 Full sweep         Sweep strikes at full damage instead of 80%
+  15 Quick sweep        Sweep is ready after 2 rounds instead of 3
+  20 Practiced hands    +2 Attack
+  25 Heavy edge         +1 damage on every blow
+
+<ansi fg="yellow-bold">Vanguard</ansi>
+
+  10 Hold the line      Brace answers the first blow struck at anyone in its
+                        column, and the held blow knocks the foe down when it
+                        hits
+  15 Parrying drill     +4 parry chance
+  20 Hardened guard     +4 armor
+  25 Unmoved            +8% maximum health
+
+<ansi fg="yellow-bold">Valkyrie</ansi>
+
+  10 Charged Sweep      a Sweep spends 8 mana to add 1d6 lightning, which
+                        ignores armor, to every foe it hits (the Sweep goes
+                        on without it when mana is short); your mana pool
+                        doubles
+  15 Rising storm       the lightning is 1d8
+  20 Gathered storm     the lightning is 1d10
+  25 Deep reserves      your mana pool is two and a half times its base
+
+The elite classes of these routes (Reaper, Linebreaker, Tempest Lancer) are
+still to come; until then a Halberdier keeps its advanced class's ranks.
+
+Sweep Drill (a talent) makes Sweep ready a round sooner; take it once.
+
+See also: <ansi fg="command">help halberdier</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help abilities</ansi>.

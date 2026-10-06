@@ -161,6 +161,7 @@ and your company's health.
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">help hexes</ansi>        a Witch's hexes, and how they land
+  <ansi fg="command">help halberdier</ansi>   a Halberdier's sweep, brace and hook
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades

@@ -33,7 +33,8 @@ companion without one can be given one, once, with
 expedition skills they use for the company as they level up
 (<ansi fg="command">help specialists</ansi>), and their spells and role in a battle:
 a cleric heals, a wizard casts, a witch hexes (<ansi fg="command">help strategy</ansi>), and a warrior
-tackles, a rogue strikes an opening, a ranger aims a shot (<ansi fg="command">help abilities</ansi>).
+tackles, a rogue strikes an opening, a ranger aims a shot, a halberdier sweeps a row
+(<ansi fg="command">help halberdier</ansi>, <ansi fg="command">help abilities</ansi>).
 
 Wizards start with Magic Missile, clerics with Minor Heal and witches with
 Slumber, the spells they cast in battle (<ansi fg="command">help witch</ansi>).
@@ -53,6 +54,7 @@ neutral or evil route, with ranks and talents of its own (<ansi fg="command">hel
   Cleric    light    none           staffs, rods and maces; a holy symbol
   Wizard    light    none           any
   Witch     light    none           any
+  Halberdier medium  none           glaives and spears
 
 A cleric's holy symbol, carried in the off hand, adds 5% to every heal.
 <ansi fg="command">archetype</ansi> shows each class's health and its Attack and Evasion a level

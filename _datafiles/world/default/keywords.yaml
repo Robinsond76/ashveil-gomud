@@ -38,6 +38,8 @@ help:
       - bury
       - archetype
       - witch
+      - halberdier
+      - halberdier-routes
       - classes
       - promotion
       - talents
@@ -293,6 +295,8 @@ help-aliases:
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   witch:            [witches, hedge-witch, hexcraft]
+  halberdier:       [halberdiers, sweep, brace, hook, crowded]
+  halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]
   specialists:      [specialist, company-specialists, expedition-skills, utilities]

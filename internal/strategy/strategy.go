@@ -45,10 +45,11 @@ const (
 	Healers   Rule = "healers"   // healers, one chanting a heal first, then the casters order (Phase 35e)
 	Assist    Rule = "assist"    // the player's own target (FF12's "party leader's target")
 	Defend    Rule = "defend"    // the foe striking our most hurt (FF12's "foe targeting ally")
+	Crowded   Rule = "crowded"   // the foe in the row with the most foes, for a sweep (Phase 39a)
 )
 
 // Rules in the order they are listed.
-var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend}
+var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend, Crowded}
 
 var roleAliases = map[string]Role{
 	"fight": Fighter, "fighter": Fighter, "melee": Fighter,
@@ -64,6 +65,7 @@ var ruleAliases = map[string]Rule{
 	"weak": Weakest, "strong": Strongest, "hurt": Wounded,
 	"near": Nearest, "front": Nearest, "far": Furthest, "back": Furthest,
 	"focus": Assist, "protect": Defend,
+	"row": Crowded, "rows": Crowded, "sweep": Crowded,
 	"mages": Casters, "spellcasters": Casters,
 	"healer": Healers, "medics": Healers,
 }
@@ -126,7 +128,16 @@ func DefaultRole(archetype string) Role {
 // it is changed: its archetype's role, and the weakest foe it can reach
 // (the rule every fight used before 32d).
 func Default(archetype string) Strategy {
-	return Strategy{Role: DefaultRole(archetype), Rule: Weakest}
+	return Strategy{Role: DefaultRole(archetype), Rule: DefaultRule(archetype)}
+}
+
+// DefaultRule is an archetype's target rule: the weakest foe it can reach,
+// except a halberdier, which goes for the most crowded row (Phase 39a).
+func DefaultRule(archetype string) Rule {
+	if strings.EqualFold(strings.TrimSpace(archetype), "halberdier") {
+		return Crowded
+	}
+	return Weakest
 }
 
 // Resolve fills blank fields from the archetype's default.

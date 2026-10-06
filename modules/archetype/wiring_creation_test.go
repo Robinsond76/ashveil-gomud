@@ -2,6 +2,7 @@ package archetype
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -76,7 +77,7 @@ func TestWiringStartArchetypeStepGrantsEachKit(t *testing.T) {
 			// Answer by number for even entries, by name for odd ones.
 			response := choice.Name
 			if i%2 == 0 {
-				response = []string{"1", "2", "3", "4", "5"}[i]
+				response = strconv.Itoa(i + 1)
 			}
 			answer(t, u, response)
 			assert.Contains(t, pending(u), "Become a "+choice.Name)

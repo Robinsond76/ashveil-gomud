@@ -1,0 +1,53 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">halberdier</ansi>
+
+The Halberdier is a polearm fighter who wins by crowding. Its glaive strikes
+past the front, and its Sweep cuts several foes with one swing, so a company
+facing a packed row loses its enemies faster than a single-target fighter
+could cut them down. Against a lone foe it is a plain, sturdy fighter. It is
+a neutral class: it has no alignment gate to meet.
+
+<ansi fg="yellow-bold">What the Halberdier is</ansi>
+
+  Health      7 to start, 0.9 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 1 and Evasion 0.9 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        medium armor, no shield, a glaive or a spear (<ansi fg="command">help armor</ansi>)
+  Stats       strength 4, vitality 3, speed 2, perception 1 (<ansi fg="command">help growth</ansi>)
+  Starts with the Polearm skill, which its abilities draw on
+  Starter kit a glaive, a tunic, leggings, food, a waterskin and a knapsack
+
+<ansi fg="yellow-bold">How a Halberdier fights</ansi>
+
+A Halberdier's strategy rule is <ansi fg="command">crowded</ansi> by default: it aims at the weakest foe
+in the row with the most foes (<ansi fg="command">help strategy</ansi>). Its abilities need no command
+and use no mana (<ansi fg="command">help abilities</ansi>):
+
+  <ansi fg="yellow-bold">Sweep</ansi>   one swing strikes its foe and the nearest foe beside it in the same
+          row, each at 80% damage. From level 8 it strikes the whole row. It
+          takes the whole turn and is ready again after 3 rounds. It is used
+          when two or more foes stand in the target's row.
+  <ansi fg="yellow-bold">Brace</ansi>   from level 3, it holds its turn with the glaive set. The first foe
+          that strikes into its place in the line is answered at once with
+          a blow at 125% damage. If no foe strikes, the turn is lost. Used
+          when Sweep is not ready and a foe is striking at its place.
+  <ansi fg="yellow-bold">Hook</ansi>    from level 6, a glaive hit has a 20% chance (40% from level 20) to
+          drag a leaping foe (a wolf, a hound, a spider) off its feet. A
+          foe on the ground can't dodge or block.
+
+Each Sweep blow is a real blow: it can miss, be dodged, blocked or parried,
+and it can wound, which can break a chant (<ansi fg="command">help interrupts</ansi>). Turn abilities off
+with <ansi fg="command">strategy [member] abilities off</ansi>.
+
+<ansi fg="yellow-bold">Routes</ansi>
+
+At level 10 a Halberdier promotes to a Sweeper, a Vanguard or a Valkyrie. All
+three are open at any alignment (<ansi fg="command">help halberdier-routes</ansi>).
+
+<ansi fg="yellow-bold">Companions</ansi>
+
+A Halberdier companion fights the same way. Recruits are hired like any other
+(<ansi fg="command">help company</ansi>). Put them in the front or middle rank, facing rows of enemies:
+the more foes in a row, the more a Sweep is worth.
+
+Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">help halberdier-routes</ansi>.
+
+See also: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help combat</ansi>.

@@ -21,9 +21,9 @@ and each companion's. A strategy is a role (what they do) and a target rule
             ward is a member you name, else whoever is most hurt, within
             one column of it (<ansi fg="command">help guardian</ansi>).
 
-Whatever its role, a warrior, rogue, or ranger also uses its class
-ability on its own when the moment comes: a tackle, an opening strike, or
-an aimed shot (<ansi fg="command">help abilities</ansi>).
+Whatever its role, a warrior, rogue, ranger or halberdier also uses its class
+ability on its own when the moment comes: a tackle, an opening strike, an
+aimed shot, or a sweep (<ansi fg="command">help abilities</ansi>).
 
 A promoted healer or caster also casts its class spells on its own (Greater Heal,
 Rejuvenation, Grove, Ward, Barkskin, Bless, Siphon, and the summons of a Hierarch
@@ -52,6 +52,8 @@ heals you even when you are down and bleeding out.
   <ansi fg="command">wounded</ansi>    the most badly hurt foe, to finish it
   <ansi fg="command">nearest</ansi>    the front-most foe
   <ansi fg="command">furthest</ansi>   the back-most foe
+  <ansi fg="command">crowded</ansi>    the weakest foe in the row with the most foes (a halberdier's default;
+             also <ansi fg="command">row</ansi>, <ansi fg="command">sweep</ansi>)
   <ansi fg="command">leader</ansi>     their leader, the toughest of them
   <ansi fg="command">casters</ansi>    their spell-casters, one chanting a spell first
   <ansi fg="command">healers</ansi>    their healers first, one chanting a heal before an idle one

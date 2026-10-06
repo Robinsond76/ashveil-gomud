@@ -13,7 +13,7 @@ var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wi
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Equal(t, baseLineages, Lineages())
+	assert.Subset(t, Lineages(), baseLineages) // the neutral lineages (39a+) have their own tests
 	for _, l := range baseLineages {
 		adv := Advanced(l)
 		require.Len(t, adv, 3, l)
