@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -53,6 +54,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Decide every player's battle first; battles opening and ending open
 	// and end their fights on the combat event stream (29b).
 	battlePass()
+
+	// Ashveil Phase 39d: a Doll Master's dolls stand for the battle.
+	dollPass()
 
 	// Ashveil Phase 30c2: spent guards come back, one per two combat
 	// rounds.
@@ -170,7 +174,7 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 		user.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 		// Ashveil Phase 33e: a tackle took this round's turn.
-		if !extra && abilityTurns[caster{userId: userId}] {
+		if !extra && abilityTurns[caster{userId: userId}] || dollTurns[caster{userId: userId}] {
 			continue
 		}
 
@@ -308,7 +312,7 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 								if defMob.Character.Health <= 0 {
 									defMob.Character.EndAggro()
 									events.AddToQueue(events.AggroChanged{MobInstanceId: defMob.InstanceId, RoomId: defMob.Character.RoomId})
-								} else if defMob.Character.Aggro == nil {
+								} else if defMob.Character.Aggro == nil && !dolls.IsDoll(defMob) {
 									defMob.PreventIdle = true
 									defMob.Command(fmt.Sprintf("attack @%d", user.UserId)) // @ means player
 								}
@@ -439,7 +443,7 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			// If a mob attacks a player, check whether player has a charmed mob helping them, and if so, they will move to attack back
 			room := rooms.LoadRoom(roomId)
 			for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
-				if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
+				if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil && !isDollInstance(instanceId) { // Phase 39d: a doll has no aim of its own
 					if charmedMob.Character.IsCharmed(defUser.UserId) && charmedMob.Character.Aggro == nil {
 
 						// Set aggro to something to prevent multiple attack triggers on this conditional
@@ -702,7 +706,7 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			}
 
 			// Mobs get aggro when attacked
-			if defMob.Character.Aggro == nil {
+			if defMob.Character.Aggro == nil && !dolls.IsDoll(defMob) { // Phase 39d: a doll has no aim of its own
 				defMob.PreventIdle = true
 				// If not in the same room,
 				// find an exit to the room of the player to move to
@@ -814,7 +818,7 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 		mob.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 		// Ashveil Phase 33e: a tackle took this round's turn.
-		if !extra && abilityTurns[caster{mobId: mobId}] {
+		if !extra && abilityTurns[caster{mobId: mobId}] || dollTurns[caster{mobId: mobId}] {
 			continue
 		}
 
@@ -907,7 +911,7 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 
 								if defMob.Character.Health <= 0 {
 									defMob.Character.EndAggro()
-								} else if defMob.Character.Aggro == nil {
+								} else if defMob.Character.Aggro == nil && !dolls.IsDoll(defMob) {
 									defMob.PreventIdle = true
 									defMob.Command(fmt.Sprintf("attack #%d", mob.InstanceId)) // # means mob
 								}
@@ -1101,7 +1105,7 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 			// If a mob attacks a player, check whether player has a charmed mob helping them, and if so, they will move to attack back
 			room := rooms.LoadRoom(roomId)
 			for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
-				if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
+				if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil && !isDollInstance(instanceId) { // Phase 39d: a doll has no aim of its own
 					if charmedMob.Character.IsCharmed(defUser.UserId) && charmedMob.Character.Aggro == nil {
 						// This is set to prevent it from triggering more than once
 						charmedMob.Character.Aggro = &characters.Aggro{
@@ -1297,7 +1301,7 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 			}
 
 			// Mobs get aggro when attacked
-			if defMob.Character.Aggro == nil {
+			if defMob.Character.Aggro == nil && !dolls.IsDoll(defMob) { // Phase 39d: a doll has no aim of its own
 				defMob.PreventIdle = true
 				defMob.Character.Aggro = &characters.Aggro{
 					Type: characters.DefaultAttack,
@@ -1416,7 +1420,9 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 		mobsHandled[mobId] = struct{}{}
 
 		if mob := mobs.GetInstance(mobId); mob != nil {
-			if mob.Character.Health < 1 {
+			if mob.Character.Health < 1 && dolls.IsDoll(mob) {
+				dollFalls(mob) // Phase 39d: a doll breaks (or is spliced), it doesn't die
+			} else if mob.Character.Health < 1 {
 
 				outcome := combatstream.OutcomeSlain
 				if mob.Practice {
