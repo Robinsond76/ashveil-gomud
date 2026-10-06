@@ -102,6 +102,10 @@ type Summary struct {
 	// Tactics is the player's saved company tactics (Phase 30c), resolved
 	// against the defaults.
 	Tactics strategy.Tactics
+	// HealersFirst is true while the company's focus is the level's default
+	// and the leader is level 5 or more (Phase 35e): it goes for an enemy
+	// healer first whenever one is in reach.
+	HealersFirst bool
 }
 
 // sources are the providers a summary reads; natives unless a test swaps
@@ -208,6 +212,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			s.Tactics.Focus = f
 		}
 	}
+	s.HealersFirst = strategy.HealersDefault(uid, c.Level)
 	if src.archetypeReporting() {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {

@@ -23,7 +23,7 @@ import (
 // focus may change, for that battle only, one order a round
 // (internal/battle); the next round's upkeep turns everyone at once.
 
-const tacticsUsage = `Usage: company tactics | company tactics focus <none|leader|casters|nearest|weakest|strongest|wounded|default> | company tactics healing <10-90> | company tactics patch <50-100> | company tactics default`
+const tacticsUsage = `Usage: company tactics | company tactics focus <none|leader|casters|healers|nearest|weakest|strongest|wounded|default> | company tactics healing <10-90> | company tactics patch <50-100> | company tactics default`
 
 // tacticsStillTurning answers a second order before the first is carried
 // out, or one given before the battle has begun.
@@ -73,7 +73,11 @@ func (m *CompanyModule) tactics(user *users.UserRecord, room *rooms.Room, args [
 		}
 		if focus == "" {
 			def, _ := strategy.FocusFor(user.UserId, user.Character.Level)
-			return fmt.Sprintf("Your company's focus is back to the default for your level: %s (%s).", def, strategy.DescribeFocus(def))
+			msg := fmt.Sprintf("Your company's focus is back to the default for your level: %s (%s).", def, strategy.DescribeFocus(def))
+			if strategy.HealersDefault(user.UserId, user.Character.Level) {
+				msg += " Whenever the enemy has a healer within reach, everyone goes for it first."
+			}
+			return msg
 		}
 		return fmt.Sprintf("Your company's focus is now %s: %s.", focus, strategy.DescribeFocus(focus))
 	case "healing", "heal":
@@ -193,6 +197,8 @@ func focusWords(rule strategy.Rule) string {
 		return "their leader"
 	case strategy.Casters:
 		return "their spell-casters"
+	case strategy.Healers:
+		return "their healers"
 	case strategy.Nearest:
 		return "the nearest of them"
 	case strategy.Strongest:
@@ -215,6 +221,10 @@ func (m *CompanyModule) tacticsView(user *users.UserRecord) string {
 		note = " [default at your level]"
 	}
 	fmt.Fprintf(&b, "  Focus:   %s (%s)%s\n", focus, strategy.DescribeFocus(focus), note)
+	// Phase 35e: from level 5 the default turns on an enemy healer first.
+	if strategy.HealersDefault(user.UserId, user.Character.Level) {
+		b.WriteString("           [default: whenever the enemy has a healer within reach, everyone goes for it first]\n")
+	}
 	fmt.Fprintf(&b, "  Healing: your healers heal anyone below %d%% of their health\n", t.Healing)
 	fmt.Fprintf(&b, "  Patch:   after a battle your healers patch everyone up to %d%% of their wound limit\n", t.Patch)
 	if _, inBattle := battle.Current(user.UserId); inBattle {

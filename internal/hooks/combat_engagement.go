@@ -270,7 +270,9 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 			emitTargetChange(userRef(leader), mobRefById(previous), mobRefById(newId), room.RoomId)
 			leader.Character.SetAggro(0, newId, attackType(leader.Character.Aggro))
 			events.AddToQueue(events.AggroChanged{UserId: leader.UserId, RoomId: leader.Character.RoomId})
-			if byRule {
+			if enemyparty.HealersDefault(leader.UserId) && enemyHealer(newId) {
+				leader.SendText(healerMarked(mobTag(mobName(newId))))
+			} else if byRule {
 				leader.SendText(turnsToward(`You`, mobTag(mobName(newId))))
 			} else {
 				leader.SendText(leaderTurnText(previous, newId, alive))
@@ -295,6 +297,12 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 		room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newId))))
 	}
+}
+
+// enemyHealer reports whether the mob instance is a healer (Phase 35e).
+func enemyHealer(instanceId int) bool {
+	m := mobs.GetInstance(instanceId)
+	return m != nil && strategy.Role(m.EnemyRole()) == strategy.Healer
 }
 
 // retarget decides a company member's new party target. ok=false means
@@ -611,6 +619,7 @@ func (s companySide) memberFoes(candidates []engagement.Combatant, keys []compan
 			StrikesPct: -1,
 			Chanting:   char.Aggro != nil && char.Aggro.Type == characters.SpellCast,
 			Caster:     role == strategy.Healer || role == strategy.Caster,
+			Healer:     role == strategy.Healer,
 		})
 	}
 	return out
