@@ -42,7 +42,7 @@ func init() {
 			rank(40, "Parrying wall", "+4 parry chance", Parry, 8),
 			rank(45, "Deeper line", "its column takes 15% less damage", ColumnGuard, 15),
 			rank(50, "Unbroken", "+8% maximum health", HealthPct, 16),
-			rank(55, "Iron wall", "+4 armor", Armor, 12),
+			rank(55, "Iron wall", "+4 armor and +3 Attack", Armor, 12, Attack, 3),
 			rank(60, "Twin brace", "Brace answers the first two foes that strike into its column", BraceTwice, 1),
 		}})
 

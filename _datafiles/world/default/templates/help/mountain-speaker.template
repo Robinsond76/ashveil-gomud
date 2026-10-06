@@ -1,0 +1,29 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mountain-speaker</ansi>
+
+The Mountain Speaker is the neutral elite of the Earthspeaker. Its Stoneskin
+grows heavier, shakes the ground under the foes' front row, and at the top
+rank covers a whole row of allies.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Tremor             when its Stoneskin lands, the ground shakes under the
+                        foes' front row: each has a 25% chance to be knocked
+                        down (a boss 10%)
+  35 Granite            Stoneskin gives +25 armor
+  40 Steady stance      allies in its row take 8% less damage
+  45 Deep tremor        Tremor knocks a foe down 35% of the time (a boss 15%)
+  50 Mountain's weight  Stoneskin gives +30 armor
+  55 Deep reserves      +25% maximum mana
+  60 Stone cloak        Stoneskin covers a whole row
+
+It needs the Earthspeaker first (<ansi fg="command">help shaman-routes</ansi>) and keeps every rank of it. At level 30
+a character that holds it promotes with <ansi fg="command">class promote [member] mountain-speaker confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Shaman talents (levels 35, 45, 55): Deep Reserves (+10% maximum mana),
+Spell Edge (+10% spell damage), Focused Will (blows break your chant 25% less
+often). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

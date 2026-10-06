@@ -445,7 +445,7 @@ func init() {
 			rank(40, "Bannerline", "allies in its row take 8% less damage", AuraResolv, 8),
 			rank(45, "Lacquered armor", "+4 armor", Armor, 4),
 			rank(50, "Rallying standard", "allies in its row gain +6 Evasion", AuraEvade, 6),
-			rank(55, "Hardened command", "+10% maximum health", HealthPct, 10),
+			rank(55, "Hardened command", "+10% maximum health and +3 Attack", HealthPct, 10, Attack, 3),
 			rank(60, "Banner of war", "allies in its row gain +5 Attack while it stands", AuraAttack, 5),
 		}})
 	register(Class{ID: "ronin", Name: "Ronin", Lineage: "samurai", Tier: TierAdvanced, Gate: GateAny,
@@ -481,10 +481,10 @@ func init() {
 		Role: "Rain that lasts the whole battle, and lightning that chains through a whole row",
 		Ranks: []Rank{
 			rank(30, "Endless rain", "its Rain lasts the whole battle", RainEndless, 1),
-			rank(35, "Rolling storm", "+10% spell damage", SpellPct, 30),
+			rank(35, "Rolling storm", "+20% spell damage", SpellPct, 40),
 			rank(40, "Storm thrift", "spells cost 15% less mana", SpellCost, 15),
 			rank(45, "Full fork", "the second foe takes all of Lightning's damage", Chain, 100),
-			rank(50, "Tempest", "+10% spell damage", SpellPct, 40),
+			rank(50, "Tempest", "+20% spell damage", SpellPct, 60),
 			rank(55, "Deep reserves", "+25% maximum mana", ManaPct, 25),
 			rank(60, "Storm wall", "Lightning also strikes every other foe in its target's row", ChainRow, 1, Chain, 100),
 		}})
@@ -502,9 +502,9 @@ func init() {
 			rank(30, "Long weather", "its weather calls last four rounds longer than a Shaman's (seven in all)", WeatherLong, 4),
 			rank(35, "Mother's veil", "Fog gives allies +10 Evasion", FogEvade, 10),
 			rank(40, "Deep reserves", "+25% maximum mana", ManaPct, 25),
-			rank(45, "Spell edge", "+10% spell damage", SpellPct, 10),
+			rank(45, "Spell edge", "+25% spell damage", SpellPct, 25),
 			rank(50, "Heavy mist", "Fog gives allies +12 Evasion", FogEvade, 12),
-			rank(55, "Hearth's hide", "+4 armor", Armor, 4),
+			rank(55, "Hearth's hide", "+4 armor and +20% spell damage", Armor, 4, SpellPct, 45),
 			rank(60, "Hidden ranks", "while its Fog lasts, foes cannot reach the company's back row with extended reach", FogHides, 1),
 		}})
 	register(Class{ID: "earthspeaker", Name: "Earthspeaker", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,

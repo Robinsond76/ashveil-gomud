@@ -376,6 +376,7 @@ func golemKnock(master actor, d *mobs.Mob, foe *mobs.Mob) {
 	events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`})
 	master.holder.say(fmt.Sprintf(`The doll's blow knocks %s down.`, mobHolder(foe).tag()),
 		`The doll's blow knocks `+verbatim(mobHolder(foe).tag())+` down.`, ` (knocked down)`)
+	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: master.char.RoomId, Source: master.ref, Target: mobRef(foe), Status: `Hammer blow`, Outcome: combatstream.OutcomeSucceeded})
 }
 
 // dollMasterOf is the character that drives a doll, nil when it is gone.

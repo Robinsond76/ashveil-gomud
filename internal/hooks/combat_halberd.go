@@ -399,6 +399,7 @@ func stormstruck(a actor, t *mobs.Mob) {
 	events.AddToQueue(events.Buff{MobInstanceId: t.InstanceId, BuffId: status.Paralyzed, Source: `combat`, Triggers: 2})
 	a.holder.say(fmt.Sprintf(`The lightning locks %s rigid.`, mobHolder(t).tag()),
 		`The lightning locks `+verbatim(mobHolder(t).tag())+` rigid.`, ` (paralyzed)`)
+	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: a.char.RoomId, Source: a.ref, Target: mobRef(t), Status: `Stormstruck`, Outcome: combatstream.OutcomeSucceeded})
 }
 
 // useBrace is a Brace: the whole turn, and a blow held for the first foe

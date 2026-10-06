@@ -1,0 +1,29 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">kenshi</ansi>
+
+The Kenshi is the neutral elite of the Ronin: the swordsman who fights on
+alone. Every fallen ally sharpens its blade, it cannot be knocked down when it
+is the last one standing, and Zanshin follows every kill.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Last stand         it cannot be knocked down while it is the last of its
+                        company standing
+  35 Grim tally         +20% damage for each fallen ally
+  40 Cold edge          +4 Attack
+  45 Lone wolf          +6 Evasion
+  50 Deeper tally       +25% damage for each fallen ally
+  55 Death's eye        +5% critical chance
+  60 Endless stillness  Zanshin works every time it fells a foe, not once a
+                        round
+
+It needs the Ronin first (<ansi fg="command">help samurai-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] kenshi confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Samurai talents (levels 35, 45, 55): Razor's Edge (+5% critical chance
+on every blow), Quick Hands (starts a battle with 15 points on its action
+meter), Shadow Footing (+5 Evasion). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.
