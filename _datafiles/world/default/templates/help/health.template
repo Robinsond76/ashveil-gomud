@@ -41,6 +41,7 @@ for each level through {{ config "GamePlay.Progression.HPFullLevels" }}, a littl
 
   <ansi fg="yellow">Class</ansi>       <ansi fg="yellow">head start</ansi>   <ansi fg="yellow">a level to 20</ansi>   <ansi fg="yellow">level 1</ansi>   <ansi fg="yellow">level 60</ansi>
   Warrior     10           1               59        88
+  Halberdier  7            0.9             55        82
   Ranger      6            0.8             54        78
   Samurai     6            0.85            54        79
   Rogue       4            0.7             52        73

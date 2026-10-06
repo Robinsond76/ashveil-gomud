@@ -82,7 +82,9 @@ type companyMember struct {
 	Class string `json:"class,omitempty"`
 	// ClassName is the class's display name (e.g. "Dread Knight"), sent with
 	// Class so the company list and battle caption can name it.
-	ClassName string       `json:"class_name,omitempty"`
+	ClassName string `json:"class_name,omitempty"`
+	// Lineage is its base archetype id (Phase 40c), for the map sprite.
+	Lineage   string       `json:"lineage,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -211,6 +213,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 		out.Archetype = strPtr(m.Archetype)
 	}
 	out.Class = m.Class
+	if !m.Leader {
+		out.Lineage = m.Lineage
+	}
 	if c, ok := classes.Get(m.Class); ok && m.Class != "" {
 		out.ClassName = c.Name
 	}

@@ -102,7 +102,7 @@ func TestCompanyCampAlliedOnly(t *testing.T) {
 
 	camps := map[int]camping.CampState{
 		94961: {HasCamp: true, Here: true, RoomID: 11, FireLit: true},
-		94962: {HasCamp: true, RoomID: 22, Resting: true},
+		94962: {HasCamp: true, RoomID: 22, Resting: true, Embers: true, Tent: true},
 		94963: {HasCamp: true, RoomID: 11}, // same room as mine, not in my party
 	}
 	state := func(uid, _ int, _ []string) (camping.CampState, bool) { return camps[uid], true }
@@ -115,7 +115,7 @@ func TestCompanyCampAlliedOnly(t *testing.T) {
 	require.NoError(t, json.Unmarshal(extra.build(me), &got))
 	assert.Equal(t, 11, got.RoomID)
 	require.Len(t, got.AlliedCamps, 1)
-	assert.Equal(t, alliedCamp{RoomID: 22, Leader: "Ally", Resting: true}, got.AlliedCamps[0])
+	assert.Equal(t, alliedCamp{RoomID: 22, Leader: "Ally", Resting: true, Embers: true, Tent: true}, got.AlliedCamps[0])
 
 	// A player with no party sees no allied camps, as an empty list.
 	require.NoError(t, json.Unmarshal(extra.build(stranger), &got))

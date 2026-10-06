@@ -12,12 +12,12 @@ var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wi
 
 // neutralLineages have no good or evil route (Phase 39b): every route is open
 // to any alignment, at level 10 and level 30.
-var neutralLineages = []string{"samurai"}
+var neutralLineages = []string{"halberdier", "samurai"}
 
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Equal(t, []string{"cleric", "ranger", "rogue", "samurai", "warrior", "witch", "wizard"}, Lineages())
+	assert.Equal(t, []string{"cleric", "halberdier", "ranger", "rogue", "samurai", "warrior", "witch", "wizard"}, Lineages())
 	for _, l := range baseLineages {
 		adv := Advanced(l)
 		require.Len(t, adv, 3, l)
