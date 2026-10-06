@@ -81,6 +81,7 @@ help:
       - inn
       - cooking
       - resources
+      - worldmap
     communication:
       - emote
       - say
@@ -313,6 +314,7 @@ help-aliases:
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   camp:             [camping, campfire]
+  worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]

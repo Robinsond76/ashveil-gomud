@@ -1,5 +1,34 @@
 # Ashveil Project Status
 
+**Phase 40b built: map sprites in the web client (2026-10-06), PR pending review:** the Map
+window draws you as your class sprite (chain: current class, lineage,
+`adventurer`, then the classic red square), a gold here-ring under you and the
+company badge (members present with the leader, hidden alone), all drawn above
+the terrain so you never blend in. Moves walk tile to tile facing the way you
+went (up/down/side, west mirrored), queue at most 2 steps behind and then snap;
+jumps (recall, teleport) do not walk; level or zone changes snap and fade in.
+Your camp draws as a tent with fire, smoke and a resting mark, `inn-rest` while
+resting at an inn; camps of your **party** draw as `tent-ally`; no other
+company's camp is ever sent or drawn. Party members with a known class draw as
+that class at 75% with an ally pennant, else stay hearts. Server: `Char.Info`
+and `Party` vitals gain `lineage` and `classid`; `Company.Camp` gains
+`room_id` and `allied_camps` (party members' camps only, regression-tested with
+a same-room outsider). New `static/js/sprites.js` loader (manifest, status,
+fallback, redraw) for 40c and later. Settings: Sprites and Camps. Help:
+`help worldmap` (aliases `map window`, `tile map`, `world map`), indexed, linked
+from `help webclient`, `help camp` and `help map`; Camp tutorial hint. Check:
+`scripts/browser/map-check.mjs` (facings, queue, badge, camp, allies,
+sprites-off, missing image); screenshot `screens/40b-map.png`.
+Decisions (delegated, with reasons): sprite scale is the nearest whole multiple
+of 32 px (half, 16 px, when zoomed out below a 16 px tile) so pixels stay
+square; `inn-rest` shows when the camp tile is `here`, an inn, and resting
+(`Company.Camp` has no separate inn-stay field, adding one is not worth a new
+payload); the unit walks on its own queue at 200 ms a tile while the camera
+keeps its existing ease; allied camps refresh with the company feed's changed-
+payload sends (no new event); the sprite loader does not yet replace the
+battle screen's own loader (follow-up, no behaviour change). Not changed: other
+players do not appear on the map, no race variants (owner deferrals).
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene

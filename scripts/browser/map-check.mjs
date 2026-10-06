@@ -1,0 +1,222 @@
+// Phase 40b browser check: drives the map window (window-map.js and the
+// shared sprite loader, through map-harness.html with the real web client
+// core) in Chromium with Playwright: the class sprite, its facing and walk
+// queue, the company badge, camp markers and the settings.
+//
+//   NODE_PATH=$(npm root -g) node scripts/browser/map-check.mjs [screenshot.png]
+import { createRequire } from 'node:module';
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
+const { chromium } = require('playwright');
+const here = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(here, '../..');
+const shot = process.argv[2];
+
+let failures = 0;
+function check(ok, what) {
+  if (ok) { console.log('ok   ' + what); } else { failures++; console.log('FAIL ' + what); }
+}
+
+// The sprite manifest is fetched, so serve the repository over HTTP.
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json' };
+const server = http.createServer((req, res) => {
+  if (req.url === '/favicon.ico') { res.writeHead(204); res.end(); return; }
+  const file = path.join(root, decodeURIComponent(req.url.split('?')[0]));
+  if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
+  res.writeHead(200, { 'content-type': types[path.extname(file)] || 'application/octet-stream' });
+  fs.createReadStream(file).pipe(res);
+});
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+const url = 'http://127.0.0.1:' + server.address().port + '/scripts/browser/map-harness.html';
+
+// A 5 x 3 field of rooms, ids 1 + x + 5*y at grid (x, y), z 0, in one zone.
+const W = 5, H = 3;
+const id = (x, y) => 1 + x + W * y;
+function roomInfo(x, y, z = 0, zone = 'Test') {
+  const exitsv2 = {};
+  const add = (name, dx, dy) => {
+    const nx = x + dx, ny = y + dy;
+    if (z === 0 && nx >= 0 && nx < W && ny >= 0 && ny < H) { exitsv2[name] = { num: id(nx, ny), dx, dy, dz: 0 }; }
+  };
+  add('north', 0, -1); add('south', 0, 1); add('east', 1, 0); add('west', -1, 0);
+  return { num: z === 0 ? id(x, y) : 100 + id(x, y), area: zone, coords: [zone, x, y, z].join(','), environment: 'forest', exitsv2, details: [] };
+}
+const world = { biomes: { forest: { color: { bg: '#2f4f2f' } } }, rooms: [] };
+for (let y = 0; y < H; y++) { for (let x = 0; x < W; x++) { world.rooms.push(roomInfo(x, y)); } }
+
+const member = (key, name, status) => ({ key, id: 0, name, status, level: 5, archetype: 'Warrior', cell: null, chemistry: null, strategy: null });
+const company = {
+  leader: member('leader', 'Wren', 'present'),
+  members: [member('companion:1', 'Oswin', 'present'), member('companion:2', 'Brant', 'present'),
+            member('companion:3', 'Ysolde', 'dead'), member('companion:4', 'Tamsin', 'separated')],
+};
+
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined });
+async function open(viewport, settings, abort) {
+  const page = await browser.newPage({ viewport });
+  page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
+  page.on('console', m => {
+    if (m.type() !== 'error') { return; }
+    if (abort && /Failed to load resource/.test(m.text())) { return; }
+    failures++; console.log('FAIL console error: ' + m.text());
+  });
+  if (abort) { await page.route(abort, r => r.abort()); }
+  await page.goto(url);
+  await page.evaluate(s => { localStorage.clear(); if (s) { localStorage.setItem('gomud_map_settings', JSON.stringify(s)); } }, settings || null);
+  await page.reload();
+  return page;
+}
+const gmcp = (page, ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
+const state = page => page.evaluate(() => window.MapView.state());
+const settle = page => page.waitForFunction(() => window.MapView.state().spriteDrawn && !window.MapView.state().walking, null, { timeout: 5000 });
+const moveTo = (page, x, y) => gmcp(page, 'Room', { Info: roomInfo(x, y) });
+const tick = (page, ms = 300) => page.waitForTimeout(ms);
+
+async function start(page) {
+  await gmcp(page, 'World.Map', world);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await moveTo(page, 2, 1);
+  await settle(page);
+}
+// The canvas colour at a room's centre pixel, to see what a layer drew.
+const pixelAt = (page, gx, gy) => page.evaluate(([x, y]) => {
+  const c = document.getElementById('map-2d-canvas');
+  const ctx = c.getContext('2d');
+  // the room centre is the canvas centre once the camera has eased to the player
+  return Array.from(ctx.getImageData(Math.round(c.width / 2 + x), Math.round(c.height / 2 + y), 1, 1).data);
+}, [gx, gy]);
+
+// --- Sprite, fallback chain, facing ---
+let page = await open({ width: 1280, height: 900 });
+await gmcp(page, 'World.Map', world);
+await moveTo(page, 2, 1);
+await settle(page);
+let s = await state(page);
+check(s.spriteDrawn && s.keys.join() === 'adventurer', 'before a class is known the adventurer sprite stands in');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'knight', lineage: 'warrior' });
+await settle(page);
+s = await state(page);
+check(s.keys.join() === 'knight,warrior,adventurer' && s.spriteDrawn, 'class, then lineage, then adventurer; an undrawn class falls to its lineage');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+check((await state(page)).keys.join() === 'warrior,adventurer', 'an unpromoted class is its lineage');
+
+await moveTo(page, 2, 0); await tick(page, 60);
+s = await state(page);
+check(s.face === 'up' && s.walking, 'walking north faces up and walks');
+await settle(page);
+await moveTo(page, 3, 0); await tick(page, 60);
+s = await state(page);
+check(s.face === 'side' && !s.flip, 'walking east faces side, unmirrored');
+await settle(page);
+await moveTo(page, 2, 0); await tick(page, 60);
+s = await state(page);
+check(s.face === 'side' && s.flip, 'walking west faces side, mirrored');
+await settle(page);
+await moveTo(page, 2, 1); await tick(page, 60);
+check((await state(page)).face === 'down', 'walking south faces down');
+await settle(page);
+await moveTo(page, 3, 2); await tick(page, 60);
+check((await state(page)).face === 'side', 'a diagonal uses the side view');
+await settle(page);
+
+// queue: a few quick moves play in order, never more than 2 behind
+await moveTo(page, 2, 2); await moveTo(page, 1, 2); await moveTo(page, 0, 2);
+s = await state(page);
+check(s.queued <= 2 && s.queued >= 1, 'quick moves queue (at most 2 steps behind): ' + s.queued);
+for (const [x, y] of [[0, 1], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0]]) {
+  await moveTo(page, x, y);
+  check((await state(page)).queued <= 2, 'never more than 2 steps behind (' + x + ',' + y + ')');
+}
+await settle(page);
+s = await state(page);
+check(s.unit.x === 4 && s.unit.y === 0, 'a pile-up ends at the newest room');
+await moveTo(page, 4, 2);
+s = await state(page);
+check(s.queued === 0 && s.unit.x === 4 && !s.walking, 'a jump of more than a tile (recall, teleport) does not walk');
+
+// z change: snap and fade, facing kept
+await gmcp(page, 'Room', { Info: roomInfo(4, 2, 1) });
+s = await state(page);
+check(s.fading && s.unit.x === 4, 'changing level snaps and fades the sprite in');
+await page.close();
+
+// --- Badge ---
+page = await open({ width: 1280, height: 900 });
+await start(page);
+check((await state(page)).companySize === 0, 'no company: no badge');
+await gmcp(page, 'Company', company);
+s = await state(page);
+check(s.companySize === 3, 'badge counts the members with the leader (not dead, not separated): ' + s.companySize);
+await gmcp(page, 'Company', { leader: company.leader, members: [member('companion:3', 'Ysolde', 'dead')] });
+check((await state(page)).companySize === 0, 'a leader travelling alone: the badge is hidden');
+await gmcp(page, 'Company', company);
+
+// --- Camps ---
+const tile = await pixelAt(page, 0, 0);
+await gmcp(page, 'Company.Camp', { has_camp: true, here: false, room: 'x', room_id: id(3, 1), fire_lit: false, resting: false,
+                                   can_camp: false, inn: false, allied_camps: [] });
+await tick(page, 400);
+s = await state(page);
+check(s.camp && s.camp.room_id === id(3, 1), 'the camp payload is kept');
+const before = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await gmcp(page, 'Company.Camp', { has_camp: true, here: false, room: 'x', room_id: id(3, 1), fire_lit: true, resting: true,
+                                   can_camp: false, inn: false, allied_camps: [{ room_id: id(0, 0), leader: 'Ally', fire_lit: true, resting: false }] });
+await tick(page, 400);
+const lit = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+check(before !== lit, 'lighting the fire (and an allied camp) changes what is drawn');
+const f1 = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await tick(page, 400);
+const f2 = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+check(f1 !== f2, 'the lit fire and smoke animate');
+await gmcp(page, 'Company.Camp', { has_camp: false, here: false, room: '', room_id: 0, fire_lit: false, resting: false,
+                                   can_camp: true, inn: false, allied_camps: [] });
+await tick(page, 400);
+const gone = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+check(gone === before ? true : gone !== lit, 'breaking the camp removes the marker');
+const noCamp = await page.evaluate(() => { window.MapView.state(); return document.getElementById('map-2d-canvas').toDataURL(); });
+await gmcp(page, 'Company.Camp', { has_camp: true, here: false, room: 'x', room_id: id(3, 1), fire_lit: false, allied_camps: [] });
+await tick(page, 300);
+check(noCamp !== await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL()), 'a camp draws its tent');
+
+// --- Allies ---
+await gmcp(page, 'Party.Vitals', {
+  Cleric: { mapx: 1, mapy: 1, mapz: 0, hascoordinates: true, aggro: false, lineage: 'cleric', classid: 'cleric' },
+  Plain: { mapx: 3, mapy: 1, mapz: 0, hascoordinates: true, aggro: false },
+});
+await page.waitForFunction(() => window.MapView.state().allies.some(a => a.name === 'Cleric' && a.sprite), null, { timeout: 5000 }).catch(() => {});
+s = await state(page);
+const cleric = s.allies.find(a => a.name === 'Cleric'), plain = s.allies.find(a => a.name === 'Plain');
+check(cleric && cleric.sprite, 'a party member with a class shows as that class sprite');
+check(plain && !plain.sprite, 'a member with no class stays a heart');
+await gmcp(page, 'Company.Camp', { has_camp: true, here: false, room: 'x', room_id: id(3, 1), fire_lit: true, resting: true, allied_camps: [{ room_id: id(1, 2), leader: 'Ally', fire_lit: true, resting: false }] });
+await tick(page, 400);
+if (shot) { await page.locator('#map-window').screenshot({ path: shot }); }
+await page.close();
+
+// --- Sprites off: the classic square ---
+page = await open({ width: 1280, height: 900 }, { sprites: false });
+await start(page).catch(() => {});
+await moveTo(page, 2, 1); await tick(page, 400);
+s = await state(page);
+check(!s.spriteDrawn, 'with sprites off nothing is drawn as a sprite');
+const px = await pixelAt(page, 0, 0);
+check(px[0] > 150 && px[1] < 40 && px[2] < 40, 'with sprites off the current room is the classic red square: ' + px);
+await page.close();
+
+// --- A missing image falls back down the chain, without errors ---
+page = await open({ width: 1280, height: 900 }, null, '**/map/units/warrior/*.png');
+await gmcp(page, 'World.Map', world);
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+await moveTo(page, 2, 1);
+await page.waitForFunction(() => window.MapView.state().spriteDrawn, null, { timeout: 5000 });
+check((await state(page)).spriteDrawn, 'a missing warrior image falls back to the adventurer sprite');
+await page.close();
+
+await browser.close();
+server.close();
+console.log(failures ? failures + ' check(s) failed' : 'all checks passed');
+process.exit(failures ? 1 : 0);

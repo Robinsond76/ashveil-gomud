@@ -1,0 +1,51 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">worldmap</ansi>
+
+In the web client, the Map window draws the rooms you have seen as tiles
+and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ansi fg="command">help map</ansi>) instead.
+
+<ansi fg="yellow-bold">You</ansi>
+
+  You are drawn as your class: a warrior, cleric, rogue, ranger, wizard or
+  witch. Before you have chosen one, or when a class has no picture of its
+  own, you are an adventurer. A gold ring under your feet marks your tile,
+  so you never blend into the ground.
+
+  When you move, you walk to the next tile and face the way you went:
+  north shows your back, south your front, east and west your side. A
+  recall or a teleport jumps without walking. Moving up or down a level
+  fades you in on the new level.
+
+<ansi fg="yellow-bold">Your company</ansi>
+
+  A small shield with a number sits over you: how many of your company are
+  with you (you, and each companion who is present and not separated or
+  fallen). It is hidden when you travel alone (<ansi fg="command">help company</ansi>).
+
+<ansi fg="yellow-bold">Your party</ansi>
+
+  A party member whose class is known is drawn as that class, a little
+  smaller than you and with a small pennant over them. One whose class is
+  not known stays a heart. Nobody outside your party appears on the map.
+
+<ansi fg="yellow-bold">Camps</ansi>
+
+  Your camp shows as a tent on its tile (<ansi fg="command">help camp</ansi>). A lit fire flickers beside
+  it with smoke rising; an unlit one sits dark. While your company rests,
+  a small sleeping mark floats over the tent; resting at an inn shows the
+  inn's bed instead. The camps of your own party show as blue tents, with
+  their own fires. You never see the camp of a company that is not in
+  your party, even one a step away.
+
+<ansi fg="yellow-bold">Resources</ansi>
+
+  A small coloured dot in a tile's corner marks what it provides, such as
+  fresh water or forage (<ansi fg="command">help resources</ansi>).
+
+<ansi fg="yellow-bold">Settings</ansi>
+
+  The settings button on the map has <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red
+  square and hearts) and <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker). Both
+  are kept per browser. The map reads what the game already tells you, so
+  it never shows anything <ansi fg="command">look</ansi> would not.
+
+See also: <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.
