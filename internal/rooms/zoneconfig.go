@@ -18,6 +18,9 @@ type ZoneConfig struct {
 	IdleMessages []string             `yaml:"idlemessages,omitempty"` // list of messages that can be displayed to players in the zone, assuming a room has none defined
 	MusicFile    string               `yaml:"musicfile,omitempty"`    // background music to play when in this zone
 	DefaultBiome string               `yaml:"defaultbiome,omitempty"` // city, swamp etc. see biomes.go
+	// Phase 40d: a tile-ready zone follows the map conventions in
+	// docs/designs/tile-ready-conventions.md; ValidateTileReady enforces them.
+	TileReady bool `yaml:"tileready,omitempty"`
 	// Phase 37: the zone's recommended level band and its random encounter
 	// tables (they enable no room by themselves), and its drop profile.
 	Encounters encounters.ZoneConfig `yaml:"encounters,omitempty"`

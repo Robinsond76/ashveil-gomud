@@ -1,0 +1,18 @@
+roomid: 2142
+zone: Alderbrook
+title: Stream Mouth
+description: The stream pours out of the lake over a lip of flat stones and runs away west toward
+  the bridge. Trout hold in the shallows.
+biome: shore
+exits:
+  north:
+    roomid: 2136
+  west:
+    roomid: 2141
+resources:
+- water
+- fishing
+mapx: 6
+mapy: 5
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,19 @@
+roomid: 2130
+zone: Alderbrook
+title: Lakeshore
+description: Reeds and pebbles line the water's edge. Small waves slap the stones.
+biome: shore
+exits:
+  east:
+    roomid: 2131
+  north:
+    roomid: 2124
+  south:
+    roomid: 2137
+resources:
+- water
+- fishing
+mapx: 7
+mapy: 3
+mapz: 0
+hascoordinates: true

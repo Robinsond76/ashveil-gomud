@@ -16,6 +16,8 @@ tags:
 exits:
   west:
     roomid: 2002
+  east:
+    roomid: 2101
 resources:
 - forage
 - shelter

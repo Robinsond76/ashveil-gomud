@@ -1,0 +1,19 @@
+roomid: 2104
+zone: Alderbrook
+title: Alder Wood
+description: Alders and old oaks stand close, their roots dark in the damp earth. Light falls in
+  coins on the leaf litter.
+biome: forest
+exits:
+  east:
+    roomid: 2105
+  south:
+    roomid: 2112
+resources:
+- forage
+- firewood
+- game
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true

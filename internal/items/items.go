@@ -170,6 +170,17 @@ func (i Item) IsDisabled() bool {
 	return i.ItemId < 0
 }
 
+// Refilled is the item after it is filled back to uses (Phase 43a): an
+// empty container becomes its full item, anything else keeps its identity
+// with the new uses.
+func (i Item) Refilled(uses int) Item {
+	if filled := i.GetSpec().FilledItemId; filled > 0 && GetItemSpec(filled) != nil {
+		return New(filled)
+	}
+	i.Uses = uses
+	return i
+}
+
 func (i *Item) Validate() {
 	if i.ItemId < 1 {
 		return

@@ -1,0 +1,9 @@
+itemid: 30040
+name: fortifying broth
+namesimple: broth
+description: A stoppered flask of thick root-and-bone broth. Prepared at camp with camp prepare broth, it raises a member's health limit by about 5% for fifteen minutes after the rest ends (help campsupplies).
+type: object
+subtype: mundane
+uses: 1
+value: 10
+weight: 300

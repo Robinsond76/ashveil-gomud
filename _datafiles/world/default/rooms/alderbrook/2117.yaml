@@ -1,0 +1,23 @@
+roomid: 2117
+zone: Alderbrook
+title: Waystone Hill
+description: A waystone taller than a man stands on the crest, cut with an old king's mark. From
+  here the lake, the hamlet and the road are laid out like a map.
+biome: cliffs
+exits:
+  east:
+    roomid: 2118
+  north:
+    roomid: 2109
+  south:
+    roomid: 2124
+  west:
+    roomid: 2116
+mapsymbol: O
+maplegend: Obelisk
+resources:
+- herbs
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

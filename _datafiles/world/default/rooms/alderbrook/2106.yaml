@@ -1,0 +1,19 @@
+roomid: 2106
+zone: Alderbrook
+title: Meadow
+description: Long grass bends in the wind, loud with grasshoppers. A cattle track threads through
+  it.
+biome: land
+exits:
+  east:
+    roomid: 2107
+  south:
+    roomid: 2114
+  west:
+    roomid: 2105
+resources:
+- forage
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true

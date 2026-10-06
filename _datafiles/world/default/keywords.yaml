@@ -86,6 +86,7 @@ help:
       - patch
     road:
       - travel
+      - walkto
       - survival
       - strain
       - weather
@@ -100,6 +101,7 @@ help:
       - worldmap
       - gathering
       - campgear
+      - campsupplies
     communication:
       - emote
       - say
@@ -347,11 +349,13 @@ help-aliases:
   pack:             [packs, satchel, knapsack, backpack, container, containers]
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
+  walkto:           [autowalk, auto-walk, click-to-walk, click to walk, walk to, walk-to, tile-ready, tile ready, tile regions, showcase, alderbrook]
   camp:             [camping, campfire]
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
+  campsupplies:     [camp supplies, camp-supplies, camp prepare, camp-prepare, supplies, broth, fortifying broth, warming draught, cooling salve, incense, watch incense]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
@@ -430,6 +434,7 @@ command-aliases:
   go:                 ['enter']
   experience:         ['exp', 'xp', 'tnl', 'level', 'levels']
   map:                ['m']
+  walkto:             ['autowalk']
   conditions:         ['c', 'cond', 'conds']
   skills:             ['sk', 'skill']
   equip:              ['wear', 'wield', 'hold']
