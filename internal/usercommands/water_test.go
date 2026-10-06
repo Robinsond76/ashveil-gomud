@@ -150,8 +150,6 @@ func TestFillIsRefusedAwayFromWater(t *testing.T) {
 }
 
 func TestWaterCommandsAreRefusedInABattle(t *testing.T) {
-	useWorld(t, "default")
-	keywords.LoadAliases()
 	fake := thirstyProvisioner()
 	useFakeProvisioner(t, fake)
 	user := userWithItem(t, 18, skinSpec())
