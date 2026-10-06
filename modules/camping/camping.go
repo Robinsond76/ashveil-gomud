@@ -366,7 +366,9 @@ type CampingModule struct {
 	// and the leaders whose first try with damp wood failed.
 	// surgery stands in for the company's field surgery in tests (Phase
 	// 40a3).
-	surgery   func(leaderUserID int) ([]string, bool)
+	surgery func(leaderUserID int) ([]string, bool)
+	// theft stands in for the company's camp theft in tests (Phase 40a4).
+	theft     func(leaderUserID, sharePct, maxUnits int, pick func(n int) int, protect func(itemID int) bool) []company.TheftLoss
 	itemCount func(leaderUserID, itemID int) int
 	spendItem func(leaderUserID, itemID int) bool
 	dampTried map[int]bool
@@ -894,6 +896,11 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	resting.Tent = gear.Tent
 	// Phase 33f3: whether raiders come, and when, is settled now.
 	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
+	// Phase 40a4: so is whether thieves come; bells and trip lines never
+	// let them.
+	if !gear.Bells {
+		rest.Theft = m.planTheftLocked(room)
+	}
 	resting.Rest = &rest
 	m.camps[user.UserId] = resting
 	if err := m.saveLocked(); err != nil {
@@ -1463,9 +1470,18 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		}
 		return false
 	}
+	// Phase 40a4: the gear the company carries calls into the company
+	// module, so it is read before m.mu; only a leader with a camp shows it.
+	m.mu.Lock()
+	_, hasCamp := m.camps[leaderUserID]
+	m.mu.Unlock()
+	var gear []string
+	if hasCamp {
+		gear = m.gearOf(leaderUserID).labels(m.companyMembers(leaderUserID))
+	}
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]
-	s := camping.CampState{Inn: has(m.innSettings().RoomTag)}
+	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear}
 	if !ok {
 		s.CanCamp = has(m.roomTag())
 	} else {

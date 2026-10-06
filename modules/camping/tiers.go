@@ -143,6 +143,7 @@ func (m *CampingModule) onNewRound(e events.Event) events.ListenerReturn {
 	m.fireDueRaids()     // Phase 33f3
 	m.clearRaiders()     // Phase 33f3
 	m.grantCampRewards() // Phase 33f3
+	m.resolveCampTheft() // Phase 40a4
 	return events.Continue
 }
 

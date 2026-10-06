@@ -982,6 +982,11 @@
         if (camp.has_camp && camp.here && camp.tent) {
             pad.appendChild(el('div', 'cmp-line', 'An oiled canvas tent is pitched here: shelter, and no cold while you rest.'));
         }
+        if (camp.has_camp && Array.isArray(camp.gear) && camp.gear.length) {
+            pad.appendChild(el('div', 'cmp-line', 'Camp gear: ' + camp.gear.join(', ') + '.'));
+        } else if (camp.has_camp) {
+            pad.appendChild(el('div', 'cmp-line', 'No camp gear carried. Bells and trip lines keep thieves out (help camp gear).'));
+        }
         if (camp.rested && camp.here && !camp.resting) {
             pad.appendChild(el('div', 'cmp-line', camp.embers
                 ? 'Your company has rested. The fire has burned to embers: feed it (Light fire) to rest again.'
