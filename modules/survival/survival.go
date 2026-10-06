@@ -432,6 +432,15 @@ func (m *SurvivalModule) ApplyMemberDrain(leaderUserID int, key domain.MemberKey
 // in one durable write. A leader-scoped operation ledger makes completion
 // retries idempotent across restarts and copyover.
 func (m *SurvivalModule) ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]domain.ExertionResult, error) {
+	return m.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, nil)
+}
+
+var _ domain.RestBonusService = (*SurvivalModule)(nil)
+
+// ApplyCompanyRestRecoveryBonus is ApplyCompanyRestRecovery with extra
+// recovery for some members (Phase 40a3: a bedroll's +25%). The ledger
+// keeps the base amount, so a retry of the same rest is still idempotent.
+func (m *SurvivalModule) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[domain.MemberKey]int) ([]domain.ExertionResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
@@ -460,7 +469,11 @@ func (m *SurvivalModule) ApplyCompanyRestRecovery(leaderUserID int, operationID 
 			m.registry = snapshot
 			return nil, err
 		}
-		change, err := m.registry.ApplyRestRecovery(leaderUserID, ref.Key, fatigue)
+		amount := fatigue
+		if pct := bonusPct[ref.Key]; pct > 0 {
+			amount += (fatigue*pct + 50) / 100
+		}
+		change, err := m.registry.ApplyRestRecovery(leaderUserID, ref.Key, amount)
 		if err != nil {
 			m.registry = snapshot
 			return nil, err

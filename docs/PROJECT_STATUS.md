@@ -1,5 +1,60 @@
 # Ashveil Project Status
 
+**Phase 40a3 built (2026-10-06, PR pending review): camp gear.** The fuel rule
+and six durable camp items. A finished camp rest now burns the fire down to
+**embers** (`Camp.Embers`): embers keep the room warm until the camp is broken
+(a damp fire's embers stay cold) but give no light, and resting again needs
+`camp fire` again, which spends another bundle (or the deadfall in a firewood
+room); the camp then takes a fresh rest session (new operation id), once the
+last rest's recovery is in. A camp saved before this phase burns down on load.
+New items 45-50 (`bedroll` 2.5 kg, 8 gold; `oiled canvas tent` 9 kg, 40;
+`fire steel and tinder` 0.2 kg, 5; `iron cookpot` 3 kg, 12; `camp bells and
+trip lines` 1 kg, 6, 10 uses; `field surgeon's kit` 1.5 kg, 25, 5 uses), sold
+at the Dunmar and Old Kings Road markets (road dearer) as `SupplyOnly`, so none
+buys back. `modules/camping/gear.go` counts the gear through
+`company.CompanyItemCount` (cargo, the leader's pack, present companions'
+packs; separated and dead members' packs are skipped) before `m.mu`, and locks
+it on the rest (`RestSession.Bedrolls/Bells/Kit`, `Camp.Tent`, all saved, so a
+restart or copyover mid-rest keeps them). **Bedrolls:** one per member, leader
+first then companions by number; `survival.ApplyCompanyRestRecoveryBonus` gives
+those members +25% of the rest's fatigue on top (the ledger keeps the base
+amount, so a replay is still a no-op). **Tent:** counts as shelter for the
+weather (never stacks with a shelter room), makes the camp room a heat source
+while resting (no rest-time cold), shows in `look`, `camp status` and GMCP
+`Company.Camp.tent`. **Fire steel:** damp bundles light first time at full
+warmth. **Cookpot:** `camp cook` makes two portions of a dish with two or more
+inputs. **Bells:** a flat 20% spot chance with no watch, +10 points on a watch
+capped at 90, one use worn when a rest starts; their own warning line.
+**Surgeon's kit:** at the end of an unbroken camp rest a healer who knows Tend
+Wounds and has the mana tends the worst lasting wound of the most wounded
+member present (`company.FieldSurgery`), before bandages and splints; one use
+worn only when a wound was treated. The rest start, `camp status` and the
+rest-complete line report the gear in use. Web: the Camp tab shows embers
+("Feed fire"), the tent, and offers Rest again once the fire is fed
+(`/mnt/project-files/screens/40a3-camp-embers.png`); GMCP `Company.Camp` gains
+`embers` and `tent` for 40b's map sprites. Help: new `help camp gear` (indexed
+under `road`; aliases bedroll, tent, cookpot, fire steel, camp bells, trip
+lines, surgeon's kit, embers) and updates to camp, gathering, campwatch,
+cooking and wounds; tutorial: the Survival lesson hands out a bedroll and a
+fire steel with its supplies and the Camp hints explain embers and gear.
+Design: [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md).
+Decisions (builder, owner delegation): (1) gear in the cargo counts without a
+horse check: cargo has no per-horse presence concept and always travels with
+the company, so the design's "cargo with its horse present" is met by the
+existing cargo rules; (2) the bells wear one use at every rest start, raid or
+not (the design's "wears 10 rests"); (3) no restring or restock service: a spent
+set of bells or a kit is bought again (the 3 and 10 gold refill prices were
+dropped; items with uses already model wear and a refill action would be a new
+shop mechanic); (4) gear is sold `SupplyOnly` and is never loot, so nothing
+gathered for free sells for more than a low-level fight pays; (5) the tutorial
+gear is granted with the Survival supplies (same once-only flag) because stage
+entry grants only there; (6) the cookpot is read when cooking, not locked on a
+rest, since `camp cook` is its own command; (7) the tent is pitched when the
+camp is made and refreshed at `camp fire` and `camp rest`. Not folded in: the
+40a2 follow-ups (gather progress as a web panel, a redraw on regrowth) are
+about gathering and the map, not camp gear; both stay open (the map redraw
+belongs with 40b).
+
 **Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
 firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
 and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
@@ -881,7 +936,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
-| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Design approved** | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Built; awaiting review** | S1 |
 | 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |

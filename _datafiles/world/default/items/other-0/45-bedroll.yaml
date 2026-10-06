@@ -1,0 +1,10 @@
+itemid: 45
+name: bedroll
+namesimple: bedroll
+description: A rolled blanket of oiled wool with a straw-stuffed pad, tied with a
+  strap. At a camp rest, whoever sleeps on one recovers a quarter more fatigue; one
+  bedroll covers one member, the leader first. Never wears out (help camp gear).
+type: object
+subtype: mundane
+value: 8
+weight: 2500

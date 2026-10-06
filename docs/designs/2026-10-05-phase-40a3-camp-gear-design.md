@@ -1,8 +1,9 @@
 # Phase 40a3: camp gear
 
 Status: **approved by the owner on 2026-10-05**, including the item list,
-weights, effects and prices (handoff rule 20). An execution plan comes
-before implementation, which waits for the milestone to start. Part
+weights, effects and prices (handoff rule 20). **Built 2026-10-06**; see
+`docs/PROJECT_STATUS.md` for the decisions (no restring or restock service;
+cargo counts without a horse check). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
 It follows [40a2 gathering](2026-10-05-phase-40a2-gathering-design.md),
 which makes camp fires need firewood. Art: S1 camp sprites (including

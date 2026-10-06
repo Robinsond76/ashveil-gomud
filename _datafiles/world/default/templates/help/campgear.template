@@ -1,0 +1,64 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">camp gear</ansi>
+
+Camp gear is a set of durable items worth the weight: each improves camping
+in one clear way, and each is carried like any other item, in your pack, a
+companion's pack, or the cargo (a horse will happily haul the heavy ones).
+Gear is not used up the way a draught is: most of it never wears out. What
+you take on the road is the decision.
+
+<ansi fg="yellow-bold">The gear</ansi>
+
+  <ansi fg="yellow">Bedroll</ansi>            2.5 kg   8 gold    never wears out
+  One for each member who will sleep on one: <ansi fg="yellow">+25% Fatigue</ansi> recovered from a
+  camp rest. Bedrolls go to you first, then to companions by number.
+  Members without one recover normally; a bedroll is a bonus, never a need.
+
+  <ansi fg="yellow">Oiled canvas tent</ansi>  9 kg    40 gold   never wears out
+  One covers the whole company. It counts as shelter for the rest, which
+  halves the weather's penalty (<ansi fg="command">help resources</ansi>), and it blocks the cold
+  while the company rests. It does not stack with a shelter room: the
+  better one applies. <ansi fg="command">look</ansi> shows a tent at your camp.
+
+  <ansi fg="yellow">Fire steel and tinder</ansi>  0.2 kg   5 gold   never wears out
+  Damp firewood lights at the first try and burns with full warmth.
+
+  <ansi fg="yellow">Iron cookpot</ansi>       3 kg    12 gold   never wears out
+  <ansi fg="command">camp cook</ansi> makes one extra portion of a dish that takes more than one
+  ingredient (hunter's stew, thyme-roasted game); single-ingredient dishes
+  are unchanged (<ansi fg="command">help cooking</ansi>).
+
+  <ansi fg="yellow">Camp bells and trip lines</ansi>  1 kg   6 gold   10 rests, then spent
+  Strung round a resting camp, they give raiders away: with no watch posted
+  there is a flat 20% chance to spot them, and with a watch the chance rises
+  by 10 points, never above 90% (<ansi fg="command">help campwatch</ansi>). A rest uses one up.
+
+  <ansi fg="yellow">Field surgeon's kit</ansi>  1.5 kg   25 gold   5 uses
+  At the end of a finished camp rest, a healer with mana left tends the worst
+  lasting wound of the most hurt member, before the rest's bandages and
+  splints, and the kit wears one use. It does nothing without a healer
+  who knows Tend Wounds and has the mana (<ansi fg="command">help wounds</ansi>).
+
+Provisioners (the markets of Dunmar and the Old Kings Road) sell all six, a
+little dearer on the road. They never buy gear back (<ansi fg="command">help market</ansi>).
+
+<ansi fg="yellow-bold">How gear is counted</ansi>
+
+  - Gear counts if your company has it at camp: in your inventory, a present
+    member's pack, or the cargo. A separated, dead or away member's gear
+    doesn't count.
+  - It is counted when the rest begins, and the effects are fixed then: a
+    bedroll lost mid-rest changes nothing until the next rest. The rest
+    report and <ansi fg="command">camp status</ansi> list the gear in use.
+  - You get one tent, one cookpot, one fire steel and one set of bells at
+    most: a second does nothing. Bedrolls count one per member.
+  - Nothing here is stolen; gear is only ever made use of.
+
+<ansi fg="yellow-bold">Fuel and embers</ansi>
+
+A rest burns the fire down to <ansi fg="yellow">embers</ansi> when it finishes. Embers keep the camp warm
+until you break it, but resting again needs the fire fed with <ansi fg="command">camp fire</ansi>,
+which spends another firewood bundle, or the deadfall in a firewood room
+(<ansi fg="command">help gathering</ansi>, <ansi fg="command">help camp</ansi>). Cooking needs a lit fire, not embers.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help cooking</ansi>, <ansi fg="command">help campwatch</ansi>, <ansi fg="command">help wounds</ansi>,
+<ansi fg="command">help gathering</ansi>, <ansi fg="command">help cargo</ansi>.
