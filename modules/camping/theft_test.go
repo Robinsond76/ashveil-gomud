@@ -179,7 +179,7 @@ func TestCampTheftSettingsParse(t *testing.T) {
 func TestTheftTextAndGearLabels(t *testing.T) {
 	assert.Contains(t, theftText([]company.TheftLoss{{Name: "a firewood bundle", Count: 1}}), "Missing: a firewood bundle.")
 	g := campGear{Bedrolls: []string{"leader"}, Tent: true, Bells: true}
-	assert.Equal(t, []string{"Bedrolls 1/3", "Tent", "Bells and trip lines"}, g.labels(3))
+	assert.Equal(t, []string{"Bedrolls 1/3", "Canvas tent", "Bells and trip lines"}, g.labels(3))
 	assert.Contains(t, strings.Join(g.lines(3), "\n"), "thieves keep out")
 }
 
@@ -188,7 +188,7 @@ func TestCampStateCarriesGearLabels(t *testing.T) {
 	stock{tentItemID: 1, cookpotItemID: 1}.install(w.m)
 	s, ok := w.m.CampStateOf(7, 100, nil)
 	require.True(t, ok)
-	assert.Equal(t, []string{"Tent", "Cookpot"}, s.Gear)
+	assert.Equal(t, []string{"Canvas tent", "Cookpot"}, s.Gear)
 	none, _ := w.m.CampStateOf(99, 100, nil)
 	assert.Empty(t, none.Gear, "no camp, no gear line")
 }

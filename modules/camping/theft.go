@@ -24,9 +24,9 @@ import (
 // Stolen goods are gone; they are not tracked.
 
 // planTheftLocked rolls whether thieves come to a rest in this zone.
-func (m *CampingModule) planTheftLocked(room *rooms.Room) *camping.Theft {
+func (m *CampingModule) planTheftLocked(room *rooms.Room, tentPct int) *camping.Theft {
 	chance := m.campSettings().Thefts[room.Zone]
-	if chance <= 0 || m.rollPct() >= chance {
+	if chance <= 0 || m.rollPct() >= camping.ScaleChance(chance, tentPct) {
 		return nil
 	}
 	return &camping.Theft{}
@@ -34,7 +34,15 @@ func (m *CampingModule) planTheftLocked(room *rooms.Room) *camping.Theft {
 
 // campGearItem is the camp gear thieves leave alone.
 func campGearItem(itemID int) bool {
-	return itemID >= bedrollItemID && itemID <= surgeonKitItemID
+	if itemID >= bedrollItemID && itemID <= surgeonKitItemID {
+		return true
+	}
+	for _, t := range camping.Tents { // Phase 52
+		if itemID == t.ItemID {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *CampingModule) campTheft(leaderUserID, sharePct, maxUnits int) []company.TheftLoss {
