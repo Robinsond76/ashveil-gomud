@@ -65,7 +65,7 @@ var roomList = []struct {
 	{90009, "thicket", "combat with an ambush"},
 	{90003, "camp", "a quiet camp with water, firewood and gathering"},
 	{90010, "road", "a camp thieves and raiders always visit"},
-	{90004, "armory", "free gear: testarea kit, give, items"},
+	{90004, "armory", "free gear: testarea catalog, kit, give"},
 	{90005, "stable", "horses for sale"},
 	{90006, "weather", "weather controls for the zone"},
 	{90007, "cellar", "darkness, for light sources"},
@@ -91,6 +91,8 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
+	events.RegisterListener(events.ItemOwnership{}, onItemDropped)
+	events.RegisterListener(events.NewRound{}, onNewRound)
 	death.SetWakeOverride(m.wakeRoom)
 	registered = m
 }

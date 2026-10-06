@@ -2,7 +2,7 @@ roomid: 90004
 zone: Test Area
 title: Armory
 description: >-
-  Weapon racks, armor stands and crates line the walls. Nothing here costs anything: testarea kit weapons, armor, camp, supplies or saddles hands you one of each kind, testarea give <item> [count] gives any item, and testarea items <word> searches the catalog. Everything vanishes when you return.
+  Weapon racks, armor stands and crates line the walls. Nothing here costs anything: testarea catalog opens the catalog of every item, to pick just what you want; testarea give <item or id> [count] takes one, and testarea kit weapons, armor, camp, supplies or saddles hands you one of each kind. Anything you drop here vanishes, and everything you take vanishes when you return.
 biome: fort
 tags:
   - lit

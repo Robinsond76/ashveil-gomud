@@ -963,6 +963,22 @@ check(await page.evaluate(() => {
 }), 'Skills text is in the compact Company scale, not the dock\'s full size');
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
 check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[["Help","track"]]', 'clicking a skill asks for its help page');
+// The test area's armory catalog: a screen with search, type chips and Take.
+await page.evaluate(() => { window.sent = []; window.gmcp('Armory', { filter: '', items: [
+  { id: 11, name: 'Iron Sword', type: 'weapon', subtype: 'sword', tier: 1 },
+  { id: 12, name: '<img src=x onerror="window.__xss=1">', type: 'weapon', subtype: 'staff', tier: 2 },
+  { id: 13, name: 'Leather Cap', type: 'head', family: 'leather', tier: 1 }] }); });
+check(await page.locator('#armory .arm-row').count() === 3, 'the armory catalog lists every item');
+check(await page.evaluate(() => !window.__xss && document.querySelector('#armory input').autocomplete === 'off'), 'the catalog sets names as text and keeps the browser from offering saved passwords');
+await page.locator('#armory .arm-chip', { hasText: 'head' }).click();
+check(await page.locator('#armory .arm-row').count() === 1, 'a type chip narrows the catalog');
+await page.locator('#armory .arm-chip', { hasText: 'All' }).click();
+await page.locator('#armory input').fill('sword');
+check(await page.locator('#armory .arm-row').count() === 1, 'typing filters the catalog');
+await page.locator('#armory .arm-count').selectOption('5');
+await page.getByRole('button', { name: 'Take Iron Sword' }).click();
+check(JSON.stringify(await page.evaluate(() => window.sent)) === '["testarea give 11 5"]', 'Take sends testarea give with the id and count');
+await page.keyboard.press('Escape');
 // The Help screen: it takes focus from the control that opened it, nothing behind it keeps a hover, and Escape returns focus.
 await page.evaluate(() => { document.dispatchEvent(new Event('DOMContentLoaded')); });
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).focus();
