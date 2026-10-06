@@ -23,6 +23,8 @@ spawninfo:
   - emote nods to themselves, pleased with their work.
   scripttag: clearing
   respawnrate: 1 real minutes
+resources:
+- forage
 mapx: 39
 mapy: 1
 mapz: 0

@@ -90,6 +90,8 @@
         .rw-badge.ephemeral { background: var(--t-badge-ephemeral-bg); color: var(--t-badge-ephemeral-text); border: 1px solid var(--t-badge-ephemeral-border); }
         .rw-badge.character { background: var(--t-badge-char-bg); color: var(--t-badge-char-text); border: 1px solid var(--t-badge-char-border); }
         .rw-badge.root      { background: var(--t-badge-root-bg); color: var(--t-badge-root-text); border: 1px solid var(--t-badge-root-border); }
+        .rw-badge.resource  { background: transparent; color: var(--t-text-heading); border: 1px solid var(--t-border); }
+        .rw-badge.resource::before { content: ''; display: inline-block; width: 0.7em; height: 0.7em; margin-right: 4px; border-radius: 50%; background: var(--rw-res-color, #aaaaaa); vertical-align: -0.05em; }
 
         /* ---- exits ---- */
         #rw-exits {
@@ -363,6 +365,13 @@
         root:      'Zone Root',
     };
 
+    // Phase 40a: room resources, with the map's dot colours.
+    const RESOURCE_BADGES = {
+        water:   { label: 'Fresh water', color: '#4aa3ff' },
+        forage:  { label: 'Forage',      color: '#7ccf3c' },
+        shelter: { label: 'Shelter',     color: '#d1a15f' },
+    };
+
     function setSection(id, rows) {
         const body  = document.getElementById('rws-body-' + id);
         const count = document.getElementById('rws-count-' + id);
@@ -469,6 +478,17 @@
                 badge.textContent = BADGE_LABELS[d];
                 badge.style.cursor = 'help';
                 badge.addEventListener('click', function() { Client.GMCPRequest('Help', d); });
+                badgesEl.appendChild(badge);
+            });
+            (room.resources || []).forEach(function(r) {
+                const meta  = RESOURCE_BADGES[r] || { label: r, color: '#aaaaaa' };
+                const badge = document.createElement('span');
+                badge.className   = 'rw-badge resource';
+                badge.textContent = meta.label;
+                badge.title       = 'This room provides ' + meta.label.toLowerCase() + ' (help resources)';
+                badge.style.setProperty('--rw-res-color', meta.color);
+                badge.style.cursor = 'help';
+                badge.addEventListener('click', function() { Client.GMCPRequest('Help', 'resources'); });
                 badgesEl.appendChild(badge);
             });
         }

@@ -331,6 +331,20 @@ func (f *fakeRuntime) UseItem(instanceID int, itm items.Item) bool {
 	}
 	return false
 }
+func (f *fakeRuntime) SetItemUses(instanceID int, itm items.Item, uses int) bool {
+	s, ok := f.liveState[instanceID]
+	if !ok || !f.live[instanceID] {
+		return false
+	}
+	for i := range s.Items {
+		if s.Items[i].Equals(itm) {
+			s.Items[i].Uses = uses
+			f.liveState[instanceID] = s
+			return true
+		}
+	}
+	return false
+}
 func (f *fakeRuntime) CharmedByOther(_ int, instanceID int) bool {
 	return f.live[instanceID] && f.stolen[instanceID]
 }

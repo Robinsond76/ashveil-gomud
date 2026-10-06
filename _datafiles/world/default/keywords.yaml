@@ -74,6 +74,7 @@ help:
       - camp
       - inn
       - cooking
+      - resources
     communication:
       - emote
       - say
@@ -132,6 +133,7 @@ help:
       - stat-edge
       - shields
       - shoot
+      - battlescreen
       - strategy
       - tactics
       - targeting
@@ -294,17 +296,19 @@ help-aliases:
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   camp:             [camping, campfire]
+  resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
   combat:           [battle, battles, fighting, fight]
+  battlescreen:     [battle-screen, battle screen, battle-map, battle map, battle-picture]
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]
   assessment:       [assess, odds, chances, risk, outlook]
   coordination:     [coordinated, enemy-roles, rabble, drilled, enemy-wounds, enemy-recovery]
   strategy:         [strategies, gambits, roles]
-  tactics:          [focus, company-tactics, personalities, personality, casters first, casters-first, default focus, default-focus, level defaults]
+  tactics:          [focus, company-tactics, personalities, personality, casters first, casters-first, healers focus, healers-first, focus the healer, default focus, default-focus, level defaults]
   guardian:         [guardians, guard, guards, ward, wards]
   abilities:        [ability, class-abilities, class-ability, opening-strike, opening, aimed-shot, aimed, mana-reserve, reserve]
   interrupts:       [interrupt, interrupted, chant, chants, concentration, shield-bash, shieldbash, counter, counters, hexer, wind-up, wind-ups, windup, windups, telegraph, telegraphs, crushing-blow, ogre]

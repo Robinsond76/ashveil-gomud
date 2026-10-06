@@ -29,6 +29,110 @@ Verification: `make generate`, `make validate`, `go test -race ./...`,
 over after one round) and passed on a rerun of the package; it is random,
 not from this phase.
 
+**Phase 40f built: battle screen in the web client (2026-10-06):** a battle
+opens as a picture (`window-battle.js`): the company left, the enemy right,
+each in its 3x3 formation on a 320x180 canvas scaled by whole numbers, over
+a biome backdrop (dimmed in the dark). It reads `Company.Battle`, `Company`
+and `.Vitals`, and the 40e event feed (hit and heal flashes with numbers,
+statuses, chant marks, falls, yields, the outcome held for 3 seconds).
+Company health is exact; enemy health is five bands. Retreat and focus send
+the dock's commands; Minimise leaves a badge; a setting (`Open
+automatically`, kept in `localStorage`) and the Combat tab's "Battle screen"
+button cover manual mode. Server: `Company.Battle.enemies[].sprite` (the mob
+spec's new optional `sprite:` key, else `unknown-humanoid`, `-beast` or
+`-large` by race). Help: `help battlescreen`, linked from `help combat` and
+`help webclient`, and the Combat tutorial lesson. Browser check:
+`scripts/browser/battle-check.mjs`; screenshot in the project files
+(`screens/40f-battle.png`). 40e follow-ups done: the roster refreshes from
+every `Company.Battle` snapshot (a fight that grows shows its newcomers);
+every `?` is one unseen presence; a `?` caster's cast shows no spell name;
+the chant mark lasts until `cast-complete`, so the lagging spell results
+(which arrive with the line after the cast) flash when they come.
+Decisions (delegated): (1) **Art:** S3 is not drawn yet, so figures are
+drawn in code (class hues, a beast and a humanoid shape, unseen shadow) and
+the screen loads `battle/units/<key>/idle.png` and
+`battle/backgrounds/<id>.png` as soon as `manifest.json` lists them, with
+no code change; (2) shipped mobs get no `sprite:` keys yet, since the S3 key
+table is not drawn and the race silhouettes cover them; the keys come with
+S3; (3) **allied reserve formations** are left as a follow-up: the 40e feed
+has no allied relay (a fight has one leader), so the half-scale view would
+have no events to animate; (4) per-member Company.Conditions icons are not
+drawn (statuses come from events, which cover enemies too); (5) the
+tutorial-zone and Stormwatchers Keep backdrop overrides wait for S3's
+`training-yard` and `ice-keep` art; (6) the screen is a floating panel, not
+a modal, so the terminal stays usable under it.
+
+**Phase 40f reviewed and merged (2026-10-06, PR #35):** the review
+confirmed the screen sends only `retreat` and `company tactics focus
+[rule]` (both allowed mid-battle, as the Combat tab), and hides what scout
+hides (enemy health in five bands, hidden foes skipped, every `?` one
+shadow, no spell or status for it). Fixed: (1) enemy figures faced away
+from the company (head, eyes and weapon mirrored the wrong way); (2)
+members who fled or were separated still stood in the picture (now
+filtered as the Combat tab does; dead `&& false` code removed); (3) a
+`Company.Battle` snapshot arriving after `fight-end` cleared the outcome,
+and one after the hold could reopen the finished battle and show "The
+battle is over" again (an `ended` flag now holds until the battle clears or
+a `fight-start`); (4) UI: a caption hint says to hover or tap a figure, a
+Help button sends `help battlescreen`, and status ticks (bleeding) flash
+their damage. Regression checks added to `battle-check.mjs`. Rejected: the
+design's "unknown-* at 50% per enemy in the dark" was replaced by one
+shadow on purpose (the 40e rule that `?` foes are one presence). UI
+follow-ups for 40g: show the round and a short "last blow" line so who hit
+whom reads without hovering (after the 35e merge the focus buttons also offer `healers`, as the Combat tab does); a named outcome reason (all fell, the company
+withdrew); role letters are blurry at the canvas font size; a `?` presence
+in a lit battle stands at front centre and can overlap a visible foe, and
+stays until the battle ends; morale (nerve) is not drawn yet. Flaky test seen: `TestBalanceMirrorClericIsACasterWhoCastsNothing`
+(`modules/company`) failed once in the full race run (1 of 5 foes aimed at
+the cleric) and passed alone five times and in a package re-run; this PR
+touches no company code, so it is left as a follow-up to make robust.
+
+**Phase 40a complete, merged via [PR #32](https://github.com/Robinsond76/ashveil-gomud/pull/32): room resources (2026-10-06):** rooms carry a validated
+`resources` list (water, forage, shelter; herbs, firewood, fishing and game
+are accepted in data but hidden until 40a2). `look` prints a "Here:" line,
+GMCP `Room.Info` and `World.Map` send `resources` (omitted when none), and
+the web map draws a coloured corner dot per resource with a tooltip row and
+an on/off setting (S1 sprites replace the dots later). Rules: `drink water`
+or `drink source` (40 Thirst plus Hydrated, free, refused in battle), `fill`
+and `company fill` (waterskin gains `refillable: water`; pack, companion
+packs and cargo), `company drink` at a source waters everyone free, a camp
+rest at a forage room gets +1 find, and a shelter room halves the weather
+rest penalty. 291 default-world rooms are tagged (lakeshore, waterfall,
+Fernhollow trough and the tutorial Weather Yard water; forest and island
+forage; caves, keeps and lodges shelter). Help: new `help resources`
+(indexed under `road`, aliases water, fill, spring, shelter), updates to
+drink, survival, forage, camp, company meal and webclient, and a Survival
+lesson hint. Design: [40a](designs/2026-10-05-phase-40a-room-resources-design.md).
+Decisions (owner delegation): `drink water` yields to an item exactly
+named "water" and keeps its old waterskin meaning away from a source (no
+surprise for existing habits); a source drink also gives the Hydrated buff
+(same as a waterskin glug); `company fill` refills part-used cargo by
+withdraw-then-deposit through the existing cargo API (no new cargo
+interface); the shelter bonus never beats a full rest. Review (2026-10-06, Opus):
+the three builder decisions are kept. Accepted findings: (1) forage and
+shelter were tagged on ~225 rooms where no camp can be made (only two
+default rooms admit `camp`), so the markers promised a rule that could not
+act; rooms now show them only where the camping module says a camp can be
+made (`rooms.SetCampableCheck`), keeping the data for when 41/42 place
+camps; (2) `company drink` at a source gave one glug each, so a parched
+member stayed thirsty beside free water; members now drink until no longer
+thirsty (at most three); (3) the Room Info panel did not show resources;
+it now has a badge per resource that opens `help resources`. Help updated
+(resources, webclient). Rejected: withdraw-then-deposit can lose part-used
+cargo if the deposit's save fails right after a good withdraw (logged as
+an error; same failure mode as other cargo moves). Browser check: dots,
+tooltip, toggle and badge render and read clearly
+(`/mnt/project-files/screens/40a-map.png`). Follow-ups: a waterskin is
+destroyed by its last glug, so `fill` only tops up part-used skins (keep
+an empty refillable container); the water dot on blue shore tiles is
+low-contrast until the S1 icons land; the root package's
+`world_party_follow_test.go` (already on master) leaves an ignored
+`config-overrides.yaml` and two user files in the default world, which can
+break a later `internal/usercommands` run that loads that world (the 40a
+battle test no longer loads it).
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
+
 **Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
 `scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
 `_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,
@@ -120,6 +224,44 @@ poisons) and 44 (live smoke playtest). Can start now beside 37 and 38b:
 screen lane first, with code-generated pixel art. Open questions in the
 40a–40g and loot designs are decided there, each with a reason.
 Documentation only. Verification: links and the diff checked.
+
+**Phase 35e complete: focus the healer (2026-10-06):** a `healers` target rule
+(a chanting healer, else the weakest idle healer, else the casters order) and
+focus. While the player has set no focus and the leader is level 5 or more,
+the company goes for an enemy healer it can reach first (`strategy.HealersDefault`,
+`enemyparty.RuleVs`, wired into `attack` aims, the round upkeep re-aim, and
+target reassignment); an explicit focus, `none` included, or a focus called in
+the battle wins. Player-facing: `company tactics` and its `default` reply say
+the healers default is in force, the leader is told "Your company marks X as a
+healer and goes for it first", GMCP carries `healers_first` (company tactics
+and battle), the web client's focus bar gains a `healers` button and a note,
+`help tactics` and `help strategy` document the rule, `focus the healer` and
+`healers focus` are help aliases, and the tutorial's tactics hint mentions it.
+Decisions: the override applies only when a healer is reachable, so a member
+who can't reach it keeps the level's default instead of the casters order;
+the default is dynamic (no healer standing means the usual default). Tests:
+rule order, default ladder, live `attack` aims at levels 3-12, set-focus and
+`none` overrides, the battle line, tactics text, GMCP payload, help.
+Balance (16 fights a cell, `ASHVEIL_BALANCE=1 TestBalanceCoordinated`, default
+company against tiers 1-3, each with a healer): level 1/5/10/30 wins were
+69-81/62-81/50-100/38-69%, in line with the pre-35e rows; the one failed
+assertion (level 30, tier 3, 37% against the 50% target) is within the noise
+of 16 fights and was not re-measured.
+Review (PR #33, Opus review thread): **accepted** the battle-start gap: the
+"marks X as a healer" line came only on a later re-aim, never when `attack`
+opened on the healer, so most fights showed no reason; `attack` now says it
+once when the leader's or a companion's opening aim is an enemy healer
+(`TestHealersDefaultSaysSoAsTheBattleOpens`). **Confirmed, no change:** the
+mid-battle focus is the 30c owner decision 2 exception to the Ogre Battle
+rule (company-wide, that battle only, once a round); 35e only makes such a
+focus end the healers default. No half-applied work found in the diff.
+**Balance re-measured** at 60 fights a cell, branch against master: level 30
+tier 3 (answer in kind) 58% against master's 53%, tier 2 62% against 45%;
+the 37% was noise and both runs pass every assertion. Level 5 and 10 tier 3
+cells moved within the sample's noise (55-68% against 67-70%). Rejected: the
+healers default also overriding a member's own `strategy` rule at levels 5-9
+is intended (company-wide default; `company tactics focus none` opts out,
+as `help tactics` says).
 
 **Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
 now receives `Company.Battle.Event`, one entry per combat happening of its
@@ -484,7 +626,7 @@ their dependencies and those decisions is the
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3). [Plan](plans/2026-10-06-phase-37-random-encounters.md), complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
-| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). **Can start now** | Roadmap 2026-10-06 (owner's difficulty rule) | — |
+| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Done** (`make smoke`) | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |

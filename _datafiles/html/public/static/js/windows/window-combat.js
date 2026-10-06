@@ -35,7 +35,7 @@
  *
  * Phase 30c, company tactics:
  *
- *   - The Battle view's focus buttons (none and the six focus rules), the
+ *   - The Battle view's focus buttons (none and the seven focus rules), the
  *     current one pressed, all disabled while an order waits for the next
  *     round; a click sends company tactics focus <rule>, for that battle
  *     only. "Saved" (company tactics focus default) returns to the saved
@@ -78,10 +78,10 @@
     const ROLES = ['fighter', 'healer', 'caster', 'guardian'];
     // Target rules, in the order `help strategy` lists them; assist is for
     // companions only.
-    const RULES = ['weakest', 'strongest', 'wounded', 'nearest', 'furthest', 'leader', 'casters', 'assist', 'defend'];
+    const RULES = ['weakest', 'strongest', 'wounded', 'nearest', 'furthest', 'leader', 'casters', 'healers', 'assist', 'defend'];
     // Phase 30c: the company focus values, in the order `help tactics`
     // lists them, and the healing thresholds.
-    const FOCI = ['none', 'leader', 'casters', 'nearest', 'weakest', 'strongest', 'wounded'];
+    const FOCI = ['none', 'leader', 'casters', 'healers', 'nearest', 'weakest', 'strongest', 'wounded'];
     const HEALING = [10, 20, 30, 40, 50, 60, 70, 80, 90];
 
     injectStyles(`
@@ -415,7 +415,7 @@
         root.appendChild(list);
         const t = data.company.tactics;
         if (t && t.focus) {
-            const how = 'focus ' + t.focus + ', heal below ' + t.healing + '%';
+            const how = 'focus ' + t.focus + (t.healers_first ? ' (healers first when an enemy has one)' : '') + ', heal below ' + t.healing + '%';
             if (inBattle) {
                 // The saved tactics are set between battles; in one, the
                 // Focus buttons above call this battle's focus.
@@ -470,6 +470,10 @@
             add('saved (' + battle.saved_focus + ')', 'default', false, 'Back to your saved focus');
         }
         if (!battle.focus_ready) { bar.appendChild(el('span', 'cbt-aside', 'turning next round')); }
+        // Phase 35e: the default focus goes for the enemy's healer first.
+        if (battle.healers_first) {
+            bar.appendChild(el('span', 'cbt-aside', 'Default: healers first (an enemy healer stands)'));
+        }
         return bar;
     }
 
@@ -574,6 +578,14 @@
         retreat.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
         retreat.addEventListener('click', () => Client.SendInput('retreat'));
         head.appendChild(retreat);
+        // Phase 40f: the picture of this battle (it opens itself unless turned off).
+        if (window.BattleScreen) {
+            const picture = el('button', 'cbt-btn', 'Battle screen');
+            picture.type = 'button';
+            picture.title = 'Show the battle as a picture (help battlescreen)';
+            picture.addEventListener('click', () => window.BattleScreen.open());
+            head.appendChild(picture);
+        }
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
         if (battle.outlook && battle.outlook.text) {

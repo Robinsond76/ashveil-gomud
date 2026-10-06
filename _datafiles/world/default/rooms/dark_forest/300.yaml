@@ -13,6 +13,8 @@ exits:
     roomid: 299
 mutators:
 - mutatorid: wildfire
+resources:
+- forage
 mapx: 18
 mapy: -1
 mapz: 0
