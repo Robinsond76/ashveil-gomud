@@ -46,7 +46,11 @@ who can't reach it keeps the level's default instead of the casters order;
 the default is dynamic (no healer standing means the usual default). Tests:
 rule order, default ladder, live `attack` aims at levels 3-12, set-focus and
 `none` overrides, the battle line, tactics text, GMCP payload, help.
-Review and balance results are added by the review thread.
+Balance (16 fights a cell, `ASHVEIL_BALANCE=1 TestBalanceCoordinated`, default
+company against tiers 1-3, each with a healer): level 1/5/10/30 wins were
+69-81/62-81/50-100/38-69%, in line with the pre-35e rows; the one failed
+assertion (level 30, tier 3, 37% against the 50% target) is within the noise
+of 16 fights and was not re-measured. Review results are added by the review thread.
 
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
