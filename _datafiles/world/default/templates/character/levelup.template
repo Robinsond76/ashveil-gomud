@@ -9,6 +9,7 @@
 {{ end }}{{ if ne .statsBefore.Perception.ValueAdj .statsAfter.Perception.ValueAdj }} Perception {{ .statsBefore.Perception.ValueAdj }} -> {{ .statsAfter.Perception.ValueAdj }}
 {{ end }} Training Points: +{{ .trainingPoints }}   Stat Points: +{{ .statPoints }}{{ if .livesUp }}   Extra Lives: +{{ .livesUp }}{{ end }}
 {{ range .powerLines }} {{ . }}
+{{ end }}{{ range .classRanks }} <ansi fg="yellow">{{ . }}</ansi>
 {{ end }} Next: {{ .nextMilestone }}
 {{ range .classNotes }} {{ . }}
 {{ end }}{{ if .classMilestone }} {{ .classMilestone }}

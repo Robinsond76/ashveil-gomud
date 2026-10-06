@@ -296,6 +296,10 @@ func (m *CompanyModule) classView(s classSubject) string {
 	default:
 		lines = append(lines, fmt.Sprintf("%s %s a level %d %s with no promotion yet. Alignment %+d.", s.label(), s.are(), s.level, lineageName(s.lineage), s.alignment))
 	}
+	// Phase 39b: a neutral lineage's base ranks, from level 1.
+	for _, r := range classes.BaseRanksReached(s.lineage, s.level) {
+		lines = append(lines, fmt.Sprintf("  Rank %d, %s: %s.", r.Level, r.Name, r.Text))
+	}
 	if promoted {
 		for _, r := range classes.RanksReached(s.class, s.level) {
 			lines = append(lines, fmt.Sprintf("  Rank %d, %s: %s.", r.Level, r.Name, r.Text))
@@ -313,7 +317,7 @@ func (m *CompanyModule) classView(s classSubject) string {
 			lines = append(lines, fmt.Sprintf("  Waiting: %s %s. %s keeps %s ranks and promotes once %s alignment recovers.", o.Class.Name, o.Reason, s.label(), s.your(), s.your()))
 		}
 	}
-	if next := classes.Milestone(s.class, s.level); next != "" {
+	if next := classes.MilestoneFor(s.lineage, s.class, s.level); next != "" {
 		lines = append(lines, "  "+next)
 	}
 	if owed := classes.TalentsOwed(s.level, s.talents); owed > 0 {

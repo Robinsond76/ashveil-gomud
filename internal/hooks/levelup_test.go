@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -103,6 +104,13 @@ func TestGrantXPLevelReport(t *testing.T) {
 			SendLevelNotifications(ev)
 			events.ProcessEvents()
 			assert.Contains(t, messages, " Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin.\n")
+			assert.Empty(t, ev.ClassRanks, "a character with no lineage ranks gains none")
+			// 39b review: the report names each rank the new levels gave.
+			messages = ""
+			ev.ClassRanks = []string{"New rank: Focus, +3% critical chance."}
+			SendLevelNotifications(ev)
+			events.ProcessEvents()
+			assert.Contains(t, messages, "New rank: Focus, +3% critical chance.")
 			assert.Contains(t, messages, "stat train")
 			assert.NotContains(t, messages, "stat step")
 			assert.Equal(t, round, util.GetRoundCount())
@@ -185,7 +193,7 @@ func TestGrantXPLevelReportNamesElitePromotionAndRanks(t *testing.T) {
 	}{
 		{"ready", "knight", 29, 41, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin."},
 		{"waiting", "knight", 29, 22, "Paladin needs alignment +30 (yours: +22). You keep your Knight ranks and can promote once it rises."},
-		{"warlord rank", "warlord", 34, 0, "Rank 35 Warlord: Battle Cry."},
+		{"warlord rank", "warlord", 34, 0, "New rank: Battle Cry, "},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			classes.SetProvider(fakeClassState{classes.State{Class: tc.class}})
@@ -206,8 +214,10 @@ func TestGrantXPLevelReportNamesElitePromotionAndRanks(t *testing.T) {
 			u.GrantXP(u.Character.XPTL(tc.from)-u.Character.Experience, "test")
 			events.ProcessEvents()
 			require.Equal(t, tc.from+1, u.Character.Level)
-			require.NotEmpty(t, ev.ClassNotes)
-			assert.Contains(t, ev.ClassNotes[len(ev.ClassNotes)-1], tc.want)
+			// The ranks come in ClassRanks (39b), promotion lines in ClassNotes.
+			lines := append(append([]string{}, ev.ClassRanks...), ev.ClassNotes...)
+			require.NotEmpty(t, lines)
+			assert.Contains(t, strings.Join(lines, "\n"), tc.want)
 		})
 	}
 }

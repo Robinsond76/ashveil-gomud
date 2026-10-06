@@ -110,10 +110,44 @@ func nameOr(id string) string {
 	return id
 }
 
+// RanksGained are the ranks a character of a lineage and class earned
+// between two levels (above from, up to and including to): its lineage's base
+// ranks, then its route's. The level-up report names them (39b review), so a
+// player sees what a rank just gave, not only the next one.
+func RanksGained(lineageID, classID string, from, to int) []Rank {
+	var out []Rank
+	for _, r := range BaseRanks(lineageID) {
+		if r.Level > from && r.Level <= to {
+			out = append(out, r)
+		}
+	}
+	if classID != "" {
+		for _, r := range RanksReached(classID, to) {
+			if r.Level > from {
+				out = append(out, r)
+			}
+		}
+	}
+	return out
+}
+
+// RankLines are RanksGained as level-up report lines.
+func RankLines(lineageID, classID string, from, to int) []string {
+	var out []string
+	for _, r := range RanksGained(lineageID, classID, from, to) {
+		out = append(out, fmt.Sprintf("New rank: %s, %s.", r.Name, r.Text))
+	}
+	return out
+}
+
 // Milestone describes what a character at a level gains next on its way,
 // for the level-up report: the next talent, promotion or rank, with
 // everything that arrives at the same level.
-func Milestone(current string, level int) string {
+func Milestone(current string, level int) string { return MilestoneFor("", current, level) }
+
+// MilestoneFor is Milestone for a character of a lineage, whose base ranks
+// (a Samurai's Focus and Zanshin) count among what comes next.
+func MilestoneFor(lineageID, current string, level int) string {
 	at := map[int][]string{}
 	if l, ok := NextTalentLevel(level); ok {
 		at[l] = append(at[l], "a talent")
@@ -130,6 +164,12 @@ func Milestone(current string, level int) string {
 	if has {
 		if r, ok := NextRank(current, level); ok {
 			at[r.Level] = append(at[r.Level], "a rank ("+r.Name+")")
+		}
+	}
+	for _, r := range BaseRanks(lineageID) {
+		if r.Level > level {
+			at[r.Level] = append(at[r.Level], "a rank ("+r.Name+")")
+			break
 		}
 	}
 	next := 0
@@ -217,40 +257,12 @@ func gateShort(g Gate) string {
 	return "any alignment"
 }
 
-// RankUpLines are the lines a level-up adds for each rank of a class
-// reached by climbing from one level to another: "Rank 45 Nightblade:
-// Shadowstep. ..." (Phase 38c1). A character with no class gets none.
-func RankUpLines(classID string, from, to int) []string {
-	c, ok := Get(classID)
-	if !ok {
-		return nil
-	}
+// LevelNotes are the promotion lines a level-up report adds (Phase 38c1):
+// from the elite level on, the elite promotion the character can take or is
+// waiting on. The ranks earned come from RankLines (39b). who and name are
+// the subject's selector and name for a companion ("" for the player).
+func LevelNotes(lineageID, current string, to, alignment int, who, name string) []string {
 	var out []string
-	for _, r := range RanksReached(classID, to) {
-		if r.Level > from {
-			out = append(out, fmt.Sprintf("Rank %d %s: %s. %s", r.Level, c.Name, r.Name, sentence(r.Text)))
-		}
-	}
-	return out
-}
-
-func sentence(s string) string {
-	if s == "" {
-		return s
-	}
-	s = strings.ToUpper(s[:1]) + s[1:]
-	if !strings.HasSuffix(s, ".") {
-		s += "."
-	}
-	return s
-}
-
-// LevelNotes are the class lines a level-up report adds (Phase 38c1): the
-// rank each level climbed past earned, then, from the elite level on, the
-// elite promotion the character can take or is waiting on. who and name
-// are the subject's selector and name for a companion ("" for the player).
-func LevelNotes(lineageID, current string, from, to, alignment int, who, name string) []string {
-	out := RankUpLines(current, from, to)
 	if to >= EliteLevel {
 		if note := ReadinessNote(lineageID, current, to, alignment, who, name); note != "" {
 			out = append(out, note)

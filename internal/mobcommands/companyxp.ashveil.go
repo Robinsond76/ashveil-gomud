@@ -82,12 +82,15 @@ func companionLevelLine(before, after characters.Character, lineage, who string)
 	line := fmt.Sprintf("%s reaches level %d (%s).", after.Name, after.Level, strings.Join(changes, ", "))
 	// Phase 38b: what its class gains next.
 	class, _ := after.ClassState()
-	if next := classes.Milestone(class, after.Level); next != "" {
+	// 39b review: and what the new levels just gave it.
+	for _, r := range classes.RankLines(after.ArchetypeID(), class, before.Level, after.Level) {
+		line += " " + r
+	}
+	if next := classes.MilestoneFor(after.ArchetypeID(), class, after.Level); next != "" {
 		line += " " + next
 	}
-	// Phase 38c1: each rank it earned, and an elite promotion ready or
-	// waiting on its gate.
-	for _, note := range classes.LevelNotes(lineage, class, before.Level, after.Level, int(after.Alignment), who, after.Name) {
+	// Phase 38c1: an elite promotion ready or waiting on its gate.
+	for _, note := range classes.LevelNotes(lineage, class, after.Level, int(after.Alignment), who, after.Name) {
 		line += " " + note
 	}
 	return line

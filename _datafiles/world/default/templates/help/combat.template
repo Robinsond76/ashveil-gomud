@@ -209,3 +209,4 @@ Strength adds bounded damage even against an equal opponent (<ansi fg="command">
 Maximum health grows only a little with level; skill decides fights (<ansi fg="command">help progression</ansi>).
 Each point of a stat over your opponent's counts the same at every level (<ansi fg="command">help stat-edge</ansi>).
 A promoted character fights with its class's ranks, and some summon allies (<ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help elite</ansi>).
+A Samurai opens a fight half a turn ahead, with a first strike that hits harder (<ansi fg="command">help samurai</ansi>).

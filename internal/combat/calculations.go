@@ -295,6 +295,12 @@ func critChance(atkSmarts, defSmarts int, hasAccuracy, targetHasBlink bool) int 
 
 // Crits rolls whether an attack is a critical hit.
 func Crits(sourceChar characters.Character, targetChar characters.Character) bool {
+	return critsWith(sourceChar, targetChar, 0)
+}
+
+// critsWith is Crits with extra critical chance points (Phase 39b: a
+// Samurai's Iaijutsu), on top of the class's own (Sharp Eye, Focus).
+func critsWith(sourceChar characters.Character, targetChar characters.Character, extra int) bool {
 	chance := critChance(
 		sourceChar.Stats.Smarts.ValueAdj,
 		targetChar.Stats.Smarts.ValueAdj,
@@ -305,6 +311,7 @@ func Crits(sourceChar characters.Character, targetChar characters.Character) boo
 	if targetChar.HasBuffFlag(status.FlagExposed) {
 		chance = min(chance+status.ExposedCritBonus, 100)
 	}
+	chance = min(chance+sourceChar.ClassCrit()+extra, 100)
 	critRoll := util.Rand(100)
 	util.LogRoll(`Crits`, critRoll, chance)
 	return critRoll < chance

@@ -21,13 +21,16 @@ func Tempo(c *characters.Character) float64 {
 // Meter is ephemeral battle state. Its zero value grants one opening turn,
 // then carries fractional progress only, even when earned turns are forfeited.
 type Meter struct {
-	Points  float64
+	Points float64
+	// Bonus is extra meter a character starts the battle with (Phase 39b:
+	// a Samurai's Iaijutsu), read once when the meter first fills.
+	Bonus   float64
 	started bool
 }
 
 func (m *Meter) Fill(tempo float64, cap int) int {
 	if !m.started {
-		m.Points = 100 - 100*tempo
+		m.Points = 100 - 100*tempo + m.Bonus
 		m.started = true
 	}
 	m.Points += 100 * tempo

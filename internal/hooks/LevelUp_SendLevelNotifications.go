@@ -27,6 +27,7 @@ func SendLevelNotifications(e events.Event) events.ListenerReturn {
 		"nextMilestone":  evt.NextMilestone,
 		"classMilestone": evt.ClassMilestone,
 		"classNotes":     evt.ClassNotes,
+		"classRanks":     evt.ClassRanks,
 		"healthBefore":   evt.HealthMaxBefore, "healthAfter": evt.HealthMaxAfter,
 		"manaBefore": evt.ManaMaxBefore, "manaAfter": evt.ManaMaxAfter,
 		"attackBefore": evt.AttackBefore, "attackAfter": evt.AttackAfter,

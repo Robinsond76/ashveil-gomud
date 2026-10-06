@@ -26,7 +26,7 @@ func TestCompanionLevelLineNamesRanksAndElitePromotion(t *testing.T) {
 	}{
 		{"ready", "mercenary", 29, 30, 0, []string{"Elite promotion ready: Mercenary -> Warlord.", "class promote #2 warlord"}, nil},
 		{"waiting", "knight", 29, 30, 22, []string{"Paladin needs alignment +30 (theirs: +22).", "Tamsin keeps their Knight ranks"}, []string{"promotion ready"}},
-		{"rank up", "warlord", 34, 35, 0, []string{"Rank 35 Warlord: Battle Cry. At the start of each battle"}, nil},
+		{"rank up", "warlord", 34, 35, 0, []string{"New rank: Battle Cry, at the start of each battle"}, nil},
 		{"below 30", "knight", 28, 29, 90, nil, []string{"Elite promotion", "needs alignment"}},
 	}
 	for _, tc := range cases {
@@ -42,4 +42,16 @@ func TestCompanionLevelLineNamesRanksAndElitePromotion(t *testing.T) {
 			assert.NotContains(t, line, n, tc.name)
 		}
 	}
+}
+
+// 39b review: a companion's level-up names the ranks it just reached, not
+// only the next one.
+func TestCompanionLevelLineNamesTheRanksItReached(t *testing.T) {
+	before := characters.Character{Name: "Kaede", Level: 2, HPArchetype: "samurai"}
+	after := characters.Character{Name: "Kaede", Level: 8, HPArchetype: "samurai"}
+	line := companionLevelLine(before, after, "samurai", "#2")
+	assert.Contains(t, line, "New rank: Focus, +3% critical chance")
+	assert.Contains(t, line, "New rank: Zanshin, when it fells a foe")
+	assert.NotContains(t, line, "Iaijutsu", "a rank already held is not repeated")
+	assert.Contains(t, line, "Next: your class promotion at level 10.")
 }

@@ -206,6 +206,8 @@ var (
 	tFocus  = defineTalent(Talent{ID: "focus", Name: "Focus", Text: "+8% spell damage", Add: Effects{SpellPct: 8}})
 	tThrift = defineTalent(Talent{ID: "thrift", Name: "Thrift", Text: "spells cost 10% less mana", Add: Effects{SpellCost: 10}})
 
+	tSharpEye = defineTalent(Talent{ID: "sharp-eye", Name: "Sharp Eye", Text: "+3% critical chance on every blow", Add: Effects{Crit: 3}})
+
 	tPotentHex = defineTalent(Talent{ID: "potent-hex", Name: "Potent Hex", Text: "+5 to a hex's chance to land", Add: Effects{HexLand: 5}})
 )
 
@@ -230,5 +232,6 @@ func init() {
 	offer("rogue", tKeenEdge, tFootwork, tDeepCuts, tPatientHand, tHeavyHands)
 	offer("ranger", tKeenEdge, tFootwork, tSteadyAim, tQuickDraw, tToughness)
 	offer("wizard", tDeepWell, tFocus, tSteadfast, tThrift, tSanctuary)
+	offer("samurai", tKeenEdge, tFootwork, tHeavyHands, tToughness, tSharpEye)
 	offer("witch", tDeepWell, tSteadfast, tThrift, tPotentHex, tSanctuary)
 }

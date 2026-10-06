@@ -211,27 +211,7 @@ func LineageOf(id string) (string, bool) {
 // level (an elite class carries its advanced class's), then the talents'
 // additive effects. Only as many talents as the level has earned count.
 func EffectsFor(classID string, level int, talentIDs []string) Effects {
-	out := Effects{}
-	for _, c := range Path(classID) {
-		for _, r := range c.Ranks {
-			if level >= r.Level {
-				for k, v := range r.Set {
-					out[k] = v
-				}
-			}
-		}
-	}
-	for _, id := range ActiveTalents(level, talentIDs) {
-		if t, ok := TalentByID(id); ok {
-			for k, v := range t.Add {
-				out[k] += v
-			}
-		}
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
+	return EffectsForLineage("", classID, level, talentIDs)
 }
 
 // RanksReached are the route's ranks a character at a level has earned,
