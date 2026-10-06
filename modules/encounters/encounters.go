@@ -257,10 +257,15 @@ func (m *EncountersModule) Entered(userID, roomID int) {
 	if !seen {
 		g = encounters.NewGrace(now) // a fresh character starts with the grace
 	}
+	before := g
 	suppressed := g.Suppresses(now)
 	m.graces[userID] = g
-	if err := m.saveLocked(); err != nil {
-		mudlog.Warn("encounters: save grace", "user", userID, "error", err)
+	// Save only when the grace changed: most entries consume nothing, and a
+	// save on every step would write the registry on the game loop.
+	if !seen || g != before {
+		if err := m.saveLocked(); err != nil {
+			mudlog.Warn("encounters: save grace", "user", userID, "error", err)
+		}
 	}
 	if suppressed {
 		return

@@ -12,7 +12,7 @@ normal battle begins with your company set up as it is.
   followers moving with you do not roll again.
   Each such entry has a chance: about 15 in 100 by default, and a room can
   set its own, higher or lower or none. <ansi fg="command">scout</ansi> in a room that allows them says
-  so.
+  so and names the zone's level band.
 
 <ansi fg="yellow-bold">Breathing room</ansi>
   After any battle, the next two entries into such rooms roll nothing, and

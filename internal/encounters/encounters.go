@@ -42,7 +42,7 @@ type Member struct {
 // the first member is the boss (count 1) and the rest are its escorts.
 type Composition struct {
 	ID      string   `yaml:"id"`
-	Kind    string   `yaml:"kind,omitempty"` // beast, humanoid, undead...; also names the goods table its spoils use
+	Kind    string   `yaml:"kind,omitempty"` // beast, humanoid, undead...: descriptive (goods come from each foe's lootcategory)
 	Weight  int      `yaml:"weight"`
 	Text    string   `yaml:"text,omitempty"` // the line that opens the encounter
 	Boss    bool     `yaml:"boss,omitempty"`

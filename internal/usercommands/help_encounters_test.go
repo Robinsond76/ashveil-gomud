@@ -54,4 +54,10 @@ func TestScoutWarnsOfADangerousRoom(t *testing.T) {
 	assert.Equal(t, `You see no enemies here.`, scoutList(room, user))
 	room.Encounter = &encounters.RoomSetting{Enabled: true, Table: "t"}
 	assert.Contains(t, scoutList(room, user), "feels dangerous")
+	assert.NotContains(t, scoutList(room, user), "levels", "no band, no level line")
+
+	// With a band, scout names the levels the zone's foes come at.
+	room.Zone = "Scout Test Wilds"
+	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: room.Zone, Encounters: encounters.ZoneConfig{Band: encounters.Band{Low: 5, High: 7}}}))
+	assert.Contains(t, scoutList(room, user), "Foes in Scout Test Wilds are of levels 5 to 7.")
 }

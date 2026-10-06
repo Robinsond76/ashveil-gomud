@@ -532,3 +532,30 @@ func (s *memStore) Save(r Registry) error {
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }
+
+type countingStore struct {
+	memStore
+	saves int
+}
+
+func (s *countingStore) Save(r Registry) error {
+	s.saves++
+	return s.memStore.Save(r)
+}
+
+func TestEntriesSaveTheGraceOnlyWhenItChanges(t *testing.T) {
+	w := setup(t)
+	store := &countingStore{}
+	w.m.store = store
+	w.roll = 99 // never springs, so no battle ends to reset the grace
+	for i := 0; i < 5; i++ {
+		w.back(t)
+		w.walk(t, "north")
+	}
+	assert.Zero(t, store.saves, "a spent grace consumes nothing, so ordinary steps write nothing")
+
+	w.m.graces[userID] = encounters.NewGrace(w.now)
+	w.back(t)
+	w.walk(t, "north")
+	assert.Equal(t, 1, store.saves, "consuming a grace entry is saved")
+}
