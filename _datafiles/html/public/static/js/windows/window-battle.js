@@ -73,6 +73,7 @@
         warrior: ['#8a8f99', '#c0504d'], cleric: ['#e8e4d0', '#d4a72c'], ranger: ['#4e7d3a', '#8a6a3b'],
         rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'], halberdier: ['#7d8590', '#b87333'],
         samurai: ['#2f3a4a', '#d9a441'], shaman: ['#3b6a7a', '#9fd0e0'],
+        dollmaster: ['#6a3d4a', '#d8b878'], doll: ['#b08850', '#6a4a2a'], // Phase 39d: the doll is painted wood
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
 
@@ -379,6 +380,26 @@
         });
 
         if (battle) {
+            // Phase 39d: a Doll Master's dolls, in the cells they stand in.
+            (battle.dolls || []).forEach(d => {
+                if (!d || !d.key) { return; }
+                const cell = cellOf(battle.positions ? battle.positions[d.key] : null);
+                if (!cell) { return; }
+                const u = unit(d.key);
+                u.side = 'company';
+                u.label = d.name || d.key;
+                u.klass = 'doll';
+                u.sprite = 'doll';
+                u.promoted = '';
+                u.className = 'Doll';
+                u.cell = cell;
+                u.leader = false;
+                u.role = '';
+                u.fallen = false;
+                u.frac = d.hp_max > 0 ? Math.max(0, Math.min(1, d.hp / d.hp_max)) : 1;
+                u.band = '';
+                seen.add(d.key);
+            });
             (battle.enemies || []).forEach(e => {
                 const u = unit(e.id);
                 u.side = 'enemy';

@@ -17,7 +17,7 @@ func init() {
 	register(Class{ID: "puppeteer", Name: "Puppeteer", Lineage: "dollmaster", Tier: TierAdvanced, Gate: GateAny,
 		Role: "two dolls, each with half the health: more bodies in the line",
 		Ranks: []Rank{
-			rank(10, "Two dolls", "you drive a second doll; each doll has 50% of the health of a single doll. Strike drives the first standing doll, and Guard String works for both", DollCount, 1, DollHPPct, 50),
+			rank(10, "Two dolls", "you drive a second doll; each doll has 50% of the health of a single doll. Puppet Strike drives both standing dolls, and Guard String works for both", DollCount, 1, DollHPPct, 50),
 			rank(15, "Finer joints", "+2 Attack on each doll's blows", DollAttack, 2),
 			rank(20, "Seasoned wood", "each doll has 60% of the health of a single doll", DollHPPct, 60),
 			rank(25, "Lacquered limbs", "each doll carries 4% armor of its own", DollArmor, 4),
@@ -40,7 +40,7 @@ func init() {
 		Role: "strings that snag more foes, sooner",
 		Ranks: []Rank{
 			rank(10, "Nimble strings", "Tangle snags two foes and is ready every 2 rounds", TangleFoes, 2, TangleCD, 1),
-			rank(15, "Quick fingers", "+2 Attack", Attack, 2),
+			rank(15, "Quick fingers", "+2 Attack on the doll's blows", DollAttack, 2),
 			rank(20, "Taut line", "Tangle pushes a foe's action meter back by 60", TanglePush, 10),
 			rank(25, "Steady hands", "+2 damage on the doll's blows", DollDamage, 2),
 		}})

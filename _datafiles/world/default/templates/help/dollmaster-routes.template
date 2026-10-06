@@ -9,26 +9,27 @@ classes, and any alignment may choose any of them. Each class adds four ranks
   10 Two dolls          a second doll, each at 50% of the doll health, so the
                         Master has two strikes a turn; Guard String works for
                         both dolls
-  15 Practiced hands    +2 Attack on the dolls' blows
-  20 Sturdier dolls     each doll has 60% of the doll health
-  25 Lacquered dolls    +4 armor on each doll
+  15 Finer joints       +2 Attack on the dolls' blows
+  20 Seasoned wood      each doll has 60% of the doll health
+  25 Lacquered limbs    each doll carries 4% armor of its own
 
 <ansi fg="yellow-bold">Golemancer</ansi>
 
-  10 Golem              one golem in place of the doll: 130% of the doll
-                        health and +15 armor, but it can't wear armor (its
-                        body is its armor); Guard String 4 times a battle
+  10 Golem doll         one golem in place of the doll: 130% of the doll
+                        health and 15% armor of its own, but it can't wear
+                        armor (its body is its armor); Guard String 4 times a
+                        battle
   15 Heavy fists        +1 damage on the golem's blows
-  20 Deep core          the golem has 150% of the doll health
-  25 Stone skin         +25 armor on the golem
+  20 Stone heart        the golem has 150% of the doll health
+  25 Unyielding         the golem carries 25% armor of its own
 
 <ansi fg="yellow-bold">Marionettist</ansi>
 
-  10 Tangling strings   Tangle snags two foes and is ready after 2 rounds
+  10 Nimble strings     Tangle snags two foes and is ready after 2 rounds
                         instead of 3
-  15 Practiced hands    +2 Attack on the doll's blows
-  20 Hard pull          Tangle pushes a foe back 10 more meter points
-  25 Fine carving       +2 damage on the doll's blows
+  15 Quick fingers      +2 Attack on the doll's blows
+  20 Taut line          Tangle pushes a foe back 10 more meter points
+  25 Steady hands       +2 damage on the doll's blows
 
 The elite classes of these routes (Grand Puppeteer, Golem Lord, String
 Sovereign) are still to come; until then a Doll Master keeps its advanced
