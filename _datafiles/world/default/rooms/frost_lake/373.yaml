@@ -16,6 +16,7 @@ exits:
     roomid: 372
 resources:
 - forage
+- herbs
 mapx: 26
 mapy: 16
 mapz: 0

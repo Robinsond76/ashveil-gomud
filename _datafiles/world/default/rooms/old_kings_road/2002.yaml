@@ -23,6 +23,9 @@ exits:
     roomid: 2008
 resources:
 - forage
+- firewood
+- herbs
+- game
 mapx: 0
 mapy: -1
 mapz: 0

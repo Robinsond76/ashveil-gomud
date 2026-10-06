@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Phase 35a2 (skill over hit points): Attack and Evasion are derived from
@@ -257,4 +258,16 @@ func (c *Character) ManaRates() (base int, perLevel float64) {
 		}
 	}
 	return base, perLevel
+}
+
+// ClassTitle is the class a player sees beside a name: the chosen
+// archetype ("Warrior"), else the skill-derived profession title. The
+// profession title alone read "scrub paladin" for every Ashveil warrior.
+func (c *Character) ClassTitle() string {
+	if id := c.ArchetypeID(); id != "" {
+		if name, ok := archetypes.Name(id); ok && name != "" {
+			return name
+		}
+	}
+	return skills.GetProfession(c.GetAllSkillRanks())
 }

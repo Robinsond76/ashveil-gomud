@@ -12,6 +12,8 @@ tags:
 exits:
   west:
     roomid: 904
+resources:
+- firewood
 mapx: -6
 mapy: 0
 mapz: -99

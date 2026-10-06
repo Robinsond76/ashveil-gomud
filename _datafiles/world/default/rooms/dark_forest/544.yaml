@@ -14,6 +14,8 @@ exits:
 gold: 30
 resources:
 - forage
+- firewood
+- herbs
 mapx: 37
 mapy: -5
 mapz: 0

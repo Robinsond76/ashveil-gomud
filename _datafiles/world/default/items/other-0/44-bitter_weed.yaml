@@ -1,0 +1,9 @@
+itemid: 44
+name: bitter weed
+namesimple: weed
+description: A tough, bitter weed picked in mistake for something useful. Telling
+  good leaves from bad is a skill. It is worth nothing.
+type: junk
+subtype: mundane
+value: 0
+weight: 10

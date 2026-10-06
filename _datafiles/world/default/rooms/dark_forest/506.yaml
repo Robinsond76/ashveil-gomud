@@ -23,6 +23,8 @@ mutators:
   spawnedround: 1596851
 resources:
 - forage
+- firewood
+- herbs
 mapx: 21
 mapy: -1
 mapz: 0

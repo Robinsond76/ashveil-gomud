@@ -276,6 +276,13 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 		return
 	}
 
+	for _, g := range m.goodsFor(room.Zone) {
+		if g.ItemID == item.ItemId && g.SupplyOnly {
+			user.SendText(fmt.Sprintf(`The market sells <ansi fg="itemname">%s</ansi> but doesn't buy it back.`, item.DisplayName()))
+			return
+		}
+	}
+
 	haggler, pct := m.haggler(user, room)
 	price, gained, err := m.commitSell(room.Zone, item.ItemId, pricing, pct)
 	switch {
