@@ -38,7 +38,11 @@ tooltip, toggle and badge render and read clearly
 (`/mnt/project-files/screens/40a-map.png`). Follow-ups: a waterskin is
 destroyed by its last glug, so `fill` only tops up part-used skins (keep
 an empty refillable container); the water dot on blue shore tiles is
-low-contrast until the S1 icons land.
+low-contrast until the S1 icons land; the root package's
+`world_party_follow_test.go` (already on master) leaves an ignored
+`config-overrides.yaml` and two user files in the default world, which can
+break a later `internal/usercommands` run that loads that world (the 40a
+battle test no longer loads it).
 Verification: `make generate`, `make validate`, `go test -race ./...`,
 `make js-lint`.
 
