@@ -163,7 +163,7 @@ func TestLiveSmokeWorld(t *testing.T) {
 
 	step("a new warrior wakes at Dunmar's West Gate", func() {
 		p = dial("world1")
-		p.registerArriving("world1", "worldpass1", "Torvald", "4", "Warrior", true, `Dunmar West Gate`)
+		p.registerArriving("world1", "worldpass1", "Torvald", "Warrior", true, `Dunmar West Gate`)
 		p.drain(2 * time.Second)
 		// A fresh character is at full health, not a fraction of it.
 		out := doAll(p, "status")

@@ -230,14 +230,14 @@ func (m *mudClient) login(user, pass string) {
 
 // register makes a new account and character: race human, the given
 // archetype. It answers the tutorial question and stops there.
-func (m *mudClient) register(user, pass, character, archetypeNumber, archetypeName string, skipTutorial bool) {
+func (m *mudClient) register(user, pass, character, archetypeName string, skipTutorial bool) {
 	m.t.Helper()
-	m.registerArriving(user, pass, character, archetypeNumber, archetypeName, skipTutorial, `Town Square`)
+	m.registerArriving(user, pass, character, archetypeName, skipTutorial, `Town Square`)
 }
 
 // registerArriving is register for a world whose start room is not the Town
 // Square: a skipped tutorial waits for the named room.
-func (m *mudClient) registerArriving(user, pass, character, archetypeNumber, archetypeName string, skipTutorial bool, arrival string) {
+func (m *mudClient) registerArriving(user, pass, character, archetypeName string, skipTutorial bool, arrival string) {
 	m.t.Helper()
 	m.expect(`Find out more`, 20*time.Second)
 	m.send("")
@@ -257,10 +257,11 @@ func (m *mudClient) registerArriving(user, pass, character, archetypeNumber, arc
 	m.send("y")
 	m.expect(`type look or start`, 20*time.Second)
 	m.send("start")
-	m.answer(`Which race will you be`, "2", `known as \(name\)`)
+	m.answer(`Which race will you be`, "human", `known as \(name\)`)
 	m.answer(`known as \(name\)`, character, `Choose the name `+character+`\? \[yes/no\]`)
 	m.answer(`Choose the name `+character+`\? \[yes/no\]`, "yes", `Which archetype will you follow`)
-	m.answer(`Which archetype will you follow`, archetypeNumber, `Become a `+archetypeName+`\?`)
+	// By name: the menu numbers shift whenever a lineage is added.
+	m.answer(`Which archetype will you follow`, strings.ToLower(archetypeName), `Become a `+archetypeName+`\?`)
 	m.answer(`Become a `+archetypeName+`\?`, "yes", `skip the tutorial\? \[yes/no\]`)
 	if skipTutorial {
 		m.answer(`skip the tutorial\? \[yes/no\]`, "yes", arrival)
@@ -513,7 +514,7 @@ func TestLiveSmoke(t *testing.T) {
 
 	step("create a warrior and take the tutorial", func() {
 		p1 = dialMud(t, "smoker1", srv.port)
-		p1.register("smoker1", "smokepass1", "Torvald", "4", "Warrior", false)
+		p1.register("smoker1", "smokepass1", "Torvald", "Warrior", false)
 		p1.expect(`Tutorial, stage 1 of 8: Your character`, 30*time.Second)
 
 		p1.drain(3 * time.Second) // the tutorial hand-off drops input typed during it
@@ -637,7 +638,7 @@ func TestLiveSmoke(t *testing.T) {
 
 	step("two players share a room", func() {
 		p2 := dialMud(t, "smoker2", srv.port)
-		p2.register("smoker2", "smokepass2", "Mirelle", "5", "Witch", true)
+		p2.register("smoker2", "smokepass2", "Mirelle", "Witch", true)
 		p2.expect(`Town Square`, 40*time.Second)
 		p2.drain(2 * time.Second)
 
