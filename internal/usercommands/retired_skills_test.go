@@ -16,8 +16,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var retiredCommands = []string{"backstab", "bump", "changeform", "peep", "pickpocket", "portal", "pray", "scribe", "search", "sneak", "tame", "track"}
+var retiredCommands = []string{"backstab", "bump", "changeform", "peep", "pickpocket", "portal", "pray", "search", "sneak", "tame", "track"}
 
+// (36a: scribe returned as a new caster skill, so it is no longer in these lists.)
 // TestRetiredSkillCommandsAreGone (33f1): the retired skill commands are no
 // longer commands, and their help topics and aliases are gone.
 func TestRetiredSkillCommandsAreGone(t *testing.T) {
@@ -40,7 +41,7 @@ func TestRetiredSkillCommandsAreGone(t *testing.T) {
 	for _, topic := range []string{"skulduggery", "protection", "jobs", "training-schools"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
-		for _, cmd := range []string{"sneak", "bump", "pickpocket", "pray", "portal", "scribe", "peep", "tame", "backstab"} {
+		for _, cmd := range []string{"sneak", "bump", "pickpocket", "pray", "portal", "peep", "tame", "backstab"} {
 			assert.NotRegexp(t, `\b`+cmd+`\b`, strings.ToLower(text), "help %s still names %s", topic, cmd)
 		}
 	}
@@ -86,8 +87,8 @@ func TestMercenariesAreNotForHire(t *testing.T) {
 func TestWorldDataHasNoRetiredSkills(t *testing.T) {
 	_, thisFile, _, _ := runtime.Caller(0)
 	world := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default")
-	retired := regexp.MustCompile(`\b(changeform|peep|portal|scribe|search|tame)\b`)
-	api := regexp.MustCompile(`\b(CharmSet|CharmRemove|CharmExpire|GetCharmCount|GetMaxCharmCount|IsTameable|GetTameMastery|SetTameMastery|GetChanceToTame|TrainSkill\("(changeform|peep|portal|scribe|search|tame)")`)
+	retired := regexp.MustCompile(`\b(changeform|peep|portal|search|tame)\b`)
+	api := regexp.MustCompile(`\b(CharmSet|CharmRemove|CharmExpire|GetCharmCount|GetMaxCharmCount|IsTameable|GetTameMastery|SetTameMastery|GetChanceToTame|TrainSkill\("(changeform|peep|portal|search|tame)")`)
 
 	walk := func(dir string, fn func(path string, data []byte)) {
 		require.NoError(t, filepath.Walk(filepath.Join(world, dir), func(path string, info os.FileInfo, err error) error {

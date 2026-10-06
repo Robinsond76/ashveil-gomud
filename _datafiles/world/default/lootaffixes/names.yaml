@@ -1,0 +1,5 @@
+# Phase 36a: a Rare or better's generated name is a prefix and a suffix
+# joined: "Gloom" + "fang" is Gloomfang.
+names:
+  prefixes: [Gloom, Ash, Grim, Thorn, Dusk, Raven, Bone, Frost, Ember, Storm, Wolf, Night, Iron, Blight, Hollow, Mourn]
+  suffixes: [fang, bane, song, reach, wrath, ward, thirst, gleam, bite, shard, whisper, brand, cleaver, guard, weep, wake]

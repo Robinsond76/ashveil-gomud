@@ -327,7 +327,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		user.SendText(
-			lookItem.GetLongDescription(),
+			lookItem.GetLongDescriptionFor(user.Character.GetSkillLevel(`scribe`)),
 		)
 
 		user.SendText(``)

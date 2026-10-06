@@ -71,6 +71,12 @@ colors:
   item-enchanted: 147
   item-cursed: 54
   item-bonus-damage: 49
+  rarity-common: 7
+  rarity-uncommon: 40
+  rarity-rare: 33
+  rarity-epic: 135
+  rarity-legendary: 208
+  rarity-set: 37
   name-flags-wrapper: 240
   name-flag: 246
   room-title: 128

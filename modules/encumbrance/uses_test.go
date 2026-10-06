@@ -58,3 +58,18 @@ func TestStoredCargoWithoutUsesLoadsFull(t *testing.T) {
 	require.NoError(t, decodeRegistry([]byte("cargo:\n  7:\n    leaderuserid: 7\n    stacks:\n    - itemid: 300\n      count: 2\n"), &registry))
 	assert.Equal(t, []encumbrance.CargoStack{{ItemId: waterId, Count: 2}}, registry.Cargo[7].Stacks)
 }
+
+// Phase 36a: a cargo stack holds only an item id, so a rolled item would
+// lose its quality and affixes in it. It stays in the pack instead.
+func TestCargoPutRefusesRolledGear(t *testing.T) {
+	user := testUser(t, 7)
+	rolled := testItem(waterId)
+	rolled.Loot = items.Rolled{Version: items.RollVersion, Quality: items.QualityFine, Rarity: items.RarityRare, Identified: true}
+	user.Character.Items = []items.Item{rolled}
+	store := &fakeStore{}
+	module := newTestModule(store, user)
+
+	assert.Contains(t, module.put(user, "waterskin"), "individually crafted gear")
+	assert.Len(t, user.Character.Items, 1, "still in the pack")
+	assert.Empty(t, store.saved.Cargo[7].Stacks, "nothing was stowed")
+}

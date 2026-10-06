@@ -64,6 +64,10 @@ round count; a rest takes real time, not game time.
   <ansi fg="command">sharpen auto on</ansi>, which sharpens automatically whenever a camp rest
   ends.
 
+  When a camp rest finishes, gear you are wearing reveals what it is, and
+  your best Scribe reads the unidentified gear the company carries
+  (<ansi fg="command">help identify</ansi>).
+
 <ansi fg="yellow-bold">Breaking camp</ansi>
 
   <ansi fg="command">camp break</ansi>
