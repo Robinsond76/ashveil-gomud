@@ -1,4 +1,5 @@
 mobid: 13
+sprite: goblin-loot
 zone: Endless Trashheap
 itemdropchance: 100
 hostile: false

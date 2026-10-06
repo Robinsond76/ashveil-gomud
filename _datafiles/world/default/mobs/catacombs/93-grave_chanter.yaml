@@ -1,6 +1,7 @@
 # Ashveil Phase 33i2: a drilled company's healer (help coordination). It
 # mends its fellows below 60% of their health; break the chant to stop it.
 mobid: 93
+sprite: grave-chanter
 zone: Catacombs
 itemdropchance: 2
 lootcategory: humanoid

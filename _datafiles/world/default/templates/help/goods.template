@@ -17,10 +17,18 @@ the dense ones first and leave the heavy scrap when the pack is full.
   <ansi fg="yellow">Curio</ansi>       200 and up   sealed letters, old maps, relic fragments
 
 Merchants buy goods like any other item, at a share of its value, and
-only the kind of thing they already trade in. A few goods, such as hides
-and game meat, are also traded at settlement markets, which pay more for
-what they are short of (<ansi fg="command">help market</ansi>).
+only the kind of thing they already trade in. Settlement markets trade in
+goods too: Dunmar's market takes every category and pays most for materials
+and valuables, while the Trappers' Post on the Old Kings Road sells trophies
+and salvage cheaply and pays little for them. A market pays more for what it
+is short of and less for what it holds plenty of, so selling a whole pack of
+one good into one market drives its price down and then stops it buying; the
+price creeps back within a minute or so. Hauling a load from the post to town is where the money is
+(<ansi fg="command">help market</ansi>).
 
-Most goods are not dropped by foes yet; that arrives with the world's drop tables.
+Foes in zones with drop tables carry goods, and a won encounter's cache adds
+more (<ansi fg="command">help loot</ansi>). Smiths break gear down into materials
+(<ansi fg="command">help salvage</ansi>), and <ansi fg="command">sell junk</ansi> clears what you have marked
+(<ansi fg="command">help mark</ansi>).
 
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help pack</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help market</ansi>, <ansi fg="command">help equipmenttiers</ansi>.

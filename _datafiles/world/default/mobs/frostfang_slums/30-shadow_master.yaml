@@ -1,4 +1,5 @@
 mobid:  30
+sprite: shadow-master
 zone: Frostfang Slums
 itemdropchance: 5
 hostile: false

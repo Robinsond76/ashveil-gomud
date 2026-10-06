@@ -1,4 +1,5 @@
 mobid:  58
+sprite: dummy-training
 zone: Tutorial
 itemdropchance: 0
 hostile: false

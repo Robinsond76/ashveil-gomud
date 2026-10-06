@@ -1,4 +1,5 @@
 mobid: 15
+sprite: skeleton
 zone: Catacombs
 itemdropchance: 15
 hostile: true

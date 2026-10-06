@@ -1,0 +1,103 @@
+package market
+
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/market"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+)
+
+// Phase 36c review: a shopkeeper who sells a market good below what a
+// market pays for it at its target stock is a risk-free loop (buy from the
+// shop, walk to the market, sell, repeat at every restock). Every shipped
+// shopkeeper's price for a traded good is at least the good's target-stock
+// price in every market, which is above anything a market pays at or above
+// target, haggle and standing included.
+func TestShopkeepersNeverUndercutMarketsOnTradedGoods(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	world := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default")
+
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId      int `yaml:"ItemId"`
+				BasePrice   int `yaml:"BasePrice"`
+				MinPrice    int `yaml:"MinPrice"`
+				MaxPrice    int `yaml:"MaxPrice"`
+				MaxStock    int `yaml:"MaxStock"`
+				TargetStock int `yaml:"TargetStock"`
+				StartStock  int `yaml:"StartStock"`
+				DriftStep   int `yaml:"DriftStep"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	floor := map[int]int{} // item id -> highest target-stock price in any market
+	for _, m := range overlay.Markets {
+		for _, w := range m.Goods {
+			g := market.Good{ItemID: w.ItemId, BasePrice: w.BasePrice, MinPrice: w.MinPrice, MaxPrice: w.MaxPrice,
+				MaxStock: w.MaxStock, TargetStock: w.TargetStock, StartStock: w.StartStock, DriftStep: w.DriftStep}
+			require.NoError(t, g.Validate(), "%s %d", m.Zone, g.ItemID)
+			floor[g.ItemID] = max(floor[g.ItemID], g.PriceForStock(g.TargetStock))
+		}
+	}
+	require.NotEmpty(t, floor)
+
+	values := map[int]int{}
+	require.NoError(t, filepath.Walk(filepath.Join(world, "items"), func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || filepath.Ext(path) != ".yaml" {
+			return err
+		}
+		var spec struct {
+			ItemId int `yaml:"itemid"`
+			Value  int `yaml:"value"`
+		}
+		raw, err := os.ReadFile(path)
+		if err == nil && yaml.Unmarshal(raw, &spec) == nil && floor[spec.ItemId] > 0 {
+			values[spec.ItemId] = spec.Value
+		}
+		return nil
+	}))
+
+	checked := 0
+	require.NoError(t, filepath.Walk(filepath.Join(world, "mobs"), func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || filepath.Ext(path) != ".yaml" {
+			return err
+		}
+		var mob struct {
+			Character struct {
+				Name string `yaml:"name"`
+				Shop []struct {
+					ItemId int `yaml:"itemid"`
+					Price  int `yaml:"price"`
+				} `yaml:"shop"`
+			} `yaml:"character"`
+		}
+		raw, err := os.ReadFile(path)
+		require.NoError(t, err)
+		require.NoError(t, yaml.Unmarshal(raw, &mob), path)
+		for _, si := range mob.Character.Shop {
+			want, traded := floor[si.ItemId]
+			if !traded {
+				continue
+			}
+			price := si.Price
+			if price == 0 {
+				price = values[si.ItemId]
+			}
+			require.Positive(t, price, "%s: item %d has no price or value", path, si.ItemId)
+			assert.GreaterOrEqual(t, price, want, "%s sells item %d for %d, under a market's %d", mob.Character.Name, si.ItemId, price, want)
+			checked++
+		}
+		return nil
+	}))
+	assert.Positive(t, checked, "Brynja's goods are checked")
+}

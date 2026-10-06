@@ -1,4 +1,5 @@
 mobid:  37
+sprite: spider-queen
 zone: Dark Forest
 itemdropchance: 100
 hostile: true
