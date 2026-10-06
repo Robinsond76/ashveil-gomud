@@ -695,6 +695,12 @@ func TestPickedCleanShowsOnLookAndQueuesARedraw(t *testing.T) {
 	w.m.checkRegrowth()
 	events.ProcessEvents()
 	assert.Len(t, redraws, 2, "and only once")
+	assert.Empty(t, w.m.pickedClean, "a regrown room is no longer watched")
+
+	// A watch that finds nothing clean is dropped, so the per-round check
+	// never keeps a room it can no longer report on.
+	w.m.watchRegrowth(5001)
+	assert.Empty(t, w.m.pickedClean)
 }
 
 func TestPoolsPersistAcrossASaveAndLoad(t *testing.T) {

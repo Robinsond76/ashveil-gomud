@@ -50,11 +50,11 @@ func buildWorldResources(room *rooms.Room) GMCPWorldResources_Payload {
 	return p
 }
 
-// resourcesChangedHandler sends World.Resources to every player online when a
-// room's resources change (a gather picks a pool clean; a regrown charge
-// clears the mark). The payload is tiny and carries no more than the map
-// already shows for any room a player has visited; a client ignores rooms it
-// has not seen.
+// resourcesChangedHandler sends World.Resources to every player online who
+// has visited the room when its resources change (a gather picks a pool
+// clean; a regrown charge clears the mark). The payload is tiny and carries
+// no more than World.Map already shows for a visited room; a player who has
+// never been there gets nothing.
 func (g *GMCPWorldModule) resourcesChangedHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.RoomResourcesChanged)
 	if !ok {
@@ -66,6 +66,10 @@ func (g *GMCPWorldModule) resourcesChangedHandler(e events.Event) events.Listene
 	}
 	payload := buildWorldResources(room)
 	for _, uId := range users.GetOnlineUserIds() {
+		u := users.GetByUserId(uId)
+		if u == nil || !u.Character.HasVisitedRoom(room.RoomId, room.Zone) {
+			continue
+		}
 		events.AddToQueue(GMCPOut{UserId: uId, Module: `World.Resources`, Payload: payload})
 	}
 	return events.Continue

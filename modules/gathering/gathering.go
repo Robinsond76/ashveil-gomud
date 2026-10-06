@@ -904,7 +904,11 @@ func (m *GatheringModule) watchRegrowth(roomID int) {
 	if m.pickedClean == nil {
 		m.pickedClean = map[int]int{}
 	}
-	m.pickedClean[roomID] = m.pooledClean(roomID)
+	if n := m.pooledClean(roomID); n > 0 {
+		m.pickedClean[roomID] = n
+	} else {
+		delete(m.pickedClean, roomID)
+	}
 }
 
 // checkRegrowth tells clients to redraw a watched room whose picked-clean
@@ -916,12 +920,11 @@ func (m *GatheringModule) checkRegrowth() {
 	var changed []int
 	for roomID, was := range m.pickedClean {
 		now := m.pooledClean(roomID)
-		if now == was {
-			continue
+		if now != was {
+			changed = append(changed, roomID)
 		}
-		changed = append(changed, roomID)
 		if now == 0 {
-			delete(m.pickedClean, roomID)
+			delete(m.pickedClean, roomID) // nothing left to watch
 		} else {
 			m.pickedClean[roomID] = now
 		}

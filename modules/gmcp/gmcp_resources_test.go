@@ -92,9 +92,10 @@ func TestWorldMapEntriesCarryShownResources(t *testing.T) {
 	assert.Len(t, got, 2)
 }
 
-// Phase 40c: a resource change reaches every player online as World.Resources,
-// so a map redraws a room its player is not standing in.
-func TestWorldResourcesGoToEveryoneOnline(t *testing.T) {
+// Phase 40c: a resource change reaches every online player who has visited
+// the room as World.Resources, so a map redraws a room its player is not
+// standing in; a player who has never been there gets nothing.
+func TestWorldResourcesGoToVisitorsOnline(t *testing.T) {
 	mudlog.SetupLogger(nil, "", "", false)
 	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "gmcpres2", Name: "Meadow", LitArea: true})
 	t.Cleanup(func() { rooms.RemoveTestBiome("gmcpres2") })
@@ -106,8 +107,13 @@ func TestWorldResourcesGoToEveryoneOnline(t *testing.T) {
 
 	far := users.NewUserRecord(990412, 1) // standing somewhere else entirely
 	far.Character.RoomId = 1
+	far.Character.MarkVisitedRoom(990411, "Meadow", nil)
 	users.SetTestUser(far)
 	t.Cleanup(func() { users.RemoveTestUser(far.UserId) })
+	stranger := users.NewUserRecord(990413, 1) // never been to the spring
+	stranger.Character.RoomId = 1
+	users.SetTestUser(stranger)
+	t.Cleanup(func() { users.RemoveTestUser(stranger.UserId) })
 
 	var got []GMCPWorldResources_Payload
 	var to []int
@@ -124,6 +130,7 @@ func TestWorldResourcesGoToEveryoneOnline(t *testing.T) {
 	(&GMCPWorldModule{}).resourcesChangedHandler(events.RoomResourcesChanged{RoomId: 990411})
 	events.ProcessEvents()
 	require.Contains(t, to, far.UserId)
+	assert.NotContains(t, to, stranger.UserId, "only players who have seen the room hear of it")
 	i := 0
 	for n, u := range to {
 		if u == far.UserId {
