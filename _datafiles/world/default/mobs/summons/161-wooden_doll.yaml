@@ -1,0 +1,19 @@
+mobid: 161
+sprite: warrior
+zone: Summons
+# Phase 39d: a Doll Master's doll. The dolls package makes it at the Master's
+# level when a battle opens, with the gear and health the Master's record
+# keeps, and takes it away when the battle ends. It is never a recruit and
+# nothing of it drops.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+wounds: none
+character:
+  name: wooden doll
+  pronouns: it
+  description: 'A jointed wooden doll about the height of a child, its painted face chipped and patient. Strings no thicker than hair run from its limbs into its Master''s fingers.'
+  raceid: 25
+  level: 1
+  alignment: 0

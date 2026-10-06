@@ -121,6 +121,10 @@ func abilityPass() {
 			if surprised(a.who.userId, a.who.mobId) {
 				continue
 			}
+			// Phase 39d: a Doll Master's turn is its dolls' strike.
+			if dollStrike(a, u, foes, room) {
+				continue
+			}
 			// Phase 38b: a Knight lays on hands instead of swinging.
 			if layHands(a, side, u, f) {
 				continue

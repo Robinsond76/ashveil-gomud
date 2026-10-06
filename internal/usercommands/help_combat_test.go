@@ -350,6 +350,9 @@ func TestClassHelpTopics(t *testing.T) {
 		"warrior-routes":    {"Lay on Hands", "Blood Oath", "Divine shield"},
 		"halberdier":        {"Sweep", "Brace", "Hook", "crowded"},
 		"halberdier-routes": {"Sweeper", "Vanguard", "Valkyrie", "Charged Sweep", "Hold the line"},
+		"dollmaster":        {"Puppet Strike", "Guard String", "Tangle", "Emergency Splice", "doll parts"},
+		"dollmaster-routes": {"Puppeteer", "Golemancer", "Marionettist", "Two dolls", "Golem"},
+		"doll":              {"doll wield", "doll mend", "doll name", "doll remove"},
 		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
 		"elite":             {"Warlord", "Paladin", "Dread Knight", "Promotion ready", "Elite talents", "Routes are final"},
 		"warlord":           {"Marked for Ruin", "Battle Cry", "Sunder", "Relentless", "Warlord's Command", "Iron Hide"},
@@ -371,6 +374,8 @@ func TestClassHelpTopics(t *testing.T) {
 		"hierarch": "summoning", "demonologist": "summoning",
 		"elites": "elite", "elite-class": "elite", "warlords": "warlord", "battle-cry": "warlord",
 		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
+		"dolls": "dollmaster", "tangle": "dollmaster", "puppeteer": "dollmaster-routes", "marionettist": "dollmaster-routes",
+		"mend-doll": "doll",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -379,7 +384,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "promotion", "classes"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "dollmaster", "promotion", "classes"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)
