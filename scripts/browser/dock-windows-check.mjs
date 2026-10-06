@@ -475,6 +475,28 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(true));
   check(await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty button')].every(b => b.disabled)) && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('fixed for this rest'), 'duties lock while resting (51)');
 }
+// Phase 56: the recipe book, folded under the camp's buttons.
+{
+  const recipes = ['seared game meat: 1 raw game meat (cooking 1)', 'grilled fish: 1 raw fish (cooking 1)', "hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)", 'thyme tea (remedy for chill): 2 wild thyme'];
+  const campR = { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, gear: ['Tent'], recipes };
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campR);
+  const bookState = () => page.evaluate(() => { const d = document.querySelector('#company-camp details.cmp-recipes'); return d ? { open: d.open, summary: d.querySelector('summary').textContent, items: d.querySelectorAll('li').length } : null; });
+  let st = await bookState();
+  check(st && !st.open && st.summary === 'Recipe book (4)' && st.items === 4, 'the recipe book is folded with its count (56)');
+  check(await page.evaluate(() => { const b = [...document.querySelectorAll('#company-camp .cmp-btn')].find(x => x.textContent === 'Rest'); const d = document.querySelector('#company-camp details.cmp-recipes'); return !!b && !!d && (b.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0; }), 'the book sits below the camp buttons (56)');
+  await page.locator('#company-camp details.cmp-recipes summary').click();
+  await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, rest_seconds: 1 });
+  st = await bookState();
+  check(st && st.open, 'an unfolded book stays open across a refresh (56)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '56-camp-recipes.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the recipe book fits a phone (56)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '56-camp-recipes-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('#company-camp details.cmp-recipes summary').click();
+  await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, recipes: [] });
+  check(await bookState() === null, 'no book with no recipes (56)');
+}
 // Phase 52: the pitched tent, and a picker when more than one tent is carried.
 {
   const tents = [
@@ -1055,6 +1077,22 @@ check(await page.evaluate(() => {
 }), 'Skills text is in the compact Company scale, not the dock\'s full size');
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
 check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[["Help","track"]]', 'clicking a skill asks for its help page');
+// The test area's armory catalog: a screen with search, type chips and Take.
+await page.evaluate(() => { window.sent = []; window.gmcp('Armory', { filter: '', items: [
+  { id: 11, name: 'Iron Sword', type: 'weapon', subtype: 'sword', tier: 1 },
+  { id: 12, name: '<img src=x onerror="window.__xss=1">', type: 'weapon', subtype: 'staff', tier: 2 },
+  { id: 13, name: 'Leather Cap', type: 'head', family: 'leather', tier: 1 }] }); });
+check(await page.locator('#armory .arm-row').count() === 3, 'the armory catalog lists every item');
+check(await page.evaluate(() => !window.__xss && document.querySelector('#armory input').autocomplete === 'off'), 'the catalog sets names as text and keeps the browser from offering saved passwords');
+await page.locator('#armory .arm-chip', { hasText: 'head' }).click();
+check(await page.locator('#armory .arm-row').count() === 1, 'a type chip narrows the catalog');
+await page.locator('#armory .arm-chip', { hasText: 'All' }).click();
+await page.locator('#armory input').fill('sword');
+check(await page.locator('#armory .arm-row').count() === 1, 'typing filters the catalog');
+await page.locator('#armory .arm-count').selectOption('5');
+await page.getByRole('button', { name: 'Take Iron Sword' }).click();
+check(JSON.stringify(await page.evaluate(() => window.sent)) === '["testarea give 11 5"]', 'Take sends testarea give with the id and count');
+await page.keyboard.press('Escape');
 // The Help screen: it takes focus from the control that opened it, nothing behind it keeps a hover, and Escape returns focus.
 await page.evaluate(() => { document.dispatchEvent(new Event('DOMContentLoaded')); });
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).focus();

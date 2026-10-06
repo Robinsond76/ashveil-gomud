@@ -1,0 +1,10 @@
+itemid: 30063
+name: "recipe page for thyme-roasted game"
+namesimple: page
+description: A greasy page in a hunter's hand, telling how long to roast game meat with wild thyme. Use it to learn the dish.
+type: readable
+subtype: usable
+uses: 1
+value: 12
+weight: 5
+recipe: 30020

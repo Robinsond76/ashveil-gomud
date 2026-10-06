@@ -141,6 +141,7 @@ help:
       - camp
       - inn
       - cooking
+      - recipes
       - resources
       - worldmap
       - gathering
@@ -449,7 +450,8 @@ help-aliases:
   campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, tents, camp tent, camp-tent, fur tent, fur-lined tent, camouflaged tent, large tent, pavilion, pavilion tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
   campduties:       [camp duties, camp-duties, duties, duty, rest duties, rest-duties, camp duty, watch duty, tending]
   campsupplies:     [camp supplies, camp-supplies, camp prepare, camp-prepare, supplies, broth, fortifying broth, warming draught, cooling salve, incense, watch incense]
-  cooking:          [cook, hearth, recipe, recipes, meal-buff, meal-buffs, meal buff, meal buffs]
+  cooking:          [cook, hearth, meal-buff, meal-buffs, meal buff, meal buffs]
+  recipes:          [recipe, recipe book, recipe-book, recipebook, recipe page, recipe pages, discovery, experiment]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
   combat:           [battle, battles, fighting, fight]

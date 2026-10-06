@@ -1951,7 +1951,7 @@ const Client = (() => {
     function _handleWebclientCommand(data) {
         if (data.startsWith('TEXTMASK:')) {
             debugLog(data);
-            textInput.type = data.substring(9) === 'true' ? 'password' : 'text';
+            setTextMask(data.substring(9) === 'true');
             return true;
         }
         if (data.startsWith('RELOGTKN:')) {
@@ -2061,10 +2061,7 @@ const Client = (() => {
             connectButton.style.display = 'block';
             connectButton.disabled = false;
 
-            if (textInput.type === 'password') {
-                textInput.value = '';
-                textInput.type  = 'text';
-            }
+            setTextMask(false);
 
             if (pendingReconnectToken) {
                 const token = pendingReconnectToken;
@@ -2555,6 +2552,123 @@ const Client = (() => {
     // -----------------------------------------------------------------------
     let connectButton, textOutput, textInput;
 
+    // The command box's key handling (history, walking arrows, tab
+    // completion, Enter to send).
+    function onCommandKeydown(event) {
+    // Space while a suggestion is active: accept the suggestion and append
+    // a space so the user can keep typing (mirrors telnet behaviour).
+        if (event.key === ' ' && _tabSug.suggestions.length > 0) {
+            event.preventDefault();
+            const accepted = _tabSug.suggestions[_tabSug.index];
+            _tabSugReset();
+            textInput.value = accepted + ' ';
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+            return false;
+        }
+
+    // Tab: request or cycle autocomplete suggestions
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const currentText = textInput.value;
+            const selStart    = textInput.selectionStart;
+            // The confirmed typed prefix is everything before the selection.
+            const typedPrefix = currentText.substring(0, selStart);
+            // If we already have suggestions for this typed prefix, cycle them.
+            if (_tabSug.suggestions.length > 0 && _tabSug.input === typedPrefix) {
+                _tabSug.index = (_tabSug.index + 1) % _tabSug.suggestions.length;
+                _tabSugApply();
+            } else {
+                // New request: use the typed prefix (excludes any selected suffix).
+                // Fall back to the full value if there is no selection (cursor at end).
+                const typed = typedPrefix || currentText;
+                _tabSugReset();
+                _tabSug.input = typed;
+                GMCPRequest('Suggestion', typed);
+            }
+            return false;
+        }
+
+        // F-key macros
+        if (event.key.substring(0, 1) === 'F' && event.key.length === 2) {
+            sendData('=' + event.key.substring(1));
+            if (event.preventDefault) { event.preventDefault(); }
+            return false;
+        }
+
+        // Command history. With the box empty the arrows walk instead
+        // (the numpad shortcuts below), so Alt+Up and Alt+Down start
+        // the history; once it is showing, plain arrows keep going.
+        const arrowsWalk = textInput.value.length === 0 && historyPosition === 0 &&
+            !event.altKey && textInput.type !== 'password' && playing();
+        if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && !arrowsWalk) {
+            event.preventDefault();
+            historyPosition += (event.key === 'ArrowUp') ? 1 : -1;
+            if (historyPosition < 0) { historyPosition = 0; }
+            if (historyPosition > commandHistory.length) { historyPosition = commandHistory.length; }
+            event.target.value = historyPosition === 0 ? '' : commandHistory[commandHistory.length - historyPosition];
+            _tabSugReset();
+            return;
+        }
+
+        // Numpad / arrow shortcuts when input is empty (arrows only in
+        // play, so they never answer a login or a pending question)
+        if (textInput.value.length === 0 && codeShortcuts[event.code] &&
+            (event.code.indexOf('Arrow') !== 0 || playing())) {
+            sendData(codeShortcuts[event.code]);
+            if (event.preventDefault) { event.preventDefault(); }
+            return false;
+        }
+
+        // Enter
+        if (event.key === 'Enter') {
+            // Accept any active suggestion before submitting
+            if (_tabSug.suggestions.length > 0) {
+                _tabSugReset();
+            }
+            if (event.target.value !== '' && textInput.type !== 'password') {
+                commandHistory.push(event.target.value);
+                historyPosition = 0;
+                if (commandHistory.length > commandHistoryMaxLength) {
+                    commandHistory = commandHistory.slice(commandHistory.length - commandHistoryMaxLength);
+                }
+            }
+
+            if (sendData(event.target.value)) {
+                event.target.value = '';
+            } else {
+                term.writeln('Not connected to the server. Did you click the Connect button?');
+            }
+        }
+    }
+
+    function bindCommandInput(input) {
+        input.addEventListener('keydown', onCommandKeydown);
+        // Clear tab-completion state whenever the input value changes by means
+        // other than the tab handler (typing, paste, cut, etc.).
+        input.addEventListener('input', _tabSugReset);
+    }
+
+    // setTextMask hides what the player types while the server asks for a
+    // password. Unmasking swaps in a fresh command box: Firefox keeps
+    // treating any box that was ever type="password" as a login field,
+    // ignores autocomplete="off" on it and opens its saved-logins dropdown
+    // ("Manage passwords") on the arrow keys for the rest of the session.
+    function setTextMask(masked) {
+        if (masked) { textInput.type = 'password'; return; }
+        if (textInput.type !== 'password') { return; }
+        const fresh = document.createElement('input');
+        Array.from(textInput.attributes).forEach(a => {
+            if (a.name !== 'type') { fresh.setAttribute(a.name, a.value); }
+        });
+        fresh.type = 'text';
+        const hadFocus = document.activeElement === textInput;
+        bindCommandInput(fresh);
+        textInput.replaceWith(fresh);
+        textInput = fresh;
+        if (hadFocus) { fresh.focus(); }
+    }
+
+
     // -----------------------------------------------------------------------
     // init()
     // -----------------------------------------------------------------------
@@ -2610,99 +2724,7 @@ const Client = (() => {
             attachSocketHandlers('Connected to the server!', true);
         });
 
-        // Input keydown
-        textInput.addEventListener('keydown', function(event) {
-        // Space while a suggestion is active: accept the suggestion and append
-        // a space so the user can keep typing (mirrors telnet behaviour).
-            if (event.key === ' ' && _tabSug.suggestions.length > 0) {
-                event.preventDefault();
-                const accepted = _tabSug.suggestions[_tabSug.index];
-                _tabSugReset();
-                textInput.value = accepted + ' ';
-                textInput.setSelectionRange(textInput.value.length, textInput.value.length);
-                return false;
-            }
-
-        // Tab: request or cycle autocomplete suggestions
-            if (event.key === 'Tab') {
-                event.preventDefault();
-                const currentText = textInput.value;
-                const selStart    = textInput.selectionStart;
-                // The confirmed typed prefix is everything before the selection.
-                const typedPrefix = currentText.substring(0, selStart);
-                // If we already have suggestions for this typed prefix, cycle them.
-                if (_tabSug.suggestions.length > 0 && _tabSug.input === typedPrefix) {
-                    _tabSug.index = (_tabSug.index + 1) % _tabSug.suggestions.length;
-                    _tabSugApply();
-                } else {
-                    // New request: use the typed prefix (excludes any selected suffix).
-                    // Fall back to the full value if there is no selection (cursor at end).
-                    const typed = typedPrefix || currentText;
-                    _tabSugReset();
-                    _tabSug.input = typed;
-                    GMCPRequest('Suggestion', typed);
-                }
-                return false;
-            }
-
-            // F-key macros
-            if (event.key.substring(0, 1) === 'F' && event.key.length === 2) {
-                sendData('=' + event.key.substring(1));
-                if (event.preventDefault) { event.preventDefault(); }
-                return false;
-            }
-
-            // Command history. With the box empty the arrows walk instead
-            // (the numpad shortcuts below), so Alt+Up and Alt+Down start
-            // the history; once it is showing, plain arrows keep going.
-            const arrowsWalk = textInput.value.length === 0 && historyPosition === 0 &&
-                !event.altKey && textInput.type !== 'password' && playing();
-            if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && !arrowsWalk) {
-                event.preventDefault();
-                historyPosition += (event.key === 'ArrowUp') ? 1 : -1;
-                if (historyPosition < 0) { historyPosition = 0; }
-                if (historyPosition > commandHistory.length) { historyPosition = commandHistory.length; }
-                event.target.value = historyPosition === 0 ? '' : commandHistory[commandHistory.length - historyPosition];
-                _tabSugReset();
-                return;
-            }
-
-            // Numpad / arrow shortcuts when input is empty (arrows only in
-            // play, so they never answer a login or a pending question)
-            if (textInput.value.length === 0 && codeShortcuts[event.code] &&
-                (event.code.indexOf('Arrow') !== 0 || playing())) {
-                sendData(codeShortcuts[event.code]);
-                if (event.preventDefault) { event.preventDefault(); }
-                return false;
-            }
-
-            // Enter
-            if (event.key === 'Enter') {
-                // Accept any active suggestion before submitting
-                if (_tabSug.suggestions.length > 0) {
-                    _tabSugReset();
-                }
-                if (event.target.value !== '' && textInput.type !== 'password') {
-                    commandHistory.push(event.target.value);
-                    historyPosition = 0;
-                    if (commandHistory.length > commandHistoryMaxLength) {
-                        commandHistory = commandHistory.slice(commandHistory.length - commandHistoryMaxLength);
-                    }
-                }
-
-                if (sendData(event.target.value)) {
-                    event.target.value = '';
-                } else {
-                    term.writeln('Not connected to the server. Did you click the Connect button?');
-                }
-            }
-        });
-
-        // Clear tab-completion state whenever the input value changes by means
-        // other than the tab handler (typing, paste, cut, etc.).
-        textInput.addEventListener('input', function() {
-            _tabSugReset();
-        });
+        bindCommandInput(textInput);
 
         // Volume sliders: load from localStorage
         _loadSoundStorage();

@@ -1,0 +1,10 @@
+itemid: 30064
+name: "recipe page for hunter's stew"
+namesimple: page
+description: A stained page that names two cuts of game, a sprig of thyme, and a long simmer. Use it to learn the dish.
+type: readable
+subtype: usable
+uses: 1
+value: 20
+weight: 5
+recipe: 30019

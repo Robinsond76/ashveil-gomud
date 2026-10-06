@@ -46,7 +46,8 @@ The road post sells them a little dearer than Dunmar.
 
   <ansi fg="command">camp prepare remedy</ansi> [member|all]
   Makes the remedy for each ailing member from gathered herbs and ends the
-  ailment at once. See <ansi fg="command">help ailments</ansi>.
+  ailment at once. <ansi fg="command">camp prepare remedy with</ansi> [herb] [herb] tries a new mix. See
+  <ansi fg="command">help ailments</ansi>.
 
   <ansi fg="command">camp prepare status</ansi>
   Shows each member's benefit and how long it has left, and what is queued.

@@ -45,7 +45,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp duties [member] [duty] | camp tent [kind] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply|remedy] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook [ingredient]... | cook [ingredient]... | recipes | camp duties [member] [duty] | camp tent [kind] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply|remedy] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -519,6 +519,8 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("camp", m.userCommand, false, false)
 	m.plug.AddUserCommand("inn", m.innCommand, false, false)
+	m.plug.AddUserCommand("cook", m.cookCommand, false, false)       // Phase 56
+	m.plug.AddUserCommand("recipes", m.recipesCommand, false, false) // Phase 56
 	m.plug.AddUserCommand("sharpen", m.sharpenCommand, false, false)
 	m.plug.AddUserCommand("coat", m.coatCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
@@ -1583,7 +1585,7 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 	case "break":
 		user.SendText(m.breakCamp(user, room))
 	case "cook":
-		user.SendText(m.cook(user, room)) // Phase 33f3
+		user.SendText(m.cook(user, room, args[1:])) // Phase 33f3; 56: with ingredients, a new combination
 	case "tent":
 		user.SendText(m.tentCommand(user, room, args[1:])) // Phase 52
 	case "duties", "duty":
@@ -1700,6 +1702,9 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]
 	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear, Supplies: supplies, Tents: tents}
+	if leader := users.GetByUserId(leaderUserID); leader != nil && leader.Character != nil {
+		s.Recipes = m.recipesLines(leader)
+	}
 	if !ok {
 		s.CanCamp = has(m.roomTag())
 	} else {

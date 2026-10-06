@@ -782,6 +782,8 @@ func nativeCompanionCooks(leaderUserID int, recipes []campRecipe) []campCook {
 // selectCampRecipe is shared by the command and the capability read model.
 // It neither consumes ingredients nor chooses a recipe the cook's ranks forbid.
 func selectCampRecipe(user *users.UserRecord, cook campCook, recipes []campRecipe) (chosen, blocked *campRecipe) {
+	// Phase 56: only dishes the leader has learned cook without trying.
+	recipes = knownCampRecipes(user, recipes)
 	// The ingredients to hand: pack items, then cargo stacks.
 	have := map[int]int{}
 	if !user.Character.CompanyCargo {
@@ -827,7 +829,7 @@ func selectCampRecipe(user *users.UserRecord, cook campCook, recipes []campRecip
 // recipe their Cooking allows from
 // ingredients in their pack and the company cargo (the pack first). The
 // dish goes into the cargo (into the pack when there is no cargo).
-func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
+func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room, words []string) string {
 	if user == nil || room == nil {
 		return "You can't cook here."
 	}
@@ -847,6 +849,9 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	if len(recipes) == 0 {
 		return "There is nothing to cook over a campfire."
 	}
+	if len(words) > 0 {
+		return m.experiment(user, room, m.bestCook(user, recipes), words) // Phase 56
+	}
 	return m.cookDish(user, room, m.bestCook(user, recipes))
 }
 
@@ -863,8 +868,15 @@ func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook 
 		if blocked != nil {
 			return fmt.Sprintf("You have the makings of %s, but it needs %s %d, and %s.", itemName(blocked.Output), blocked.Skill, blocked.MinLevel, bestRankText(cook, blocked.Skill))
 		}
-		return "You have nothing to cook: see help cooking for what each dish needs."
+		return "You have nothing to cook with what you know: try a new combination with cook (help recipes), or see help cooking."
 	}
+	text, _ := m.cookRecipe(user, room, cook, chosen, "over the campfire", "")
+	return text
+}
+
+// cookRecipe cooks one chosen recipe from the pack and cargo. learned is a
+// sentence appended when the dish was just worked out (Phase 56).
+func (m *CampingModule) cookRecipe(user *users.UserRecord, room *rooms.Room, cook campCook, chosen *campRecipe, where, learned string) (string, bool) {
 	// Plan where each ingredient comes from: the pack first, then cargo.
 	var fromPack []items.Item
 	fromCargo := map[int]int{}
@@ -890,7 +902,7 @@ func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook 
 	// Phase 40a3: an iron cookpot stretches a multi-ingredient dish into
 	// one extra portion.
 	portions := 1
-	pot := len(chosen.Inputs) > 1 && m.gearCount(user.UserId, cookpotItemID) > 0
+	pot := len(chosen.Inputs) > 1 && chosen.Output != items.MakeshiftMealItemId && m.gearCount(user.UserId, cookpotItemID) > 0
 	if pot {
 		portions = 2
 	}
@@ -900,11 +912,11 @@ func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook 
 		dishGrams = spec.Weight * portions
 	}
 	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, dishGrams-inputGrams); refuse {
-		return text
+		return text, false
 	}
-	potNote := ""
+	potNote := learned
 	if pot {
-		potNote = " The iron cookpot stretches it into a second portion."
+		potNote = " The iron cookpot stretches it into a second portion." + learned
 	}
 	if user.Character.CompanyCargo {
 		dishes := make([]items.Item, 0, portions)
@@ -912,9 +924,9 @@ func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook 
 			dishes = append(dishes, items.New(chosen.Output))
 		}
 		if err := encumbrance.TransformCargo(user.UserId, fromPack, dishes); err != nil {
-			return "The ingredients couldn't be saved; nothing was cooked."
+			return "The ingredients couldn't be saved; nothing was cooked.", false
 		}
-		return fmt.Sprintf("%s %s %s over the campfire; it goes into company cargo.%s", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output), potNote)
+		return fmt.Sprintf("%s %s %s %s; it goes into company cargo.%s", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output), where, potNote), true
 	}
 	// Take from the cargo first, putting back what was taken if any of it
 	// fails, so a failed save never eats ingredients (33f3 review).
@@ -927,7 +939,7 @@ func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook 
 					mudlog.Error("camping: cook restore", "leader", user.UserId, "error", err)
 				}
 			}
-			return "The ingredients couldn't be gathered right now."
+			return "The ingredients couldn't be gathered right now.", false
 		}
 		withdrawn = append(withdrawn, encumbrance.CargoStack{ItemId: id, Count: fromCargo[id]})
 	}
@@ -946,11 +958,11 @@ func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook 
 			dropped++
 		}
 		if stored == 0 {
-			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire and %s it down by the fire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, cook.verb("set", "sets"), potNote)
+			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> %s and %s it down by the fire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, where, cook.verb("set", "sets"), potNote), true
 		}
-		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, potNote)
+		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> %s.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, where, potNote), true
 	}
-	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, potNote)
+	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> %s; it goes into the company's cargo.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, where, potNote), true
 }
 
 // bestRankText names the best rank present in a skill: "the best in your

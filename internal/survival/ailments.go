@@ -47,6 +47,9 @@ type AilmentSpec struct {
 	Remedy    []Ingredient
 	// RemedyName is the preparation's name: "thyme tea".
 	RemedyName string
+	// Common (Phase 56) marks a remedy every company knows; the rest are
+	// learned by trying a mix of herbs (`camp prepare remedy with`) .
+	Common bool
 }
 
 // Effect is the penalty in a few words.
@@ -67,6 +70,7 @@ var ailments = []AilmentSpec{
 	{
 		Kind: AilmentChill, Name: "Chill", Battles: 4, DamagePct: 10,
 		Cause:      "walking or resting while Frozen",
+		Common:     true,
 		RemedyName: "thyme tea",
 		Remedy:     []Ingredient{{ItemID: 30018, Count: 2, Name: "wild thyme"}},
 	},

@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -148,7 +149,7 @@ func (m *CampingModule) suppliesText(user *users.UserRecord, prepared *camping.P
 	if !prepared.Empty() {
 		lines = append(lines, "Queued for the next rest: "+m.queuedText(user, prepared)+".")
 	}
-	lines = append(lines, m.remediesText(user.UserId))
+	lines = append(lines, m.remediesText(user))
 	return strings.Join(lines, "\n")
 }
 
@@ -251,6 +252,9 @@ func (m *CampingModule) prepareCommand(user *users.UserRecord, room *rooms.Room,
 		return m.clearPrepared(user, camp, targets, args[1:])
 	}
 	if args[0] == "remedy" || args[0] == "remedies" {
+		if len(args) > 1 && args[1] == "with" { // Phase 56: try a mix of herbs
+			return m.prepareRemedyMix(user, targets, args[2:])
+		}
 		if len(args) > 2 {
 			return prepareUsage
 		}
@@ -688,9 +692,13 @@ func remedyHerbsText(a survival.AilmentSpec) string {
 
 // remediesText lists what each ailment's remedy takes, and how much of it
 // the company carries (for `camp supplies`).
-func (m *CampingModule) remediesText(leaderUserID int) string {
-	lines := []string{"Remedies (camp prepare remedy), made from gathered herbs:"}
+func (m *CampingModule) remediesText(user *users.UserRecord) string {
+	leaderUserID := user.UserId
+	lines := []string{"Remedies you know (camp prepare remedy), made from gathered herbs; to find another, camp prepare remedy with [herb] [herb]:"}
 	for _, a := range survival.Ailments() {
+		if !remedyKnown(user, a) {
+			continue
+		}
 		have := make([]string, 0, len(a.Remedy))
 		for _, ing := range a.Remedy {
 			have = append(have, fmt.Sprintf("%s %d/%d", ing.Name, m.gearCount(leaderUserID, ing.ItemID), ing.Count))
@@ -705,6 +713,105 @@ func (m *CampingModule) remediesText(leaderUserID int) string {
 // herbs counted before anything is spent; a refusal consumes nothing. A
 // remedy is used up as it is made, never an item, so it can't be sold.
 func (m *CampingModule) prepareRemedy(user *users.UserRecord, chosen []prepTarget) string {
+	text, _ := m.cureWith(user, chosen, nil)
+	return text
+}
+
+// remedyKnown reports whether the leader can make an ailment's remedy.
+func remedyKnown(user *users.UserRecord, a survival.AilmentSpec) bool {
+	return cookbook.KnowsRemedy(user.Character, a.Kind, a.Common)
+}
+
+// remedyRecipe is an ailment's remedy as a herb mix, one entry per herb.
+func remedyRecipe(a survival.AilmentSpec) []int {
+	var out []int
+	for _, ing := range a.Remedy {
+		for i := 0; i < ing.Count; i++ {
+			out = append(out, ing.ItemID)
+		}
+	}
+	return out
+}
+
+// prepareRemedyMix is `camp prepare remedy with [herb]...` (Phase 56): it
+// tries exactly that mix of herbs. A mix that is the remedy for an ailment
+// someone in the company has cures it, and teaches the remedy the first
+// time; any other mix is a useless brew that uses up its herbs, so a guess
+// always costs.
+func (m *CampingModule) prepareRemedyMix(user *users.UserRecord, targets []prepTarget, words []string) string {
+	herb := func(id int) bool {
+		for _, a := range survival.Ailments() {
+			for _, ing := range a.Remedy {
+				if ing.ItemID == id {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	// The herbs the company carries (the seam `camp prepare remedy` spends).
+	var stockOfHerbs []cookbook.Stack
+	seen := map[int]bool{}
+	for _, a := range survival.Ailments() {
+		for _, ing := range a.Remedy {
+			if !seen[ing.ItemID] {
+				seen[ing.ItemID] = true
+				stockOfHerbs = append(stockOfHerbs, cookbook.Stack{ItemID: ing.ItemID, Count: m.gearCount(user.UserId, ing.ItemID)})
+			}
+		}
+	}
+	mix, problem := cookbook.ResolveWith(words, stockOfHerbs, herb)
+	if problem != "" {
+		return problem
+	}
+	var matched *survival.AilmentSpec
+	for _, a := range survival.Ailments() {
+		a := a
+		if _, ok := cookbook.Match(mix, []cookbook.Recipe{{Inputs: remedyRecipe(a)}}); ok {
+			matched = &a
+			break
+		}
+	}
+	// 56 review: one mix is one dose, for the first member it helps, so
+	// the herbs spent are exactly the herbs named.
+	var patient []prepTarget
+	if matched != nil {
+		needs := map[string]survival.Needs{}
+		for _, n := range m.survival.CompanyNeeds(user.UserId) {
+			needs[string(n.Key)] = n.Needs
+		}
+		for _, t := range targets {
+			for _, a := range survival.ActiveAilments(needs[t.key]) {
+				if a.Kind == matched.Kind && patient == nil {
+					patient = []prepTarget{t}
+				}
+			}
+		}
+	}
+	if matched == nil || patient == nil {
+		// A guess that helps nobody: the herbs are spent.
+		for _, id := range mix {
+			if !m.spendOne(user.UserId, id) {
+				return "The herbs were not there when you reached for them."
+			}
+		}
+		return "You steep " + cookbook.Describe(mix) + ", but the brew does nothing for anyone here. The herbs are used up."
+	}
+	fresh := !cookbook.KnowsRemedy(user.Character, matched.Kind, matched.Common)
+	only := *matched
+	text, cured := m.cureWith(user, patient, &only)
+	if fresh && cured > 0 {
+		cookbook.LearnRemedy(user.Character, only.Kind)
+		text += fmt.Sprintf("\nYou have worked out a new remedy: %s (%s). It is in your recipe book (recipes).", only.RemedyName, remedyHerbsText(only))
+	}
+	return text
+}
+
+// cureWith cures the ailments of the chosen members. only (a mix being
+// tried) limits it to one ailment, whether or not it is known; otherwise
+// only the remedies the leader knows are made. It returns how many
+// ailments broke.
+func (m *CampingModule) cureWith(user *users.UserRecord, chosen []prepTarget, only *survival.AilmentSpec) (string, int) {
 	needs := map[string]survival.Needs{}
 	for _, n := range m.survival.CompanyNeeds(user.UserId) {
 		needs[string(n.Key)] = n.Needs
@@ -718,15 +825,21 @@ func (m *CampingModule) prepareRemedy(user *users.UserRecord, chosen []prepTarge
 			continue
 		}
 		for _, a := range active {
-			work = append(work, remedyNeed{target: t, ailment: a})
+			switch {
+			case only != nil && a.Kind != only.Kind:
+			case only == nil && !remedyKnown(user, a):
+				lines = append(lines, fmt.Sprintf("%s has a %s, and you know no remedy for it. Try a mix of herbs: camp prepare remedy with [herb] [herb] (help recipes).", t.name, strings.ToLower(a.Name)))
+			default:
+				work = append(work, remedyNeed{target: t, ailment: a})
+			}
 		}
 	}
 	if len(work) == 0 {
-		return strings.Join(lines, "\n")
+		return strings.Join(lines, "\n"), 0
 	}
 	curing, ok := m.survival.(curingSurvival)
 	if !ok {
-		return "Remedies are not available right now."
+		return "Remedies are not available right now.", 0
 	}
 	want := map[int]int{}
 	names := map[int]string{}
@@ -747,15 +860,16 @@ func (m *CampingModule) prepareRemedy(user *users.UserRecord, chosen []prepTarge
 		}
 	}
 	if len(short) > 0 {
-		return strings.Join(append(lines, "You need "+strings.Join(short, ", ")+" for that. Nothing was used. \"camp supplies\" lists the herbs."), "\n")
+		return strings.Join(append(lines, "You need "+strings.Join(short, ", ")+" for that. Nothing was used. \"camp supplies\" lists the herbs."), "\n"), 0
 	}
 	for _, id := range order {
 		for i := 0; i < want[id]; i++ {
 			if !m.spendOne(user.UserId, id) {
-				return strings.Join(append(lines, "The herbs were not there when you reached for them."), "\n")
+				return strings.Join(append(lines, "The herbs were not there when you reached for them."), "\n"), 0
 			}
 		}
 	}
+	broke := 0
 	for _, w := range work {
 		cured, err := curing.CureAilment(user.UserId, survival.MemberKey(w.target.key), w.ailment.Kind)
 		if err != nil {
@@ -764,8 +878,9 @@ func (m *CampingModule) prepareRemedy(user *users.UserRecord, chosen []prepTarge
 			continue
 		}
 		if cured {
+			broke++
 			lines = append(lines, fmt.Sprintf("You make %s for %s, and the %s breaks.", w.ailment.RemedyName, w.target.name, strings.ToLower(w.ailment.Name)))
 		}
 	}
-	return strings.Join(lines, "\n")
+	return strings.Join(lines, "\n"), broke
 }
