@@ -16,13 +16,15 @@ never skip or disable a test; add a regression test for each bug fix.
 
 Ranked by value. Each entry names the decision and its reason.
 
-1. **One config coercion package, `internal/modconfig`.** Twelve modules
-   each carried `configInt`, `configFloat`, `configString` and a
-   map-lowercasing helper (`stringMap` or `lowerKeys`), about 500 lines in
-   all, and the copies had drifted: market and standing rejected fractional
-   floats, the rest truncated them; only archetype accepted `uint64`.
+1. **One config coercion package, `internal/modconfig`.** Thirteen
+   modules each carried `configInt`, `configFloat`, `configString`, a
+   map-lowercasing helper (`stringMap` or `lowerKeys`) and in three cases
+   a duration parser, about 550 lines in all, and the copies had drifted:
+   market and standing rejected fractional floats, the rest truncated
+   them; only archetype accepted `uint64`; the duration parsers accepted
+   different formats (the camp reward cooldown ignored a numeric value).
    Decision: one package with `Int`, `IntOr`, `Float`, `FloatOr`, `String`,
-   `Strings`, `Map` and `Duration`, and the strict rule (a fractional value
+   `Strings`, `Bool`, `Map` and `Duration`, and the strict rule (a fractional value
    is rejected so a mistyped number falls back to the module default rather
    than silently becoming its floor). Reason: the shipped `config.yaml`
    only uses integers, so no behaviour changes, and the strict rule is the
@@ -53,11 +55,8 @@ Ranked by value. Each entry names the decision and its reason.
    test added. The company card also had no branch for the `fled` status
    the server sends (a fled member showed a bare health bar), and the
    gametime countdown could read "1h 60m".
-7. **Shared duration parsing and needs line.** Three duration parsers
-   accepted different formats for the same kind of key (the camp reward
-   cooldown ignored a numeric value). `modconfig.Duration` serves all
-   three. The four-way copy of the company needs status line is now
-   `survival.NeedsLine`.
+7. **Shared needs line.** The four-way copy of the company needs status
+   line is now `survival.NeedsLine`.
 8. **Dead code removed.** Six unreferenced Go helpers (`LevelLine`,
    `company.AddedGrams`, `EquipmentCapacityDelta`, `weather.RenderLine`,
    `sharedPackBonus`, `exertionZero`), two unused JS functions
