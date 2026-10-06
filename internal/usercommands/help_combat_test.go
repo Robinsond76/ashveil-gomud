@@ -357,7 +357,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"wizard-routes": {"Theurgist", "Arcanist", "Warlock", "Life Drain", "help archon"},
 		"wise-one":      {"Hearthward", "Deep Slumber", "Mend Charm", "Cleansing ward", "Hearth's Peace", "Ward of Life"},
 		"coven-mother":  {"Coven's Will", "Lasting hexes", "Cheaper hexes", "Breaking the boss", "Twin Hex", "Coven Circle"},
-		"crone-of-ash":  {"Ashen Curse", "Rotting Miasma", "Dread everywhere", "Lingering Curse", "Soul Rot", "Crone's Doom"},
+		"crone-of-ash":  {"Ashen Curse", "Rotting Miasma", "Quick curses", "Lingering Curse", "Soul Rot", "Crone's Doom"},
 		"witch-routes":  {"Hedge Witch", "Coven Sage", "Hag", "help wise-one", "help crone-of-ash"},
 	}
 	for topic, wants := range pages {

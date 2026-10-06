@@ -69,7 +69,8 @@ func (a ScriptActor) CastTargets() []*ScriptActor {
 	}
 	var out []*ScriptActor
 	for _, id := range c.Aggro.SpellInfo.TargetMobInstanceIds {
-		if m := GetMob(id); m != nil && m.characterRecord != nil && m.characterRecord.Health > 0 {
+		if m := GetMob(id); m != nil && m.characterRecord != nil && m.characterRecord.Health > 0 &&
+			!m.characterRecord.CombatWithdrawn && m.characterRecord.RoomId == c.RoomId {
 			out = append(out, m)
 		}
 	}
@@ -112,6 +113,7 @@ func (a ScriptActor) Raise() string {
 	}
 	mob, err := summons.Raise(summons.Caller{UserID: a.userId, MobID: a.mobInstanceId}, f)
 	if err != nil || mob == nil {
+		summons.NoteFallen(leader, f) // nothing rose: the foe can still be raised
 		return ""
 	}
 	return mob.Character.Name

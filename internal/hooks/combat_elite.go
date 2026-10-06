@@ -100,8 +100,6 @@ func counterspell(a actor, fx classes.Effects, foes []int) bool {
 	}
 	var chanter *mobs.Mob
 	for _, id := range foes {
-		if m := mobs.GetInstance(id); m != nil {
-		}
 		if m := mobs.GetInstance(id); m != nil && m.Character.Health >= 1 && mobHolder(m).chanting() {
 			chanter = m
 			break
@@ -114,7 +112,6 @@ func counterspell(a actor, fx classes.Effects, foes []int) bool {
 	if a.who.userId > 0 {
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: a.who.userId})
 	}
-	a.char.RTState().Countered = combatRound.Load()
 	resist := 0
 	if chanter.Boss {
 		resist = hexes.BossResist
@@ -336,7 +333,7 @@ func eliteFall(m *mobs.Mob) *mobs.Mob {
 	for _, uid := range battle.Players() {
 		b, ok := battle.Current(uid)
 		u := users.GetByUserId(uid)
-		if !ok || u == nil || u.Character == nil || b.RoomId != room.RoomId || u.Character.RoomId != room.RoomId {
+		if !ok || u == nil || u.Character == nil || b.RoomId != room.RoomId || u.Character.RoomId != room.RoomId || !b.Has(m.InstanceId) {
 			continue
 		}
 		if !m.Boss {
@@ -357,7 +354,7 @@ func eliteFall(m *mobs.Mob) *mobs.Mob {
 				}
 			}
 		}
-		if m.Character.RT != nil && m.Character.RT.SoulRot {
+		if m.Character.RT != nil && m.Character.RT.SoulRot && combat.Hexed(&m.Character) {
 			soulRot(uid, m, room)
 		}
 	}

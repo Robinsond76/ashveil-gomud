@@ -150,24 +150,22 @@ func TestCovenMotherHexesLastLongerAndCostLess(t *testing.T) {
 	assert.Less(t, cost[40], cost[35], "Cheaper hexes at 40")
 }
 
-func TestCovenMothersChantsAreShorter(t *testing.T) {
-	// A Coven Sage's Binding chants a round and lands next round; the
-	// Mother's chants a round less again and lands as the battle opens.
-	for _, tc := range []struct {
-		class string
-		held  bool
-	}{{"coven-sage", false}, {"coven-mother", true}} {
-		t.Run(tc.class, func(t *testing.T) {
-			b := witchElite(t, tc.class, 30)
+func TestCroneQuickCursesChantShorter(t *testing.T) {
+	// A Crone's Binding chants two rounds until Quick curses at 40 trims a
+	// round off it (the Coven Mother keeps the Coven Sage's one round).
+	wait := map[int]int{}
+	for _, level := range []int{35, 40} {
+		t.Run(fmt.Sprint(level), func(t *testing.T) {
+			b := witchElite(t, "crone-of-ash", level)
 			b.witchHexes("binding")
 			b.startWitchFight()
-			var held bool
-			for _, m := range b.livingBandits() {
-				held = held || status.Live(&m.Character, status.Paralyzed)
-			}
-			assert.Equal(t, tc.held, held)
+			ag := b.aria.Character.Aggro
+			require.NotNil(t, ag)
+			require.Equal(t, "binding", ag.SpellInfo.SpellId)
+			wait[level] = ag.RoundsWaiting
 		})
 	}
+	assert.Equal(t, wait[35]-1, wait[40], "Quick curses at 40")
 }
 
 func TestCovenMothersBossResistIsHalved(t *testing.T) {
@@ -237,7 +235,10 @@ func TestCroneHexedFoesAreEasierToHit(t *testing.T) {
 	b.startWitchFight()
 	m := b.firstHeld(status.Asleep, 3)
 	require.NotNil(t, m)
-	assert.Equal(t, 8, b.aria.Character.ClassEffects().Int(classes.CurseAtk))
+	assert.Equal(t, 5, b.aria.Character.ClassEffects().Int(classes.CurseAtk))
+	require.NotNil(t, m.Character.RT)
+	assert.Equal(t, 5, m.Character.RT.CurseAtk, "allies' Attack against the hexed foe")
+	assert.Equal(t, 10, m.Character.RT.CurseDmg, "every ally's blows bite deeper (review fix)")
 }
 
 func TestCroneLingeringCurseLeavesTheFoeExposed(t *testing.T) {

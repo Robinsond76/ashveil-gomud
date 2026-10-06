@@ -7,13 +7,13 @@ holds its turn to break an enemy chant, and wards its allies.
 <ansi fg="yellow-bold">Ranks</ansi>
 
   30 Counterspell      holds its turn to counter the first enemy chant it sees
-                       (cost 12 mana); see below
+                       (cost 20 mana); see below
   35 Twin ward         Arcane Ward also covers a second ally
-  40 Mana Shield       allies in the Archon's row take 15% less damage from
+  40 Mana Shield       allies in the Archon's row take 10% less damage from
                        spells
   45 Sharper counter   Counterspell lands 10 points more often, and a countered
                        caster loses 10% of its mana
-  50 Triple ward       a ward absorbs three blows
+  50 Cheaper counter   Counterspell costs 15 mana
   55 Reflection        once a battle, a ward that absorbs a blow returns half of
                        what it took to the attacker
   60 Archon's Aegis    once a battle, when two or more of the company have no
@@ -23,7 +23,7 @@ holds its turn to break an enemy chant, and wards its allies.
 <ansi fg="yellow-bold">Counterspell</ansi>
 
 It is automatic: when a foe is chanting a spell at the start of a round and the
-Archon has 12 mana, it holds its turn (it does not swing or cast that round) and
+Archon has 20 mana (15 from level 50), it holds its turn (it does not swing or cast that round) and
 speaks a counter-word. The chance is the hexes' own: 65 in 100 at equal
 Mysticism, one more for each point the Archon has over the caster, never under
 25 or over 90 (a boss caster, 25 less). A countered caster loses that chant and

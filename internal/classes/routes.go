@@ -214,11 +214,11 @@ func init() {
 	register(Class{ID: "archon", Name: "Archon", Lineage: "wizard", Tier: TierElite, Parent: "theurgist", Gate: GateGood,
 		Role: "disruption of hostile magic: counters enemy chants and wards the company",
 		Ranks: []Rank{
-			rank(30, "Counterspell", "holds its turn to counter the first enemy chant it sees: its Mysticism against the caster's (65 in 100 at even stats, 25 to 90, a boss 25 less) breaks the chant; takes the turn, cost 12", Counter, 12),
+			rank(30, "Counterspell", "holds its turn to counter the first enemy chant it sees: its Mysticism against the caster's (65 in 100 at even stats, 25 to 90, a boss 25 less) breaks the chant; takes the turn, cost 20", Counter, 20),
 			rank(35, "Twin ward", "Arcane Ward also covers a second ally", WardExtra, 1),
-			rank(40, "Mana Shield", "allies in the Archon's row take 15% less damage from spells", SpellShield, 15),
+			rank(40, "Mana Shield", "allies in the Archon's row take 10% less damage from spells", SpellShield, 10),
 			rank(45, "Sharper counter", "Counterspell lands 10 points more often, and a countered caster loses 10% of its mana", CounterBonus, 10, CounterDrain, 10),
-			rank(50, "Triple ward", "a ward absorbs three blows", WardBlows, 3),
+			rank(50, "Cheaper counter", "Counterspell costs 15", Counter, 15),
 			rank(55, "Reflection", "once a battle, a ward that absorbs a blow returns half of it to the attacker", Reflect, 1),
 			rank(60, "Archon's Aegis", "once a battle, when the company first needs it, the Archon wards every ally at once", Aegis, 1),
 		}})
@@ -234,7 +234,7 @@ func init() {
 		Role: "the strongest reliable damage",
 		Ranks: []Rank{
 			rank(30, "Overchannel", "once every 4 rounds, a damage spell it casts deals 50% more damage for 50% more mana", Overchannel, 4),
-			rank(35, "Quick casting", "damage spells chant one round less", ChantTrim, 1),
+			rank(35, "Quick casting", "every other damage spell it casts chants one round less", ChantTrim, 1),
 			rank(40, "Thrifty casting", "spells cost 15% less mana in all", SpellCost, 15),
 			rank(45, "Arcane Barrage", "Magic Missile strikes a second foe at full damage", Barrage, 1),
 			rank(50, "Frequent Overchannel", "Overchannel every 3 rounds", Overchannel, 3),
@@ -253,7 +253,7 @@ func init() {
 		Role: "raises fallen foes as thralls and drains the living",
 		Ranks: []Rank{
 			teaches(rank(30, "Raise the Fallen", "once a battle, when a foe falls, a 2-round chant (a tenth of its mana) raises it as a thrall with 60% of its health and its weapon attacks, no spells; it fights until the battle ends or it is destroyed. Bosses can't be raised", Raise, 1, RaiseHP, 60), "raisefallen"),
-			rank(35, "Deeper drain", "Life Drain heals 150% of the damage it deals", DrainPct, 150),
+			rank(35, "Deeper drain", "Life Drain heals 150% of the damage it deals, and spells deal 35% more damage in all", DrainPct, 150, SpellPct, 35),
 			rank(40, "Grave Chill", "Life Drain also hobbles its first target", GraveChill, 1),
 			rank(45, "Grim rising", "a thrall rises with 85% of its health", RaiseHP, 85),
 			rank(50, "Raise again", "Raise the Fallen twice a battle", Raise, 2),
@@ -292,7 +292,7 @@ func init() {
 	register(Class{ID: "coven-mother", Name: "Coven Mother", Lineage: "witch", Tier: TierElite, Parent: "coven-sage", Gate: GateAny,
 		Role: "reach for the whole group: surer hexes and shorter chants",
 		Ranks: []Rank{
-			rank(30, "Coven's Will", "its hexes land 5 points more often (never above 90), and its chants take one round less again", HexLand, 5, HexChant, 2),
+			rank(30, "Coven's Will", "its hexes land 5 points more often (never above 90)", HexLand, 5),
 			rank(35, "Lasting hexes", "its hexes last a round longer (a foe is still never held more than half a fight)", HexLong, 1),
 			rank(40, "Cheaper hexes", "its hexes cost 20% less mana", HexCost, 20),
 			rank(45, "Breaking the boss", "a boss resists its hexes by 12 instead of 25", BossHalf, 1),
@@ -311,11 +311,11 @@ func init() {
 	register(Class{ID: "crone-of-ash", Name: "Crone of Ash", Lineage: "witch", Tier: TierElite, Parent: "hag", Gate: GateEvil,
 		Role: "curses that spread and kill: hexed foes are easier to hit and take far more",
 		Ranks: []Rank{
-			rank(30, "Ashen Curse", "hexed foes take 40% more damage, and allies have +8 Attack against them", HexedDamage, 40, CurseAtk, 8),
+			rank(30, "Ashen Curse", "foes under its hexes take 40% more damage from its own blows and 10% more from every ally's, and allies have +5 Attack against them", HexedDamage, 40, CurseDmg, 10, CurseAtk, 5),
 			rank(35, "Rotting Miasma", "Miasma's poison deals double damage", PoisonX2, 1),
-			rank(40, "Dread everywhere", "Dread Whisper checks every enemy group", DreadAll, 1),
+			rank(40, "Quick curses", "every other hex it casts chants one round less", HexQuick, 1),
 			rank(45, "Lingering Curse", "when a hex ends, the foe stays exposed for 1 round", Linger, 1),
-			rank(50, "Deeper Ashen Curse", "hexed foes take 55% more damage", HexedDamage, 55),
+			rank(50, "Deeper Ashen Curse", "its curse makes hexed foes take 55% more damage", HexedDamage, 55),
 			rank(55, "Soul Rot", "a hexed foe that falls forces a morale check on its group", SoulRot, 1),
 			rank(60, "Crone's Doom", "once a battle, a foe that stays hexed 3 rounds in a row falls; a boss loses 10% of its health instead", Doom, 1),
 		}})

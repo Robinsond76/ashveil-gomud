@@ -11,7 +11,8 @@ dead: a foe that falls in the battle can rise as a thrall (see
                        (a tenth of its mana) raises it as a thrall with 60% of
                        its health, its weapon attacks and no spells. Bosses
                        can't be raised
-  35 Deeper drain      Life Drain heals 150% of the damage it deals
+  35 Deeper drain      Life Drain heals 150% of the damage it deals, and
+                       spells deal 35% more damage in all
   40 Grave Chill       Life Drain also hobbles its first target
   45 Grim rising       a thrall rises with 85% of its health
   50 Raise again       Raise the Fallen twice a battle

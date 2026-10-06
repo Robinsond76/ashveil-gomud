@@ -19,20 +19,36 @@ var unholyRaces = map[string]bool{"undead": true, "ghostly spirit": true, "demon
 // holyRaces are what a Demon's rending claws are for.
 var holyRaces = map[string]bool{"angel": true}
 
-// hexStatuses are the statuses a Witch's hexes leave on a foe.
+// hexStatuses are the statuses only a Witch's hexes leave on a foe.
+var hexStatuses = []int{status.Asleep, status.Paralyzed, status.Blighted}
+
+// sharedHexStatuses are statuses a hex leaves that other blows leave too
+// (a Tackle's knockdown, a weapon's poison, Grave Chill's hobble): they
+// count as a hex only while a hex laid that status on the foe this battle.
 //
 // Phase 38c3: every status a hex leaves counts (a foe that is poisoned by
 // Miasma, hobbled, knocked down or exposed by a hex is "hexed" too), or the
 // Hag's and Crone of Ash's curse would only ever meet sleepers.
-var hexStatuses = []int{status.Asleep, status.Paralyzed, status.Blighted, status.Poisoned, status.KnockedDown, status.Hobbled, status.Exposed}
+var sharedHexStatuses = []int{status.Poisoned, status.KnockedDown, status.Hobbled, status.Exposed}
 
 // Hexed reports whether a character carries a status a hex leaves.
 func Hexed(c *characters.Character) bool { return hexed(c) }
 
 func hexed(c *characters.Character) bool {
 	for _, id := range hexStatuses {
-		// A status buff left behind by its expiry is not a hex; poison is
-		// the shipped buff, which carries no status spec.
+		// A status buff left behind by its expiry is not a hex.
+		if status.Live(c, id) {
+			return true
+		}
+	}
+	if c.RT == nil || len(c.RT.HexBuffs) == 0 {
+		return false
+	}
+	for _, id := range sharedHexStatuses {
+		if !c.RT.HexBuffs[id] {
+			continue
+		}
+		// Poison is the shipped buff, which carries no status spec.
 		if id == status.Poisoned && c.HasBuff(id) || id != status.Poisoned && status.Live(c, id) {
 			return true
 		}
@@ -54,7 +70,14 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if src.RT != nil {
 		summon = src.RT.Summon
 	}
-	if (fx == nil && summon == nil) || dmg <= 0 || tgt.HealthMax.Value <= 0 {
+	// Phase 38c3: a Crone of Ash's Ashen Curse raises every ally's blows
+	// against the foe while it is hexed (the attacker's own Hexed Damage,
+	// a Hag's, counts instead when it is larger).
+	curse := 0
+	if tgt.RT != nil && tgt.RT.CurseDmg > 0 {
+		curse = tgt.RT.CurseDmg
+	}
+	if (fx == nil && summon == nil && curse == 0) || dmg <= 0 || tgt.HealthMax.Value <= 0 {
 		return dmg
 	}
 	hpPct := tgt.Health * 100 / tgt.HealthMax.Value
@@ -82,7 +105,7 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 			pct += summon.Rend
 		}
 	}
-	if p := fx.Int(classes.HexedDamage); p > 0 && hexed(tgt) {
+	if p := max(fx.Int(classes.HexedDamage), curse); p > 0 && hexed(tgt) {
 		pct += p
 	}
 	// Phase 39b: a Ronin's Vengeance grows with each fallen ally.

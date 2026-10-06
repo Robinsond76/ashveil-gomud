@@ -1453,8 +1453,8 @@ const buffAsleepID = status.Asleep
 
 // hexWard is a Witch's Warding hex: a landed hex shields the most hurt ally
 // from the next blows, up to an average hit of her level. A Wise One's
-// Hearthward (Phase 38c3) wards the two, then three, most hurt allies
-// without a ward, each up to 1.5 average hits.
+// Hearthward (Phase 38c3) wards the three, then four, most hurt allies
+// without a ward, each up to 2 average hits.
 func (a ScriptActor) hexWard() {
 	fx := a.characterRecord.ClassEffects()
 	n := fx.Int(classes.HexWard)
@@ -1481,13 +1481,25 @@ func (a ScriptActor) hexWard() {
 // that the hexed streak of Crone's Doom starts here.
 func (a ScriptActor) curseFoe(target ScriptActor, h hexes.Hex) {
 	fx := a.characterRecord.ClassEffects()
-	if fx == nil || target.characterRecord == nil || target.mobRecord == nil {
+	if target.characterRecord == nil || target.mobRecord == nil {
 		return
 	}
 	rt := target.characterRecord.RTState()
-	rt.CurseBy = a.characterRecord
+	if h.Buff > 0 && !h.Morale {
+		if rt.HexBuffs == nil {
+			rt.HexBuffs = map[int]bool{}
+		}
+		rt.HexBuffs[h.Buff] = true
+	}
+	// Crone's Doom follows the Crone: another witch's hex doesn't take it.
+	if rt.CurseBy == nil || fx.Has(classes.Doom) || !rt.CurseBy.ClassEffects().Has(classes.Doom) {
+		rt.CurseBy = a.characterRecord
+	}
 	if n := fx.Int(classes.CurseAtk); n > 0 {
 		rt.CurseAtk = n
+	}
+	if n := fx.Int(classes.CurseDmg); n > 0 {
+		rt.CurseDmg = n // Ashen Curse: every ally's blows bite deeper
 	}
 	if fx.Has(classes.SoulRot) {
 		rt.SoulRot = true

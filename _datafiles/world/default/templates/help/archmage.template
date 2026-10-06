@@ -8,7 +8,8 @@ game: the same spells, cast harder, faster and cheaper.
 
   30 Overchannel       once every 4 rounds, a damage spell it casts deals 50%
                        more damage for 50% more mana
-  35 Quick casting     damage spells chant one round less
+  35 Quick casting     every other damage spell it casts chants one round
+                       less
   40 Thrifty casting   spells cost 15% less mana in all
   45 Arcane Barrage    Magic Missile strikes a second foe at full damage
   50 Frequent Overchannel   Overchannel every 3 rounds

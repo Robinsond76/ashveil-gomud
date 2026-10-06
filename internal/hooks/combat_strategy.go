@@ -394,13 +394,28 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 	a.char.Mana -= cost
 	wait := sp.WaitRounds
 	if sp.Type == spells.HarmSingle || sp.Type == spells.HarmMulti {
-		wait = max(0, wait-a.char.ClassEffects().Int(classes.ChantTrim)) // Phase 38c3: Quick casting
+		// Phase 38c3: Quick casting trims every other damage spell's chant.
+		if trim := a.char.ClassEffects().Int(classes.ChantTrim); trim > 0 {
+			rt := a.char.RTState()
+			rt.QuickCasts++
+			if rt.QuickCasts%2 == 1 {
+				wait = max(0, wait-trim)
+			}
+		}
 	}
 	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
 		wait = max(0, wait-a.char.ClassEffects().Int(classes.SummonSooner)) // Swift Host, Mastered binding
 	}
 	if _, isHex := hexes.For(spellId); isHex {
 		wait = max(0, wait-a.char.ClassEffects().Int(classes.HexChant)) // Phase 38b: a Witch's quicker chant
+		// Phase 38c3: a Crone's Quick curses trims every other hex's chant.
+		if trim := a.char.ClassEffects().Int(classes.HexQuick); trim > 0 {
+			rt := a.char.RTState()
+			rt.QuickCasts++
+			if rt.QuickCasts%2 == 1 {
+				wait = max(0, wait-trim)
+			}
+		}
 	}
 	a.char.SetCast(wait, info)
 	if tempoActive {

@@ -66,7 +66,7 @@ func TestArchonCounterspellBreaksAChantAndCostsAHeldTurn(t *testing.T) {
 	before := len(*stream)
 	out := b.fight()
 	assert.Contains(t, out, "chant comes apart")
-	assert.Equal(t, mana-12, b.aria.Character.Mana, "Counterspell costs 12")
+	assert.Equal(t, mana-20, b.aria.Character.Mana, "Counterspell costs 20")
 	broken := interruptsOf(*stream, key(captain))
 	require.Len(t, broken, 1)
 	assert.Equal(t, combatstream.OutcomeSucceeded, broken[0].Outcome)
@@ -86,7 +86,7 @@ func TestArchonCounterspellCanFail(t *testing.T) {
 	mana := b.aria.Character.Mana
 	out := b.fight()
 	assert.Contains(t, out, "shrugs it off")
-	assert.Equal(t, mana-12, b.aria.Character.Mana, "the turn and the mana are spent either way")
+	assert.Equal(t, mana-20, b.aria.Character.Mana, "the turn and the mana are spent either way")
 	broken := interruptsOf(*stream, key(captain))
 	require.Len(t, broken, 1)
 	assert.Equal(t, combatstream.OutcomeFailed, broken[0].Outcome)
@@ -154,8 +154,8 @@ func TestArchonManaShieldGivesItsRowTheAura(t *testing.T) {
 	require.Contains(t, b.cmd("formation", "move oswin 2 1"), "Placed")
 	b.startWitchFight()
 	b.classRounds(1, nil)
-	assert.Equal(t, 15, b.aria.Character.Aura.SpellResolve, "her own row")
-	assert.Equal(t, 15, b.companion(1).Character.Aura.SpellResolve, "beside her")
+	assert.Equal(t, 10, b.aria.Character.Aura.SpellResolve, "her own row")
+	assert.Equal(t, 10, b.companion(1).Character.Aura.SpellResolve, "beside her")
 	assert.Zero(t, b.companion(2).Character.Aura.SpellResolve, "the row behind is not covered")
 }
 
@@ -189,7 +189,9 @@ func TestArchmageQuickCastingChantsOneRoundLess(t *testing.T) {
 		}
 		return castEvents(*stream, combatstream.CastStart, "Aria")
 	}
-	assert.Greater(t, count(35), count(30), "more casts in the same rounds")
+	slow, quick := count(30), count(35)
+	assert.Greater(t, quick, slow, "more casts in the same rounds")
+	assert.Less(t, quick, 2*slow, "only every other chant is trimmed (review tuning)")
 }
 
 func TestArchmageStormDoublesSparksOnce(t *testing.T) {
@@ -252,6 +254,23 @@ func TestNecromancerCannotRaiseABossOrTwiceBelowRank50(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, summons.HasFallen(7), "a boss is never raised")
 	assert.Nil(t, b.summonRounds(3))
+}
+
+// Phase 38c3 review: a foe from someone else's battle in the same room is
+// neither raised nor harvested.
+func TestNecromancerIgnoresAFoeOutsideItsBattle(t *testing.T) {
+	t.Cleanup(company.ResetSummonsForTest)
+	b := eliteCaster(t, "necromancer", 55, "raisefallen")
+	b.startWitchFight()
+	b.aria.Character.Mana = 100
+	ours := b.livingBandits()[0]
+	stranger := mobs.NewMobByIdNoElite(ours.MobId, ours.Character.RoomId, ours.Character.Level)
+	require.NotNil(t, stranger)
+	stranger.Character.Health = 0
+	_, err := mobcommands.Suicide("", stranger, rooms.LoadRoom(stranger.Character.RoomId))
+	require.NoError(t, err)
+	assert.False(t, summons.HasFallen(7), "not this battle's foe")
+	assert.Equal(t, 100, b.aria.Character.Mana, "no harvest")
 }
 
 func TestNecromancerDeathsHarvestFeedsMana(t *testing.T) {

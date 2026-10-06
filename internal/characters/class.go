@@ -175,7 +175,6 @@ type ClassRT struct {
 	ReflectUsed bool   // Reflection has been spent
 	Raised      int    // thralls raised this battle
 	BargainUsed bool   // Lich's Bargain has been spent
-	Countered   uint64 // the combat round of its last Counterspell
 	// A ward's extras, set when a hex or Arcane Ward grants it. A ward that
 	// holds none of them is the plain Phase 38b ward.
 	WardMend      int      // heal the holder when the ward breaks
@@ -187,17 +186,21 @@ type ClassRT struct {
 	// resolved ("ward of life" or "bargain"), for the narration to tell.
 	Saved string
 
+	QuickCasts int // damage spells or hexes cast this battle (Quick casting and Quick curses trim every other one)
+
 	// Phase 38c3: the Witch's elites.
-	HexLands   int        // hexes it has landed this battle (Twin Hex)
-	CircleUsed bool       // Coven Circle has been spent
-	DoomUsed   bool       // Crone's Doom has been spent
-	LifeUsed   bool       // Ward of Life has been spent
-	CurseAtk   int        // on a foe: the Attack allies have against it while it is hexed
-	CurseBy    *Character // on a foe: the Crone whose hex last landed on it
-	HexStreak  int        // on a foe: rounds in a row it has been hexed
-	LingerAt   uint64     // on a foe: the hex round after which it is left exposed
-	SoulRot    bool       // on a foe: its fall forces a morale check on its group
-	PoisonX2   bool       // on a foe: its poison deals double damage
+	HexLands   int          // hexes it has landed this battle (Twin Hex)
+	CircleUsed bool         // Coven Circle has been spent
+	DoomUsed   bool         // Crone's Doom has been spent
+	LifeUsed   bool         // Ward of Life has been spent
+	CurseAtk   int          // on a foe: the Attack allies have against it while it is hexed
+	CurseDmg   int          // on a foe: percent more damage every ally's blows deal it while it is hexed
+	CurseBy    *Character   // on a foe: the Crone whose hex last landed on it
+	HexBuffs   map[int]bool // on a foe: the statuses a hex has laid on it this battle
+	HexStreak  int          // on a foe: rounds in a row it has been hexed
+	LingerAt   uint64       // on a foe: the hex round after which it is left exposed
+	SoulRot    bool         // on a foe: its fall forces a morale check on its group
+	PoisonX2   bool         // on a foe: its poison deals double damage
 }
 
 // WardEvent is what a ward did in a round's strikes (Phase 38c3), for the

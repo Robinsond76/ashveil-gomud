@@ -31,7 +31,7 @@ const (
 
 	// The Witch's elite routes (Phase 38c3).
 	HexWardCap  = "hexwardcap"  // percent of an average hit a hex's ward absorbs (Hearthward)
-	WardMend    = "wardmend"    // a breaking ward heals its holder a quarter of a Minor Heal
+	WardMend    = "wardmend"    // a breaking ward heals its holder half of a Minor Heal
 	WardCleanse = "wardcleanse" // a breaking ward removes one harmful status
 	WardPeace   = "wardpeace"   // Evasion given to allies holding the ward
 	WardLife    = "wardlife"    // once a battle a warded ally who would fall stays at 1 health
@@ -41,8 +41,9 @@ const (
 	TwinHex     = "twinhex"     // every third hex landed also leaves its target exposed
 	Circle      = "circle"      // once a battle the first resisted hex lands anyway
 	CurseAtk    = "curseatk"    // Attack allies have against a hexed foe
+	HexQuick    = "hexquick"    // every other hex chants this many rounds less (Quick curses)
+	CurseDmg    = "cursedmg"    // percent more damage every ally's blows deal a hexed foe
 	PoisonX2    = "poisonx2"    // Miasma's poison deals double damage
-	DreadAll    = "dreadall"    // Dread Whisper checks every enemy group
 	Linger      = "linger"      // a foe stays exposed a round after a hex ends
 	SoulRot     = "soulrot"     // a hexed foe that falls forces a morale check on its group
 	Doom        = "doom"        // once a battle a foe hexed 3 rounds in a row falls
@@ -58,7 +59,7 @@ const (
 	Overchannel  = "overchannel"  // rounds between Overchannels
 	ChantTrim    = "chanttrim"    // rounds off a damage spell's chant
 	Barrage      = "barrage"      // Magic Missile strikes a second foe
-	Storm        = "storm"        // once a battle a Shower of Sparks strikes every foe in the room
+	Storm        = "storm"        // once a battle a Shower of Sparks strikes every foe in the group
 	Raise        = "raise"        // times a battle it raises a fallen foe
 	RaiseHP      = "raisehp"      // percent of its health a thrall rises with
 	DrainPct     = "drainpct"     // percent of its damage Life Drain heals
