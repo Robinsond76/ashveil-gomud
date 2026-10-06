@@ -3,23 +3,23 @@
 
 - {text: "Another day on the road. I have had worse.", ctx: [camp]}
 - {text: "It is good to sit down. I forgot what that felt like.", ctx: [camp]}
-- {text: "The wood is dry and the night is clear. I will not ask for more.", ctx: [camp]}
+- {text: "The wood is dry and the night is clear. I will not ask for more.", ctx: [camp], when: [night]}
 - {text: "I am too tired to talk. Pretend I said something clever.", ctx: [camp]}
 - {text: "Somebody pass the water, please.", ctx: [camp]}
 - {text: "I like this part of the day, when nobody is trying to hurt us.", ctx: [camp]}
 - {text: "Every fire is a small victory. I enjoy this one.", ctx: [camp]}
 - {text: "My pack is lighter and my stomach is not. Fair trade, I suppose.", ctx: [camp]}
 - {text: "Feeling better. Let us see what the day has in store.", ctx: [rested]}
-- {text: "Morning at last. That was a long night.", ctx: [rested]}
+- {text: "Up at last. That felt like a long sleep.", ctx: [rested]}
 - {text: "Everything creaks. But I am up.", ctx: [rested]}
-- {text: "We are up, we are fed, and nobody got robbed. Good start.", ctx: [rested]}
+- {text: "We are up, we are fed, and we are all here. Good start.", ctx: [rested]}
 - {text: "Well, that is that.", ctx: [win]}
 - {text: "Let us catch our breath before we go on.", ctx: [win]}
 - {text: "Is everyone still standing? Good.", ctx: [win]}
 - {text: "Not my favorite fight, but we are through it.", ctx: [win]}
 - {text: "Too close for comfort. Let us tighten up next time.", ctx: [close]}
 - {text: "Nobody say a word about how that went. We were lucky.", ctx: [close]}
-- {text: "We lost {fallen}. I do not want to talk about it yet.", ctx: [fall]}
+- {text: "{fallen} is dead. I do not want to talk about it until a priest has seen them.", ctx: [fall]}
 - {text: "Not a good day. We will do better by {fallen}.", ctx: [fall]}
 - {text: "That went smoothly. I do not trust it, but I will take it.", ctx: [flawless]}
 - {text: "That was almost too easy. Almost.", ctx: [flawless]}

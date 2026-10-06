@@ -18,7 +18,7 @@
 - {text: "The line held all through it. Nobody even had to retreat.", ctx: [flawless], arch: [martial]}
 
 # --- arcane: wizard, witch, dollmaster ---
-- {text: "The stars are sharp tonight. Good weather for thinking.", ctx: [camp], arch: [arcane]}
+- {text: "The stars are sharp tonight. Good weather for thinking.", ctx: [camp], arch: [arcane], when: [night]}
 - {text: "I am reviewing my notes while the light holds. Old habits.", ctx: [camp], arch: [arcane]}
 - {text: "Do not touch my pack. Nothing in it is dangerous. Mostly.", ctx: [camp], arch: [arcane]}
 - {text: "The fire is steady. The flame has a pattern, if you watch it long enough.", ctx: [camp], arch: [arcane]}
@@ -30,13 +30,13 @@
 - {text: "My reserves are low. Another fight like that and I will be useless.", ctx: [win], arch: [arcane]}
 - {text: "I will note the timing of that for later. It will matter someday.", ctx: [win], arch: [arcane]}
 - {text: "I was nearly out of power at the end there. Too close. Far too close.", ctx: [close], arch: [arcane]}
-- {text: "I could have cast quicker. {fallen} would still be with us.", ctx: [fall], arch: [arcane]}
+- {text: "I could have cast quicker. {fallen} would still be standing.", ctx: [fall], arch: [arcane]}
 - {text: "Each cast landed true. I could not have asked for more.", ctx: [flawless], arch: [arcane]}
 
 # --- faith: cleric, shaman ---
 - {text: "I will tend to any wounds before we sleep. Show me where it hurts.", ctx: [camp], arch: [faith]}
 - {text: "Even the road is holy, if you walk it with care.", ctx: [camp], arch: [faith]}
-- {text: "The spirits are restless tonight. Or perhaps it is only the wind.", ctx: [camp], arch: [faith]}
+- {text: "The spirits are restless tonight. Or perhaps it is only the wind.", ctx: [camp], arch: [faith], when: [night]}
 - {text: "Let me bless the camp. It is a small thing, and it helps me sleep.", ctx: [camp], arch: [faith]}
 - {text: "Take your rest. I will keep a quiet vigil.", ctx: [camp], arch: [faith]}
 - {text: "I feel the strength in all of you. It is a comfort.", ctx: [rested], arch: [faith]}
@@ -52,7 +52,7 @@
 - {text: "I scouted a bit around the camp. Nothing close, but I will check again.", ctx: [camp], arch: [skirmisher]}
 - {text: "Fire is a beacon. We should keep it small.", ctx: [camp], arch: [skirmisher]}
 - {text: "I like a fire I can slip away from. Habit.", ctx: [camp], arch: [skirmisher]}
-- {text: "There is a trail nearby. Something has been using it. I will look at first light.", ctx: [camp], arch: [skirmisher]}
+- {text: "There is a trail nearby. Something has been using it. I will look at first light.", ctx: [camp], arch: [skirmisher], when: [night]}
 - {text: "Keep your voices down. Sound carries farther than you think.", ctx: [camp], arch: [skirmisher]}
 - {text: "I have set a few little warnings around the edge. Step carefully if you wander.", ctx: [camp], arch: [skirmisher]}
 - {text: "I slept with one eye open. Out of habit, and because I am not an idiot.", ctx: [rested], arch: [skirmisher]}

@@ -15,17 +15,19 @@ A flight, a defeat, or a broken-off fight draws no banter.
 
 <ansi fg="yellow-bold">What they say</ansi>
 
-Each companion has a <ansi fg="command">personality</ansi> rolled when it joins your company, and it keeps
+Each companion has a personality rolled when it joins your company, and it keeps
 it: stoic, cheerful, grim, boastful, wry or devout. What a companion says
 also follows its archetype (a warrior talks about shields, a wizard about
 spells) and its alignment, good, neutral or evil (<ansi fg="command">help alignment</ansi>). Some
 lines are said in answer to another companion's, and some mention another
-member, or you, by name.
+member, or you, by name. Talk of the stars, the moon or the night waits
+for nightfall on the world clock.
 
 After a battle the talk follows how it went:
 
   a close call    someone was left at under a third of their health
-  a fall          a companion was lost in the fight (<ansi fg="command">help resurrect</ansi>)
+  a fall          a companion was killed in the fight; the others want
+                  them raised in time (<ansi fg="command">help resurrect</ansi>)
   a clean win     nobody was hurt much
   anything else   a plain victory
 

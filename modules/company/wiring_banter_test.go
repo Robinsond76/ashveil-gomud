@@ -17,7 +17,7 @@ import (
 // Phase 49 wiring: a recruit is rolled a personality; after a won battle,
 // and at a camp rest, companions talk; `set banter off` silences them.
 
-var spoken = regexp.MustCompile(`(says|laughs|mutters|boasts|remarks|murmurs), "`)
+var spoken = regexp.MustCompile(`(says|laughs|mutters|boasts|remarks|murmurs|asks|grins|growls|declares|quips|says quietly), "`)
 
 func banterPercents(t *testing.T, battle, camp, rested int) {
 	t.Helper()
@@ -157,10 +157,21 @@ func TestFallenCompanionIsNoticedOnce(t *testing.T) {
 	record, _ := module.registry.Get(7)
 	user := b.aria
 	assert.Equal(t, "", module.newlyFallen(user))
-	record.Companions[0].Death = &domain.CompanionDeath{}
+	// Review: one already dead (awaiting resurrection, or across a
+	// restart) is not a new fall.
+	record.Companions[1].Death = &domain.CompanionDeath{}
 	module.registry.Put(record)
-	assert.NotEmpty(t, module.newlyFallen(user), "a new death")
+	assert.Equal(t, "", module.newlyFallen(user), "an old death is not mourned again")
+	// A death recorded in the fight is.
+	module.recordCompanionDeath(7, record.Companions[0].ID, events.MobDeath{})
+	assert.Equal(t, banter.ShortName(companionName(record.Companions[0])), module.newlyFallen(user), "a new death")
 	assert.Equal(t, "", module.newlyFallen(user), "the same death is not a new fall")
+	// One raised again before the battle ends is not mourned.
+	module.recordCompanionDeath(7, record.Companions[2].ID, events.MobDeath{})
+	again, _ := module.registry.Get(7)
+	again.Companions[2].Death = nil
+	module.registry.Put(again)
+	assert.Equal(t, "", module.newlyFallen(user))
 }
 
 func TestPurgeForgetsBanter(t *testing.T) {
@@ -170,4 +181,31 @@ func TestPurgeForgetsBanter(t *testing.T) {
 	require.NotNil(t, module.CampBanter(7, banter.CtxCamp))
 	module.banter.forget(7)
 	assert.Empty(t, module.LastBanter(7))
+}
+
+// Review: a companion killed in the fight is mourned at the victory's end
+// with fall lines, never with a plain win line.
+func TestCompanionKilledInTheFightDrawsFallLines(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	banterPercents(t, 100, 100, 100)
+	pool, err := banter.Load()
+	require.NoError(t, err)
+	byID := map[string]banter.Line{}
+	for _, l := range pool.Lines() {
+		byID[l.ID] = l
+	}
+	record, _ := module.registry.Get(7)
+	module.recordCompanionDeath(7, record.Companions[0].ID, events.MobDeath{})
+	out := battleWon(b, combatstream.OutcomeVictory)
+	require.Regexp(t, spoken, out)
+	said := module.LastBanter(7)
+	require.NotEmpty(t, said)
+	for _, s := range said {
+		assert.NotEqual(t, record.Companions[0].ID, s.Member, "the dead do not speak")
+		l := byID[s.LineID]
+		if l.Reply == "" {
+			assert.Contains(t, l.Ctx, banter.CtxFall, "%q is not a fall line", s.Text)
+		}
+	}
 }

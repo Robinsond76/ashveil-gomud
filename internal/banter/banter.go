@@ -50,14 +50,45 @@ var verbs = map[string]string{
 	"boastful": "boasts", "wry": "remarks", "devout": "murmurs",
 }
 
+// altVerbs vary a personality's delivery, so a cheerful companion does not
+// laugh at every line.
+var altVerbs = map[string][]string{
+	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"declares"},
+	"wry": {"quips"}, "devout": {"says quietly"},
+}
+
+// verbFor is how a line is delivered: a question is asked; otherwise one
+// of the personality's verbs, fixed per line so a line always reads the
+// same.
+func verbFor(personality, lineID, text string) string {
+	if strings.HasSuffix(strings.TrimSpace(text), "?") {
+		return "asks"
+	}
+	options := append([]string{verbs[personality]}, altVerbs[personality]...)
+	if options[0] == "" {
+		return "says"
+	}
+	h := fnv.New32a()
+	h.Write([]byte(lineID))
+	return options[int(h.Sum32()%uint32(len(options)))]
+}
+
 // Groups are archetype families a line may be tagged with instead of one
 // archetype.
 var groups = map[string]string{
 	"warrior": "martial", "halberdier": "martial", "samurai": "martial",
 	"wizard": "arcane", "witch": "arcane", "dollmaster": "arcane",
 	"cleric": "faith", "shaman": "faith",
-	"rogue": "skirmisher", "ranger": "skirmisher", "gryphon-rider": "skirmisher",
+	"alchemist": "arcane",
+	"rogue":     "skirmisher", "ranger": "skirmisher", "gryphon-rider": "skirmisher",
+	"beasttamer": "skirmisher", "arbalist": "skirmisher",
 }
+
+// Times a line can be tied to, from the world clock.
+const (
+	TimeDay   = "day"
+	TimeNight = "night"
+)
 
 // GroupOf is an archetype's family ("" when it has none).
 func GroupOf(archetype string) string { return groups[strings.ToLower(archetype)] }
@@ -88,6 +119,9 @@ type Line struct {
 	Arch  []string `yaml:"arch,omitempty"`
 	Pers  []string `yaml:"pers,omitempty"`
 	Align []string `yaml:"align,omitempty"`
+	// When limits a line to the day or the night (stars, the moon, the
+	// dark); unset, it fits any time.
+	When []string `yaml:"when,omitempty"`
 	// Prefer lists tags (of any kind) that make the line likelier.
 	Prefer []string `yaml:"prefer,omitempty"`
 	// Reply names the line this one answers. A reply is said only after
@@ -108,12 +142,39 @@ type Member struct {
 	Alignment   int
 }
 
-func (m Member) short() string {
-	name := strings.TrimSpace(m.Name)
-	if i := strings.IndexByte(name, ' '); i > 0 && name[0] >= 'A' && name[0] <= 'Z' {
-		return name[:i]
+func (m Member) short() string { return ShortName(m.Name) }
+
+// titles are first words that are not a given name ("Recruit Cleric",
+// "Sir Aldous"): a member so named is called by its whole name.
+var titles = map[string]bool{
+	"recruit": true, "sir": true, "lady": true, "lord": true, "dame": true,
+	"captain": true, "sergeant": true, "brother": true, "sister": true,
+	"father": true, "mother": true, "old": true, "young": true, "master": true,
+	"mistress": true, "the": true,
+}
+
+// ShortName is the name the company calls a member by: its given name
+// ("Garrick" for "Garrick Vane"), or the whole name when it starts with a
+// title or is not a proper name.
+func ShortName(name string) string {
+	name = strings.TrimSpace(name)
+	i := strings.IndexByte(name, ' ')
+	if i <= 0 || name[0] < 'A' || name[0] > 'Z' || titles[strings.ToLower(name[:i])] {
+		return name
 	}
-	return name
+	return name[:i]
+}
+
+// callName is m's short name, or its whole name when another member of
+// the company would be called the same.
+func (m Member) callName(company []Member) string {
+	short := m.short()
+	for _, o := range company {
+		if o.ID != m.ID && o.short() == short {
+			return strings.TrimSpace(m.Name)
+		}
+	}
+	return short
 }
 
 func (m Member) has(tag string) bool {
@@ -174,6 +235,11 @@ func NewPool(lines []Line) (*Pool, error) {
 				return nil, fmt.Errorf("banter %q: unknown alignment %q", l.Text, a)
 			}
 		}
+		for _, w := range l.When {
+			if w != TimeDay && w != TimeNight {
+				return nil, fmt.Errorf("banter %q: unknown time %q", l.Text, w)
+			}
+		}
 		l.needsOther = strings.Contains(l.Text, "{other}")
 		l.needsFallen = strings.Contains(l.Text, "{fallen}")
 		l.idx = i
@@ -220,6 +286,9 @@ type Request struct {
 	Leader string
 	// Fallen names a member who fell, for {fallen}.
 	Fallen string
+	// Night is whether it is night on the world clock: lines tied to the
+	// day or the night are said only then.
+	Night bool
 	// Recent is the line ids a member has said lately, by Member.ID, which
 	// are not repeated.
 	Recent map[int]map[string]bool
@@ -280,6 +349,17 @@ func (l Line) weight(m Member) int {
 
 func inContext(l Line, ctx string) bool { return contains(l.Ctx, ctx) }
 
+// fitsTime reports whether a line suits the hour.
+func (l Line) fitsTime(night bool) bool {
+	if len(l.When) == 0 {
+		return true
+	}
+	if night {
+		return contains(l.When, TimeNight)
+	}
+	return contains(l.When, TimeDay)
+}
+
 // pick draws from candidates by weight; ok is false with none.
 func (p *Pool) pick(rng Rand, m Member, req Request, candidates []int) (int, bool) {
 	total := 0
@@ -307,7 +387,7 @@ func (p *Pool) pick(rng Rand, m Member, req Request, candidates []int) (int, boo
 func (p *Pool) usable(m Member, req Request, ctx, prompt string, others int) []int {
 	var out []int
 	for i, l := range p.lines {
-		if !inContext(l, ctx) || !l.matches(m) {
+		if !inContext(l, ctx) || !l.matches(m) || !l.fitsTime(req.Night) {
 			continue
 		}
 		if prompt == "" && l.Reply != "" || prompt != "" && l.Reply != prompt {
@@ -328,16 +408,12 @@ func (p *Pool) say(l Line, m Member, others []Member, rng Rand, req Request) Sai
 	text := l.Text
 	if l.needsOther && len(others) > 0 {
 		o := others[rng.Intn(len(others))]
-		text = strings.ReplaceAll(text, "{other}", o.short())
+		text = strings.ReplaceAll(text, "{other}", o.callName(req.Members))
 	}
 	text = strings.ReplaceAll(text, "{fallen}", req.Fallen)
 	text = strings.ReplaceAll(text, "{leader}", req.Leader)
-	text = strings.ReplaceAll(text, "{name}", m.short())
-	verb := verbs[m.Personality]
-	if verb == "" {
-		verb = "says"
-	}
-	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verb, LineID: l.ID}
+	text = strings.ReplaceAll(text, "{name}", m.callName(req.Members))
+	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verbFor(m.Personality, l.ID, text), LineID: l.ID}
 }
 
 func without(ms []Member, id int) []Member {
@@ -437,7 +513,7 @@ func (p *Pool) repliesFor(m Member, req Request, prompt string, others int) []in
 	var out []int
 	for _, i := range p.replies[prompt] {
 		l := p.lines[i]
-		if !l.matches(m) || l.needsOther && others < 1 || l.needsFallen && req.Fallen == "" || req.Recent[m.ID][l.ID] {
+		if !l.matches(m) || !l.fitsTime(req.Night) || l.needsOther && others < 1 || l.needsFallen && req.Fallen == "" || req.Recent[m.ID][l.ID] {
 			continue
 		}
 		out = append(out, i)

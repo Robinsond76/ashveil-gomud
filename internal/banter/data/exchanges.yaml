@@ -13,9 +13,9 @@
 - {text: "Twice as good, and thrice as filling. I am on my third helping.", reply: c-hungry, pers: [cheerful, boastful]}
 - {text: "Do not get used to it. The next one may be a handful of dry biscuit.", reply: c-hungry, pers: [grim, stoic]}
 
-- {id: c-dream, text: "Last night I dreamed I was back home. It felt so real.", ctx: [camp]}
+- {id: c-dream, text: "The last time I slept, I dreamed I was back home. It felt so real.", ctx: [camp]}
 - {text: "Home is a story we tell ourselves. This is real enough for me.", reply: c-dream, pers: [stoic, grim]}
-- {text: "Tell me about it. What did you miss the most?", reply: c-dream, pers: [cheerful, devout]}
+- {text: "Tell me about it. What did you miss the most?", reply: c-dream, pers: [cheerful, devout], align: [good, neutral]}
 - {text: "I dreamed of a feast. I woke up with a stomachache. Dreams are unreliable.", reply: c-dream, pers: [wry]}
 
 - {id: c-sleep, text: "Somebody take the watch. I am done for.", ctx: [camp]}
@@ -27,16 +27,16 @@
 - {text: "I know one. It is long, it is grand, and I am the hero.", reply: c-story, pers: [boastful]}
 - {text: "I know one about a goat and a bridge. It is not very good, but it is short.", reply: c-story, pers: [wry, cheerful]}
 - {text: "A tale of the dark places, that is what I have. Perhaps not for the fire.", reply: c-story, pers: [grim]}
-- {text: "Let me tell you of a time I was saved by a stranger. It still gives me comfort.", reply: c-story, pers: [devout, cheerful]}
+- {text: "Let me tell you of a time I was saved by a stranger. It still gives me comfort.", reply: c-story, pers: [devout, cheerful], align: [good, neutral]}
 
 - {id: c-cold, text: "Is it me, or is it getting colder?", ctx: [camp]}
-- {text: "Come closer to the fire. There is room for another.", reply: c-cold, pers: [cheerful, devout]}
+- {text: "Come closer to the fire. There is room for another.", reply: c-cold, pers: [cheerful, devout], align: [good, neutral]}
 - {text: "It is not you. Put on another layer and be done with it.", reply: c-cold, pers: [stoic, grim, wry]}
 
 - {id: c-future, text: "Where do you suppose we will be in a year?", ctx: [camp]}
 - {text: "Standing, I hope. Everything else is a bonus.", reply: c-future, pers: [grim, stoic]}
 - {text: "Richer, famous, and a little wiser. Two of three, perhaps.", reply: c-future, pers: [wry, boastful]}
-- {text: "Wherever we are, I hope we are together.", reply: c-future, pers: [cheerful, devout]}
+- {text: "Wherever we are, I hope we are together.", reply: c-future, pers: [cheerful, devout], align: [good, neutral]}
 
 - {id: c-luck, text: "Do you think our luck will hold?", ctx: [camp]}
 - {text: "Luck is not a plan. Keep your blade ready and it will not matter.", reply: c-luck, arch: [martial, skirmisher]}
@@ -59,7 +59,7 @@
 - {text: "To see where the road went. It is still going.", reply: c-why, pers: [cheerful, devout]}
 - {text: "Because I was the best option. Obviously.", reply: c-why, pers: [boastful]}
 
-- {id: c-moon, text: "Look at that moon. It is almost too bright to sleep.", ctx: [camp]}
+- {id: c-moon, text: "Look at that moon. It is almost too bright to sleep.", ctx: [camp], when: [night]}
 - {text: "Then do not sleep. I will keep you company.", reply: c-moon, pers: [cheerful, devout]}
 - {text: "A bright moon means long shadows. I do not like long shadows.", reply: c-moon, pers: [grim]}
 - {text: "A bright moon is a good friend to anyone who works in the dark.", reply: c-moon, arch: [skirmisher]}
@@ -69,13 +69,13 @@
 - {text: "Hum along, then. I will start slow.", reply: c-song, pers: [cheerful]}
 - {text: "A hymn, perhaps? It works as well as a march, and sits better in the heart.", reply: c-song, pers: [devout]}
 
-- {id: c-wake, text: "I could not sleep. Did you hear something out there last night?", ctx: [camp, rested]}
+- {id: c-wake, text: "I could not sleep. Did you hear something out there?", ctx: [camp, rested]}
 - {text: "Only the wind. Go back to sleep.", reply: c-wake, pers: [stoic, wry]}
 - {text: "I heard it. Something moved at the edge of the light. I do not think it came closer.", reply: c-wake, arch: [skirmisher]}
-- {text: "Yes. I have been listening to it all night. It sounds hungry.", reply: c-wake, pers: [grim]}
+- {text: "Yes. I have been listening to it for hours. It sounds hungry.", reply: c-wake, pers: [grim]}
 
 # --- rested ---
-- {id: r-morning, text: "Good morning, everyone. Did we all survive the night?", ctx: [rested]}
+- {id: r-morning, text: "Everyone awake? Did we all make it through?", ctx: [rested]}
 - {text: "Every last one of us. I counted. Twice.", reply: r-morning, pers: [stoic, grim]}
 - {text: "Better than ever. I could eat a whole roast.", reply: r-morning, pers: [cheerful, boastful]}
 - {text: "Barely. Someone snores like a landslide.", reply: r-morning, pers: [wry]}
@@ -113,9 +113,9 @@
 
 # --- fall ---
 - {id: f-fall, text: "I did not see it coming. One moment {fallen} was there, and then...", ctx: [fall]}
-- {text: "None of us did. Do not blame yourself.", reply: f-fall, pers: [stoic, devout, cheerful]}
-- {text: "We cannot change it. We can only go on.", reply: f-fall, pers: [grim, wry]}
-- {text: "Let us make sure it counts for something.", reply: f-fall, align: [good]}
+- {text: "None of us did. Do not blame yourself.", reply: f-fall, pers: [stoic, devout, cheerful], align: [good, neutral]}
+- {text: "Grieving will not help them. A church might. Help me carry them.", reply: f-fall, pers: [grim, wry]}
+- {text: "We bring them back. Whatever it costs, we bring them back.", reply: f-fall, align: [good]}
 
 # --- flawless ---
 - {id: l-flaw, text: "Not a scratch on anyone. Is that even possible?", ctx: [flawless]}

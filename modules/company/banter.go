@@ -9,12 +9,12 @@ package company
 
 import (
 	"math/rand"
-	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -47,9 +47,9 @@ type banterState struct {
 	// recent is each leader's companions' latest line ids, oldest first.
 	recent map[int]map[int][]string
 	last   map[int][]banter.Said
-	// dead are the companions already known dead at the last battle's end,
-	// so only a new death counts as someone falling.
-	dead map[int]map[int]bool
+	// fell is each leader's companions who died since the last battle
+	// ended (their ids, in order), noted when the death is recorded.
+	fell map[int][]int
 }
 
 func (b *banterState) poolLocked() *banter.Pool {
@@ -68,7 +68,17 @@ func (b *banterState) forget(leader int) {
 	defer b.mu.Unlock()
 	delete(b.recent, leader)
 	delete(b.last, leader)
-	delete(b.dead, leader)
+	delete(b.fell, leader)
+}
+
+// noteFall remembers that a companion died, for the battle's end.
+func (b *banterState) noteFall(leader, companionID int) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.fell == nil {
+		b.fell = map[int][]int{}
+	}
+	b.fell[leader] = append(b.fell[leader], companionID)
 }
 
 func (m *CompanyModule) banterPercent(key string, fallback int) int {
@@ -136,7 +146,7 @@ func (m *CompanyModule) campMembers(leaderUserID int) []banter.Member {
 }
 
 // exchange runs one exchange for the leader, remembers it, and returns it.
-func (m *CompanyModule) exchange(user *users.UserRecord, members []banter.Member, contexts []string, fallen string) []banter.Said {
+func (m *CompanyModule) exchange(user *users.UserRecord, members []banter.Member, contexts []string, fallen string, night bool) []banter.Said {
 	if len(members) < 2 {
 		return nil
 	}
@@ -158,7 +168,7 @@ func (m *CompanyModule) exchange(user *users.UserRecord, members []banter.Member
 		}
 		recent[id] = set
 	}
-	said := pool.Exchange(b.rng, banter.Request{Contexts: contexts, Members: members, Leader: user.Character.Name, Fallen: fallen, Recent: recent})
+	said := pool.Exchange(b.rng, banter.Request{Contexts: contexts, Members: members, Leader: user.Character.Name, Fallen: fallen, Night: night, Recent: recent})
 	if len(said) == 0 {
 		return nil
 	}
@@ -204,7 +214,7 @@ func (m *CompanyModule) CampBanter(leaderUserID int, context string) []banter.Sa
 	if !on || m.persistenceAvailable() != nil || !m.banter.roll(percent) {
 		return nil
 	}
-	return m.exchange(user, m.campMembers(leaderUserID), []string{context}, "")
+	return m.exchange(user, m.campMembers(leaderUserID), []string{context}, "", gametime.IsNight())
 }
 
 // LastBanter implements company.BanterProvider.
@@ -258,47 +268,27 @@ func (m *CompanyModule) battleBanter(user *users.UserRecord, outcome string) str
 		}
 	}
 	contexts := banterContexts(fallen != "", lowest)
-	if fallen == "" {
-		fallen = user.Character.Name
-	}
-	said := m.exchange(user, members, contexts, fallen)
+	said := m.exchange(user, members, contexts, fallen, gametime.IsNight())
 	return banter.Format(said)
 }
 
 // newlyFallen is the name of a companion that died since the last battle
-// ended ("" when none did), and notes the dead for next time. A leader
-// brought down in the fight counts as the leader's own fall.
+// ended and is still dead ("" when none did), and forgets the deaths, so
+// each is mourned once. A companion dead from before (one awaiting
+// resurrection, or any dead across a restart) is not a new fall.
 func (m *CompanyModule) newlyFallen(user *users.UserRecord) string {
-	record, _ := m.registry.Get(user.UserId)
 	b := &m.banter
 	b.mu.Lock()
-	defer b.mu.Unlock()
-	if b.dead == nil {
-		b.dead = map[int]map[int]bool{}
-	}
-	seen := b.dead[user.UserId]
-	now := map[int]bool{}
-	name := ""
-	for _, c := range record.Companions {
-		if !c.Dead() {
-			continue
-		}
-		now[c.ID] = true
-		if !seen[c.ID] && name == "" {
-			name = shortenName(companionName(c))
+	ids := b.fell[user.UserId]
+	delete(b.fell, user.UserId)
+	b.mu.Unlock()
+	record, _ := m.registry.Get(user.UserId)
+	for _, id := range ids {
+		if c, ok := findCompanion(record, id); ok && c.Dead() {
+			return banter.ShortName(companionName(c))
 		}
 	}
-	b.dead[user.UserId] = now
-	return name
-}
-
-// shortenName is a name's given name, like banter's own.
-func shortenName(name string) string {
-	name = strings.TrimSpace(name)
-	if i := strings.IndexByte(name, ' '); i > 0 && name[0] >= 'A' && name[0] <= 'Z' {
-		return name[:i]
-	}
-	return name
+	return ""
 }
 
 // banterContexts are the contexts to draw from after a won battle, most

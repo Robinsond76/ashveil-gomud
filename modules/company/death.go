@@ -162,6 +162,7 @@ func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID int, evt 
 	if _, anchored := m.anchors[leaderUserID]; !anchored && m.chemistryWorld().LeaderOnline(leaderUserID) {
 		m.startAnchor(leaderUserID)
 	}
+	m.banter.noteFall(leaderUserID, companionID) // Phase 49: mourned at the battle's end
 	mudlog.Info("company: companion died", "leader", leaderUserID, "companion", companionID, "op", death.OpID, "allowance", allowance)
 	if err := m.save(); err != nil {
 		mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)

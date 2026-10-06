@@ -1,6 +1,8 @@
 package banter
 
 import (
+	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"math/rand"
 	"strings"
 	"testing"
@@ -294,5 +296,171 @@ func TestRepeatsAreRareWithAWindow(t *testing.T) {
 	}
 	if repeats != 0 {
 		t.Errorf("%d of %d lines repeated inside the window", repeats, total)
+	}
+}
+
+// Review: every class lineage belongs to a family, so its own family's
+// lines reach it, and has some lines of its own.
+func TestEveryLineageHasAFamilyAndLines(t *testing.T) {
+	p := mustPool(t)
+	for _, lineage := range classes.Lineages() {
+		if GroupOf(lineage) == "" {
+			t.Errorf("lineage %q has no banter family", lineage)
+		}
+		own := 0
+		for _, l := range p.Lines() {
+			if contains(l.Arch, lineage) {
+				own++
+			}
+		}
+		if own == 0 {
+			t.Errorf("lineage %q has no lines of its own", lineage)
+		}
+	}
+}
+
+// usableSet is every non-reply line m can say in ctx at either hour, with
+// its weight for m.
+func usableSet(p *Pool, m Member, ctx string) map[string]int {
+	out := map[string]int{}
+	for _, night := range []bool{false, true} {
+		for _, i := range p.usable(m, Request{Night: night, Fallen: "Corin"}, ctx, "", 1) {
+			out[p.lines[i].Text] = p.lines[i].weight(m)
+		}
+	}
+	return out
+}
+
+// Review: a devout evil witch and a cheerful good cleric mostly say
+// different things (by draw weight; the untagged fillers are shared), and
+// the evil one never says the kind-hearted lines.
+func TestPersonalityAndAlignmentShapeThePool(t *testing.T) {
+	p := mustPool(t)
+	dark := Member{ID: 1, Archetype: "witch", Personality: "devout", Alignment: -80}
+	kind := Member{ID: 2, Archetype: "cleric", Personality: "cheerful", Alignment: 80}
+	for _, ctx := range []string{CtxCamp, CtxWin, CtxFall} {
+		a, b := usableSet(p, dark, ctx), usableSet(p, kind, ctx)
+		shared, total := 0, 0
+		for text, w := range a {
+			total += w
+			if b[text] > 0 {
+				shared += w
+			}
+		}
+		if shared*3 > total {
+			t.Errorf("%s: %d of the evil devout witch's draw weight %d is shared with the good cheerful cleric", ctx, shared, total)
+		}
+	}
+	for _, text := range []string{"I say a quiet word for the fallen foe. They too were someone's.", "Wherever we are, I hope we are together."} {
+		for _, ctx := range []string{CtxWin, CtxCamp} {
+			if usableSet(p, dark, ctx)[text] > 0 {
+				t.Errorf("an evil member can say %q", text)
+			}
+		}
+	}
+	evilDevout := 0
+	for text := range usableSet(p, dark, CtxWin) {
+		if strings.Contains(text, "prayers were answered") || strings.Contains(text, "blood spilled") {
+			evilDevout++
+		}
+	}
+	if evilDevout == 0 {
+		t.Error("the evil devout witch has no dark-faith lines after a win")
+	}
+}
+
+// Review: a line about stars, the moon or the night is said only at
+// night on the world clock.
+func TestNightLinesWaitForNight(t *testing.T) {
+	p := mustPool(t)
+	m := Member{ID: 1, Archetype: "wizard", Personality: "cheerful", Alignment: 0}
+	day := p.usable(m, Request{Night: false}, CtxCamp, "", 1)
+	for _, i := range day {
+		l := p.lines[i]
+		if contains(l.When, TimeNight) {
+			t.Errorf("night line %q usable by day", l.Text)
+		}
+		lower := strings.ToLower(l.Text)
+		for _, w := range []string{"stars", "moon", "tonight", "evening"} {
+			if strings.Contains(lower, w) {
+				t.Errorf("by day: %q mentions %q but is not tied to the night", l.Text, w)
+			}
+		}
+	}
+	night := p.usable(m, Request{Night: true}, CtxCamp, "", 1)
+	if len(night) <= len(day)-5 {
+		t.Errorf("night has %d lines against the day's %d", len(night), len(day))
+	}
+}
+
+// Review: a fallen companion is dead but can be resurrected (help
+// resurrect), so nobody buries them.
+func TestFallLinesDoNotBuryTheFallen(t *testing.T) {
+	p := mustPool(t)
+	for _, l := range p.Lines() {
+		if !inContext(l, CtxFall) && l.Reply != "f-fall" {
+			continue
+		}
+		lower := strings.ToLower(l.Text)
+		for _, w := range []string{"rest in peace", "is gone", "we lost", "be remembered", "still be with us", " was the best", " was a good"} {
+			if strings.Contains(lower, w) {
+				t.Errorf("%q treats the fallen as gone for good (%q)", l.Text, w)
+			}
+		}
+	}
+}
+
+// Review: a member is called by its given name, unless the name starts
+// with a title or another member would answer to the same one.
+func TestCallNameAvoidsTitlesAndClashes(t *testing.T) {
+	cases := map[string]string{
+		"Garrick Vane":   "Garrick",
+		"Recruit Cleric": "Recruit Cleric",
+		"Sir Aldous":     "Sir Aldous",
+		"Ysolde":         "Ysolde",
+	}
+	for name, want := range cases {
+		if got := ShortName(name); got != want {
+			t.Errorf("ShortName(%q) = %q, want %q", name, got, want)
+		}
+	}
+	company := []Member{{ID: 1, Name: "Hild Marrow"}, {ID: 2, Name: "Hild Ashby"}, {ID: 3, Name: "Bram Cole"}}
+	if got := company[0].callName(company); got != "Hild Marrow" {
+		t.Errorf("two Hilds: got %q, want the whole name", got)
+	}
+	if got := company[2].callName(company); got != "Bram" {
+		t.Errorf("got %q", got)
+	}
+	p, err := NewPool([]Line{
+		{ID: "a", Text: "Hello, {other}.", Ctx: []string{CtxCamp}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rng := rand.New(rand.NewSource(3))
+	for i := 0; i < 30; i++ {
+		for _, s := range p.Exchange(rng, Request{Contexts: []string{CtxCamp}, Members: company[:2]}) {
+			if s.Text != "Hello, Hild Marrow." && s.Text != "Hello, Hild Ashby." {
+				t.Fatalf("got %q", s.Text)
+			}
+		}
+	}
+}
+
+// Review: questions are asked, and a personality has more than one way to
+// deliver a line.
+func TestVerbsFitTheLine(t *testing.T) {
+	if got := verbFor("cheerful", "x", "Are we ready to move on?"); got != "asks" {
+		t.Errorf("a question: got %q", got)
+	}
+	seen := map[string]bool{}
+	for i := 0; i < 40; i++ {
+		seen[verbFor("cheerful", fmt.Sprint("line", i), "Lovely.")] = true
+	}
+	if !seen["laughs"] || !seen["grins"] || len(seen) != 2 {
+		t.Errorf("cheerful verbs: %v", seen)
+	}
+	if got := verbFor("", "x", "Hm."); got != "says" {
+		t.Errorf("no personality: got %q", got)
 	}
 }
