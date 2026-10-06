@@ -20,7 +20,7 @@ func TestCompanyCampPayload(t *testing.T) {
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, map[string]any{"has_camp": true, "here": true, "room": "", "fire_lit": true, "resting": true, "rested": false,
-		"embers": false, "tent": false, "gear": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}}, got)
+		"embers": false, "tent": false, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}}, got)
 
 	// Phase 40a3: a finished rest leaves embers, and a pitched tent shows.
 	state = camping.CampState{HasCamp: true, Here: true, Rested: true, Embers: true, Tent: true}
@@ -33,6 +33,12 @@ func TestCompanyCampPayload(t *testing.T) {
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, []any{"Tent", "Bells and trip lines"}, got["gear"])
 	assert.Equal(t, false, got["fire_lit"])
+
+	// Phase 43a: camp supplies carried, and what is queued for the rest.
+	state = camping.CampState{HasCamp: true, Here: true, Supplies: []string{"fortifying broth x2"}, Prepared: []string{"fortifying broth for Tamsin", "watch incense"}}
+	require.NoError(t, json.Unmarshal(extra.build(u), &got))
+	assert.Equal(t, []any{"fortifying broth x2"}, got["supplies"])
+	assert.Equal(t, []any{"fortifying broth for Tamsin", "watch incense"}, got["prepared"])
 	state = camping.CampState{HasCamp: true, Here: true, FireLit: true, Resting: true, RestPercent: 25, RestSeconds: 45}
 
 	none := campExtra(func(int, int, []string) (camping.CampState, bool) { return camping.CampState{}, false }, nil)

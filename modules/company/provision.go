@@ -316,6 +316,8 @@ func (m *CompanyModule) useCompanionItem(leaderUserID, companionID int, itm item
 			}
 			if state.Items[i].Uses > 1 {
 				state.Items[i].Uses--
+			} else if emptyID := state.Items[i].GetSpec().EmptyItemId; emptyID > 0 && items.GetItemSpec(emptyID) != nil {
+				state.Items[i] = items.New(emptyID) // Phase 43a: an empty skin, not nothing
 			} else {
 				state.Items = append(state.Items[:i], state.Items[i+1:]...)
 			}

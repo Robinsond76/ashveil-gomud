@@ -181,6 +181,13 @@ func (c Cargo) Withdraw(itemId, count int) (Cargo, error) {
 // used one first. fullUses is the item's uses when full; an item with one
 // use or none is used up whole.
 func (c Cargo) ConsumeUse(itemId, fullUses int) (Cargo, error) {
+	return c.ConsumeUseLeaving(itemId, fullUses, 0)
+}
+
+// ConsumeUseLeaving is ConsumeUse, except that spending an item's last use
+// leaves one leaveItemId in its place when that is positive (Phase 43a: a
+// drunk-dry waterskin becomes an empty one).
+func (c Cargo) ConsumeUseLeaving(itemId, fullUses, leaveItemId int) (Cargo, error) {
 	out, uses, err := c.WithdrawOne(itemId)
 	if err != nil {
 		return c, err
@@ -190,6 +197,10 @@ func (c Cargo) ConsumeUse(itemId, fullUses int) (Cargo, error) {
 	}
 	if left := uses - 1; left > 0 {
 		if out, err = out.DepositUses(itemId, left, 1); err != nil {
+			return c, err
+		}
+	} else if leaveItemId > 0 {
+		if out, err = out.Deposit(leaveItemId, 1); err != nil {
 			return c, err
 		}
 	}

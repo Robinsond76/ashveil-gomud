@@ -36,7 +36,18 @@ func HasWater(room *rooms.Room) bool {
 // RefillableUses is the uses a water container is filled back to, and
 // whether the item is one at all.
 func RefillableUses(spec items.ItemSpec) (int, bool) {
-	if !strings.EqualFold(spec.Refillable, RefillWater) || spec.Uses < 1 {
+	if !strings.EqualFold(spec.Refillable, RefillWater) {
+		return 0, false
+	}
+	// Phase 43a: an empty container is filled into its full item, so it
+	// fills to that item's uses.
+	if spec.FilledItemId > 0 {
+		if full := items.GetItemSpec(spec.FilledItemId); full != nil && full.Uses > 0 {
+			return full.Uses, true
+		}
+		return 0, false
+	}
+	if spec.Uses < 1 {
 		return 0, false
 	}
 	return spec.Uses, true
@@ -147,7 +158,7 @@ func Fill(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 		for i := range user.Character.Items {
 			if user.Character.Items[i].Equals(itm) {
-				user.Character.Items[i].Uses = max
+				user.Character.Items[i] = user.Character.Items[i].Refilled(max)
 				break
 			}
 		}

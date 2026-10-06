@@ -40,6 +40,9 @@ The deeper your exposure, the more it costs you:
   little cold or warm, or somewhere on the chilled-to-freezing or
   overheated-to-heatstroke scale.
 
+A warming draught or a cooling salve slows one member's exposure for 15
+minutes (<ansi fg="command">help camp supplies</ansi>).
+
 See also: <ansi fg="command">help weather</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help strain</ansi>,
 <ansi fg="command">help camp</ansi>, <ansi fg="command">help conditions</ansi>.
 

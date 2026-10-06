@@ -1,0 +1,26 @@
+roomid: 2115
+zone: Alderbrook
+title: Hollin's Farmhouse
+description: A low farmhouse of daub and thatch fronts the green, its door propped open on a
+  flagged kitchen. A ladder-stair climbs to the loft, where the family keeps its grain
+  and its good blankets behind a bolted door.
+biome: house
+exits:
+  east:
+    roomid: 2116
+  north:
+    roomid: 2107
+  south:
+    roomid: 2122
+  up:
+    roomid: 2144
+    lock:
+      difficulty: 3
+  west:
+    roomid: 2114
+resources:
+- shelter
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

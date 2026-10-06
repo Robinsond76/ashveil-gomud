@@ -930,7 +930,12 @@ func (c *Character) UseItem(i items.Item) int {
 				usesLeft--
 			}
 			if usesLeft <= 0 {
-				c.Items = append(c.Items[:j], c.Items[j+1:]...)
+				// Phase 43a: a spent waterskin leaves an empty one to refill.
+				if emptyID := c.Items[j].GetSpec().EmptyItemId; emptyID > 0 && items.GetItemSpec(emptyID) != nil {
+					c.Items[j] = items.New(emptyID)
+				} else {
+					c.Items = append(c.Items[:j], c.Items[j+1:]...)
+				}
 			} else {
 				c.Items[j].Uses = usesLeft
 				c.Items[j].LastUsedRound = util.GetRoundCount()
@@ -1465,6 +1470,13 @@ func (c *Character) ApplyHealthChange(healthChange int) int {
 		// Phase 38a: a blight halves the healing its holder receives.
 		if c.HasBuffFlag("blighted") {
 			newHealth = oldHealth + (newHealth-oldHealth)/2
+		}
+		// Phase 43b: leechbane cuts healing by a quarter, rounded down in
+		// the victim's favor of the poison (the heal loses floor(25%)), and
+		// never below one point of a positive heal.
+		if c.HasBuffFlag("leechbane") {
+			heal := newHealth - oldHealth
+			newHealth = oldHealth + max(1, heal-heal/4)
 		}
 		// Phase 30b: healing stops at the wound limit.
 		newHealth = c.CapHealing(oldHealth, newHealth)

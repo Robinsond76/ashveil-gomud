@@ -164,3 +164,74 @@ func TestShippedCampGearIsSupplyOnly(t *testing.T) {
 	}
 	assert.Equal(t, map[string]int{"Dunmar": 6, "Old Kings Road": 6}, seen)
 }
+
+// Phase 43b: weapon poison vials are sold in the markets (the common one on
+// the road too) and never bought back, so they are never a profit loop.
+func TestShippedPoisonVialsAreSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				BasePrice  int  `yaml:"BasePrice"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	seen := map[string][]int{}
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if g.ItemId >= 280 && g.ItemId <= 283 {
+				assert.True(t, g.SupplyOnly, "%s item %d", m.Zone, g.ItemId)
+				seen[m.Zone] = append(seen[m.Zone], g.ItemId)
+				if g.ItemId == 280 {
+					assert.LessOrEqual(t, g.BasePrice, 8, "bitterleaf costs about a bandage")
+				}
+			}
+		}
+	}
+	assert.Equal(t, map[string][]int{"Dunmar": {280, 281, 282, 283}, "Old Kings Road": {280}}, seen)
+}
+
+// Phase 43a: camp supplies are sold in both shipped markets, never bought
+// back, and the road is never cheaper than town.
+func TestShippedCampSuppliesAreSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				BasePrice  int  `yaml:"BasePrice"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	town := map[int]int{}
+	road := map[int]int{}
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if g.ItemId < 30040 || g.ItemId > 30043 {
+				continue
+			}
+			assert.True(t, g.SupplyOnly, "%s item %d", m.Zone, g.ItemId)
+			if m.Zone == "Dunmar" {
+				town[g.ItemId] = g.BasePrice
+			} else {
+				road[g.ItemId] = g.BasePrice
+			}
+		}
+	}
+	require.Len(t, town, 4, "broth, draught, salve and incense in Dunmar")
+	require.Len(t, road, 4, "and on the road")
+	for id, price := range town {
+		assert.GreaterOrEqual(t, road[id], price, "the road is never cheaper: item %d", id)
+	}
+}
