@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">shogun</ansi>
+
+The Shogun is the neutral elite of the Hatamoto. A commander: the whole
+company starts a battle sooner, its Bodyguard stands in more often, and its
+row fights under a banner.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Commander's presence  every ally's action meter starts a battle 15
+                           points higher
+  35 Sworn guard           Bodyguard: 4 times a battle
+  40 Bannerline            allies in its row take 8% less damage
+  45 Lacquered armor       +4 armor
+  50 Rallying standard     allies in its row gain +6 Evasion
+  55 Hardened command      +10% maximum health and +3 Attack
+  60 Banner of war         allies in its row gain +5 Attack while it stands
+
+It needs the Hatamoto first (<ansi fg="command">help samurai-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] shogun confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Samurai talents (levels 35, 45, 55): Razor's Edge (+5% critical chance
+on every blow), Quick Hands (starts a battle with 15 points on its action
+meter), Shadow Footing (+5 Evasion). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

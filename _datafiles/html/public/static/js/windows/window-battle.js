@@ -936,7 +936,7 @@
             if (battle.nerve === 'faltering') { banners.push('company faltering'); }
             // Phase 39c: a Shaman's weather over the battle.
             if (battle.weather && battle.weather.name) {
-                banners.push(battle.weather.name + ' (' + battle.weather.rounds + (battle.weather.rounds === 1 ? ' round' : ' rounds') + ': ' + battle.weather.effect + ')');
+                banners.push(battle.weather.name + ' (' + (battle.weather.endless ? 'the whole battle' : battle.weather.rounds + (battle.weather.rounds === 1 ? ' round' : ' rounds')) + ': ' + battle.weather.effect + ')');
             }
             // Phase 54: the sigil the company stands in.
             if (battle.sigil && battle.sigil.name) {

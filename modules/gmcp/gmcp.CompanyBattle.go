@@ -101,7 +101,10 @@ type battleWeather struct {
 	Kind   string `json:"kind"`
 	Name   string `json:"name"`
 	Rounds int    `json:"rounds"`
-	Effect string `json:"effect"`
+	// Endless is a weather that lasts the whole battle (a Tempest Lord's
+	// Rain): the screens say so instead of counting rounds.
+	Endless bool   `json:"endless,omitempty"`
+	Effect  string `json:"effect"`
 }
 
 // battleSigil is the sigil a battle was fought in (Phase 54): its kind
@@ -827,7 +830,7 @@ func weatherFact(w battle.Weather) *battleWeather {
 	if w.Kind == stormcraft.None || w.Left < 1 {
 		return nil
 	}
-	return &battleWeather{Kind: string(w.Kind), Name: w.Kind.Name(), Rounds: max(1, w.Left-1), Effect: w.Kind.Effect()}
+	return &battleWeather{Kind: string(w.Kind), Name: w.Kind.Name(), Rounds: max(1, w.Left-1), Endless: w.Left > stormcraft.EndlessRounds/2, Effect: w.Kind.Effect()}
 }
 
 // sigilFact is the sigil the battle began in, for the feed: nil without one.

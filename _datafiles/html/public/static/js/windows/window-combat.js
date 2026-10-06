@@ -608,7 +608,7 @@
         if (battle.weather && battle.weather.name) {
             const w = battle.weather;
             const note = el('div', 'cbt-note cbt-weather',
-                'Weather: ' + w.name + ', ' + w.rounds + (w.rounds === 1 ? ' round' : ' rounds') + ' (' + w.effect + ')');
+                'Weather: ' + w.name + ', ' + (w.endless ? 'the whole battle' : w.rounds + (w.rounds === 1 ? ' round' : ' rounds')) + ' (' + w.effect + ')');
             note.title = 'A Shaman\'s weather, this battle only (help shaman)';
             root.appendChild(note);
         }

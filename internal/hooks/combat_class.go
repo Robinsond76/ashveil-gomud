@@ -45,7 +45,7 @@ func auraPass() {
 		applyAuras(uid, side, f)
 		cry, cryer := battleCry(side, b, combatRound.Load())
 		for _, a := range side {
-			a.char.Aura.Attack = cry
+			a.char.Aura.Attack += cry
 		}
 		announceCry(cryer, cry, b, combatRound.Load())
 		for _, a := range side {
@@ -70,6 +70,8 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 	}
 	evade := map[int]int{}
 	resolve := map[int]int{}
+	colResolve := map[int]int{} // Phase 39i: a Linebreaker's Shield line covers its column
+	attackRow := map[int]int{}  // Phase 39i: a Shogun's Banner of war sharpens its row
 	rally := 0
 	// Phase 39c: a Mistweaver's Veil of mist, while its Fog lasts, covers
 	// the whole company.
@@ -98,15 +100,24 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 		watchBack = max(watchBack, fx.Int(classes.WatchBack)) // Phase 38c2: a Sentinel watches the back row
 		evade[row] = max(evade[row], fx.Int(classes.AuraEvade))
 		resolve[row] = max(resolve[row], fx.Int(classes.AuraResolv))
+		attackRow[row] = max(attackRow[row], fx.Int(classes.AuraAttack))
+		if _, col, placed := f.Find(a.key); placed {
+			colResolve[col] = max(colResolve[col], fx.Int(classes.ColumnGuard))
+		}
 	}
 	if watchBack > 0 {
 		evade[2] += watchBack
 	}
 	for _, a := range side {
 		row := rowOf(a)
+		col := -1
+		if _, c, placed := f.Find(a.key); placed {
+			col = c
+		}
 		a.char.Aura = characters.ClassAura{
 			Evasion: max(evade[row], fogEvade),
-			Resolve: max(resolve[row], rally),
+			Resolve: max(resolve[row], rally, colResolve[col]),
+			Attack:  attackRow[row],
 		}
 		// A Knight guarding a ward holds its shield the firmer.
 		if fx := a.char.ClassEffects(); fx.Has(classes.FaithBlock) && enemyparty.MemberStrategy(uid, a.key).Role == strategy.Guardian {

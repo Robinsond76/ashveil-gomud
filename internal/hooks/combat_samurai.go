@@ -33,6 +33,11 @@ func samuraiRound(side []actor) {
 			}
 			rt.QuietStarted, rt.Struck = true, false
 		}
+		if fx.Has(classes.LastStand) {
+			rt := a.char.RTState()
+			rt.SidePeak = max(rt.SidePeak, len(side))
+			rt.Alone = len(side) == 1 && rt.SidePeak > 1
+		}
 		if fx.Has(classes.Vengeance) {
 			rt := a.char.RTState()
 			rt.SidePeak = max(rt.SidePeak, len(side))
@@ -57,7 +62,7 @@ func samuraiBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	}
 	rt := attacker.char.RTState()
 	round := combatRound.Load()
-	if rt.ZanshinRound == round {
+	if rt.ZanshinRound == round && !attacker.char.ClassEffects().Has(classes.ZanshinFree) {
 		return
 	}
 	who := caster{userId: attacker.ref.UserId, mobId: attacker.ref.MobInstanceId}

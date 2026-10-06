@@ -26,6 +26,15 @@ random intervals, without anyone doing anything.
   air a few degrees (<ansi fg="command">help temperature</ansi>). Zones with no
   weather table of their own (caves, dungeons) have none to show.
 
+<ansi fg="yellow-bold">In the web client</ansi>
+
+The <ansi fg="yellow">Time and Date</ansi> panel draws the weather you can see over the sun and
+moon: drifting cloud, rain, a storm's lightning, or fog, with its name
+in the corner (hover it for the room's weather line). Heavy cloud dims
+the sun and, when overcast, hides the moon. Indoors with a view out
+the tag says "(outside)"; with no view out, or in a zone with no
+weather, the sky stays plain.
+
 <ansi fg="yellow-bold">How weather affects you</ansi>
 
 Bad weather outdoors, in a tracked zone, does three things:

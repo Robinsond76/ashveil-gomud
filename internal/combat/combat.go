@@ -651,7 +651,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				strikeIai := iai
 				if iai {
 					iai = false
-					sourceChar.RT.IaiSpent = true
+					sourceChar.RT.IaiStrikes++
+					// A Sword Saint's Twin draw keeps the edge for a second strike.
+					if sourceChar.RT.IaiStrikes > iaiFx.Int(classes.IaiExtra) {
+						sourceChar.RT.IaiSpent = true
+					}
 				}
 				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
 				// Phase 38c2: a Marksman's Perfect Shot can't miss or be avoided.

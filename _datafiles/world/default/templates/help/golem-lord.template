@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">golem-lord</ansi>
+
+The Golem Lord is the neutral elite of the Golemancer. Its golem hits hard
+enough to knock foes down, grows stone armor and, at the top rank, stands up a
+second time after it falls.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Hammering blows    the golem's blows knock the foe down 20% of the time
+                        (a boss 10%)
+  35 Hammer fists       +2 damage on the golem's blows
+  40 Granite heart      the golem has 170% of the health of a single doll
+  45 Deeper stone       the golem carries 35% armor of its own
+  50 Ringing blows      its blows knock the foe down 30% of the time (a boss
+                        15%)
+  55 Practiced strings  +4 Attack on the golem's blows
+  60 Rise again         the golem stands back up a second time a battle, at
+                        half its health, on top of Emergency Splice
+
+It needs the Golemancer first (<ansi fg="command">help dollmaster-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] golem-lord confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Doll Master talents (levels 35, 45, 55): Iron Hide (+5 Armor), Heartwood
+(+15 health on every doll), Master Carver (+2 damage on every doll's blows).
+See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

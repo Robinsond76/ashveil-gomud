@@ -298,3 +298,29 @@ const (
 	FirstLoaded = "firstloaded" // the first bolt of each battle needs no reload
 	BoltCD      = "boltcd"      // rounds off Piercing Bolt's cooldown (its reload is unchanged)
 )
+
+// The neutral elites (Phase 39i): the Halberdier, Samurai, Shaman and Doll
+// Master lineages' elite ranks.
+const (
+	// Halberdier.
+	SweepBehind = "sweepbehind" // percent of a blow's damage a Sweep also deals the foes in the row behind its target
+	ColumnGuard = "columnguard" // percent less damage allies in the holder's column take while it stands
+	BraceTwice  = "bracetwice"  // Brace answers the first two foes that strike into its column
+	ChargedArc  = "chargedarc"  // percent of a Charged Sweep's lightning that arcs to a foe in the next row
+	ChargedStun = "chargedstun" // a Charged Sweep's lightning can leave the foe it strikes paralyzed for a round
+	// Samurai.
+	IaiExtra    = "iaiextra"    // strikes beyond the first that carry Iaijutsu's edge
+	ZanshinFree = "zanshinfree" // Zanshin works every time the holder fells a foe, not once a round
+	LastStand   = "laststand"   // it cannot be knocked down while it is the last of its company standing
+	AuraAttack  = "auraattack"  // Attack allies in the holder's row gain while it stands
+	// Shaman.
+	RainEndless = "rainendless" // its Rain lasts the whole battle
+	ChainRow    = "chainrow"    // Lightning also strikes every other foe in its target's row
+	FogHides    = "foghides"    // while its Fog lasts, foes cannot reach its company's back row with extended reach
+	StoneRow    = "stonerow"    // Stoneskin covers a whole row
+	Tremor      = "tremor"      // percent chance each foe in the front row is knocked down when Stoneskin lands
+	// Doll Master.
+	DollKnock  = "dollknock"  // percent chance a doll's blow knocks the foe down
+	SplicePlus = "spliceplus" // a second Emergency Splice, standing the doll up at half its health
+	TangleWeak = "tangleweak" // Attack a tangled foe's next attack loses
+)
