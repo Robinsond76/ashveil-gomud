@@ -95,8 +95,9 @@ const battle = {
   outlook: { risk: 'fair', close: true, text: 'It could go either way.' },
 };
 
+const VW = Number(process.env.MOBILE_WIDTH || 390);
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined });
-const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const ctx = await browser.newContext({ viewport: { width: VW, height: 780 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const page = await ctx.newPage();
 page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
 page.on('console', m => {
@@ -119,7 +120,7 @@ await page.evaluate(() => {
     VirtualWindows.handleGMCP(namespace, body);
   };
 });
-await page.evaluate(() => VirtualWindows.setConnected(true));
+await page.evaluate(() => { VirtualWindows.setConnected(true); document.getElementById('connect-button').style.display = 'none'; });
 const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
 const sent = () => page.evaluate(() => window.sent);
 const clearSent = () => page.evaluate(() => { window.sent = []; });
@@ -142,7 +143,7 @@ check(await overflow() <= 0, 'the page never scrolls sideways');
 const barBox = await box('#touch-bar'), navBox = await box('#mobile-nav'), inBox = await box('#input-area');
 check(inBox.y + inBox.height <= barBox.y + barBox.height + 80 && navBox.y + navBox.height <= 780 + 1, 'the command box, touch bar and view bar sit at the bottom of the screen');
 const termBox = await box('#terminal');
-check(termBox.height > 300 && termBox.width >= 380, 'the game text still has room: ' + Math.round(termBox.width) + 'x' + Math.round(termBox.height));
+check(termBox.height > 300 && termBox.width >= VW - 10, 'the game text still has room: ' + Math.round(termBox.width) + 'x' + Math.round(termBox.height));
 await shot('game');
 
 // --- the touch bar's commands ---
@@ -162,7 +163,7 @@ await page.locator('#mobile-nav button', { hasText: 'Map' }).tap();
 check(await page.evaluate(() => Mobile.view()) === 'map', 'the Map button shows the map');
 check((await visibleWins('#dock-left')).join() === 'Map', 'only the map shows in the Map view: ' + (await visibleWins('#dock-left')).join());
 const mapBox = await box('#map-2d-canvas');
-check(mapBox && mapBox.width >= 380 && mapBox.height >= 250, 'the map fills the screen: ' + Math.round(mapBox.width) + 'x' + Math.round(mapBox.height));
+check(mapBox && mapBox.width >= VW - 10 && mapBox.height >= 250, 'the map fills the screen: ' + Math.round(mapBox.width) + 'x' + Math.round(mapBox.height));
 check((await box('#terminal')).height > 0 && await page.evaluate(() => getComputedStyle(document.getElementById('terminal')).visibility) === 'hidden', 'the terminal is out of sight behind it');
 await page.waitForTimeout(500);
 await shot('map');
@@ -243,7 +244,7 @@ const hereWins = await visibleWins('#dock-left');
 check(hereWins.includes('RoomInfo') && !hereWins.includes('Map'), 'the Here view shows the room, not the map: ' + hereWins.join());
 check(await page.evaluate(() => getComputedStyle(document.getElementById('rw-gather')).display !== 'none'), 'the gather progress strip shows');
 const gb = await box('#rw-gather');
-check(gb && gb.x >= 0 && gb.x + gb.width <= 390 && gb.y + gb.height <= 780, 'and fits the screen: ' + JSON.stringify(gb && { x: Math.round(gb.x), w: Math.round(gb.width) }));
+check(gb && gb.x >= 0 && gb.x + gb.width <= VW && gb.y + gb.height <= 780, 'and fits the screen: ' + JSON.stringify(gb && { x: Math.round(gb.x), w: Math.round(gb.width) }));
 check(await overflow() <= 0, 'Here never scrolls sideways');
 await shot('here-gather');
 await gmcp('Room.Gather', { phase: 'done', kind: 'herbs', label: 'gathering herbs', lines: ['Your company gathers 3 wild thyme.'] });
@@ -260,7 +261,7 @@ await page.waitForTimeout(150);
 const campText = await page.evaluate(() => (document.getElementById('company-camp') || {}).textContent || '');
 check(campText.includes('Camp gear: Bedrolls 2/3, Tent, Bells and trip lines.'), 'the Camp tab shows its gear line');
 const camp = await box('#company-camp');
-check(camp && camp.x >= 0 && camp.x + camp.width <= 391, 'the Camp tab fits the screen width: ' + (camp && Math.round(camp.width)));
+check(camp && camp.x >= 0 && camp.x + camp.width <= VW + 1, 'the Camp tab fits the screen width: ' + (camp && Math.round(camp.width)));
 check(await overflow() <= 0, 'Company never scrolls sideways');
 await shot('company-camp');
 await page.getByRole('tab', { name: 'Combat' }).tap();
@@ -272,9 +273,9 @@ await gmcp('Company.Battle', battle);
 await page.waitForTimeout(400);
 check(await page.evaluate(() => BattleScreen.state().open), 'the battle screen opens by itself on a phone');
 const bs = await box('#battle-screen');
-check(bs && bs.x === 0 && bs.width === 390 && bs.height >= 700, 'it takes the whole screen: ' + JSON.stringify(bs && { w: bs.width, h: Math.round(bs.height) }));
+check(bs && bs.x === 0 && bs.width === VW && bs.height >= 700, 'it takes the whole screen: ' + JSON.stringify(bs && { w: bs.width, h: Math.round(bs.height) }));
 const cv = await box('#battle-screen canvas');
-check(cv && cv.width <= 390 && cv.width >= 360, 'the picture fits the width: ' + Math.round(cv.width));
+check(cv && cv.width <= VW && cv.width >= VW - 30, 'the picture fits the width: ' + Math.round(cv.width));
 const foot = await page.evaluate(() => [...document.querySelectorAll('#battle-screen .bs-foot button')].map(b => {
   const r = b.getBoundingClientRect();
   return { t: b.textContent, h: r.height, inside: r.left >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight };
