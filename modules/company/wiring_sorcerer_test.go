@@ -29,7 +29,7 @@ func TestSorcererLoosesALanceAfterAChantAndPaysItsMana(t *testing.T) {
 	b := eliteCaster(t, "sorcerer", 10, "arcanelance", "mm")
 	stream := b.listen()
 	b.startWitchFight()
-	assert.Equal(t, 300-18, b.aria.Character.Mana, "the chant's mana is spent as it begins")
+	assert.Equal(t, 300-15, b.aria.Character.Mana, "the chant's mana is spent as it begins")
 	out := lanceRounds(b, 6)
 	assert.Contains(t, out, "chanting: Arcane Lance, 3 rounds")
 	assert.Regexp(t, `You hurl the lance, and it drives into .* \(\d+ damage\)`, out)
@@ -98,8 +98,8 @@ func TestHighSorcererGatheredChantIsShorterThanTheSorcerers(t *testing.T) {
 	assert.Greater(t, quick, slow, "more Lances in the same rounds")
 }
 
-func TestHighSorcererLanceCostsLessAtRank50(t *testing.T) {
-	b := eliteCaster(t, "high-sorcerer", 50, "arcanelance")
+func TestSorcererLanceCostsLessAtRank25(t *testing.T) {
+	b := eliteCaster(t, "sorcerer", 25, "arcanelance")
 	require.Equal(t, 300, b.aria.Character.Mana)
 	b.startWitchFight()
 	assert.Equal(t, 300-12, b.aria.Character.Mana)

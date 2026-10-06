@@ -318,10 +318,10 @@ func init() {
 	register(Class{ID: "sorcerer", Name: "Sorcerer", Lineage: "wizard", Tier: TierAdvanced, Gate: GateAny,
 		Role: "costly magical burst: one heavy Arcane Lance after a long chant",
 		Ranks: []Rank{
-			teaches(rank(10, "Arcane Lance", "a heavy bolt at one foe, about twice a Magic Missile; chant 3 rounds, cost 18", Lance, 1, LanceCost, 18), "arcanelance"),
+			teaches(rank(10, "Arcane Lance", "a heavy bolt at one foe, about twice a Magic Missile; chant 3 rounds, cost 15", Lance, 1, LanceCost, 15), "arcanelance"),
 			rank(15, "Gathered power", "the Lance deals 25% more damage", LancePct, 25),
 			rank(20, "Steady chant", "blows break the Sorcerer's chant 25% less often", ChantBreak, 25),
-			rank(25, "Cheaper lance", "the Lance costs 15", LanceCost, 15),
+			rank(25, "Cheaper lance", "the Lance costs 12", LanceCost, 12),
 		}})
 	register(Class{ID: "high-sorcerer", Name: "High Sorcerer", Lineage: "wizard", Tier: TierElite, Parent: "sorcerer", Gate: GateAny,
 		Role: "a Lance that strikes harder, sooner and twice, and a chant blows rarely break",
@@ -330,7 +330,7 @@ func init() {
 			rank(35, "Gathered chant", "the Lance chants a round less", LanceTrim, 1),
 			rank(40, "Unbroken chant", "blows break its chant 50% less often", ChantBreak, 50),
 			rank(45, "Twin Lance", "the Lance also strikes a second foe for half its damage", LanceTwin, 50),
-			rank(50, "Efficient lance", "the Lance costs 12", LanceCost, 12),
+			rank(50, "Searing lance", "the Lance deals 60% more damage in all", LancePct, 60),
 			rank(55, "Bottomless well", "+20% maximum mana", ManaPct, 20),
 			rank(60, "Instant Lance", "once a battle, its first Lance needs no chant", LanceFree, 1),
 		}})

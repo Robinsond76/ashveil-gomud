@@ -363,7 +363,7 @@ func TestClassHelpTopics(t *testing.T) {
 		"thrall":        {"risen", "60%", "never saved", "help necromancer"},
 		"wizard-routes": {"Theurgist", "Arcanist", "Warlock", "Sorcerer", "Arcane Lance", "Life Drain", "help archon", "help high-sorcerer"},
 		// Phase 38d: the Sorcerer's elite.
-		"high-sorcerer": {"High Lance", "Gathered chant", "Unbroken chant", "Twin Lance", "Efficient lance", "Bottomless well", "Instant Lance", "Deep Reserves"},
+		"high-sorcerer": {"High Lance", "Gathered chant", "Unbroken chant", "Twin Lance", "Searing lance", "Bottomless well", "Instant Lance", "Deep Reserves"},
 		"wise-one":      {"Hearthward", "Deep Slumber", "Mend Charm", "Cleansing ward", "Hearth's Peace", "Ward of Life"},
 		"coven-mother":  {"Coven's Will", "Lasting hexes", "Cheaper hexes", "Breaking the boss", "Twin Hex", "Coven Circle"},
 		"crone-of-ash":  {"Ashen Curse", "Rotting Miasma", "Quick curses", "Lingering Curse", "Soul Rot", "Crone's Doom"},

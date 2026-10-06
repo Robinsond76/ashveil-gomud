@@ -4,7 +4,7 @@ name: Arcane Lance
 description: Hurts for 15+2d6, plus 1 per 5 caster levels and 1 per 8 Mysticism, scaled by skill; a long chant
 type: harmmulti
 school: conjuration
-cost: 18
+cost: 15
 waitrounds: 2
 difficulty: 75
 power:
