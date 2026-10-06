@@ -96,11 +96,11 @@ func TestFocusBuildsCriticalChanceFromQuietRoundsAndStopsAtItsCap(t *testing.T) 
 	s := samurai(t, 3, "")
 	assert.Zero(t, s.ClassCrit(), "nothing yet")
 	s.RT.Quiet = 1
-	assert.Equal(t, 5, s.ClassCrit())
+	assert.Equal(t, 3, s.ClassCrit())
 	s.RT.Quiet = 2
-	assert.Equal(t, 10, s.ClassCrit())
+	assert.Equal(t, 6, s.ClassCrit())
 	s.RT.Quiet = 9
-	assert.Equal(t, 15, s.ClassCrit(), "capped at +15")
+	assert.Equal(t, 9, s.ClassCrit(), "capped at +9")
 	s.SetClassState("kensai", nil)
 	s.Level = 20
 	assert.Equal(t, 20, s.ClassCrit(), "Deep focus raises the cap")
@@ -115,7 +115,7 @@ func TestFocusBuildsCriticalChanceFromQuietRoundsAndStopsAtItsCap(t *testing.T) 
 			crits++
 		}
 	}
-	assert.InDelta(t, 225, crits, 70, "+15%% of 1500")
+	assert.InDelta(t, 135, crits, 55, "+9%% of 1500")
 }
 
 func TestSharpEyeAddsCriticalChanceToEveryBlow(t *testing.T) {

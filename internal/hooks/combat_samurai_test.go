@@ -91,7 +91,7 @@ func TestFocusCountsQuietRoundsAndAHitResetsIt(t *testing.T) {
 	round()
 	round()
 	assert.Equal(t, 2, s.char.RT.Quiet)
-	assert.Equal(t, 10, s.char.ClassCrit())
+	assert.Equal(t, 6, s.char.ClassCrit())
 
 	foe := mobHolder(engagementMob(t, 8622, 50, 1))
 	samuraiBlow(foe, *s, combat.AttackResult{Hit: true, DamageToTarget: 3})
