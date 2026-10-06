@@ -38,7 +38,9 @@ func TestPhase39i2Elites(t *testing.T) {
 	// Alchemist at the floor, where no route can be ranked, so those two
 	// meet foes a few levels above or below them (ASHVEIL_BALANCE_LEAD
 	// overrides every lineage's lead for calibration).
-	leads := map[string]int{"beasttamer": 0, "gryphon-rider": 0, "alchemist": 0, "arbalist": 0}
+	// Measured: Beast Tamer +4 and Gryphon Rider +2 leave room under 100%;
+	// the Alchemist -1 lifts it off the floor.
+	leads := map[string]int{"beasttamer": 4, "gryphon-rider": 2, "alchemist": -1, "arbalist": 0}
 	override, overridden := os.LookupEnv("ASHVEIL_BALANCE_LEAD")
 	if v, err := strconv.Atoi(override); overridden && err == nil {
 		for k := range leads {
