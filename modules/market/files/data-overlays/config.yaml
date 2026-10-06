@@ -101,6 +101,8 @@ Markets:
         MaxStock: 20
         TargetStock: 10
         StartStock: 8
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       - ItemId: 95 # alchemist's reagents (Phase 39g); brewed into an Alchemist's flasks
         BasePrice: 8
         MinPrice: 5
