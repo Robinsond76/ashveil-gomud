@@ -1,0 +1,44 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">warrior-routes</ansi>
+
+The warrior lineage splits at level 10 into a protector of faith, a brawler
+or a protector of blood. They all fight in the front rank; the Knight and the
+Blackguard also heal.
+
+<ansi fg="yellow-bold">Knight (good)</ansi>
+
+  10 Lay on Hands       heals itself or an adjacent ally for half a Minor Heal;
+                        takes its turn, no chant or mana; 2 uses per rest
+  15 Second wind        3 uses per rest
+  20 Shield of faith    +5 block chance while guarding a ward
+  25 Staunch hands      Lay on Hands also stops bleeding
+
+  <ansi fg="yellow-bold">Paladin</ansi> (30): Lay on Hands is a full Minor Heal and removes a harmful status;
+  Aura of Resolve (allies in its row take 10% less damage; auras don't stack
+  within a row); 4 uses; Smite (+50% against undead and demons); Rallying aura
+  (5% to the rest of the company); Far hands (any ally in reach); Divine shield
+  (once a battle it ignores the next blow; 5 uses).
+
+<ansi fg="yellow-bold">Mercenary (neutral)</ansi>
+
+  10 Hard tackle        Tackle succeeds 10 points more often, ready a round sooner
+  15 Practiced hands    +2 Attack
+  20 Pin down           a tackled foe stays down a round longer
+  25 Hit while down     a tackled foe is also left exposed
+
+<ansi fg="yellow-bold">Blackguard (evil)</ansi>
+
+  10 Blood Oath         a melee blow that lands heals the most hurt ally for half
+                        the damage; 3 blows a battle; the foe it wounded has -3
+                        Attack against its allies
+  15 Deeper oath        4 blows a battle
+  20 Fearful wounds     the wounded foe has -5 Attack
+  25 Deepest oath       5 blows a battle
+
+  <ansi fg="yellow-bold">Dread Knight</ansi> (30): Blood Oath heals 75%, Aura of Dread (foes aimed at it have -5
+  Attack), Spreading oath (a second ally heals half as much), up to 7 blows,
+  Terror (its critical hits that land also stagger the target, which loses its
+  next action), and at 60 Blood Oath heals 100%.
+
+Lay on Hands uses come back with a rest (a camp rest, an inn).
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help cleric-routes</ansi>.

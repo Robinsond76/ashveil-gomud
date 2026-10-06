@@ -38,6 +38,12 @@ tackles, a rogue strikes an opening, a ranger aims a shot (<ansi fg="command">he
 Wizards start with Magic Missile, clerics with Minor Heal and witches with
 Slumber, the spells they cast in battle (<ansi fg="command">help witch</ansi>).
 
+<ansi fg="yellow-bold">Classes</ansi>
+
+Your archetype is your lineage. At level 10 you promote to a class on a good,
+neutral or evil route, with ranks and talents of its own (<ansi fg="command">help classes</ansi>,
+<ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>). Companions promote too.
+
 <ansi fg="yellow-bold">How each class fights</ansi>
 
   <ansi fg="yellow">Class</ansi>     <ansi fg="yellow">armor</ansi>    <ansi fg="yellow">shields</ansi>        <ansi fg="yellow">weapons</ansi>
@@ -52,4 +58,4 @@ A cleric's holy symbol, carried in the off hand, adds 5% to every heal.
 <ansi fg="command">archetype</ansi> shows each class's health and its Attack and Evasion a level
 (<ansi fg="command">help evasion</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help shields</ansi>).
 
-See also: <ansi fg="command">help abilities</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help train</ansi>.
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help train</ansi>.

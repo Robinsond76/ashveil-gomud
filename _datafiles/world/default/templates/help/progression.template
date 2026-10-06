@@ -29,6 +29,12 @@ no head start. A level 60 warrior has about 88 HP before Vitality, half
 again a level 1 warrior's 59 (<ansi fg="command">help health</ansi>).
 Wounds reduce how far healing can restore you (<ansi fg="command">help wounds</ansi>).
 
+<ansi fg="yellow-bold">Promotion and talents</ansi>
+
+At level 10 you promote to a class, and at level 30 some classes promote again
+(<ansi fg="command">help promotion</ansi>). You choose a talent at levels 5, 15, 25, 35, 45 and 55
+(<ansi fg="command">help talents</ansi>). The level-up report names what comes next.
+
 <ansi fg="yellow-bold">Spells and abilities grow</ansi>
 
 Damage and healing spells grow with your level and Mysticism: Magic
