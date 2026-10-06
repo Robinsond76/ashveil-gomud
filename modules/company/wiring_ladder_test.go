@@ -190,3 +190,24 @@ func TestHealersDefaultSaysWhyTheLeaderTurns(t *testing.T) {
 	assert.Contains(t, got, "Your company marks the bandit slinger as a healer and goes for it first.")
 	assert.NotContains(t, got, "You turn toward")
 }
+
+// Review fix: the battle's opening says the company marks the healer, not
+// only a later re-aim; without the default it says nothing of healers.
+func TestHealersDefaultSaysSoAsTheBattleOpens(t *testing.T) {
+	open := func(level int, setup func(b *brawl)) string {
+		b := newBrawl(t)
+		b.withArchetypes("")
+		b.unplaced()
+		_, bruiser, slinger, _, _ := b.shapeBandits()
+		mobs.GetInstance(slinger).Role = "healer"
+		b.aria.Character.Level = level
+		if setup != nil {
+			setup(b)
+		}
+		return b.cmd("attack", fmt.Sprintf("#%d", bruiser))
+	}
+	const line = "Your company marks the bandit slinger as a healer and goes for it first."
+	assert.Contains(t, open(6, nil), line)
+	assert.NotContains(t, open(4, nil), line, "below level 5 there is no healers default")
+	assert.NotContains(t, open(6, func(b *brawl) { b.saveTactics(strategy.Tactics{Focus: strategy.Strongest}) }), line, "a set focus is no default")
+}

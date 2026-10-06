@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -250,6 +251,14 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			// for the room. Phase 32c: the foe is the whole group.
 			user.SendText(goForText(user.Character, util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, foeName)), alreadyFighting))
 
+			// Phase 35e: a company on its healers default that opens on an
+			// enemy healer says so, once, as the battle starts.
+			healersDefault := grouped && !alreadyFighting && enemyparty.HealersDefault(user.UserId)
+			marked := 0
+			if healersDefault && enemyHealer(attackMobInstanceId) {
+				marked = attackMobInstanceId
+			}
+
 			for _, instId := range room.GetMobs(rooms.FindCharmed) {
 				if m := mobs.GetInstance(instId); m != nil {
 					if m.Character.Aggro == nil && m.Character.IsCharmed(user.UserId) { // Charmed mobs help the player
@@ -259,11 +268,20 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 						if leaderId, key, ok := company.LeaderAndKeyForInstance(instId); ok && leaderId == user.UserId && grouped {
 							if id, ok := enemyparty.Aim(group, enemyparty.CompanionAttacker(user.UserId, key, m, attackMobInstanceId)); ok {
 								aim = id
+								if healersDefault && marked == 0 && enemyHealer(id) {
+									marked = id
+								}
 							}
 						}
 						m.Command(fmt.Sprintf(`attack #%d`, aim)) // # denotes a specific mob instanceId
 
 					}
+				}
+			}
+
+			if marked > 0 {
+				if h := mobs.GetInstance(marked); h != nil {
+					user.SendText(healerMarkedText(h.Character.Name))
 				}
 			}
 
@@ -377,6 +395,19 @@ func goForText(c *characters.Character, target string, alreadyFighting bool) str
 		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, c.Equipment.Weapon.DisplayName(), target)
 	}
 	return fmt.Sprintf(`You go for %s.`, target)
+}
+
+// enemyHealer reports whether the mob instance is a healer (Phase 35e).
+func enemyHealer(instanceId int) bool {
+	m := mobs.GetInstance(instanceId)
+	return m != nil && strategy.Role(m.EnemyRole()) == strategy.Healer
+}
+
+// healerMarkedText is the line a company on its healers default says when it
+// opens on an enemy healer (Phase 35e), the same words the battle's re-aim
+// uses.
+func healerMarkedText(name string) string {
+	return fmt.Sprintf(`Your company marks %s as a healer and goes for it first.`, util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, name)))
 }
 
 // theGroup turns a group's name into the one being gone for: "a band of

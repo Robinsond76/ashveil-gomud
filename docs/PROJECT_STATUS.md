@@ -29,7 +29,7 @@ screen lane first, with code-generated pixel art. Open questions in the
 40a–40g and loot designs are decided there, each with a reason.
 Documentation only. Verification: links and the diff checked.
 
-**Phase 35e built: focus the healer (2026-10-06):** a `healers` target rule
+**Phase 35e complete: focus the healer (2026-10-06):** a `healers` target rule
 (a chanting healer, else the weakest idle healer, else the casters order) and
 focus. While the player has set no focus and the leader is level 5 or more,
 the company goes for an enemy healer it can reach first (`strategy.HealersDefault`,
@@ -50,7 +50,22 @@ Balance (16 fights a cell, `ASHVEIL_BALANCE=1 TestBalanceCoordinated`, default
 company against tiers 1-3, each with a healer): level 1/5/10/30 wins were
 69-81/62-81/50-100/38-69%, in line with the pre-35e rows; the one failed
 assertion (level 30, tier 3, 37% against the 50% target) is within the noise
-of 16 fights and was not re-measured. Review results are added by the review thread.
+of 16 fights and was not re-measured.
+Review (PR #33, Opus review thread): **accepted** the battle-start gap: the
+"marks X as a healer" line came only on a later re-aim, never when `attack`
+opened on the healer, so most fights showed no reason; `attack` now says it
+once when the leader's or a companion's opening aim is an enemy healer
+(`TestHealersDefaultSaysSoAsTheBattleOpens`). **Confirmed, no change:** the
+mid-battle focus is the 30c owner decision 2 exception to the Ogre Battle
+rule (company-wide, that battle only, once a round); 35e only makes such a
+focus end the healers default. No half-applied work found in the diff.
+**Balance re-measured** at 60 fights a cell, branch against master: level 30
+tier 3 (answer in kind) 58% against master's 53%, tier 2 62% against 45%;
+the 37% was noise and both runs pass every assertion. Level 5 and 10 tier 3
+cells moved within the sample's noise (55-68% against 67-70%). Rejected: the
+healers default also overriding a member's own `strategy` rule at levels 5-9
+is intended (company-wide default; `company tactics focus none` opts out,
+as `help tactics` says).
 
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
@@ -390,7 +405,7 @@ their dependencies and those decisions is the
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
-| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Built, in review (see the 35e entry at the top) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
+| 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
