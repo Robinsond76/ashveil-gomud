@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -160,6 +161,9 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	b.Coordination = int(enemyparty.Coordination(p))
 	battle.SetCoordination(sd.user.UserId, b.Coordination)
 	assignPartyEnemyNames(sd.user.UserId, p)
+	// Phase 37: a summary lists only this fight's spoils, never a death's
+	// spoils noted outside any fight.
+	loot.TakeSpoils(sd.user.UserId)
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
 	if len(p.Members) > 0 {
 		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {

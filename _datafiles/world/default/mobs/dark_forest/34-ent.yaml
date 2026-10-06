@@ -3,6 +3,7 @@ zone: Dark Forest
 itemdropchance: 5
 hostile: true
 solitary: true
+boss: true
 maxwander: -1
 groups: 
   - forest-creature

@@ -52,6 +52,8 @@ battle, and clears its targets, chants, and guards. A chant cut short this
 way returns no mana. Other players' battles continue. Your horses and
 cargo are not in the room, so nothing about them changes. A restart or
 copyover cancels an order in progress; it never moves a saved company.
+When the foes were a random encounter, the survivors of that group are
+cleared once nobody is still fighting them (<ansi fg="command">help encounters</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help morale</ansi>, <ansi fg="command">help company</ansi>,
 <ansi fg="command">help separation</ansi>.

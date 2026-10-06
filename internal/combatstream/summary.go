@@ -72,6 +72,10 @@ type Summary struct {
 	Effects          []Count
 	Kills            []Amount // company members, most first
 
+	// Spoils is what the leader's company took (Phase 37), set by the
+	// caller when the fight ends: item names and gold, as they fell.
+	Spoils []string
+
 	Enemies []EnemyEnding
 	Company []MemberHealth
 }
@@ -385,6 +389,9 @@ func Render(s Summary, viewerUserId int) []string {
 	}
 	if len(s.Kills) > 0 {
 		out = append(out, line("Kills", joinAmounts(s.Kills)))
+	}
+	if len(s.Spoils) > 0 {
+		out = append(out, line("Spoils", strings.Join(s.Spoils, " · ")))
 	}
 	enemies := make([]string, 0, len(s.Enemies))
 	for _, e := range s.Enemies {
