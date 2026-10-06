@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -84,6 +85,16 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 	}
 	b.aimAt("bandit captain")
 	b.companion(1).Character.Health = 1
+	form, ok := enemyparty.CompanyFormation(7)
+	require.True(t, ok)
+	cells := map[string]bool{}
+	for _, row := range form {
+		for _, key := range row {
+			if key != "" {
+				cells[string(key)] = true
+			}
+		}
+	}
 	steps = nil
 	rounds := combatRoundsToPlay(t, b, &now)
 
@@ -115,6 +126,17 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 		assert.Positive(t, kinds[kind], "a %s event was sent: %v", kind, kinds)
 	}
 	assert.Equal(t, 1, kinds["fight-end"])
+
+	// The fight-start roster names the company by the keys of their cells
+	// in Company.Battle.positions, the leader included.
+	first := payloads[0].Events[0]
+	require.Equal(t, "fight-start", first["kind"])
+	roster, _ := first["company"].([]any)
+	require.NotEmpty(t, roster)
+	assert.Contains(t, roster, "leader")
+	for _, ref := range roster {
+		assert.True(t, cells[ref.(string)], "%v has a cell in Company.Battle", ref)
+	}
 	last := payloads[len(payloads)-1]
 	assert.Equal(t, "fight-end", last.Events[len(last.Events)-1]["kind"])
 	assert.Equal(t, "victory", last.Events[len(last.Events)-1]["outcome"])

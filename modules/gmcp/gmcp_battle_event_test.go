@@ -139,18 +139,18 @@ func TestBattleEventsReachTheLeaderWithSharedIDs(t *testing.T) {
 
 	assert.Equal(t, []string{
 		"fight-start:>",
-		"attack:me>m:88",
-		"status-applied:me>m:88",
+		"attack:leader>m:88",
+		"status-applied:leader>m:88",
 		"attack:m:89>companion:1",
-		"heal:companion:1>me",
-		"death:me>m:88",
+		"heal:companion:1>leader",
+		"death:leader>m:88",
 		"fight-end:>",
 	}, r.kinds())
 
 	ps := r.payloads()
 	require.NotEmpty(t, ps)
 	start := ps[0].Events[0]
-	assert.Equal(t, []string{"me", "companion:1"}, start.Company)
+	assert.Equal(t, []string{"leader", "companion:1"}, start.Company)
 	assert.Equal(t, []string{"m:88", "m:89"}, start.Enemies)
 
 	var attack battleEvent
@@ -235,8 +235,8 @@ func TestBattleEventsMaskEnemiesTheLeaderCannotSee(t *testing.T) {
 
 	assert.Equal(t, []string{
 		"fight-start:>",
-		"attack:me>?",
-		"status-applied:me>m:89",
+		"attack:leader>?",
+		"status-applied:leader>m:89",
 	}, r.kinds())
 	assert.Equal(t, []string{"m:89"}, r.payloads()[0].Events[0].Enemies, "an unseen enemy is not listed")
 }
@@ -287,11 +287,11 @@ func TestBattleEventsAreReleasedInStepWithTheNarration(t *testing.T) {
 	require.Len(t, steps, 6, "%v", steps)
 	// "Aria swings." has nothing before it; the first attack is held for
 	// the line that follows it.
-	assert.Equal(t, at["The bandit is cut. (3)"], at["attack:me>m:88"], "an event goes out with the line that follows it")
+	assert.Equal(t, at["The bandit is cut. (3)"], at["attack:leader>m:88"], "an event goes out with the line that follows it")
 	assert.Greater(t, at["The bandit is cut. (3)"], at["Aria swings."])
-	assert.Equal(t, at["The bandit misses."], at["attack:m:88>me"])
+	assert.Equal(t, at["The bandit misses."], at["attack:m:88>leader"])
 	// Nothing follows the death: it goes out with the last line.
-	assert.Equal(t, at["The bandit misses."], at["death:me>m:88"])
+	assert.Equal(t, at["The bandit misses."], at["death:leader>m:88"])
 	assert.Greater(t, at["The bandit misses."], at["The bandit is cut. (3)"])
 }
 
@@ -313,7 +313,7 @@ func TestBattleEventsFlushWithTheText(t *testing.T) {
 
 	hooks.FlushPacedCombat(7)
 	events.ProcessEvents()
-	assert.Equal(t, []string{"attack:me>m:88"}, r.kinds())
+	assert.Equal(t, []string{"attack:leader>m:88"}, r.kinds())
 	texts := 0
 	for _, e := range r.got {
 		if e.payload == nil {
@@ -322,4 +322,15 @@ func TestBattleEventsFlushWithTheText(t *testing.T) {
 	}
 	assert.Equal(t, 2, texts)
 	assert.False(t, combatpace.Default().Busy(7))
+}
+
+// TestBattleEventsNameTheLeaderByTheirCellKey: a company's leader is
+// "leader", the key of their cell in Company.Battle.positions, so the
+// battle screen needs no mapping; a player who leads no company is "me".
+func TestBattleEventsNameTheLeaderByTheirCellKey(t *testing.T) {
+	v := battleViewer{userId: 7}
+	assert.Equal(t, "leader", v.refID(rigLeader))
+	assert.Equal(t, "me", v.refID(combatstream.Ref{UserId: 7, Name: "Aria"}))
+	assert.Equal(t, "u:8", v.refID(combatstream.Ref{UserId: 8, LeaderUserId: 8, MemberKey: "leader"}))
+	assert.Equal(t, "m:9", v.refID(combatstream.Ref{MobInstanceId: 9, LeaderUserId: 8, MemberKey: "companion:1"}))
 }

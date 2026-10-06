@@ -68,8 +68,8 @@
   `hooks.CombatData_Hold` orders with the round's narration (held with it for
   a player who paces combat, released with the next text line or the round's
   last, flushed with it) and hands back through `hooks.SetCombatDataSender`
-  as one message per released batch. Refs match `Company.Battle` (`me`, member
-  key, `m:<instance>`, `u:<id>`; `?` for an enemy in the dark or hidden, whose
+  as one message per released batch. Refs match `Company.Battle` (member key,
+  `leader` for the player; `me` only without a company; `m:<instance>`, `u:<id>`; `?` for an enemy in the dark or hidden, whose
   statuses are also dropped). Never add enemy health, unshown numbers, or
   secret statuses. Sent only to the web client, or a client that listed the
   module in `Core.Supports.Set`. The web client does not store it:

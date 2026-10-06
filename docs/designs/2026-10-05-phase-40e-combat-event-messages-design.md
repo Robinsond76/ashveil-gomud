@@ -175,6 +175,15 @@ Built as designed, with these decisions (best judgment, delegated):
   the following line or the round's last.
 - **Client.** `Client.onBattleEvents(fn)` in `webclient-core.js` delivers each
   message; events never enter `GMCPStructs`. 40f adds the listener.
+- **Review (2026-10-06).** The leader is named by their member key
+  (`leader`, the key of their cell in `Company.Battle.positions`), not `me`,
+  so every company ref matches a cell with no mapping; `me` is left for a
+  player who leads no company. Follow-ups for 40f: refresh the roster from
+  `Company.Battle` when a fight grows (no event announces joiners); draw `?`
+  as one unseen presence, since masked enemies can't be told apart; don't name the spell of a `?`
+  caster's cast; expect a
+  spell's results to arrive with the line after its cast line; allied
+  companies need the relay above before reserve formations animate.
 
 ## Open questions
 

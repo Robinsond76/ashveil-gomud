@@ -42,7 +42,17 @@ cells; in the dark or for a hidden enemy every enemy ref is `?` and its
 statuses are dropped, instead of tracking which enemies the narration
 labelled; secret statuses are never sent. Design:
 [40e](designs/2026-10-05-phase-40e-combat-event-messages-design.md).
-Independent review: pending (Opus thread).
+Independent review (Opus, 2026-10-06): accepted, the leader's ref was
+`me`, which matches nothing in `Company.Battle`; it is now their member key
+`leader` (`me` only without a company), with a unit test and a real-round
+check that the fight-start roster matches the formation's cells; an unused
+viewer field removed. Rejected: data released one line after a spell's
+narration (by design: an event rides the next line). Left for 40f: an
+unseen enemy's cast still carries its spell ID (cast lines already hint at
+the spell); 40f should not show it for a `?` caster.
+Checked and sound: no health or secret status in the feed, dark/hidden
+masking matches `Company.Battle`, flushes carry the data, pace off sends at
+once. 40f follow-ups are in the design's Built section.
 
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,

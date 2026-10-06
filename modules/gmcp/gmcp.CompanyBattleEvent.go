@@ -90,24 +90,25 @@ func wantsBattleEvents(connectionId uint64) bool {
 
 // battleViewer is what the ID mapping needs of the player whose feed it is.
 type battleViewer struct {
-	userId  int
-	unseen  func(instanceId int) bool // an enemy the player can't make out
-	enemies map[int]bool              // the fight's enemies, by instance
+	userId int
+	unseen func(instanceId int) bool // an enemy the player can't make out
 }
 
-// refID names a combatant as Company.Battle and Company do: "me", a member
-// key, "m:<instance>" for an enemy or any other mob, "u:<id>" for another
-// player, "?" for an enemy not made out.
+// refID names a combatant as Company.Battle and Company do: a member key
+// for the player's own company (the leader is "leader", the key of their
+// cell in Company.Battle.positions), "me" for the player when they lead no
+// company, "m:<instance>" for an enemy or any other mob, "u:<id>" for
+// another player, "?" for an enemy not made out.
 func (v battleViewer) refID(r combatstream.Ref) string {
 	switch {
 	case r.Zero():
 		return ""
+	case r.LeaderUserId == v.userId && r.MemberKey != "":
+		return r.MemberKey
 	case r.UserId == v.userId:
 		return "me"
 	case r.UserId > 0:
 		return "u:" + strconv.Itoa(r.UserId)
-	case r.LeaderUserId == v.userId && r.MemberKey != "":
-		return r.MemberKey
 	case v.unseen != nil && v.unseen(r.MobInstanceId):
 		return battleUnseen
 	}

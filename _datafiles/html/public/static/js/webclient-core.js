@@ -1793,8 +1793,10 @@ const Client = (() => {
     // It is not state, so it is never stored in GMCPStructs and never reaches
     // the windows' onGMCP handlers; a listener added with
     // Client.onBattleEvents(fn) gets each message (the battle screen,
-    // Phases 40f and 40g). Refs match Company.Battle: "me", a member key,
-    // "m:<instance>", "u:<id>", or "?" for an enemy that can't be made out.
+    // Phases 40f and 40g). Refs match Company.Battle: a member key (the
+    // player is "leader", their cell's key), "me" for a player leading no
+    // company, "m:<instance>", "u:<id>", or "?" for an enemy that can't be
+    // made out.
     // -----------------------------------------------------------------------
     const _battleEventListeners = [];
 
