@@ -64,6 +64,7 @@ func TestCompanyDockThroughPluginsLoad(t *testing.T) {
 
 	// What the web client receives, per module, in order.
 	sent := map[string][]map[string]any{}
+	freshEvents(t)
 	gid := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out, ok := e.(gmcp.GMCPOut); ok && out.UserId == 7 && strings.HasPrefix(out.Module, "Company") {
 			var body map[string]any

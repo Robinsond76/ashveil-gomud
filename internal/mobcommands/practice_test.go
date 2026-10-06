@@ -48,6 +48,7 @@ func practiceFight(t *testing.T, practice bool) (xp int, room *rooms.Room, death
 	mob.InstanceId = 424242
 	room.AddMob(mob.InstanceId)
 
+	freshEvents(t)
 	lid := events.RegisterListener(events.MobDeath{}, func(events.Event) events.ListenerReturn {
 		deaths++
 		return events.Continue

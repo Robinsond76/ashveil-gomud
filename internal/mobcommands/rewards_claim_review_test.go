@@ -60,6 +60,7 @@ func TestLootClaimOutsideOneAllianceGoesToMostDamage(t *testing.T) {
 				t.Cleanup(p.Disband)
 			}
 			var said []string
+			freshEvents(t)
 			id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 				said = append(said, e.(events.Message).Text)
 				return events.Cancel

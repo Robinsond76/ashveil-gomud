@@ -53,6 +53,7 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })
@@ -174,9 +175,11 @@ func TestCombatCadenceLeavesOtherRoundsAlone(t *testing.T) {
 		}
 	})
 	t.Cleanup(unsub)
+	freshEvents(t)
 	combat := events.RegisterListener(events.NewRound{}, hooks.CombatOnCadence)
 	t.Cleanup(func() { events.UnregisterListener(events.NewRound{}, combat) })
 	after := 0
+	freshEvents(t)
 	counter := events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
 		after++
 		return events.Continue
@@ -238,6 +241,7 @@ func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
 			return events.Continue
 		}},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })
@@ -314,6 +318,7 @@ func TestWalkingAwayFlushesHeldLines(t *testing.T) {
 			return events.Continue
 		}},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })

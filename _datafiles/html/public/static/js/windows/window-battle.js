@@ -839,6 +839,8 @@
         retreatBtn.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
         retreatBtn.addEventListener('click', () => Client.SendInput('retreat'));
         foot.appendChild(retreatBtn);
+        // A finger can't hover for the buttons' titles, so name the row.
+        foot.appendChild(el('span', 'bs-focus-label', 'Focus:'));
         FOCI.forEach(rule => {
             const b = el('button', null, rule);
             b.type = 'button';
@@ -868,7 +870,12 @@
         const help = el('button', null, 'Help');
         help.type = 'button';
         help.title = 'How to read the battle screen (help battlescreen)';
-        help.addEventListener('click', () => Client.SendInput('help battlescreen'));
+        help.addEventListener('click', () => {
+            Client.SendInput('help battlescreen');
+            // Phase 40i: on a phone the help text lands in the Game view behind
+            // this screen, so step aside to it; the badge brings the battle back.
+            if (window.Mobile && window.Mobile.active()) { close(); window.Mobile.show('game'); }
+        });
         foot.appendChild(help);
         overlay.appendChild(foot);
         document.body.appendChild(overlay);
@@ -888,7 +895,13 @@
     function fit() {
         if (!canvas) { return; }
         const room = Math.min((window.innerWidth - 28) / W, (window.innerHeight - 150) / H);
-        if (room >= 1) {
+        // Phase 40i: on a phone the picture takes the screen's whole width, at
+        // any scale (the pixel art stays crisp); the buttons below need the rest.
+        if (document.body.classList.contains('mobile')) {
+            const w = Math.max(160, Math.min(Math.floor(window.innerWidth - 12), Math.floor((window.innerHeight - 260) * W / H)));
+            canvas.style.width = w + 'px';
+            canvas.style.height = Math.round(w * H / W) + 'px';
+        } else if (room >= 1) {
             const s = Math.min(4, Math.floor(room));
             canvas.style.width = (W * s) + 'px';
             canvas.style.height = (H * s) + 'px';
@@ -970,7 +983,9 @@
         const x = (ev.clientX - r.left) * W / r.width;
         const y = (ev.clientY - r.top) * H / r.height;
         let best = null;
-        let bestD = 18 * 18;
+        // A fingertip is blunter than a pointer: reach further on a touch screen.
+        const reach = window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 28 : 18;
+        let bestD = reach * reach;
         const compact = compactAllies();
         units.forEach(u => {
             if (!u.cell || (compact && isShrunk(u))) { return; }
@@ -1005,9 +1020,11 @@
     // bannerAt is the allied pennant under a canvas point, or null.
     function bannerAt(x, y) {
         const g = allyGroups();
+        // A fingertip needs a little more pennant than a pointer does.
+        const pad = window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 8 : 0;
         for (const a of g.list) {
             const fx = ALLY_ANCHORS[a.index] - 38;
-            if (x >= fx - 2 && x <= fx + 46 && y >= 20 && y <= 42) { return a.index; }
+            if (x >= fx - 2 - pad && x <= fx + 46 + pad && y >= 20 - pad && y <= 42 + pad) { return a.index; }
         }
         return null;
     }

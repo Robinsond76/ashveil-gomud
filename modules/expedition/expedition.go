@@ -738,8 +738,12 @@ func (m *ExpeditionModule) departureFactorsLocked(req expedition.StartRequest) d
 	f := departureFactors{}
 	weatherDuration, weatherExertion := 100, 100
 	condition, ok := weatherIn(roomZone(req.OriginRoomID))
-	if !ok {
-		condition, ok = weatherIn(roomZone(req.DestinationRoomID))
+	// Phase 46: an origin whose weather changes nothing for travel (a city's)
+	// defers to the destination's, as an untracked origin always did.
+	if !ok || (orNeutral(condition.TravelDurationPct) == 100 && orNeutral(condition.ExertionPct) == 100) {
+		if destCondition, destOK := weatherIn(roomZone(req.DestinationRoomID)); destOK {
+			condition, ok = destCondition, true
+		}
 	}
 	if ok {
 		weatherDuration = orNeutral(condition.TravelDurationPct)

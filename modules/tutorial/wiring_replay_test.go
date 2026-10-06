@@ -170,6 +170,7 @@ func TestTutorialReplayThroughPluginsLoad(t *testing.T) {
 		events.UnregisterListener(gmcp.GMCPOut{}, ids[4])
 	})
 	var messages = map[int][]string{}
+	freshEvents(t)
 	lid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		m := e.(events.Message)
 		messages[m.UserId] = append(messages[m.UserId], m.Text)

@@ -103,6 +103,7 @@ func newTestWorld(t *testing.T) *testWorld {
 	users.SetTestUser(w.user)
 
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.UserId == w.user.UserId {
 			messages = append(messages, msg.Text)
@@ -350,6 +351,7 @@ func (w *testWorld) useAsProvider(t *testing.T) {
 func deaths(t *testing.T) *int {
 	t.Helper()
 	count := 0
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerDeath{}, func(events.Event) events.ListenerReturn {
 		count++
 		return events.Continue

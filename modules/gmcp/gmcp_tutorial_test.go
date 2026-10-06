@@ -107,6 +107,7 @@ func TestTutorialWebRequestAndDespawn(t *testing.T) {
 	u := users.NewUserRecord(43, 4343)
 	users.SetTestUser(u)
 	var got []int
+	freshEvents(t)
 	id := events.RegisterListener(GMCPTutorialRequest{}, func(e events.Event) events.ListenerReturn {
 		got = append(got, e.(GMCPTutorialRequest).UserId)
 		return events.Cancel

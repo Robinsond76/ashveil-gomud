@@ -93,6 +93,7 @@ func TestFormationDefaultsThroughLoginAndCombatFeed(t *testing.T) {
 	require.NoError(t, module.save())
 	gmcp.AcceptGMCPForTest(users.GetConnectionId(7))
 	var snapshot map[string]any
+	freshEvents(t)
 	id := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.UserId == 7 && out.Module == "Company" {

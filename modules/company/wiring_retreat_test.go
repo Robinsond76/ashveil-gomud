@@ -411,6 +411,7 @@ func TestRetreatRelocationFailureRollsBackEveryMovedActor(t *testing.T) {
 func TestWimpyOrdersOneRetreat(t *testing.T) {
 	b := retreatBrawl(t)
 	var fled []string
+	freshEvents(t)
 	listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 		if in := e.(events.Input); in.UserId == 7 {
 			fled = append(fled, in.InputText)

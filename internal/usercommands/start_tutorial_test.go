@@ -39,6 +39,7 @@ func startToTutorial(t *testing.T, id int) (*users.UserRecord, string) {
 
 	events.ProcessEvents()
 	var messages []string
+	freshEvents(t)
 	lid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.UserId == id {
 			messages = append(messages, m.Text)

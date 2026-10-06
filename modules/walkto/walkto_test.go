@@ -134,6 +134,7 @@ func newWorld(t *testing.T) *world {
 	w.m.summary = func(*users.UserRecord) companyview.Summary { return w.summ }
 	w.m.hostileIn = func(*rooms.Room, int) string { return w.hostle }
 
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		w.said = append(w.said, tags.ReplaceAllString(e.(events.Message).Text, ""))
 		return events.Continue

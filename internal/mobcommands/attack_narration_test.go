@@ -35,6 +35,7 @@ func TestMobFightStartIsNarrated(t *testing.T) {
 	}
 
 	var seen []string
+	freshEvents(t)
 	lid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.RoomId == room.RoomId {
 			seen = append(seen, m.Text)

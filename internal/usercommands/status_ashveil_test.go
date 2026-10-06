@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -38,6 +39,7 @@ func useWorld(t *testing.T, world string) {
 	}
 	previous := configs.GetFilePathsConfig().DataFiles.String()
 	require.NoError(t, set(dir))
+	keywords.LoadAliases() // help and aliases read the world's keywords.yaml
 	t.Cleanup(func() { require.NoError(t, set(previous)) })
 }
 

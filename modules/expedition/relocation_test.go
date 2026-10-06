@@ -39,6 +39,7 @@ func useCompanyRelocations(t *testing.T) *companyRelocations {
 func arrivalLines(t *testing.T) *[]string {
 	t.Helper()
 	lines := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		lines = append(lines, e.(events.Message).Text)
 		return events.Continue
