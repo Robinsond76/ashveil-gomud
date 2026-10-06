@@ -33,7 +33,7 @@ func TestPhase38c3WizardWitchRoutes(t *testing.T) {
 	}
 	var cells []cell
 	for _, level := range []int{40, 50} {
-		for _, class := range []string{"", "theurgist", "archon", "arcanist", "archmage", "warlock", "necromancer"} {
+		for _, class := range []string{"", "theurgist", "archon", "arcanist", "archmage", "warlock", "necromancer", "sorcerer", "high-sorcerer"} {
 			cells = append(cells, cell{"wizard", class, level})
 		}
 		for _, class := range []string{"", "hedge-witch", "wise-one", "coven-sage", "coven-mother", "hag", "crone-of-ash"} {

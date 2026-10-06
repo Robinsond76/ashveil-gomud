@@ -27,6 +27,9 @@ const (
 	UseWeather Use = "weather" // calls a battle weather: Fog, Chill Wind or Rain
 	UseStorm   Use = "storm"   // Lightning, a heavy bolt at one foe (a second for a Stormcaller)
 
+	// Phase 38d: a Sorcerer's burst.
+	UseBurst Use = "burst" // Arcane Lance, one heavy, costly bolt at one foe
+
 	// Phase 39g: an Alchemist's flasks.
 	UseCure  Use = "cure"  // an antidote: takes poison and bleeding off an ally
 	UseFlame Use = "flame" // a Fire Flask at a foe and the one beside it
@@ -35,7 +38,7 @@ const (
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise, UseWeather, UseStorm, UseCure, UseFlame:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon, UseRaise, UseWeather, UseStorm, UseCure, UseFlame, UseBurst:
 		return u, true
 	}
 	return "", false
@@ -92,6 +95,8 @@ func DefaultAutoSpells() []Spell {
 		{ID: "lightning", Use: UseStorm},
 		{ID: "gust", Use: UseAttack},
 		{ID: "stoneskin", Use: UseBark},
+		// Phase 38d: the Sorcerer's Lance, ahead of the plain attack spells.
+		{ID: "arcanelance", Use: UseBurst},
 		// Phase 39g: the Alchemist's flasks. Each costs a flask, not mana.
 		{ID: "draught", Use: UseHeal},
 		{ID: "antidote", Use: UseCure},
@@ -221,7 +226,7 @@ func Decide(s Situation) Action {
 		if use == UseFlame && s.Flasks <= FlaskKeep {
 			return Spell{}, false
 		}
-		if (use == UseAttack || use == UseAttackAll) && s.Reserve > 0 && (s.Mana-sp.Cost)*100 < s.Reserve*s.MaxMana {
+		if (use == UseAttack || use == UseAttackAll || use == UseBurst) && s.Reserve > 0 && (s.Mana-sp.Cost)*100 < s.Reserve*s.MaxMana {
 			return Spell{}, false
 		}
 		return sp, true
@@ -349,6 +354,10 @@ func Decide(s Situation) Action {
 		// Phase 39c: Lightning, the Shaman's heavy bolt.
 		if sp, ok := affordable(UseStorm); ok {
 			return Action{Kind: Storm, Spell: sp.ID}
+		}
+		// Phase 38d: the Sorcerer's Arcane Lance, while its mana lasts.
+		if sp, ok := affordable(UseBurst); ok {
+			return Action{Kind: Attack, Spell: sp.ID}
 		}
 		if s.Foes >= 2 {
 			if sp, ok := affordable(UseAttackAll); ok {

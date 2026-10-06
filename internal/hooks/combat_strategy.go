@@ -350,7 +350,8 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 		// Phase 38c3: an Archmage's Arcane Barrage reaches a second foe; Phase 39c:
 		// a Stormcaller's Lightning chains to a second foe.
 		if (action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage)) ||
-			(action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0) {
+			(action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0) ||
+			(action.Spell == "arcanelance" && a.char.ClassEffects().Int(classes.LanceTwin) > 0) {
 			for _, other := range foes {
 				if other != id {
 					info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, other)
@@ -416,6 +417,24 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 			if rt.QuickCasts%2 == 1 {
 				wait = max(0, wait-trim)
 			}
+		}
+	}
+	if sp.SpellId == "arcanelance" {
+		// Phase 38d: a High Sorcerer's Gathered chant trims every other Lance
+		// (review: trimming each one made a one-round Lance every round), and
+		// its Instant Lance needs no chant, once a battle.
+		fx := a.char.ClassEffects()
+		rt := a.char.RTState()
+		if trim := fx.Int(classes.LanceTrim); trim > 0 {
+			rt.QuickCasts++
+			if rt.QuickCasts%2 == 1 {
+				wait = max(0, wait-trim)
+			}
+		}
+		if fx.Has(classes.LanceFree) && !rt.LanceFreed {
+			rt.LanceFreed = true
+			wait = 0
+			announceInstantLance(a)
 		}
 	}
 	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
