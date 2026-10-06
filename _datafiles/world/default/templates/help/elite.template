@@ -70,14 +70,28 @@ list, the elite talents (every elite of a lineage shares one), beside the lineag
   Tempest Lord    neutral   Stormcaller route: endless rain, chained row  <ansi fg="command">help tempest-lord</ansi>
   Veil Mother     neutral   Mistweaver route: long fog hides the back  <ansi fg="command">help veil-mother</ansi>
   Mountain Speaker neutral  Earthspeaker route: tremor, stone over a row  <ansi fg="command">help mountain-speaker</ansi>
+  <ansi fg="yellow-bold">Beast Tamer</ansi>
+  Packlord        neutral   Houndmaster route: hobbled foes left exposed  <ansi fg="command">help packlord</ansi>
+  Beastlord       neutral   Bearward route: two-foe swipes, a bear that stands again  <ansi fg="command">help beastlord</ansi>
+  Dragon Lord     neutral   Dragon Tamer route: burning Breath on four foes  <ansi fg="command">help dragon-lord</ansi>
+  <ansi fg="yellow-bold">Gryphon Rider</ansi>
+  Gryphon Lord    neutral   Gryphon Knight route: a Dive every other round  <ansi fg="command">help gryphon-lord</ansi>
+  Falcon Marshal  neutral   Skyscout route: allies hit the marked foe harder  <ansi fg="command">help falcon-marshal</ansi>
+  Wyvern Lord     neutral   Wyvern Rider route: poison-fed dives, a lashing tail  <ansi fg="command">help wyvern-lord</ansi>
+  <ansi fg="yellow-bold">Alchemist</ansi>
+  Panacean        neutral   Apothecary route: an Elixir that saves a falling ally  <ansi fg="command">help panacean</ansi>
+  Grenadier       neutral   Bombardier route: Fire Flask over four or five foes  <ansi fg="command">help grenadier</ansi>
+  Transmuter      neutral   Mutagenist route: a Mutagen over a whole row  <ansi fg="command">help transmuter</ansi>
+  <ansi fg="yellow-bold">Arbalist</ansi>
+  Siege Master    neutral   Siegebreaker route: bolts that pass through  <ansi fg="command">help siege-master</ansi>
+  Deadeye         neutral   Sharpshooter route: no winding after a crit or kill  <ansi fg="command">help deadeye</ansi>
+  Bastion         neutral   Warden route: covering shots at foes striking the column  <ansi fg="command">help bastion</ansi>
   <ansi fg="yellow-bold">Doll Master</ansi>
   Grand Puppeteer neutral   Puppeteer route: a third doll  <ansi fg="command">help grand-puppeteer</ansi>
   Golem Lord      neutral   Golemancer route: knockdown, a second rising  <ansi fg="command">help golem-lord</ansi>
   String Sovereign neutral  Marionettist route: weakening strings  <ansi fg="command">help string-sovereign</ansi>
 
-The elites of the Beast Tamer, Gryphon Rider, Alchemist and Arbalist are still
-to come; until they arrive those characters keep their advanced class's ranks.
 
-Routes in depth: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>.
+Routes in depth: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help beasttamer-routes</ansi>, <ansi fg="command">help gryphon-rider-routes</ansi>, <ansi fg="command">help alchemist-routes</ansi>, <ansi fg="command">help arbalist-routes</ansi>, <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>.
 
 See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help alignment</ansi>.

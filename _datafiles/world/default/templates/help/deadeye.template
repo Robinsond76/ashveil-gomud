@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">deadeye</ansi>
+
+The Deadeye is the neutral elite of the Sharpshooter (Arbalist route; no
+alignment asked). A critical bolt needs no winding, and at the top rank
+neither does a bolt that fells its foe; the Piercing Bolt also comes a round
+sooner.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Hair trigger       a critical bolt needs no winding
+  35 Killer's sight     +22% critical chance with a shooting weapon
+  40 Steadier hands     Steady Aim gives +30 Attack
+  45 Dead calm          +8 Attack with a shooting weapon
+  50 Quickened loading  Piercing Bolt's cooldown is a round shorter
+  55 Eagle's eye        +30% critical chance with a shooting weapon
+  60 Ready again        a bolt that fells its foe needs no winding
+
+It needs the Sharpshooter first (<ansi fg="command">help arbalist-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] deadeye confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Arbalist talents (levels 35, 45, 55): Long Draw (+10% damage with a
+shooting weapon), Eagle Eye (+5 Attack with a shooting weapon), Quick Nock
+(starts a battle with 15 points on its action meter). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help arbalist-routes</ansi>, <ansi fg="command">help arbalist</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

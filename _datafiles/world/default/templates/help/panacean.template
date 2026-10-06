@@ -1,0 +1,33 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">panacean</ansi>
+
+The Panacean is the neutral elite of the Apothecary (Alchemist route; no
+alignment asked). Its Elixir keeps an ally on its feet: the first blow that
+would fell an ally leaves it with a share of its health instead, and richer
+draughts heal more.
+
+The Elixir works before the blow lands, so it saves an ally rather than
+raising one that has already fallen.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Elixir             once a battle, a blow that would fell an ally leaves
+                        it standing with a quarter of its health
+  35 Richer draughts    Healing Draught heals 50% more
+  40 Deeper satchel     +8 flasks in the satchel (in all)
+  45 Wide splash        a Healing Draught's splash heals 50% as much
+  50 Fine elixir        the Elixir leaves the ally with 40% of its health
+  55 Master's satchel   +12 flasks in the satchel (in all)
+  60 Second elixir      the Elixir works twice a battle
+
+It needs the Apothecary first (<ansi fg="command">help alchemist-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] panacean confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Alchemist talents (levels 35, 45, 55): Iron Hide (+5 Armor), Master
+Brewer (+4 flasks in the satchel), Potent Flasks (Healing Draught heals 15%
+more and Fire Flask burns 15% harder). See <ansi fg="command">help
+talents</ansi>.
+
+See also: <ansi fg="command">help alchemist-routes</ansi>, <ansi fg="command">help alchemist</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

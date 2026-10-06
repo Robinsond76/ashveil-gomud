@@ -553,7 +553,9 @@ func TestDeadeyeCriticalBoltNeedsNoWinding(t *testing.T) {
 	}
 	fresh(t, "deadeye with a critical bolt", func(t *testing.T) { assert.Zero(t, reloads(t, "deadeye", true), "no winding after a critical bolt") })
 	fresh(t, "deadeye without a critical", func(t *testing.T) { assert.Equal(t, 1, reloads(t, "deadeye", false), "a plain bolt is wound") })
-	fresh(t, "sharpshooter with a critical bolt", func(t *testing.T) { assert.Equal(t, 1, reloads(t, "sharpshooter", true), "no hair trigger without the rank") })
+	fresh(t, "sharpshooter with a critical bolt", func(t *testing.T) {
+		assert.Equal(t, 1, reloads(t, "sharpshooter", true), "no hair trigger without the rank")
+	})
 }
 
 func TestDeadeyeBoltThatFellsItsFoeNeedsNoWinding(t *testing.T) {

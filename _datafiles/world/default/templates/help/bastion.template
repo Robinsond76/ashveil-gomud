@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">bastion</ansi>
+
+The Bastion is the neutral elite of the Warden of the Wall (Arbalist route;
+no alignment asked). A foe that strikes an ally in its column is answered
+with the bolt the Bastion was holding, which unloads the crossbow: the next
+turn is a winding.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Covering shot      a loaded crossbow answers a foe that strikes an ally
+                        in its column with a bolt at 80% of a blow's damage,
+                        twice a battle; the answer unloads it
+  35 Keeper's vigor     +14% maximum health
+  40 Heavy pavise       the row's damage cut is 20%
+  45 Third shot         Covering shot works three times a battle
+  50 Bastion plate      +8 armor in all
+  55 Heavy answer       Covering shot deals a full blow's damage
+  60 Unbroken wall      the row's damage cut is 25%
+
+It needs the Warden of the Wall first (<ansi fg="command">help arbalist-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] bastion confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Arbalist talents (levels 35, 45, 55): Long Draw (+10% damage with a
+shooting weapon), Eagle Eye (+5 Attack with a shooting weapon), Quick Nock
+(starts a battle with 15 points on its action meter). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help arbalist-routes</ansi>, <ansi fg="command">help arbalist</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

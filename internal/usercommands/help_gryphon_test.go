@@ -36,7 +36,7 @@ func TestGryphonRiderHelp(t *testing.T) {
 	for alias, topic := range map[string]string{
 		"gryphon rider": "gryphon-rider", "dive": "gryphon-rider", "talons": "gryphon-rider", "skirmisher": "gryphon-rider",
 		"gryphon knight": "gryphon-rider-routes", "skyscout": "gryphon-rider-routes", "wyvern rider": "gryphon-rider-routes",
-		"falcon marshal": "gryphon-rider-routes",
+		"falcon marshal": "falcon-marshal",
 	} {
 		want, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)

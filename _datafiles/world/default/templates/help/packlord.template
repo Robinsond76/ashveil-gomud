@@ -1,0 +1,35 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">packlord</ansi>
+
+The Packlord is the neutral elite of the Houndmaster (Beast Tamer route; no
+alignment asked). Its warhound hunts as a pack does: a bite that lands on a
+foe the hound has already hobbled leaves that foe exposed, hobbling reaches
+foes that are still healthy, and at the top rank the hound strikes before
+the foes do.
+
+A second hound is not part of this route: the pack is one stronger hound, so
+the Tamer still keeps a single beast (help beast).
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Pack hunt          a warhound's bite that lands on a foe it has hobbled
+                        leaves it exposed
+  35 Pack leader        the warhound has 150% of a wolf's health
+  40 Hunting cry        +4 Attack on the warhound's bites (in all)
+  45 Wider hobble       the warhound's bites hobble a foe below three quarters
+                        of its health
+  50 Hound of war       the warhound has 175% of a wolf's health
+  55 Rending fangs      +3 damage on the warhound's bites (in all)
+  60 First strike       the warhound starts a battle with 50 points on its
+                        action meter, so it strikes before the foes do
+
+It needs the Houndmaster first (<ansi fg="command">help beasttamer-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] packlord confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Beast Tamer talents (levels 35, 45, 55): Iron Hide (+5 Armor), Pack
+Bond (your beast has 15% more health), Savage Jaws (+2 damage on your
+beast's blows). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help beasttamer-routes</ansi>, <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

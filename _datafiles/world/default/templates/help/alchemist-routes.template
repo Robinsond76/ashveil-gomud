@@ -30,8 +30,11 @@ classes, and any alignment may choose any of them. Each class adds four ranks
                         rounds longer
   25 Pure mutagen       a Mutagen costs its ally no health
 
-The elite classes of these routes (Panacean, Grenadier, Transmuter) are still
-to come; until then an Alchemist keeps its advanced class's ranks.
+<ansi fg="yellow-bold">Elite classes</ansi> (level 30, neutral, any alignment; <ansi fg="command">help elite</ansi>)
+
+  <ansi fg="command">help panacean</ansi>     Panacean, the Apothecary route: an Elixir that keeps a falling ally standing
+  <ansi fg="command">help grenadier</ansi>    Grenadier, the Bombardier route: Fire Flask bursts over four, then five foes
+  <ansi fg="command">help transmuter</ansi>   Transmuter, the Mutagenist route: a Mutagen that hardens a whole row
 
 <ansi fg="yellow-bold">Talents</ansi>
 
