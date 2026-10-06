@@ -33,7 +33,7 @@ const (
 	// ChalkItemID is the reagent each sigil uses up (market-only, never bought back).
 	ChalkItemID = 30060
 	// FirePct is the extra damage a fire spell deals under a fire sigil.
-	FirePct = 15
+	FirePct = 25
 	// MendingPct is the extra a heal restores under a mending sigil.
 	MendingPct = 25
 	// StillRounds is how many rounds the foes stay chilled by a stillness sigil.
@@ -70,7 +70,7 @@ func (k Kind) Name() string {
 func (k Kind) Effect() string {
 	switch k {
 	case Fire:
-		return "fire spells 15% stronger and leave the foe burning"
+		return "fire spells 25% stronger and leave the foe burning"
 	case Ward:
 		return "company starts under a small ward"
 	case Stillness:
