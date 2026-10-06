@@ -161,6 +161,7 @@ func init() {
 	domain.SetCompanyService(m)
 	domain.SetMemberDrainService(m)
 	domain.SetMealService(m)
+	domain.SetAilmentService(m)
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {
@@ -690,8 +691,66 @@ func (m *SurvivalModule) applyBenefit(leaderUserID int, key domain.MemberKey, na
 			return domain.ProvisionResult{}, err
 		}
 	}
+	// Phase 55: an ailment the food gives (raw game meat's Gut-ache).
+	if benefit.Ailment != "" {
+		caught, err := m.registry.CatchAilment(leaderUserID, key, benefit.Ailment)
+		if err != nil {
+			return domain.ProvisionResult{}, err
+		}
+		if caught {
+			result.Caught = benefit.Ailment
+		}
+	}
 	result.Needs = m.registry.MustNeedsFor(leaderUserID, key)
 	return result, nil
+}
+
+var _ domain.AilmentService = (*SurvivalModule)(nil)
+
+// CatchAilment implements domain.AilmentService (Phase 55). The member must
+// be on the roster and alive; the write is durable at once, like a meal's.
+func (m *SurvivalModule) CatchAilment(leaderUserID int, key domain.MemberKey, kind string) (bool, error) {
+	return m.changeAilment(leaderUserID, key, func() (bool, error) {
+		return m.registry.CatchAilment(leaderUserID, key, kind)
+	})
+}
+
+// CureAilment implements domain.AilmentService (Phase 55).
+func (m *SurvivalModule) CureAilment(leaderUserID int, key domain.MemberKey, kind string) (bool, error) {
+	return m.changeAilment(leaderUserID, key, func() (bool, error) {
+		return m.registry.CureAilment(leaderUserID, key, kind)
+	})
+}
+
+func (m *SurvivalModule) changeAilment(leaderUserID int, key domain.MemberKey, change func() (bool, error)) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistenceAvailable(); err != nil {
+		return false, err
+	}
+	if leaderUserID <= 0 || !domain.ValidMemberKey(key) {
+		return false, domain.ErrInvalidMember
+	}
+	if ref, ok := currentRosterMember(leaderUserID, key); ok && (ref.Dead || ref.Needless) {
+		return false, nil
+	}
+	snapshot := m.registry.Clone()
+	if err := m.registry.Ensure(leaderUserID, key); err != nil {
+		m.registry = snapshot
+		return false, err
+	}
+	changed, err := change()
+	if err != nil {
+		m.registry = snapshot
+		return false, err
+	}
+	if changed {
+		if err := m.save(); err != nil {
+			m.registry = snapshot
+			return false, err
+		}
+	}
+	return changed, nil
 }
 
 // SpendMealBattle implements domain.MealService (Phase 50): one battle off

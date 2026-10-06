@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 // Phase 50: a member's needs and meal buff set its battle condition when a
@@ -22,14 +23,35 @@ import (
 // buffs, and names what is not neutral in one line.
 func (sd side) startFare(room *rooms.Room) {
 	uid := sd.user.UserId
-	needs := map[survival.MemberKey]survival.MemberNeeds{}
-	for _, n := range survival.CompanyNeeds(uid) {
-		needs[n.Key] = n
+	actors := sideActors(sd.user, room)
+	var notes []string
+	readNeeds := func() map[survival.MemberKey]survival.MemberNeeds {
+		out := map[survival.MemberKey]survival.MemberNeeds{}
+		for _, n := range survival.CompanyNeeds(uid) {
+			out[n.Key] = n
+		}
+		return out
+	}
+	needs := readNeeds()
+	// Phase 55: a lasting puncture wound left open through FeverBattles
+	// battles festers into a Fever, which counts in this very battle.
+	for _, a := range actors {
+		if a.char.Health < 1 || len(a.char.Wounds) == 0 {
+			continue
+		}
+		if n, ok := needs[a.key]; ok && survival.AilmentBattles(n.Needs, survival.AilmentFever) > 0 {
+			continue // already feverish: the wound is not counted again
+		}
+		if wounds.Festering(a.char.Wounds, survival.FeverBattles) {
+			if caught, err := survival.CatchAilment(uid, a.key, survival.AilmentFever); err == nil && caught {
+				sd.user.SendText(survival.CaughtLine(a.char.Name, survival.AilmentFever))
+				needs = readNeeds()
+			}
+		}
 	}
 	fare := map[string]string{}
 	var spent []survival.MemberKey
-	var notes []string
-	for _, a := range sideActors(sd.user, room) {
+	for _, a := range actors {
 		rt := a.char.RTState()
 		n, ok := needs[a.key]
 		if !ok {
@@ -41,7 +63,7 @@ func (sd side) startFare(room *rooms.Room) {
 		if c.ManaPct > 0 && a.char.Mana < a.char.ManaMax.Value {
 			a.char.Mana = min(a.char.ManaMax.Value, a.char.Mana+max(1, a.char.ManaMax.Value*c.ManaPct/100))
 		}
-		if c.Meal.Kind != "" {
+		if c.Meal.Kind != "" || len(c.Ailments) > 0 {
 			spent = append(spent, a.key)
 		}
 		if sum := c.Summary(n.Needs.MealBattles); sum != "" {

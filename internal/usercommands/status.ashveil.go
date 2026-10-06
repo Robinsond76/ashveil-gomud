@@ -6,6 +6,7 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -92,6 +93,10 @@ func addAshveilVitals(p *templates.Panel, s companyview.Summary) {
 		if row.need.Known {
 			addRow(p, row.full, row.short, needValue(row.need))
 		}
+	}
+	// Phase 55: lasting ailments (help ailments).
+	if len(s.Leader.Ailments) > 0 {
+		addRow(p, `Ailing: `, `Ail:`, `<ansi fg="red">`+strings.Join(s.Leader.Ailments, `, `)+`</ansi>`)
 	}
 	// Phase 50: what those needs and a meal buff do in the next battle.
 	if s.Leader.Fare != `` {

@@ -6,12 +6,14 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	domain "github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -59,6 +61,9 @@ func conditionGroups(user *users.UserRecord, s companyview.Summary) []condGroup 
 		}
 	}
 
+	// Phase 55: each ailment, with its penalty and how to treat it.
+	survival.rows = append(survival.rows, ailmentRows(s.Leader.Ailments)...)
+
 	// Phase 50: the battle condition those needs and a meal buff set.
 	if s.Leader.Fare != `` {
 		survival.rows = append(survival.rows, condRow{name: `In battle`, description: s.Leader.Fare, permaBuff: true})
@@ -102,3 +107,19 @@ func conditionGroups(user *users.UserRecord, s companyview.Summary) []condGroup 
 	}
 	return out
 }
+
+// ailmentRows is a condition row for each of the leader's ailments (Phase 55).
+func ailmentRows(labels []string) []condRow {
+	var rows []condRow
+	for _, label := range labels {
+		name, left, _ := strings.Cut(strings.TrimSuffix(label, `)`), ` (`)
+		spec, ok := ailmentSpecOf(name)
+		if !ok {
+			continue
+		}
+		rows = append(rows, condRow{name: spec.Name, description: fmt.Sprintf(`%s; %s left. Treat it with camp prepare remedy.`, spec.Effect(), left), permaBuff: true})
+	}
+	return rows
+}
+
+func ailmentSpecOf(name string) (domain.AilmentSpec, bool) { return domain.FindAilment(name) }
