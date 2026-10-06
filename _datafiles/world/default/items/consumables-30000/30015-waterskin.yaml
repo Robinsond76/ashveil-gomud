@@ -6,6 +6,7 @@ type: drink
 subtype: drinkable
 uses: 5
 refillable: water
+emptyitemid: 30044
 hydration: 40
 buffids: 
 - 34
