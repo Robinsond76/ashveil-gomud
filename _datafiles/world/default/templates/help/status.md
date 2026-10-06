@@ -1,6 +1,6 @@
 # Help for ~status~
 
-The ~status~ command is your character sheet: your path, race, level, and alignment; your vitals (health, mana, armor, burden, hunger, thirst, fatigue, warmth, and light); your attributes, wealth, and training; and your company (who's alive, your load, what you're doing, your rest tier, and where you'll wake if you fall).
+The ~status~ command is your character sheet: your path (your class and its lineage once you promote), race, level, and alignment; your vitals (health, mana, armor, burden, hunger, thirst, fatigue, warmth, and light); your attributes, wealth, and training; and your company (who's alive with each companion's class and level, your load, what you're doing, your rest tier, and where you'll wake if you fall).
 
 Automatic stats grow smoothly each level. The sheet shows your next milestone; every two levels you also earn a *Stat Point* to spend on training. Planned choices say (coming). See ~help progression~ for health and experience growth.
 

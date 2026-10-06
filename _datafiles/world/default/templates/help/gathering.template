@@ -21,6 +21,11 @@ part, so companions standing with you add to the haul. Any other command
 than <ansi fg="command">look</ansi> or <ansi fg="command">conditions</ansi>, moving, an attack, or a fight cancels the work with
 nothing gained. You can't start in battle, while resting or while travelling.
 
+While the work runs, <ansi fg="command">status</ansi> and the prompt show it on the Doing line ("Gathering
+herbs 40%, 12s left"). In the web client the Room Info window shows a bar
+that fills over the work's length, then what the company brought back (or
+that the work was stopped).
+
 <ansi fg="yellow-bold">What you find</ansi>
 
   <ansi fg="yellow">Herbs</ansi>  1 to 2, such as wild thyme and mushrooms. A ranger (Forage,

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -320,4 +321,38 @@ func TestSummaryCarriesPromotedClass(t *testing.T) {
 	require.NotEmpty(t, s.Companions)
 	assert.Equal(t, "druid", s.Companions[0].Class)
 	assert.Equal(t, "", s.Companions[1].Class)
+}
+
+// TestSummaryRankNamesThePromotedClass (Phase 45): a member's rank reads as
+// its class with its lineage once promoted, else the archetype alone.
+func TestSummaryRankNamesThePromotedClass(t *testing.T) {
+	classes.SetProvider(fakeClasses{class: "priest"})
+	t.Cleanup(func() { classes.SetProvider(nil) })
+	src := fullSources()
+	src.archetype = func(int) (string, bool) { return "cleric", true }
+	src.archetypeReporting = func() bool { return true }
+	src.name = func(id string) (string, bool) {
+		return map[string]string{"cleric": "Cleric", "warrior": "Warrior"}[id], true
+	}
+	members, _ := src.members(1)
+	members[0].Class = "knight"
+	src.members = func(int) ([]company.MemberView, bool) { return members, true }
+	s := src.summary(testUser())
+	assert.Equal(t, "Priest (Cleric)", s.Leader.RankName())
+	assert.Equal(t, "Knight (Warrior)", s.Companions[0].RankName())
+	assert.Equal(t, "", s.Companions[1].RankName(), "no archetype, no class")
+	assert.Equal(t, "Warrior", Member{Archetype: "Warrior"}.RankName(), "unpromoted: the archetype alone")
+}
+
+// TestSummaryGatheringIsTheActivity (Phase 45): a gather in progress is what
+// the company is doing, ahead of a camp.
+func TestSummaryGatheringIsTheActivity(t *testing.T) {
+	src := fullSources()
+	src.gather = func(int) (gathering.Progress, bool) {
+		return gathering.Progress{Kind: gathering.Herbs, Label: "gathering herbs", Total: 20 * time.Second, Remaining: 10 * time.Second}, true
+	}
+	s := src.summary(testUser())
+	assert.True(t, s.ActivityKnown)
+	assert.Equal(t, Gathering, s.Activity.Kind)
+	assert.Equal(t, "Gathering herbs 50%, 10s left", s.Activity.Label())
 }

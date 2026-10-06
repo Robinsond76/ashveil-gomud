@@ -231,3 +231,36 @@ func TestUntrainedArmorThroughEquipAndStatus(t *testing.T) {
 	assert.Regexp(t, `Bulk: +Heavy, untrained`, text)
 	assert.Regexp(t, `Attack: +8 +Evasion: 12`, text, "10 lower in untrained armor")
 }
+
+// TestStatusShowsClassesAndCompanyRoster (Phase 45): the sheet names the
+// leader's promoted class with its lineage, lists each companion's class and
+// level, and shows a gather in progress as what the company is doing.
+func TestStatusShowsClassesAndCompanyRoster(t *testing.T) {
+	useWorld(t, "default")
+	sum := sampleSummary()
+	sum.Leader.Class = "knight"
+	sum.Leader.Archetype = "Warrior"
+	sum.Companions = []companyview.Member{
+		{ID: 1, Name: "Oswin", Level: 6, Archetype: "Cleric", Class: "priest", Status: company.MemberPresent},
+		{ID: 2, Name: "Brant", Level: 4, Archetype: "Warrior", Status: company.MemberPresent},
+		{ID: 3, Name: "Ysolde", Level: 5, Archetype: "Mage", Status: company.MemberDead},
+	}
+	sum.Activity = companyview.Activity{Kind: companyview.Gathering, Detail: "gathering herbs", Percent: 40, Remaining: 12 * time.Second}
+	useSummary(t, sum)
+	text := statusText(t, users.NewUserRecord(7, 1), "")
+	for _, want := range []string{
+		"Path:", "Knight (Warrior)", "Oswin:", "Priest (Cleric), Lv 6", "Brant:", "Warrior, Lv 4", "Ysolde:", "Mage, Lv 5 (fallen)",
+		"Doing:", "Gathering herbs 40%, 12s left",
+	} {
+		assert.Contains(t, text, want)
+	}
+}
+
+// TestStatusHelpMentionsClasses (Phase 45): the page says the sheet shows
+// the promoted class and each companion's class.
+func TestStatusHelpMentionsClasses(t *testing.T) {
+	useWorld(t, "default")
+	text, err := GetHelpContents("status")
+	require.NoError(t, err)
+	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "each companion's class and level")
+}

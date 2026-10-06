@@ -45,6 +45,7 @@ func TestActivityLabel(t *testing.T) {
 		{Activity{Kind: CampRest, Remaining: 12*time.Minute + 5*time.Second}, "Resting 12m"},
 		{Activity{Kind: InnStay, Remaining: 5 * time.Minute}, "At inn 5m"},
 		{Activity{Kind: Camped}, "Camped"},
+		{Activity{Kind: Gathering, Detail: "gathering herbs", Percent: 25, Remaining: 15 * time.Second}, "Gathering herbs 25%, 15s left"},
 	} {
 		assert.Equal(t, tc.want, tc.a.Label(), tc.want)
 	}

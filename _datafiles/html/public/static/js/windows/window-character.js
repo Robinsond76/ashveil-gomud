@@ -858,7 +858,16 @@
 
         const parts = [info.name, info.class].filter(Boolean);
         if (parts.length) {
-            nameEl.appendChild(document.createTextNode(parts.join(' \u00b7 ')));
+            const text = document.createTextNode(parts.join(' \u00b7 '));
+            // A promoted class shows its lineage on hover (Phase 45).
+            if (info.lineage_name) {
+                const span = document.createElement('span');
+                span.title = info.lineage_name + ' line';
+                span.appendChild(text);
+                nameEl.appendChild(span);
+            } else {
+                nameEl.appendChild(text);
+            }
         }
 
         if (info.race) {

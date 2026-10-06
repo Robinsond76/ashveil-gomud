@@ -516,6 +516,21 @@ type RoomResourcesChanged struct {
 
 func (r RoomResourcesChanged) Type() string { return `RoomResourcesChanged` }
 
+// GatherProgress is queued when a company's gathering work starts, finishes
+// or is stopped (Phase 45), so the web client can show a progress strip and
+// the result. Phase is "start", "done" or "stopped"; Seconds is the work's
+// length on a start; Lines are what the leader was told on done or stopped.
+type GatherProgress struct {
+	UserId  int
+	Kind    string
+	Label   string
+	Phase   string
+	Seconds int
+	Lines   []string
+}
+
+func (g GatherProgress) Type() string { return `GatherProgress` }
+
 type RebuildMap struct {
 	MapRootRoomId int
 	SkipIfExists  bool

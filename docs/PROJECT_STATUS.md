@@ -1,5 +1,41 @@
 # Ashveil Project Status
 
+**Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2
+and 40g2 reviews listed. (1) **Class everywhere.** `status` (the sheet `score`
+aliases) names the leader's promoted class with its lineage ("Knight
+(Warrior)") on the Path row and lists each companion on the Company panel
+("Oswin: Priest (Cleric), Lv 6", fallen marked); `Member.RankName` in
+`companyview` is the one formatter. `Char.Info.class` is now the promoted
+class's name once promoted, with the lineage in `lineage_name`, which the web
+Character window shows on hover. The company roster and Company window
+already named classes (38b, 40s5). (2) **Gather progress.** The gathering
+module queues `events.GatherProgress` on start, finish and stop; the GMCP
+room module sends it as `Room.Gather` (phase, kind, label, seconds, lines)
+and the Room Info window shows a strip: a bar filled over the work's length
+with the seconds left, then the result lines (15 s) or "Work stopped".
+In text, `gathering.ProgressOf` (a provider seam like camping's) feeds
+`companyview.Activity` kind Gathering, so the prompt and the status
+Doing row read "Gathering herbs 40%, 12s left". (3) **Battle screen.** Tap an
+allied formation or its pennant to watch it full size (it swaps with the
+player's company, which shrinks into the ally's place as "your band"); tap the
+small band to return; the view returns itself when that company leaves.
+View only: inputs are still retreat and company focus. An ally's blow on a
+foe the player is not fighting (or by an undrawn third company) is dropped
+from the picture and the last-blow line rather than landing on nothing.
+Help: `gathering`, `status`, `battlescreen` updated; the gather and party
+tutorial hints point at the new displays. Tests: `modules/gathering`
+(announcements and provider), `companyview`, `usercommands` status sheet and
+help, `modules/gmcp` (Char.Info, Room.Gather), `scripts/browser/room-check.mjs`
+(Character and Room windows) and new sections of `battle-check.mjs`.
+Screenshots `screens/45-*.png`. Decisions (delegated): (a) the gather strip
+lives in the Room Info window, since the work is tied to the room and Room
+Info is always docked, not in the Camp tab or map (both off limits here); (b)
+the Doing row and prompt use a new activity kind rather than a new row, so
+every surface shows it; (c) watching is a pure view swap with no new server
+state; (d) dropping unseen-ally blows beats inventing a figure, because the
+feed already hides ally numbers; (e) the Path row keeps its label and shows
+the class with lineage in brackets rather than adding a Class row.
+
 **Phase 40g2 reviewed and merged via [PR #48](https://github.com/Robinsond76/ashveil-gomud/pull/48) (2026-10-06, Opus review thread):**
 ally relay checked for consent (both players support the party), same room,
 shared enemy and the receiver's own unseen masking; mid-battle inputs are

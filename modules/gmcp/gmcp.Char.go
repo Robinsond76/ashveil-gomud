@@ -527,6 +527,13 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			SkillPoints:    user.Character.StatPoints,
 			TrainingPoints: user.Character.TrainingPoints,
 		}
+		// Phase 45: a promoted character is named by its class.
+		if classID != lineageID {
+			if c, ok := classes.Get(classID); ok {
+				payload.Info.LineageName = payload.Info.Class
+				payload.Info.Class = c.Name
+			}
+		}
 
 		if !all {
 			return payload.Info, `Char.Info`
@@ -976,6 +983,9 @@ type GMCPCharModule_Payload_Info struct {
 	Account string `json:"account,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Class   string `json:"class,omitempty"`
+	// Phase 45: LineageName is the base archetype's name, sent only once the
+	// character is promoted (Class then names the promoted class).
+	LineageName string `json:"lineage_name,omitempty"`
 	// Phase 40b: the Ashveil class keys the map sprite is chosen by:
 	// Lineage is the base archetype, ClassID the promoted class (the
 	// archetype until the character promotes). Empty before an archetype
