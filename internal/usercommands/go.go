@@ -302,6 +302,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					if mob.Character.IsCharmed() {
 						continue
 					}
+					// Phase 37: a random encounter's foes seek only their company.
+					if parties.ReservedFrom(mob.EncounterOwner, user.UserId) {
+						continue
+					}
 
 					isHostile := mob.Hostile // Is it automatically hostile?
 					if !isHostile {

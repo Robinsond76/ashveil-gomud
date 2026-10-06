@@ -534,6 +534,18 @@ type CombatPaceDrained struct {
 
 func (c CombatPaceDrained) Type() string { return `CombatPaceDrained` }
 
+// CombatData (Ashveil Phase 40e) is structured data about a combat
+// happening, for one player. It is queued as the happening is emitted so
+// that it is dispatched in order with the round's narration, which
+// hooks.CombatData_Hold uses to release it in step with the player's
+// combat pace. Data is opaque to the events package.
+type CombatData struct {
+	UserId int
+	Data   any
+}
+
+func (c CombatData) Type() string { return `CombatData` }
+
 // Fired when a player or mob enters or leaves aggro state
 type AggroChanged struct {
 	UserId        int // non-zero if a player's aggro state changed

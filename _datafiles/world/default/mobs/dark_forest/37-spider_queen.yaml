@@ -3,6 +3,7 @@ zone: Dark Forest
 itemdropchance: 100
 hostile: true
 solitary: true
+boss: true
 painreactions:
   - tovictim: 'A crack runs through the chitin at your crown. You shriek and hold the web.'
     toroom: '{name} shrieks as the chitin of the crown splits, but clings to the web.'

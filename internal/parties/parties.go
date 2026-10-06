@@ -379,3 +379,15 @@ func (p *Party) AutoAttackToken(userId int) uint64 {
 	}
 	return p.autoTokens[userId]
 }
+
+// ReservedFrom reports whether something reserved for owner's company (a
+// random room encounter's foes, Phase 37) is closed to userID: it is when
+// there is an owner and userID is neither them nor in their party or
+// alliance. Shared-room visibility never grants a claim.
+func ReservedFrom(owner, userID int) bool {
+	if owner <= 0 || owner == userID {
+		return false
+	}
+	p := Get(owner)
+	return p == nil || !p.IsMember(userID)
+}

@@ -222,3 +222,27 @@ func TestYieldedSummaryAndMercyKeepsFinishedFight(t *testing.T) {
 	assert.Equal(t, id, e.FightID)
 	assert.NotEqual(t, next, e.FightID)
 }
+
+// Phase 37: a fight's spoils (set by the caller as the fight ends) show on
+// their own line, before the enemies, and not at all when there are none.
+func TestSummaryShowsSpoilsOnlyWhenThereAreSome(t *testing.T) {
+	s := New()
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
+	sum, _ := s.EndFight(id, 3, OutcomeVictory, Final{})
+	for _, l := range Render(*sum, 7) {
+		assert.NotContains(t, l, "Spoils")
+	}
+	sum.Spoils = []string{"a fine drop sword", "27 gold"}
+	lines := Render(*sum, 7)
+	assert.Contains(t, lines, "Spoils         a fine drop sword · 27 gold")
+	spoils, enemies := -1, -1
+	for i, l := range lines {
+		if l == "Spoils         a fine drop sword · 27 gold" {
+			spoils = i
+		}
+		if len(l) > 7 && l[:7] == "Enemies" {
+			enemies = i
+		}
+	}
+	assert.Less(t, spoils, enemies)
+}

@@ -81,6 +81,10 @@ const (
 	enemySpread  = "spread"
 	enemyDefault = "default"
 	enemyCasters = "casters"
+	// enemyHealer (Phase 37): the mirror's priest is a healer in an
+	// otherwise ordinary group (Weakest targeting), as an encounter's healer
+	// group is.
+	enemyHealer = "healer"
 	// Phase 33i2: the default personality, with the hedge priest a
 	// healer (Minor Heal) and the hired blade a guardian, at a tier
 	// (enemyRoles + the tier's number: "roles1" to "roles4").
@@ -415,6 +419,12 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 			mob.Targeting, mob.TargetingNoise = string(strategy.Weakest), 0
 		case enemyMode == enemyCasters:
 			mob.Targeting, mob.TargetingNoise = string(strategy.Casters), 0
+		case enemyMode == enemyHealer:
+			mob.Targeting, mob.TargetingNoise = string(strategy.Weakest), 0
+			if m.id == 9202 {
+				mob.Role = "healer"
+				mob.Character.SpellBook["heal"] = 250
+			}
 		case strings.HasPrefix(enemyMode, enemyRoles):
 			tier, err := strconv.Atoi(strings.TrimPrefix(enemyMode, enemyRoles))
 			require.NoError(t, err, enemyMode)
