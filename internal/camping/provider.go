@@ -198,6 +198,12 @@ type CampState struct {
 	Embers bool
 	// Tent is an oiled canvas tent pitched at the camp (Phase 40a3).
 	Tent bool
+	// Gear is the camp gear the company carries (Phase 40a4), one short
+	// label each, for the web Camp tab.
+	Gear []string
+	// TheftRisk is set when thieves work the camp's road and the company
+	// carries no camp bells (40a4 review).
+	TheftRisk bool
 	// RestPercent and RestSeconds are a running rest's progress and time
 	// left.
 	RestPercent, RestSeconds int

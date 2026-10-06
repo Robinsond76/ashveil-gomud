@@ -60,6 +60,11 @@ type campSettings struct {
 	Recipes            []campRecipe
 	// RewardCooldown is how often a company may earn Forage and Vigil.
 	RewardCooldown time.Duration
+	// Phase 40a4 camp theft: the chance per rest without bells, by zone;
+	// the share of loose goods thieves take and the most items they take.
+	Thefts        map[string]int
+	TheftSharePct int
+	TheftMaxItems int
 }
 
 func defaultCampSettings() campSettings {
@@ -73,6 +78,9 @@ func defaultCampSettings() campSettings {
 		ForageBase:         1,
 		ForageLevelsPerOne: 2,
 		RewardCooldown:     15 * time.Minute,
+		Thefts:             map[string]int{},
+		TheftSharePct:      10,
+		TheftMaxItems:      4,
 	}
 }
 
@@ -125,6 +133,16 @@ func parseCampSettings(get func(string) any) campSettings {
 		}
 		s.Raids[zone] = campRaid{MobID: mobID, ChancePct: chance}
 	}
+	for _, entry := range listOf(get("CampTheft")) {
+		f := fieldsOf(entry)
+		zone := configString(f["zone"])
+		chance, okC := configInt(f["chancepct"])
+		if zone == "" || !okC || chance < 0 || chance > 100 {
+			mudlog.Warn("camping: CampTheft entry skipped", "entry", entry)
+			continue
+		}
+		s.Thefts[zone] = chance
+	}
 	pct := func(key string, into *int, lo, hi int) {
 		if n, ok := configInt(get(key)); ok && n >= lo && n <= hi {
 			*into = n
@@ -136,6 +154,8 @@ func parseCampSettings(get func(string) any) campSettings {
 	if s.RaidLatestPct < s.RaidEarliestPct {
 		s.RaidEarliestPct, s.RaidLatestPct = 30, 70
 	}
+	pct("TheftSharePct", &s.TheftSharePct, 1, 100)
+	pct("TheftMaxItems", &s.TheftMaxItems, 1, 50)
 	pct("VigilCap", &s.VigilCap, 0, company.MaxLoyalty)
 	pct("ForageBase", &s.ForageBase, 0, 10)
 	pct("ForageLevelsPerOne", &s.ForageLevelsPerOne, 1, 10)

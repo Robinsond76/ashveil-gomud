@@ -1,3 +1,5 @@
+# Ashveil Project Status
+
 **Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
 a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
 the foe and its row neighbour, the whole row from level 8), Brace (answers
@@ -23,7 +25,9 @@ After the 40a3/40b/40s5 master merge, one race run failed
 Merged after 39b: both neutral lineages share the help tables, recruit
 lists and `DefaultRule` (Samurai strongest, Halberdier crowded).
 
-# Ashveil Project Status
+**Phase 40a4 reviewed and merged via [PR #50](https://github.com/Robinsond76/ashveil-gomud/pull/50) (2026-10-06, Opus review thread):** builder decisions (1)-(7) kept as reasoned below; (8) changed. Accepted and fixed: (a) breaking camp, or resting again, between a rest's end and the next round dodged its thieves (decision 8 only favoured a player who knew the trick), so `settleTheft` completes a due rest and resolves its theft first in `camp break` and `camp rest` (regression `TestBreakingCampOrRestingAgainDoesNotDodgeThieves`); (b) fairness/UI check: the only warning was help and a tutorial hint, so starting a rest on a road thieves work without bells now says so, and `Company.Camp.theft_risk` drives a Camp tab line "Thieves work this road" (the old "no gear" line, shown even in safe zones, no longer mentions thieves) (`TestThievesAreWarnedOfAtRestStartAndOnTheCampTab`, browser check); (c) `help camp gear` said "no warning" and "the rest report names what is missing"; reworded to match. Browser check `dock-windows-check.mjs` ran to the end (260 checks). Rejected: none. Follow-ups: a watch is only counted if the leader is still at the camp when the theft resolves (it resolves within a round of the rest, so left as is).
+
+**Phase 40a4 built (2026-10-06): camp theft.** A camp rest without camp bells and trip lines may draw thieves. `RestSession.Theft` is rolled when the rest starts (never when bells are strung; a zone needs a `CampTheft` entry, shipped: Old Kings Road 20%) and saved with it. Once the rest is done and the leader is online and out of battle, `resolveCampTheft` (game loop, `modules/camping/theft.go`) marks it done and saves **before** taking anything, so a restart can never rob a rest twice, then `company.CampTheft` removes about 10% (`TheftSharePct`) of the loose goods, at least one item and at most 4 (`TheftMaxItems`), from the cargo and the companions' packs, and the leader reads "When you wake, the packs have been rifled. Missing: ..." with a pointer to `help camp gear`. Never taken: equipped gear, the leader's own pack, the treasury and gold, quest-token items, keys, and camp gear (items 45-50). A posted watch gets its raid-spot chance (25% a level) to catch them: "nothing is missing", nothing taken. Folded in from the 40a3 review: the web Camp tab now lists the camp gear the company carries (GMCP `Company.Camp.gear`, one label per piece, e.g. "Bedrolls 2/3", "Tent"; with none it hints that bells keep thieves out; `/mnt/project-files/screens/40a4-camp-gear.png`). `camp status` bells line says thieves keep out. Help: `help camp gear` gains a Thieves section (aliases thieves, thief, theft, camp theft, stolen) and its stale "nothing is stolen" line is gone; `help camp` and `help campwatch` updated; the tutorial's Camp gear hint mentions that bells keep thieves off. Tests: rolled and saved at rest start (and never with bells or in an unlisted zone), resolved once after the rest with the done flag saved first, reload does not rob twice, offline or in-battle leaders wait, watch catches, empty-handed thieves, settings parse, and the real company provider (cargo plus companion packs, spares quest tokens, keys, protected gear and the leader's pack; share and cap), GMCP gear payload, help render, browser check. Decisions (builder, owner delegation): (1) thieves roll once per rest at start, like raiders, and resolve after the rest, so the report is "noticed on waking"; (2) the leader's own pack is safe (the leader is the one asleep with it), while the cargo and companions' packs are "unattended"; (3) camp gear is never stolen, so a company never loses its bells or tent to the thing they guard against; (4) the chance is zone-based and only configured for Old Kings Road (tutorial and safe-zone camps are never robbed), 20% against raids' 15%; (5) a posted watch protects with its raid-spot chance; (6) stolen goods are gone, no tracking (economy rule: nothing gathered or bought can be reclaimed for profit); (7) a leader offline when the rest ends is robbed on return, so logging out does not dodge it (as raids); (8) a rest started before the theft resolves loses it, which only favours the player. Follow-ups: none needed; thief mobs or tracking stolen goods could be a later quest hook.
 
 **Phase 38c1 built: elite framework, UI and the warrior and cleric elites (2026-10-06):**
 The promotion framework 38b shipped (level 30, gate wait, catch-up ranks) now
@@ -1373,7 +1377,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
 | [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Done (PR #45)** | S1 |
-| 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
+| 40a4 | Camp theft without bells and trip lines, and a web gear line. **Built (review pending)** | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
 | [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
@@ -3130,7 +3134,7 @@ those results. This documentation change does not rerun or supersede them.
   visibility.
 - **Race and gender sprite variants (owner, 2026-10-05):** not for now.
   Revisit with the races review.
-- **Camp theft (owner, 2026-10-05):** a future camp event. A company
+- **Camp theft (owner, 2026-10-05), built in 40a4:** a camp event. A company
   resting **without camp bells and trip lines** may wake to find some loot
   and supplies missing, with no fight and no warning. Details are in the
   [40a3 camp gear](designs/2026-10-05-phase-40a3-camp-gear-design.md)
