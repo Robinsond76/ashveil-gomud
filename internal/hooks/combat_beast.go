@@ -286,11 +286,13 @@ func beastBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	} else {
 		return
 	}
-	// Phase 39i2: the Packlord's pack hunts a foe it has crippled.
-	if info.Hunt && status.Live(d, status.Hobbled) && !status.Live(d, status.Exposed) {
+	// Phase 39i2: the Packlord's pack hunts a foe it has crippled (its own
+	// hobble, not another's).
+	if info.Hunt && d.RT != nil && d.RT.HobbledBy == rt && status.Live(d, status.Hobbled) && !status.Live(d, status.Exposed) {
 		ev.BuffId = status.Exposed
 		events.AddToQueue(ev)
 		attacker.say("", "%s's bite finds "+verbatim(defender.tag())+"'s lame leg, and it is left exposed. (exposed)", ` (exposed)`)
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: defender.roomId, Source: attacker.ref, Target: defender.ref, Status: `Pack hunt`})
 		return
 	}
 	at := info.HobbleAt
@@ -301,6 +303,7 @@ func beastBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		return
 	}
 	events.AddToQueue(ev)
+	d.RTState().HobbledBy = rt
 	attacker.say("", "%s's bite lays "+verbatim(defender.tag())+" open at the legs. (hobbled)", ` (hobble)`)
 }
 
@@ -320,6 +323,7 @@ func beastSwipe(attacker, defender statusHolder, dmg int) {
 		return
 	}
 	roundExtraMobs = append(roundExtraMobs, beside.InstanceId)
+	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: attacker.ref, Target: mobRef(beside), Status: `Swipe`, Damage: dealt})
 	attacker.say("", "%s's swipe rakes "+verbatim(mobHolder(beside).tag())+fmt.Sprintf(" too. (swipe, %d damage)", dealt), ` (swipe)`)
 }
 

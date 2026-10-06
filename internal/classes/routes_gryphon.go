@@ -66,10 +66,10 @@ func init() {
 		Ranks: []Rank{
 			rank(30, "Rotting venom", "a Dive deals 25% more damage to a poisoned foe", DivePoisX, 25),
 			rank(35, "Wyvern scales", "+14% maximum health in all", HealthPct, 14),
-			rank(40, "Barbed tail", "+5 Attack", Attack, 5),
+			rank(40, "Barbed tail", "+5 Attack in all", Attack, 5),
 			rank(45, "Deep venom", "a Dive deals 40% more damage to a poisoned foe", DivePoisX, 40),
-			rank(50, "Wyvern cunning", "+7 Evasion", Evasion, 7),
+			rank(50, "Wyvern cunning", "+7 Evasion in all", Evasion, 7),
 			rank(55, "Power dive", "a Dive deals 50% more damage", DiveDmg, 50),
-			rank(60, "Lashing tail", "a Dive that lands also lashes the foe beside its target with the wyvern's tail for half the damage, and poisons it", DiveTail, 50),
+			rank(60, "Lashing tail", "a Dive that lands also lashes the foe beside its target with the wyvern's tail for half the Dive's damage, and poisons it", DiveTail, 50),
 		}})
 }

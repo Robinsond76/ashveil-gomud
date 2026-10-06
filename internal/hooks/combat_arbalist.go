@@ -59,7 +59,8 @@ func useBolt(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 	rt.AimStruck = false
 	a.char.Aura.Attack += atk
 	rt.BlowPierce = fx.Int(classes.BoltPierce)
-	r := extraBlow(a, target, room, strategy.BoltBlowPct+fx.Int(classes.BoltDmg))
+	boltPct := strategy.BoltBlowPct + fx.Int(classes.BoltDmg)
+	r := extraBlow(a, target, room, boltPct)
 	rt.BlowPierce = 0
 	a.char.Aura.Attack -= atk
 
@@ -72,6 +73,7 @@ func useBolt(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 		((r.Crit && fx.Has(classes.ReloadCrit)) || (target.Character.Health < 1 && fx.Has(classes.ReloadKill))) {
 		rt.Reload = false
 		a.holder.say(`The crossbow springs back, ready again.`, `%s's crossbow springs back, ready again.`, ` (no winding)`)
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Status: `Hair trigger`, Outcome: combatstream.OutcomeSucceeded})
 	}
 	// Phase 39i2: a Siege Master's Ballista bolt passes through to the foe
 	// behind its target.
@@ -81,7 +83,9 @@ func useBolt(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 			btag := mobHolder(behind).tag()
 			a.holder.say(fmt.Sprintf(`The bolt passes through and strikes %s behind.`, btag), `The bolt passes through and strikes `+verbatim(btag)+` behind.`, ` (ballista bolt)`)
 			rt.BlowPierce = fx.Int(classes.BoltPierce)
-			extraBlow(a, behind, room, fx.Int(classes.BoltThroughPct))
+			// A share of the bolt's own damage (review: it was a share of a
+			// plain blow, a third of what the rank promises).
+			extraBlow(a, behind, room, max(1, boltPct*fx.Int(classes.BoltThroughPct)/100))
 			rt.BlowPierce = 0
 			emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(behind), Status: `Ballista bolt`})
 		}

@@ -38,7 +38,7 @@ func init() {
 			rank(45, "Wider hobble", "the warhound's bites hobble a foe below three quarters of its health", BeastHobbleAt, 75),
 			rank(50, "Hound of war", "the warhound has 175% of a wolf's health", BeastHPPct, 175),
 			rank(55, "Rending fangs", "+3 damage on the warhound's bites (in all)", BeastDamage, 3),
-			rank(60, "First strike", "the warhound starts a battle with 50 points on its action meter, so it strikes before the foes do", BeastOpen, 50),
+			rank(60, "First strike", "the warhound starts a battle with 50 points on its action meter, so it usually strikes before the foes do", BeastOpen, 50),
 		}})
 
 	register(Class{ID: "bearward", Name: "Bearward", Lineage: "beasttamer", Tier: TierAdvanced, Gate: GateAny,

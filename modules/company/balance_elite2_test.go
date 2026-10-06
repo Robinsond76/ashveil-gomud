@@ -34,10 +34,30 @@ func TestPhase39i2Elites(t *testing.T) {
 		"alchemist":     {"apothecary", "panacean", "bombardier", "grenadier", "mutagenist", "transmuter"},
 		"arbalist":      {"siegebreaker", "siege-master", "sharpshooter", "deadeye", "warden-of-the-wall", "bastion"},
 	}
+	// Review: the even mirror puts the Beast Tamer at the win ceiling and the
+	// Alchemist at the floor, where no route can be ranked, so those two
+	// meet foes a few levels above or below them (ASHVEIL_BALANCE_LEAD
+	// overrides every lineage's lead for calibration).
+	leads := map[string]int{"beasttamer": 0, "gryphon-rider": 0, "alchemist": 0, "arbalist": 0}
+	override, overridden := os.LookupEnv("ASHVEIL_BALANCE_LEAD")
+	if v, err := strconv.Atoi(override); overridden && err == nil {
+		for k := range leads {
+			leads[k] = v
+		}
+	}
+	// Review: Garrick's broadsword is no lineage's weapon; each swapped
+	// member wields a tier-one weapon of its own class.
+	weapons := map[string]int{
+		"beasttamer":    10131, // iron short spear, 1d6
+		"gryphon-rider": 10141, // iron war spear, 1d8+1: a lance, for Lance charge and Thunder landing
+		"alchemist":     10021, // ash quarterstaff, 1d6
+		"arbalist":      10181, // hunting crossbow, 1d6+2
+	}
 	for _, level := range []int{40, 60} {
 		for _, lineage := range []string{"beasttamer", "gryphon-rider", "alchemist", "arbalist"} {
 			for _, class := range lineages[lineage] {
-				label := fmt.Sprintf("%s/L%d/%s", lineage, level, class)
+				lead := leads[lineage]
+				label := fmt.Sprintf("%s/L%d%+d/%s", lineage, level, lead, class)
 				if only != "" && !strings.Contains(label, only) {
 					continue
 				}
@@ -46,12 +66,10 @@ func TestPhase39i2Elites(t *testing.T) {
 				for i := 0; i < fights; i++ {
 					t.Run(fmt.Sprintf("%s/%d", label, i), func(t *testing.T) {
 						f := newBalanceFightWithOptions(t, level, companyDefault, enemyDefault, balanceFightOptions{
-							EnemyCount: 5, Coordination: 1, LegacyMirror: true, Boss: false,
+							EnemyCount: 5, EnemyLevels: []int{level + lead}, Coordination: 1, LegacyMirror: true, Boss: false,
 							Classes: map[int]string{3: lineage},
 						})
-						if lineage == "arbalist" { // the tier-1 hunting crossbow
-							f.brawl.companion(3).Character.Equipment.Weapon = items.New(10181)
-						}
+						f.brawl.companion(3).Character.Equipment.Weapon = items.New(weapons[lineage])
 						f.brawl.companion(3).Character.SetClassState(class, nil)
 						start := f.healthRemaining()[sideCompany]
 						r := f.run()

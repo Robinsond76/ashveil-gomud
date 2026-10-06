@@ -25,12 +25,12 @@ func init() {
 	register(Class{ID: "siege-master", Name: "Siege Master", Lineage: "arbalist", Tier: TierElite, Parent: "siegebreaker", Gate: GateAny,
 		Role: "a bolt that passes through to the foe behind it, and bolts that tear armor away faster",
 		Ranks: []Rank{
-			rank(30, "Ballista bolt", "once a battle, a Piercing Bolt passes through its target and strikes the foe behind it in the column for 60% of its damage", BoltThrough, 1, BoltThroughPct, 60),
+			rank(30, "Ballista bolt", "once a battle, a Piercing Bolt passes through its target and strikes the foe behind it in the column for 60% of the bolt's damage", BoltThrough, 1, BoltThroughPct, 60),
 			rank(35, "Sundering bolts II", "each bolt that lands takes 20 armor off the foe, up to 60", Shred, 20, ShredCap, 60),
 			rank(40, "Siege stock", "a Piercing Bolt deals 50% more damage", BoltDmg, 50),
 			rank(45, "Ballista crew", "the Ballista bolt works twice a battle", BoltThrough, 2),
 			rank(50, "Wall-breaker", "each bolt that lands takes 25 armor off the foe, up to 75", Shred, 25, ShredCap, 75),
-			rank(55, "Heavy ballista", "a Piercing Bolt deals 70% more damage, and the Ballista bolt hits the foe behind for 80%", BoltDmg, 70, BoltThroughPct, 80),
+			rank(55, "Heavy ballista", "a Piercing Bolt deals 70% more damage, and the Ballista bolt hits the foe behind for 80% of it", BoltDmg, 70, BoltThroughPct, 80),
 			rank(60, "Siege barrage", "the Ballista bolt works four times a battle", BoltThrough, 4),
 		}})
 
@@ -46,11 +46,11 @@ func init() {
 		Role: "a crossbow that is ready again at once after a critical bolt or a kill",
 		Ranks: []Rank{
 			rank(30, "Hair trigger", "a critical bolt needs no winding", ReloadCrit, 1),
-			rank(35, "Killer's sight", "+22% critical chance with a shooting weapon", RangedCrit, 22),
+			rank(35, "Killer's sight", "+22% critical chance with a shooting weapon in all", RangedCrit, 22),
 			rank(40, "Steadier hands", "Steady Aim gives +30 Attack", SteadyAim, 30),
-			rank(45, "Dead calm", "+8 Attack with a shooting weapon", RangedAttack, 8),
+			rank(45, "Dead calm", "+8 Attack with a shooting weapon in all", RangedAttack, 8),
 			rank(50, "Quickened loading", "Piercing Bolt's cooldown is a round shorter", BoltCD, 1),
-			rank(55, "Eagle's eye", "+30% critical chance with a shooting weapon", RangedCrit, 30),
+			rank(55, "Eagle's eye", "+30% critical chance with a shooting weapon in all", RangedCrit, 30),
 			rank(60, "Ready again", "a bolt that fells its foe needs no winding", ReloadKill, 1),
 		}})
 
@@ -65,8 +65,8 @@ func init() {
 	register(Class{ID: "bastion", Name: "Bastion", Lineage: "arbalist", Tier: TierElite, Parent: "warden-of-the-wall", Gate: GateAny,
 		Role: "answers a foe that strikes its column with the bolt it was holding",
 		Ranks: []Rank{
-			rank(30, "Covering shot", "a loaded crossbow answers a foe that strikes an ally in its column with a bolt at 80% of a blow's damage, twice a battle; the answer unloads it", ColumnShot, 2, ColumnShotPct, 80),
-			rank(35, "Keeper's vigor", "+14% maximum health", HealthPct, 14),
+			rank(30, "Covering shot", "a loaded crossbow answers a foe that attacks an ally in its column with a bolt at 80% of a blow's damage, twice a battle; the answer unloads it", ColumnShot, 2, ColumnShotPct, 80),
+			rank(35, "Keeper's vigor", "+14% maximum health in all", HealthPct, 14),
 			rank(40, "Heavy pavise", "the row's damage cut is 20%", AuraResolv, 20),
 			rank(45, "Third shot", "Covering shot works three times a battle", ColumnShot, 3),
 			rank(50, "Bastion plate", "+8 armor in all", Armor, 8),

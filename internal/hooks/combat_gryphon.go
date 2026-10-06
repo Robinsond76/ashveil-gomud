@@ -104,6 +104,7 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 					events.AddToQueue(events.Buff{MobInstanceId: other.InstanceId, BuffId: status.KnockedDown, Source: `combat`})
 					otag := mobHolder(other).tag()
 					a.holder.say(fmt.Sprintf(`The landing throws %s down as well.`, otag), `The landing throws `+verbatim(otag)+` down as well.`, ` (knocked down)`)
+					emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(other), Status: `Thunder landing`})
 				}
 			}
 		}
@@ -126,7 +127,9 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 		if other := foeBeside(target, room, nil); other != nil {
 			otag := mobHolder(other).tag()
 			a.holder.say(fmt.Sprintf(`Your wyvern's tail lashes %s.`, otag), `The wyvern's tail lashes `+verbatim(otag)+`.`, ` (tail lash)`)
-			tr := extraBlow(a, other, room, share)
+			emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(other), Status: `Lashing tail`})
+			// Half the Dive's own damage (review: it was half a plain blow).
+			tr := extraBlow(a, other, room, max(1, pct*share/100))
 			if tr.Hit && tr.DamageToTarget > 0 && other.Character.Health > 0 && fx.Has(classes.DivePois) && other.PoisonSusceptibility != items.PoisonImmune && !other.Character.HasBuff(buffPoisoned) {
 				events.AddToQueue(events.Buff{MobInstanceId: other.InstanceId, BuffId: buffPoisoned, Source: `combat`})
 				a.holder.say(fmt.Sprintf(`Your venom sinks into %s.`, otag), `%s's venom sinks into `+verbatim(otag)+`.`, ` (poisoned)`)

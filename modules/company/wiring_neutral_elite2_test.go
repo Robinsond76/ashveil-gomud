@@ -28,13 +28,20 @@ import (
 // ----- Beast Tamer -----
 
 func TestPacklordHoundExposesAFoeItHasHobbled(t *testing.T) {
-	exposes := func(t *testing.T, route string) (exposed bool, out string) {
+	// own: the hobble is the hound's own bite's (review: another's hobble,
+	// an Arbalist's Crippling Bolt, must not count).
+	exposes := func(t *testing.T, route string, own bool) (exposed bool, out string) {
 		b, _ := beastBrawl(t, 30, route)
 		b.hardenBandits()
 		b.fight()
 		for i := 0; i < 5 && !exposed; i++ {
 			for _, m := range b.livingBandits() {
 				require.NoError(t, m.Character.AddBuff(status.Hobbled, true))
+				if own {
+					m.Character.RTState().HobbledBy = b.beast().Character.RTState()
+				} else {
+					m.Character.RTState().HobbledBy = nil
+				}
 			}
 			b.toughen()
 			b.hardenBandits()
@@ -46,12 +53,17 @@ func TestPacklordHoundExposesAFoeItHasHobbled(t *testing.T) {
 		return
 	}
 	fresh(t, "packlord", func(t *testing.T) {
-		exposed, out := exposes(t, "packlord")
+		exposed, out := exposes(t, "packlord", true)
 		assert.True(t, exposed, "a bite on a hobbled foe leaves it exposed\n%s", out)
 		assert.Contains(t, out, "(exposed)")
 	})
+	fresh(t, "another's hobble", func(t *testing.T) {
+		exposed, out := exposes(t, "packlord", false)
+		assert.False(t, exposed, "a hobble the hound did not bite is no pack hunt\n%s", out)
+		assert.NotContains(t, out, "lame leg")
+	})
 	fresh(t, "houndmaster", func(t *testing.T) {
-		exposed, out := exposes(t, "houndmaster")
+		exposed, out := exposes(t, "houndmaster", true)
 		assert.False(t, exposed, "no pack hunt without the rank\n%s", out)
 		assert.NotContains(t, out, "lame leg")
 	})
@@ -269,8 +281,10 @@ func TestGryphonLordDiveIsReadyEveryOtherRound(t *testing.T) {
 
 func TestGryphonLordThunderLandingKnocksDownTheFoesBesideTheTarget(t *testing.T) {
 	down := func(t *testing.T, class string, level int) (n int, out string) {
-		b, _, _ := eliteRider(t, class, level, 10141) // a war spear: a lance
+		b, stream, _ := eliteRider(t, class, level, 10141) // a war spear: a lance
 		out = b.fight()
+		// The battle caption names it (review).
+		out += fmt.Sprintf("\n[%d Thunder landing events]", boltCount(since(*stream, 0), "Thunder landing"))
 		for _, m := range b.livingBandits() {
 			if status.Live(&m.Character, status.KnockedDown) {
 				n++
@@ -282,6 +296,7 @@ func TestGryphonLordThunderLandingKnocksDownTheFoesBesideTheTarget(t *testing.T)
 		n, out := down(t, "gryphon-lord", 60)
 		assert.GreaterOrEqual(t, n, 2, "the target and a foe beside it\n%s", out)
 		assert.Contains(t, out, "The landing throws")
+		assert.NotContains(t, out, "[0 Thunder landing events]")
 	})
 	fresh(t, "without it", func(t *testing.T) {
 		n, out := down(t, "gryphon-lord", 55)
@@ -321,16 +336,23 @@ func TestFalconMarshalMarksTheFoeItDivesOn(t *testing.T) {
 // here the Lord's dive is shown to land through the real round on a foe a
 // poisoned status is on, and to strike a clean foe as well.
 func TestWyvernLordDivesOnPoisonedAndCleanFoes(t *testing.T) {
-	for _, poisoned := range []bool{true, false} {
-		fresh(t, fmt.Sprintf("poisoned %v", poisoned), func(t *testing.T) {
-			b, stream, foe := eliteRider(t, "wyvern-lord", 30, 10131)
-			if poisoned {
-				require.NoError(t, foe.Character.AddBuff(13, true))
-			}
-			b.fight()
-			assert.Contains(t, halberdTargets(since(*stream, 0), "Tamsin Reed"), foe.InstanceId)
-		})
+	// The Dive's share of a blow on the foe (review: proven by number).
+	dive := func(t *testing.T, poisoned bool) int {
+		b, stream, foe := eliteRider(t, "wyvern-lord", 30, 10131)
+		if poisoned {
+			require.NoError(t, foe.Character.AddBuff(13, true))
+		}
+		seen, restore := hooks.RecordExtraBlowsForTest()
+		t.Cleanup(restore)
+		b.fight()
+		require.Contains(t, halberdTargets(since(*stream, 0), "Tamsin Reed"), foe.InstanceId)
+		require.NotEmpty(t, (*seen)[foe.InstanceId])
+		return (*seen)[foe.InstanceId][0]
 	}
+	var clean, poisoned int
+	fresh(t, "clean", func(t *testing.T) { clean = dive(t, false) })
+	fresh(t, "poisoned", func(t *testing.T) { poisoned = dive(t, true) })
+	assert.Equal(t, 25, poisoned-clean, "Rotting venom: +25%% on a poisoned foe")
 }
 
 func TestWyvernLordTailLashesAndPoisonsTheFoeBeside(t *testing.T) {
@@ -338,6 +360,7 @@ func TestWyvernLordTailLashesAndPoisonsTheFoeBeside(t *testing.T) {
 		b, stream, _ := eliteRider(t, class, level, 10131)
 		out = b.fight()
 		ids = halberdTargets(since(*stream, 0), "Tamsin Reed")
+		out += fmt.Sprintf("\n[%d Lashing tail events]", boltCount(since(*stream, 0), "Lashing tail"))
 		for _, id := range ids {
 			if m := mobs.GetInstance(id); m != nil && m.Character.HasBuff(13) {
 				poisoned++
@@ -346,9 +369,17 @@ func TestWyvernLordTailLashesAndPoisonsTheFoeBeside(t *testing.T) {
 		return
 	}
 	fresh(t, "lashing tail", func(t *testing.T) {
+		seen, restore := hooks.RecordExtraBlowsForTest()
+		t.Cleanup(restore)
 		ids, out, poisoned := struck(t, "wyvern-lord", 60)
+		require.Len(t, ids, 2)
+		dive, tail := (*seen)[ids[0]], (*seen)[ids[1]]
+		require.NotEmpty(t, dive)
+		require.NotEmpty(t, tail)
+		assert.Equal(t, dive[0]/2, tail[0], "half the Dive's damage, not half a blow")
 		assert.Len(t, ids, 2, "the dive and the tail lash\n%s", out)
 		assert.Contains(t, out, "tail lashes")
+		assert.Contains(t, out, "[1 Lashing tail events]", "the battle caption names it")
 		assert.Equal(t, 2, poisoned)
 	})
 	fresh(t, "wyvern rider", func(t *testing.T) {
@@ -365,6 +396,16 @@ func TestPanaceanElixirKeepsAFallingAllyOnItsFeet(t *testing.T) {
 	// rest keep to Garrick, who is whole.
 	strike := func(t *testing.T, class string, level int) (health int, out string) {
 		b := alchemistBrawl(t, class, level) // no spells: no draught gets to Ysolde first
+		stream := b.listen()
+		defer func() {
+			// The battle caption names it by the ally it saved (review: an
+			// event with no source showed nothing).
+			for _, e := range *stream {
+				if e.Kind == combatstream.Ability && e.Status == "Elixir" {
+					out += "\n[Elixir event from " + e.Source.Name + "]"
+				}
+			}
+		}()
 		forceBlows(t, true)
 		b.startWitchFight()
 		ysolde, garrick := b.companion(4), b.companion(3)
@@ -386,6 +427,7 @@ func TestPanaceanElixirKeepsAFallingAllyOnItsFeet(t *testing.T) {
 		health, out := strike(t, "panacean", 30)
 		assert.Equal(t, 25, health, "a quarter of its health\n%s", out)
 		assert.Contains(t, out, "(elixir,")
+		assert.Contains(t, out, "[Elixir event from Ysolde")
 	})
 	fresh(t, "fine elixir", func(t *testing.T) {
 		health, _ := strike(t, "panacean", 50)
@@ -506,8 +548,16 @@ func TestSiegeMasterBoltPassesThroughToTheFoeBehind(t *testing.T) {
 		deep = b.deepFoe()
 		front := b.frontFoeOf(deep)
 		front.Character.Equipment.Body = items.New(20163)
+		seen, restore := hooks.RecordExtraBlowsForTest()
+		t.Cleanup(restore)
 		b.arbalistRound(stream, front)
 		through = boltCount(since(*stream, 0), "Ballista bolt")
+		if through > 0 {
+			bolt, behind := (*seen)[front.InstanceId], (*seen)[deep.InstanceId]
+			require.NotEmpty(t, bolt)
+			require.NotEmpty(t, behind)
+			assert.Equal(t, bolt[0]*b.companion(1).Character.ClassEffects().Int(classes.BoltThroughPct)/100, behind[0], "a share of the bolt, not of a plain blow")
+		}
 		return through, halberdTargets(since(*stream, 0), "Tamsin Reed"), deep
 	}
 	fresh(t, "siege master", func(t *testing.T) {

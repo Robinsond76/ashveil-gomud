@@ -158,6 +158,7 @@ type ClassRT struct {
 	Summon       *SummonInfo // set on a summoned creature
 	Doll         *DollInfo   // set on a Doll Master's doll (Phase 39d)
 	Beast        *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
+	HobbledBy    *ClassRT    // on a foe: the beast whose bite last hobbled it (39i2 Pack hunt)
 	Bless        int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.

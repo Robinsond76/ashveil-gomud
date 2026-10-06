@@ -8,11 +8,11 @@ sooner.
 <ansi fg="yellow-bold">Ranks</ansi>
 
   30 Hair trigger       a critical bolt needs no winding
-  35 Killer's sight     +22% critical chance with a shooting weapon
+  35 Killer's sight     +22% critical chance with a shooting weapon in all
   40 Steadier hands     Steady Aim gives +30 Attack
-  45 Dead calm          +8 Attack with a shooting weapon
+  45 Dead calm          +8 Attack with a shooting weapon in all
   50 Quickened loading  Piercing Bolt's cooldown is a round shorter
-  55 Eagle's eye        +30% critical chance with a shooting weapon
+  55 Eagle's eye        +30% critical chance with a shooting weapon in all
   60 Ready again        a bolt that fells its foe needs no winding
 
 It needs the Sharpshooter first (<ansi fg="command">help arbalist-routes</ansi>) and keeps every rank of it. At level 30 a

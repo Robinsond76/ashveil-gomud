@@ -315,7 +315,7 @@ func wardAfterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		}
 		note := fmt.Sprintf(" (elixir, %d health, %d of %d left)", defender.char.Health, by.ElixirMax-by.ElixirSpent, by.ElixirMax)
 		defender.say("A Panacean's elixir burns down your throat as the blow lands, and you stay on your feet."+note, "A Panacean's elixir keeps %s on their feet."+note, "")
-		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: defender.roomId, Target: defender.ref, Status: `Elixir`, Outcome: combatstream.OutcomeSucceeded})
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: defender.roomId, Source: defender.ref, Status: `Elixir`, Outcome: combatstream.OutcomeSucceeded})
 		if defender.user != nil {
 			events.AddToQueue(events.CharacterVitalsChanged{UserId: defender.user.UserId})
 		}

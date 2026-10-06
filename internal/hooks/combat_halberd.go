@@ -44,7 +44,23 @@ func halberdier(c *characters.Character) bool { return c.ArchetypeID() == "halbe
 // its ordinary swing: through the same hit, defense, armor, status and wound
 // rules and the same lines as any blow, with its damage at pct percent. A
 // foe it fells is sent to the round's death handling.
+// extraBlowSeen, when set by a test, hears every extra blow's foe and share
+// of a blow's damage.
+var extraBlowSeen func(mobInstanceId, pct int)
+
+// RecordExtraBlowsForTest records each extra blow's foe and share (39i2
+// review: the Dive and bolt shares are proven by number, not by dice).
+func RecordExtraBlowsForTest() (seen *map[int][]int, restore func()) {
+	m := map[int][]int{}
+	prev := extraBlowSeen
+	extraBlowSeen = func(id, pct int) { m[id] = append(m[id], pct) }
+	return &m, func() { extraBlowSeen = prev }
+}
+
 func extraBlow(a actor, foe *mobs.Mob, room *rooms.Room, pct int) combat.AttackResult {
+	if extraBlowSeen != nil {
+		extraBlowSeen(foe.InstanceId, pct)
+	}
 	rt := a.char.RTState()
 	rt.BlowPct = pct
 	defer func() { rt.BlowPct = 0 }()

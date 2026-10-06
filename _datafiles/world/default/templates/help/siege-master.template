@@ -9,7 +9,7 @@ bolts tear armor away faster.
 
   30 Ballista bolt      once a battle, a Piercing Bolt passes through its
                         target and strikes the foe behind it in the column for
-                        60% of its damage
+                        60% of the bolt's damage
   35 Sundering bolts II each bolt that lands takes 20 armor off the foe, up to
                         60
   40 Siege stock        a Piercing Bolt deals 50% more damage
@@ -17,7 +17,7 @@ bolts tear armor away faster.
   50 Wall-breaker       each bolt that lands takes 25 armor off the foe, up to
                         75
   55 Heavy ballista     a Piercing Bolt deals 70% more damage, and the
-                        Ballista bolt hits the foe behind for 80%
+                        Ballista bolt hits the foe behind for 80% of it
   60 Siege barrage      the Ballista bolt works four times a battle
 
 It needs the Siegebreaker first (<ansi fg="command">help arbalist-routes</ansi>) and keeps every rank of it. At level 30 a
