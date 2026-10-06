@@ -1164,20 +1164,20 @@ type GMCPCharModule_Payload_Stats struct {
 // Char.Vitals
 // /////////////////
 type GMCPCharModule_Payload_Vitals struct {
-	Hp    int `json:"hp,omitempty"`
-	HpMax int `json:"hp_max,omitempty"`
-	Sp    int `json:"sp,omitempty"`
-	SpMax int `json:"sp_max,omitempty"`
+	Hp    int `json:"hp"`
+	HpMax int `json:"hp_max"`
+	Sp    int `json:"sp"`
+	SpMax int `json:"sp_max"`
 }
 
 // /////////////////
 // Char.Worth
 // /////////////////
 type GMCPCharModule_Payload_Worth struct {
-	Gold int `json:"gold_carry,omitempty"`
-	Bank int `json:"gold_bank,omitempty"`
-	TNL  int `json:"tnl,omitempty"`
-	XP   int `json:"xp,omitempty"`
+	Gold int `json:"gold_carry"`
+	Bank int `json:"gold_bank"`
+	TNL  int `json:"tnl"`
+	XP   int `json:"xp"`
 }
 
 // /////////////////

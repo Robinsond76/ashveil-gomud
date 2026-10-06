@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"strconv"
@@ -335,7 +336,7 @@ func (m *CompanyModule) allowedTemplates() map[int]struct{} {
 }
 
 func maxCompanionsFromConfig(raw any) int {
-	n, ok := configInt(raw)
+	n, ok := modconfig.Int(raw)
 	if !ok || n < 1 {
 		return domain.MaxCompanions
 	}
@@ -350,24 +351,6 @@ func (m *CompanyModule) maxCompanions() int {
 		return maxCompanionsFromConfig(m.plug.Config.Get("MaxCompanions"))
 	}
 	return domain.MaxCompanions
-}
-
-func configInt(raw any) (int, bool) {
-	switch v := raw.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
-	case float64:
-		return int(v), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		if err != nil {
-			return 0, false
-		}
-		return n, true
-	}
-	return 0, false
 }
 
 func (m *CompanyModule) instance(leaderUserID, companionID int) (int, bool) {

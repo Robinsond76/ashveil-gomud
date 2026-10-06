@@ -11,9 +11,8 @@ package survival
 
 import (
 	"errors"
+	"fmt"
 	"sort"
-	"strconv"
-	"strings"
 	"sync"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -28,6 +27,12 @@ const LeaderMemberKey = domain.LeaderMemberKey
 
 // CompanionMemberKey returns the survival key for a companion ID.
 func CompanionMemberKey(id int) MemberKey { return domain.CompanionMemberKey(id) }
+
+// CompanionIDFromMemberKey is internal/company.CompanionIDFromMemberKey for
+// callers that only import this package.
+func CompanionIDFromMemberKey(key MemberKey) (int, bool) {
+	return domain.CompanionIDFromMemberKey(key)
+}
 
 // Needs are the individual, normalized survival values for one member. 100
 // means fully supplied or rested; 0 means depleted or exhausted.
@@ -191,6 +196,16 @@ func BandFor(value int) Band {
 }
 
 // HungerLabel renders the hunger-specific label for a value.
+// NeedsLine is the one-line status a company view prints for a member:
+// "  Name: Hunger 80 (fed), Thirst 60 (quenched), Fatigue 20 (rested)".
+func NeedsLine(name string, needs Needs) string {
+	return fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
+		name,
+		needs.Hunger, HungerLabel(needs.Hunger),
+		needs.Thirst, ThirstLabel(needs.Thirst),
+		needs.Fatigue, FatigueLabel(needs.Fatigue))
+}
+
 func HungerLabel(value int) string {
 	switch BandFor(value) {
 	case BandDepleted:
@@ -243,12 +258,8 @@ func ValidMemberKey(key MemberKey) bool {
 	if key == LeaderMemberKey {
 		return true
 	}
-	raw := string(key)
-	if !strings.HasPrefix(raw, "companion:") {
-		return false
-	}
-	id, err := strconv.Atoi(strings.TrimPrefix(raw, "companion:"))
-	return err == nil && id > 0
+	id, ok := domain.CompanionIDFromMemberKey(key)
+	return ok && id > 0
 }
 
 func validateMember(leaderUserID int, key MemberKey) error {
@@ -418,10 +429,7 @@ func (r *Registry) Members(leaderUserID int) []MemberKey {
 }
 
 func companionOrdinal(key MemberKey) int {
-	id, err := strconv.Atoi(strings.TrimPrefix(string(key), "companion:"))
-	if err != nil {
-		return 0
-	}
+	id, _ := domain.CompanionIDFromMemberKey(key)
 	return id
 }
 

@@ -12,8 +12,8 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -481,7 +481,7 @@ func (m *WeatherModule) userCommand(_ string, user *users.UserRecord, room *room
 // parseMoonCycleDays reads the configured lunar cycle length, falling back
 // to sky.DefaultCycleDays when it is missing or non-positive.
 func parseMoonCycleDays(raw any) int {
-	days := configInt(raw)
+	days := modconfig.IntOr(raw, 0)
 	if days < 1 {
 		return sky.DefaultCycleDays
 	}
@@ -498,18 +498,18 @@ func parseBiomeTables(raw any) map[string]biomeTable {
 		return tables
 	}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
-		biome := strings.TrimSpace(configString(fields["biome"]))
+		biome := strings.TrimSpace(modconfig.String(fields["biome"]))
 		if biome == "" {
 			continue
 		}
-		interval := stringMap(fields["changeintervalrounds"])
+		interval := modconfig.Map(fields["changeintervalrounds"])
 		table := biomeTable{
-			ChangeMin: uint64(configInt(interval["min"])),
-			ChangeMax: uint64(configInt(interval["max"])),
+			ChangeMin: uint64(modconfig.IntOr(interval["min"], 0)),
+			ChangeMax: uint64(modconfig.IntOr(interval["max"], 0)),
 		}
 		condList, ok := fields["conditions"].([]any)
 		if !ok {
@@ -518,22 +518,22 @@ func parseBiomeTables(raw any) map[string]biomeTable {
 		}
 		seen := map[string]bool{}
 		for _, condRaw := range condList {
-			condFields := stringMap(condRaw)
+			condFields := modconfig.Map(condRaw)
 			if condFields == nil {
 				continue
 			}
-			name := strings.TrimSpace(configString(condFields["name"]))
+			name := strings.TrimSpace(modconfig.String(condFields["name"]))
 			condition := weather.Condition{
 				Name:              name,
-				Description:       configString(condFields["description"]),
-				TravelDurationPct: configInt(condFields["traveldurationpct"]),
-				ExertionPct:       configInt(condFields["exertionpct"]),
-				RestRecoveryPct:   configInt(condFields["restrecoverypct"]),
-				CloudCover:        configInt(condFields["cloudcover"]),
-				VisibilityMod:     configInt(condFields["visibilitymod"]),
-				TemperatureMod:    configInt(condFields["temperaturemod"]),
+				Description:       modconfig.String(condFields["description"]),
+				TravelDurationPct: modconfig.IntOr(condFields["traveldurationpct"], 0),
+				ExertionPct:       modconfig.IntOr(condFields["exertionpct"], 0),
+				RestRecoveryPct:   modconfig.IntOr(condFields["restrecoverypct"], 0),
+				CloudCover:        modconfig.IntOr(condFields["cloudcover"], 0),
+				VisibilityMod:     modconfig.IntOr(condFields["visibilitymod"], 0),
+				TemperatureMod:    modconfig.IntOr(condFields["temperaturemod"], 0),
 			}
-			weight := configInt(condFields["weight"])
+			weight := modconfig.IntOr(condFields["weight"], 0)
 			if err := condition.Validate(); err != nil {
 				mudlog.Warn("weather: invalid biome condition", "biome", biome, "name", name, "error", err)
 				continue
@@ -560,46 +560,4 @@ func parseBiomeTables(raw any) map[string]biomeTable {
 		tables[biome] = table
 	}
 	return tables
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }

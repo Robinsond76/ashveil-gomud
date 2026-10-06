@@ -6,6 +6,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -52,12 +53,12 @@ func parseRecruiters(raw any) map[int]recruiter {
 		return out
 	}
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			mudlog.Warn("company: recruiter entry is not a map; skipped")
 			continue
 		}
-		roomID, ok := configInt(fields["roomid"])
+		roomID, ok := modconfig.Int(fields["roomid"])
 		if !ok || roomID <= 0 {
 			mudlog.Warn("company: recruiter without a room; skipped", "roomid", fields["roomid"])
 			continue
@@ -77,18 +78,18 @@ func parseRecruiters(raw any) map[int]recruiter {
 		seen := map[string]bool{}
 		candidates, _ := fields["candidates"].([]any)
 		for _, rawCandidate := range candidates {
-			cf := lowerKeys(rawCandidate)
+			cf := modconfig.Map(rawCandidate)
 			if cf == nil {
 				mudlog.Warn("company: recruit candidate is not a map; skipped", "roomid", roomID)
 				continue
 			}
 			id, _ := cf["id"].(string)
 			id = strings.ToLower(strings.TrimSpace(id))
-			templateID, templateOK := configInt(cf["mobtemplateid"])
+			templateID, templateOK := modconfig.Int(cf["mobtemplateid"])
 			price := 0
 			priceOK := true
 			if rawPrice, set := cf["price"]; set {
-				price, priceOK = configInt(rawPrice)
+				price, priceOK = modconfig.Int(rawPrice)
 			}
 			tutorial, _ := cf["tutorial"].(bool)
 			switch {

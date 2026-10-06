@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -26,11 +27,11 @@ func parseCompanionArchetypes(raw any) map[int]string {
 		return out
 	}
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
-		id, ok := configInt(fields["mobtemplateid"])
+		id, ok := modconfig.Int(fields["mobtemplateid"])
 		archetype, _ := fields["archetype"].(string)
 		archetype = strings.ToLower(strings.TrimSpace(archetype))
 		if !ok || id <= 0 || archetype == "" {
@@ -39,26 +40,6 @@ func parseCompanionArchetypes(raw any) map[int]string {
 		out[id] = archetype
 	}
 	return out
-}
-
-func lowerKeys(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			out[strings.ToLower(k)] = v
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			if name, ok := k.(string); ok {
-				out[strings.ToLower(name)] = v
-			}
-		}
-		return out
-	}
-	return nil
 }
 
 func (m *CompanyModule) companionArchetypes() map[int]string {

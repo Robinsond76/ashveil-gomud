@@ -13,10 +13,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -86,17 +86,17 @@ func DefaultSettings() Settings {
 func parseSettings(get func(string) any) Settings {
 	s := DefaultSettings()
 	positive := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok && n > 0 {
+		if n, ok := modconfig.Int(get(name)); ok && n > 0 {
 			*dst = n
 		}
 	}
 	nonNegative := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok && n >= 0 {
+		if n, ok := modconfig.Int(get(name)); ok && n >= 0 {
 			*dst = n
 		}
 	}
 	anyInt := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok {
+		if n, ok := modconfig.Int(get(name)); ok {
 			*dst = n
 		}
 	}
@@ -105,7 +105,7 @@ func parseSettings(get func(string) any) Settings {
 	nonNegative("FireWarmth", &s.Temperature.FireWarmth)
 	anyInt("ComfortLow", &s.Comfort.ComfortLow)
 	anyInt("ComfortHigh", &s.Comfort.ComfortHigh)
-	if f, ok := configFloat(get("HeatFactor")); ok && f >= 0 {
+	if f, ok := modconfig.Float(get("HeatFactor")); ok && f >= 0 {
 		s.Comfort.HeatFactor = f
 	}
 	positive("CeilingPerStress", &s.Exposure.CeilingPerStress)
@@ -125,10 +125,10 @@ func parseSettings(get func(string) any) Settings {
 
 	if list, ok := get("Biomes").([]any); ok {
 		for _, entry := range list {
-			fields := stringMap(entry)
-			biome := strings.ToLower(strings.TrimSpace(configString(fields["biome"])))
-			base, okBase := configInt(fields["base"])
-			drop, okDrop := configInt(fields["nightdrop"])
+			fields := modconfig.Map(entry)
+			biome := strings.ToLower(strings.TrimSpace(modconfig.String(fields["biome"])))
+			base, okBase := modconfig.Int(fields["base"])
+			drop, okDrop := modconfig.Int(fields["nightdrop"])
 			if biome == "" || !okBase || (okDrop && drop < 0) {
 				mudlog.Warn("exposure: invalid biome temperature", "entry", entry)
 				continue
@@ -139,9 +139,9 @@ func parseSettings(get func(string) any) Settings {
 	if list, ok := get("SlotWarmth").([]any); ok {
 		slots := map[string]int{}
 		for _, entry := range list {
-			fields := stringMap(entry)
-			slot := strings.ToLower(strings.TrimSpace(configString(fields["slot"])))
-			warmth, ok := configInt(fields["warmth"])
+			fields := modconfig.Map(entry)
+			slot := strings.ToLower(strings.TrimSpace(modconfig.String(fields["slot"])))
+			warmth, ok := modconfig.Int(fields["warmth"])
 			if slot == "" || !ok || warmth < 0 {
 				mudlog.Warn("exposure: invalid slot warmth", "entry", entry)
 				continue
@@ -817,59 +817,4 @@ func memberStatus(name string, exposure int) string {
 		return fmt.Sprintf("%s %s %s (exposure %d/100).", name, verb, bandNames[true][band], -exposure)
 	}
 	return fmt.Sprintf("%s %s %s (exposure %d/100).", name, verb, bandNames[false][band], exposure)
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return map[string]any{}
-}
-
-func configInt(raw any) (int, bool) {
-	switch value := raw.(type) {
-	case int:
-		return value, true
-	case int64:
-		return int(value), true
-	case float64:
-		return int(value), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		return n, err == nil
-	}
-	return 0, false
-}
-
-func configFloat(raw any) (float64, bool) {
-	switch value := raw.(type) {
-	case float64:
-		return value, true
-	case int:
-		return float64(value), true
-	case int64:
-		return float64(value), true
-	case string:
-		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
-		return f, err == nil
-	}
-	return 0, false
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }

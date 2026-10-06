@@ -129,7 +129,7 @@ func campExtra(state func(leaderUserID, roomID int, tags []string) (camping.Camp
 	return companyExtra{module: "Company.Camp", build: func(user *users.UserRecord) []byte {
 		var tags []string
 		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-			tags = room.Tags
+			tags = room.GetTags()
 		}
 		s, ok := state(user.UserId, user.Character.RoomId, tags)
 		if !ok {

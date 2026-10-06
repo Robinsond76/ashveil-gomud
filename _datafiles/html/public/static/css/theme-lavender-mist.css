@@ -30,7 +30,6 @@
     --t-bg-panel:        var(--p-bg-dark);
     --t-bg-surface:      #e4d8f8;
     --t-bg-surface-alt:  #dcd0f4;
-    --t-bg-input:        #fff;
     --t-bg-hover:        #d4c8f0;
     --t-bg-selected:     #c8b8ec;
     --t-bg-row:          #ede8f8;
@@ -63,7 +62,6 @@
     --t-btn-border:      var(--p-accent-mid);
     --t-btn-hover-bg:    var(--p-accent-mid);
     --t-btn-hover-text:  #fff;
-    --t-btn-accent:      var(--p-accent);
 
     /* ── Inputs ──────────────────────────────────────────────── */
     --t-input-bg:        #fff;
@@ -79,7 +77,6 @@
     --t-toggle-off:      var(--p-neutral);
     --t-toggle-on:       var(--p-accent);
     --t-slider-track:    var(--p-neutral);
-    --t-slider-thumb:    var(--p-accent);
     --t-slider-border:   var(--p-accent-mid);
 
     /* ── Dock ────────────────────────────────────────────────── */
@@ -174,11 +171,7 @@
     --t-aggro-text:      #b01840;
 
     /* ── Debuff ──────────────────────────────────────────────── */
-    --t-debuff-text:     #d02050;
-    --t-debuff-secondary:#e07090;
     --t-debuff-border:   #f0c0d0;
-    --t-debuff-bg:       #fce8ee;
-    --t-debuff-perm:     #b01840;
 
     /* ── Gear badges ─────────────────────────────────────────── */
     --t-cursed-text:          #d02050;
@@ -229,12 +222,6 @@
     --t-party-location:      var(--p-text-sub);
 
     /* ── Map UI ──────────────────────────────────────────────── */
-    --t-map-tab-bg:          #ede8f8;
-    --t-map-tab-border:      #dcd4f0;
-    --t-map-tab-text:        #a898d0;
-    --t-map-tab-hover:       var(--p-text-sub);
-    --t-map-tab-active-text: var(--p-text);
-    --t-map-tab-active-border:var(--p-accent);
     --t-map-controls-bg:     rgba(244, 240, 252, 0.88);
     --t-map-controls-hover:  rgba(236, 228, 248, 0.96);
     --t-map-controls-text:   var(--p-text-sub);

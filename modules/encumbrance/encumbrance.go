@@ -13,10 +13,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -693,8 +693,8 @@ func pluralUses(n int) string {
 // (both in kg), and the load-band table, rejecting a malformed band rather
 // than applying a guess, matching modules/weather's parseBiomeTables.
 func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.LoadBand) {
-	baseGrams := max(int(configFloat(baseRaw)*1000), 0)
-	strengthGrams := max(int(configFloat(strengthRaw)*1000), 0)
+	baseGrams := max(int(modconfig.FloatOr(baseRaw, 0)*1000), 0)
+	strengthGrams := max(int(modconfig.FloatOr(strengthRaw, 0)*1000), 0)
 
 	bands := []encumbrance.LoadBand{}
 	list, ok := bandsRaw.([]any)
@@ -702,14 +702,14 @@ func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.Lo
 		return baseGrams, strengthGrams, bands
 	}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
 		band := encumbrance.LoadBand{
-			MinRatio:          configFloat(fields["minratio"]),
-			TravelDurationPct: configInt(fields["traveldurationpct"]),
-			FatiguePct:        configInt(fields["fatiguepct"]),
+			MinRatio:          modconfig.FloatOr(fields["minratio"], 0),
+			TravelDurationPct: modconfig.IntOr(fields["traveldurationpct"], 0),
+			FatiguePct:        modconfig.IntOr(fields["fatiguepct"], 0),
 		}
 		if err := band.Validate(); err != nil {
 			mudlog.Warn("encumbrance: invalid load band", "error", err)
@@ -719,58 +719,4 @@ func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.Lo
 	}
 	sort.Slice(bands, func(i, j int) bool { return bands[i].MinRatio < bands[j].MinRatio })
 	return baseGrams, strengthGrams, bands
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
-}
-
-func configFloat(raw any) float64 {
-	switch value := raw.(type) {
-	case float64:
-		return value
-	case int:
-		return float64(value)
-	case int64:
-		return float64(value)
-	case string:
-		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
-		if err == nil {
-			return f
-		}
-	}
-	return 0
 }

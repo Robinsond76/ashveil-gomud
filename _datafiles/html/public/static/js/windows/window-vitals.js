@@ -364,14 +364,14 @@
             row.appendChild(CompanyData.el('span', 'vitals-member-note', note));
             spoken.push(note);
         } else if (m.status === 'fled') {
- row.classList.add('is-away');
- row.appendChild(CompanyData.el('span', 'vitals-member-note', 'fled; returns after battle'));
- spoken.push('fled; returns after battle');
- } else if (m.status === 'separated') {
- row.classList.add('is-away');
- row.appendChild(CompanyData.el('span', 'vitals-member-note', 'separated; finding the way back'));
- spoken.push('separated; finding the way back');
- } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'fled; returns after battle'));
+            spoken.push('fled; returns after battle');
+        } else if (m.status === 'separated') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'separated; finding the way back'));
+            spoken.push('separated; finding the way back');
+        } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
             row.classList.add('is-away');
             row.appendChild(CompanyData.el('span', 'vitals-member-note', 'not with you'));
             spoken.push('not with you');

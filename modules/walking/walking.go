@@ -15,10 +15,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -94,12 +94,12 @@ func DefaultSettings() Settings {
 func parseSettings(get func(string) any) Settings {
 	s := DefaultSettings()
 	positive := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok && n > 0 {
+		if n, ok := modconfig.Int(get(name)); ok && n > 0 {
 			*dst = n
 		}
 	}
 	nonNegative := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok && n >= 0 {
+		if n, ok := modconfig.Int(get(name)); ok && n >= 0 {
 			*dst = n
 		}
 	}
@@ -116,7 +116,7 @@ func parseSettings(get func(string) any) Settings {
 	if list, ok := get("Settlements").([]any); ok {
 		settlements := map[string]bool{}
 		for _, entry := range list {
-			if biome := strings.ToLower(strings.TrimSpace(configString(entry))); biome != "" {
+			if biome := strings.ToLower(strings.TrimSpace(modconfig.String(entry))); biome != "" {
 				settlements[biome] = true
 			}
 		}
@@ -125,9 +125,9 @@ func parseSettings(get func(string) any) Settings {
 	if list, ok := get("Biomes").([]any); ok {
 		biomes := map[string]int{}
 		for _, entry := range list {
-			fields := stringMap(entry)
-			biome := strings.ToLower(strings.TrimSpace(configString(fields["biome"])))
-			strain, ok := configInt(fields["strain"])
+			fields := modconfig.Map(entry)
+			biome := strings.ToLower(strings.TrimSpace(modconfig.String(fields["biome"])))
+			strain, ok := modconfig.Int(fields["strain"])
 			if biome == "" || !ok || strain < 0 {
 				mudlog.Warn("walking: invalid biome strain", "entry", entry)
 				continue
@@ -753,44 +753,4 @@ func (m *WalkingModule) report(user *users.UserRecord, room *rooms.Room) []strin
 		lines = append(lines, line+".")
 	}
 	return lines
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return map[string]any{}
-}
-
-func configInt(raw any) (int, bool) {
-	switch value := raw.(type) {
-	case int:
-		return value, true
-	case int64:
-		return int(value), true
-	case float64:
-		return int(value), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		return n, err == nil
-	}
-	return 0, false
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }
