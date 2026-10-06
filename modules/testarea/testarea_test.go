@@ -3,12 +3,15 @@ package testarea
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"github.com/stretchr/testify/assert"
@@ -66,8 +69,25 @@ func TestTheAreaIsClosed(t *testing.T) {
 func TestOnlyAdminsGoInAndToolsNeedATrip(t *testing.T) {
 	tr := newTrip(t)
 	tr.user.Role = users.RoleUser
-	assert.Contains(t, tr.run("testarea", ""), "permission")
+	// A player gets no hint the command or its help exists: the word is
+	// an unknown command and the help topic is missing.
+	tr.messages = nil
+	handled, err := usercommands.TryCommand("testarea", "", tr.user.UserId, events.CmdSkipScripts)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.False(t, handled, "testarea is no command to a player")
+	for _, msg := range tr.messages {
+		assert.NotContains(t, msg, "permission")
+		assert.NotContains(t, msg, "testarea")
+	}
 	assert.Equal(t, 2001, tr.user.Character.RoomId)
+	tr.messages = nil
+	_, _ = usercommands.TryCommand("help", "testarea", tr.user.UserId, events.CmdSkipScripts)
+	events.ProcessEvents()
+	help := strings.Join(tr.messages, "\n")
+	assert.Contains(t, help, "No help found")
+	assert.NotContains(t, help, "closed set of rooms")
+	assert.NotContains(t, tr.run("help", ""), "testarea", "the help index lists no admin topic to a player")
 	tr.user.Role = users.RoleAdmin
 
 	for _, tool := range []string{"class wizard", "level 9", "gold", "kit weapons", "fight 3 2 58", "companion add warrior"} {

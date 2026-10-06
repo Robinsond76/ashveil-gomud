@@ -452,10 +452,10 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			}
 			return handled, err
 
-		} else if cmdInfo.AdminOnly {
-			user.SendText(fmt.Sprintf(`You don't have permission to use <ansi fg="command">%s</ansi>.`, cmd))
-			return true, nil
 		}
+		// Ashveil: an admin command a player may not use reads as no command
+		// at all, so it gives no hint that it exists; the word falls through
+		// to emotes, spells and exits like any other.
 	}
 
 	if _, ok := emoteAliases[cmd]; ok {

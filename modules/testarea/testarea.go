@@ -23,6 +23,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -89,6 +90,8 @@ func init() {
 	m.plug.Callbacks.SetOnLoad(m.load)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
+	death.SetWakeOverride(m.wakeRoom)
 	registered = m
 }
 
@@ -132,6 +135,35 @@ func (m *Module) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
+// wakeRoom keeps an admin who dies on a trip inside the area: they wake in
+// the hub, not at a church out in the world.
+func (m *Module) wakeRoom(fellRoomID int) (int, bool) {
+	if !IsAreaRoom(fellRoomID) {
+		return 0, false
+	}
+	return HubRoom, true
+}
+
+// onRoomChange ends a trip the moment its character leaves the area by any
+// way but testarea return (an admin teleport, a script): the test character
+// never stands in the world, so nothing from the area can reach it.
+func (m *Module) onRoomChange(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.RoomChange)
+	if !ok || evt.UserId == 0 || !IsAreaRoom(evt.FromRoomId) || IsAreaRoom(evt.ToRoomId) {
+		return events.Continue
+	}
+	if _, in := m.session(evt.UserId); !in {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil || user.Character == nil || IsAreaRoom(user.Character.RoomId) {
+		return events.Continue
+	}
+	say(user, `<ansi fg="alert-3">You left the test area, so your trip is over.</ansi>`)
+	m.returnBack(user)
+	return events.Continue
+}
+
 // onUserPurged forgets a purged user's trip.
 func (m *Module) onUserPurged(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.UserPurged)
@@ -168,8 +200,7 @@ func cmd(s string) string { return `<ansi fg="command">` + s + `</ansi>` }
 // command is the `testarea` command.
 func (m *Module) command(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if !isAdmin(user) {
-		say(user, "You don't have permission to use testarea.")
-		return true, nil
+		return false, nil // no hint that the command exists
 	}
 	fields := strings.Fields(rest)
 	sub := ""

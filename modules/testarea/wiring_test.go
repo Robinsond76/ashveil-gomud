@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	deathdomain "github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -274,4 +275,120 @@ func TestTripInAndBackLeavesTheCharacterAsItWas(t *testing.T) {
 	instanceID, live := company.InstanceFor(u.UserId, 1)
 	require.True(t, live, "the companion is standing again")
 	assert.Equal(t, beforeRoom, mobs.GetInstance(instanceID).Character.RoomId)
+}
+
+// roundTrip is the saved user file and module states before a trip, to
+// compare after it.
+type roundTrip struct {
+	room   int
+	file   []byte
+	states map[string][]byte
+}
+
+// withCompany gives the admin what a played character has: a class, a
+// companion (which settles the company cargo, as a login does) and a horse.
+func (tr *trip) withCompany() {
+	tr.t.Helper()
+	require.Contains(tr.t, tr.run("archetype", "choose warrior confirm"), "Warrior")
+	tr.run("company", "summon training dummy")
+	require.Contains(tr.t, tr.run("mount", "stable pack-horse"), "pack horse")
+}
+
+func (tr *trip) before() roundTrip {
+	tr.t.Helper()
+	return roundTrip{room: tr.user.Character.RoomId, file: tr.savedUserFile(), states: tr.states()}
+}
+
+func (tr *trip) assertAsBefore(b roundTrip) {
+	tr.t.Helper()
+	_, in := registered.session(tr.user.UserId)
+	assert.False(tr.t, in, "the trip is over")
+	assert.Equal(tr.t, b.room, tr.user.Character.RoomId)
+	assert.Equal(tr.t, string(b.file), string(tr.savedUserFile()), "the saved character is byte-identical")
+	after := tr.states()
+	assert.Equal(tr.t, len(b.states), len(after))
+	for name, want := range b.states {
+		assert.Equal(tr.t, string(want), string(after[name]), "module %s is as it was", name)
+	}
+}
+
+// TestCompanionGearDismissalAndCargoAreUndone: gear put on a companion,
+// items packed into a horse's cargo and a companion dismissed in the area
+// are all back as they were after the return, and no armory item survives
+// anywhere.
+func TestCompanionGearDismissalAndCargoAreUndone(t *testing.T) {
+	tr := newTrip(t)
+	u := tr.user
+	tr.withCompany()
+	// A fighter who can hold a weapon, recruited before the trip.
+	_, err := company.AdminRecruit(u.UserId, u.Character.RoomId, "warrior", 5)
+	require.NoError(t, err)
+	tr.run("look", "")
+	b := tr.before()
+	itemsBefore := len(u.Character.Items)
+
+	tr.run("testarea", "")
+	require.Contains(t, tr.run("testarea", "kit weapons"), "You take")
+	require.Greater(t, len(u.Character.Items), itemsBefore)
+	weapon := u.Character.Items[len(u.Character.Items)-1]
+	equipped := tr.run("company", "equip #2 "+weapon.ShorthandId())
+	require.NotContains(t, equipped, "can't", equipped)
+	require.Contains(t, tr.run("company", "dismiss #1"), "dismissed")
+	inArea, _ := company.CompanyMembers(u.UserId)
+	require.Len(t, inArea, 1, "the dismissal happened")
+	tr.run("testarea", "return")
+	tr.assertAsBefore(b)
+
+	assert.Len(t, u.Character.Items, itemsBefore, "no armory item came back")
+	members, ok := company.CompanyMembers(u.UserId)
+	require.True(t, ok)
+	require.Len(t, members, 2, "the dismissed companion is back")
+}
+
+// TestLeavingTheAreaEndsTheTrip: an admin teleport (or any move but the
+// return) out of the area ends the trip at once, so the test character never
+// stands in the world.
+func TestLeavingTheAreaEndsTheTrip(t *testing.T) {
+	tr := newTrip(t)
+	u := tr.user
+	tr.withCompany()
+	b := tr.before()
+	tr.run("testarea", "")
+	tr.run("testarea", "gold 99999")
+	require.Contains(t, tr.run("testarea", "kit weapons"), "You take")
+
+	out := tr.run("teleport", "2002")
+	assert.Contains(t, out, "trip is over")
+	b.room = u.Character.RoomId
+	assert.NotEqual(t, 2002, b.room, "the return puts them back where the trip began")
+	assert.Equal(t, 2001, u.Character.RoomId)
+	tr.assertAsBefore(b)
+}
+
+// TestDeathInTheAreaWakesInTheHub: a death on a trip wakes the admin in the
+// hub, not at a church in the world, and the level it cost comes back on the
+// return.
+func TestDeathInTheAreaWakesInTheHub(t *testing.T) {
+	tr := newTrip(t)
+	u := tr.user
+	tr.withCompany()
+	b := tr.before()
+	tr.run("testarea", "yard")
+	require.Equal(t, 90002, u.Character.RoomId)
+
+	provider, ok := deathdomain.Active()
+	require.True(t, ok)
+	u.Character.Health = -10
+	tr.messages = nil
+	provider.Respawn(u.UserId, true)
+	events.ProcessEvents()
+	assert.Equal(t, HubRoom, u.Character.RoomId, "the dead wake in the hub")
+	assert.Equal(t, 4, u.Character.Level, "the death cost a level")
+	_, in := registered.session(u.UserId)
+	require.True(t, in, "the trip goes on")
+	assert.NotContains(t, strings.Join(tr.messages, "\n"), "altar")
+
+	tr.run("testarea", "return")
+	assert.Equal(t, 5, u.Character.Level)
+	tr.assertAsBefore(b)
 }

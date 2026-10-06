@@ -341,6 +341,12 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	}
 	cfg := m.config()
 	dest, ok := domain.Destination(checkpoint(c), cfg.fallbackID, m.validChurch, m.roomLoads)
+	wake, overridden := domain.WakeOverride(c.RoomId)
+	if overridden && m.roomLoads(wake) {
+		dest, ok = wake, true
+	} else {
+		overridden = false
+	}
 	if !ok {
 		m.hold(user, firstAttempt, "no church can be loaded", nil)
 		return
@@ -373,11 +379,14 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 
 	church := m.loadRoom(dest)
 	lines := []string{fmt.Sprintf("You wake before the altar of %s.", roomTitle(church))}
+	if overridden {
+		lines[0] = fmt.Sprintf("You wake in %s.", roomTitle(church))
+	}
 	if moved > 0 {
 		lines = append(lines, "Your company is with you.")
 	}
 	user.SendText(strings.Join(lines, "\n"))
-	if church != nil {
+	if church != nil && !overridden {
 		church.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is carried in and laid before the altar.`, c.Name), userID)
 	}
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: userID})
