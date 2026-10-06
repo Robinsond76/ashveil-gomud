@@ -1,0 +1,8 @@
+setid: ogrehunter
+name: "Ogre-hunter's Kit"
+lore: "Those who hunt the forest ogre learn to wear what it cannot easily crush."
+bonuses:
+  - pieces: 2
+    effects: {armor: 3}
+  - pieces: 3
+    effects: {wounded: 15, attack: 4}

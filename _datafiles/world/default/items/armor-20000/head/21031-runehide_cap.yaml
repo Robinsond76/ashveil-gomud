@@ -1,0 +1,11 @@
+itemid: 21031
+name: runehide cap
+namesimple: cap
+description: Hide cured with runes until it turns a blade like steel and weighs like leather. It is headgear of the leather path.
+type: head
+subtype: wearable
+bulk: light
+tier: 5
+family: leather
+damagereduction: 6
+weight: 500

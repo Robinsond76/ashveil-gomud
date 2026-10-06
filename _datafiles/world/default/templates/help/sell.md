@@ -25,7 +25,8 @@ identified) sells at a discount, priced by its rarity alone, so you can
 never tell from the price what it carries. Once read it sells for what it
 really is, so have a Scribe read it first; a merchant's reading fee is worth
 paying only on a good find (~help identify~). Gear with a blob of data, or a spent item with uses
-used up, is not bought.
+used up, is not bought. A relic sells like any other find, and for a good
+price (~help relics~).
 
 Settlement markets buy goods at prices that move with what they hold
 (~help market~), and smiths turn unwanted gear into materials

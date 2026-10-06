@@ -227,9 +227,9 @@ func affixCount(r items.Rarity, rng Source) (n int, major bool) {
 	case items.RarityEpic:
 		return 3 + rng.Intn(2), true
 	case items.RarityLegendary:
-		// The authored signature effect arrives with the legendary catalog;
-		// until then its slot is one major affix.
-		return 3, true
+		// Phase 36d: the signature is authored on the item (its relic
+		// block), and the roll adds two ordinary affixes (loot design).
+		return 2, false
 	case items.RaritySet:
 		return 2, false
 	}
@@ -263,6 +263,12 @@ func (s AffixSet) Generate(spec items.ItemSpec, opts Options, rng Source) (items
 	}
 	ilvl := min(max(opts.ILvl, MinILvl), MaxILvl)
 	rarity := opts.Rarity
+	if spec.Relic != nil {
+		// Phase 36d: an authored relic is always its own rarity at its own
+		// item level and standard workmanship, so its numbers are the ones
+		// in its file.
+		ilvl, rarity, opts.Quality = spec.Relic.ILvl, spec.Relic.Rarity(), items.QualityStandard
+	}
 	if rarity == "" {
 		rarity = weightedRarity(rng, opts.RarityBoost, opts.MinRarity)
 	} else if !rarity.Valid() {
@@ -288,6 +294,9 @@ func (s AffixSet) Generate(spec items.ItemSpec, opts Options, rng Source) (items
 	}
 
 	want, wantMajor := affixCount(rarity, rng)
+	if spec.Relic != nil && spec.Relic.IsSet() {
+		want = 0 // a set piece is fixed: its power is the set's bonus
+	}
 	used := map[string]bool{}
 	for i := 0; i < want; i++ {
 		major := wantMajor && i == want-1
@@ -302,8 +311,11 @@ func (s AffixSet) Generate(spec items.ItemSpec, opts Options, rng Source) (items
 		used[a.Group] = true
 		r.Affixes = append(r.Affixes, rollAffix(rng, a, ilvl))
 	}
-	if rarity.Rank() >= items.RarityRare.Rank() {
+	if rarity.Rank() >= items.RarityRare.Rank() && spec.Relic == nil {
 		r.Name = generatedName(rng, s.Names)
+	}
+	if len(r.Affixes) == 0 {
+		r.Identified = true // nothing hidden to read
 	}
 	return r, nil
 }

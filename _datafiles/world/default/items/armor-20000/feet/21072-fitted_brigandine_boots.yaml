@@ -1,0 +1,11 @@
+itemid: 21072
+name: fitted brigandine boots
+namesimple: boots
+description: 'Plates riveted inside a close-fitted coat, a master armorer''s best work. It is footwear of the medium path.'
+type: feet
+subtype: wearable
+bulk: medium
+tier: 4
+family: medium
+damagereduction: 5
+weight: 1200

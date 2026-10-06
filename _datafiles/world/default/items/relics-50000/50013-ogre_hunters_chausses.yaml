@@ -1,0 +1,18 @@
+itemid: 50013
+name: "Ogre-hunter's Chausses"
+namesimple: chausses
+description: 'Hide-lined chausses with scale at the knee, made to be run in.'
+type: legs
+subtype: wearable
+bulk: medium
+tier: 4
+family: medium
+damagereduction: 10
+weight: 2200
+value: 705
+relic:
+  set: ogrehunter
+  ilvl: 27
+  mob: 85
+  chance: 6
+  lore: 'Those who hunt the forest ogre learn to wear what it cannot easily crush.'

@@ -1,0 +1,13 @@
+itemid: 10184
+name: siege crossbow
+namesimple: crossbow
+description: A heavy steel-bowed crossbow cranked with a windlass. It is built to punch through armor.
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: crossbow
+tier: 4
+family: crossbow
+damage:
+  diceroll: 1d12+2
+weight: 4200

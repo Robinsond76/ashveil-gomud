@@ -214,24 +214,28 @@ func TestGearCatalogHelp(t *testing.T) {
 	dice := func(id int) string { return specs[id].Damage.DiceRoll }
 	for _, row := range []struct {
 		label string
-		ids   [3]int
+		ids   [5]int
 	}{
-		{"Sword", [3]int{10101, 10102, 10103}}, {"Axe", [3]int{10111, 10112, 10113}},
-		{"Mace", [3]int{10121, 10122, 10123}}, {"Short spear", [3]int{10131, 10132, 10133}},
-		{"War spear", [3]int{10141, 10142, 10143}}, {"Glaive", [3]int{10151, 10152, 10153}},
-		{"Staff", [3]int{10021, 10162, 10163}}, {"Bow", [3]int{10171, 10172, 10173}},
-		{"Crossbow", [3]int{10181, 10182, 10183}},
+		{"Sword", [5]int{10101, 10102, 10103, 10104, 10105}}, {"Axe", [5]int{10111, 10112, 10113, 10114, 10115}},
+		{"Mace", [5]int{10121, 10122, 10123, 10124, 10125}}, {"Short spear", [5]int{10131, 10132, 10133, 10134, 10135}},
+		{"War spear", [5]int{10141, 10142, 10143, 10144, 10145}}, {"Glaive", [5]int{10151, 10152, 10153, 10154, 10155}},
+		{"Staff", [5]int{10021, 10162, 10163, 10164, 10165}}, {"Bow", [5]int{10171, 10172, 10173, 10174, 10175}},
+		{"Crossbow", [5]int{10181, 10182, 10183, 10184, 10185}},
 	} {
-		want := fmt.Sprintf("%s %s / %s / %s", row.label, dice(row.ids[0]), dice(row.ids[1]), dice(row.ids[2]))
+		want := fmt.Sprintf("%s %s / %s / %s / %s / %s", row.label, dice(row.ids[0]), dice(row.ids[1]), dice(row.ids[2]), dice(row.ids[3]), dice(row.ids[4]))
 		compact := regexp.MustCompile(` {2,}`).ReplaceAllString(plain, " ")
 		assert.Contains(t, compact, want, "help equipmenttiers states %s damage", row.label)
 	}
 	for path, base := range map[string]int{"Cloth": 20100, "Leather": 20130, "Medium": 20160, "Heavy": 20190} {
-		var dr [3]int
+		var dr [5]int
 		weight := 0
-		for tier := 0; tier < 3; tier++ {
+		for tier := 0; tier < 5; tier++ {
 			for slot := 0; slot < 5; slot++ {
-				spec := specs[base+slot*3+tier]
+				id := base + slot*3 + tier
+				if tier >= 3 { // tiers 4 and 5 are at 21000 (36d); 20500 is creature gear
+					id = 21000 + (base - 20100) + slot*3 + (tier - 3)
+				}
+				spec := specs[id]
 				require.NotNil(t, spec, "%s tier %d slot %d", path, tier+1, slot)
 				dr[tier] += spec.DamageReduction
 				if tier == 0 {
@@ -239,7 +243,7 @@ func TestGearCatalogHelp(t *testing.T) {
 				}
 			}
 		}
-		want := fmt.Sprintf("%s %s %d / %d / %d", path, strings.ToLower(specs[base+3].Bulk), dr[0], dr[1], dr[2])
+		want := fmt.Sprintf("%s %s %d / %d / %d / %d / %d", path, strings.ToLower(specs[base+3].Bulk), dr[0], dr[1], dr[2], dr[3], dr[4])
 		compact := regexp.MustCompile(` {2,}`).ReplaceAllString(plain, " ")
 		assert.Contains(t, compact, want, "help equipmenttiers states the %s set", path)
 		assert.Contains(t, compact, fmt.Sprintf("%.1f kg", float64(weight)/1000), "and its weight")

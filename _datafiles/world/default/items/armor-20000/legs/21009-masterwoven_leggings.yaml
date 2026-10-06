@@ -1,0 +1,11 @@
+itemid: 21009
+name: masterwoven leggings
+namesimple: leggings
+description: Fine woven cloth in many close layers, the work of a master weaver. It is leg armor of the cloth path.
+type: legs
+subtype: wearable
+bulk: light
+tier: 4
+family: cloth
+damagereduction: 2
+weight: 400

@@ -1,0 +1,13 @@
+itemid: 10175
+name: runewood bow
+namesimple: bow
+description: A bow of rune-bound wood, supple and tireless in the draw.
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: bow
+tier: 5
+family: bow
+damage:
+  diceroll: 1d12+2
+weight: 1100

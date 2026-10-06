@@ -1,0 +1,11 @@
+itemid: 21097
+name: runesteel gauntlets
+namesimple: gauntlets
+description: Runesteel plate, etched and fitted, the armor of a champion. It is hand protection of the heavy path.
+type: gloves
+subtype: wearable
+bulk: heavy
+tier: 5
+family: heavy
+damagereduction: 6
+weight: 900

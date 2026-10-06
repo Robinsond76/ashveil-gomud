@@ -1,0 +1,13 @@
+itemid: 10114
+name: masterwork hewing axe
+namesimple: axe
+description: A broad-bladed axe from a master smith, weighted to bite deep and free itself clean.
+type: weapon
+hands: 1
+subtype: cleaving
+weaponclass: axe
+tier: 4
+family: axe
+damage:
+  diceroll: 1d10+1
+weight: 1800

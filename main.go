@@ -1758,6 +1758,7 @@ func loadAllDataFiles(isReload bool) {
 	buffs.LoadFlagDataFiles() // Load buff flags before buffs so buff validation can check flags
 	buffs.LoadDataFiles()     // Load buffs before items for cost calculation reasons
 	items.LoadDataFiles()
+	items.LoadSetDataFiles()  // Phase 36d authored set bonuses
 	loot.LoadLootDataFiles()  // category tables reference item specs
 	loot.LoadAffixDataFiles() // Phase 36a gear affixes
 	races.LoadDataFiles()

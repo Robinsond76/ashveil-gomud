@@ -1,0 +1,11 @@
+itemid: 21034
+name: runehide jerkin
+namesimple: jerkin
+description: Hide cured with runes until it turns a blade like steel and weighs like leather. It is body armor of the leather path.
+type: body
+subtype: wearable
+bulk: light
+tier: 5
+family: leather
+damagereduction: 14
+weight: 2000

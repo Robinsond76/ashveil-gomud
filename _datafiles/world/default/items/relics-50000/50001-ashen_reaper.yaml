@@ -1,0 +1,22 @@
+itemid: 50001
+name: Ashen Reaper
+namesimple: glaive
+description: 'A glaive of ancient ash-grey alloy with a long, hooked blade. Nothing about it shines, and nothing it cuts stays standing.'
+type: weapon
+hands: 2
+subtype: slashing
+weaponclass: glaive
+tier: 6
+family: glaive
+reach: true
+damage:
+  diceroll: 1d12+7
+weight: 3600
+value: 1375
+relic:
+  signature: Reaping
+  effects: {wounded: 20, smite: 20}
+  ilvl: 35
+  mob: 14
+  chance: 6
+  lore: 'The lich carried it out of a dead kingdom. It is said to reap best what is already falling.'

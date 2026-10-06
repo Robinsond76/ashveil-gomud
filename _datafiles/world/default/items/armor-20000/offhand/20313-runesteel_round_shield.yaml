@@ -1,0 +1,12 @@
+itemid: 20313
+name: runesteel round shield
+namesimple: shield
+description: A round shield rimmed in runesteel, solid and well balanced.
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 5
+family: round shield
+damagereduction: 13
+weight: 3700

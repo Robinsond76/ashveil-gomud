@@ -1,0 +1,19 @@
+itemid: 50002
+name: Grave-Pact Circlet
+namesimple: circlet
+description: 'A thin circlet of grey silver set with a single clouded stone, cold against the brow.'
+type: head
+subtype: wearable
+bulk: light
+tier: 5
+family: cloth
+damagereduction: 3
+weight: 200
+value: 1375
+relic:
+  signature: Grave Pact
+  effects: {bargain: 1, healpct: 10}
+  ilvl: 35
+  mob: 14
+  chance: 4
+  lore: 'Whoever wears it has struck a bargain with something that does not like to lose.'
