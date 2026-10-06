@@ -59,6 +59,7 @@ declare interface ActorObject {
     StartRejuv(rounds: number, total: number): boolean;
     GrantBless(rounds: number): boolean;
     CleanseOne(source: string): string;
+    HurtAllies(others: boolean): ActorObject[];
     MostHurtAlly(others: boolean): ActorObject | null;
     HealFactor(): number;
     WoundNote(rolled: number, healed: number): string;

@@ -44,12 +44,12 @@ func combinedEdge(skill, stat float64) float64 {
 
 // attackEdge is the attacker's skill edge over the defender.
 func attackEdge(atk, def *characters.Character) float64 {
-	return SkillEdge(atk.AttackSkill()-def.ClassEffects().Int(classes.AuraDread), def.Evasion())
+	return SkillEdge(attackRating(atk, def), def.Evasion())
 }
 
 // defenseEdge is the defender's skill edge over the attacker.
 func defenseEdge(def, atk *characters.Character) float64 {
-	return SkillEdge(def.Evasion(), atk.AttackSkill()-def.ClassEffects().Int(classes.AuraDread))
+	return SkillEdge(def.Evasion(), attackRating(atk, def))
 }
 
 // statAdvantage is StatEdge, never below 0: one-sided chances start at
@@ -375,7 +375,7 @@ func blockChanceForEdge(shieldArmor int, edge float64) int {
 // Attack, plus the Strength edge, with its shield's armor.
 func blockChance(def, atk *characters.Character) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Strength.ValueAdj, atk.Stats.Strength.ValueAdj))
-	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block)
+	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block
 	return max(0, min(100, chance))
 }
 

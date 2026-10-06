@@ -134,6 +134,7 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		riposteBlow(attacker, defender)
 	}
 	thornsBlow(attacker, defender, r)
+	oathBlow(attacker, defender, r)
 	if r.CritLanded && attacker.char.ClassEffects().Has(classes.TerrorCrit) && defender.char.Health >= 1 && !status.Live(defender.char, status.Staggered) {
 		ev := events.Buff{BuffId: status.Staggered, Source: `combat`}
 		if defender.user != nil {

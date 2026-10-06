@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -110,8 +111,14 @@ func abilityPass() {
 		for _, id := range standingFoes(enemyparty.Group{Party: p}, room) {
 			foes[id] = true
 		}
-		for _, a := range sideActors(u, room) {
+		side := sideActors(u, room)
+		f, _ := company.FormationFor(u.UserId)
+		for _, a := range side {
 			if surprised(a.who.userId, a.who.mobId) {
+				continue
+			}
+			// Phase 38b: a Knight lays on hands instead of swinging.
+			if layHands(a, side, u, f) {
 				continue
 			}
 			foe, ok := abilityFoe(a, u, foes)

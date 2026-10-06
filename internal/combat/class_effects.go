@@ -65,3 +65,15 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	}
 	return dmg
 }
+
+// attackRating is the attacker's Attack against this defender: lowered by a
+// Dread Knight's Aura of Dread when it is the one aimed at, and by a foe's
+// Intimidation (a Blackguard's wound) against anyone but the one who made
+// it.
+func attackRating(atk, def *characters.Character) int {
+	rating := atk.AttackSkill() - def.ClassEffects().Int(classes.AuraDread)
+	if rt := atk.RT; rt != nil && rt.Intim > 0 && def.RT != rt.IntimOwner {
+		rating -= rt.Intim
+	}
+	return rating
+}

@@ -109,6 +109,7 @@ func actorObjectType() ObjectTypeDef {
 			m("StartRejuv", "boolean", "Starts the actor healing total points over rounds combat rounds; false if it already is (Phase 38b).", p("rounds", "number"), p("total", "number")),
 			m("GrantBless", "boolean", "Blesses the actor (+5 Attack and Evasion) for rounds combat rounds; false if it is blessed (Phase 38b).", p("rounds", "number")),
 			m("CleanseOne", "string", "Removes one harmful status once a battle per source and returns its word, else an empty string (Phase 38b).", p("source", "string")),
+			m("HurtAllies", "ActorObject[]", "Returns the hurt living members of the actor's company in its room, the most hurt first; others skips the actor itself (Phase 38b).", p("others", "boolean")),
 			m("MostHurtAlly", "ActorObject", "Returns the most hurt living member of the actor's company in its room, or null; others skips the actor itself (Phase 38b).", p("others", "boolean")),
 			m("HealFactor", "number", "Returns what the actor's heals are multiplied by: 1 plus its gear's healing percent (Phase 35a2)."),
 			m("WoundNote", "string", "Returns the text a heal adds when the wound limit held some back, else an empty string (Phase 30b).", p("rolled", "number"), p("healed", "number")),

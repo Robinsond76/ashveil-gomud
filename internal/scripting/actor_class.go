@@ -2,6 +2,7 @@ package scripting
 
 import (
 	"slices"
+	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -105,10 +106,10 @@ func (a ScriptActor) CleanseOne(source string) string {
 	return word
 }
 
-// MostHurtAlly is the living member of the actor's company in its room with
-// the lowest share of health, other than the actor itself when others is
-// set; nil when no one is hurt.
-func (a ScriptActor) MostHurtAlly(others bool) *ScriptActor {
+// HurtAllies are the living members of the actor's company in its room that
+// are below their wound limit, the most hurt (by share of health) first.
+// others leaves the actor itself out.
+func (a ScriptActor) HurtAllies(others bool) []*ScriptActor {
 	c := a.characterRecord
 	if c == nil {
 		return nil
@@ -120,8 +121,11 @@ func (a ScriptActor) MostHurtAlly(others bool) *ScriptActor {
 	if leader == 0 {
 		return nil
 	}
-	var best *ScriptActor
-	bestFrac := 1.0
+	type hurt struct {
+		actor *ScriptActor
+		frac  float64
+	}
+	var found []hurt
 	consider := func(x *ScriptActor) {
 		if x == nil || x.characterRecord == nil || x.characterRecord.Health < 1 || x.characterRecord.RoomId != c.RoomId {
 			return
@@ -133,23 +137,32 @@ func (a ScriptActor) MostHurtAlly(others bool) *ScriptActor {
 		if x.characterRecord.Health >= limit {
 			return
 		}
-		if f := float64(x.characterRecord.Health) / float64(limit); f < bestFrac {
-			best, bestFrac = x, f
-		}
+		found = append(found, hurt{x, float64(x.characterRecord.Health) / float64(limit)})
 	}
 	if u := users.GetByUserId(leader); u != nil {
 		consider(GetUser(leader))
 	}
 	if room := rooms.LoadRoom(c.RoomId); room != nil {
 		for _, id := range room.GetMobs(rooms.FindCharmed) {
-			if l, _, ok := company.LeaderAndKeyForInstance(id); ok && l == leader {
-				if m := mobs.GetInstance(id); m != nil {
-					consider(GetMob(id))
-				}
+			if l, _, ok := company.LeaderAndKeyForInstance(id); ok && l == leader && mobs.GetInstance(id) != nil {
+				consider(GetMob(id))
 			}
 		}
 	}
-	return best
+	sort.SliceStable(found, func(i, j int) bool { return found[i].frac < found[j].frac })
+	out := make([]*ScriptActor, len(found))
+	for i, f := range found {
+		out[i] = f.actor
+	}
+	return out
+}
+
+// MostHurtAlly is the first of HurtAllies, nil when no one is hurt.
+func (a ScriptActor) MostHurtAlly(others bool) *ScriptActor {
+	if all := a.HurtAllies(others); len(all) > 0 {
+		return all[0]
+	}
+	return nil
 }
 
 // RowAllies is the living members of the actor's company that stand in the

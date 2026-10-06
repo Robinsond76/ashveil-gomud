@@ -93,6 +93,7 @@ func (c *Character) HealCostPct(patching bool) int {
 type ClassAura struct {
 	Evasion int
 	Resolve int
+	Block   int // block chance points (a Knight guarding a ward)
 }
 
 // ClassRT is a character's class state for the battle it is in: nothing in
@@ -103,7 +104,9 @@ type ClassRT struct {
 	Bark, Thorns  int  // Barkskin's armor and the damage a striker takes
 	Rejuv, Per    int  // rounds of Rejuvenation left and its heal each round
 	ShieldUsed    bool // Divine Shield has been spent this battle
-	OathBlows     int  // Blood Oath blows left this battle
+	OathUsed      int  // Blood Oath blows spent this battle
+	Intim         int  // Attack this foe loses against anyone but IntimOwner
+	IntimOwner    *ClassRT
 	Cleansed      map[string]bool
 	Guards        int // an Angel's Guard uses spent
 	Hands         int // Lay on Hands uses since the last rest
@@ -155,4 +158,11 @@ func (c *Character) blessPoints() int {
 		return BlessPoints
 	}
 	return 0
+}
+
+// RestClass renews what rest gives back to a class: Lay on Hands uses.
+func (c *Character) RestClass() {
+	if c.RT != nil {
+		c.RT.Hands = 0
+	}
 }

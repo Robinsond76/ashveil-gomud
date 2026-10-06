@@ -151,3 +151,62 @@ func TestClericBlessesAnAllyAtLevelEight(t *testing.T) {
 	}
 	assert.True(t, blessed)
 }
+
+// knightBrawl is classCaster with Aria a warrior of the class and level.
+func knightBrawl(t *testing.T, class string, level int) *brawl {
+	t.Helper()
+	b := classCaster(t, class, level)
+	b.withArchetypes("warrior")
+	b.aria.Character.SpellBook = map[string]int{}
+	return b
+}
+
+func TestKnightLaysOnHandsInsteadOfSwingingAndRunsOutBetweenRests(t *testing.T) {
+	b := knightBrawl(t, "knight", 10)
+	b.startWitchFight()
+	tamsin := &b.companion(1).Character
+	b.toughen()
+	tamsin.Health = 100 // 10%
+	var out string
+	b.hold(nil)
+	out = b.fight()
+	assert.Contains(t, out, "lay on hands", "the Knight takes the turn to heal")
+	assert.Contains(t, out, "1 left")
+	assert.Greater(t, tamsin.Health, 100)
+	assert.Equal(t, 1, b.aria.Character.RT.Hands)
+
+	tamsin.Health = 100
+	b.hold(nil)
+	b.fight()
+	assert.Equal(t, 2, b.aria.Character.RT.Hands)
+
+	tamsin.Health = 100
+	b.hold(nil)
+	out = b.fight()
+	assert.NotContains(t, out, "lay on hands", "two uses between rests at level 10")
+	assert.Equal(t, 2, b.aria.Character.RT.Hands)
+
+	b.aria.Character.RestClass()
+	assert.Zero(t, b.aria.Character.RT.Hands, "rest brings them back")
+}
+
+func TestBlackguardsOathHealsTheMostHurtAllyAndCowsTheFoe(t *testing.T) {
+	b := knightBrawl(t, "blackguard", 10)
+	forceBlows(t, true)
+	b.startWitchFight()
+	tamsin := &b.companion(1).Character
+	b.toughen()
+	tamsin.Health = 100
+	b.hold(nil)
+	out := b.fight()
+	assert.Contains(t, out, "blood oath")
+	assert.Greater(t, tamsin.Health, 100)
+	cowed := 0
+	for _, m := range b.livingBandits() {
+		if m.Character.RT != nil && m.Character.RT.Intim > 0 {
+			cowed++
+		}
+	}
+	assert.Positive(t, cowed, "a wounded foe is intimidated")
+	assert.LessOrEqual(t, b.aria.Character.RT.OathUsed, 3, "three blows a battle at level 10")
+}
