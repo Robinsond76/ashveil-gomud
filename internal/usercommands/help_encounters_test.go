@@ -72,7 +72,7 @@ func TestZoneBandNoteRatesTheBandAgainstTheViewersLevel(t *testing.T) {
 	room := &rooms.Room{RoomId: 96902, Zone: "Band Test Wilds"}
 	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: room.Zone, Encounters: encounters.ZoneConfig{Band: encounters.Band{Low: 10, High: 12}}}))
 	user := users.NewUserRecord(96902, 0)
-	for level, want := range map[int]string{12: "Your company should manage.", 9: "A fair test", 7: "Risky at your company's level", 5: "Dangerous at your company's level: prepare carefully."} {
+	for level, want := range map[int]string{12: "Your company (level 12) should manage.", 9: "A fair test at your company's level (9).", 7: "Risky at your company's level (7): expect losses.", 5: "Dangerous at your company's level (5): prepare carefully."} {
 		user.Character.Level = level
 		note := zoneBandNote(user, room)
 		assert.Contains(t, note, "Foes in Band Test Wilds are of levels 10 to 12.", "level %d", level)
@@ -107,14 +107,14 @@ func TestZoneBandNoteRatesByTheCompanyLevel(t *testing.T) {
 
 	user.Character.Level = 6
 	company.SetFormationProvider(bandCompany{levels: []int{12, 12, 12, 12}}) // (6+48)/5 = 10.8 -> 11
-	assert.Contains(t, zoneBandNote(user, room), "Your company should manage.")
+	assert.Contains(t, zoneBandNote(user, room), "Your company (level 11) should manage.")
 
 	user.Character.Level = 12
 	company.SetFormationProvider(bandCompany{levels: []int{3, 3, 3, 3}}) // (12+12)/5 = 4.8 -> 5
-	assert.Contains(t, zoneBandNote(user, room), "Dangerous at your company's level")
+	assert.Contains(t, zoneBandNote(user, room), "Dangerous at your company's level (5)")
 
 	company.SetFormationProvider(nil) // no company readable: the leader alone
-	assert.Contains(t, zoneBandNote(user, room), "Your company should manage.")
+	assert.Contains(t, zoneBandNote(user, room), "Your company (level 12) should manage.")
 }
 
 // TestLookShowsTheZoneBand (37b): the real look command prints the band.
@@ -139,7 +139,7 @@ func TestLookShowsTheZoneBand(t *testing.T) {
 	require.NoError(t, err)
 	events.ProcessEvents()
 	out := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
-	assert.Contains(t, out, "Foes in Band Look Wilds are of levels 5 to 7. Your company should manage.")
+	assert.Contains(t, out, "Foes in Band Look Wilds are of levels 5 to 7. Your company (level 5) should manage.")
 }
 
 // TestLookAndScoutSayHowLongALairStaysQuiet (37b review): a lair the

@@ -188,12 +188,14 @@ func burdenedLine(members []*mobs.Mob) string {
 
 // ratingPhrases say how a zone's band weighs on the company's level
 // (encounters.Rating): the owner's rule that difficulty comes only from
-// entering a zone above your level.
+// entering a zone above your level. Each names the company level it rates
+// (37c review), so a player sees why a lone leader and a full company read
+// the same zone differently.
 var ratingPhrases = map[string]string{
-	encounters.RatingEasy:      `Your company should manage.`,
-	encounters.RatingFair:      `A fair test at your company's level.`,
-	encounters.RatingRisky:     `Risky at your company's level: expect losses.`,
-	encounters.RatingDangerous: `Dangerous at your company's level: prepare carefully.`,
+	encounters.RatingEasy:      `Your company (level %d) should manage.`,
+	encounters.RatingFair:      `A fair test at your company's level (%d).`,
+	encounters.RatingRisky:     `Risky at your company's level (%d): expect losses.`,
+	encounters.RatingDangerous: `Dangerous at your company's level (%d): prepare carefully.`,
 }
 
 // zoneBandNote is the zone's level band for look and scout: "Foes in the
@@ -207,8 +209,9 @@ func zoneBandNote(user *users.UserRecord, room *rooms.Room) string {
 	b := cfg.Encounters.Band
 	out := fmt.Sprintf(`Foes in %s are of levels %d to %d.`, cfg.Name, b.Low, b.High)
 	if user != nil && user.Character != nil {
-		if phrase := ratingPhrases[encounters.Rating(companyview.LevelFor(user), b)]; phrase != `` {
-			out += ` ` + phrase
+		level := companyview.LevelFor(user)
+		if phrase := ratingPhrases[encounters.Rating(level, b)]; phrase != `` {
+			out += ` ` + fmt.Sprintf(phrase, level)
 		}
 	}
 	return out
