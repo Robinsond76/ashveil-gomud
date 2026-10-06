@@ -80,6 +80,8 @@ help:
       - gryphon-rider-routes
       - alchemist
       - alchemist-routes
+      - arbalist
+      - arbalist-routes
       - brew
       - summoning
     company:
@@ -363,6 +365,8 @@ help-aliases:
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
   gryphon-rider:    [gryphon rider, gryphon, gryphons, rider, dive, talons, skirmisher, skirmish, power-dive]
   gryphon-rider-routes: [gryphon-knight, gryphon knight, skyscout, wyvern-rider, wyvern rider, gryphon-lord, gryphon lord, falcon-marshal, falcon marshal, wyvern-lord, wyvern lord, lance-charge, eagle-eye, hawk-s-mark]
+  arbalist:         [arbalists, crossbowman, crossbowmen, piercing-bolt, piercing bolt, bolt, bolts, winding, armor-breaker, crippling-bolt]
+  arbalist-routes:  [siegebreaker, sharpshooter, warden-of-the-wall, warden of the wall, siege-master, siege master, deadeye, bastion, pavise, sundering-bolts, keen-sight]
   samurai-routes:   [kensai, hatamoto, ronin, sword-saint, sword saint, shogun, kenshi, bodyguard, vengeance]
   shaman:           [shamans, weather-caller, stormcraft, call-fog, callfog, gust, chill-wind, chillwind, lightning, battle-weather, fogbound, windchilled]
   shaman-routes:    [stormcaller, mistweaver, earthspeaker, tempest-lord, tempest lord, veil-mother, veil mother, mountain-speaker, mountain speaker, stoneskin, chain-lightning]

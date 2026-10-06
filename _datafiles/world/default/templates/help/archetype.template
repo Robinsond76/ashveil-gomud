@@ -35,7 +35,7 @@ expedition skills they use for the company as they level up
 a cleric heals, a wizard casts, a witch hexes (<ansi fg="command">help strategy</ansi>), a shaman calls a weather
 (<ansi fg="command">help shaman</ansi>), a samurai opens a fight half a turn
 ahead (<ansi fg="command">help samurai</ansi>), a gryphon rider dives onto the rows behind the front
-(<ansi fg="command">help gryphon-rider</ansi>), and a warrior
+(<ansi fg="command">help gryphon-rider</ansi>), an arbalist looses armor-piercing bolts (<ansi fg="command">help arbalist</ansi>), and a warrior
 tackles, a rogue strikes an opening, a ranger aims a shot, a halberdier sweeps a row,
 a Doll Master fights through a wooden doll,
 a Beast Tamer sends a living beast in beside it,
@@ -66,6 +66,7 @@ neutral or evil route, with ranks and talents of its own (<ansi fg="command">hel
   Doll Master light  none           daggers, rods and staffs
   Gryphon Rider medium  none, bucklers  spears and swords
   Beast Tamer medium none           whips, spears and daggers
+  Arbalist  medium   none           crossbows only
   Shaman    light    none           any
   Alchemist light    none           daggers, staffs and slings
 

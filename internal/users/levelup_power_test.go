@@ -53,3 +53,18 @@ func TestPowerSnapshotNamesTheGryphonRidersPowerDive(t *testing.T) {
 	assert.Empty(t, powerLines(at(2), at(3)))
 	assert.Equal(t, []string{"Dive 100% of a blow -> 125% of a blow"}, powerLines(at(7), at(8)))
 }
+
+// Phase 39h: an arbalist's level-up report names Piercing Bolt's damage when
+// a route rank (Heavy stock) raises it.
+func TestPowerSnapshotNamesTheArbalistsPiercingBolt(t *testing.T) {
+	c := characters.New()
+	c.HPArchetype = "arbalist"
+	at := func(level int) []powerEntry {
+		c.Level = level
+		return abilityPower(c, strategy.CompanionAbilities("arbalist"))
+	}
+	assert.Equal(t, []powerEntry{{"Piercing Bolt", "140% of a shot"}}, at(1))
+	assert.Empty(t, powerLines(at(7), at(8)), "Armor-breaker is a rank line, not a size")
+	c.HPClass = "siegebreaker"
+	assert.Equal(t, []string{"Piercing Bolt 140% of a shot -> 160% of a shot"}, powerLines(at(14), at(15)))
+}

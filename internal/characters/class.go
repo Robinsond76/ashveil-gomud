@@ -180,6 +180,17 @@ type ClassRT struct {
 	DollGuards int
 	Spliced    bool
 	SpliceTurn bool
+	// The Arbalist's lineage (Phase 39h): a bolt just loosed leaves its next
+	// turn to the winding (Reload); BoltFired is the first bolt of the battle
+	// spent; AimStruck is a blow landing on the holder since its last bolt
+	// (Steady Aim); BlowPierce, when set, is the percent of the target's armor
+	// the blow being resolved ignores and is cleared at once. On a foe,
+	// Shred is the armor its bolts have taken off it this battle.
+	Reload     bool
+	BoltFired  bool
+	AimStruck  bool
+	BlowPierce int
+	Shred      int
 	// The Beast Tamer's lineage (Phase 39e): the Attack Sic gives its beast
 	// this round, the Evasion Pack Sense gives the Tamer while the beast
 	// stands, and the Rally heals spent this battle.

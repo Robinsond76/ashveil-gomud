@@ -169,6 +169,7 @@ and your company's health.
   <ansi fg="command">help gryphon-rider</ansi> a Gryphon Rider's dive past the front line
   <ansi fg="command">help beasttamer</ansi>   a Beast Tamer's bonded beast, and how it fights
   <ansi fg="command">help alchemist</ansi>   an Alchemist's flasks: draughts, antidotes, fire and tonics
+  <ansi fg="command">help arbalist</ansi>    an Arbalist's armor-piercing bolt, and its winding
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
@@ -221,4 +222,5 @@ Each point of a stat over your opponent's counts the same at every level (<ansi 
 A promoted character fights with its class's ranks, and some summon allies (<ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help elite</ansi>); the wizard and witch elites also break chants (<ansi fg="command">help archon</ansi>), raise thralls (<ansi fg="command">help necromancer</ansi>), ward and curse (<ansi fg="command">help wise-one</ansi>, <ansi fg="command">help crone-of-ash</ansi>).
 A Samurai opens a fight half a turn ahead, with a first strike that hits harder (<ansi fg="command">help samurai</ansi>).
 A Gryphon Rider dives from open sky past a standing front line onto the rows behind it (<ansi fg="command">help gryphon-rider</ansi>).
+An Arbalist looses a heavy bolt that ignores armor, then spends its next turn winding the crossbow (<ansi fg="command">help arbalist</ansi>).
 A Shaman calls a weather into the battle (fog, a cold wind or rain) that tilts the odds for its length (<ansi fg="command">help shaman</ansi>).

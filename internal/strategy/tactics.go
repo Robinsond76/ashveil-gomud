@@ -248,7 +248,7 @@ func EnemyPick(rule Rule, foes []Foe, noise int, roll Roll) (int, bool) {
 		return pool[roll(len(pool))].ID, true
 	}
 	switch rule {
-	case Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers:
+	case Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Armored:
 	default:
 		rule = Weakest
 	}

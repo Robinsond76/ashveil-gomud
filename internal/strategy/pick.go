@@ -20,6 +20,9 @@ type Foe struct {
 	// Healer is a foe whose role is healing: a mob with the healer role, or
 	// a company member set to heal. The healers rule (Phase 35e).
 	Healer bool
+	// Armor is the percent of a blow its armor turns aside. The armored
+	// rule (Phase 39h).
+	Armor int
 }
 
 // Pick chooses a target by rule (the owner's rule 6). The rule chooses
@@ -120,6 +123,15 @@ func choose(rule Rule, pool []Foe, assistID int) (int, bool) {
 		return best(func(a, b Foe) bool {
 			if rowSize[a.Row] != rowSize[b.Row] {
 				return rowSize[a.Row] > rowSize[b.Row]
+			}
+			return a.HP < b.HP
+		})
+	case Armored:
+		// The most heavily armored foe (Phase 39h: an armor-piercing
+		// bolt's best target); ties go to the weakest.
+		return best(func(a, b Foe) bool {
+			if a.Armor != b.Armor {
+				return a.Armor > b.Armor
 			}
 			return a.HP < b.HP
 		})

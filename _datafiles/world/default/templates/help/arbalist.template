@@ -1,0 +1,66 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">arbalist</ansi>
+
+The Arbalist is a crossbow shooter built to bring down armored foes. Its
+Piercing Bolt hits far harder than an arrow and ignores armor, but winding
+the crossbow afterwards takes its next turn, so it shoots every other turn.
+Against one heavily armored foe it is strongest; against many light foes it
+is weaker than a ranger. It has no creed: no alignment gate stands in front
+of any of its routes.
+
+<ansi fg="yellow-bold">What the Arbalist is</ansi>
+
+  Health      4 to start, 0.75 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 1.0 and Evasion 0.8 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        medium armor, no shield, crossbows only
+              (<ansi fg="command">help armor</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help equipmenttiers</ansi>)
+  Stats       perception 4, strength 3, vitality 2, speed 1 (<ansi fg="command">help growth</ansi>)
+  Starter kit a hunting crossbow, a padded jack, a leather cap, worn boots,
+              food, a waterskin and a knapsack
+  Utility     none: a shooter's work is in the fight
+
+<ansi fg="yellow-bold">Ranks of the Arbalist</ansi>
+
+  Level 1   <ansi fg="yellow">Piercing Bolt</ansi>   the Arbalist's whole turn, once every 2 combat rounds: one
+            bolt at 140% of an ordinary shot that ignores half the foe's
+            armor. The turn after it is spent winding the crossbow: no
+            shot, though the action meter still fills.
+  Level 3   <ansi fg="yellow">Steady Aim</ansi>      a bolt has +10 Attack when nothing has hurt the Arbalist
+            (no blow has landed on it) since its last bolt.
+  Level 6   <ansi fg="yellow">Crippling Bolt</ansi>  a bolt that lands hobbles the foe for 2 rounds
+            (<ansi fg="command">help statuses</ansi>).
+  Level 8   <ansi fg="yellow">Armor-breaker</ansi>   a Piercing Bolt ignores all of the foe's armor.
+
+Level 5 brings the first talent: Keen Edge, Footwork, Toughness, Sharp Eye
+(+3% critical chance on every blow) or Heavy Bolts (a Piercing Bolt deals
+10% more damage) (<ansi fg="command">help talents</ansi>). At level 10 an Arbalist promotes to a
+Siegebreaker, Sharpshooter or Warden of the Wall (<ansi fg="command">help arbalist-routes</ansi>).
+
+<ansi fg="yellow-bold">The winding</ansi>
+
+A Piercing Bolt needs a shooting weapon in hand. After one, the Arbalist's
+next turn is spent winding the crossbow: it makes no blow that turn. The
+round it winds, the bolt's cooldown is also running, so the next bolt is
+ready the round after. The battle shows both: "looses a heavy bolt" and
+"winds the crossbow". A battle's end loads the crossbow again, so every
+fight starts with a bolt ready. Any other weapon it holds shoots plainly.
+
+<ansi fg="yellow-bold">How an Arbalist fights</ansi>
+
+A battle plays out on its own, so everything above happens without a command.
+The Arbalist's default target rule is <ansi fg="command">armored</ansi>: the foe with the most armor it
+can reach, the weakest on a tie (<ansi fg="command">help strategy</ansi>). Put it in the back row, where a
+crossbow reaches any foe in a column (<ansi fg="command">help formation</ansi>), with a guardian
+in front of it (<ansi fg="command">help guardian</ansi>); it makes no blow while winding. Armor reduces
+a blow by a share, so the heavier the foe's armor, the more a bolt gets
+through that an arrow would not. <ansi fg="command">strategy me abilities off</ansi> turns the bolt, and its
+winding, off: the Arbalist then shoots every turn at an ordinary rate.
+
+<ansi fg="yellow-bold">Other Arbalists</ansi>
+
+An Arbalist companion fights the same way, by its strategy, and promotes
+and chooses talents like any other (<ansi fg="command">help company</ansi>). Recruits are hired like
+any other and arrive with a hunting crossbow.
+
+Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">talent</ansi>, <ansi fg="command">strategy</ansi>.
+
+See also: <ansi fg="command">help arbalist-routes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help combat</ansi>.

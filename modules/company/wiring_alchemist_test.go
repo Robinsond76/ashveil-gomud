@@ -164,9 +164,15 @@ func TestAnApothecaryDraughtHealsMoreSplashesAndCleans(t *testing.T) {
 		b.hurtOne(1, 100)
 		return b.companion(1).Character.Health - 100, b
 	}
-	plain, _ := healed("", 10)
-	potent, _ := healed("apothecary", 10)
-	assert.Greater(t, potent, plain-1, "Potent draughts heal 30% more")
+	// A draught's heal is rolled, so compare totals over several throws
+	// (39h review: one throw each flaked about 1 run in 10).
+	plain, potent := 0, 0
+	for i := 0; i < 8; i++ {
+		p, _ := healed("", 10)
+		q, _ := healed("apothecary", 10)
+		plain, potent = plain+p, potent+q
+	}
+	assert.Greater(t, potent, plain, "Potent draughts heal 30% more")
 
 	// Splash draught (20): the next most hurt ally takes 30% as much.
 	b := alchemistBrawl(t, "apothecary", 20, "draught")
