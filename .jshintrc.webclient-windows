@@ -3,6 +3,7 @@
   "globals": {
     "CharacterTabs": false,
     "Client": false,
+    "Sprites": false,
     "CompanyData": false,
     "FitAddon": false,
     "injectStyles": false,

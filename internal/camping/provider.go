@@ -188,11 +188,16 @@ type CampState struct {
 	// room. RoomTitle is the camp's room.
 	HasCamp, Here bool
 	RoomTitle     string
-	FireLit       bool
-	Resting       bool
-	// Rested is a camp whose rest is done: it can't rest again (32g
-	// review finding 7).
+	// RoomID is the camp's room (Phase 40b), so the map can mark its tile.
+	RoomID  int
+	FireLit bool
+	Resting bool
+	// Rested is a camp whose last rest is done. Its fire has burned to
+	// embers (Embers, Phase 40a3): feed it (camp fire) to rest again.
 	Rested bool
+	Embers bool
+	// Tent is an oiled canvas tent pitched at the camp (Phase 40a3).
+	Tent bool
 	// RestPercent and RestSeconds are a running rest's progress and time
 	// left.
 	RestPercent, RestSeconds int

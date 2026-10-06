@@ -36,7 +36,7 @@ func sampleCompany() companyview.Summary {
 			WarmthKnown: true, Placed: true},
 		CompanyKnown: true,
 		Companions: []companyview.Member{
-			{Key: company.CompanionMemberKey(1), ID: 1, Name: "Bran", Status: company.MemberPresent, Level: 3, Archetype: "Warrior",
+			{Key: company.CompanionMemberKey(1), ID: 1, Name: "Bran", Status: company.MemberPresent, Level: 3, Archetype: "Warrior", Lineage: "warrior", Class: "knight",
 				HasHP: true, HP: 12, HPMax: 25, Hunger: need(70, "Sated"), Thirst: need(70, "Comfortable"), Fatigue: need(70, "Ready"),
 				Placed: true, Row: 0, Col: 1},
 			{Key: company.CompanionMemberKey(2), ID: 2, Name: "Bran", Status: company.MemberAwaiting, Level: 2},
@@ -78,6 +78,9 @@ func TestCompanyPayloadShape(t *testing.T) {
 	assert.Equal(t, "companion:1", bran["key"])
 	assert.Equal(t, "present", bran["status"])
 	assert.Equal(t, map[string]any{"row": 0.0, "col": 1.0}, bran["cell"])
+	assert.Equal(t, "warrior", bran["lineage"], "the map picks a companion's sprite by these")
+	assert.Equal(t, "knight", bran["class"])
+	assert.NotContains(t, leader, "lineage", "the leader's lineage rides Char.Info")
 	assert.NotContains(t, bran, "rescue_seconds", "countdowns live in the live half")
 	awaiting := members[1].(map[string]any)
 	assert.Equal(t, "awaiting", awaiting["status"])
@@ -462,4 +465,28 @@ func TestCompanyPayloadTrainingFields(t *testing.T) {
 	awaiting := members[1].(map[string]any)
 	assert.NotContains(t, awaiting, "skills", "none trained")
 	assert.Equal(t, 0.0, awaiting["training_points"], "known, and zero")
+}
+
+// TestCompanyMemberClass (Phase 40s5): a promoted member's class id travels
+// with it so the battle screen can draw the class's art; before promotion the
+// key is absent.
+func TestCompanyMemberClass(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.Class = "paladin"
+	s.Companions[0].Class = "hag"
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, err := json.Marshal(p)
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	assert.Equal(t, "paladin", got["leader"].(map[string]any)["class"])
+	members := got["members"].([]any)
+	assert.Equal(t, "Paladin", got["leader"].(map[string]any)["class_name"], "the display name travels with the id")
+	assert.Equal(t, "hag", members[0].(map[string]any)["class"])
+	assert.Equal(t, "Hag", members[0].(map[string]any)["class_name"])
+	_, has := members[1].(map[string]any)["class"]
+	assert.False(t, has, "an unpromoted member carries no class key")
+	_, has = members[1].(map[string]any)["class_name"]
+	assert.False(t, has, "nor a class name")
 }

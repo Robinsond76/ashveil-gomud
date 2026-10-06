@@ -1,0 +1,10 @@
+itemid: 47
+name: fire steel and tinder
+namesimple: fire steel
+description: A striker of hard steel with a flint, and a tin of dry tinder. With it,
+  damp firewood lights at the first try and burns at full warmth (camp fire). Never
+  wears out (help camp gear).
+type: object
+subtype: mundane
+value: 5
+weight: 200

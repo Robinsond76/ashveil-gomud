@@ -1,0 +1,40 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">samurai-routes</ansi>
+
+The Samurai lineage splits at level 10 into a master of the first cut, a
+sworn bodyguard or a masterless blade. None of the three asks anything of
+your alignment, at level 10 or at level 30.
+
+<ansi fg="yellow-bold">Kensai</ansi>
+
+  10 Piercing draw      Iaijutsu also ignores half of the target's armor
+  15 Clean cut          +2 Attack
+  20 Deep focus         Focus builds up to +20%
+  25 Opening edge       Iaijutsu deals 75% more damage
+
+  <ansi fg="yellow-bold">Sword Saint</ansi> (30, still to come): Focus to +25% and an Iaijutsu that strikes twice.
+
+<ansi fg="yellow-bold">Hatamoto</ansi>
+
+  10 Bodyguard          steps in front of the company leader twice a battle,
+                        like a guardian (<ansi fg="command">help guardian</ansi>): a standing Hatamoto whose
+                        column is within one of the leader's takes the blow
+                        meant for them, whatever strategy it fights by
+  15 Standard bearer    allies in its row gain +3 Evasion
+  20 Loyal blade        Bodyguard: 3 times a battle
+  25 Shield wall        allies in its row take 5% less damage
+
+  <ansi fg="yellow-bold">Shogun</ansi> (30, still to come): every ally in the company opens a battle sooner.
+
+<ansi fg="yellow-bold">Ronin</ansi>
+
+  10 Vengeance          +10% damage for each fallen ally in the company
+  15 Grim resolve       +2 Attack
+  20 Deeper vengeance   +15% damage for each fallen ally
+  25 Lone blade         +3 Evasion
+
+  <ansi fg="yellow-bold">Kenshi</ansi> (30, still to come): when it stands alone it cannot be knocked down.
+
+Elite classes are named but not open yet; until they are, a Samurai keeps its
+advanced class's ranks. Routes are final.
+
+See also: <ansi fg="command">help samurai</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help guardian</ansi>.

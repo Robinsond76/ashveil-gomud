@@ -39,6 +39,9 @@
         mapBackground:   '#111111',  // canvas background color
         defaultZoom:     null,       // null = no default; number = zoom level to ease to on room change
         showResources:   true,       // Phase 40a: draw room-resource icons in tile corners
+        sprites:         true,       // Phase 40b: your class sprite, company badge and ally sprites; off = the classic red square and hearts
+        showCamp:        true,       // Phase 40b: your camp and your party's camps
+        style:           'tiles',    // Phase 40c: 'tiles' (terrain art, landmarks, walls, fog) | 'classic' (coloured squares and letters)
     };
 
     // Phase 40a: room resources. Until the S1 icon sprites exist each one
@@ -481,8 +484,22 @@
         // -- Constants ---------------------------------------------------------
         var ROOM_GRID_STEP = 42;  // fallback only; runtime reads mapSettings.roomSpacing
 
-        function getRoomSize()  { return Math.round(mapSettings.roomSize); }
-        function getBaseStep()  { return Math.round(mapSettings.roomSpacing); }
+        // Phase 40c: in the tiles style a room is one 32 px art tile and
+        // neighbours touch, so the size and spacing settings do not apply.
+        var TILE_PX = 32;
+        var TILE_ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3, 4]; // tile sizes 16, 24, 32, 48, 64, 96 and 128 px stay crisp
+        var ANIM_TILE_MS = 250;
+        function tilesOn()      { return mapSettings.style !== 'classic'; }
+        function getRoomSize()  { return tilesOn() ? TILE_PX : Math.round(mapSettings.roomSize); }
+        function getBaseStep()  { return tilesOn() ? TILE_PX : Math.round(mapSettings.roomSpacing); }
+        function snapZoom(z) {
+            var best = TILE_ZOOMS[0];
+            TILE_ZOOMS.forEach(function (v) { if (Math.abs(v - z) < Math.abs(best - z)) { best = v; } });
+            return best;
+        }
+        function reducedMotion() {
+            try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; }
+        }
 
         var CONNECTION_WIDTH = 4;    // Stroke width of corridor lines; thicker = more visible connections, can obscure small rooms
         var ROOM_BORDER_WIDTH = 1.5; // Stroke width of the outline drawn around each room square; higher = bolder room edges
@@ -518,6 +535,298 @@
         var partyHeartEase = {}; // name -> { fromGx, fromGy, toGx, toGy, toZ, startTime }
         var heartRafId = null;
 
+
+        // -- Phase 40b: sprites, badge, camps ------------------------------------
+        var WALK_STEP_MS    = 200;  // time the sprite takes per tile; matches CENTER_EASE_DURATION
+        var WALK_QUEUE_MAX  = 2;    // steps the sprite may trail the player before it snaps
+        var FADE_MS         = 250;  // fade-in after a level (z) or zone change
+        var ALLY_SCALE      = 0.75; // allied class sprites at 75% of the player's
+        var identity    = { classid: '', lineage: '' }; // Char.Info
+        var companySize = 0;        // members with the leader, 0 when alone or unknown
+        var campInfo    = null;     // Company.Camp
+        var companions  = [];       // Phase 40c: present companions { key, lineage, classid }, drawn beside you
+        // Where each companion stands around the player, in art pixels from
+        // the player's feet (x across, y up); a fifth or later is not drawn
+        // (the badge still counts everyone).
+        var COMPANION_SLOTS = [{ x: -13, y: 2 }, { x: 13, y: 2 }, { x: -7, y: 7 }, { x: 7, y: 7 }];
+        var unit = {
+            x: null, y: null,       // grid position drawn (eased)
+            targetX: null, targetY: null,
+            zoneKey: '',
+            face: 'down', flip: false,
+            step: null,             // { fromX, fromY, toX, toY, face, flip, start }
+            queue: [],
+            fadeStart: -1,
+        };
+        var animTimer = null;
+        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0 }; // what the last render drew (browser checks)
+
+        function faceOf(dx, dy, prev) {
+            if (dx === 0 && dy === 0) { return prev || { face: 'down', flip: false }; }
+            if (dx === 0) { return { face: dy < 0 ? 'up' : 'down', flip: false }; }
+            return { face: 'side', flip: dx < 0 }; // sprites face right; mirror for west; diagonals use side
+        }
+
+        // chainKeys is the sprite folder order for a character: current
+        // class, lineage, then the adventurer.
+        function chainKeys(classid, lineage) {
+            var keys = [];
+            [classid, lineage, 'adventurer'].forEach(function (k) {
+                if (k && keys.indexOf(k) === -1) { keys.push(k); }
+            });
+            return keys;
+        }
+
+        // resolveSheet walks the fallback chain. It returns null while the
+        // wanted image is still loading (nothing flashes in a worse sprite)
+        // and when every image is missing or failed (the caller then draws
+        // the classic marker).
+        function resolveSheet(keys, walking) {
+            for (var i = 0; i < keys.length; i++) {
+                var idle = 'map/units/' + keys[i] + '/idle.png';
+                var walk = 'map/units/' + keys[i] + '/walk.png';
+                var st = Sprites.status(idle);
+                if (st === 'ready') {
+                    if (Sprites.status(walk) === 'ready' && walking) { return { sheet: Sprites.art(walk), walk: true }; }
+                    return { sheet: Sprites.art(idle), walk: false };
+                }
+                if (st === 'loading') { return null; }
+            }
+            return null;
+        }
+
+        // spriteMult is the whole-number multiple of 32 px nearest the tile
+        // size, so pixels stay square; zoomed far out it halves (16 px).
+        function spriteMult(tilePx) {
+            return tilePx < 16 ? 0.5 : Math.max(1, Math.round(tilePx / 32));
+        }
+
+        function drawFrame(sheet, row, flip, cx, feetY, mult, now, startMs, alpha) {
+            var info = sheet.info;
+            var r = Math.max(0, (info.rows || []).indexOf(row));
+            var f = Sprites.frame(info, r, now, startMs);
+            var w = f.sw * mult, h = f.sh * mult;
+            var x = Math.round(cx - w / 2);
+            var y = Math.round(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            ctx.globalAlpha = alpha;
+            if (flip) {
+                ctx.translate(x + w, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(sheet.img, f.sx, f.sy, f.sw, f.sh, 0, y, w, h);
+            } else {
+                ctx.drawImage(sheet.img, f.sx, f.sy, f.sw, f.sh, x, y, w, h);
+            }
+            ctx.restore();
+        }
+
+        // drawIcon draws a centered, anchor-less marker (ring, badge, camp
+        // pieces) at <mult>x. It reports whether the image was ready.
+        function drawIcon(path, cx, cy, mult, now) {
+            var a = Sprites.art(path);
+            if (!a) { return false; }
+            var f = Sprites.frame(a.info, 0, now, 0);
+            var w = f.sw * mult, h = f.sh * mult;
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h);
+            ctx.restore();
+            return true;
+        }
+
+        function spritesOn() { return mapSettings.sprites !== false; }
+
+        // unitMoveTo records the player's move: a one-tile step walks (facing
+        // the way it went) and queues at most WALK_QUEUE_MAX behind; a jump
+        // of more than a tile (recall, teleport) and a faster pile-up snap;
+        // a level or zone change snaps and fades in, keeping the facing.
+        function unitMoveTo(gx, gy, zoneKey, now) {
+            if (unit.x === null) {
+                unit.x = unit.targetX = gx; unit.y = unit.targetY = gy; unit.zoneKey = zoneKey;
+                return;
+            }
+            if (zoneKey !== unit.zoneKey) {
+                unit.zoneKey = zoneKey;
+                unitSnap(gx, gy);
+                unit.fadeStart = now;
+                return;
+            }
+            var dx = gx - unit.targetX, dy = gy - unit.targetY;
+            if (dx === 0 && dy === 0) { return; }
+            if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) { unitSnap(gx, gy); return; }
+            var f = faceOf(dx, dy);
+            unit.queue.push({ x: gx, y: gy, face: f.face, flip: f.flip });
+            unit.targetX = gx; unit.targetY = gy;
+            if (unit.queue.length > WALK_QUEUE_MAX) { unitSnap(gx, gy); }
+        }
+
+        function unitSnap(gx, gy) {
+            unit.x = unit.targetX = gx; unit.y = unit.targetY = gy;
+            unit.queue = [];
+            unit.step = null;
+        }
+
+        // unitPose advances the walk to <now> and returns where the sprite
+        // is and whether it is walking.
+        function unitPose(now) {
+            var chainStart = null;
+            while (true) {
+                if (!unit.step && unit.queue.length) {
+                    var n = unit.queue.shift();
+                    unit.step = { fromX: unit.x, fromY: unit.y, toX: n.x, toY: n.y,
+                                  start: chainStart !== null ? chainStart : now };
+                    unit.face = n.face; unit.flip = n.flip;
+                }
+                if (!unit.step) { break; }
+                var t = (now - unit.step.start) / WALK_STEP_MS;
+                if (t >= 1) {
+                    unit.x = unit.step.toX; unit.y = unit.step.toY;
+                    chainStart = unit.step.start + WALK_STEP_MS;
+                    unit.step = null;
+                    continue;
+                }
+                return {
+                    x: unit.step.fromX + (unit.step.toX - unit.step.fromX) * t,
+                    y: unit.step.fromY + (unit.step.toY - unit.step.fromY) * t,
+                    walking: true, start: unit.step.start,
+                };
+            }
+            return { x: unit.x, y: unit.y, walking: false, start: 0 };
+        }
+
+        // fireAndRest draws a camp's fire (bottom right of the tent, or at
+        // <at>) and its resting mark (over the tent).
+        function fireAndRest(cx, cy, mult, lit, resting, now, at, embers) {
+            var fx = at ? at.px : cx + 8 * mult, fy = at ? at.py : cy + 8 * mult;
+            if (lit) {
+                drawIcon('map/camp/fire-lit.png', fx, fy, mult, now);
+                drawIcon('map/camp/smoke.png', fx, fy - 12 * mult, mult, now);
+            } else if (embers) {
+                // Phase 40c: a fire burned down to embers glows low, no smoke.
+                if (!drawIcon('map/camp/embers.png', fx, fy, mult, now)) {
+                    drawIcon('map/camp/fire-unlit.png', fx, fy, mult, now);
+                }
+            } else {
+                drawIcon('map/camp/fire-unlit.png', fx, fy, mult, now);
+            }
+            if (resting) { drawIcon('map/camp/resting.png', cx - 8 * mult, cy - 12 * mult, mult, now); }
+        }
+
+        // tent is false for a camp pitched without a tent (Phase 40a3): the
+        // rough camp is drawn instead. A payload that does not say (older
+        // server) is drawn with its tent.
+        function drawCamp(roomId, ally, lit, resting, innRest, now, occupied, embers, tent) {
+            var r = rooms.get(roomId);
+            if (!r) { return; }
+            var p = gridToCanvas(r.x, r.y);
+            var mult = spriteMult(getRoomSize() * zoomScale);
+            var fire = null;
+            if (occupied) {
+                // Your sprite stands on this tile and would hide the camp:
+                // pitch the tent behind your left shoulder and the fire by
+                // your right foot so both still show (40b review).
+                fire = { px: p.px + 14 * mult, py: p.py + 6 * mult };
+                p = { px: p.px - 12 * mult, py: p.py - 8 * mult };
+            }
+            if (innRest) {
+                drawIcon('map/camp/inn-rest.png', p.px, p.py, mult, now);
+                return;
+            }
+            var pitch = (tent === false)
+                ? (ally ? 'map/camp/camp-rough-ally.png' : 'map/camp/camp-rough.png')
+                : (ally ? 'map/camp/tent-ally.png' : 'map/camp/tent.png');
+            if (!drawIcon(pitch, p.px, p.py, mult, now)) {
+                // no art yet: a small tent triangle
+                var q = getRoomSize() * zoomScale * 0.4;
+                ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
+                ctx.beginPath(); ctx.moveTo(p.px, p.py - q); ctx.lineTo(p.px + q, p.py + q); ctx.lineTo(p.px - q, p.py + q); ctx.closePath(); ctx.fill();
+            }
+            fireAndRest(p.px, p.py, mult, lit, resting, now, fire, embers);
+        }
+
+        // drawCamps draws your camp and your party's. spriteOn says your class
+        // sprite stands on your tile, so a camp there is drawn beside it.
+        function drawCamps(now, spriteOn) {
+            if (!campInfo || mapSettings.showCamp === false) { return; }
+            (campInfo.allied_camps || []).forEach(function (c) {
+                drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, spriteOn && c.room_id === currentRoomId, !!c.embers, c.tent);
+            });
+            if (campInfo.has_camp && campInfo.room_id) {
+                var inn = !!(campInfo.here && campInfo.inn && campInfo.resting);
+                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, spriteOn && campInfo.room_id === currentRoomId, !!campInfo.embers, campInfo.tent);
+            }
+        }
+
+        // drawUnit draws the player's marker above the terrain: the here-ring,
+        // the class sprite, then the company badge. It returns false when
+        // there is no sprite to draw (off, still loading, or no art), so the
+        // caller shows the classic red square.
+        function drawUnit(now) {
+            if (!spritesOn() || currentRoomId === null || unit.x === null) { return false; }
+            var pose = unitPose(now);
+            var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking);
+            if (!res) { return false; }
+            var tile = getRoomSize() * zoomScale;
+            var mult = spriteMult(tile);
+            var p = gridToCanvas(pose.x, pose.y);
+            var alpha = 1;
+            if (unit.fadeStart >= 0) {
+                alpha = Math.min(1, (now - unit.fadeStart) / FADE_MS);
+                if (alpha >= 1) { unit.fadeStart = -1; }
+            }
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            if (!drawIcon('map/markers/here-ring.png', p.px, p.py + 8 * mult, mult, now)) {
+                ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = Math.max(1, mult * 2);
+                ctx.strokeRect(p.px - tile / 2, p.py - tile / 2, tile, tile);
+            }
+            ctx.restore();
+            // Companions stand in behind you and move with you.
+            companions.slice(0, COMPANION_SLOTS.length).forEach(function (c, i) {
+                var cres = resolveSheet(chainKeys(c.classid, c.lineage), pose.walking);
+                if (!cres) { return; }
+                var slot = COMPANION_SLOTS[i], cm = mult * ALLY_SCALE;
+                drawFrame(cres.sheet, unit.face, unit.flip, p.px + slot.x * mult, p.py + (12 - slot.y) * mult, cm, now, pose.walking ? pose.start : 0, alpha);
+            });
+            drawFrame(res.sheet, unit.face, unit.flip, p.px, p.py + 12 * mult, mult, now, pose.walking ? pose.start : 0, alpha);
+            if (companySize > 1) {
+                var bx = p.px + 9 * mult, by = p.py - 12 * mult;
+                var bw = 12 * mult;
+                if (!drawIcon('map/markers/company-badge.png', bx, by, mult, now)) {
+                    ctx.fillStyle = '#8a2a2a'; ctx.beginPath(); ctx.arc(bx, by, bw / 2, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold ' + Math.round(8 * mult) + 'px monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(String(companySize), bx, by);
+            }
+            return { walking: pose.walking };
+        }
+
+        // drawAllySprite draws a party member as a class sprite at 75% with
+        // an ally pennant. It returns false when there is no art to draw, so
+        // the caller keeps the heart.
+        function drawAllySprite(ease, gx, gy, moving, now) {
+            if (!ease.classid && !ease.lineage) { return false; }
+            var res = resolveSheet(chainKeys(ease.classid, ease.lineage), moving);
+            if (!res) { return false; }
+            var p = gridToCanvas(gx, gy);
+            var mult = spriteMult(getRoomSize() * zoomScale) * ALLY_SCALE;
+            drawFrame(res.sheet, ease.face || 'down', !!ease.flip, p.px, p.py + 12 * mult, mult, now, ease.startTime, 1);
+            drawIcon('map/markers/ally-banner.png', p.px + 9 * mult, p.py - 10 * mult, mult, now);
+            return true;
+        }
+
+        function scheduleAnim(walking) {
+            if (!container || !container.isConnected || animTimer !== null) { return; }
+            if (walking) {
+                animTimer = requestAnimationFrame(function () { animTimer = null; render(); });
+            } else {
+                animTimer = setTimeout(function () { animTimer = null; render(); }, 120);
+            }
+        }
+
         // -- Helpers -----------------------------------------------------------
         function resizeCanvas() {
             if (!canvas || !container) { return; }
@@ -535,9 +844,16 @@
             };
         }
 
+        var lastWheelStep = 0;
+        function stepTileZoom(dir) {
+            var i = TILE_ZOOMS.indexOf(snapZoom(zoomScale)) + dir;
+            return TILE_ZOOMS[Math.max(0, Math.min(TILE_ZOOMS.length - 1, i))];
+        }
+
         function setCameraTarget(tx, ty) {
             panOffsetX = 0; panOffsetY = 0;
             var targetZoom = (mapSettings.defaultZoom !== null) ? mapSettings.defaultZoom : zoomScale;
+            if (tilesOn()) { targetZoom = snapZoom(targetZoom); }
             if (CENTER_EASE_DURATION <= 0) {
                 cameraX = tx; cameraY = ty;
                 zoomScale = targetZoom;
@@ -634,6 +950,125 @@
             });
         }
 
+        // -- Phase 40c: terrain tiles, walls, landmarks --------------------------
+        // drawTileArt draws one 32 px frame of <path> centred on (px, py) at
+        // <size> px, smoothing off. <variant> picks a column of a variants
+        // sheet; <animated> instead picks the frame for <now>. It reports
+        // whether the image was ready.
+        function drawTileArt(path, variant, px, py, size, now, animated) {
+            var a = Sprites.art(path);
+            if (!a) { return false; }
+            var fw = a.info.frame[0], fh = a.info.frame[1];
+            var f = animated ? Sprites.frame(a.info, 0, now, 0) : { sx: variant * fw, sy: 0, sw: fw, sh: fh };
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(px - size / 2), Math.round(py - size / 2), size, size);
+            ctx.restore();
+            return true;
+        }
+
+        // drawTerrain draws a room's biome tile (the variant is the room id
+        // mod 3, the same for every viewer) and its animated overlay. It
+        // returns null while the art is not ready, else { animated }.
+        function drawTerrain(room, id, p, size, now) {
+            var biome = room.env ? room.env : 'default';
+            var path = 'map/terrain/' + biome + '.png';
+            if (Sprites.status(path) === 'none') {
+                // A biome with no art (or none yet, before the manifest loads).
+                if (!Sprites.has('map/terrain/unknown.png')) { return null; }
+                path = 'map/terrain/unknown.png';
+            }
+            var a = Sprites.art(path);
+            if (!a) { return null; }
+            var variants = Math.max(1, a.info.variants || 1);
+            drawTileArt(path, ((id % variants) + variants) % variants, p.px, p.py, size, now, false);
+            var animated = false;
+            if (a.info.animated_overlay && !reducedMotion()) {
+                animated = true;
+                drawTileArt('map/terrain/' + a.info.animated_overlay, 0, p.px, p.py, size, now, true);
+            }
+            return { animated: animated };
+        }
+
+        // drawWalls puts a dark edge between two touching rooms with no exit
+        // between them, so the map never suggests a way through a wall.
+        function drawWalls(index, size) {
+            var w = Math.max(2, Math.round(size / 16));
+            ctx.save();
+            ctx.strokeStyle = '#0e0a08';
+            ctx.lineWidth = w;
+            ctx.lineCap = 'butt';
+            var count = 0;
+            ctx.beginPath();
+            rooms.forEach(function (room, id) {
+                var p = gridToCanvas(room.x, room.y);
+                var h = Math.round(size / 2);
+                [[1, 0], [0, 1]].forEach(function (d) {
+                    var other = index[(room.x + d[0]) + ',' + (room.y + d[1])];
+                    if (other === undefined) { return; }
+                    var key = id < other ? (id + '-' + other) : (other + '-' + id);
+                    if (edges.has(key)) { return; }
+                    count++;
+                    if (d[0] === 1) {
+                        var x = Math.round(p.px) + h;
+                        ctx.moveTo(x, Math.round(p.py) - h); ctx.lineTo(x, Math.round(p.py) + h);
+                    } else {
+                        var y = Math.round(p.py) + h;
+                        ctx.moveTo(Math.round(p.px) - h, y); ctx.lineTo(Math.round(p.px) + h, y);
+                    }
+                });
+            });
+            ctx.stroke();
+            ctx.restore();
+            return count;
+        }
+
+        // drawLandmark draws the landmark overlay a room's legend or symbol
+        // maps to (map/landmarks.json). A symbol with no landmark keeps its
+        // letter, outlined so it reads on any terrain; an intentional-glyph
+        // legend (shore) and a plain room draw nothing over the tile.
+        function drawLandmark(room, id, p, size, fontPx, now) {
+            var info = roomInfoStore.get(id) || {};
+            var table = Sprites.data('map/landmarks.json');
+            var legend = String(info.maplegend || '').toLowerCase();
+            var sym = info.mapsymbol || '';
+            var lm = table ? ((table.legends && table.legends[legend]) || (table.symbols && table.symbols[sym])) : '';
+            if (lm) {
+                var path = 'map/landmarks/' + lm + '.png';
+                var st = Sprites.status(path);
+                if (st === 'loading') { return ''; }
+                if (st === 'ready') { drawTileArt(path, 0, p.px, p.py, size, now, false); return 'landmark'; }
+            }
+            if (!sym) { return ''; }
+            if (table && Array.isArray(table.glyphs) && table.glyphs.indexOf(legend) !== -1) { return ''; }
+            ctx.save();
+            ctx.font = 'bold ' + Math.max(8, Math.round(fontPx)) + 'px monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = Math.max(2, Math.round(fontPx / 4));
+            ctx.strokeStyle = '#000000';
+            ctx.strokeText(sym, p.px, p.py);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(sym, p.px, p.py);
+            ctx.restore();
+            return 'glyph';
+        }
+
+        // drawChevrons marks a room with stairs up or down (S1 chevrons).
+        // It returns false when the art is not ready, so the glyph stands.
+        function drawChevrons(room, p, now) {
+            var size = getRoomSize() * zoomScale;
+            var mult = spriteMult(size);
+            var ok = true;
+            if (room.hasUp) {
+                ok = drawIcon('map/markers/exit-up.png', p.px + size / 2 - 5 * mult, p.py - size / 2 + 5 * mult, mult, now) && ok;
+            }
+            if (room.hasDown) {
+                ok = drawIcon('map/markers/exit-down.png', p.px - size / 2 + 5 * mult, p.py + size / 2 - 5 * mult, mult, now) && ok;
+            }
+            return ok;
+        }
+
         // -- Rendering ---------------------------------------------------------
         function drawLineBadge(mx, my, type) {
             var sz = Math.max(7, Math.round(CONNECTION_WIDTH * zoomScale * 2.5));
@@ -675,53 +1110,127 @@
             var BASE_STEP = getBaseStep();
             var useCircle = (mapSettings.roomShape === 'circle');
 
-            ctx.strokeStyle = mapSettings.connectionColor;
-            ctx.lineWidth   = CONNECTION_WIDTH * zoomScale;
-            ctx.lineCap     = 'round';
-
-            edges.forEach(function (flags, key) {
-                var parts = key.split('-');
-                var rA = rooms.get(parseInt(parts[0], 10));
-                var rB = rooms.get(parseInt(parts[1], 10));
-                if (!rA || !rB) { return; }
-                var pA = gridToCanvas(rA.x, rA.y), pB = gridToCanvas(rB.x, rB.y);
-                ctx.beginPath(); ctx.moveTo(pA.px, pA.py); ctx.lineTo(pB.px, pB.py); ctx.stroke();
-                if (flags.locked || flags.secret) {
-                    drawLineBadge((pA.px + pB.px) / 2, (pA.py + pB.py) / 2,
-                                  flags.secret ? 'secret' : 'key');
-                }
-            });
-
-            var stubLen = BASE_STEP * zoomScale * 0.55;
-            zoneExitStubs.forEach(function (stub) {
-                var r = rooms.get(stub.roomId);
-                if (!r) { return; }
-                var p = gridToCanvas(r.x, r.y);
-                var len = Math.sqrt(stub.dx * stub.dx + stub.dy * stub.dy);
-                if (len === 0) { return; }
-                var ex = p.px + (stub.dx / len) * stubLen;
-                var ey = p.py + (stub.dy / len) * stubLen;
-                ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(ex, ey); ctx.stroke();
-                if (stub.locked || stub.secret) {
-                    drawLineBadge((p.px + ex) / 2, (p.py + ey) / 2, stub.secret ? 'secret' : 'key');
-                }
-            });
-
+            var tiles = tilesOn();
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0 };
+            var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
             var scaledFont   = SYMBOL_FONT_SIZE  * zoomScale;
             var half         = scaledSize / 2;
+            var tilePx       = Math.max(1, Math.round(scaledSize));
+            var drewTiles    = {};   // room id -> its terrain tile was drawn
+            var animTiles    = false;
 
+            ctx.strokeStyle = mapSettings.connectionColor;
+            ctx.lineWidth   = CONNECTION_WIDTH * zoomScale;
+            ctx.lineCap     = 'round';
+
+            // drawConnections draws corridor lines and their lock badges. In
+            // the tiles style touching rooms need no line (only the badge);
+            // a longer or diagonal exit keeps its line, drawn over the tiles.
+            function drawConnections() {
+                ctx.strokeStyle = mapSettings.connectionColor;
+                ctx.lineWidth   = CONNECTION_WIDTH * zoomScale;
+                ctx.lineCap     = 'round';
+                edges.forEach(function (flags, key) {
+                    var parts = key.split('-');
+                    var rA = rooms.get(parseInt(parts[0], 10));
+                    var rB = rooms.get(parseInt(parts[1], 10));
+                    if (!rA || !rB) { return; }
+                    var pA = gridToCanvas(rA.x, rA.y), pB = gridToCanvas(rB.x, rB.y);
+                    var touching = Math.abs(rA.x - rB.x) + Math.abs(rA.y - rB.y) === 1;
+                    if (!(tiles && touching)) {
+                        ctx.beginPath(); ctx.moveTo(pA.px, pA.py); ctx.lineTo(pB.px, pB.py); ctx.stroke();
+                    }
+                    if (flags.locked || flags.secret) {
+                        drawLineBadge((pA.px + pB.px) / 2, (pA.py + pB.py) / 2,
+                                      flags.secret ? 'secret' : 'key');
+                    }
+                });
+            }
+
+            // drawStubs draws exits that lead to unvisited rooms: a short
+            // line in the classic style; in tiles a fog tile at the far end
+            // (or the line, while the fog art is not ready).
+            function drawStubs(fogOnly) {
+                var stubLen = BASE_STEP * zoomScale * 0.55;
+                var fogged = {};
+                zoneExitStubs.forEach(function (stub) {
+                    var r = rooms.get(stub.roomId);
+                    if (!r) { return; }
+                    var p = gridToCanvas(r.x, r.y);
+                    var len = Math.sqrt(stub.dx * stub.dx + stub.dy * stub.dy);
+                    if (len === 0) { return; }
+                    var fogReady = tiles && Sprites.status('map/terrain/fog.png') === 'ready';
+                    if (fogReady) {
+                        var fx = r.x + stub.dx, fy = r.y + stub.dy;
+                        var occupied = coordIndex[fx + ',' + fy] !== undefined;
+                        if (fogOnly && !occupied && !fogged[fx + ',' + fy]) {
+                            fogged[fx + ',' + fy] = true;
+                            var fp = gridToCanvas(fx, fy);
+                            drawTileArt('map/terrain/fog.png', 0, fp.px, fp.py, tilePx, nowMs, false);
+                            drawn.fog++;
+                        }
+                        if (!fogOnly && (stub.locked || stub.secret)) {
+                            var fq = gridToCanvas(fx, fy);
+                            drawLineBadge((p.px + fq.px) / 2, (p.py + fq.py) / 2, stub.secret ? 'secret' : 'key');
+                        }
+                        return;
+                    }
+                    if (fogOnly) { return; }
+                    ctx.strokeStyle = mapSettings.connectionColor;
+                    ctx.lineWidth   = CONNECTION_WIDTH * zoomScale;
+                    ctx.lineCap     = 'round';
+                    var ex = p.px + (stub.dx / len) * stubLen;
+                    var ey = p.py + (stub.dy / len) * stubLen;
+                    ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(ex, ey); ctx.stroke();
+                    if (stub.locked || stub.secret) {
+                        drawLineBadge((p.px + ex) / 2, (p.py + ey) / 2, stub.secret ? 'secret' : 'key');
+                    }
+                });
+            }
+
+            var coordIndex = {};
+            rooms.forEach(function (room, id) { coordIndex[room.x + ',' + room.y] = id; });
+
+            if (!tiles) {
+                drawConnections();
+                drawStubs(false);
+            }
+
+            // Phase 40b: with a class sprite the current room keeps its terrain
+            // colour and the sprite stands above it; without one it stays the
+            // classic red square.
+            var spriteOn = spritesOn() && currentRoomId !== null && unit.x !== null &&
+                resolveSheet(chainKeys(identity.classid, identity.lineage), false) !== null;
+
+            // Pass 1: terrain. A room with no tile art yet (loading, failed or
+            // missing) draws its classic colour square so the map never blanks.
             rooms.forEach(function (room, id) {
                 var p         = gridToCanvas(room.x, room.y);
-                var isCurrent = (id === currentRoomId);
+                var isCurrent = (id === currentRoomId) && !spriteOn;
+                if (tiles) {
+                    var t = drawTerrain(room, id, p, tilePx, nowMs);
+                    if (t) {
+                        drewTiles[id] = true;
+                        drawn.tiles++;
+                        if (t.animated) { animTiles = true; drawn.animated++; }
+                        if (isCurrent) {
+                            ctx.strokeStyle = CURRENT_ROOM_COLOR;
+                            ctx.lineWidth = Math.max(2, Math.round(scaledSize * 0.08));
+                            ctx.strokeRect(Math.round(p.px - tilePx / 2) + 1, Math.round(p.py - tilePx / 2) + 1, tilePx - 2, tilePx - 2);
+                        }
+                        return;
+                    }
+                }
+                if (tiles) { drawn.fallbacks++; }
                 var fill      = isCurrent ? CURRENT_ROOM_COLOR : colorForSymbol(room.symbol, room.env);
                 var rx = p.px - half, ry = p.py - half;
                 ctx.fillStyle   = fill;
                 ctx.strokeStyle = ROOM_BORDER_COLOR;
                 ctx.lineWidth   = scaledBorder;
 
-                if (useCircle) {
+                if (useCircle && !tiles) {
                     ctx.beginPath();
                     ctx.arc(p.px, p.py, half, 0, Math.PI * 2);
                     ctx.fill();
@@ -736,14 +1245,35 @@
                 ctx.fillStyle    = symColor;
                 ctx.font         = 'bold ' + scaledFont + 'px monospace';
                 ctx.textAlign    = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(room.symbol || '\u2022', p.px, p.py);
+                ctx.fillText(room.symbol || '•', p.px, p.py);
+            });
+
+            if (tiles) {
+                drawStubs(true);   // fog sits on the terrain, under walls and landmarks
+                drawn.walls = drawWalls(coordIndex, tilePx);
+                drawConnections();
+                drawStubs(false);
+            }
+
+            // Pass 2: landmark, resources, up/down marks.
+            rooms.forEach(function (room, id) {
+                var p         = gridToCanvas(room.x, room.y);
+                var isCurrent = (id === currentRoomId) && !spriteOn;
+                var tiled     = !!drewTiles[id];
+                var fill      = isCurrent ? CURRENT_ROOM_COLOR : colorForSymbol(room.symbol, room.env);
+                var symColor  = isCurrent ? CURRENT_ROOM_TEXT_COLOR
+                    : (fill !== '#3a3a4a' ? contrastColor(fill) : SYMBOL_TEXT_COLOR);
+                if (tiled) {
+                    var mark = drawLandmark(room, id, p, tilePx, scaledFont, nowMs);
+                    if (mark === 'landmark') { drawn.landmarks++; } else if (mark === 'glyph') { drawn.glyphs++; }
+                }
                 if (mapSettings.showResources) {
                     var resIds = resourcesFor(id);
                     var goneIds = depletedFor(id);
                     if (resIds.length > 0) {
                         var dot   = Math.max(3, scaledSize * 0.16);
                         var shown = resIds.slice(0, RESOURCE_ICON_MAX);
-                        var inset = useCircle ? Math.max(2, half * 0.45) : Math.max(2, scaledSize * 0.1);
+                        var inset = (useCircle && !tiles) ? Math.max(2, half * 0.45) : Math.max(2, scaledSize * 0.1);
                         shown.forEach(function (rid, i) {
                             var meta = RESOURCE_INFO[rid];
                             ctx.fillStyle = (meta && meta.color) || '#aaaaaa';
@@ -751,7 +1281,7 @@
                             ctx.lineWidth = 1;
                             var dx = p.px - half + inset + i * (dot * 2 + 1) + dot * 0.5;
                             var dy = p.py - half + inset;
-                            if (useCircle) {
+                            if (useCircle && !tiles) {
                                 dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
                                 dy = p.py - half * 0.62;
                             }
@@ -774,7 +1304,7 @@
                             }
                         });
                         if (resIds.length > RESOURCE_ICON_MAX) {
-                            ctx.fillStyle = symColor;
+                            ctx.fillStyle = tiled ? '#ffffff' : symColor;
                             ctx.font = 'bold ' + Math.max(6, dot * 2) + 'px monospace';
                             ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
                             ctx.fillText('+', p.px - half + inset + RESOURCE_ICON_MAX * (dot * 2 + 1), p.py - half + inset);
@@ -782,24 +1312,31 @@
                     }
                 }
                 if (room.hasUp || room.hasDown) {
+                    if (tiled && drawChevrons(room, p, nowMs)) { return; }
                     var arrowSize = Math.max(5, scaledSize * 0.28);
                     ctx.font      = 'bold ' + arrowSize + 'px monospace';
-                    ctx.fillStyle = isCurrent ? CURRENT_ROOM_TEXT_COLOR : symColor;
+                    ctx.fillStyle = isCurrent ? CURRENT_ROOM_TEXT_COLOR : (tiled ? '#ffffff' : symColor);
                     // For circles the bounding-box corners sit outside the circle.
                     // Inset from centre by half/√2 so the arrows stay inside.
-                    var arrowInset = useCircle
+                    var arrowInset = (useCircle && !tiles)
                         ? Math.max(2, half * 0.707 - arrowSize * 0.5)
                         : Math.max(2, scaledSize * 0.1);
                     if (room.hasDown) {
                         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-                        ctx.fillText('\u25be', p.px - arrowInset, p.py + arrowInset);
+                        ctx.fillText('▾', p.px - arrowInset, p.py + arrowInset);
                     }
                     if (room.hasUp) {
                         ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-                        ctx.fillText('\u25b4', p.px + arrowInset, p.py - arrowInset);
+                        ctx.fillText('▴', p.px + arrowInset, p.py - arrowInset);
                     }
                 }
             });
+
+            // Animated tiles (water, shore, swamp, snow, desert) cycle on a
+            // timer while the map is drawn; reduced motion keeps them still.
+            if (animTiles && !reducedMotion() && !document.hidden) { scheduleAnim(false); }
+
+            drawCamps(nowMs, spriteOn);
 
             // Draw party member hearts over rooms (skip the player's current room).
             // Each heart eases from its previous grid position to the new one over HEART_EASE_DURATION.
@@ -820,15 +1357,29 @@
                 var gx = ease.fromGx + (ease.toGx - ease.fromGx) * s;
                 var gy = ease.fromGy + (ease.toGy - ease.fromGy) * s;
                 var p = gridToCanvas(gx, gy);
-                ctx.fillStyle = ease.aggro ? '#ff3333' : '#00cfcf';
-                ctx.fillText('\u2665', p.px, p.py);
+                // Phase 40b: a member whose class is known shows as that class's
+                // sprite with an ally pennant; otherwise (or with sprites off)
+                // the heart stays.
+                if (!(spritesOn() && drawAllySprite(ease, gx, gy, t < 1, nowMs))) {
+                    ctx.fillStyle = ease.aggro ? '#ff3333' : '#00cfcf';
+                    ctx.font = 'bold ' + Math.round(scaledSize) + 'px serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('\u2665', p.px, p.py);
+                }
                 if (t < 1) { anyEasing = true; }
             });
+            var drewUnit = drawUnit(nowMs);
             if (anyEasing && heartRafId === null) {
                 heartRafId = requestAnimationFrame(function () {
                     heartRafId = null;
                     render();
                 });
+            }
+            // The sprites and camp fires animate: keep redrawing while any is
+            // on screen (a walk redraws every frame, idling a few times a second).
+            if (drewUnit || (spritesOn() && campInfo && mapSettings.showCamp !== false &&
+                (campInfo.has_camp || (campInfo.allied_camps || []).length))) {
+                scheduleAnim(!!(drewUnit && drewUnit.walking));
             }
         }
 
@@ -896,7 +1447,16 @@
             canvas.addEventListener('wheel', function (e) {
                 e.preventDefault();
                 var factor = Math.pow(ZOOM_STEP, e.deltaY * 0.002);
-                zoomScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale / factor));
+                var next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale / factor));
+                if (tilesOn()) {
+                    // A wheel turn moves one step at a time so tiles stay crisp.
+                    var from = snapZoom(zoomScale);
+                    var i = TILE_ZOOMS.indexOf(from) + (next > zoomScale ? 1 : (next < zoomScale ? -1 : 0));
+                    next = TILE_ZOOMS[Math.max(0, Math.min(TILE_ZOOMS.length - 1, i))];
+                    if (Date.now() - lastWheelStep < 80) { return; }
+                    lastWheelStep = Date.now();
+                }
+                zoomScale = next;
                 render();
             }, { passive: false });
 
@@ -905,12 +1465,12 @@
             var btnOut = document.createElement('button');
             btnOut.textContent = '\u2212'; btnOut.title = 'Zoom out';
             btnOut.addEventListener('click', function () {
-                zoomScale = Math.max(ZOOM_MIN, zoomScale / ZOOM_STEP); render();
+                zoomScale = tilesOn() ? stepTileZoom(-1) : Math.max(ZOOM_MIN, zoomScale / ZOOM_STEP); render();
             });
             var btnIn = document.createElement('button');
             btnIn.textContent = '+'; btnIn.title = 'Zoom in';
             btnIn.addEventListener('click', function () {
-                zoomScale = Math.min(ZOOM_MAX, zoomScale * ZOOM_STEP); render();
+                zoomScale = tilesOn() ? stepTileZoom(1) : Math.min(ZOOM_MAX, zoomScale * ZOOM_STEP); render();
             });
             var btnSettings = document.createElement('button');
             btnSettings.innerHTML = '&#9881;';
@@ -981,6 +1541,7 @@
                 }
             }
             currentRoomId = info.num;
+            unitMoveTo(gx, gy, zoneKey, performance.now());
             setCameraTarget(gx, gy);
         }
 
@@ -1023,17 +1584,46 @@
                 return grp;
             }
 
+            // Phase 40c: tiles (terrain art, landmarks, walls, fog) or the classic
+            // coloured squares. Shape, size and spacing only apply to classic.
+            var classicRows = [];
+            function applyStyleRows() {
+                classicRows.forEach(function (r) { r.style.display = tilesOn() ? 'none' : ''; });
+            }
+            panel.appendChild(row('Style', btnGroup(
+                [{ label: 'Tiles', value: 'tiles' }, { label: 'Classic', value: 'classic' }],
+                function () { return tilesOn() ? 'tiles' : 'classic'; },
+                function (v) {
+                    mapSettings.style = v;
+                    if (v === 'tiles') { zoomScale = snapZoom(zoomScale); }
+                    applyStyleRows();
+                }
+            )));
+
             var shapeRow = row('Shape', btnGroup(
                 [{ label: 'Squares', value: 'square' }, { label: 'Circles', value: 'circle' }],
                 function () { return mapSettings.roomShape; },
                 function (v) { mapSettings.roomShape = v; }
             ));
             panel.appendChild(shapeRow);
+            classicRows.push(shapeRow);
 
             panel.appendChild(row('Resources', btnGroup(
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
                 function () { return mapSettings.showResources !== false; },
                 function (v) { mapSettings.showResources = v; }
+            )));
+
+            panel.appendChild(row('Sprites', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.sprites !== false; },
+                function (v) { mapSettings.sprites = v; }
+            )));
+
+            panel.appendChild(row('Camps', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.showCamp !== false; },
+                function (v) { mapSettings.showCamp = v; }
             )));
 
             var slider = document.createElement('input');
@@ -1047,7 +1637,9 @@
                 saveMapSettings();
                 render();
             });
-            panel.appendChild(row('Size', slider));
+            var sizeRow = row('Size', slider);
+            panel.appendChild(sizeRow);
+            classicRows.push(sizeRow);
 
             var spacingSlider = document.createElement('input');
             spacingSlider.type  = 'range';
@@ -1060,7 +1652,10 @@
                 saveMapSettings();
                 render();
             });
-            panel.appendChild(row('Spacing', spacingSlider));
+            var spacingRow = row('Spacing', spacingSlider);
+            panel.appendChild(spacingRow);
+            classicRows.push(spacingRow);
+            applyStyleRows();
 
             function colorPicker(settingKey) {
                 var input = document.createElement('input');
@@ -1142,6 +1737,42 @@
             onRoomUpdate:        onRoomUpdate,
             setupResizeObserver: setupResizeObserver,
             getCurrentRoomId:    function () { return currentRoomId; },
+            setIdentity: function (classid, lineage) {
+                if (identity.classid === classid && identity.lineage === lineage) { return; }
+                identity.classid = classid; identity.lineage = lineage;
+                render();
+            },
+            setCompanySize: function (n) { if (n !== companySize) { companySize = n; render(); } },
+            setCompanions: function (list) {
+                var same = list.length === companions.length && list.every(function (c, i) {
+                    return c.key === companions[i].key && c.classid === companions[i].classid && c.lineage === companions[i].lineage;
+                });
+                if (same) { return; }
+                companions = list; render();
+            },
+            setCamp: function (camp) { campInfo = camp; render(); },
+            redraw: function () { render(); },
+            // state is for the browser checks (scripts/browser/map-check.mjs).
+            state: function () {
+                var res = resolveSheet(chainKeys(identity.classid, identity.lineage), false);
+                var pose = unit.x === null ? null : unitPose(performance.now());
+                return {
+                    spriteDrawn: spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
+                    queued: unit.queue.length, companySize: companySize,
+                    companions: companions.map(function (c) {
+                        return { key: c.key, sprite: spritesOn() && resolveSheet(chainKeys(c.classid, c.lineage), false) !== null };
+                    }),
+                    style: tilesOn() ? 'tiles' : 'classic', drawn: drawn, zoom: zoomScale,
+                    camp: campInfo, fading: unit.fadeStart >= 0,
+                    unit: pose ? { x: pose.x, y: pose.y } : null,
+                    keys: chainKeys(identity.classid, identity.lineage),
+                    allies: Object.keys(partyHeartEase).map(function (n) {
+                        var e = partyHeartEase[n];
+                        return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,
+                                 sprite: spritesOn() && !!(e.classid || e.lineage) && resolveSheet(chainKeys(e.classid, e.lineage), false) !== null };
+                    }),
+                };
+            },
             setPartyPositions: function (positions) {
                 var newPositions = positions || {};
                 var now = performance.now();
@@ -1177,8 +1808,13 @@
                         toGy:      pos.y,
                         toZ:       pos.z,
                         aggro:     pos.aggro,
+                        lineage:   pos.lineage,
+                        classid:   pos.classid,
                         startTime: now,
                     };
+                    var f = faceOf(pos.x - fromGx, pos.y - fromGy, existing ? { face: existing.face, flip: existing.flip } : null);
+                    partyHeartEase[name].face = f.face;
+                    partyHeartEase[name].flip = f.flip;
                 });
 
                 // Remove ease entries for members no longer in the party.
@@ -1245,6 +1881,9 @@
     });
 
     view2d.setupResizeObserver(win);
+    Sprites.onChange(function () { view2d.redraw(); });
+    Sprites.data('map/landmarks.json'); // start the landmark table loading
+    window.MapView = { state: function () { return view2d.state(); } };
 
     // =========================================================================
     // GMCP update logic
@@ -1258,6 +1897,19 @@
         ingestWorldMap(worldData.Map);
     }
 
+    // Phase 40c: a room's resources changed (picked clean, or regrown). The
+    // map keeps the last info it was given for each room, so patch it and
+    // redraw instead of waiting for the next visit.
+    function updateWorldResources() {
+        var w = Client.GMCPStructs.World;
+        var body = w && w.Resources;
+        var info = body && roomInfoStore.get(body.num);
+        if (!info) { return; }
+        info.resources = Array.isArray(body.resources) ? body.resources : [];
+        info.depleted = Array.isArray(body.depleted) ? body.depleted : [];
+        view2d.redraw();
+    }
+
     function updatePartyPositions() {
         var partyData = Client.GMCPStructs.Party;
         if (!partyData || !partyData.Vitals) { partyMemberPositions = {}; view2d.setPartyPositions(partyMemberPositions); return; }
@@ -1268,9 +1920,38 @@
             if (name === myName) { return; }
             var v = vitals[name];
             if (!v.hascoordinates) { return; }
-            partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro };
+            partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro,
+                                           lineage: v.lineage || '', classid: v.classid || '' };
         });
         view2d.setPartyPositions(partyMemberPositions);
+    }
+
+    // Phase 40b: who the player is (Char.Info), how many travel with them and
+    // their camps (Company), all read from the stored GMCP state.
+    function updateIdentity() {
+        var c = Client.GMCPStructs.Char;
+        var info = c && c.Info;
+        view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '');
+    }
+
+    function updateCompany() {
+        var co = Client.GMCPStructs.Company;
+        var size = 0;
+        if (co && co.leader && Array.isArray(co.members)) {
+            var withLeader = co.members.filter(function (m) { return m && m.status === 'present'; }).length;
+            size = withLeader > 0 ? withLeader + 1 : 0;
+        }
+        view2d.setCompanySize(size);
+        var present = [];
+        if (co && Array.isArray(co.members)) {
+            co.members.forEach(function (m) {
+                if (m && m.status === 'present' && (m.class || m.lineage)) {
+                    present.push({ key: m.key, lineage: m.lineage || '', classid: m.class || '' });
+                }
+            });
+        }
+        view2d.setCompanions(present);
+        view2d.setCamp((co && co.Camp) || null);
     }
 
     function updateMap() {
@@ -1278,6 +1959,9 @@
         if (!obj || !obj.Info) { return; }
         win.open();
         if (!win.isOpen()) { return; }
+
+        updateIdentity();
+        updateCompany();
 
         if (!worldMapRequested) {
             worldMapRequested = true;
@@ -1307,10 +1991,16 @@
 
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals'],
+        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals', 'Char', 'Company'],
         onGMCP: function (namespace) {
-            if (namespace === 'World.Map') {
+            if (namespace === 'Char.Info' || namespace === 'Char') {
+                updateIdentity();
+            } else if (namespace.indexOf('Company') === 0) {
+                updateCompany();
+            } else if (namespace === 'World.Map') {
                 updateWorldMap();
+            } else if (namespace === 'World.Resources') {
+                updateWorldResources();
             } else if (namespace === 'Room.Info' || namespace === 'Room') {
                 updateMap();
             } else if (namespace === 'Party' || namespace === 'Party.Vitals') {

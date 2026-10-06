@@ -73,4 +73,15 @@
   statuses are also dropped). Never add enemy health, unshown numbers, or
   secret statuses. Sent only to the web client, or a client that listed the
   module in `Core.Supports.Set`. The web client does not store it:
-  `Client.onBattleEvents`.
+  `Client.onBattleEvents`. `round` is the server's round counter;
+  `fight_round` (40g review) counts the fight's own rounds from 1, for
+  display, and `spell_name` is a spell's display name beside its id.
+  Phase 40g2: each message carries `pace` (the receiver's combat pace, so the
+  screen need not infer it), and a fight's happenings are also relayed to its
+  leader's consenting allies (`parties.AlliedLeaders`) who fight some of the
+  same mobs here in a battle of their own, with the ally's members as
+  `a:<leader>:<key>` (the ids `Company.Battle.allies` lists). Only the kinds
+  in `allyKinds`; never an ally's health numbers, statuses (their numbers and
+  status fields are scrubbed), tactics, or fight start/end/focus. `Company.Battle`
+  also carries `allies` (formation cells, class and health words) and `nerve`
+  ("faltering" while `morale.Losing` holds for the company).

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -123,6 +124,7 @@ func rigEnemy(id int) combatstream.Ref {
 func TestBattleEventsReachTheLeaderWithSharedIDs(t *testing.T) {
 	r := newEventRig(t)
 	r.user.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
+	t.Cleanup(spells.UseSpellsForTest(&spells.SpellData{SpellId: "mend", Name: "Mend Wounds"}))
 
 	id := r.stream.Open(341, 100, "party-a", rigLeader, []combatstream.Ref{rigCompanion}, []combatstream.Ref{rigEnemy(88), rigEnemy(89)})
 	events.WithCause(341, func() {
@@ -153,12 +155,17 @@ func TestBattleEventsReachTheLeaderWithSharedIDs(t *testing.T) {
 	assert.Equal(t, []string{"leader", "companion:1"}, start.Company)
 	assert.Equal(t, []string{"m:88", "m:89"}, start.Enemies)
 
-	var attack battleEvent
+	var attack, heal battleEvent
 	for _, p := range ps {
 		assert.Equal(t, id, p.Fight)
+		// The fight opened at the server's round 341: its first is 1.
+		assert.Equal(t, p.Round-340, p.FightRound)
 		for _, e := range p.Events {
 			if e.Kind == "attack" && e.Tgt == "m:88" {
 				attack = e
+			}
+			if e.Kind == "heal" {
+				heal = e
 			}
 			if e.Kind == "fight-end" {
 				assert.Equal(t, combatstream.OutcomeVictory, e.Outcome)
@@ -169,6 +176,8 @@ func TestBattleEventsReachTheLeaderWithSharedIDs(t *testing.T) {
 	assert.Equal(t, 6, attack.Damage)
 	assert.Equal(t, "slashing", attack.Weapon)
 	assert.Equal(t, "telling", attack.Quality)
+	assert.Equal(t, "mend", heal.Spell)
+	assert.Equal(t, "Mend Wounds", heal.SpellName, "the spell's display name rides with its id")
 
 	raw, err := json.Marshal(ps)
 	require.NoError(t, err)

@@ -1,0 +1,37 @@
+{
+  "_note": "Phase 40c: which S2 landmark overlay a room draws. A room's maplegend (lowercase) is tried first, then its mapsymbol. Legends in 'glyphs' keep the plain letter on purpose (the terrain already says it). Edit with the sprite specification's landmark table; TestMapLegendsHaveLandmarks keeps it in step with the shipped rooms.",
+  "legends": {
+    "inn": "inn",
+    "bank": "bank",
+    "trainer": "trainer",
+    "temple": "temple",
+    "chapel": "temple",
+    "shaman": "shaman",
+    "hermit": "hermit",
+    "east-gate": "gate",
+    "west-gate": "gate",
+    "wall": "wall",
+    "bridge": "bridge",
+    "keep": "keep",
+    "throneroom": "throne",
+    "townsquare": "townsquare",
+    "village": "village",
+    "caravan": "caravan",
+    "lake house": "lake-house",
+    "cave": "cave-mouth",
+    "entrance": "cave-mouth",
+    "exit": "cave-mouth",
+    "obelisk": "obelisk",
+    "pond": "pond",
+    "rocks": "rocks",
+    "desert": "desert-ruin",
+    "alts": "alts"
+  },
+  "symbols": {
+    "$": "bank",
+    "♜": "wall",
+    "B": "bridge",
+    "★": "landmark"
+  },
+  "glyphs": ["shore"]
+}

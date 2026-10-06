@@ -8,11 +8,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
 )
+
+// promotedClasses are the Phase 38b advanced and built elite classes with art (S5).
+var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag"}
 
 type spriteMeta struct {
 	Size   []int    `json:"size"`
@@ -107,7 +111,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 	for _, r := range []string{"water", "forage", "herbs", "firewood", "shelter", "fishing", "game", "unknown", "depleted"} {
 		want = append(want, "map/resources/"+r+".png")
 	}
-	for _, u := range []string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer"} {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer"}, promotedClasses...) {
 		want = append(want, "map/units/"+u+"/idle.png", "map/units/"+u+"/walk.png")
 	}
 	for _, rel := range want {
@@ -170,7 +174,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 // feet on row 30 (frameHeight-2) and nothing outside the frame margins.
 func TestMapUnitSpritesFollowAnchorRules(t *testing.T) {
 	dir := spriteDir(t)
-	for _, u := range []string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer"} {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer"}, promotedClasses...) {
 		for file, frames := range map[string]int{"idle.png": 2, "walk.png": 4} {
 			f, err := os.Open(filepath.Join(dir, "map", "units", u, file))
 			if err != nil {
@@ -271,12 +275,12 @@ func TestSpriteSetsS2S3AreComplete(t *testing.T) {
 	for _, b := range strings.Fields("forest deep-web plains road city slums interior catacombs cave snowfield ice-keep shore swamp desert highlands training-yard") {
 		want = append(want, "battle/backgrounds/"+b+".png")
 	}
-	for _, u := range strings.Fields(`warrior rogue ranger cleric wizard witch adventurer unknown-humanoid unknown-beast unknown-large
+	for _, u := range strings.Fields(`warrior rogue ranger cleric wizard witch adventurer ` + strings.Join(promotedClasses, " ") + ` unknown-humanoid unknown-beast unknown-large
 		rat rat-big wolf-timber wolf-snow dog-junkyard spider-hatchling spider-large spider-warrior spider-queen skeleton bone-warden
 		bonecrafter lich acolyte-dark grave-chanter brigand ruffian ruffian-dangerous ruffian-enforcer poacher poacher-shieldman
 		bonesetter shadow-trainee shadow-master goblin goblin-hexer goblin-loot faerie imp-forest fungus ent ogre-forest crocodile
 		creeper-cave creeper-abyssal stalker-cave bats-echo ice-warrior ice-guardian snow-floof dummy-training straw-footman
-		straw-archer guard guard-royal guard-captain`) {
+		straw-archer guard guard-royal guard-captain goblin-shaman angel demon`) {
 		want = append(want, "battle/units/"+u+"/idle.png")
 	}
 	for _, f := range strings.Fields("cell cell-acting cell-targeted acting-arrow fallen surrendered hp-frame") {
@@ -481,5 +485,62 @@ func TestMobSpriteKeysExist(t *testing.T) {
 	})
 	if used < 40 {
 		t.Errorf("only %d mobs carry a sprite key", used)
+	}
+}
+
+// Phase 40c: every maplegend a shipped room uses draws a landmark overlay or
+// is listed as an intentional glyph, and every landmark id has art.
+func TestMapLegendsHaveLandmarks(t *testing.T) {
+	dir := spriteDir(t)
+	raw, err := os.ReadFile(filepath.Join(dir, "map", "landmarks.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var table struct {
+		Legends map[string]string `json:"legends"`
+		Symbols map[string]string `json:"symbols"`
+		Glyphs  []string          `json:"glyphs"`
+	}
+	if err := json.Unmarshal(raw, &table); err != nil {
+		t.Fatal(err)
+	}
+	m := loadSpriteManifest(t, dir)
+	for _, ids := range []map[string]string{table.Legends, table.Symbols} {
+		for from, id := range ids {
+			if _, ok := m.Files["map/landmarks/"+id+".png"]; !ok {
+				t.Errorf("%q maps to landmark %q, which has no art in the manifest", from, id)
+			}
+		}
+	}
+	glyph := map[string]bool{}
+	for _, g := range table.Glyphs {
+		glyph[g] = true
+	}
+	_, src, _, _ := runtime.Caller(0)
+	rooms := filepath.Join(filepath.Dir(filepath.Dir(src)), "_datafiles", "world", "default", "rooms")
+	legend := regexp.MustCompile(`(?m)^maplegend:\s*(.+?)\s*$`)
+	seen := 0
+	err = filepath.WalkDir(rooms, func(p string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || filepath.Ext(p) != ".yaml" {
+			return err
+		}
+		data, rerr := os.ReadFile(p)
+		if rerr != nil {
+			return rerr
+		}
+		for _, mt := range legend.FindAllSubmatch(data, -1) {
+			seen++
+			name := strings.ToLower(strings.Trim(string(mt[1]), `"'`))
+			if _, ok := table.Legends[name]; !ok && !glyph[name] {
+				t.Errorf("%s: maplegend %q has no landmark and is not an intentional glyph", p, name)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seen == 0 {
+		t.Fatal("found no maplegend in the shipped rooms; the path is wrong")
 	}
 }

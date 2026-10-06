@@ -48,6 +48,7 @@ func auraPass() {
 			}
 		}
 		rejuvPass(side)
+		samuraiRound(side)
 	}
 }
 

@@ -23,11 +23,12 @@ import (
 // the web client receives it.
 
 type eventPayload struct {
-	Fight  uint64           `json:"fight"`
-	Round  uint64           `json:"round"`
-	Events []map[string]any `json:"events"`
-	raw    string
-	at     time.Duration
+	Fight      uint64           `json:"fight"`
+	Round      uint64           `json:"round"`
+	FightRound uint64           `json:"fight_round"`
+	Events     []map[string]any `json:"events"`
+	raw        string
+	at         time.Duration
 }
 
 var eventRefPattern = regexp.MustCompile(`^(me|\?|leader|companion:\d+|m:\d+|u:\d+)$`)
@@ -140,6 +141,14 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 	last := payloads[len(payloads)-1]
 	assert.Equal(t, "fight-end", last.Events[len(last.Events)-1]["kind"])
 	assert.Equal(t, "victory", last.Events[len(last.Events)-1]["outcome"])
+
+	// fight_round counts the fight's own rounds from 1 (the battle screen's
+	// title), while round is the server's counter.
+	assert.Equal(t, uint64(1), payloads[0].FightRound)
+	for _, p := range payloads {
+		assert.Equal(t, p.Round-payloads[0].Round+1, p.FightRound, "round %d", p.Round)
+	}
+	assert.Greater(t, payloads[0].Round, uint64(1), "the server's counter is not the fight's")
 
 	// Sequence numbers only rise, across messages.
 	var prev float64
