@@ -537,6 +537,28 @@
     64
    ]
   },
+  "battle/units/alchemist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit alchemist"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/angel/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -561,6 +583,48 @@
    ]
   },
   "battle/units/arcanist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "wizard",
+   "note": "wizard line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/archmage/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "wizard",
+   "note": "wizard line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/archon/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
    "frame": [
@@ -778,6 +842,27 @@
     64
    ]
   },
+  "battle/units/coven-mother/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "witch",
+   "note": "witch line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/coven-sage/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -864,6 +949,27 @@
    "size": [
     288,
     72
+   ]
+  },
+  "battle/units/crone-of-ash/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "witch",
+   "note": "witch line",
+   "size": [
+    256,
+    64
    ]
   },
   "battle/units/demon/idle.png": {
@@ -1305,6 +1411,27 @@
     64
    ]
   },
+  "battle/units/gryphon-knight/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "gryphon-rider",
+   "note": "gryphon-rider line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/gryphon-rider/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1674,6 +1801,27 @@
     64
    ]
   },
+  "battle/units/marksman/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "ranger",
+   "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/mercenary/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1711,6 +1859,48 @@
    "family": "promoted class",
    "variant_of": "shaman",
    "note": "shaman line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/necromancer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "wizard",
+   "note": "wizard line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/nightblade/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "rogue",
+   "note": "rogue line",
    "size": [
     256,
     64
@@ -1754,6 +1944,27 @@
    "family": "promoted class",
    "variant_of": "warrior",
    "note": "warrior line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/pathfinder/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "rogue",
+   "note": "rogue line",
    "size": [
     256,
     64
@@ -1912,6 +2123,27 @@
     48
    ]
   },
+  "battle/units/ravager/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "ranger",
+   "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/rogue/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -2065,6 +2297,27 @@
     64
    ]
   },
+  "battle/units/sentinel/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "ranger",
+   "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/shadow-master/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -2149,6 +2402,27 @@
    "names": [
     "skeleton"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/skyscout/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "gryphon-rider",
+   "note": "gryphon-rider line",
    "size": [
     256,
     64
@@ -2397,6 +2671,27 @@
     64
    ]
   },
+  "battle/units/swordmaster/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "rogue",
+   "note": "rogue line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/theurgist/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -2605,6 +2900,27 @@
     64
    ]
   },
+  "battle/units/wise-one/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "witch",
+   "note": "witch line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/witch/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -2689,6 +3005,27 @@
    "names": [
     "timber wolf"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/wyvern-rider/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "gryphon-rider",
+   "note": "gryphon-rider line",
    "size": [
     256,
     64
@@ -3892,6 +4229,48 @@
     96
    ]
   },
+  "map/units/alchemist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/alchemist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/arcanist/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -3915,6 +4294,94 @@
    ]
   },
   "map/units/arcanist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/archmage/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/archmage/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/archon/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/archon/walk.png": {
    "frames": 4,
    "frame_ms": 120,
    "kind": "map-unit",
@@ -4110,6 +4577,50 @@
     96
    ]
   },
+  "map/units/coven-mother/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/coven-mother/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/coven-sage/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4133,6 +4644,50 @@
    ]
   },
   "map/units/coven-sage/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/crone-of-ash/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/crone-of-ash/walk.png": {
    "frames": 4,
    "frame_ms": 120,
    "kind": "map-unit",
@@ -4499,6 +5054,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "dollmaster",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/gryphon-knight/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "gryphon-rider",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/gryphon-knight/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "gryphon-rider",
    "size": [
     128,
     96
@@ -4940,6 +5539,50 @@
     96
    ]
   },
+  "map/units/marksman/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/marksman/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/mercenary/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -5028,6 +5671,94 @@
     96
    ]
   },
+  "map/units/necromancer/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/necromancer/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/nightblade/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/nightblade/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/paladin/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -5067,6 +5798,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/pathfinder/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/pathfinder/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
    "size": [
     128,
     96
@@ -5197,6 +5972,50 @@
    ],
    "anchor": "bottom-center",
    "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/ravager/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/ravager/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
    "size": [
     128,
     96
@@ -5374,6 +6193,50 @@
     96
    ]
   },
+  "map/units/sentinel/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/sentinel/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/shaman/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -5411,6 +6274,50 @@
    ],
    "anchor": "bottom-center",
    "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/skyscout/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "gryphon-rider",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/skyscout/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "gryphon-rider",
    "size": [
     128,
     96
@@ -5543,6 +6450,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "halberdier",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/swordmaster/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/swordmaster/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
    "size": [
     128,
     96
@@ -5854,6 +6805,50 @@
     96
    ]
   },
+  "map/units/wise-one/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/wise-one/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/witch/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -5933,6 +6928,50 @@
    ],
    "anchor": "bottom-center",
    "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/wyvern-rider/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "gryphon-rider",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/wyvern-rider/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "gryphon-rider",
    "size": [
     128,
     96

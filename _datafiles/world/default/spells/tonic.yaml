@@ -1,0 +1,11 @@
+# Phase 39g: an Alchemist's bracing tonic, from level 8.
+spellid: tonic
+name: Bracing Tonic
+description: One ally gains +5 Attack and Evasion for 3 combat rounds. It costs one flask, no mana and no chant
+type: helpsingle
+school: alchemy
+cost: 0
+flask: 1
+waitrounds: 0
+difficulty: 0
+scope: member

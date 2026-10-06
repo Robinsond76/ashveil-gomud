@@ -590,6 +590,12 @@
             card.appendChild(el('div', 'company-hp-text', v.hp + '/' + v.hp_max));
             spoken.push(label);
         }
+        // Phase 39g: an Alchemist's flask satchel.
+        if (m.status !== 'dead' && typeof v.flasks === 'number' && typeof v.flasks_max === 'number') {
+            const flasksLabel = 'Flasks ' + v.flasks + ' of ' + v.flasks_max;
+            card.appendChild(el('div', 'company-needs ' + (v.flasks === 0 ? 'need-warn' : 'need-ok'), flasksLabel + (v.flasks === 0 ? '!' : '')));
+            spoken.push(flasksLabel);
+        }
         const needs = needsText(v.needs);
         if (m.status !== 'dead' && needs.length) {
             const line = el('div', 'company-needs');

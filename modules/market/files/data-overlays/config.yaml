@@ -94,6 +94,15 @@ Markets:
         StartStock: 10
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      - ItemId: 95 # alchemist's reagents (Phase 39g); brewed into an Alchemist's flasks
+        BasePrice: 8
+        MinPrice: 5
+        MaxPrice: 16
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 14
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 43b: weapon poison vials, one dose each (help poisons).
       - ItemId: 280 # vial of bitterleaf (Phase 43b)
         BasePrice: 6

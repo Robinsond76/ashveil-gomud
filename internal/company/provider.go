@@ -457,6 +457,9 @@ type MemberView struct {
 	// MP and MPMax are its live mana, set only for a present companion
 	// (Phase 32g); MPMax 0 means it has none.
 	MP, MPMax int
+	// FlasksMax is an Alchemist companion's satchel size and Flasks what it
+	// still carries (Phase 39g); FlasksMax 0 means it has none.
+	Flasks, FlasksMax int
 	// Placed, Row, and Col are its formation cell (0-based).
 	Placed   bool
 	Row, Col int
