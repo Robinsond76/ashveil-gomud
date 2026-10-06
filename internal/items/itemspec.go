@@ -212,6 +212,8 @@ type ItemSpec struct {
 	Tier            int         `yaml:"tier,omitempty"`            // Phase 36a: material and power budget 1-6; 0 means unset (tier 1)
 	Uses            int         `yaml:"uses,omitempty"`            // How many uses it starts with
 	Refillable      string      `yaml:"refillable,omitempty"`      // Phase 40a: what it can be refilled with ("water"), back to Uses, at a room with that resource
+	EmptyItemId     int         `yaml:"emptyitemid,omitempty"`     // Phase 43a: what is left when its last use is spent (an empty waterskin), instead of nothing
+	FilledItemId    int         `yaml:"filleditemid,omitempty"`    // Phase 43a: on a refillable empty container, the full item a fill turns it into
 	BuffIds         []int       `yaml:"buffids,omitempty"`         // What buffs it can apply (if used)
 	WornBuffIds     []int       `yaml:"wornbuffids,omitempty"`     // BuffId's that are applied while worn, and expired when removed.
 	DamageReduction int         `yaml:"damagereduction,omitempty"` // % of damage it reduces when it blocks attacks

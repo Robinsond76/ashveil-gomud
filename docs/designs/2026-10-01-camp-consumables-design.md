@@ -1,7 +1,9 @@
 # Camp consumables — deferred design
 
-Status: recorded at the owner's request on 2026-10-01 for future phase
-implementation. No gameplay implemented or phase scheduled. The seven item
+Status: recorded at the owner's request on 2026-10-01. **Phase 43a (2026-10-06)
+implemented the first slice: fortifying broth, warming draught, cooling salve
+and watch incense (see `docs/PROJECT_STATUS.md`); scent paste, weapon oil and
+the antidote draught remain open.** Before 43a: no gameplay implemented or phase scheduled. The seven item
 ideas are retained; numeric balance, command names and implementation details
 below are proposed defaults. Companion design:
 [weapon poisons and camp assignments](2026-10-01-weapon-poisons-design.md).

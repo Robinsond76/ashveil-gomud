@@ -43,7 +43,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp break | camp sharpen [status | auto on|off] | camp poison [assign|unassign|preview|apply] | camp coat"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -865,7 +865,9 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	gear := m.gearOf(user.UserId)
 	// 40a4 review: a finished rest's thieves come before another rest.
 	m.settleTheft(user.UserId)
-	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId))
+	// Phase 43a: so are the queued broth and incense.
+	funded := m.fundPrepared(user, room)
+	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId), funded)
 	if started && gear.Bells {
 		spend := m.spendItem
 		if spend == nil {
@@ -873,10 +875,13 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 		}
 		spend(user.UserId, campBellsItemID)
 	}
+	if started {
+		m.settlePrepared(user.UserId, funded)
+	}
 	return text
 }
 
-func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room, gear campGear, members int) (string, bool) {
+func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room, gear campGear, members int, funded restPrep) (string, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -917,6 +922,10 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	rest.Bedrolls = gear.Bedrolls
 	rest.Bells = gear.Bells
 	rest.Kit = gear.Kit
+	// Phase 43a: the broth and incense funded for this rest, locked now.
+	rest.Broth = funded.Broth
+	rest.Incense = funded.Incense
+	resting.Prepared = funded.clearQueue(resting.Prepared)
 	resting.Tent = gear.Tent
 	// Phase 33f3: whether raiders come, and when, is settled now.
 	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
@@ -942,6 +951,9 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 		}
 	}
 	if line := restGearText(resting.Rest, gear.Tent, members); line != "" {
+		text += "\n" + line
+	}
+	if line := restPrepText(funded, m.prepName(user)); line != "" {
 		text += "\n" + line
 	}
 	// 40a4 review: warn of thieves on a road they work, whether or not
@@ -1087,6 +1099,9 @@ func (m *CampingModule) status(leaderUserID int) string {
 		mudlog.Warn("camping: status sync", "leader", leaderUserID, "error", err)
 	}
 	text := m.statusTextLocked(leaderUserID)
+	if prepared := m.camps[leaderUserID].Prepared; !prepared.Empty() {
+		text += "\nSet by for the next rest (camp prepare status): " + m.queuedTextLocked(leaderUserID, prepared) + "."
+	}
 	// 40a3 review: between rests, show what the gear at hand will do (a
 	// running rest already reports the gear locked for it).
 	if camp := m.camps[leaderUserID]; camp.Rest == nil || camp.Rest.State != camping.Resting {
@@ -1421,6 +1436,10 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.breakCamp(user, room))
 	case "cook":
 		user.SendText(m.cook(user, room)) // Phase 33f3
+	case "supplies":
+		user.SendText(m.suppliesCommand(user)) // Phase 43a
+	case "prepare":
+		user.SendText(m.prepareCommand(user, room, args[1:])) // Phase 43a
 	default:
 		user.SendText(campUsage)
 	}
@@ -1490,6 +1509,12 @@ func (m *CampingModule) buffRoundsLeft(c *characters.Character, buffID int) int 
 func (m *CampingModule) registerBuffGroupsLocked() {
 	s := m.innSettings()
 	companyview.RegisterBuffGroup(companyview.GroupRest, s.RestedBuffId, s.WellRestedBuffId)
+	// Phase 43a: the Fortified sizes show with rest, the draughts with the
+	// climate conditions.
+	for _, tier := range camping.BrothBuffs {
+		companyview.RegisterBuffGroup(companyview.GroupRest, tier.BuffID)
+	}
+	companyview.RegisterBuffGroup(companyview.GroupSurvival, camping.WarmingBuffID, camping.CoolingBuffID)
 }
 
 var _ camping.CampStateProvider = (*CampingModule)(nil)
@@ -1511,21 +1536,25 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	m.mu.Lock()
 	_, hasCamp := m.camps[leaderUserID]
 	m.mu.Unlock()
-	var gear []string
+	var gear, supplies []string
 	bells := false
 	if hasCamp {
 		carried := m.gearOf(leaderUserID)
 		gear, bells = carried.labels(m.companyMembers(leaderUserID)), carried.Bells
+		supplies = m.supplyLabels(leaderUserID)
 	}
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]
-	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear}
+	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear, Supplies: supplies}
 	if !ok {
 		s.CanCamp = has(m.roomTag())
 	} else {
 		s.HasCamp, s.Here, s.FireLit = true, camp.RoomID == roomID, camp.FireLit
 		s.Embers, s.Tent = camp.Embers, camp.Tent
 		s.RoomID = camp.RoomID
+		if !camp.Prepared.Empty() {
+			s.Prepared = strings.Split(m.queuedTextLocked(leaderUserID, camp.Prepared), ", ")
+		}
 		if camp.Rest != nil && camp.Rest.State == camping.Completed {
 			s.Rested = true
 		}

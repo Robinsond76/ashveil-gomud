@@ -1,0 +1,9 @@
+itemid: 30041
+name: warming draught
+namesimple: draught
+description: A small flask of emberleaf draught, hot in the throat. Prepared at camp it cuts the cold a member takes on by a quarter for fifteen minutes (help campsupplies).
+type: object
+subtype: mundane
+uses: 1
+value: 12
+weight: 200

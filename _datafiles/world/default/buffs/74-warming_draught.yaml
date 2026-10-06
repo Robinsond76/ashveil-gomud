@@ -1,0 +1,10 @@
+# Phase 43a: a warming draught (help campsupplies) cuts the cold you take on
+# by a quarter. It gives no warmth and no heat protection.
+buffid: 74
+name: Warming Draught
+description: A warming draught slows the cold's grip on you by a quarter.
+secret: false
+triggerrate: 15 real minutes
+triggercount: 1
+flags:
+  - warming-draught
