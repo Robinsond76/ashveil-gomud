@@ -151,6 +151,30 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # An ash staff, a hooded robe, and one minor mana draught.
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 38]
+  # Phase 39a: the glaive class, neutral from the start (neutral classes
+  # design). Two hands on a polearm, so no shield; Sweep strikes a row and
+  # Brace answers the first blow (internal/hooks/combat_halberd.go).
+  - ArchetypeId: halberdier
+    HPPerLevel: 0.9
+    HPStart: 7
+    AttackRate: 1.0
+    EvasionRate: 0.9
+    ArmorTraining: medium
+    ShieldSizes: [none]
+    WeaponClasses: [glaive, spear]
+    Name: Halberdier
+    Description: Polearm fighters who sweep a row of foes with a glaive and brace to meet the first blow, at home in the front or middle row and tied to no side.
+    Skills: [polearm]
+    GrantSkills:
+      - { Skill: polearm, Level: 1 }
+    Growth:
+      - { Stat: strength, Weight: 4 }
+      - { Stat: vitality, Weight: 3 }
+      - { Stat: speed, Weight: 2 }
+      - { Stat: perception, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+    # A militia glaive, a padded tunic and leggings, rations and a waterskin.
+    Kit: [10151, 20103, 20109, 30004, 30015, 38]
   # Phase 39b: the duelist, a neutral lineage (no alignment gate at 10 or 30).
   # Its first strike each battle is its best (Iaijutsu, internal/classes);
   # medium armor and no shield make it an ordinary front-liner after that.

@@ -36,6 +36,10 @@ func hexed(c *characters.Character) bool {
 // threshold, and Wounded, Smite, Rend Holy and Hexed Damage raise it by a
 // percent. Only a blow that has damage to raise is changed.
 func classBlowDamage(src, tgt *characters.Character, dmg int) int {
+	// Phase 39a: a Sweep's or a held blow's own share of the damage.
+	if src.RT != nil && src.RT.BlowPct > 0 && dmg > 0 {
+		dmg = max(1, (dmg*src.RT.BlowPct+50)/100)
+	}
 	fx := src.ClassEffects()
 	var summon *characters.SummonInfo
 	if src.RT != nil {

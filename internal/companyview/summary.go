@@ -44,8 +44,10 @@ type Member struct {
 	Class, ClassName, ClassTier string
 	ClassRank                   int
 	Promotion                   string
-	HasHP                       bool
-	HP, HPMax                   int
+	// Lineage is its base archetype id (Phase 40c), for the map sprite.
+	Lineage   string
+	HasHP     bool
+	HP, HPMax int
 	// HPLimit is the wound limit (Phase 30b): HPMax when unwounded.
 	HPLimit int
 	// HasMP is false when the member has no mana to show: none at all, or
@@ -216,7 +218,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	}
 	s.Leader.Class = classes.PlayerClass(uid).Class
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
-	s.Leader.Abilities = strategy.PlayerAbilities(c.GetSkillLevel)
+	s.Leader.Abilities = strategy.AtLevel(strategy.PlayerAbilities(c.GetSkillLevel), c.Level)
 	s.Tactics = strategy.Tactics{}.Resolve()
 	if src.tactics != nil {
 		s.Tactics = src.tactics(uid)
@@ -254,9 +256,10 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Class: v.Class, Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
+			m.Lineage = v.Archetype
 			m.SetClass(v.Archetype, v.Class, v.Level, v.Alignment)
 			m.Strategy = src.strategy(uid, m.Key)
-			m.Abilities = strategy.CompanionAbilities(v.Archetype)
+			m.Abilities = strategy.AtLevel(strategy.CompanionAbilities(v.Archetype), v.Level)
 			switch v.Status {
 			case company.MemberDead:
 				s.Dead++

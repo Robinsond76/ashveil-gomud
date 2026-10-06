@@ -110,6 +110,19 @@ func choose(rule Rule, pool []Foe, assistID int) (int, bool) {
 			}
 		}
 		return 0, false
+	case Crowded:
+		// The foe whose row holds the most foes (Phase 39a: a sweep's
+		// best target); ties go to the weakest, then front row first.
+		rowSize := map[int]int{}
+		for _, f := range pool {
+			rowSize[f.Row]++
+		}
+		return best(func(a, b Foe) bool {
+			if rowSize[a.Row] != rowSize[b.Row] {
+				return rowSize[a.Row] > rowSize[b.Row]
+			}
+			return a.HP < b.HP
+		})
 	case Healers:
 		// Healers first (Phase 35e): a healer chanting a spell, else an
 		// idle healer (the weakest of them), else the casters order.

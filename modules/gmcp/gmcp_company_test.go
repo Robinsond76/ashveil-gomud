@@ -36,7 +36,7 @@ func sampleCompany() companyview.Summary {
 			WarmthKnown: true, Placed: true},
 		CompanyKnown: true,
 		Companions: []companyview.Member{
-			{Key: company.CompanionMemberKey(1), ID: 1, Name: "Bran", Status: company.MemberPresent, Level: 3, Archetype: "Warrior",
+			{Key: company.CompanionMemberKey(1), ID: 1, Name: "Bran", Status: company.MemberPresent, Level: 3, Archetype: "Warrior", Lineage: "warrior", Class: "knight",
 				HasHP: true, HP: 12, HPMax: 25, Hunger: need(70, "Sated"), Thirst: need(70, "Comfortable"), Fatigue: need(70, "Ready"),
 				Placed: true, Row: 0, Col: 1},
 			{Key: company.CompanionMemberKey(2), ID: 2, Name: "Bran", Status: company.MemberAwaiting, Level: 2},
@@ -78,6 +78,9 @@ func TestCompanyPayloadShape(t *testing.T) {
 	assert.Equal(t, "companion:1", bran["key"])
 	assert.Equal(t, "present", bran["status"])
 	assert.Equal(t, map[string]any{"row": 0.0, "col": 1.0}, bran["cell"])
+	assert.Equal(t, "warrior", bran["lineage"], "the map picks a companion's sprite by these")
+	assert.Equal(t, "knight", bran["class"])
+	assert.NotContains(t, leader, "lineage", "the leader's lineage rides Char.Info")
 	assert.NotContains(t, bran, "rescue_seconds", "countdowns live in the live half")
 	awaiting := members[1].(map[string]any)
 	assert.Equal(t, "awaiting", awaiting["status"])

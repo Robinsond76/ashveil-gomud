@@ -86,9 +86,11 @@ type companyMember struct {
 	// Tier is "advanced" or "elite", Rank the highest rank level reached,
 	// and Promotion "ready" or "waiting-gate" (Phase 38c1); each omitted
 	// when empty.
-	Tier      string       `json:"tier,omitempty"`
-	Rank      int          `json:"rank,omitempty"`
-	Promotion string       `json:"promotion,omitempty"`
+	Tier      string `json:"tier,omitempty"`
+	Rank      int    `json:"rank,omitempty"`
+	Promotion string `json:"promotion,omitempty"`
+	// Lineage is its base archetype id (Phase 40c), for the map sprite.
+	Lineage   string       `json:"lineage,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -217,6 +219,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 		out.Archetype = strPtr(m.Archetype)
 	}
 	out.Class, out.ClassName = m.Class, m.ClassName
+	if !m.Leader {
+		out.Lineage = m.Lineage
+	}
 	if c, ok := classes.Get(m.Class); ok && m.Class != "" && out.ClassName == "" {
 		out.ClassName = c.Name
 	}
