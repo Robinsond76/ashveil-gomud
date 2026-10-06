@@ -74,7 +74,7 @@ func TestExperienceShowsNextMilestone(t *testing.T) {
 	for _, tc := range []struct {
 		level int
 		text  string
-	}{{1, "level 3: second class option (coming)"}, {9, "level 10: class promotion (coming)"}, {30, "No upcoming milestone announced."}, {60, "No upcoming milestone announced."}} {
+	}{{1, "level 3: second class option (coming)"}, {9, "level 10: class promotion"}, {29, "level 30: elite promotion (coming)"}, {30, "level 35: elite rank and talent (coming)"}, {60, "No upcoming milestone announced."}} {
 		user.Character.Level = tc.level
 		user.Character.Validate()
 		text := experienceText(t, user, "")

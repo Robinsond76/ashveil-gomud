@@ -44,6 +44,9 @@ from your company's average won't take service with you at all;
 <ansi fg="command">company inspect</ansi> tells you before you pay whether they
 would join, and whether they'd join uneasy.
 
+Class promotion checks it too: a good route at +30 or higher, an evil route
+at -30 or lower, at levels 10 and 30 (<ansi fg="command">help elite</ansi>).
+
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help standing</ansi>.
 
 Sparing a surrendered foe raises your alignment by 5; execution lowers it by 5 instead of ordinary kill alignment. Company alignment remains its living members’ average. Companions react with loyalty by their own beliefs (help mercy).

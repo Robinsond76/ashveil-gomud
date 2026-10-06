@@ -68,16 +68,17 @@ and mana above a new maximum are lowered to fit, without a free refill.
 
 <ansi fg="yellow-bold">Milestones</ansi>
 Wizards learn Shower of Sparks, clerics Minor Heal All and witches
-Earthbind at level 3,
-kept for good once learned. The other choices are planned, and are not
-unlocked yet:
+Earthbind at level 3, kept for good once learned:
   Level 3: second class option (coming) for warriors, rogues and rangers
-  Level 5: talent (coming)
-  Level 10: class promotion (coming)
-  Level 15: talent (coming)
-  Level 20: advanced signature (coming)
-  Level 25: talent (coming)
-  Level 30: elite promotion (coming)
+These later choices have arrived:
+  Level 5, 15, 25: a talent (<ansi fg="command">help talents</ansi>)
+  Level 10: class promotion (<ansi fg="command">help promotion</ansi>)
+  Level 20: the advanced signature rank
+  Level 30: elite promotion for warriors and clerics (<ansi fg="command">help elite</ansi>)
+  Level 35, 45, 55: a talent, with elite talents for an elite
+  Level 35 to 60: an elite rank every five levels
+The elite step for rogues, rangers, wizards and witches is still planned
+(coming).
 
 <ansi fg="yellow-bold">Commands</ansi>
   <ansi fg="command">experience</ansi>       your level and the company's progress

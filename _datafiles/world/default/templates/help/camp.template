@@ -71,8 +71,10 @@ round count; a rest takes real time, not game time.
   After a rest the fire is embers, so another rest costs another bundle.
   Camp gear improves a rest: bedrolls add a quarter more Fatigue for each
   member who has one, a tent shelters the company, bells and trip lines
-  warn of raiders, and a field surgeon's kit treats a wound
-  (<ansi fg="command">help camp gear</ansi>). The rest report lists the gear in use.
+  warn of raiders and keep thieves out, and a field surgeon's kit treats a
+  wound (<ansi fg="command">help camp gear</ansi>). The rest report lists the gear in use.
+  On dangerous roads a camp without bells may be robbed while it sleeps; you
+  are told what is missing when you wake.
 
   <ansi fg="command">camp sharpen</ansi>
   Spends your whetstones sharpening your company's blades, the same as

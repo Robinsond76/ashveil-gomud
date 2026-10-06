@@ -343,6 +343,7 @@ type LevelUp struct {
 	NextMilestone           milestones.Milestone
 	ClassMilestone          string   // Phase 38b: the class's next promotion, talent or rank
 	ClassRanks              []string // 39b review: the ranks the new levels gave, as "New rank: ..."
+	ClassNotes              []string // Phase 38c1: an elite promotion ready or waiting on its gate
 	StatsDelta              stats.Statistics
 	TrainingPoints          int
 	StatPoints              int
