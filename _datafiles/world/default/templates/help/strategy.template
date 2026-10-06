@@ -49,6 +49,7 @@ heals you even when you are down and bleeding out.
   <ansi fg="command">furthest</ansi>   the back-most foe
   <ansi fg="command">leader</ansi>     their leader, the toughest of them
   <ansi fg="command">casters</ansi>    their spell-casters, one chanting a spell first
+  <ansi fg="command">healers</ansi>    their healers first, one chanting a heal before an idle one
   <ansi fg="command">assist</ansi>     whatever you are striking (companions only)
   <ansi fg="command">defend</ansi>     the foe striking whichever of you is most hurt
 

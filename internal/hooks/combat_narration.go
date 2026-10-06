@@ -37,6 +37,13 @@ func turnsToward(who, target string) string {
 	return util.CapitalizeFirst(fmt.Sprintf(`%s turns toward %s.`, named(who), named(target)))
 }
 
+// healerMarked is the line a company on its healers default says when it
+// turns on an enemy healer (Phase 35e): the player sees why the company went
+// for that foe, not the usual "you turn toward".
+func healerMarked(target string) string {
+	return fmt.Sprintf(`Your company marks %s as a healer and goes for it first.`, named(target))
+}
+
 // Opener and closing pools, keyed by a mob group ("" is the generic pool).
 // A fight's lines come from its enemies' first group with a pool.
 // "bandits" is for the road bandits of the play-test roadmap (32c) and the
