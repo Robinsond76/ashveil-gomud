@@ -44,8 +44,9 @@ func TestSigilsHelpRendersAndIsIndexed(t *testing.T) {
 	// The numbers the page states are the rules' own.
 	assert.Contains(t, plain, "15 real")
 	assert.Equal(t, 15, sigils.Minutes)
-	assert.Equal(t, 25, sigils.FirePct)
-	assert.Equal(t, 25, sigils.MendingPct)
+	assert.Contains(t, plain, fmt.Sprintf("hit %d%%", sigils.FirePct))
+	assert.Contains(t, plain, fmt.Sprintf("land %d%% stronger", sigils.MendingPct))
+	assert.Contains(t, plain, "Each member of the company")
 	assert.Equal(t, 3, sigils.StillRounds)
 	for _, k := range sigils.Kinds {
 		assert.Contains(t, plain, fmt.Sprintf("%d mana", k.ManaCost()), k)

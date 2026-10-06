@@ -20,11 +20,12 @@ one somewhere else lets the old one fade.
 
 <ansi fg="yellow-bold">The four sigils</ansi>
 
-  <ansi fg="yellow">Fire</ansi>        12 mana   Fire spells (Shower of Sparks, Fire Flask) hit 25%
+  <ansi fg="yellow">Fire</ansi>        12 mana   Fire spells (Shower of Sparks, Fire Flask) hit 15%
                          harder and leave the foe burning.
-  <ansi fg="yellow">Ward</ansi>        15 mana   Each member of the front row starts the battle under
-                         a small ward, which takes up to about a third of your level
-                         plus four from the first blow it meets.
+  <ansi fg="yellow">Ward</ansi>        15 mana   Each member of the company starts the battle under a
+                         small ward, which takes up to about a third of your level
+                         plus four from the first blow it meets. A healer's own
+                         ward replaces it.
   <ansi fg="yellow">Stillness</ansi>   15 mana   Every foe starts the battle windchilled for 3 rounds:
                          its chants and sling shots take a round longer.
   <ansi fg="yellow">Mending</ansi>     12 mana   Heals your company casts land 25% stronger.

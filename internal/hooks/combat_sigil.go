@@ -47,8 +47,8 @@ func (sd side) startSigil(room *rooms.Room, enemies []int) {
 	battle.SetSigil(uid, l.Kind, l.Expires)
 	switch l.Kind {
 	case sigils.Ward:
-		if n := wardFrontRow(uid, sd.user, room); n > 0 {
-			room.SendText(fmt.Sprintf("The %s flares, and a ward settles over the front row. (%s, %d warded)", l.Kind.Name(), l.Kind.Name(), n))
+		if n := wardCompany(sd.user, room); n > 0 {
+			room.SendText(fmt.Sprintf("The %s flares, and a ward settles over the company. (%s, %d warded)", l.Kind.Name(), l.Kind.Name(), n))
 		}
 	case sigils.Stillness:
 		chilled := 0
@@ -68,20 +68,20 @@ func (sd side) startSigil(room *rooms.Room, enemies []int) {
 	}
 }
 
-// wardFrontRow puts a small ward on each standing member of the company's
-// front row that has none, and returns how many it warded.
-func wardFrontRow(uid int, u *users.UserRecord, room *rooms.Room) int {
-	f, _ := company.FormationFor(uid)
+// wardCompany puts a small ward on each standing member of the company that
+// has none, and returns how many it warded. (Review: it once warded the
+// front row only, which foes going for the weakest mostly walked past.)
+func wardCompany(u *users.UserRecord, room *rooms.Room) int {
 	warded := 0
 	for _, a := range sideActors(u, room) {
-		if r, _, placed := f.Find(a.key); !placed || r != 0 || a.char.Health < 1 {
+		if a.char.Health < 1 {
 			continue
 		}
 		rt := a.char.RTState()
 		if rt.Ward > 0 {
 			continue
 		}
-		rt.Ward, rt.WardCap = sigils.WardBlows, sigils.WardCap(a.char.Level)
+		rt.Ward, rt.WardCap, rt.WardSigil = sigils.WardBlows, sigils.WardCap(a.char.Level), true
 		warded++
 	}
 	return warded

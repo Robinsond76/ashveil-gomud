@@ -137,6 +137,9 @@ type ClassAura struct {
 // uses, which come back with rest.
 type ClassRT struct {
 	Ward, WardCap int  // blows a ward absorbs, and the most it takes from each
+	// WardSigil marks a ward a ward sigil gave (Phase 54 review): a caster's
+	// own ward replaces it, and healers do not count it as warded.
+	WardSigil bool
 	Bark, Thorns  int  // Barkskin's armor and the damage a striker takes
 	Rejuv, Per    int  // rounds of Rejuvenation left and its heal each round
 	ShieldUsed    bool // Divine Shield has been spent this battle

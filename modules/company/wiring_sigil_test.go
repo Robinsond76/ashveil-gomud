@@ -89,40 +89,38 @@ func TestAFadedOrFarAwaySigilIsNotUsed(t *testing.T) {
 	assert.Zero(t, b2.marked(status.Windchilled))
 }
 
-func TestWardSigilWardsTheFrontRowOnly(t *testing.T) {
+func TestWardSigilWardsTheWholeCompany(t *testing.T) {
 	b := sigilBrawl(t)
 	b.lay(sigils.Ward)
-	for who, cell := range map[string]string{"me": "1 1", "tamsin": "1 2", "garrick": "2 1", "oswin": "3 1", "ysolde": "3 2"} {
-		b.cmd("formation", "move "+who+" "+cell)
-	}
-	f, _ := domainFormationFor(7)
-	chars := map[string]*characters.Character{string(domainLeaderKey()): b.aria.Character}
+	chars := map[string]*characters.Character{"leader": b.aria.Character}
 	for id := 1; id <= 4; id++ {
 		chars[string(domainCompanionKey(id))] = &b.companion(id).Character
 	}
-	front, back := 0, 0
-	for key := range chars {
-		if r, _, placed := f.Find(domainMemberKey(key)); placed && r == 0 {
-			front++
-		} else if placed {
-			back++
-		}
-	}
-	require.Positive(t, front, "the shipped formation has a front row")
-	require.Positive(t, back, "and members behind it")
-
 	out := b.beginFight()
-	assert.Contains(t, out, "a ward settles over the front row")
+	assert.Contains(t, out, "a ward settles over the company")
 	for key, c := range chars {
-		r, _, placed := f.Find(domainMemberKey(key))
-		if placed && r == 0 {
-			require.NotNil(t, c.RT, key)
-			assert.Equal(t, sigils.WardBlows, c.RT.Ward, "%s starts warded", key)
-			assert.Equal(t, sigils.WardCap(c.Level), c.RT.WardCap, key)
-		} else {
-			assert.True(t, c.RT == nil || c.RT.Ward == 0, "%s is not in the front row", key)
-		}
+		require.NotNil(t, c.RT, key)
+		// The opening round may already have spent a ward on a struck member.
+		assert.LessOrEqual(t, c.RT.Ward, sigils.WardBlows, key)
+		assert.Equal(t, sigils.WardCap(c.Level), c.RT.WardCap, "%s was warded", key)
+		assert.True(t, c.RT.WardSigil, key)
 	}
+}
+
+// Review: a caster's own ward replaces a sigil's small one, and a healer
+// still sees the member as unwarded.
+func TestACastersWardReplacesTheSigilsWard(t *testing.T) {
+	b := sigilBrawl(t)
+	b.lay(sigils.Ward)
+	b.beginFight()
+	rt := b.aria.Character.RTState()
+	rt.Ward, rt.WardCap, rt.WardSigil = sigils.WardBlows, sigils.WardCap(b.aria.Character.Level), true
+	aria := scripting.GetActor(7, 0)
+	assert.True(t, aria.GrantWard(40, 2), "a real ward lands over the sigil's")
+	assert.Equal(t, 2, rt.Ward)
+	assert.Equal(t, 40, rt.WardCap)
+	assert.False(t, rt.WardSigil)
+	assert.False(t, aria.GrantWard(40, 2), "but not over another real ward")
 }
 
 func TestFireSigilStrengthensFireSpellsAndLeavesTheFoeBurning(t *testing.T) {
@@ -167,7 +165,7 @@ func TestFireAndMendingSigilsScaleSpellsBySharedFactors(t *testing.T) {
 	healPlain := aria.HealFactor()
 
 	battle.SetSigil(7, sigils.Fire, time.Now().Add(time.Hour).Unix())
-	assert.InDelta(t, plain*1.25, aria.SpellFactor(*foe), 0.0001, "fire spells hit 25% harder under a fire sigil")
+	assert.InDelta(t, plain*(1+float64(sigils.FirePct)/100), aria.SpellFactor(*foe), 0.0001, "fire spells hit harder under a fire sigil")
 	assert.Equal(t, healPlain, aria.HealFactor(), "and heals are untouched")
 	b.aria.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "gust"})
 	assert.InDelta(t, plain, aria.SpellFactor(*foe), 0.0001, "a spell that is not fire is untouched")
@@ -259,10 +257,7 @@ func TestACasterCompanionDrawsTheSigilForALeaderWhoCannotCast(t *testing.T) {
 
 // Small aliases for the company domain, so this file reads shortly.
 var (
-	domainFormationFor = domain.FormationFor
-	domainLeaderKey    = func() domain.MemberKey { return domain.LeaderMemberKey }
 	domainCompanionKey = domain.CompanionMemberKey
-	domainMemberKey    = func(s string) domain.MemberKey { return domain.MemberKey(s) }
 )
 
 // A companion's fire spell burns too: the sigil is the company's, not the

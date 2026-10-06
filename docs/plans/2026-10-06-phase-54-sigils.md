@@ -26,8 +26,8 @@ page records how it was built and the decisions the owner delegated.
 
 | Kind | Mana | Effect |
 |---|---|---|
-| fire | 12 | spells with `element: fire` (Shower of Sparks, Fire Flask) deal 25% more (`SpellFactor`) and leave the foe Burning (`fireBurn`, both player and companion casts) |
-| ward | 15 | each standing front-row member gets a ward: 1 blow, up to 4 + level/3 (about half a Priest's Ward) |
+| fire | 12 | spells with `element: fire` (Shower of Sparks, Fire Flask) deal 15% more (`SpellFactor`; 25% in the build, cut in review) and leave the foe Burning (`fireBurn`, both player and companion casts) |
+| ward | 15 | each standing member gets a ward: 1 blow, up to 4 + level/3 (about half a Priest's Ward); a cast ward replaces it (review: the build warded the front row only) |
 | stillness | 15 | every foe gets Windchilled for 3 rounds: chants and sling shots one round slower |
 | mending | 12 | heals land 25% stronger (`HealFactor`) |
 

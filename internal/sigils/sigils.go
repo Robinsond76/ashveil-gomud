@@ -18,7 +18,7 @@ type Kind string
 const (
 	None      Kind = ""
 	Fire      Kind = "fire"      // fire spells hit harder and leave the foe burning
-	Ward      Kind = "ward"      // the front row starts the battle under a small ward
+	Ward      Kind = "ward"      // the company starts the battle under a small ward
 	Stillness Kind = "stillness" // the foes' chants and sling shots start a round slower
 	Mending   Kind = "mending"   // heals land stronger
 )
@@ -33,12 +33,12 @@ const (
 	// ChalkItemID is the reagent each sigil uses up (market-only, never bought back).
 	ChalkItemID = 30060
 	// FirePct is the extra damage a fire spell deals under a fire sigil.
-	FirePct = 25
+	FirePct = 15
 	// MendingPct is the extra a heal restores under a mending sigil.
 	MendingPct = 25
 	// StillRounds is how many rounds the foes stay chilled by a stillness sigil.
 	StillRounds = 3
-	// WardBlows is how many blows each front-row ward absorbs.
+	// WardBlows is how many blows each member's ward absorbs.
 	WardBlows = 1
 )
 
@@ -53,7 +53,7 @@ func (k Kind) ManaCost() int {
 	return 0
 }
 
-// WardCap is the most a front-row ward takes from one blow: about half of
+// WardCap is the most a sigil's ward takes from one blow: about half of
 // a Priest's Ward, from a character's level.
 func WardCap(level int) int { return 4 + max(level, 1)/3 }
 
@@ -70,9 +70,9 @@ func (k Kind) Name() string {
 func (k Kind) Effect() string {
 	switch k {
 	case Fire:
-		return "fire spells 25% stronger and leave the foe burning"
+		return "fire spells 15% stronger and leave the foe burning"
 	case Ward:
-		return "front row starts under a small ward"
+		return "company starts under a small ward"
 	case Stillness:
 		return "foe chants and sling shots start a round slower"
 	case Mending:

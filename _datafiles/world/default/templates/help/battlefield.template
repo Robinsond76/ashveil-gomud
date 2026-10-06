@@ -57,5 +57,5 @@ See help ambush, help formation, help survival, help temperature, and help comba
 <ansi fg="yellow-bold">Sigils</ansi>
 
 A sigil laid in the room before the fight (<ansi fg="command">cast sigil of</ansi> [kind]) shapes the battle too:
-fire spells burn, the front row starts warded, foes chant a round slower, or
+fire spells burn, the company starts warded, foes chant a round slower, or
 heals land stronger. See <ansi fg="command">help sigils</ansi>.
