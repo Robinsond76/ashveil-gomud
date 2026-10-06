@@ -231,6 +231,8 @@ func announceOverchannel(a actor, pct, mana int, storm bool) {
 func announceInstantLance(a actor) {
 	suffix := " (instant lance, no chant)"
 	a.holder.say("The lance forms at once."+suffix, "%s's lance forms at once."+suffix, "")
+	// Review: the battle screen names it, as it does Overwatch or Aegis.
+	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: a.char.RoomId, Source: a.ref, Status: "Instant Lance", Outcome: combatstream.OutcomeSucceeded})
 }
 
 // applyEliteAuras gives each standing member the round's Mana Shield (the

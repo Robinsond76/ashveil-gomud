@@ -405,11 +405,18 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		}
 	}
 	if sp.SpellId == "arcanelance" {
-		// Phase 38d: a High Sorcerer's Gathered chant trims every Lance, and
+		// Phase 38d: a High Sorcerer's Gathered chant trims every other Lance
+		// (review: trimming each one made a one-round Lance every round), and
 		// its Instant Lance needs no chant, once a battle.
 		fx := a.char.ClassEffects()
-		wait = max(0, wait-fx.Int(classes.LanceTrim))
-		if rt := a.char.RTState(); fx.Has(classes.LanceFree) && !rt.LanceFreed {
+		rt := a.char.RTState()
+		if trim := fx.Int(classes.LanceTrim); trim > 0 {
+			rt.QuickCasts++
+			if rt.QuickCasts%2 == 1 {
+				wait = max(0, wait-trim)
+			}
+		}
+		if fx.Has(classes.LanceFree) && !rt.LanceFreed {
 			rt.LanceFreed = true
 			wait = 0
 			announceInstantLance(a)

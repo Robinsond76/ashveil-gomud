@@ -27,8 +27,8 @@ func TestSorcererRanksApplyFromTheirLevel(t *testing.T) {
 		{"high-sorcerer", 30, LancePct, 40}, // replaces Gathered power's 25
 		{"high-sorcerer", 35, LanceTrim, 1},
 		{"high-sorcerer", 40, ChantBreak, 50}, // replaces Steady chant's 25
-		{"high-sorcerer", 45, LanceTwin, 50},
-		{"high-sorcerer", 50, LancePct, 60},
+		{"high-sorcerer", 45, LanceTwin, 25},
+		{"high-sorcerer", 50, LancePct, 45},
 		{"high-sorcerer", 55, ManaPct, 20},
 		{"high-sorcerer", 59, LanceFree, 0},
 		{"high-sorcerer", 60, LanceFree, 1},

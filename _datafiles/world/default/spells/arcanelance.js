@@ -1,10 +1,10 @@
-// Phase 38d: Arcane Lance, a Sorcerer's burst. One heavy bolt at one foe after a long chant (blows can break
+// Phase 38d: Arcane Lance, a Sorcerer's burst. One heavy, costly bolt at one foe after a chant (blows can break
 // it). The rank table's effects change it: Gathered power and High Lance add damage ('lancepct'), Twin Lance
 // strikes a second foe for a share ('lancetwin'). The spell's size is its power block (arcanelance.yaml, read
 // through SpellPower); skill decides how well it lands (SpellFactor).
 SPELL_ID = 'arcanelance';
 SPELL_NAME = 'Arcane Lance';
-WAIT_ROUNDS = 2; // arcanelance.yaml's waitrounds
+WAIT_ROUNDS = 1; // arcanelance.yaml's waitrounds
 
 function chanting(rounds) {
     return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
@@ -15,7 +15,10 @@ function fill(sourceActor, text) {
 }
 
 function onCast(sourceActor, targetActors) {
-    var rounds = chanting(WAIT_ROUNDS + 1);
+    // A High Sorcerer's Gathered chant and Instant Lance shorten some chants after this line; onWait gives
+    // the true count, so the opening line names none for it (Phase 38d review).
+    var shortened = sourceActor.ClassEffect('lancetrim') > 0 || sourceActor.ClassEffect('lancefree') > 0;
+    var rounds = shortened ? ' (chanting: ' + SPELL_NAME + ')' : chanting(WAIT_ROUNDS + 1);
     SendUserMessage(sourceActor.UserId(), 'You raise your hands, and a spear of white light begins to form.' + rounds);
     SendRoomMessage(sourceActor.GetRoomId(), fill(sourceActor, '%S raises %P hands, and a spear of white light begins to form.') + rounds, sourceActor.UserId());
     return true;

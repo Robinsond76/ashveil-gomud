@@ -18,9 +18,9 @@ to the elite class that continues its route (<ansi fg="command">help promotion</
   25 Steady chant     blows break its chant 25% less often
   Elite: Archmage (<ansi fg="command">help archmage</ansi>)
 
-<ansi fg="yellow-bold">Sorcerer</ansi> (neutral)  costly magical burst: one heavy Arcane Lance after a long chant
+<ansi fg="yellow-bold">Sorcerer</ansi> (neutral)  costly magical burst: one heavy Arcane Lance at a time
   10 Arcane Lance     a heavy bolt at one foe, about twice a Magic Missile
-                      (chant 3 rounds, cost 15)
+                      (chant 2 rounds, cost 15)
   15 Gathered power   the Lance deals 25% more damage
   20 Steady chant     blows break its chant 25% less often
   25 Cheaper lance    the Lance costs 12
