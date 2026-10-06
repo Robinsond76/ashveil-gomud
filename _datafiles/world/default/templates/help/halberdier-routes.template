@@ -6,7 +6,7 @@ classes, and any alignment may choose any of them. Each class adds four ranks
 
 <ansi fg="yellow-bold">Sweeper</ansi>
 
-  10 Full sweep         Sweep strikes at full damage instead of 80%
+  10 Full sweep         Sweep strikes at full damage instead of 90%
   15 Quick sweep        Sweep is ready after 2 rounds instead of 3
   20 Practiced hands    +2 Attack
   25 Heavy edge         +1 damage on every blow

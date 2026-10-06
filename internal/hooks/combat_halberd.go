@@ -215,7 +215,7 @@ func frontOf(f company.Formation, col int, alive map[company.MemberKey]bool) (in
 }
 
 // useSweep is a Sweep: the whole turn, one blow at each foe struck, each at
-// the sweep's share of the damage (80%, or a Sweeper's 100%), and a
+// the sweep's share of the damage (90%, or a Sweeper's 100%), and a
 // Valkyrie's Charged Sweep adds lightning that ignores armor to each blow
 // that lands.
 func useSweep(a actor, foe *mobs.Mob, room *rooms.Room, foes map[int]bool) {

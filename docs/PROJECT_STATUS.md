@@ -531,6 +531,17 @@ blow's bruise); the test now counts only the bleed's wound.
 Verification: `make generate`, `make validate`, `go test -race ./...`,
 `make js-lint`.
 
+**Phase 39a complete: the Halberdier (2026-10-06):** the first neutral class,
+a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
+the foe and its row neighbour, the whole row from level 8), Brace (answers
+the first strike at 125%), Hook (knocks a leaping foe down), a `crowded`
+target rule, Sweeper, Vanguard and Valkyrie routes open at any alignment
+(elites planned for 39i), a Sweep Drill talent, a recruitable Halberdier
+(mob 130), `help halberdier` and `help halberdier-routes`. See the
+[plan](plans/2026-10-06-phase-39a-halberdier.md). Decisions: Sweep 90% after
+the balance run showed 80% lost five-foe groups; sprite deferred to 40s5.
+Independent review is the Opus review thread's.
+
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
 school, reach 1 to the whole group by level, three new statuses (Asleep,

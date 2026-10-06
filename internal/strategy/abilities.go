@@ -58,7 +58,7 @@ var Abilities = []AbilitySpec{
 		Does: "its first shot that lands this round is a critical hit, leaving the foe exposed"},
 	{ID: Sweep, Name: "Sweep", Archetype: "halberdier", Skill: "polearm", Cooldown: 3,
 		When: "it wields a melee weapon, and its foe stands in a row with another foe",
-		Does: "one swing strikes its foe and one foe beside it in the same row (every foe in the row from level 8), each at 80% of the damage and each defending separately; the whole turn"},
+		Does: "one swing strikes its foe and one foe beside it in the same row (every foe in the row from level 8), each at 90% of the damage and each defending separately; the whole turn"},
 	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 3,
 		When: "its Sweep is not ready, it wields a melee weapon, and a foe is striking at its place in the line",
 		Does: "holds its turn; the first foe that strikes it takes a held blow at once, 25% harder than an ordinary one"},
@@ -257,7 +257,7 @@ func ParseReserve(s string) (int, bool) {
 // Sweep numbers (Phase 39a). A sweep strikes each foe at SweepPct of a
 // blow's damage; from SweepRowLevel it reaches the whole row.
 const (
-	SweepPct      = 80
+	SweepPct      = 90
 	SweepRowLevel = 8
 	BracePct      = 125
 )

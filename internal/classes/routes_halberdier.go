@@ -9,7 +9,7 @@ func init() {
 	register(Class{ID: "sweeper", Name: "Sweeper", Lineage: "halberdier", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a wider, harder Sweep that is ready sooner",
 		Ranks: []Rank{
-			rank(10, "Full sweep", "Sweep deals 100% of a blow's damage to every foe it strikes, not 80%", SweepPct, 100),
+			rank(10, "Full sweep", "Sweep deals 100% of a blow's damage to every foe it strikes, not 90%", SweepPct, 100),
 			rank(15, "Quick sweep", "Sweep is ready a round sooner", SweepCD, 1),
 			rank(20, "Practiced hands", "+2 Attack", Attack, 2),
 			rank(25, "Heavy edge", "+1 damage on every blow", Damage, 1),

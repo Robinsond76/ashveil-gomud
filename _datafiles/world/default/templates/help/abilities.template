@@ -25,7 +25,7 @@ heal, it follows from how your company is set up. Who has which:
   <ansi fg="command">Sweep</ansi>            halberdiers; for you, the <ansi fg="skill">polearm</ansi> skill
     When: it wields a melee weapon and two or more foes stand in its
     target's row.
-    Does: strikes its foe and the nearest foe beside it at 80% of a blow's
+    Does: strikes its foe and the nearest foe beside it at 90% of a blow's
     damage each; from level 8 it strikes the whole row. Each is a real
     blow that can miss. It is the whole turn. At most once every 3
     combat rounds (<ansi fg="command">help halberdier</ansi>).

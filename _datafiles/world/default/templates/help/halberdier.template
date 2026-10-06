@@ -22,7 +22,7 @@ in the row with the most foes (<ansi fg="command">help strategy</ansi>). Its abi
 and use no mana (<ansi fg="command">help abilities</ansi>):
 
   <ansi fg="yellow-bold">Sweep</ansi>   one swing strikes its foe and the nearest foe beside it in the same
-          row, each at 80% damage. From level 8 it strikes the whole row. It
+          row, each at 90% damage. From level 8 it strikes the whole row. It
           takes the whole turn and is ready again after 3 rounds. It is used
           when two or more foes stand in the target's row.
   <ansi fg="yellow-bold">Brace</ansi>   from level 3, it holds its turn with the glaive set. The first foe
