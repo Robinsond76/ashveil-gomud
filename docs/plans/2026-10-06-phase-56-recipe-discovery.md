@@ -61,3 +61,17 @@ Built under Robinson's full-autonomy rule; each decision has its reason.
 New `help recipes` (aliases recipe, recipe book, recipe pages, experiment),
 indexed under road beside cooking, linked from `help cooking`, `help camp` and
 `help camp duties`; `help cooking` and the camp lesson in the tutorial point at it.
+
+## Review decisions (2026-10-06)
+
+- **Existing characters keep everything.** A saved character with no
+  `recipebook` key predates discovery (`cookbook.Legacy`); new characters get
+  an empty book from `characters.New`. Before this phase every dish was
+  available up to the skill, so that is what such characters keep.
+- **Only hearths are kitchens** (`rooms.Container.IsHearth`): a loom keeps
+  its old `use` behaviour.
+- **No free hints.** An unknown dish above the cook's rank is a plain miss;
+  a remedy mix is one dose; herbs alone are refused (every dish has game or
+  fish in it, so the refusal tells nothing).
+- **Recipe pages in testing:** the armory catalog already lists every item,
+  pages included.
