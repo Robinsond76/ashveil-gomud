@@ -27,9 +27,9 @@ import (
 // start (and the blow itself) lifts it.
 var spoiled []*characters.ClassRT
 
-// ResetEliteForTest forgets every runtime mark of the rogue and ranger
-// elites.
-func ResetEliteForTest() {
+// resetRogueRangerElite forgets every runtime mark of the rogue and ranger
+// elites (ResetEliteForTest).
+func resetRogueRangerElite() {
 	clear(spoiled)
 	spoiled = nil
 	clear(abilityKind)

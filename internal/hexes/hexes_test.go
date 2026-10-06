@@ -1,6 +1,10 @@
 package hexes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestReachGrowsWithLevel(t *testing.T) {
 	for level, want := range map[int]int{1: 1, 7: 1, 8: 2, 15: 2, 16: 3, 23: 3, 24: 4, 29: 4, 30: ReachGroup, 40: ReachGroup} {
@@ -102,4 +106,29 @@ func TestImmunityKeepsAHoldBelowHalfOfTheRounds(t *testing.T) {
 	if l.Immune("m1", 1109) {
 		t.Error("Reset forgets")
 	}
+}
+
+// Phase 38c3: a bonus raises a hex's chance but never past the cap; a boss's
+// resist can be halved; a long hold is followed by as long an immunity.
+func TestLandChanceWithBonusAndResist(t *testing.T) {
+	assert.Equal(t, LandChance(0, false), LandChanceWith(0, 0, 0))
+	assert.Equal(t, LandChance(0, true), LandChanceWith(0, BossResist, 0))
+	assert.Equal(t, LandChanceWith(0, 0, 0)+10, LandChanceWith(0, 0, 10))
+	assert.Equal(t, LandMax, LandChanceWith(5, 0, 40), "never above 90")
+	assert.Equal(t, LandMin, LandChanceWith(-5, BossResist, 0), "never below 25")
+	assert.Greater(t, LandChanceWith(0, BossResist/2, 0), LandChanceWith(0, BossResist, 0), "Breaking the boss")
+}
+
+func TestALongHoldIsFollowedByAsLongAnImmunity(t *testing.T) {
+	l := NewLedger()
+	l.Land("m1", 1109, 5)
+	immune := 0
+	for round := 0; round < 14; round++ {
+		if l.Immune("m1", 1109) {
+			immune++
+		}
+		l.Tick()
+	}
+	assert.Equal(t, 10, immune, "a five-round hold and five rounds of immunity: never more than half")
+	assert.Equal(t, 14, l.Round())
 }

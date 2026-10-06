@@ -758,12 +758,25 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				}
 				// Phase 38b: a Divine Shield turns the first blow of a battle
 				// aside, and a ward takes its share of one.
+				warded := targetChar.RT != nil && targetChar.RT.Ward > 0
 				if attackTargetDamage > 0 && targetChar.ShieldBlow() {
 					attackTargetReduction += attackTargetDamage
 					attackTargetDamage = 0
 				} else if left, absorbed := targetChar.AbsorbWard(attackTargetDamage); absorbed > 0 {
 					attackTargetDamage = left
 					attackTargetReduction += absorbed
+					// Phase 38c3: a ward that breaks, or reflects.
+					broke, back := targetChar.WardAbsorbed(absorbed)
+					attackResult.Ward.Broke = attackResult.Ward.Broke || broke
+					attackResult.Ward.Reflect += back
+					attackResult.DamageToSource += back
+				}
+				// Phase 38c3: a Ward of Life or a Lich's Bargain keeps a
+				// blow that would fell its target from doing it.
+				if capped, saved := targetChar.GuardFall(attackTargetDamage, targetChar.Health-attackResult.DamageToTarget, warded); saved != "" {
+					attackTargetReduction += attackTargetDamage - capped
+					attackTargetDamage = capped
+					attackResult.Ward.Saved = saved
 				}
 				// Phase 38c2: a Nightblade's Coup de Grace fells a foe near death
 				// (a boss takes double damage instead).

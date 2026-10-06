@@ -224,6 +224,13 @@ var (
 	tRadiantHealing = defineEliteTalent(Talent{ID: "radiant-healing", Name: "Radiant Healing", Text: "+10% healing", Add: Effects{HealPct: 10}})
 	tUnshaken       = defineEliteTalent(Talent{ID: "unshaken", Name: "Unshaken", Text: "blows break your chant 25% less often", Add: Effects{ChantBreak: 25}})
 
+	// Phase 38c3: the wizard and witch elite talents. Deep Reserves is
+	// offered to both lineages.
+	tDeepReserves = defineEliteTalent(Talent{ID: "deep-reserves", Name: "Deep Reserves", Text: "+10% maximum mana", Add: Effects{ManaPct: 10}})
+	tFocusedWill  = defineEliteTalent(Talent{ID: "focused-will", Name: "Focused Will", Text: "blows break your chant 25% less often", Add: Effects{ChantBreak: 25}})
+	tSpellEdge    = defineEliteTalent(Talent{ID: "spell-edge", Name: "Spell Edge", Text: "+10% spell damage", Add: Effects{SpellPct: 10}})
+	tIronWill     = defineEliteTalent(Talent{ID: "iron-will", Name: "Iron Will", Text: "blows break your chant 25% less often", Add: Effects{ChantBreak: 25}})
+	tHexReach     = defineEliteTalent(Talent{ID: "hex-reach", Name: "Hex Reach", Text: "+5 to a hex's chance to land (never above 90)", Add: Effects{HexLand: 5}})
 	// Phase 38c2: the rogue and ranger elite talents. "Razor's Edge" is the
 	// design's Keen Edge, renamed: Keen Edge is already the +2 Attack talent.
 	tShadowFooting = defineEliteTalent(Talent{ID: "shadow-footing", Name: "Shadow Footing", Text: "+5 Evasion", Add: Effects{Evasion: 5}})
@@ -237,6 +244,8 @@ var (
 func init() {
 	offerElite("warrior", tIronHide, tSecondWind, tVeteransEdge)
 	offerElite("cleric", tFontOfGrace, tRadiantHealing, tUnshaken)
+	offerElite("wizard", tDeepReserves, tFocusedWill, tSpellEdge)
+	offerElite("witch", tDeepReserves, tIronWill, tHexReach)
 	offerElite("rogue", tShadowFooting, tRazorsEdge, tQuickHands)
 	offerElite("ranger", tLongDraw, tEagleEye, tQuickNock)
 	offer("cleric", tMendingHands, tSteadfast, tDeepWell, tSanctuary, tGentleRest)

@@ -3,6 +3,7 @@ package combat
 import (
 	"slices"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
@@ -40,6 +41,9 @@ type AttackResult struct {
 	// Qualities is the quality (QualityGlancing, QualitySolid or
 	// QualityTelling) of each strike that landed, in order (Phase 35d).
 	Qualities []string
+	// Ward is what the target's ward did in the round's strikes (Phase
+	// 38c3).
+	Ward characters.WardEvent
 }
 
 // Active defense outcomes (Phase 30g2).

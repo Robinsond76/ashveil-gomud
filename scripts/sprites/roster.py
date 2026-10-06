@@ -90,6 +90,7 @@ for cls in promoted.CLASS_IDS:
         variant_of=promoted.LINEAGE[cls], note=f"{promoted.LINEAGE[cls]} line")
 add("angel", "L", "summon", summoned.angel, ["angel"], note="a Hierarch's summon")
 add("demon", "L", "summon", summoned.demon, ["demon"], note="a Demonologist's summon")
+add("doll", "S", "construct", summoned.doll, ["doll"], note="a Doll Master's painted wooden puppet (39d)")
 add("unknown-humanoid", "M", "fallback", H["unknown-humanoid"], note="fallback silhouette")
 add("unknown-beast", "M", "fallback", beasts.unknown_beast, note="fallback silhouette")
 add("unknown-large", "L", "fallback", giants.unknown_large, note="fallback silhouette")

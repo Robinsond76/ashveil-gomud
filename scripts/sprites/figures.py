@@ -63,6 +63,9 @@ CLASSES = {
     # Phase 39h: a siege-camp crossbowman in a slate padded jack.
     "arbalist": dict(trousers="charcoal", boots="leather", torso="slate", sleeve="leather",
                      hair="charcoal"),
+    # Phase 39d: the Doll Master, a puppeteer in a long plum frock coat.
+    "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum",
+                       hair="bone"),
 }
 
 
@@ -716,6 +719,44 @@ def draw_arbalist(r):
     cv.part(line(px - 1, hy - r.px(5), hx, hy), "bone", flat="d")
     cv.part(line(px - 1, hy + r.px(5), hx, hy), "bone", flat="d")
     cv.put(hx, hy - 1, "steel.l")  # the nut
+
+
+
+def draw_dollmaster(r):
+    """A plum frock coat with brass buttons and a bone-white mane, a puppeteer's
+    wooden control bar held up with three strings, and a spool of thread at the belt."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("plum")
+    skirt = r.yhip + r.px(4)
+    if v == "up":
+        cv.part(rect(r.tx0 - 1, r.ysh, r.tx1 + 1, skirt), "plum")
+        cv.part({(r.cx, y) for y in range(r.ysh + 1, skirt)}, "plum", flat="d")
+    else:
+        cv.part(rect(r.tx0 - 1, r.yhip - 1, r.tx1 + 1, skirt), "plum")  # coat tails
+        cv.part({(x, skirt) for x in range(r.tx0 - 1, r.tx1 + 2)}, "brass", flat="m")
+        for y in range(r.ysh + 2, r.yhip - 1, max(2, r.px(3))):  # brass buttons
+            cv.put(r.cx if v == "down" else r.tx1, y, "brass.l")
+        cv.part(rect(r.tx0, r.ysh, r.tx1, r.ysh + 1), "wool", flat="m")  # cravat
+    _belt(r, "leather", r.yhip - r.px(1), "brass.m")
+    if v != "up":
+        sx = r.tx0 + 1 if v == "down" else r.tx0
+        cv.part(rect(sx, r.yhip, sx + 1, r.yhip + r.px(2)), "bone", flat="m")  # thread spool
+    r.arms("plum", glove="bone")
+    r.head(hair="bone")
+    hx, hy = r.hand_r
+    if v == "up":
+        hx = r.cx + r.px(2)
+    elif v == "down":
+        hx += 1
+    top = hy - r.px(9)
+    cv.part(line(hx - r.px(4), top, hx + r.px(4), top), "wood", flat="m")  # control bar
+    cv.part({(hx, top + 1), (hx, top + 2)}, "wood", flat="d")  # grip
+    cv.part(line(hx, top + 2, hx, hy), "wood", flat="m")
+    for dx in (-r.px(4), 0, r.px(4)):  # strings hang slack, ending in little beads
+        end = top + r.px(7)
+        cv.put(hx + dx, top + 1, "bone.m")
+        cv.put(hx + dx, end, "ember.m" if dx == 0 else "bone.l")
 
 
 DRAWERS = {

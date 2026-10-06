@@ -1,0 +1,33 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">wizard-routes</ansi>
+
+A wizard promotes at level 10 to one of three advanced classes, and at level 30
+to the elite class that continues its route (<ansi fg="command">help promotion</ansi>).
+
+<ansi fg="yellow-bold">Theurgist</ansi> (good, alignment +30)  protective arcane support
+  10 Arcane Ward      one ally's next blow is absorbed, up to one average hit
+                      (chant 1, cost 10, one ward per ally)
+  15 Steady chant     blows break its chant 25% less often
+  20 Double ward      a ward absorbs two blows
+  25 Deep reserves    +10% maximum mana
+  Elite: Archon (<ansi fg="command">help archon</ansi>)
+
+<ansi fg="yellow-bold">Arcanist</ansi> (neutral)  reliable damage and mana-efficient casting
+  10 Arcane focus     spells deal 10% more damage
+  15 Efficient casting spells cost 10% less mana
+  20 Sharper focus    spells deal 15% more damage
+  25 Steady chant     blows break its chant 25% less often
+  Elite: Archmage (<ansi fg="command">help archmage</ansi>)
+
+<ansi fg="yellow-bold">Warlock</ansi> (evil, alignment -30)  life-draining magic
+  10 Life Drain       damages one foe for a Magic Missile's worth and heals the
+                      most hurt ally for the damage dealt (chant 1, cost 10)
+  15 Cheaper drain    Life Drain costs 8
+  20 Twin drain       Life Drain also strikes a second foe and heals a second
+                      ally, at 60%
+  25 Dark focus       spells deal 10% more damage
+  Elite: Necromancer (<ansi fg="command">help necromancer</ansi>)
+
+A wizard's role is caster (<ansi fg="command">help strategy</ansi>): it casts on its own, and a Theurgist
+wards the company first.
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help strategy</ansi>.

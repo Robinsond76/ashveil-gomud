@@ -16,7 +16,7 @@ import (
 )
 
 // promotedClasses are the Phase 38b advanced and built elite classes with art (S5).
-var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag", "warlord", "sweeper", "vanguard", "valkyrie", "kensai", "hatamoto", "ronin", "stormcaller", "mistweaver", "earthspeaker"}
+var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag", "puppeteer", "golemancer", "marionettist", "warlord", "sweeper", "vanguard", "valkyrie", "kensai", "hatamoto", "ronin", "stormcaller", "mistweaver", "earthspeaker"}
 
 type spriteMeta struct {
 	Size   []int    `json:"size"`
@@ -280,7 +280,7 @@ func TestSpriteSetsS2S3AreComplete(t *testing.T) {
 		bonecrafter lich acolyte-dark grave-chanter brigand ruffian ruffian-dangerous ruffian-enforcer poacher poacher-shieldman
 		bonesetter shadow-trainee shadow-master goblin goblin-hexer goblin-loot faerie imp-forest fungus ent ogre-forest crocodile
 		creeper-cave creeper-abyssal stalker-cave bats-echo ice-warrior ice-guardian snow-floof dummy-training straw-footman
-		straw-archer guard guard-royal guard-captain goblin-shaman angel demon`) {
+		straw-archer guard guard-royal guard-captain goblin-shaman angel demon doll`) {
 		want = append(want, "battle/units/"+u+"/idle.png")
 	}
 	for _, f := range strings.Fields("cell cell-acting cell-targeted acting-arrow fallen surrendered hp-frame") {

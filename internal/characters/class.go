@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
@@ -71,7 +72,7 @@ func (c *Character) SpellCost(sp *spells.SpellData) int {
 		return 0
 	}
 	cost := sp.Cost
-	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
+	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" || sp.SpellId == "raisefallen" {
 		return max(1, c.ManaMax.Value/10) // a summon costs a tenth of the mana
 	}
 	fx := c.ClassEffects()
@@ -86,7 +87,12 @@ func (c *Character) SpellCost(sp *spells.SpellData) int {
 		}
 		return max(1, cost-(cost*fx.Int(classes.SpellCost)+50)/100)
 	}
-	if pct := fx.Int(classes.SpellCost); pct != 0 {
+	pct := fx.Int(classes.SpellCost)
+	// Phase 38c3: a Coven Mother's hexes cost less again.
+	if _, isHex := hexes.For(sp.SpellId); isHex {
+		pct += fx.Int(classes.HexCost)
+	}
+	if pct != 0 {
 		cost -= (cost*pct + 50) / 100
 	}
 	if sp.School == spells.SchoolRestoration {
@@ -115,6 +121,9 @@ type ClassAura struct {
 	Block   int // block chance points (a Knight guarding a ward)
 	Attack  int // Attack points (a Warlord's Battle Cry)
 	Fallen  int // allies of its company that have fallen (a Ronin's Vengeance)
+	// Phase 38c3: an Archon's Mana Shield, the percent less damage spells
+	// do to its row.
+	SpellResolve int
 }
 
 // ClassRT is a character's class state for the battle it is in: nothing in
@@ -175,6 +184,51 @@ type ClassRT struct {
 	AimStruck  bool
 	BlowPierce int
 	Shred      int
+
+	// Phase 38c3: the Wizard's elites. Overchannel and the once-a-battle
+	// gifts of the Archon, Archmage and Necromancer.
+	OverRound   uint64 // the combat round of its last Overchannel
+	OverSpent   bool   // Overchannel has been used this battle
+	StormUsed   bool   // Archmage's Storm has been spent
+	AegisUsed   bool   // Archon's Aegis has been spent
+	ReflectUsed bool   // Reflection has been spent
+	Raised      int    // thralls raised this battle
+	BargainUsed bool   // Lich's Bargain has been spent
+	// A ward's extras, set when a hex or Arcane Ward grants it. A ward that
+	// holds none of them is the plain Phase 38b ward.
+	WardMend      int      // heal the holder when the ward breaks
+	WardCleanse   bool     // remove one harmful status when the ward breaks
+	WardPeace     int      // Evasion the holder has while it holds the ward
+	WardLifeBy    *ClassRT // a Wise One's Ward of Life: it has not yet been spent
+	WardReflectBy *ClassRT // an Archon's Reflection: it has not yet been spent
+	// Saved is what kept this character from falling in the blow just
+	// resolved ("ward of life" or "bargain"), for the narration to tell.
+	Saved string
+
+	QuickCasts int // damage spells or hexes cast this battle (Quick casting and Quick curses trim every other one)
+
+	// Phase 38c3: the Witch's elites.
+	HexLands   int          // hexes it has landed this battle (Twin Hex)
+	CircleUsed bool         // Coven Circle has been spent
+	DoomUsed   bool         // Crone's Doom has been spent
+	LifeUsed   bool         // Ward of Life has been spent
+	CurseAtk   int          // on a foe: the Attack allies have against it while it is hexed
+	CurseDmg   int          // on a foe: percent more damage every ally's blows deal it while it is hexed
+	CurseBy    *Character   // on a foe: the Crone whose hex last landed on it
+	HexBuffs   map[int]bool // on a foe: the statuses a hex has laid on it this battle
+	HexStreak  int          // on a foe: rounds in a row it has been hexed
+	LingerAt   uint64       // on a foe: the hex round after which it is left exposed
+	SoulRot    bool         // on a foe: its fall forces a morale check on its group
+	PoisonX2   bool         // on a foe: its poison deals double damage
+}
+
+// WardEvent is what a ward did in a round's strikes (Phase 38c3), for the
+// hooks to narrate and finish: the ward ran out of blows, how much of a
+// blow Reflection sends back, and what held the target on its feet.
+type WardEvent struct {
+	Broke   bool
+	Reflect int
+	Saved   string
 }
 
 // RTState is the character's class battle state, made on first use.
@@ -224,6 +278,49 @@ func (c *Character) AbsorbWard(dmg int) (left, absorbed int) {
 	return dmg - absorbed, absorbed
 }
 
+// WardAbsorbed finishes a ward's absorption of absorbed points (Phase 38c3):
+// whether it has run out of blows, and the damage an Archon's Reflection
+// sends back at the attacker (half the absorbed damage), once a battle.
+func (c *Character) WardAbsorbed(absorbed int) (broke bool, reflect int) {
+	if c.RT == nil || absorbed <= 0 {
+		return false, 0
+	}
+	if by := c.RT.WardReflectBy; by != nil && !by.ReflectUsed {
+		by.ReflectUsed = true
+		reflect = max(1, absorbed/2)
+	}
+	return c.RT.Ward <= 0, reflect
+}
+
+// GuardFall caps a blow of dmg that would fell the character (its health
+// left being room), when a Ward of Life (the ward it held when the blow
+// came) or a Lich's Bargain keeps it at 1 health (Phase 38c3). It returns
+// the damage to take and what saved it, "" for nothing.
+func (c *Character) GuardFall(dmg, room int, warded bool) (int, string) {
+	if dmg <= 0 || dmg < room {
+		return dmg, ""
+	}
+	if c.RT == nil {
+		// A Necromancer that has cast nothing this battle has no runtime
+		// state yet; its Bargain still holds.
+		if !c.ClassEffects().Has(classes.Bargain) {
+			return dmg, ""
+		}
+		c.RTState()
+	}
+	if by := c.RT.WardLifeBy; warded && by != nil && !by.LifeUsed {
+		by.LifeUsed = true
+		c.RT.Saved = "ward of life"
+		return max(0, room-1), c.RT.Saved
+	}
+	if !c.RT.BargainUsed && c.ClassEffects().Has(classes.Bargain) {
+		c.RT.BargainUsed = true
+		c.RT.Saved = "bargain"
+		return max(0, room-1), c.RT.Saved
+	}
+	return dmg, ""
+}
+
 // ShieldBlow spends a Divine Shield on a blow, once a battle.
 func (c *Character) ShieldBlow() bool {
 	if c.RT == nil || c.RT.ShieldUsed || !c.ClassEffects().Has(classes.DivineShield) {
@@ -258,6 +355,7 @@ type SummonInfo struct {
 	OwnerUser, OwnerMob   int    // who called it
 	OwnerKey              string // the owner's company member key
 	HPPct                 int    // percent of a warrior's health at its level
+	HealthPct             int    // percent of the whole health its template works out to (a thrall)
 	Dice, Sides           int    // its natural weapon's dice
 	Smite, Rend           int    // percent more damage against the unholy, the holy
 	Guards, GuardsUsed    int    // Guard uses a battle and spent

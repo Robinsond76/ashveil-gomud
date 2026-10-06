@@ -95,6 +95,7 @@ func summonPass() {
 
 // dismissSummons removes a leader's summons: its battle ended.
 func dismissSummons(leaderID int) {
+	summons.ClearFallen(leaderID) // Phase 38c3: no one rises after the battle
 	for _, id := range company.SummonInstances() {
 		if l, _, ok := company.SummonOf(id); ok && l == leaderID {
 			summons.Dismiss(id)
@@ -114,7 +115,11 @@ func summonRound(u *users.UserRecord, a actor, side []actor, room *rooms.Room) {
 		return
 	}
 	if owner.Health < 1 { // the Angel departs when its Hierarch falls
-		a.holder.say("", "%s bows its head and rises away in a column of light.", "")
+		if sm.Kind == summons.Thrall { // Phase 38c3: a thrall drops with its master
+			a.holder.say("", "%s crumbles to dust as its master falls.", "")
+		} else {
+			a.holder.say("", "%s bows its head and rises away in a column of light.", "")
+		}
 		summons.Dismiss(a.who.mobId)
 		return
 	}

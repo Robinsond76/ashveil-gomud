@@ -53,6 +53,10 @@ beside the five above:
            Veteran's Edge (+3 Attack)
   Cleric   Font of Grace (+10% maximum mana), Radiant Healing (+10% healing),
            Unshaken (blows break your chant 25% less often)
+  Wizard   Deep Reserves (+10% maximum mana), Focused Will (blows break your
+           chant 25% less often), Spell Edge (+10% spell damage)
+  Witch    Deep Reserves, Iron Will (blows break your chant 25% less often),
+           Hex Reach (+5 to a hex's chance to land, never above 90)
   Rogue    Shadow Footing (+5 Evasion), Razor's Edge (+5% critical chance on every
            blow), Quick Hands (starts a battle with 15 points on its action meter)
   Ranger   Long Draw (+10% damage with a shooting weapon), Eagle Eye (+5 Attack with

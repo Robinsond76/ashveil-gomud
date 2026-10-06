@@ -112,6 +112,16 @@ func (a ScriptActor) CleanseOne(source string) string {
 // are below their wound limit, the most hurt (by share of health) first.
 // others leaves the actor itself out.
 func (a ScriptActor) HurtAllies(others bool) []*ScriptActor {
+	return a.companyAllies(others, true)
+}
+
+// AllAllies are every living member of the actor's company in its room,
+// the most hurt (by share of health) first (Phase 38c3).
+func (a ScriptActor) AllAllies(others bool) []*ScriptActor {
+	return a.companyAllies(others, false)
+}
+
+func (a ScriptActor) companyAllies(others, hurtOnly bool) []*ScriptActor {
 	c := a.characterRecord
 	if c == nil {
 		return nil
@@ -136,7 +146,7 @@ func (a ScriptActor) HurtAllies(others bool) []*ScriptActor {
 			return
 		}
 		limit := max(1, x.characterRecord.HealthLimit())
-		if x.characterRecord.Health >= limit {
+		if hurtOnly && x.characterRecord.Health >= limit {
 			return
 		}
 		found = append(found, hurt{x, float64(x.characterRecord.Health) / float64(limit)})
