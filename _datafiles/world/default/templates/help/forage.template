@@ -6,6 +6,9 @@ company's best forager brings back food: 1 find, plus 1 more for every
 meat, wild thyme, and mushrooms. They go into the company's cargo
 (<ansi fg="command">help cargo</ansi>); anything the company can't carry is left behind.
 
+A room that lists forage (the "Here:" line in <ansi fg="command">look</ansi>, <ansi fg="command">help resources</ansi>) gives one more
+find than usual. A zone with nothing to find gives nothing extra.
+
 Raw meat and thyme are what a cook needs (<ansi fg="command">help cooking</ansi>). A rest spoiled
 by raiders brings no forage, and a company forages (and keeps a vigil) at
 most once every 15 minutes of real time. You collect it at the camp, once

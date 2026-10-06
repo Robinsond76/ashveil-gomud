@@ -18,6 +18,8 @@ spawninfo:
   respawnrate: 5 real minutes
 idlemessages:
 - "304"
+resources:
+- water
 mapx: 31
 mapy: 14
 mapz: 0

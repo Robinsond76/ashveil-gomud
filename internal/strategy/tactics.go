@@ -27,7 +27,7 @@ const DefaultPatch = 80
 
 // FocusRules are the values a focus takes, in the order they are listed.
 // Assist and defend follow a person, so they are no company focus.
-var FocusRules = []Rule{NoFocus, Leader, Casters, Nearest, Weakest, Strongest, Wounded}
+var FocusRules = []Rule{NoFocus, Leader, Casters, Healers, Nearest, Weakest, Strongest, Wounded}
 
 // Tactics is a player's company tactics. A blank field is its default.
 type Tactics struct {
@@ -47,7 +47,20 @@ const (
 	// CastersFocusLevel is the leader level from which the default focus is
 	// casters first: casters while any stand, then the weakest.
 	CastersFocusLevel = 25
+	// HealersFocusLevel is the leader level from which the default focus
+	// is the healers rule whenever the enemy group has a healer (Phase
+	// 35e). It takes the place of the level's own default for that fight.
+	HealersFocusLevel = 5
 )
+
+// HealersDefault reports whether the company at a leader level aims at an
+// enemy healer first, as its default (Phase 35e): the player has set no
+// focus (an explicit one, "none" included, always wins) and the leader is
+// level 5 or more. The battle checks that the enemy actually has a healer.
+func HealersDefault(userID, level int) bool {
+	_, defaulted := FocusFor(userID, level)
+	return defaulted && level >= HealersFocusLevel
+}
 
 // DefaultFocusAt is the focus a company aims by at a leader level when the
 // player has set none: NoFocus (each member by its own rule) below level 10,
@@ -235,7 +248,7 @@ func EnemyPick(rule Rule, foes []Foe, noise int, roll Roll) (int, bool) {
 		return pool[roll(len(pool))].ID, true
 	}
 	switch rule {
-	case Strongest, Wounded, Nearest, Furthest, Leader, Casters:
+	case Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers:
 	default:
 		rule = Weakest
 	}

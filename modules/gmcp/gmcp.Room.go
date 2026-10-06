@@ -518,6 +518,11 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		}
 		// end room details
 
+		// Phase 40a: the shown room resources (never reserved ones).
+		if shown := room.ShownResources(); len(shown) > 0 {
+			payload.Resources = shown
+		}
+
 	}
 
 	// If we reached this point and Char wasn't requested, we have a problem.
@@ -557,6 +562,7 @@ type GMCPRoomModule_Payload struct {
 	Exits       map[string]int                                      `json:"exits"`
 	ExitsV2     map[string]GMCPRoomModule_Payload_Contents_ExitInfo `json:"exitsv2"`
 	Details     []string                                            `json:"details"`
+	Resources   []string                                            `json:"resources,omitempty"` // Phase 40a: shown room resources, omitted when none
 	Contents    GMCPRoomModule_Payload_Contents                     `json:"Contents"`
 }
 

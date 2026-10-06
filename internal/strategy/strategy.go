@@ -42,12 +42,13 @@ const (
 	Furthest  Rule = "furthest"  // the back-most (FF12's "furthest")
 	Leader    Rule = "leader"    // the group's leader, its toughest (Ogre Battle's Leader)
 	Casters   Rule = "casters"   // spell-casters, one chanting first (Phase 30c)
+	Healers   Rule = "healers"   // healers, one chanting a heal first, then the casters order (Phase 35e)
 	Assist    Rule = "assist"    // the player's own target (FF12's "party leader's target")
 	Defend    Rule = "defend"    // the foe striking our most hurt (FF12's "foe targeting ally")
 )
 
 // Rules in the order they are listed.
-var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Assist, Defend}
+var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Healers, Assist, Defend}
 
 var roleAliases = map[string]Role{
 	"fight": Fighter, "fighter": Fighter, "melee": Fighter,
@@ -64,6 +65,7 @@ var ruleAliases = map[string]Rule{
 	"near": Nearest, "front": Nearest, "far": Furthest, "back": Furthest,
 	"focus": Assist, "protect": Defend,
 	"mages": Casters, "spellcasters": Casters,
+	"healer": Healers, "medics": Healers,
 }
 
 // ParseRole reads a role or its alias.
@@ -173,6 +175,8 @@ func (r Rule) Describe() string {
 		return "their leader, the toughest of them"
 	case Casters:
 		return "their spell-casters, one chanting first"
+	case Healers:
+		return "their healers first, one chanting a heal before an idle one"
 	case Assist:
 		return "whatever you are striking"
 	case Defend:

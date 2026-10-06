@@ -202,11 +202,16 @@ func (m *CampingModule) campRecovery(room *rooms.Room) (int, weather.Condition, 
 	if !ok || condition.RestRecoveryPct <= 0 {
 		return recovery, weather.Condition{}, false
 	}
-	scaled := (recovery*condition.RestRecoveryPct + 50) / 100
+	pct := condition.RestRecoveryPct
+	// Phase 40a: a shelter room halves the weather's penalty.
+	if pct < 100 && room.HasResource(rooms.ResourceShelter) {
+		pct += (100 - pct) / 2
+	}
+	scaled := (recovery*pct + 50) / 100
 	if scaled < 1 {
 		scaled = 1
 	}
-	return scaled, condition, condition.RestRecoveryPct < 100
+	return scaled, condition, pct < 100
 }
 
 // --- inn stays ---

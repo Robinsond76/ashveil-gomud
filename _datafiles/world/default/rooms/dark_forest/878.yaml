@@ -25,6 +25,9 @@ spawninfo:
   itemid: 25
   gold: 1
   respawnrate: 1 real day
+resources:
+- water
+- shelter
 mapx: 40
 mapy: 2
 mapz: -1

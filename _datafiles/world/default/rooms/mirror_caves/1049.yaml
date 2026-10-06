@@ -12,6 +12,8 @@ description: Within the labyrinth of The Mirror Caves, you find yourself in yet 
 exits:
   north:
     roomid: 1048
+resources:
+- shelter
 mapx: -22
 mapy: 14
 mapz: -1
