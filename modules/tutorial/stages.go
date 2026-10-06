@@ -169,7 +169,7 @@ func init() {
 				`A critical hit also leaves a mark that matches the weapon: bleeding, a stagger, a knockdown. Staggered and knocked-down fighters lose their next action, and it all ends with the fight (<ansi fg="command">help statuses</ansi>).`,
 				`A round's lines come to you one by one, so you watch the fight unfold; your prompt's health catches up when they finish. <ansi fg="command">set combatpace fast</ansi>, normal, slow, or off sets how fast (<ansi fg="command">help combatpace</ansi>).`,
 				`When the last foe falls, a battle summary shows the damage, the kills, and your company's health (<ansi fg="command">help battle-summary</ansi>).`,
-				`Playing in the web client? The Combat tab shows the battle as it goes: both formations, who strikes whom, and how hurt each foe looks (<ansi fg="command">help webclient</ansi>).`,
+				`Playing in the web client? The Combat tab shows the battle as it goes: both formations, who strikes whom, and how hurt each foe looks, and the battle also opens as a picture, the battle screen (<ansi fg="command">help battlescreen</ansi>, <ansi fg="command">help webclient</ansi>).`,
 				`To leave a battle, <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>): your company prepares for one round, then tries to withdraw together. A hobbled member pins everyone until the hurt passes (<ansi fg="command">help retreat</ansi>).`,
 				`For every detail of how battles work, see <ansi fg="command">help combat</ansi>, and from there <ansi fg="command">help formation</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help chemistry</ansi>, and <ansi fg="command">help light</ansi>.`,
 			},

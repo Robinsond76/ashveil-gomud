@@ -217,3 +217,13 @@ copyover.
 ## Open questions
 
 1. Approve the allied-company recommendation (above).
+
+## Built (2026-10-06)
+
+Built as designed, with the decisions listed in
+[PROJECT_STATUS](../PROJECT_STATUS.md): code-drawn placeholder figures that
+S3 art replaces with no code change (manifest-keyed), no shipped mob
+`sprite:` keys yet, allied reserve formations deferred (no allied relay in
+the 40e feed), conditions icons from events only, backdrop overrides for
+the tutorial zone and Stormwatchers Keep waiting on S3. Help:
+`help battlescreen`. Check: `scripts/browser/battle-check.mjs`.

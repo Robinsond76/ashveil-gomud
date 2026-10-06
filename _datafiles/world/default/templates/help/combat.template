@@ -146,6 +146,7 @@ and your company's health.
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
   <ansi fg="command">help guardian</ansi>     guardians and their guards
+  <ansi fg="command">help battlescreen</ansi> the web client's battle picture
   <ansi fg="command">help evasion</ansi>      Attack and Evasion: the skill each level brings
   <ansi fg="command">help defense</ansi>      blocks, parries, and dodges
   <ansi fg="command">help shields</ansi>      shield sizes, and who may carry them

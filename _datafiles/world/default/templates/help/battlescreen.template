@@ -1,0 +1,45 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">battlescreen</ansi>
+
+In the web client, a battle opens as a picture: your company on the left,
+the enemy on the right, each standing in its 3x3 formation over a backdrop
+that matches the ground you fight on. It shows the same battle as the
+Combat tab and the story text, drawn for a quick look. The text clients
+see no change.
+
+The battle plays out on its own (<ansi fg="command">help strategy</ansi>). Nothing you do on this
+screen steers it, except the two things you could always do: retreat, and
+change the company's focus.
+
+<ansi fg="yellow-bold">Reading the picture</ansi>
+
+- Row 1, the front, stands nearest the line down the middle; the back rows
+  stand further out (<ansi fg="command">help formation</ansi>). The three columns are three lanes,
+  upper (further) to lower (nearer).
+- Each of you shows a health bar, and a letter for your role: F fighter,
+  H healer, C caster, G guardian. You wear a small crown.
+- Enemy health is shown in five steps, never as numbers: unhurt, scratched,
+  wounded, badly wounded, near death. Hover or tap a figure to read its
+  name and health, and to see whom it strikes.
+- A small coloured mark over a figure is a status on it. A bright mark
+  means it is chanting a spell. A flash and a number show a blow, a heal,
+  or a miss as it lands. A fallen figure lies down.
+- In the dark, or against a foe you can't make out, you see one shadow
+  instead of the enemy (<ansi fg="command">help light</ansi>).
+
+<ansi fg="yellow-bold">Opening and closing</ansi>
+
+  It opens by itself when a battle starts. <ansi fg="yellow">Minimise</ansi> shrinks it to a badge
+  in the corner; the battle goes on. Click the badge, or the Combat tab's
+  <ansi fg="yellow">Battle screen</ansi> button, to bring it back.
+  Untick <ansi fg="yellow">Open automatically</ansi> to keep it shut until you ask.
+  When the fight ends it shows the outcome for three seconds, then closes.
+
+<ansi fg="yellow-bold">Buttons</ansi>
+
+  <ansi fg="yellow">Retreat</ansi> sends <ansi fg="command">retreat</ansi>, and the focus buttons send <ansi fg="command">company tactics focus [rule]</ansi>
+  (<ansi fg="command">help tactics</ansi>), as the Combat tab's do. <ansi fg="yellow">Help</ansi> opens this page.
+
+Screen readers: the picture is decorative. The Combat tab's Battle view
+and the story text carry everything, and are unchanged.
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help formation</ansi>
