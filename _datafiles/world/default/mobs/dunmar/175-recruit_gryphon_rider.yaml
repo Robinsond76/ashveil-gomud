@@ -1,0 +1,24 @@
+mobid: 175
+zone: Dunmar
+# Phase 39f recruit base (gryphon rider). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Gryphon Rider
+  description: A scout who flew a gryphon for a lord who no longer pays, looking for a company to dive for, spear in hand.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10131
+    offhand:
+      itemid: 20047
+    head:
+      itemid: 20020
+    body:
+      itemid: 20163
+    feet:
+      itemid: 20003

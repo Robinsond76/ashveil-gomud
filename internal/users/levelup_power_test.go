@@ -39,3 +39,17 @@ func TestHalberdierLevelsAreNewRankLines(t *testing.T) {
 		assert.Empty(t, abilityPower(c, strategy.CompanionAbilities("halberdier")), "level %d", level)
 	}
 }
+
+// Phase 39f review: a gryphon rider's level-up report names Dive's damage
+// when Power dive raises it (level 8).
+func TestPowerSnapshotNamesTheGryphonRidersPowerDive(t *testing.T) {
+	c := characters.New()
+	c.HPArchetype = "gryphon-rider"
+	at := func(level int) []powerEntry {
+		c.Level = level
+		return abilityPower(c, strategy.CompanionAbilities("gryphon-rider"))
+	}
+	assert.Equal(t, []powerEntry{{"Dive", "100% of a blow"}}, at(1))
+	assert.Empty(t, powerLines(at(2), at(3)))
+	assert.Equal(t, []string{"Dive 100% of a blow -> 125% of a blow"}, powerLines(at(7), at(8)))
+}

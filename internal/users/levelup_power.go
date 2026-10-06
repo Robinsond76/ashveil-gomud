@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 )
@@ -57,7 +58,8 @@ func powerSnapshot(c *characters.Character) []powerEntry {
 
 // abilityPower are the report's entries for the abilities a character
 // knows, at its level. A halberdier's Sweep, Brace and Hook are base ranks
-// (Phase 46), reported as "New rank" lines.
+// (Phase 46), reported as "New rank" lines. A gryphon rider's Dive shows its
+// damage, which its ranks raise (39f review).
 func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntry {
 	var out []powerEntry
 	for _, id := range strategy.AtLevel(known, c.Level) {
@@ -66,6 +68,8 @@ func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntr
 			out = append(out, powerEntry{name: "Opening Strike", size: fmt.Sprintf("+%d damage", strategy.OpeningStrikeBonus(c.Level))})
 		case strategy.AimedShot:
 			out = append(out, powerEntry{name: "Aimed Shot", size: fmt.Sprintf("+%d damage", strategy.AimedShotBonus(c.Level))})
+		case strategy.Dive: // Phase 39f review: Power dive and Falling stone grow it
+			out = append(out, powerEntry{name: "Dive", size: fmt.Sprintf("%d%% of a blow", 100+c.ClassEffects().Int(classes.DiveDmg))})
 		}
 	}
 	return out
