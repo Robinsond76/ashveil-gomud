@@ -1,0 +1,22 @@
+roomid: 2118
+zone: Alderbrook
+title: Cave Mouth
+description: A black fissure splits the hillside here, wide enough for two to enter side by side.
+  Cold air breathes out of it, smelling of wet stone and old bats, and the hamlet's
+  children are forbidden to go in.
+biome: cave
+exits:
+  down:
+    roomid: 2102
+  north:
+    roomid: 2110
+  south:
+    roomid: 2125
+  west:
+    roomid: 2117
+mapsymbol: C
+maplegend: Cave
+mapx: 8
+mapy: 1
+mapz: 0
+hascoordinates: true

@@ -80,6 +80,7 @@ help:
       - patch
     road:
       - travel
+      - walkto
       - survival
       - strain
       - weather
@@ -335,6 +336,7 @@ help-aliases:
   pack:             [packs, satchel, knapsack, backpack, container, containers]
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
+  walkto:           [autowalk, auto-walk, click-to-walk, click to walk, walk to, walk-to, tile-ready, tile ready, tile regions, showcase, alderbrook]
   camp:             [camping, campfire]
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
@@ -418,6 +420,7 @@ command-aliases:
   go:                 ['enter']
   experience:         ['exp', 'xp', 'tnl', 'level', 'levels']
   map:                ['m']
+  walkto:             ['autowalk']
   conditions:         ['c', 'cond', 'conds']
   skills:             ['sk', 'skill']
   equip:              ['wear', 'wield', 'hold']
