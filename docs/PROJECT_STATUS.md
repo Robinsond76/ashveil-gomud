@@ -1,6 +1,68 @@
 # Ashveil Project Status
 
-**Phase 39d built: the Doll Master neutral lineage (2026-10-06, PR pending review):** a back-row Master fights through a wooden doll. Dolls are records on the Master (player character or companion state: name, damage, broken, gear) that stand as charmed mobs (mob 161) for one battle, laid over the formation in front of their Master, with no company slot, aim or turn of their own; Puppet Strike makes the Master's turn the doll's strike. Guard String (rank 5, 2 then 3 guards), Tangle (12), Emergency Splice (18); routes Puppeteer (two dolls), Golemancer (golem), Marionettist (tangle); archetype `dollmaster` (HP 1 and 0.55, Attack 0.7, Evasion 0.8, light armor), recruit mob 160, doll parts item 70 sold at Dunmar, `doll` command, camp-rest mending. Help: `help dollmaster`, `help dollmaster-routes`, `help doll` plus updates to the related pages and the formation page; tutorial hint in the creation lesson. Plan: [39d](plans/2026-10-06-phase-39d-dollmaster.md). Balance (60 fights, five-foe groups, Doll Master vs warrior third slot): 78/91/73% vs 81/91/65% at L5/10/20, within noise of the five-point target. Decisions (owner delegated): dolls are summon-like mobs plus a registry rather than company records, to avoid roster, food, morale and XP machinery; a Master with no able doll swings its own dagger; Tangle shifts the meter for the next round; `doll mend` works anywhere out of battle and camp rest mends automatically; companion Masters' dolls keep the starter cudgel; doll parts only bought back unused. Follow-ups: battle screen and GMCP presentation of dolls, dressing companion Masters' dolls, doll sprite, elites (39i).
+**Phase 39d complete, reviewed from [PR #59](https://github.com/Robinsond76/ashveil-gomud/pull/59) (2026-10-06): the Doll Master neutral lineage.** a back-row Master fights through a wooden doll. Dolls are records on the Master (player character or companion state: name, damage, broken, gear) that stand as charmed mobs (mob 161) for one battle, laid over the formation in front of their Master, with no company slot, aim or turn of their own; Puppet Strike makes the Master's turn the doll's strike. Guard String (rank 5, 2 then 3 guards), Tangle (12), Emergency Splice (18); routes Puppeteer (two dolls), Golemancer (golem), Marionettist (tangle); archetype `dollmaster` (HP 1 and 0.55, Attack 0.7, Evasion 0.8, light armor), recruit mob 160, doll parts item 70 sold at Dunmar, `doll` command, camp-rest mending. Help: `help dollmaster`, `help dollmaster-routes`, `help doll` plus updates to the related pages and the formation page; tutorial hint in the creation lesson. Plan: [39d](plans/2026-10-06-phase-39d-dollmaster.md). Balance (60 fights, five-foe groups, Doll Master vs warrior third slot): 78/91/73% vs 81/91/65% at L5/10/20, within noise of the five-point target. Decisions (owner delegated): dolls are summon-like mobs plus a registry rather than company records, to avoid roster, food, morale and XP machinery; a Master with no able doll swings its own dagger; Tangle shifts the meter for the next round; `doll mend` works anywhere out of battle and camp rest mends automatically; companion Masters' dolls keep the starter cudgel; doll parts only bought back unused. Follow-ups: battle screen and GMCP presentation of dolls, dressing companion Masters' dolls, doll sprite, elites (39i).
+
+**Phase 39d review (Opus review thread):** accepted and fixed: (1) UI: dolls were invisible in battle; the battle screen drew nothing in their cells and the Combat tab named no one when a foe struck a doll. `Company.Battle` now carries `dolls` [{key, name, master, hp, hp_max}] (the key is the id the doll's events use and its key in `positions`); the Combat tab lists each doll as a fighter ("Pip, 30 / 40 · your doll") and names it as a target, and the battle screen draws it as a painted-wood figure until doll art lands (`TestBattleFeedListsTheCompanysDolls`). (2) Marionettist's rank 15 gave +2 Attack to the Master, who does not swing while a doll stands; it now adds Attack to the doll's blows. (3) Puppeteer's rank text said Strike drives only the first doll; both standing dolls strike, as the code and help say. (4) `help dollmaster-routes` named ranks the code does not (Practiced hands, Deep core, Stone skin and others) and gave armor as flat points; it now uses the ranks' names and percent armor. Balance at 100 fights a cell (five-foe groups, Doll Master vs warrior third slot): 79/93/82% vs 80/92/75% at L5/10/20; L20 rechecked at 300 fights: 79% vs 74%, at the five-point target, so no tuning. Decisions: (a) companion Masters' dolls stay undressable this phase: moving an item from the leader's pack to a companion's saved doll crosses two stores and needs the company's asset commit path (`commitAssets`), so it is a follow-up rather than a quick fix; (b) the two starter doll parts can be sold once per character for about 20 gold, accepted like the 40a3 bedroll exception (no repeat source; mending consumes parts and creates nothing resellable). Checked: doll parts are a supply sold only in Dunmar and bought back unused; dolls drop nothing and take no XP, wounds or food; mob 160/161 and item 70 collide with nothing on master or open branches; abilities stay hidden below their unlock level (`strategy.AtLevel`); route ranks use the shared "New rank" line. Follow-ups: dressing companion Masters' dolls (asset commit), doll and Doll Master sprites (art pass), a "goes limp" line when a Master falls with its doll standing, elites (39i).
+**Phase 44b complete (2026-10-06): world smoke playtest.** `make
+smoke-world` (`live_smoke_world_test.go`) plays a Warrior that skipped the
+tutorial through the world on a real server: recruiting at the Waymark Inn,
+the Old Kings Road journey (the fallen tree and `travel resume`), a random
+encounter fight and its loot, `gather firewood` and a camp, a restart, a
+salvage at the Frostfang armorer, a sale at the Dunmar market and a night at
+the Dunmar inn; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is its
+own target (about four minutes). Three things are bent in the test's own
+copy of the world only: new characters start at Dunmar's West Gate, the Old
+Kings Road gets an always-springing encounter table (two unarmed brigands),
+and the account is made an admin for the restart so it can teleport to
+Frostfang, which no shipped road reaches. Live bugs it found, each fixed with
+a regression test: (1) **a journey that ended in a room that springs random
+encounters froze the whole server**: `moveAndFinishLocked` held the expedition
+lock while the encounter roll asked the expedition module whether the leader
+could move (the arrival is now queued and heard after the lock is released;
+no shipped room was both a journey end and an encounter room, so only this
+run met it); (2) **a new character skipping the tutorial woke at 11/59 HP**
+(the engine seeds 10 health under the archetype's raised maximum; creation
+now starts at full health); (3) `company status` kept a companion's old level
+after it levelled in a fight (it showed the last save's snapshot); (4) "Your
+company gathers 3 firewood bundle" (now plural); (5) the phase 44 open item,
+"The battle is under way" lingering after a fight's summary: an aim at a foe
+already slain counted as a battle until the next round cleared it, so
+`loot`, `go`, `eat` and the rest were refused (it now does not). The fifth
+fix is read-only (the two reverted attempts cleared the aim); the world smoke
+loot step logs how long it waited, and the tutorial run keeps `doAfterBattle`
+as a safety net. Not fixed, noted for later: Dunmar has a market but no
+merchant or smith, and no road joins it to Frostfang, so gear a Dunmar
+company loots can only be sold or salvaged after a trip no shipped route
+makes; the only two camp rooms (the tutorial campground and the Fork) have free
+deadfall, so gathered firewood bundles have no use at a camp in the shipped
+world (a camp elsewhere would burn one) and markets never buy them; `weather`
+in Dunmar and Frostfang (city biomes) says "You can't tell what the weather
+is like here" because only the forest biome has a weather table (a content
+gap, not a code bug); a camp rest was not played in the world run, because the
+Fork's 15% camp-raid roll would make it depend on dice (the tutorial run covers
+a rest). One observation not reproduced: the prompt briefly showed
+"Overloaded" with 12.9 of 30 kg carried after `camp break` and a step.
+Merging master (39b's Samurai) renumbered the creation menus and broke both
+smoke runs; they now answer the race and archetype prompts by name.
+Verification: `make generate`, `make validate`, `go test -race ./...`, `make
+js-lint`, `make js-test`, `make smoke`, `make smoke-world` (all pass on the merged tree).
+
+**Phase 44b reviewed and merged via [PR #55](https://github.com/Robinsond76/ashveil-gomud/pull/55) (2026-10-06, Opus review thread):**
+checked the deadlock fix: the travel timer already completes on the event
+loop, so queuing `journeyArrived` only moves the encounter roll past the
+expedition lock; the encounter roll re-checks that the leader is still in the
+arrival room, so a late arrival can't spring on someone who moved or logged
+off. The smoke's world bending (start room, fixture encounter table, unarmed
+brigands, admin role) only writes the test's temp copy and its overrides file.
+`AimedAtMob` reads the mob map on the game loop like every other caller; the
+`company status` refresh is the save path's own snapshot. No fixes needed.
+Decisions: (1) the city-weather gap stays a follow-up, not a quick table,
+because a city table would change journey weather (a Dunmar departure now
+takes the forest's weather from its destination); (2) the firewood-at-camp
+and Dunmar merchant/smith gaps go to world building 41, which places camps
+and shops; (3) a camp rest stays out of the world run (the tutorial run covers
+it). UI: the fixes are themselves the player-visible changes (HP, roster level,
+plural, battle refusals); no help change needed.
 
 **Phase 39c complete, merged via [PR #54](https://github.com/Robinsond76/ashveil-gomud/pull/54) (2026-10-06): the Shaman neutral lineage.** A weather-caller: Call Fog and Gust at level 1, Chill Wind 3, Rain 6, Lightning 8. One battle-local weather at a time, 3 rounds, a new call replaces the old: Fog (Fogbound foes: ranged -10 to hit, spells -10%), Chill Wind (Windchilled: chants and sling shots one round slower), Rain (Lightning +50%). Routes Stormcaller (chain lightning at 50%), Mistweaver (+5 Evasion to allies in fog, longer weather), Earthspeaker (Stoneskin: +10/15/20 armor); elites planned (39i). Long Weather talent, recruit mob 150, `help shaman` and `help shaman-routes`, creation-lesson tutorial hint, strategy uses `weather` and `storm`. Plan: [39c](plans/2026-10-06-phase-39c-shaman.md). Decisions: Caster role, not a new support role; Fog and Chill are buffs so `conditions` shows them; weather marks only foes standing at the call; a spell with an apostrophe in its script text silently disabled the spell (fixed, `node --check` each spell script). Merged master (39a Halberdier) before the PR; powers are learned spells, so the strategy list, company summary and capability panel show them only once known, and route ranks reuse 39b's "New rank" level-up line. Follow-ups: Shaman battle sprites (art pass), elite ranks (39i).
 
@@ -167,6 +229,44 @@ Samurai elites as still to come.
 Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
 in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
 a "Druid tuning" pass belongs with 39i or a small phase.
+
+**Phase 37c reviewed and merged via [PR #52](https://github.com/Robinsond76/ashveil-gomud/pull/52) (2026-10-06, Opus review thread).** Review checked the company-level rating (`look`, `scout`, GMCP `Room.Info`, the web header resend on a level change), the conversation sweep fix, and each test fix. Accepted and fixed: (1) the rating line never said what level it rated, so a lone leader and a full company could read one zone differently with no clue why; `look` and `scout` now name it ("Risky at your company's level (7): expect losses."), and `help encounters` says the fallen count and `look` names the level; (2) `util.UseRandForTest` swapped a plain package variable that every goroutine's `Rand` reads; it is now an `atomic.Pointer`, so a test that pins it never races a goroutine still rolling. Agreed with the builder: the fallen count toward the company level (they come back; every member status is temporary). Verification: full `go test -race ./...` twice (once before and once after the master merge), plus shuffled repeat runs of `modules/company`, `modules/archetype` and `internal/conversations`. Still unreproduced and left watched: the unnamed archetype flake and `TestAlliedFinalEnemyPaysAfterCombatClosesBattle`; `TestAttackOnAWaitingGroupIsRefused` has a likely fix only (shared road corpses). Also fixed in review: `TestIaijutsuIsTheFirstStrikeOfABattleOnly` (about 1 run in 8: Iaijutsu's own +10% critical chance stands with the odds pinned to 0, so a crit doubled the strike; the test now pins `util.Rand` to its top face; 100 of 100). Follow-up (candidate phase 37d): `internal/usercommands` tests share package state, so shuffled runs and `-count>1` fail (`TestDefenseHelp`, `TestStartFallsBackWithoutTheTutorial`, `TestSuicidePendingGoesStraightToRespawn`, `TestLookNamesTheLootClaimant` and others; each passes alone and in the default order); `TestSpawnLootRollsAnItemIntoTheRoom` (failed once in a full race run, 200 of 200 solo) is likely the same family. After the phase 45 master merge `TestStartFallsBackWithoutTheTutorial` failed every run: its premise (no tutorial rooms) held only if no earlier test loaded the default world, and `TestDefenseHelp` does; it now clears `TutorialRooms` itself through the new `configs.SetTestSpecialRoomsConfig`.
+
+**Phase 37c built: test stability and company-level zone rating (2026-10-06):**
+(1) The zone band rating (easy, fair, risky, dangerous) in `look`, `scout`,
+GMCP `Room.Info.levelband` and the web header now rates the **company's
+level**: the rounded average of the leader and every companion, the fallen
+included (`companyview.CompanyLevel`, the same "average level" the enemy
+coordination tiers use; the leader alone when the company can't be read).
+The web client's header refreshes when that level changes (a level-up, a
+recruit, a dismissal): the GMCP room module resends `Room.Info` on a
+company-level change inside a banded zone. Help (`encounters`, `scout`,
+`look`), the web tooltip and the tutorial hint say "your company's level".
+(2) Flaky tests, found by repeated and shuffled runs of `modules/company`
+(`go test -race -count=N -shuffle=on`) and fixed at the cause:
+`TestCompanyMovesAsOneThroughGo` (the moving, recruit and roster tests write
+different Dunmar 2003/2001 room files into one process-wide room cache, so
+whichever ran first left the others its rooms; now `freshDunmarRooms` evicts
+them before and after each); `TestEncounterFightEndsInOneCacheAndTheSpoilsLine`
+and likely `TestAttackOnAWaitingGroupIsRefused` (corpses and gold left on the
+shared brawl road by earlier tests; `newBrawl` now clears them; the waiting
+group test failed once in a shuffled run and never in 700 solo runs, so this
+is a likely cause, not a proven one);
+`TestBalanceMirrorClericIsACasterWhoCastsNothing` (about 1 run in 40: the
+balance fixture installs the real random aim roll after the test pinned its
+own, so the coordination tier's noise floor sent an enemy at a random
+member; the pin now comes after the fixture, 250 of 250);
+`TestAimedShotGrowsWithLevel` (dice and blow quality noise against a
+tight margin; the test now pins `util.Rand` through the new
+`util.UseRandForTest`); `TestSpellEventsThroughTheRealRound` (every
+chant-breaking blow broke the cast, so about 1 try in 20 went off and 60
+straight failures came up in about 1 run in 30; chants are now held against
+ordinary blows, and a try succeeds about 28% of the time); and a nil map
+panic in `TestRosterThroughPluginsLoad` (an event queued by an earlier test
+fired before the test reset its message map); and `TestAttemptConversation_UsesPluginFile`, which was a real engine bug: the conversation sweep pruned a conversation that had not yet been stepped (its `LastRound` is 0) whenever the round count was past ten, so a fresh conversation could vanish (now aged from its start). Not reproduced: the
+`modules/archetype` failure (25 shuffled runs clean; the test is unnamed) and
+`TestAlliedFinalEnemyPaysAfterCombatClosesBattle` (failed once in one
+shuffled run, clean on the same seed afterwards).
 
 **Phase 40c reviewed and merged via [PR #49](https://github.com/Robinsond76/ashveil-gomud/pull/49) (2026-10-06, Opus review thread): terrain and landmark tiles.** Review: regrow watcher cost is bounded by rooms currently picked clean (entries dropped on full regrowth), `Ledger.Charges` is read-only, no game time touched; allied camp `embers`/`tent` add nothing beyond what party members already see. Accepted and fixed: (1) `World.Resources` went to every online player, telling them of rooms they had never visited; it now goes only to players who have visited the room (`TestWorldResourcesGoToVisitorsOnline`); (2) a regrow watch that found nothing clean stayed in the per-round scan forever; it is now dropped (`TestPickedCleanShowsOnLookAndQueuesARedraw`). Agreed with the builder: tiles ignore the size and spacing sliders (scaling 32 px art off-grid would smear it; zoom covers size). Built: the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. (3) camps use the 40a3 fields: `embers` draws the low-glowing embers sprite when the fire is not lit and `tent: false` draws the rough camp (bedrolls, no tent) instead of the tent, for your camp and, with the same two fields added to allied camps, your party's. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
 
@@ -1386,7 +1486,9 @@ their dependencies and those decisions is the
 | 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
+| 44b | World smoke playtest (`make smoke-world`): journey, encounter fight and loot, gathering, camp, restart, salvage, market and inn on a live server; fixed a journey-arrival deadlock and four other live bugs. Complete, in review | Roadmap 2026-10-06 | 44, 37, 36c, 40a2 |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
+| 37c | Test stability (flaky tests found by shuffled and repeated runs) and the zone band rating by company level, refreshed on level change. Built, in review | Roadmap 2026-10-06 | 37b |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Built (PR open). Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |

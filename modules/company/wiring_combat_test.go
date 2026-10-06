@@ -161,6 +161,10 @@ func newBrawl(t *testing.T) *brawl {
 	keywords.LoadAliases()
 	road := rooms.LoadRoom(920101)
 	require.NotNil(t, road)
+	// The road lives in a process-wide room cache: corpses (and their gold)
+	// a previous test left must not count in this one (37c).
+	road.Corpses = nil
+	t.Cleanup(func() { road.Corpses = nil })
 
 	useFakeLifecycle(t, &fakeLifecycle{})
 	require.NotNil(t, module)

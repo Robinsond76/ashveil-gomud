@@ -173,3 +173,19 @@ func useDataDir(t *testing.T, dir string) {
 	require.NoError(t, set(dir))
 	t.Cleanup(func() { require.NoError(t, set(previous)) })
 }
+
+// freshDunmarRooms drops the Dunmar test rooms from the room cache, before
+// the test loads them from its own data dir and again when it ends. Rooms
+// live in a process-wide cache, and three tests write different 2003 and
+// 2001 files (the moving test gives them exits, the recruit and roster
+// tests do not): whichever ran first left its room for the others, so a
+// shuffled run could find the inn without its east exit (37c).
+func freshDunmarRooms(t *testing.T) {
+	t.Helper()
+	drop := func() {
+		rooms.RemoveTestRoom(2003)
+		rooms.RemoveTestRoom(2001)
+	}
+	drop()
+	t.Cleanup(drop)
+}

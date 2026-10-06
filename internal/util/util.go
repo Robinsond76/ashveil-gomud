@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"crypto/md5"
@@ -174,7 +175,28 @@ func Rand(maxInt int) int {
 	if maxInt < 1 {
 		return 0
 	}
+	if f := randForTest.Load(); f != nil {
+		return (*f)(maxInt)
+	}
 	return rand.Intn(maxInt)
+}
+
+// randForTest, when set, replaces the random source of every Rand and
+// RollDice call. Atomic, so a goroutine still rolling while a test swaps it
+// is not a data race under -race.
+var randForTest atomic.Pointer[func(int) int]
+
+// UseRandForTest makes Rand (and so RollDice) return f(max), for a test
+// that compares two measurements through the real combat round and must not
+// let dice and quality rolls blur the difference (37c). Call the returned
+// func to restore the random source. For testing only.
+func UseRandForTest(f func(int) int) (restore func()) {
+	var next *func(int) int
+	if f != nil {
+		next = &f
+	}
+	prev := randForTest.Swap(next)
+	return func() { randForTest.Store(prev) }
 }
 
 func LogRoll(name string, rollResult int, targetNumber int) {
