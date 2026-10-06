@@ -89,7 +89,8 @@ func weightRange(itemType string) (lo, hi int) {
 	case "readable", "key", "lockpicks":
 		return 5, 2000
 	}
-	return 5, 10000
+	// Mundane objects: up to 20 kg (Phase 52: the large pavilion tent).
+	return 5, 20000
 }
 
 func TestShippedItemsWeighSomething(t *testing.T) {
