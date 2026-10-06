@@ -20,8 +20,13 @@ var unidentifiedRarityPct = map[Rarity]int{
 
 // IsSpecialForSale is IsSpecial for merchants: a blob, spent uses and a
 // hand-edited spec still keep an item from sale, but a rolled item's own
-// override and roll do not (36a left rolled gear unsellable).
+// override and roll do not (36a left rolled gear unsellable). A cooked meal
+// is never bought (Phase 50 review): it is cooked from gathered or bought
+// ingredients, so buying it back would turn cooking into profit.
 func (i *Item) IsSpecialForSale() bool {
+	if i.GetSpec().Meal != "" {
+		return true
+	}
 	if len(i.Blob) > 0 {
 		return true
 	}
