@@ -174,4 +174,10 @@ const (
 	BleedLong    = "bleedlong"    // rounds added to the bleeding it causes
 	RendArmor    = "rendarmor"    // its critical hits break the target's armor for 2 rounds
 	Apex         = "apex"         // each foe it fells forces a morale check on that foe's group
+
+	// The Shaman's lineage (Phase 39c).
+	Chain       = "chain"       // percent of a Lightning bolt a second foe takes
+	FogEvade    = "fogevade"    // Evasion allies gain while its Fog lasts
+	WeatherLong = "weatherlong" // extra rounds its weather calls last
+	Stoneskin   = "stoneskin"   // armor its Stoneskin gives one ally for the battle
 )

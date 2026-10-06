@@ -1,0 +1,10 @@
+# Phase 39c: an Earthspeaker's armor spell, a Barkskin of the earth.
+spellid: stoneskin
+name: Stoneskin
+description: Armor for the battle on one ally
+type: helpsingle
+school: stormcraft
+cost: 8
+waitrounds: 0
+difficulty: 0
+scope: member

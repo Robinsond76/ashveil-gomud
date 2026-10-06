@@ -40,3 +40,14 @@ func TestColdDelaysOnlyExplicitSlingCapability(t *testing.T) {
 	c.SetAggro(0, 1, DefaultAttack)
 	assert.Equal(t, 1, c.Aggro.RoundsWaiting)
 }
+
+// Phase 39c: a Shaman's Chill Wind (buff 1113) slows chants like the cold.
+func TestWindchilledDelaysChants(t *testing.T) {
+	c := New()
+	c.Buffs.List = []*buffs.Buff{{BuffId: 1113, TriggersLeft: 3}}
+	assert.Equal(t, 1, c.ColdDelay())
+	c.SetCast(2, SpellAggroInfo{SpellId: "mm"})
+	assert.Equal(t, 3, c.Aggro.RoundsWaiting)
+	c.Buffs.List[0].TriggersLeft = 0
+	assert.Zero(t, c.ColdDelay())
+}

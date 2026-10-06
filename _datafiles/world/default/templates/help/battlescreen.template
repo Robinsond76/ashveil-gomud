@@ -22,6 +22,9 @@ change the company's focus.
   of you. The first time it happens in a fight, companions of weak loyalty
   may hesitate or flee (<ansi fg="command">help morale</ansi>). A companion who hesitates loses its action, and the
   last-blow line says so. A foe that yields or runs is marked the same way.
+- When a Shaman calls a weather (<ansi fg="command">help shaman</ansi>), the header names it, the
+  rounds it has left and what it does, such as <ansi fg="yellow">fog (3 rounds: foe ranged
+  attacks and spells weaker)</ansi>. The Combat tab's Battle view shows it too.
 - Enemy health is shown in five steps, never as numbers: unhurt, scratched,
   wounded, badly wounded, near death. Hover or tap a figure to read its
   name and health, and to see whom it strikes.
@@ -49,6 +52,13 @@ change the company's focus.
   you cannot command theirs, and the buttons act on your company only. On a
   narrow screen (a phone) each allied company is a pennant with a count of
   those still standing.
+
+  Tap an allied formation, or its pennant, to watch that company at full size:
+  it takes your company's place and yours shrinks into its place, labelled
+  "your band". Tap your small band (or the pennant again) to come back. Watching
+  only changes the view. The buttons still act on your company, and the view
+  returns by itself when that company leaves the fight. An ally's blow on a foe
+  that is not in your fight is not drawn.
 
 <ansi fg="yellow-bold">Animation</ansi>
 

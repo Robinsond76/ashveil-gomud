@@ -1,5 +1,47 @@
 # Ashveil Project Status
 
+**Phase 39c complete, merged via [PR #54](https://github.com/Robinsond76/ashveil-gomud/pull/54) (2026-10-06): the Shaman neutral lineage.** A weather-caller: Call Fog and Gust at level 1, Chill Wind 3, Rain 6, Lightning 8. One battle-local weather at a time, 3 rounds, a new call replaces the old: Fog (Fogbound foes: ranged -10 to hit, spells -10%), Chill Wind (Windchilled: chants and sling shots one round slower), Rain (Lightning +50%). Routes Stormcaller (chain lightning at 50%), Mistweaver (+5 Evasion to allies in fog, longer weather), Earthspeaker (Stoneskin: +10/15/20 armor); elites planned (39i). Long Weather talent, recruit mob 150, `help shaman` and `help shaman-routes`, creation-lesson tutorial hint, strategy uses `weather` and `storm`. Plan: [39c](plans/2026-10-06-phase-39c-shaman.md). Decisions: Caster role, not a new support role; Fog and Chill are buffs so `conditions` shows them; weather marks only foes standing at the call; a spell with an apostrophe in its script text silently disabled the spell (fixed, `node --check` each spell script). Merged master (39a Halberdier) before the PR; powers are learned spells, so the strategy list, company summary and capability panel show them only once known, and route ranks reuse 39b's "New rank" level-up line. Follow-ups: Shaman battle sprites (art pass), elite ranks (39i).
+
+**Phase 39c review (Opus review thread):** accepted and fixed: (1) Rain promised "fire damage halved on both sides" in its spell text, cast line and `help shaman`, but nothing in the game deals fire damage (Burning is never applied), so the claim is gone and the dead `FireDamage` helper removed; Rain now only feeds Lightning. (2) UI: the player could not see which weather was up or for how long; `Company.Battle` now carries `weather` {kind, name, rounds, effect}, the battle screen's header names it ("fog (3 rounds: foe ranged attacks and spells weaker)") and the Combat tab's Battle view adds a Weather note; `help battlescreen` and `help shaman` say so (`TestBattleFeedCarriesTheWeather`, `scripts/browser/battle-check.mjs`). (3) Balance was too strong at 100 fights a cell: Shaman 62/69/33% against Wizard 28/40/29% and Witch 44/41/22% at levels 5/10/20. Experiments showed the weather itself is worth little in the mirror (a Shaman that never calls weather still won 55% at level 5); the edge was its sturdier body and focused single-target Gust, and the Wizard underperforms because it chants Shower of Sparks at a group instead of Magic Missile. Tuned: health and Evasion to the Wizard's (no head start, 0.5 a level, Evasion 0.75), Wizard-like growth (mysticism 4, smarts 3, perception 2, speed 1), Gust base 6 to 5 (about 70% of Magic Missile), Lightning base 10 to 9, Chill Wind cost 8 to 12. Result at 150 fights: Shaman 44/52/32%, within 5 points of the Witch at level 5 and of the Wizard at 20; level 10 stays about 10 points above both (Rain's Lightning bonus at 30% instead of 50% made no measurable difference, so the design's 50% stays). Routes after tuning (80 fights a cell, base/Stormcaller/Mistweaver/Earthspeaker): level 15 38/32/27/36%, level 25 16/23/21/30%; at 15 the routes sit within noise of the base class (Mistweaver lowest), at 25 all beat it; left for the 39i balance pass with the elites. Rejected: the Mistweaver's fog Evasion covering all blows, not only melee as the design said (simpler and visible; kept). Mob 150 and buffs 1112/1113 collide with nothing on master or open branches at merge time. Follow-ups: the Wizard picks Shower of Sparks over Magic Missile against groups and trails the other casters (balance candidate); Earthspeaker's Stoneskin is not listed in `strategy` spell lists for casters (minor); Mistweaver trails at level 15 (39i balance pass); Shaman sprites (art pass) and elite ranks (39i).
+
+**Phase 45 reviewed and merged via [PR #53](https://github.com/Robinsond76/ashveil-gomud/pull/53) (2026-10-06, Opus review thread):** checked that watching an ally full size draws only what the feed already carries for allies (health bands, chant mark; no numbers, statuses or role letters, since the server never sends them), that the tap only swaps the view (inputs stay retreat and company focus), and that the prompt's progress text rides the existing `{activity}` token (refreshed per round like travel, no extra lines). Accepted and fixed: (1) typing `status` cancelled the gather, though the help and tutorial pointed players at `status` to watch it; the bare sheet and its aliases now keep the work (`status train` still stops it), help and the start message updated (`TestTypedCommandsCancelTheWork`); (2) `Room.Gather` result lines carried terminal colour tags (`<ansi fg="itemname">`) that the Room Info panel would print raw; the GMCP handler strips them (`TestRoomGatherCarriesTheWorksProgress`); (3) companion rows on the status sheet did not line up with `Members:`; labels are padded. Merged master (38c1 elites): 38c1 added its own promoted-class display (a `Class` row on the sheet and `route`/`tier`/`rank` in `Char.Info`, drawn in the Character window), so 45's duplicate (Path row as "Knight (Warrior)", `Char.Info.class` renamed with `lineage_name` and a hover) was dropped in favour of 38c1's; the Path row is the lineage again and the companion roster rows stay. Follow-ups: a client that reconnects mid-gather gets no bar until the next start (no resend of `Room.Gather` on login).
+
+**Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2
+and 40g2 reviews listed. (1) **Class everywhere.** `status` (the sheet `score`
+aliases) names the leader's promoted class with its lineage ("Knight
+(Warrior)") on the Path row and lists each companion on the Company panel
+("Oswin: Priest (Cleric), Lv 6", fallen marked); `Member.RankName` in
+`companyview` is the one formatter. `Char.Info.class` is now the promoted
+class's name once promoted, with the lineage in `lineage_name`, which the web
+Character window shows on hover. The company roster and Company window
+already named classes (38b, 40s5). (2) **Gather progress.** The gathering
+module queues `events.GatherProgress` on start, finish and stop; the GMCP
+room module sends it as `Room.Gather` (phase, kind, label, seconds, lines)
+and the Room Info window shows a strip: a bar filled over the work's length
+with the seconds left, then the result lines (15 s) or "Work stopped".
+In text, `gathering.ProgressOf` (a provider seam like camping's) feeds
+`companyview.Activity` kind Gathering, so the prompt and the status
+Doing row read "Gathering herbs 40%, 12s left". (3) **Battle screen.** Tap an
+allied formation or its pennant to watch it full size (it swaps with the
+player's company, which shrinks into the ally's place as "your band"); tap the
+small band to return; the view returns itself when that company leaves.
+View only: inputs are still retreat and company focus. An ally's blow on a
+foe the player is not fighting (or by an undrawn third company) is dropped
+from the picture and the last-blow line rather than landing on nothing.
+Help: `gathering`, `status`, `battlescreen` updated; the gather and party
+tutorial hints point at the new displays. Tests: `modules/gathering`
+(announcements and provider), `companyview`, `usercommands` status sheet and
+help, `modules/gmcp` (Char.Info, Room.Gather), `scripts/browser/room-check.mjs`
+(Character and Room windows) and new sections of `battle-check.mjs`.
+Screenshots `screens/45-*.png`. Decisions (delegated): (a) the gather strip
+lives in the Room Info window, since the work is tied to the room and Room
+Info is always docked, not in the Camp tab or map (both off limits here); (b)
+the Doing row and prompt use a new activity kind rather than a new row, so
+every surface shows it; (c) watching is a pure view swap with no new server
+state; (d) dropping unseen-ally blows beats inventing a figure, because the
+feed already hides ally numbers; (e) the Path row keeps its label and shows
+the class with lineage in brackets rather than adding a Class row.
+
 **Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
 a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
 the foe and its row neighbour, the whole row from level 8), Brace (answers

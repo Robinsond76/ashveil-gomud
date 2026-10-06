@@ -1,0 +1,13 @@
+buffid: 1112
+name: Fogbound
+description: A fog hangs about you. Your ranged attacks and spells are weaker while it lasts.
+secret: false
+# Phase 39c: a Shaman's Call Fog. Ticked by the combat round (see
+# internal/status), never by game rounds; the call sets the count itself
+# (rounds + 1); this is the default, 3 rounds.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 4
+flags:
+  - combat-status
+  - fogbound

@@ -399,7 +399,7 @@ func (m *StrategyModule) spellsFor(mb member, role domain.Role) []string {
 	case domain.Healer:
 		uses = []domain.Use{domain.UseHeal, domain.UseHealAll}
 	case domain.Caster:
-		uses = []domain.Use{domain.UseAttack, domain.UseAttackAll}
+		uses = []domain.Use{domain.UseWeather, domain.UseStorm, domain.UseAttack, domain.UseAttackAll}
 	case domain.Controller:
 		uses = []domain.Use{domain.UseHex, domain.UseAttack}
 	default:
