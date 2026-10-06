@@ -142,3 +142,40 @@ def demon(t, W=96):
     cv.put(hx0 + 8, hy0 + 2, "bone.l")
     cv.outline()
     return cv
+
+
+def doll(t, W=48):
+    """A Doll Master's puppet: painted wood, jointed, a bead-eyed face, hung on
+    three strings from a control bar above the frame that sway with the breath."""
+    cv = Canvas(W, W)
+    fy = W - 3
+    b = [0, 1, 1, 0][t]
+    sway = [0, 1, 0, -1][t]
+    top = fy - 30 + b
+    cx = W // 2
+    hip = top + 20
+    # legs: two wooden pegs with knob feet
+    for x0, d in ((cx - 5, 0), (cx + 1, 1)):
+        cv.part(rect(x0, hip, x0 + 3, fy - 3), "wood")
+        cv.part(rect(x0 - 1 + d * 2, fy - 3, x0 + 4 + d, fy), "wood", flat="d")
+        cv.put(x0 + 1, hip + 6, "brass.m")  # knee joint
+    # torso: a painted tunic block
+    cv.part(rect(cx - 6, top + 10, cx + 6, hip + 1), "oxblood")
+    cv.part({(x, top + 10) for x in range(cx - 6, cx + 7)}, "brass", flat="m")
+    cv.part({(x, hip + 1) for x in range(cx - 6, cx + 7)}, "brass", flat="m")
+    # arms: pegs hanging from the strings, the near one forward
+    cv.part(rect(cx - 9, top + 11, cx - 7, top + 20), "wood", flat="d")
+    cv.part(limb((cx + 7, top + 12), (cx + 11 + sway, top + 18), 3), "wood")
+    cv.put(cx + 11 + sway, top + 19, "bone.m")  # hand
+    # head: a round wooden face with bead eyes and a painted cheek
+    cv.part(ellipse(cx, top + 5, 5.4, 5.4), "wood")
+    cv.put(cx + 2, top + 4, "outline")
+    cv.put(cx - 2, top + 4, "outline")
+    cv.put(cx + 2, top + 7, "oxblood.m")
+    cv.part(rect(cx - 4, top - 1, cx + 4, top), "oxblood")  # painted cap
+    # strings: head, near hand, far hand, up to a bar the frame cuts off
+    for x0, y0, x1 in ((cx, top - 1, cx + sway), (cx + 11 + sway, top + 17, cx + 11), (cx - 8, top + 11, cx - 8 - sway)):
+        for y in range(0, y0):
+            if y % 2 == t % 2 or y > y0 - 3:
+                cv.put(round(x0 + (x1 - x0) * (1 - y / max(1, y0))), y, "bone.d")
+    return cv
