@@ -90,6 +90,15 @@ heal, it follows from how your company is set up. Who has which:
     every 3 levels.
     At most once every 3 combat rounds.
 
+  <ansi fg="command">Overwatch</ansi>        Sentinels (an elite ranger class), a class gift: no skill needed
+    When: it has a bow or sling, its Aimed Shot is not ready, and a foe
+    could strike an ally in its middle or back row.
+    Does: holds the turn; the first foe that goes for such an ally is shot
+    before the blow resolves, and on a hit the blow lands at half damage.
+    If no foe does, the arrow flies at its own foe at the round's end.
+    At most once every round
+    (<ansi fg="command">help sentinel</ansi>).
+
 An opening strike or aimed shot replaces one turn's swing, never an
 extra one: it still has to hit, can still be blocked, parried, or dodged,
 and armor still takes its share (<ansi fg="command">help defense</ansi>). Its critical hit

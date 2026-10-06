@@ -62,3 +62,33 @@ func TestNerveAndReactions(t *testing.T) {
 		}
 	}
 }
+
+// Phase 38c2: a hunted foe flees less often, never not at all.
+func TestEnemyHuntedShrinksTheFleeBandButKeepsAFloor(t *testing.T) {
+	flees := func(s string, penalty int) int {
+		n := 0
+		for roll := 0; roll < 100; roll++ {
+			if EnemyHunted(s, roll, penalty) == Flee {
+				n++
+			}
+		}
+		return n
+	}
+	for _, tc := range []struct {
+		s       string
+		penalty int
+		want    int
+	}{
+		{"wary", 0, 10}, {"skittish", 0, 35}, {"skittish", 25, 10}, {"skittish", 40, 5},
+		{"wary", 90, 5}, {"unbreakable", 25, 0}, {"", 25, 0},
+	} {
+		if got := flees(tc.s, tc.penalty); got != tc.want {
+			t.Errorf("%q penalty %d: %d fleeing rolls, want %d", tc.s, tc.penalty, got, tc.want)
+		}
+	}
+	for roll := 0; roll < 100; roll++ {
+		if Enemy("skittish", roll) != Flee && EnemyHunted("skittish", roll, 25) != Enemy("skittish", roll) {
+			t.Errorf("roll %d: only flight may change", roll)
+		}
+	}
+}

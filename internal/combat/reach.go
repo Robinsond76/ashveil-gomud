@@ -27,7 +27,7 @@ func ResolveReach(c *characters.Character, innateReach bool) formationcombat.Rea
 		}
 	}
 
-	if innateReach {
+	if innateReach || c.ReachOverride() { // Phase 38c2: a Shadowstep reaches
 		return formationcombat.ReachExtended
 	}
 

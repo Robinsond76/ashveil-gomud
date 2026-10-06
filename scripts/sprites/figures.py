@@ -47,6 +47,13 @@ CLASSES = {
                   hood="heather"),
     "adventurer": dict(trousers="leather", boots="leather", torso="wool", sleeve="wool",
                        hood="leather"),
+    # The neutral lineages (Phase 40h): polearm infantry, lacquered swordsmen, spirit-talkers.
+    "halberdier": dict(trousers="wool", boots="leather", torso="leather", sleeve="leather",
+                       wide=1, hair="leather"),
+    "samurai": dict(trousers="charcoal", boots="charcoal", torso="oxblood", sleeve="oxblood",
+                    wide=1, hair="charcoal"),
+    "shaman": dict(trousers="leather", boots="leather", torso="leather", sleeve="leather",
+                   hair="charcoal"),
 }
 
 
@@ -528,7 +535,101 @@ def draw_adventurer(r):
     r.head(hood="leather")
 
 
+def draw_halberdier(r):
+    """Kettle helm, breastplate over a tawny coat, a halberd carried upright."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("leather")
+    top = rect(r.tx0, r.ysh, r.tx1, r.ysh + r.px(5))
+    cv.part(top, "iron")
+    cv.part({(x, r.ysh + r.px(5)) for x in range(r.tx0, r.tx1 + 1)}, "steel", flat="m")
+    hem = r.yhip + r.px(3)
+    cv.part(rect(r.tx0 + (0 if v == "side" else 1), r.yhip - 1, r.tx1 - (0 if v == "side" else 1), hem), "ochre")
+    _belt(r, "leather", r.yhip - r.px(1), "brass.m")
+    r.arms("leather", glove="leather")
+    r.head(helm="iron")
+    hx, hy = r.hand_r
+    if v == "up":
+        hx = r.cx + r.px(2)
+    elif v == "down":
+        hx += 1
+    long = r.px(15) if r.battle else r.px(15)
+    pole = thick(line(hx, hy + r.px(7), hx, hy - long), 1)
+    cv.part(pole, "wood", flat="m")
+    tip = hy - long
+    cv.part(rect(hx - 1, tip - r.px(3), hx + (1 if k == 1 else 2), tip), "steel", flat="l")  # spike
+    blade = rect(hx + 1, tip + 1, hx + r.px(5), tip + r.px(5))
+    blade -= {(hx + r.px(5), tip + 1), (hx + r.px(5), tip + r.px(5))}
+    cv.part(blade, "steel")
+    cv.part(rect(hx - r.px(2), tip + 2, hx - 1, tip + r.px(3) + 1), "steel", flat="m")  # back hook
+    cv.put(hx, tip + 1, "brass.m")
+
+
+def draw_samurai(r):
+    """Lacquered cuirass in banded plates, flared shoulder guards, kabuto, a katana at the hip."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("oxblood")
+    for y in range(r.ysh + 1, r.yhip - r.px(1), 2):  # lamellar plate bands
+        cv.part({(x, y) for x in range(r.tx0, r.tx1 + 1)}, "iron", flat="m")
+    cv.part({(x, r.yhip + i) for i in range(r.px(3)) for x in range(r.tx0, r.tx1 + 1)
+             if (x - r.tx0 + i) % 3 != 0}, "oxblood", flat="d")  # kusazuri skirt
+    _belt(r, "brass", r.yhip - r.px(1))
+    r.arms("oxblood", glove="charcoal")
+    for x in ((r.cx,) if v == "side" else (r.tx0 - 1, r.tx1)):  # sode shoulder guards
+        cv.part(rect(x - 1, r.ysh, x + r.px(2), r.ysh + r.px(3)), "oxblood")
+        cv.part({(xx, r.ysh + r.px(3)) for xx in range(x - 1, x + r.px(2) + 1)}, "brass", flat="m")
+    r.head(helm="iron")
+    x0 = r.cx - S.hw // 2
+    cv.part({(x, r.top + 1) for x in range(x0 - 1, x0 + S.hw + 1)}, "iron", flat="l")  # kabuto brim
+    if v != "up":
+        cv.part(line(r.cx - r.px(2), r.top, r.cx - r.px(3), r.top - r.px(3)), "brass", flat="m")
+        cv.part(line(r.cx + r.px(2), r.top, r.cx + r.px(3), r.top - r.px(3)), "brass", flat="m")
+    if r.battle:
+        hx, hy = r.hand_r
+        cv.part(thick(line(hx, hy, hx + 17, hy - 11), 1), "steel", flat="l")
+        cv.part(rect(hx - 2, hy - 1, hx, hy + 1), "leather")
+        cv.part({(hx + 1, hy - 1), (hx + 1, hy)}, "brass", flat="m")
+    elif v == "up":
+        cv.part(line(r.tx0 - 1, r.yhip + r.px(2), r.tx1 + 2, r.yhip - r.px(2)), "steel", flat="m")
+    else:
+        kx = r.tx0 - 1 if v == "down" else r.cx - r.px(1)
+        cv.part(thick(line(kx + r.px(5), r.yhip - r.px(2), kx - r.px(2), r.yhip + r.px(6)), 1), "steel", flat="m")
+        cv.part({(kx + r.px(5), r.yhip - r.px(2))}, "leather")
+
+
+def draw_shaman(r):
+    """A hide mantle with a fur collar and a bone mask, a feathered totem staff."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("leather")
+    if v == "up":
+        cv.part(rect(r.tx0 - 1, r.ysh, r.tx1 + 1, r.yhip + r.px(4)), "wool")
+        cv.part({(r.cx, y) for y in range(r.ysh + 1, r.yhip + r.px(4))}, "wool", flat="d")
+    else:
+        cv.part(rect(r.tx0 - 1, r.ysh, r.tx1 + 1, r.ysh + r.px(4)), "wool")
+        cv.part({(x, r.ysh + r.px(4)) for x in range(r.tx0 - 1, r.tx1 + 2, 2)}, "wool", flat="d")
+        cv.part(rect(r.tx0, r.ysh + r.px(5), r.tx1, r.yhip - 1), "ochre", flat="m")  # beaded tunic
+    _belt(r, "leather", r.yhip - r.px(1), "bone.m")
+    for i, x in enumerate(range(r.tx0 + 1, r.tx1, 2)):  # a string of bone and feather charms
+        if v != "up":
+            cv.put(x, r.ysh + r.px(4) + 1, "bone.l" if i % 2 else "moss.m")
+    r.arms("leather", glove="skin")
+    r.head(hair="charcoal", mask="bone")
+    hx, hy = r.hand_r
+    if v == "down":
+        hx += 1
+    long = r.px(20) if r.battle else r.px(21)
+    cv.part(thick(line(hx, hy + r.px(5), hx, hy - long), 1), "wood", flat="m")
+    tip = hy - long
+    cv.part(rect(hx - 1, tip - r.px(2), hx + 1, tip), "bone", flat="m")  # a small skull
+    cv.put(hx, tip - r.px(2), "outline")
+    cv.part(line(hx + 1, tip + r.px(1), hx + r.px(3), tip + r.px(5)), "moss", flat="m")  # feathers
+    cv.part(line(hx - 1, tip + r.px(1), hx - r.px(2), tip + r.px(4)), "water", flat="m")
+
+
 DRAWERS = {
+    "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
     "warrior": draw_warrior, "rogue": draw_rogue, "ranger": draw_ranger,
     "cleric": draw_cleric, "wizard": draw_wizard, "witch": draw_witch,
     "adventurer": draw_adventurer,

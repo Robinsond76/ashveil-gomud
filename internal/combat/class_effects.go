@@ -40,6 +40,11 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if src.RT != nil && src.RT.BlowPct > 0 && dmg > 0 {
 		dmg = max(1, (dmg*src.RT.BlowPct+50)/100)
 	}
+	// Phase 38c2: a blow a Sentinel's Overwatch shot spoiled lands at part of
+	// its damage.
+	if src.RT != nil && src.RT.Spoil > 0 && dmg > 0 {
+		dmg = max(1, dmg*(100-src.RT.Spoil)/100)
+	}
 	// Phase 39d: a doll's blows carry its Master's carving.
 	if src.RT != nil && src.RT.Doll != nil && src.RT.Doll.Damage > 0 && dmg > 0 {
 		dmg += src.RT.Doll.Damage
@@ -84,6 +89,17 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if p := fx.Int(classes.HexedDamage); p > 0 && hexed(tgt) {
 		pct += p
 	}
+	// Phase 38c2: a Nightblade's Death Mark, a Ravager's Bloodscent, a
+	// Ranger's Long Draw, and a blow the Sentinel's Overwatch spoiled.
+	if src.RT != nil && src.RT.DeathMark != nil && tgt.RT == src.RT.DeathMark {
+		pct += fx.Int(classes.DeathMark)
+	}
+	if p := fx.Int(classes.HuntBleed); p > 0 && status.Live(tgt, status.Bleeding) {
+		pct += p
+	}
+	if p := fx.Int(classes.RangedPct); p > 0 && src.Shooting() {
+		pct += p
+	}
 	// Phase 39b: a Ronin's Vengeance grows with each fallen ally.
 	if p := fx.Int(classes.Vengeance); p > 0 {
 		pct += p * src.Aura.Fallen
@@ -112,5 +128,30 @@ func attackRating(atk, def *characters.Character) int {
 	if rt := atk.RT; rt != nil && rt.Intim > 0 && def.RT != rt.IntimOwner {
 		rating -= rt.Intim
 	}
+	// Phase 38c2: a Marksman's eye for the back row, and a ranger's Eagle Eye.
+	if fx := atk.ClassEffects(); fx != nil {
+		if def.RT != nil && def.RT.BackRow {
+			rating += fx.Int(classes.BackAttack)
+		}
+		if atk.Shooting() {
+			rating += fx.Int(classes.RangedAttack)
+		}
+	}
 	return rating
+}
+
+// coupDamage is Coup de Grace (Phase 38c2): a blow that lands on a foe
+// whose health, before it, is below the share of its maximum fells it
+// outright; against a boss it deals double damage instead. left is the
+// foe's health still standing when this blow lands; boss is true for a boss
+// (read from the mob when the blow code has it, else from the foe's state).
+func coupDamage(src, tgt *characters.Character, dmg, left int, boss bool) int {
+	pct := src.ClassEffects().Int(classes.Coup)
+	if pct <= 0 || dmg <= 0 || tgt.HealthMax.Value <= 0 || left*100 >= tgt.HealthMax.Value*pct {
+		return dmg
+	}
+	if boss || tgt.RT != nil && tgt.RT.Boss {
+		return dmg * 2
+	}
+	return max(dmg, left)
 }

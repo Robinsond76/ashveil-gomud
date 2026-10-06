@@ -15,7 +15,8 @@ FRAME = {"S": 48, "M": 64, "L": 72, "XL": 96}
 # stand about 1.5x a person and cover two formation cells, not three, at 1x.
 DRAW = {"L": 96, "XL": 128}
 
-CLASS_IDS = ["warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer"]
+CLASS_IDS = ["warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer",
+             "halberdier", "samurai", "shaman"]
 
 
 class Unit:

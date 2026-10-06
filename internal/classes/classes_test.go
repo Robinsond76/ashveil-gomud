@@ -101,7 +101,8 @@ func TestRankTablesAreOrdered(t *testing.T) {
 // routes of the faith design are selectable; the other lineages' elite
 // routes are listed as planned (38c).
 func TestFaithRoutesAreOpenAndTheRestPlanned(t *testing.T) {
-	open := map[string]bool{"warlord": true, "paladin": true, "dread-knight": true, "hierarch": true, "elder-druid": true, "demonologist": true}
+	open := map[string]bool{"warlord": true, "paladin": true, "dread-knight": true, "hierarch": true, "elder-druid": true, "demonologist": true,
+		"pathfinder": true, "swordmaster": true, "nightblade": true, "sentinel": true, "marksman": true, "ravager": true}
 	for _, c := range All() {
 		if c.Tier != TierElite {
 			continue
@@ -180,11 +181,11 @@ func TestEliteWaitsForItsGate(t *testing.T) {
 }
 
 func TestPlannedEliteIsNotSelectable(t *testing.T) {
-	o := Options("rogue", "scout", 30, 100)
+	o := Options("samurai", "kensai", 30, 100)
 	require.Len(t, o, 1)
 	assert.False(t, o[0].Eligible)
 	assert.False(t, o[0].Waiting)
-	_, err := Check("rogue", "scout", "pathfinder", 40, 100)
+	_, err := Check("samurai", "kensai", "sword-saint", 40, 100)
 	assert.Error(t, err)
 }
 
@@ -318,7 +319,7 @@ func TestMilestone(t *testing.T) {
 	assert.Equal(t, "Next: a talent and a rank (Prayer of Mending) at level 25.", Milestone("priest", 20))
 	assert.Equal(t, "Next: your elite promotion at level 30.", Milestone("priest", 25))
 	// A planned elite is not promised.
-	assert.Equal(t, "Next: a talent at level 35.", Milestone("scout", 25))
+	assert.Equal(t, "Next: a talent at level 35.", Milestone("kensai", 25))
 	assert.Equal(t, "", Milestone("hierarch", 60))
 }
 
@@ -412,7 +413,7 @@ func TestPromotionStateAndReadinessNote(t *testing.T) {
 	assert.Equal(t, "ready", PromotionState("warrior", "mercenary", 30, -90))
 	assert.Equal(t, "ready", PromotionState("warrior", "", 10, 50), "a base character at 10 may take an advanced route")
 	assert.Equal(t, "", PromotionState("warrior", "paladin", 60, 90), "an elite has nothing further")
-	assert.Equal(t, "", PromotionState("rogue", "scout", 30, 90), "a planned elite is not offered")
+	assert.Equal(t, "", PromotionState("samurai", "kensai", 30, 90), "a planned elite is not offered")
 
 	assert.Equal(t, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin.",
 		ReadinessNote("warrior", "knight", 30, 41, "", ""))
@@ -464,7 +465,7 @@ func TestEveryOpenEliteRankAppliesFromItsLevel(t *testing.T) {
 		assert.Equal(t, 11, len(RanksReached(c.ID, 60)), c.ID+": four advanced and seven elite ranks")
 		assert.Equal(t, 4, len(RanksReached(parent.ID, 59)), parent.ID+" gains nothing from the elite table")
 	}
-	assert.Equal(t, 6, open, "warrior and cleric elites are open")
+	assert.Equal(t, 12, open, "warrior, cleric, rogue and ranger elites are open")
 }
 
 func rankNames(rs []Rank) []string {
