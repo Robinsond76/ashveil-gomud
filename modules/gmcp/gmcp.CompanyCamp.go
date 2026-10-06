@@ -41,6 +41,8 @@ type alliedCamp struct {
 	Leader  string `json:"leader"`
 	FireLit bool   `json:"fire_lit"`
 	Resting bool   `json:"resting"`
+	Embers  bool   `json:"embers"` // Phase 40c: banked embers, drawn when the fire is not lit
+	Tent    bool   `json:"tent"`   // Phase 40c: pitched with a tent; a rough camp without one is drawn otherwise
 }
 
 func campPayloadOf(s camping.CampState) campPayload {
@@ -100,7 +102,7 @@ func alliedCampsOf(user *users.UserRecord, state func(leaderUserID, roomID int, 
 		if !ok || !s.HasCamp {
 			continue
 		}
-		out = append(out, alliedCamp{RoomID: s.RoomID, Leader: users.CharacterName(uid), FireLit: s.FireLit, Resting: s.Resting})
+		out = append(out, alliedCamp{RoomID: s.RoomID, Leader: users.CharacterName(uid), FireLit: s.FireLit, Resting: s.Resting, Embers: s.Embers, Tent: s.Tent})
 	}
 	return out
 }
