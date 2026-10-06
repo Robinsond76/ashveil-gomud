@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -252,4 +253,16 @@ func (c *Character) ManaRates() (base int, perLevel float64) {
 		}
 	}
 	return base, perLevel
+}
+
+// ClassTitle is the class a player sees beside a name: the chosen
+// archetype ("Warrior"), else the skill-derived profession title. The
+// profession title alone read "scrub paladin" for every Ashveil warrior.
+func (c *Character) ClassTitle() string {
+	if id := c.ArchetypeID(); id != "" {
+		if name, ok := archetypes.Name(id); ok && name != "" {
+			return name
+		}
+	}
+	return skills.GetProfession(c.GetAllSkillRanks())
 }

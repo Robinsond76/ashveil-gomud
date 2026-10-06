@@ -57,8 +57,6 @@ Server:
   - print
   - online
   - print
-  - inbox check
-  - print
   - mudletmap
   - checkclient
   # - Motd -
