@@ -52,6 +52,14 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 		}
 		groupName = mobparty.Generate(summaries).Name
 	}
+	engage(roomID, room, foes, leaderUserID, group, groupName)
+	return mob.InstanceId, nil
+}
+
+// engage rolls the company's detection of the foes, then sets the foes upon
+// the leader: hostile, unmoving, in their spawn group. Camp raids, travel
+// ambushes and random room encounters (Phase 37) all end here.
+func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, group, groupName string) {
 	observer, perception, visibility := "you", 0, room.GetVisibility()
 	if u := users.GetByUserId(leaderUserID); u != nil && u.Character != nil {
 		found := u.Character.Health > 0 && u.Character.RoomId == roomID && !u.Character.CombatWithdrawn
@@ -99,7 +107,6 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 		room.AddMob(foe.InstanceId)
 		foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
 	}
-	return mob.InstanceId, nil
 }
 
 // EncounterGroup names an encounter's spawn group after its first foe.

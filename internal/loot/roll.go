@@ -53,6 +53,12 @@ type Options struct {
 	Rarity  items.Rarity
 	Quality items.Quality
 	Source  string // where it came from, shown at Scribe rank 4
+	// RarityBoost multiplies the Rare and Epic weights (Phase 37: x2 for an
+	// elite, x5 for a boss; 0 or 1 is none). MinRarity guarantees at least
+	// that rarity (a boss's guaranteed Rare). Neither applies when Rarity
+	// is set.
+	RarityBoost int
+	MinRarity   items.Rarity
 }
 
 // ErrNotRollable is returned for an item that cannot roll (a consumable, a
@@ -156,13 +162,38 @@ func rollAffix(rng Source, a Affix, ilvl int) items.RolledAffix {
 	return out
 }
 
-func weightedRarity(rng Source) items.Rarity {
-	total := 0
+func weightedRarity(rng Source, boost int, min items.Rarity) items.Rarity {
+	weights := make([]struct {
+		r items.Rarity
+		w int
+	}, 0, len(rarityWeights))
+	extra := 0
 	for _, e := range rarityWeights {
-		total += e.w
+		if boost > 1 && e.r.Rank() >= items.RarityRare.Rank() {
+			extra += e.w * (boost - 1)
+			e.w *= boost
+		}
+		weights = append(weights, e)
+	}
+	for i := range weights {
+		if weights[i].r == items.RarityCommon {
+			weights[i].w = max(0, weights[i].w-extra) // the boost comes out of the plain items
+		}
+	}
+	total := 0
+	for _, e := range weights {
+		if e.r.Rank() >= min.Rank() {
+			total += e.w
+		}
+	}
+	if total < 1 {
+		return min
 	}
 	n := rng.Intn(total)
-	for _, e := range rarityWeights {
+	for _, e := range weights {
+		if e.r.Rank() < min.Rank() {
+			continue
+		}
 		if n < e.w {
 			return e.r
 		}
@@ -233,7 +264,7 @@ func (s AffixSet) Generate(spec items.ItemSpec, opts Options, rng Source) (items
 	ilvl := min(max(opts.ILvl, MinILvl), MaxILvl)
 	rarity := opts.Rarity
 	if rarity == "" {
-		rarity = weightedRarity(rng)
+		rarity = weightedRarity(rng, opts.RarityBoost, opts.MinRarity)
 	} else if !rarity.Valid() {
 		return items.Rolled{}, fmt.Errorf("unknown rarity %q", rarity)
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/walking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -448,11 +449,16 @@ func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
 		return events.Continue
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+	// Phase 37: the arrival is heard once, by the random-encounter seam.
+	var arrivals [][3]int
+	removeArrival := walking.AddArrivalListener(func(user, from, to int) { arrivals = append(arrivals, [3]int{user, from, to}) })
+	t.Cleanup(removeArrival)
 	_, err := module.StartTravel(startRequest())
 	require.NoError(t, err)
 	now = baseTime().Add(5 * time.Second)
 	scheduler.fire(0)
 	require.Equal(t, expedition.Interrupted, module.sessions[7].State)
+	assert.Empty(t, arrivals, "an interruption is not an arrival")
 
 	now = baseTime().Add(time.Hour)
 	module.resume(7)
@@ -464,6 +470,9 @@ func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
 
 	assert.Equal(t, []int{200}, mover.moves)
 	assert.Len(t, arrivalMessages, 1)
+	require.Len(t, arrivals, 1, "arrival rolls once, even with the stale timer")
+	assert.Equal(t, 7, arrivals[0][0])
+	assert.Equal(t, 200, arrivals[0][2])
 	assert.Equal(t, []survival.Exertion{{Hunger: 5, Thirst: 5, Fatigue: 5}, {Hunger: 5, Thirst: 5, Fatigue: 5}}, surv.applied)
 	assert.NotContains(t, module.sessions, 7)
 }
