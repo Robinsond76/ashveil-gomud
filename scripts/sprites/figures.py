@@ -67,11 +67,20 @@ class Rig:
         self.sw = S.sw + self.spec.get("wide", 0) * (2 if S.k > 1 else 1)
         self.battle = side and S.k > 1
         self.tw = round(self.sw * (0.75 if self.battle else 0.6)) if side else self.sw
-        if side and self.cls == "warrior":
+        if side and self.cls == "warrior" and not self.battle:
             self.tw += 1
+        if self.battle and self.cls == "warrior":
+            self.tw -= 2  # broad, but not a slab at 64 px
         self.tx0 = self.cx - self.tw // 2
         self.tx1 = self.tx0 + self.tw - 1
         self.hand_r = (self.tx1 + 2, self.ysh + S.arm_len - 3)  # refined by arms()
+
+    def shade_down(self, pixels):
+        """Push painted pixels one shade darker (far limbs, back layers)."""
+        for x, y in pixels:
+            c = self.cv.get(x, y)
+            if c and c.endswith((".l", ".m")):
+                self.cv.put(x, y, c[:-1] + ("m" if c.endswith(".l") else "d"))
 
     def px(self, v):
         return max(1, round(v * self.k))
@@ -97,6 +106,8 @@ class Rig:
                              x0 + S.lw + (1 if S.k == 1 else 2), self.fy - lift)
                 self.cv.part(body, ramp)
                 self.cv.part(shoe, boot)
+                if self.battle and i == 0:
+                    self.shade_down(body | shoe)
         else:
             for i, x0 in enumerate((self.cx - S.g // 2 - S.lw, self.cx + S.g - S.g // 2)):
                 lift = p["lift"][i]
@@ -231,6 +242,9 @@ def draw_warrior(r):
     else:
         sur = rect(r.tx0 + 1, r.ysh + r.px(2), r.tx1 - 1, hem)
     cv.part(sur, "oxblood")
+    if r.battle:
+        cv.part(line(r.cx, r.yhip, r.cx, hem), "iron", flat="d")
+        r.shade_down({(x, y) for x, y in sur if x < r.tx0 + 2 and y > r.ysh + 3})
     _belt(r, "leather", r.yhip - r.px(1), "brass.m")
     r.arms("iron")
     if v != "up":
@@ -254,12 +268,17 @@ def draw_warrior(r):
         cv.part(ellipse(sx, sy, sr + 1, sr + 1), "wood")
         cv.part({(sx, sy)}, "steel", flat="m")
     elif r.battle:
-        sx, sy = r.cx, r.ysh + r.px(5)
-        cv.part(ellipse(sx, sy, 5, 6), "wood")
-        cv.part(ellipse(sx, sy, 1.5, 1.5), "steel", flat="m")
+        # Braced: sword held low and forward by the far hand, the round
+        # shield pushed forward on the near arm, seen edge-on.
         hx, hy = r.hand_r
-        cv.part(thick(line(hx, hy - 1, hx + 5, hy - 16), 1), "steel")
-        cv.part(line(hx - 1, hy - 2, hx + 2, hy - 3), "brass", flat="m")
+        gx, gy = r.tx1 + 1, r.yhip + 1
+        cv.part(thick(line(gx + 1, gy + 1, gx + 11, gy + 7), 1), "steel")
+        cv.part(line(gx, gy - 2, gx + 2, gy + 2), "brass", flat="m")
+        sx, sy = hx + 2, hy + 1
+        cv.part(ellipse(sx, sy, 2.4, 8), "wood")
+        cv.part({(sx, y) for y in range(sy - 8, sy + 9) if (sx, y) in ellipse(sx, sy, 2.4, 8)},
+                "steel", flat="d")
+        cv.part(rect(sx + 2, sy - 1, sx + 3, sy + 1), "steel", flat="m")
     else:
         sx, sy = r.cx + 1, r.ysh + r.px(5)
         sh = ellipse(sx, sy, sr - 0.4, sr + 0.4)
@@ -271,7 +290,9 @@ def draw_warrior(r):
 
 def draw_rogue(r):
     S, cv, v, k = r.S, r.cv, r.view, r.k
-    r.legs()
+    # Battle: dark leather breeches under the charcoal jerkin, so the legs
+    # read apart from the body.
+    r.legs(ramp="leather" if r.battle else None)
     r.torso("charcoal")
     # Dull plum sash and cross-strap.
     cv.part({(x, r.yhip - r.px(2)) for x in range(r.tx0, r.tx1 + 1)}, "plum", flat="m")
@@ -281,9 +302,13 @@ def draw_rogue(r):
     r.head(hood="charcoal", mask="plum")
     # Two short blades crossed low at the hips.
     if r.battle:
+        # Crouched with both blades in a reverse grip, edges trailing back
+        # along the forearms.
         hx, hy = r.hand_r
-        cv.part(line(hx, hy - 1, hx + 7, hy + 4), "steel", flat="m")
-        cv.part(line(r.tx0 + 2, r.yhip - 4, r.tx0, r.yhip + 6), "steel", flat="m")
+        cv.part(line(hx, hy - 1, hx - 7, hy - 6), "steel", flat="l")
+        cv.part(rect(hx, hy - 2, hx + 1, hy - 1), "leather", flat="d")
+        cv.part(line(r.tx0 + 1, r.yhip - 2, r.tx0 - 5, r.yhip + 4), "steel", flat="m")
+        cv.part(line(r.tx0 + 2, r.yhip - 3, r.tx0 + 3, r.yhip - 2), "leather", flat="d")
     for sgn in (-1, 1):
         if v == "side" and (sgn == 1 or r.battle):
             continue
@@ -516,5 +541,10 @@ def map_walk(cls):
     return [[render(cls, v, MAP, p) for p in WALK_POSES] for v in ("down", "up", "side")]
 
 
+# Per-class battle stance tweaks over the shared braced stance.
+BATTLE_STANCE = {"rogue": dict(bob=3, stride=(-4, 3))}
+
+
 def battle_idle(cls):
-    return render(cls, "side", BATTLE, dict(bob=0, stride=(-3, 3)))
+    pose = {**dict(bob=0, stride=(-3, 3)), **BATTLE_STANCE.get(cls, {})}
+    return render(cls, "side", BATTLE, pose)

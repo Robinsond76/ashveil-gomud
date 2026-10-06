@@ -25,3 +25,7 @@ __debug*
 cmd/modmanager/modmanager
 /modmanager
 /GoMud
+
+# Python bytecode (scripts/sprites)
+__pycache__/
+*.pyc

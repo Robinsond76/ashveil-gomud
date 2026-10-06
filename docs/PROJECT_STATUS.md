@@ -17,8 +17,25 @@ is an 8x8 image, one pixel per color; the here-ring has no outline (a 1 px
 ring would double); the ogre and goblins in `style-battle` are throwaway mocks
 for S3 to replace; battle idle shows one frame, since S3 owns full battle
 sheets; app icons are scaled by whole numbers from a 64 / 48 / 32 grid (the
-192 px version drops detail rather than just downscaling). Independent
-review pending (separate thread).
+192 px version drops detail rather than just downscaling).
+**Review (2026-10-06):** S0 approved against the art direction: muted
+palette, adult 5- and 7-head proportions, grounded gear, natural map. Fixed:
+battle warrior was a red slab with a raised sword (now narrower, split
+surcoat, shield forward edge-on, sword low per the S3 pose); battle rogue was
+one charcoal block (now crouched, leather breeches, reverse-grip blades); far
+legs shade one step darker in battle; committed `__pycache__` removed and
+ignored. Accepted: contact sheet lives in `docs/verification/` rather than
+`sprites/contact/` (keeps review images out of shipped assets); manifest
+carries what 40b (paths, rows, anchor, baseline, timing, `adventurer`
+fallback), 40i (sizes, maskable safe zone) need; S3 extends it for 40f.
+Follow-ups for S3/40s5: real goblin and ogre art drawn side-on (the mocks face
+front; goblins must look feral, not comic); 4-frame battle idle; ranger
+"arrow nocked low", cleric shield and wizard stone glow poses; a 1x
+readability pass on the 3x3 formation with enemy mirroring; a darker
+battle-ground band so unit feet and shadows read on dirt. UI check: the map
+set gives a clear, readable class marker and camp state at 32 px; the gap is
+that S2 terrain must keep tiles quieter than units, and 40b should draw the
+here-ring and badge above terrain so the player's sprite never blends in.
 
 **38c-d elite routes design (2026-10-06):** rank tables 30–60 for the
 thirteen elites the faith routes design didn't cover (Warlord; Pathfinder,
