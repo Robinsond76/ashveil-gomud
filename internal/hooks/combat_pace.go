@@ -97,6 +97,10 @@ func paceOf(user *users.UserRecord) combatpace.Pace {
 	return combatpace.For(user.GetConfigOption(combatpace.OptionKey), user.ScreenReader)
 }
 
+// PaceOf is a player's combat pace, for the web client's battle feed
+// (Phase 40g2), which paces its animation by it.
+func PaceOf(user *users.UserRecord) combatpace.Pace { return paceOf(user) }
+
 // sendOrHold delivers a message's text to one recipient: held when a combat
 // round caused it and the recipient paces combat, at once otherwise.
 //
