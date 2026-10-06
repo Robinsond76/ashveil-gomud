@@ -47,6 +47,27 @@ func Enemy(s string, roll int) Outcome {
 	return Flee
 }
 
+// EnemyHunted is Enemy for a foe a hunter has struck (Phase 38c2): its flee
+// band shrinks by penalty points but never below 5 when it could flee at all,
+// and what is taken off the band becomes Hold.
+func EnemyHunted(s string, roll, penalty int) Outcome {
+	out := Enemy(s, roll)
+	if out != Flee || roll < 0 || roll >= 100 {
+		return out
+	}
+	fleeBand := 0
+	for r := 0; r < 100; r++ {
+		if Enemy(s, r) == Flee {
+			fleeBand++
+		}
+	}
+	keep := max(5, fleeBand-penalty)
+	if roll >= 100-keep {
+		return Flee
+	}
+	return Hold
+}
+
 // Group tracks consumed triggers. Departures are not deaths.
 type Group struct {
 	Leader, Specialist, Size int

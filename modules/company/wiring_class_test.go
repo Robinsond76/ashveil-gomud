@@ -275,10 +275,10 @@ func TestEliteWaitsForTheGateAndPromotesWhenItRecovers(t *testing.T) {
 // The rogue, ranger, wizard and witch elites arrive with 38c2 and 38c3.
 func TestPlannedEliteIsNotOpenYet(t *testing.T) {
 	w, store := classBrawl(t, 30, 100)
-	w.withArchetypes("rogue")
-	store.state.Class = "scout"
-	assert.Contains(t, w.cmd("class", "promote pathfinder confirm"), "not open yet")
-	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Pathfinder")
+	w.withArchetypes("samurai")
+	store.state.Class = "kensai"
+	assert.Contains(t, w.cmd("class", "promote sword-saint confirm"), "not open yet")
+	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Sword Saint")
 }
 
 func TestUnpromotedHighLevelCharacterKeepsItsBase(t *testing.T) {
@@ -370,7 +370,7 @@ func TestOldRecordsReadAsUnpromoted(t *testing.T) {
 
 // Phase 38c1: the elite step through the real commands for the six open
 // routes, at the gate boundaries, for the leader.
-func TestEliteGatesForTheSixOpenRoutes(t *testing.T) {
+func TestEliteGatesForTheTwelveOpenRoutes(t *testing.T) {
 	for _, tc := range []struct {
 		lineage, advanced, elite, name string
 		good, evil                     bool
@@ -381,6 +381,12 @@ func TestEliteGatesForTheSixOpenRoutes(t *testing.T) {
 		{"cleric", "priest", "hierarch", "Hierarch", true, false},
 		{"cleric", "druid", "elder-druid", "Elder Druid", false, false},
 		{"cleric", "blood-priest", "demonologist", "Demonologist", false, true},
+		{"rogue", "scout", "pathfinder", "Pathfinder", true, false},
+		{"rogue", "duelist", "swordmaster", "Swordmaster", false, false},
+		{"rogue", "assassin", "nightblade", "Nightblade", false, true},
+		{"ranger", "warden", "sentinel", "Sentinel", true, false},
+		{"ranger", "hunter", "marksman", "Marksman", false, false},
+		{"ranger", "stalker", "ravager", "Ravager", false, true},
 	} {
 		t.Run(tc.elite, func(t *testing.T) {
 			wait, ok := 0, 0 // the alignments one point short of the gate, and at it
