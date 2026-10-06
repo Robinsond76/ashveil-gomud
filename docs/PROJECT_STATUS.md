@@ -1,6 +1,75 @@
 # Ashveil Project Status
 
-**Phase 40c built: terrain and landmark tiles (2026-10-06, PR open for review):** the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. (3) camps use the 40a3 fields: `embers` draws the low-glowing embers sprite when the fire is not lit and `tent: false` draws the rough camp (bedrolls, no tent) instead of the tent, for your camp and, with the same two fields added to allied camps, your party's. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
+**Phase 40c reviewed and merged via [PR #49](https://github.com/Robinsond76/ashveil-gomud/pull/49) (2026-10-06, Opus review thread): terrain and landmark tiles.** Review: regrow watcher cost is bounded by rooms currently picked clean (entries dropped on full regrowth), `Ledger.Charges` is read-only, no game time touched; allied camp `embers`/`tent` add nothing beyond what party members already see. Accepted and fixed: (1) `World.Resources` went to every online player, telling them of rooms they had never visited; it now goes only to players who have visited the room (`TestWorldResourcesGoToVisitorsOnline`); (2) a regrow watch that found nothing clean stayed in the per-round scan forever; it is now dropped (`TestPickedCleanShowsOnLookAndQueuesARedraw`). Agreed with the builder: tiles ignore the size and spacing sliders (scaling 32 px art off-grid would smear it; zoom covers size). Built: the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. (3) camps use the 40a3 fields: `embers` draws the low-glowing embers sprite when the fire is not lit and `tent: false` draws the rough camp (bedrolls, no tent) instead of the tent, for your camp and, with the same two fields added to allied camps, your party's. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
+
+**Phase 40g2 reviewed and merged via [PR #48](https://github.com/Robinsond76/ashveil-gomud/pull/48) (2026-10-06, Opus review thread):**
+ally relay checked for consent (both players support the party), same room,
+shared enemy and the receiver's own unseen masking; mid-battle inputs are
+still only retreat and company focus; the nerve mark uses `morale.Losing` on
+the fight's roster like the check does. Accepted and fixed: (1) an allied
+player with no formation is named `u:<id>`, not `a:<leader>:<key>`, so what
+befell them kept its numbers and statuses; `isAllyRef` now covers `u:` refs
+(regression `TestAlliedHappeningsScrubAnAllyWithoutFormation`); (2) UI check:
+allied members were drawn as their base class even when promoted, so
+`allies[].members[].promoted` now carries the 40s5 class id and the screen
+draws that art first; (3) `help battlescreen` said weak companions "may now"
+falter while the mark shows, but the nerve test runs once per fight; reworded.
+Rejected: the mark reads `fi.Company`, which grows if a companion joins
+mid-fight, while the check uses the starting roster; reading `hooks`' fight
+state from the GMCP goroutine would race, and the mismatch needs a mid-fight
+join, so it stays (decision (d)). Merged master (40s5 class art): the caption
+names a member's class and an ally's company. Follow-ups: tap an allied
+formation to watch it full size; an ally's blow on a foe the receiver is not
+fighting is relayed but has no figure to land on.
+
+**Phase 40g2 built: battle screen follow-ups (2026-10-06):**
+closes the 40g review's follow-ups. (1) **Allied formations.** Each allied
+company fights its own fight (33d), so the 40e feed now also relays a
+fight's happenings to the leader's consenting allies
+(`parties.AlliedLeaders`) who are in a battle of their own against some of
+the same mobs in the same room, with the ally's members as
+`a:<leader>:<key>`. Only watchable kinds go (strikes, spells, heals, casts,
+wind-ups, interrupts, falls, flight, abilities, target changes, statuses on
+enemies), never a fight's start, end or focus, wound changes, guards or
+mercy; what befell an ally has its numbers and status scrubbed and no status
+event on an ally is sent. `Company.Battle` gains `allies` (leader id and
+name; each member's id, name, class, cell, health in words, `down`), and the
+screen draws up to two as half-scale formations behind and above the
+player's, each with a pennant and the leader's name, a "+N more" mark for
+the rest, and pennants with a count of those standing on a phone. Allied
+units strike from where they stand (no lunge across the field). (2) **The
+pace is sent:** every `Company.Battle.Event` message carries `pace` (fast,
+normal, slow, off; `hooks.PaceOf`); the screen uses it and keeps the old
+inference only as a fallback for a server that sends none. (3) **Morale is
+drawn:** `Company.Battle.nerve` is "faltering" while the nerve rule
+(`morale.Losing`: half the company down or a quarter of its health left)
+holds; the header says "company faltering", each company figure shows a
+drop of sweat, hover says "shaken", and a hesitating companion's lost action
+reads "hesitates as the company falters" in the last-blow line. Enemy yield
+and flight markers were already shown. **Role letters are crisp:** a 3x5
+pixel font drawn in whole pixels (also used for "yields" and the allied
+labels) replaces anti-aliased canvas text; a browser check samples the role
+chip and finds two colours only. **The unseen presence** takes the first free
+enemy cell (centre first) and steps aside when a foe comes into view.
+Decisions (delegated): (a) allies are matched by party consent plus a shared
+enemy and room rather than a new alliance store, so nothing is persisted and
+33d's rules are untouched; (b) an ally's blows on the shared enemy keep
+their damage digits (the enemy's numbers are already shown) while numbers on
+ally members are hidden, the conservative reading of "bands only"; (c)
+tap-to-swap to watch an ally full-size is not built (view-only, the design
+marked it a recommendation), a candidate follow-up; (d) the nerve mark is
+computed in `modules/gmcp` from the fight's roster with the same
+`morale.Losing` rule rather than reading `hooks`' private fight state; (e)
+only two allied formations are drawn (the design's cap). Tests:
+`modules/gmcp/gmcp_battle_allies_test.go` (relay with consent, room, shared
+enemy, unseen masking and scrubbing through the real stream, hooks pacer and
+GMCP path; payload; ally selection; nerve; pace on released batches), a Node
+planner test for allied refs, and the allied section of
+`scripts/browser/battle-check.mjs`; help `battlescreen` gained Allies,
+morale and pace text (tested) and the Departure tutorial lesson points to it;
+screenshot `screens/40g2-battle.png`.
+
+**Phase 39b complete (merged via PR #47, 2026-10-06): the Samurai neutral lineage.** Iaijutsu (first swing of a battle +50% damage, +10% crit, half a turn ahead; spent hit or miss), Focus (+3% crit per quiet round to +9%), Zanshin (+50 meter once a round when it fells a foe); routes Kensai (piercing draw), Hatamoto (Bodyguard: guards the leader twice a battle), Ronin (Vengeance per fallen ally). New base-rank mechanism (`classes/base.go`) for lineage ranks from level 1. Samurai archetype (6 HP, 0.85/level, medium armor, sword), recruit mob 139, default rule strongest, Camp Watch utility. Help: `help samurai`, `help samurai-routes` plus updates to related pages; tutorial hint in the creation lesson. Plan: [39b](plans/2026-10-06-phase-39b-samurai.md). Balance (80 fights, ±5): Samurai 83/91/77% vs Rogue 76/92/76% at L5/10/20. Decisions: duelist is a Fighter with default rule strongest; first strike spent on the first swing; Bodyguard precedes strategy guards; Focus 3/9 and Attack 1.0 tuned down from the design; elites stay planned (39i). Follow-ups: Samurai battle sprites (art pass), elite ranks (39i). Review (Opus review thread): accepted, level-up reports named only the next rank, so a player never saw what Focus or Zanshin (or any route rank) had just given; fixed with `classes.RanksGained`/`RankLines`, a "New rank: ..." line in the player and companion level-up reports, `help classes` updated, regression tests in classes, hooks and mobcommands; accepted, this entry described Zanshin as triggering on being struck (it fires on felling a foe), corrected. Checked and kept: Iaijutsu RT exists before the first blow (auraPass makes it for any character with class effects), Vengeance counts only standing members, Bodyguard skips the leader itself and spends its own count, effect keys are unique, recruit 139 does not collide with 39a's 130. UI: `class`, level-ups, help and the battle-screen hue cover the change; no web panel lists ranks, so none needed updating.
 
 **Phase 40a3 complete (2026-10-06, PR #45): camp gear.** The fuel rule
 and six durable camp items. A finished camp rest now burns the fire down to

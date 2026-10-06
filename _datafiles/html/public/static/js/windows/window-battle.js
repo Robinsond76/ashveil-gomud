@@ -72,6 +72,7 @@
     const CLASS_HUES = {
         warrior: ['#8a8f99', '#c0504d'], cleric: ['#e8e4d0', '#d4a72c'], ranger: ['#4e7d3a', '#8a6a3b'],
         rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'],
+        samurai: ['#2f3a4a', '#d9a441'],
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
 
@@ -191,7 +192,8 @@
     let roundNo = 0;            // the round of the latest events
     let lastBlow = '';          // the latest happening, in words
     let sched = new TL.Scheduler();
-    let paceHistory = [];       // how event batches arrived, to infer the combat pace
+    let paceHistory = [];       // how event batches arrived, to infer the pace of a server that sends none
+    let feedPace = '';          // the player's combat pace, as the event feed sends it (Phase 40g2)
     let holding = new Set();    // units whose fall or exit is still to play
     let outcomeQueued = false;  // a fight-end is scheduled: its outcome shows when it plays
     let shakeUntil = 0;
@@ -242,6 +244,58 @@
         return { x: side === 'company' ? W / 2 - dx : W / 2 + dx, y: 120 + col * 20 };
     }
 
+    // Allied companies (Phase 40g2) stand behind and above the player's, in
+    // their own half-scale 3x3, at most two drawn; they face the enemy as the
+    // company does. Each anchor is the right edge of a formation's front row.
+    const ALLY_SCALE = 0.5;
+    const ALLY_ANCHORS = [150, 94];
+    const MAX_ALLIES = ALLY_ANCHORS.length;
+
+    function allySlot(index, row, col) {
+        return { x: ALLY_ANCHORS[index] - row * 16 - col * 3, y: 58 + col * 9 };
+    }
+
+    // slotOf is where a unit's feet stand.
+    function slotOf(u) {
+        if (u.side === 'ally') { return allySlot(u.ally || 0, u.cell.row, u.cell.col); }
+        return slot(u.side, u.cell.row, u.cell.col);
+    }
+
+    // ---------------------------------------------------------------------
+    // Pixel text: 3x5 glyphs drawn as whole pixels, so letters on the
+    // canvas stay crisp at every scale (canvas text is anti-aliased)
+    // ---------------------------------------------------------------------
+
+    const GLYPHS = {
+        A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111',
+        F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', J: '001001001101010',
+        K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010',
+        P: '110101110100100', Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010',
+        U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101', Y: '101101010010010',
+        Z: '111001010100111', '0': '111101101101111', '1': '010110010010111', '2': '110001010100111', '3': '110001010001110',
+        '4': '101101111001001', '5': '111100110001110', '6': '011100111101111', '7': '111001010010010', '8': '111101111101111',
+        '9': '111101111001110', '+': '000010111010000', '?': '110001010000010', '-': '000000111000000', '.': '000000000000010',
+    };
+
+    // pixText draws text in the 3x5 pixel font with its top-left at (x, y);
+    // lower case is drawn as capitals, anything unknown as a gap. It returns
+    // the width it took.
+    function pixText(text, x, y, color) {
+        ctx.fillStyle = color;
+        let cx = Math.round(x);
+        const top = Math.round(y);
+        String(text).toUpperCase().split('').forEach(ch => {
+            const g = GLYPHS[ch];
+            if (g) {
+                for (let i = 0; i < 15; i++) {
+                    if (g[i] === '1') { ctx.fillRect(cx + (i % 3), top + Math.floor(i / 3), 1, 1); }
+                }
+            }
+            cx += 4;
+        });
+        return cx - Math.round(x);
+    }
+
     // ---------------------------------------------------------------------
     // Units
     // ---------------------------------------------------------------------
@@ -260,12 +314,23 @@
         return c && Number.isFinite(c.row) && Number.isFinite(c.col) ? { row: c.row, col: c.col } : null;
     }
 
+    // unseenCell is where the unseen presence stands: the first cell of the
+    // enemy formation, centre first, that no visible foe holds, so its
+    // silhouette never overlaps one the player can see.
+    const UNSEEN_CELLS = [[0, 1], [1, 1], [0, 0], [0, 2], [1, 0], [1, 2], [2, 1], [2, 0], [2, 2]];
+    function unseenCell() {
+        const held = new Set();
+        units.forEach(o => { if (o.side === 'enemy' && !o.unseen && o.cell && !o.fallen) { held.add(o.cell.row + ',' + o.cell.col); } });
+        const free = UNSEEN_CELLS.find(c => !held.has(c[0] + ',' + c[1])) || UNSEEN_CELLS[0];
+        return { row: free[0], col: free[1] };
+    }
+
     function unseen() {
         const u = unit('?');
         u.side = 'enemy';
         u.label = 'something unseen';
         u.sprite = 'unknown-shape';
-        u.cell = { row: 0, col: 1 };
+        u.cell = unseenCell();
         u.unseen = true;
         u.fallen = false;
         return u;
@@ -317,12 +382,35 @@
             (battle.fallen || []).forEach(f => { if (units.has(f.id)) { unit(f.id).fallen = !holding.has(f.id); seen.add(f.id); } });
             (battle.surrendered || []).forEach(f => { if (units.has(f.id)) { const u = unit(f.id); u.yielded = true; seen.add(f.id); } });
             if (battle.dark) { unseen(); seen.add('?'); }
+            // Allied companies: the first two are drawn, half scale.
+            (battle.allies || []).slice(0, MAX_ALLIES).forEach((al, index) => {
+                (al.members || []).forEach(m => {
+                    if (!m || !m.id) { return; }
+                    const cell = cellOf(m.cell);
+                    if (!cell) { return; }
+                    const u = unit(m.id);
+                    u.side = 'ally';
+                    u.ally = index;
+                    u.allyName = al.name || '';
+                    u.label = m.name || m.id;
+                    u.klass = String(m.class || '').toLowerCase();
+                    u.sprite = u.klass || 'adventurer';
+                    u.promoted = String(m.promoted || '').toLowerCase();
+                    u.cell = cell;
+                    u.band = m.health || '';
+                    u.frac = BANDS[m.health] !== undefined ? BANDS[m.health] : 1;
+                    u.fallen = !!m.down && !holding.has(m.id);
+                    seen.add(m.id);
+                });
+            });
         }
         // Anyone no longer in the fight leaves the picture; the unseen
         // presence stays while an event still names one.
         units.forEach((u, id) => {
             if (!seen.has(id) && !(id === '?' && u.keep) && !holding.has(id)) { units.delete(id); }
         });
+        // The unseen presence steps aside for a foe that came into view.
+        if (units.has('?')) { units.get('?').cell = unseenCell(); }
     }
 
     // ---------------------------------------------------------------------
@@ -334,7 +422,7 @@
         u.flash = Date.now() + 260;
         u.flashColor = color;
         if (text) {
-            const p = u.cell ? slot(u.side, u.cell.row, u.cell.col) : { x: W / 2, y: 120 };
+            const p = u.cell ? slotOf(u) : { x: W / 2, y: 120 };
             floaters.push({ x: p.x, y: p.y - 34, text: String(text), color, born: Date.now() });
         }
         wake();
@@ -373,7 +461,11 @@
         case 'heal': return t ? (a ? a + ' mends ' : 'Mended: ') + t + (e.amount ? ' (+' + e.amount + ')' : '') : '';
         case 'cast-start': return a ? a + ' begins a chant' : '';
         case 'cast-complete': return a && e.outcome === 'interrupted' ? a + '\'s chant is broken' : '';
-        case 'status-tick': return t && e.damage ? t + ' suffers ' + (e.status || 'a wound') + ' (' + e.damage + ')' : '';
+        case 'status-tick':
+            if (t && e.outcome === 'lost-action') {
+                return t + (e.status === 'hesitation' ? ' hesitates as the company falters' : ' loses the action');
+            }
+            return t && e.damage ? t + ' suffers ' + (e.status || 'a wound') + ' (' + e.damage + ')' : '';
         case 'death': return t ? t + ' falls' : '';
         case 'yield': return a ? a + ' yields' : '';
         case 'flee': return a ? a + ' flees' : '';
@@ -389,6 +481,9 @@
         const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) }));
         // fight_round counts this fight's rounds; round is the server's counter.
         if (body.fight_round) { roundNo = body.fight_round; paintChrome(); }
+        // The feed carries the player's pace; inference from how batches
+        // arrive is only the fallback for a server that does not send it.
+        if (body.pace && TL.BUDGETS[body.pace]) { feedPace = body.pace; }
         paceHistory.push({ at: Date.now(), n: evs.length });
         if (paceHistory.length > 8) { paceHistory.shift(); }
         if (motion() === 'off') {
@@ -424,7 +519,7 @@
             else if (e.kind === 'fight-end') { ended = true; paintBadge(); }
         });
         const happenings = TL.plan(evs, {
-            pace: TL.inferPace(paceHistory), motion: motion(), has: hasArt,
+            pace: feedPace || TL.inferPace(paceHistory), motion: motion(), has: hasArt,
         });
         const bySeq = new Map(evs.map(e => [e.seq, e]));
         happenings.forEach(h => {
@@ -491,7 +586,7 @@
         const u = units.get(o.unit);
         if (!u) { return; }
         const now = Date.now();
-        const p = u.cell ? slot(u.side, u.cell.row, u.cell.col) : { x: W / 2, y: 120 };
+        const p = u.cell ? slotOf(u) : { x: W / 2, y: 120 };
         if (o.tint && motion() === 'full') { u.flash = now + 260; u.flashColor = o.tint; }
         (o.digits || []).forEach((d, i) => {
             floaters.push({ x: p.x, y: p.y - 34 - i * 8, text: d.text, color: d.color, born: now, big: !!d.big, dim: !!d.dim });
@@ -763,6 +858,8 @@
             if (battle.dark) { banners.push('dark'); }
             if (battle.narrow) { banners.push('narrow'); }
             if (battle.retreat) { banners.push('withdrawing ' + battle.retreat.exit); }
+            if (battle.nerve === 'faltering') { banners.push('company faltering'); }
+            if ((battle.allies || []).length) { banners.push('allies: ' + battle.allies.map(a => a.name).join(', ')); }
             if (battle.waiting && battle.waiting.length) { banners.push('waiting: ' + battle.waiting.join(', ')); }
         }
         bannerNode.textContent = banners.join(' · ');
@@ -785,8 +882,10 @@
         if (!u) { captionNode.textContent = battle && !outcomeText ? HINT : ''; return; }
         let text = u.label;
         if (u.side === 'company' && u.className) { text += ', ' + u.className; }
-        if (u.side === 'enemy' && u.band) { text += ', ' + u.band; }
-        if (u.side === 'company' && u.fallen) { text += ', fallen'; }
+        if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
+        if (u.side !== 'company' && u.band) { text += ', ' + u.band; }
+        if (u.side !== 'enemy' && u.fallen) { text += ', fallen'; }
+        if (u.side === 'company' && !u.fallen && battle && battle.nerve === 'faltering') { text += ', shaken'; }
         if (u.yielded) { text += ', surrendered'; }
         const t = targetOf(u.id);
         if (t && units.get(t)) { text += ', striking ' + units.get(t).label; }
@@ -808,9 +907,10 @@
         const y = (ev.clientY - r.top) * H / r.height;
         let best = null;
         let bestD = 18 * 18;
+        const compact = compactAllies();
         units.forEach(u => {
-            if (!u.cell) { return; }
-            const p = slot(u.side, u.cell.row, u.cell.col);
+            if (!u.cell || (compact && u.side === 'ally')) { return; }
+            const p = slotOf(u);
             const d = (p.x - x) * (p.x - x) + (p.y - 12 - y) * (p.y - 12 - y);
             if (d < bestD) { bestD = d; best = u.id; }
         });
@@ -849,17 +949,18 @@
     // slot, a vertical squash, and the art animation to draw (with its
     // progress) when the art has it. Without art the idle figure nudges.
     function poseOf(u, p0, now) {
-        const dir = u.side === 'company' ? 1 : -1;
-        const pose = { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1 };
+        const dir = u.side !== 'enemy' ? 1 : -1;
+        const pose = { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1, scale: u.side === 'ally' ? ALLY_SCALE : 1 };
         const full = motion() === 'full';
         sched.active(now).forEach(st => {
             if (st.unit !== u.id && !(st.unit === '*company*' && u.side === 'company')) { return; }
             const p = Math.max(0, Math.min(1, (now - st.start) / Math.max(1, st.end - st.start)));
             let anim = st.anim;
-            if (st.lunge && units.get(st.lunge) && units.get(st.lunge).cell) {
+            // An allied unit, small and far, strikes from where it stands.
+            if (st.lunge && u.side !== 'ally' && units.get(st.lunge) && units.get(st.lunge).cell) {
                 // Step in toward the target, strike at the middle, step back.
                 const t = units.get(st.lunge);
-                const tp = slot(t.side, t.cell.row, t.cell.col);
+                const tp = slotOf(t);
                 const e = tri(p);
                 pose.dx += (tp.x - dir * 16 - p0.x) * e;
                 pose.dy += (tp.y - p0.y) * e;
@@ -954,19 +1055,20 @@
     // drawFigure draws one unit standing with its feet at (x, y), facing
     // the centre line.
     function drawFigure(u, x, y, now, pose) {
-        pose = pose || { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1 };
-        const dir = u.side === 'company' ? 1 : -1;       // +1 faces right
+        pose = pose || { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1, scale: 1 };
+        const sc = pose.scale || 1;
+        const dir = u.side !== 'enemy' ? 1 : -1;         // +1 faces right
         const dim = battle && battle.dark ? 0.5 : 1;
         const flashing = u.flash > now;
         // Shadow.
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fillRect(Math.round(x - 7), y - 1, 14, 2);
+        ctx.fillRect(Math.round(x - 7 * sc), y - 1, Math.round(14 * sc), Math.max(1, Math.round(2 * sc)));
         // The pose moves the figure; its shadow stays on the ground.
         ctx.save();
         ctx.globalAlpha = pose.alpha;
-        if (pose.dx || pose.dy || pose.squash !== 1) {
+        if (pose.dx || pose.dy || pose.squash !== 1 || sc !== 1) {
             ctx.translate(Math.round(x + pose.dx), Math.round(y + pose.dy));
-            ctx.scale(1, pose.squash);
+            ctx.scale(sc, sc * pose.squash);
             ctx.translate(-Math.round(x), -y);
         }
         drawBody(u, x, y, now, pose, dir, dim);
@@ -974,7 +1076,7 @@
         if (flashing && !u.fallen && !u.tinted) {
             ctx.fillStyle = u.flashColor;
             ctx.globalAlpha = 0.45;
-            ctx.fillRect(Math.round(x + pose.dx - 10), Math.round(y + pose.dy - 32), 20, 33);
+            ctx.fillRect(Math.round(x + pose.dx - 10 * sc), Math.round(y + pose.dy - 32 * sc), Math.round(20 * sc), Math.round(33 * sc));
             ctx.globalAlpha = 1;
         }
     }
@@ -991,7 +1093,7 @@
         u.tinted = false;
         if (u.fallen) {
             // Lying down: a flat shape, the figure's body hue.
-            const c = u.side === 'company' ? (CLASS_HUES[u.klass] || DEFAULT_HUES)[0] : '#6a4a4a';
+            const c = u.side !== 'enemy' ? (CLASS_HUES[u.klass] || DEFAULT_HUES)[0] : '#6a4a4a';
             rect(x - 9, y - 5, 18, 4, shade(c, 0.6));
             rect(x - (9 * dir), y - 7, 4, 4, '#c8a888');
             return;
@@ -1033,7 +1135,7 @@
             }
             ctx.restore();
             u.tinted = u.flash > now;
-        } else if (u.side === 'company') {
+        } else if (u.side !== 'enemy') {
             const hues = CLASS_HUES[u.klass] || DEFAULT_HUES;
             const body = shade(hues[0], dim), trim = shade(hues[1], dim);
             rect(x - 3, y - 8, 2, 8, '#2a2a30');                 // legs
@@ -1079,6 +1181,7 @@
     // drawInfo draws the bar, role badge, statuses and chant mark.
     function drawInfo(u, x, y) {
         if (u.fallen || u.unseen) { return; }
+        if (u.side === 'ally') { drawAllyInfo(u, x, y); return; }
         const w = 18;
         rect(x - w / 2, y + 3, w, 3, '#101014');
         if (u.side === 'company') {
@@ -1092,14 +1195,17 @@
             }
         }
         if (u.role && ROLE_GLYPH[u.role]) {
-            ctx.font = '7px monospace';
-            ctx.fillStyle = '#e8e8f0';
-            ctx.fillText(ROLE_GLYPH[u.role], Math.round(x - w / 2), y + 13);
+            // A pixel-font letter on a dark chip: crisp at every scale.
+            rect(Math.round(x - w / 2), y + 7, 5, 7, '#101014');
+            pixText(ROLE_GLYPH[u.role], x - w / 2 + 1, y + 8, '#e8e8f0');
+        }
+        if (u.side === 'company' && battle && battle.nerve === 'faltering') {
+            // The company's nerve is tested: a drop of sweat beside the bar.
+            rect(Math.round(x + w / 2 - 1), y + 8, 1, 2, '#e8a838');
+            rect(Math.round(x + w / 2 - 2), y + 10, 3, 2, '#e8a838');
         }
         if (u.yielded) {
-            ctx.font = '7px monospace';
-            ctx.fillStyle = '#e8e8f0';
-            ctx.fillText('yields', Math.round(x - 10), y - 36);
+            pixText('yields', x - 11, y - 44, '#e8e8f0');
         }
         let i = 0;
         u.statuses.forEach(s => {
@@ -1107,6 +1213,58 @@
             i++;
         });
         if (u.casting) { rect(x - 1, y - 40, 2, 2, '#9ab0ff'); rect(x - 3, y - 38, 6, 1, '#9ab0ff'); }
+    }
+
+    // drawAllyInfo draws an allied unit's small band bar (words, never a
+    // number) and its chant mark.
+    function drawAllyInfo(u, x, y) {
+        const segs = Math.max(0, Math.round(u.frac * 5));
+        rect(x - 6, y + 2, 12, 3, '#101014');
+        for (let i = 0; i < 5; i++) { rect(x - 5 + i * 2, y + 3, 1, 1, i < segs ? '#d8c24a' : '#3a3a42'); }
+        if (u.casting) { rect(x, y - 22, 1, 1, '#9ab0ff'); rect(x - 1, y - 21, 3, 1, '#9ab0ff'); }
+    }
+
+    // compactAllies is true when the canvas shows too small for half-scale
+    // figures (a phone): each allied company is a pennant instead.
+    function compactAllies() {
+        if (!canvas) { return false; }
+        const r = canvas.getBoundingClientRect();
+        return r.width > 0 && r.width < 420;
+    }
+
+    // allyGroups are the allied companies drawn, each with its members that
+    // stand, and how many more companies there are than are drawn.
+    function allyGroups() {
+        const list = ((battle && battle.allies) || []).slice(0, MAX_ALLIES).map((al, index) => ({
+            index, name: al.name || '', up: units.size ? Array.from(units.values()).filter(u => u.side === 'ally' && u.ally === index && !u.fallen).length : 0,
+        }));
+        return { list, more: Math.max(0, ((battle && battle.allies) || []).length - MAX_ALLIES) };
+    }
+
+    // drawAllyBanners labels each allied formation with a pennant and its
+    // leader's name; on a phone the pennant (with a count of those standing)
+    // stands for the formation. Companies beyond the two drawn collapse to a
+    // "+N" pennant.
+    function drawAllyBanners() {
+        const g = allyGroups();
+        const compact = compactAllies();
+        g.list.forEach(a => {
+            const ax = ALLY_ANCHORS[a.index];
+            const hue = hashHue(a.name || 'ally');
+            const fx = ax - 38;
+            rect(fx, 22, 1, 12, '#c8ccd4');
+            ctx.fillStyle = 'hsl(' + hue + ',55%,45%)';
+            ctx.fillRect(fx + 1, 22, 6, 4);
+            if (compact) {
+                pixText(String(a.up), fx + 9, 22, '#ffffff');
+                pixText(a.name.slice(0, 6), fx + 2, 36, '#e8e8f0');
+            } else {
+                pixText(a.name.slice(0, 9), fx + 9, 22, '#e8e8f0');
+            }
+        });
+        if (g.more > 0) {
+            pixText('+' + g.more + ' more', 4, 4, '#e8e8f0');
+        }
     }
 
     function draw() {
@@ -1118,16 +1276,19 @@
         ctx.imageSmoothingEnabled = false;
         drawBackground();
         // Back to front by lane (then row), so nearer units overlap.
-        const list = Array.from(units.values()).filter(u => u.cell);
-        list.sort((a, b) => (a.cell.col - b.cell.col) || (b.cell.row - a.cell.row));
+        const compact = compactAllies();
+        const list = Array.from(units.values()).filter(u => u.cell && !(compact && u.side === 'ally'));
+        // Allied formations stand behind: they go first, then the lanes.
+        list.sort((a, b) => ((a.side === 'ally' ? 0 : 1) - (b.side === 'ally' ? 0 : 1)) || (a.cell.col - b.cell.col) || (b.cell.row - a.cell.row));
+        drawAllyBanners();
         list.forEach(u => {
-            const p = slot(u.side, u.cell.row, u.cell.col);
+            const p = slotOf(u);
             drawFigure(u, p.x, p.y, now, poseOf(u, p, now));
         });
         // Bars, roles and statuses go over every figure, so a large unit in
         // front never hides the health of those behind it.
         list.forEach(u => {
-            const p = slot(u.side, u.cell.row, u.cell.col);
+            const p = slotOf(u);
             drawInfo(u, p.x, p.y);
         });
         drawEffects(now);
@@ -1142,7 +1303,7 @@
             pairs.forEach(pr => {
                 const a = units.get(pr[0]), b = units.get(pr[1]);
                 if (!a || !b || !a.cell || !b.cell) { return; }
-                const pa = slot(a.side, a.cell.row, a.cell.col), pb = slot(b.side, b.cell.row, b.cell.col);
+                const pa = slotOf(a), pb = slotOf(b);
                 ctx.beginPath();
                 ctx.moveTo(pa.x, pa.y - 12);
                 ctx.lineTo(pb.x, pb.y - 12);
@@ -1182,7 +1343,7 @@
     function centreOf(id) {
         const u = units.get(id);
         if (!u || !u.cell) { return null; }
-        const p = slot(u.side, u.cell.row, u.cell.col);
+        const p = slotOf(u);
         return { x: p.x, y: p.y - 12, u: u };
     }
 
@@ -1372,6 +1533,7 @@
             holding = new Set();
             outcomeQueued = false;
             paceHistory = [];
+            feedPace = '';
             lastBlow = '';
             roundNo = 0;
             minimised = false;
@@ -1450,6 +1612,10 @@
                 round: roundNo,
                 lastBlow,
                 motion: motion(),
+                pace: feedPace,
+                nerve: battle && battle.nerve ? battle.nerve : '',
+                allies: allyGroups(),
+                compact: compactAllies(),
                 backlog: sched.backlog(Date.now()),
                 fx: sched.activeFx(Date.now()).map(f => f.kind + (f.id ? ':' + f.id : '')),
                 digits: floaters.filter(f => f.text).map(f => f.text),
@@ -1457,11 +1623,11 @@
                 shaking: shakeUntil > Date.now(),
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
-                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
+                    id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
-                    pose: u.cell ? poseOf(u, slot(u.side, u.cell.row, u.cell.col), Date.now()) : null,
-                    at: u.cell ? slot(u.side, u.cell.row, u.cell.col) : null,
+                    pose: u.cell ? poseOf(u, slotOf(u), Date.now()) : null,
+                    at: u.cell ? slotOf(u) : null,
                 })),
             };
         },

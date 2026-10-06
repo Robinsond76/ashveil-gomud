@@ -245,3 +245,10 @@ test('an unseen caster\'s spell is never named nor coloured; a seen one uses the
   const seen = first([{ seq: 3, kind: 'cast-start', src: 'companion:3', spell: 'mm', spell_name: 'Magic Missile' }])[0];
   assert.equal(seen.ops[0].spell, 'Magic Missile');
 });
+
+test('an allied company\'s unit counts as company for the hit effect, and allied refs plan like any other', () => {
+  const hit = first([{ seq: 1, kind: 'attack', src: 'a:8:leader', tgt: 'm:1', outcome: 'hit', damage: 3 }]);
+  assert.equal(hit.find(s => s.unit === 'm:1').fx[0].id, 'blunt', 'a bare-handed ally strikes blunt, not with claws');
+  const down = first([{ seq: 2, kind: 'death', src: 'm:1', tgt: 'a:8:companion:2' }]);
+  assert.ok(down.some(s => s.unit === 'a:8:companion:2'), 'an allied unit falls like any other');
+});
