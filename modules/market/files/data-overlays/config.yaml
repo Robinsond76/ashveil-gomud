@@ -141,6 +141,201 @@ Markets:
         TargetStock: 5
         StartStock: 3
         DriftStep: 1
+      # Phase 36c: the 36b trade goods, so a hauled load has somewhere to go.
+      # Town pays best for materials and valuables; the road post is glutted
+      # with trophies and salvage, so carrying them to Dunmar pays.
+      - ItemId: 200 # bear hide
+        BasePrice: 26
+        MinPrice: 13
+        MaxPrice: 57
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 7
+        DriftStep: 2
+      - ItemId: 201 # elk antlers
+        BasePrice: 16
+        MinPrice: 8
+        MaxPrice: 35
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 7
+        DriftStep: 2
+      - ItemId: 202 # boar tusks
+        BasePrice: 10
+        MinPrice: 5
+        MaxPrice: 22
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 7
+        DriftStep: 2
+      - ItemId: 203 # troll tusk
+        BasePrice: 40
+        MinPrice: 20
+        MaxPrice: 88
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 7
+        DriftStep: 2
+      - ItemId: 204 # snowcat pelt
+        BasePrice: 22
+        MinPrice: 11
+        MaxPrice: 48
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 7
+        DriftStep: 2
+      - ItemId: 210 # rusted mail
+        BasePrice: 9
+        MinPrice: 4
+        MaxPrice: 20
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 9
+        DriftStep: 2
+      - ItemId: 211 # broken blades
+        BasePrice: 5
+        MinPrice: 2
+        MaxPrice: 11
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 9
+        DriftStep: 2
+      - ItemId: 212 # scrap iron
+        BasePrice: 7
+        MinPrice: 4
+        MaxPrice: 15
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 9
+        DriftStep: 2
+      - ItemId: 213 # bent arrows
+        BasePrice: 2
+        MinPrice: 1
+        MaxPrice: 4
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 9
+        DriftStep: 2
+      - ItemId: 214 # splintered shields
+        BasePrice: 4
+        MinPrice: 2
+        MaxPrice: 9
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 9
+        DriftStep: 2
+      - ItemId: 220 # iron ore
+        BasePrice: 23
+        MinPrice: 12
+        MaxPrice: 51
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 6
+        DriftStep: 2
+      - ItemId: 221 # steel ingot
+        BasePrice: 58
+        MinPrice: 29
+        MaxPrice: 128
+        MaxStock: 12
+        TargetStock: 6
+        StartStock: 4
+        DriftStep: 1
+      - ItemId: 222 # runestone shard
+        BasePrice: 78
+        MinPrice: 39
+        MaxPrice: 172
+        MaxStock: 8
+        TargetStock: 4
+        StartStock: 2
+        DriftStep: 1
+      - ItemId: 223 # ashwood plank
+        BasePrice: 18
+        MinPrice: 9
+        MaxPrice: 40
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 6
+        DriftStep: 2
+      - ItemId: 224 # bolt of silk
+        BasePrice: 49
+        MinPrice: 24
+        MaxPrice: 108
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 6
+        DriftStep: 2
+      - ItemId: 225 # tanned leather
+        BasePrice: 21
+        MinPrice: 10
+        MaxPrice: 46
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 6
+        DriftStep: 2
+      - ItemId: 230 # silver trinket
+        BasePrice: 60
+        MinPrice: 30
+        MaxPrice: 132
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1
+      - ItemId: 231 # garnet
+        BasePrice: 105
+        MinPrice: 52
+        MaxPrice: 231
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1
+      - ItemId: 232 # jade idol
+        BasePrice: 225
+        MinPrice: 112
+        MaxPrice: 495
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1
+      - ItemId: 233 # gilded goblet
+        BasePrice: 135
+        MinPrice: 68
+        MaxPrice: 297
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1
+      - ItemId: 234 # ivory comb
+        BasePrice: 68
+        MinPrice: 34
+        MaxPrice: 150
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1
+      - ItemId: 240 # sealed letter
+        BasePrice: 35
+        MinPrice: 18
+        MaxPrice: 77
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
+      - ItemId: 241 # weathered map
+        BasePrice: 42
+        MinPrice: 21
+        MaxPrice: 92
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
+      - ItemId: 242 # relic fragment
+        BasePrice: 98
+        MinPrice: 49
+        MaxPrice: 216
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
   - Zone: Old Kings Road
     Goods:
       - ItemId: 28 # wolf hide
@@ -209,3 +404,92 @@ Markets:
         TargetStock: 3
         StartStock: 2
         DriftStep: 1
+      # Phase 36c: trophies and salvage are cheap and plentiful at the post.
+      - ItemId: 200 # bear hide
+        BasePrice: 19
+        MinPrice: 10
+        MaxPrice: 42
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 24
+        DriftStep: 2
+      - ItemId: 201 # elk antlers
+        BasePrice: 12
+        MinPrice: 6
+        MaxPrice: 26
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 24
+        DriftStep: 2
+      - ItemId: 202 # boar tusks
+        BasePrice: 7
+        MinPrice: 4
+        MaxPrice: 15
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 24
+        DriftStep: 2
+      - ItemId: 203 # troll tusk
+        BasePrice: 29
+        MinPrice: 14
+        MaxPrice: 64
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 24
+        DriftStep: 2
+      - ItemId: 204 # snowcat pelt
+        BasePrice: 16
+        MinPrice: 8
+        MaxPrice: 35
+        MaxStock: 24
+        TargetStock: 12
+        StartStock: 24
+        DriftStep: 2
+      - ItemId: 210 # rusted mail
+        BasePrice: 7
+        MinPrice: 4
+        MaxPrice: 15
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 30
+        DriftStep: 2
+      - ItemId: 211 # broken blades
+        BasePrice: 4
+        MinPrice: 2
+        MaxPrice: 9
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 30
+        DriftStep: 2
+      - ItemId: 213 # bent arrows
+        BasePrice: 2
+        MinPrice: 1
+        MaxPrice: 4
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 30
+        DriftStep: 2
+      - ItemId: 220 # iron ore
+        BasePrice: 18
+        MinPrice: 9
+        MaxPrice: 40
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 20
+        DriftStep: 2
+      - ItemId: 223 # ashwood plank
+        BasePrice: 14
+        MinPrice: 7
+        MaxPrice: 31
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 20
+        DriftStep: 2
+      - ItemId: 225 # tanned leather
+        BasePrice: 16
+        MinPrice: 8
+        MaxPrice: 35
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 20
+        DriftStep: 2

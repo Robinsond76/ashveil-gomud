@@ -37,8 +37,10 @@ character:
       quantitymax: 4
     - itemid: 220
       quantitymax: 4
+      price: 24 # 36c review: above Dunmar's market price, so no buy-and-resell loop
     - itemid: 225
       quantitymax: 4
+      price: 22 # 36c review: above Dunmar's market price
   equipment:
     weapon:
       itemid: 10005

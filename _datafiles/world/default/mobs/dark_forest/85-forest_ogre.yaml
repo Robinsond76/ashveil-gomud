@@ -4,6 +4,7 @@
 # breaks it: a crit that lands, a stagger, a knockdown, or a stun
 # (help interrupts).
 mobid: 85
+sprite: ogre-forest
 zone: Dark Forest
 itemdropchance: 10
 sweep: true

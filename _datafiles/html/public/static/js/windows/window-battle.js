@@ -948,7 +948,7 @@
         }
         drawBody(u, x, y, now, pose, dir, dim);
         ctx.restore();
-        if (flashing && !u.fallen) {
+        if (flashing && !u.fallen && !u.tinted) {
             ctx.fillStyle = u.flashColor;
             ctx.globalAlpha = 0.45;
             ctx.fillRect(Math.round(x + pose.dx - 10), Math.round(y + pose.dy - 32), 20, 33);
@@ -956,7 +956,16 @@
         }
     }
 
+    // tintLayer is a scratch canvas the size of a frame, for tinting art.
+    let tintCanvas = null;
+    function tintLayer(w, h) {
+        if (!tintCanvas) { tintCanvas = document.createElement('canvas'); }
+        if (tintCanvas.width < w || tintCanvas.height < h) { tintCanvas.width = Math.max(w, tintCanvas.width); tintCanvas.height = Math.max(h, tintCanvas.height); }
+        return tintCanvas.getContext('2d');
+    }
+
     function drawBody(u, x, y, now, pose, dir, dim) {
+        u.tinted = false;
         if (u.fallen) {
             // Lying down: a flat shape, the figure's body hue.
             const c = u.side === 'company' ? (CLASS_HUES[u.klass] || DEFAULT_HUES)[0] : '#6a4a4a';
@@ -983,7 +992,21 @@
             if (dir < 0) { ctx.scale(-1, 1); }
             if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
             ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            if (u.flash > now) {
+                // A hit tints the figure's own shape, not a box around it.
+                const t = tintLayer(fw, fh);
+                t.clearRect(0, 0, fw, fh);
+                t.globalCompositeOperation = 'source-over';
+                t.drawImage(sheet.img, i * fw, 0, fw, fh, 0, 0, fw, fh);
+                t.globalCompositeOperation = 'source-atop';
+                t.globalAlpha = 0.55;
+                t.fillStyle = u.flashColor;
+                t.fillRect(0, 0, fw, fh);
+                t.globalAlpha = 1;
+                ctx.drawImage(tintCanvas, 0, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            }
             ctx.restore();
+            u.tinted = u.flash > now;
         } else if (u.side === 'company') {
             const hues = CLASS_HUES[u.klass] || DEFAULT_HUES;
             const body = shade(hues[0], dim), trim = shade(hues[1], dim);
@@ -1074,6 +1097,11 @@
         list.forEach(u => {
             const p = slot(u.side, u.cell.row, u.cell.col);
             drawFigure(u, p.x, p.y, now, poseOf(u, p, now));
+        });
+        // Bars, roles and statuses go over every figure, so a large unit in
+        // front never hides the health of those behind it.
+        list.forEach(u => {
+            const p = slot(u.side, u.cell.row, u.cell.col);
             drawInfo(u, p.x, p.y);
         });
         drawEffects(now);

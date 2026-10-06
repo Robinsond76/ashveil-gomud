@@ -1,4 +1,5 @@
 mobid: 16
+sprite: acolyte-dark
 zone: Catacombs
 itemdropchance: 2
 hostile: false

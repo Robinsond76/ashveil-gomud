@@ -90,6 +90,8 @@ help:
       - list
       - offer
       - sell
+      - salvage
+      - mark
       - store
       - unstore
       - withdraw
@@ -251,8 +253,10 @@ help-aliases:
   quality: [crude, worn, fine, superior, exquisite, workmanship]
   itemlevel: [item level, ilvl, item-level]
   equipmenttiers: [tier, tiers, equipment-tiers, equipment tiers, weapon families, glaive, glaives, crossbows, polearms]
-  goods: [trade goods, trade-goods, trophies, salvage, materials, valuables, curios, value per kg]
+  goods: [trade goods, trade-goods, trophies, materials, valuables, curios, value per kg]
   affixes: [affix, prefix, suffix, modifiers, major affix]
+  salvage: [salvaging, breaking down, salvage gear]
+  mark: [junk, marking, sell junk, sell-junk, mark junk]
   identify: [identification, identified, read gear, unread]
   scribe: [scribing]
   morale: [nerve, hesitation, temperament]
