@@ -532,6 +532,10 @@ func mealLine(step mealStep, food larderItem, result survival.ProvisionResult, i
 	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> (%s). %s.`, subject, verb, food.Name, where, status)
 }
 
+// sourceDrinksMax bounds how many drinks one member takes from a source in
+// one company drink: three glugs reach full from empty.
+const sourceDrinksMax = 3
+
 // waterFromSource waters every present member below the top thirst band
 // from the room's water, costing nothing (Phase 40a). It reads thirst
 // fresh, after any meal's own water.
@@ -551,19 +555,29 @@ func (m *CompanyModule) waterFromSource(user *users.UserRecord) []string {
 		if isCompanion {
 			selector = "#" + strconv.Itoa(companionID)
 		}
-		result, err := survival.Provision(user.UserId, selector, survival.Benefit{Hydration: usercommands.WaterSourceHydration})
+		// The water is free, so each member drinks until no longer thirsty.
+		var result survival.ProvisionResult
+		var err error
+		thirst := member.Needs.Thirst
+		for range sourceDrinksMax {
+			result, err = survival.Provision(user.UserId, selector, survival.Benefit{Hydration: usercommands.WaterSourceHydration})
+			if err != nil || survival.BandFor(result.Needs.Thirst) == survival.BandFull || result.Needs.Thirst <= thirst {
+				break
+			}
+			thirst = result.Needs.Thirst
+		}
 		if err != nil {
 			lines = append(lines, fmt.Sprintf("%s couldn't be watered: %s", member.Name, err))
 			continue
 		}
-		thirst := "Thirst: " + survival.ThirstLabel(result.Needs.Thirst)
+		label := "Thirst: " + survival.ThirstLabel(result.Needs.Thirst)
 		if isCompanion {
-			lines = append(lines, fmt.Sprintf(`<ansi fg="username">%s</ansi> drinks from the water here. %s.`, result.Name, thirst))
+			lines = append(lines, fmt.Sprintf(`<ansi fg="username">%s</ansi> drinks from the water here. %s.`, result.Name, label))
 			continue
 		}
 		user.Character.CancelBuffsWithFlag("hidden")
 		user.AddBuff(usercommands.WaterSourceBuff, "drink")
-		lines = append(lines, "You drink from the water here. "+thirst+".")
+		lines = append(lines, "You drink from the water here. "+label+".")
 	}
 	return lines
 }

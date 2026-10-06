@@ -421,6 +421,9 @@ func init() {
 	camping.SetAbandonProvider(m)
 	camping.SetCampAbandoner(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
+	// Phase 40a: forage and shelter act on a camp rest, so the room shows
+	// them only where a camp can be made.
+	rooms.SetCampableCheck(func(r *rooms.Room) bool { return roomEligible(r, m.roomTag()) })
 	// Phase 32a: look shows the camps in a room.
 	camping.SetRoomCampsReader(m.RoomCamps)
 	// A lit campfire also warms its room (Phase 15).

@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
@@ -26,17 +27,18 @@ type resourceInfo struct {
 	ID    string
 	Label string // how look and the map tooltip name it
 	Shown bool   // false: reserved until its mechanic ships
+	Camp  bool   // acts only on a camp rest: shown only where a camp can be made
 }
 
 // resourceTable fixes the vocabulary and the display order.
 var resourceTable = []resourceInfo{
-	{ResourceWater, `fresh water`, true},
-	{ResourceForage, `forage`, true},
-	{ResourceShelter, `shelter`, true},
-	{ResourceHerbs, `herbs`, false},
-	{ResourceFirewood, `firewood`, false},
-	{ResourceFishing, `fishing`, false},
-	{ResourceGame, `game`, false},
+	{ResourceWater, `fresh water`, true, false},
+	{ResourceForage, `forage`, true, true},
+	{ResourceShelter, `shelter`, true, true},
+	{ResourceHerbs, `herbs`, false, false},
+	{ResourceFirewood, `firewood`, false, false},
+	{ResourceFishing, `fishing`, false, false},
+	{ResourceGame, `game`, false, false},
 }
 
 func lookupResource(id string) (resourceInfo, bool) {
@@ -107,17 +109,41 @@ func (r *Room) HasResource(id string) bool {
 	return false
 }
 
+var (
+	campableMu sync.RWMutex
+	campable   func(*Room) bool
+)
+
+// SetCampableCheck registers the rule for whether a camp can be made in a
+// room (modules/camping). Forage and shelter only act on a camp rest, so
+// they are shown only where it says yes; with no rule set they are shown
+// wherever the data lists them. nil clears it.
+func SetCampableCheck(check func(*Room) bool) {
+	campableMu.Lock()
+	defer campableMu.Unlock()
+	campable = check
+}
+
+func canCampIn(r *Room) bool {
+	campableMu.RLock()
+	check := campable
+	campableMu.RUnlock()
+	return check == nil || check(r)
+}
+
 // ShownResources is the room's resources that players can see and use
-// today, in display order. Never nil.
+// today, in display order. Forage and shelter need a room a camp can be
+// made in, so a marker never promises a rule that can't act. Never nil.
 func (r *Room) ShownResources() []string {
 	out := []string{}
 	if r == nil {
 		return out
 	}
 	for _, info := range resourceTable {
-		if info.Shown && r.HasResource(info.ID) {
-			out = append(out, info.ID)
+		if !info.Shown || !r.HasResource(info.ID) || (info.Camp && !canCampIn(r)) {
+			continue
 		}
+		out = append(out, info.ID)
 	}
 	return out
 }

@@ -117,3 +117,31 @@ func TestCompanyFillIsRefusedAwayFromWater(t *testing.T) {
 	assert.Equal(t, 1, user.Character.Items[0].Uses)
 	require.Contains(t, companyUsage, "company fill")
 }
+
+// thirstTracker raises thirst by each drink's hydration, like the real
+// provisioner, so repeat drinks can be counted.
+type thirstTracker struct {
+	thirst map[string]int
+	drinks map[string]int
+}
+
+func (f *thirstTracker) Provision(_ int, selector string, b survival.Benefit) (survival.ProvisionResult, error) {
+	f.thirst[selector] = min(100, f.thirst[selector]+b.Hydration)
+	f.drinks[selector]++
+	return survival.ProvisionResult{Name: selector, Needs: survival.Needs{Hunger: 100, Thirst: f.thirst[selector]}}, nil
+}
+func (f *thirstTracker) IsMemberSelector(int, string) bool { return true }
+
+// Review fix: the source is free, so a parched member drinks until no
+// longer thirsty instead of one glug per "company drink".
+func TestCompanyDrinkAtASourceDrinksUntilFull(t *testing.T) {
+	m, _, user := mealSetup(t)
+	survival.SetCompanyService(fakeNeeds{needs: []survival.MemberNeeds{member(you, "Dain", 100, 0), member(tamsin, "Tamsin", 100, 50)}})
+	tracker := &thirstTracker{thirst: map[string]int{"": 0, "#1": 50}, drinks: map[string]int{}}
+	survival.SetProvisioner(tracker)
+
+	out := m.mealView(user, waterRoom(), mealDrink)
+	assert.Equal(t, 2, tracker.drinks[""], "0 -> 40 -> 80: two drinks reach full")
+	assert.Equal(t, 1, tracker.drinks["#1"], "50 -> 90: one drink")
+	assert.NotContains(t, out, "still thirsty")
+}

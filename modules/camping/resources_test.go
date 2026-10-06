@@ -81,3 +81,12 @@ func TestShelterRoomHalvesTheWeatherPenaltyAndLocksIt(t *testing.T) {
 	clear.m.startRest(clear.user, clear.room)
 	assert.Equal(t, 20, clear.camp().Rest.Recovery, "shelter never improves on a full rest")
 }
+
+// Review fix: the camping module tells rooms where a camp can be made, so
+// forage and shelter markers only show in rooms tagged for camping.
+func TestCampResourcesShowOnlyInCampableRooms(t *testing.T) {
+	camp := &rooms.Room{RoomId: 1, Tags: []string{defaultRoomTag}, Resources: []string{rooms.ResourceWater, rooms.ResourceShelter}}
+	cave := &rooms.Room{RoomId: 2, Resources: []string{rooms.ResourceWater, rooms.ResourceShelter}}
+	assert.Equal(t, []string{rooms.ResourceWater, rooms.ResourceShelter}, camp.ShownResources())
+	assert.Equal(t, []string{rooms.ResourceWater}, cave.ShownResources())
+}

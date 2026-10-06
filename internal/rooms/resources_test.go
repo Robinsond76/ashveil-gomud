@@ -75,3 +75,17 @@ func TestShippedWorldResourcesAreValid(t *testing.T) {
 	require.NoError(t, err)
 	assert.Greater(t, tagged, 0, "the default world tags its rooms")
 }
+
+// Review fix: forage and shelter only act on a camp rest, so they are
+// hidden where no camp can be made; water is shown anywhere.
+func TestCampResourcesShowOnlyWhereACampCanBeMade(t *testing.T) {
+	SetCampableCheck(func(r *Room) bool { return r.RoomId == 1 })
+	t.Cleanup(func() { SetCampableCheck(nil) })
+
+	camp := &Room{RoomId: 1, Resources: []string{"water", "forage", "shelter"}}
+	cave := &Room{RoomId: 2, Resources: []string{"water", "forage", "shelter"}}
+	assert.Equal(t, []string{"water", "forage", "shelter"}, camp.ShownResources())
+	assert.Equal(t, []string{"water"}, cave.ShownResources())
+	assert.Equal(t, "Here: fresh water.", cave.ResourceLine())
+	assert.True(t, cave.HasResource(ResourceShelter), "the data is kept for when a camp arrives")
+}
