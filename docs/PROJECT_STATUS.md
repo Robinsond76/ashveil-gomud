@@ -1,5 +1,30 @@
 # Ashveil Project Status
 
+**Phase 40a complete: room resources (2026-10-06):** rooms carry a validated
+`resources` list (water, forage, shelter; herbs, firewood, fishing and game
+are accepted in data but hidden until 40a2). `look` prints a "Here:" line,
+GMCP `Room.Info` and `World.Map` send `resources` (omitted when none), and
+the web map draws a coloured corner dot per resource with a tooltip row and
+an on/off setting (S1 sprites replace the dots later). Rules: `drink water`
+or `drink source` (40 Thirst plus Hydrated, free, refused in battle), `fill`
+and `company fill` (waterskin gains `refillable: water`; pack, companion
+packs and cargo), `company drink` at a source waters everyone free, a camp
+rest at a forage room gets +1 find, and a shelter room halves the weather
+rest penalty. 291 default-world rooms are tagged (lakeshore, waterfall,
+Fernhollow trough and the tutorial Weather Yard water; forest and island
+forage; caves, keeps and lodges shelter). Help: new `help resources`
+(indexed under `road`, aliases water, fill, spring, shelter), updates to
+drink, survival, forage, camp, company meal and webclient, and a Survival
+lesson hint. Design: [40a](designs/2026-10-05-phase-40a-room-resources-design.md).
+Decisions (owner delegation): `drink water` yields to an item exactly
+named "water" and keeps its old waterskin meaning away from a source (no
+surprise for existing habits); a source drink also gives the Hydrated buff
+(same as a waterskin glug); `company fill` refills part-used cargo by
+withdraw-then-deposit through the existing cargo API (no new cargo
+interface); the shelter bonus never beats a full rest. Review pending.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
+
 **38c-d elite routes design (2026-10-06):** rank tables 30–60 for the
 thirteen elites the faith routes design didn't cover (Warlord; Pathfinder,
 Swordmaster, Nightblade; Sentinel, Marksman, Ravager; Archon, Archmage,
