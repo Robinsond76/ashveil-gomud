@@ -1,5 +1,56 @@
 # Ashveil Project Status
 
+**Phase 40s5 reviewed and merged (2026-10-06, Opus review thread):** the
+class art, GMCP `class` key and battle-window fallback are sound; promoted
+classes read apart from their base at 1x in the contact sheet and the battle
+screen (UI check screenshot kept outside the repo as
+`screens/40s5-battle.png` in the project files).
+Decision (delegated): `TestEveryBuiltClassHasArt` no longer fails when a
+built class has no art, because elite (38c) and neutral (39) classes are
+built in parallel and the battle screen already falls back to the base
+class (or a silhouette for a lineage with no art). It logs each pending
+class and its fallback instead; the later art pass runs it with
+`ASHVEIL_ART_STRICT=1`, which fails until every built class has art. It
+still fails when `promotedClasses` names a class that does not exist.
+UI check, fixed in review: the company list showed a promoted member only
+by its base archetype ("Warrior" for a Paladin) and the battle caption only
+by name, so Company GMCP members now also carry `class_name`; the company
+card shows the class (its line on hover) and the battle caption reads
+"Wren, Paladin, striking …"; `help battlescreen` says so (tests: GMCP
+payload, `TestBattleScreenHelp`, and assertions in
+`scripts/browser/battle-check.mjs` and `dock-windows-check.mjs`).
+Follow-ups: `score` and the Character window still show no class (38b
+follow-up); `dock-windows-check.mjs` stalls at its Combat-tab hover since
+40f because the battle screen opens over the tab (pre-existing; the 40s5
+assertions run before that point); three members in one row overlap
+heavily on the battle screen. Merged master (44 smoke, 40a2 shaman
+renumber: same mob 97, kept the shaman's own sprite) and 40g (battle
+animation): a promoted member uses its own class's pose sheets once its
+idle exists, never the base class's, so it does not flicker between looks.
+
+**Phase 40s5 built: class art, art set S5 (2026-10-06):** map sprites
+(down/up/side, idle and walk) and battle idles for the 23 promoted classes on
+master (the 18 level-10 classes plus Paladin, Hierarch, Elder Druid, Blood
+ Priest, Demonologist and Dread Knight), the Angel and Demon summons (large
+units) and a goblin shaman of its own (was the hexer's art); `scripts/sprites/promoted.py`,
+`summoned.py`, `make sprites` now also writes
+[`docs/verification/40s5-contact-sheet.png`](verification/40s5-contact-sheet.png).
+Forks, with reasons: (1) each promoted class is its lineage's base figure with
+ramps swapped and a few accessories, not a new rig, so a promotion reads as a
+step up and the S0 proportions and anchors hold for free; (2) good routes go
+lighter with brass, neutral earth-toned, evil darker with ember touches, using
+the existing 64-color palette only; (3) the Company GMCP member now carries
+`class` (promoted class id, omitted before promotion) and the battle window
+draws `battle/units/<class>/idle.png` when the manifest lists it, falling back
+to the base class, so the art shows today; (4) mobs `95-angel`, `96-demon` and
+the shaman use `sprite:` keys; (5) the goblin shaman is mob 97 (master made the same fix in 40a2, since 38b's Angel holds id 95). Elite (38c) and neutral (39) classes still
+`Planned` are left to a later art pass: warlord, pathfinder, swordmaster,
+nightblade, sentinel, marksman, ravager, archon, archmage, necromancer,
+wise-one, coven-mother, crone-of-ash; `TestEveryBuiltClassHasArt` lists built classes
+with no art (see the review below), and `TestMobSpriteKeysHaveArt` checks every mob
+`sprite:` key. The 40b map window (merged alongside) draws a promoted
+player's class map sprite first, so the S5 map art shows there too. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
+
 **Phase 40b complete, merged via [PR #43](https://github.com/Robinsond76/ashveil-gomud/pull/43) (2026-10-06): map sprites in the web client.** The Map
 window draws you as your class sprite (chain: current class, lineage,
 `adventurer`, then the classic red square), a gold here-ring under you and the
