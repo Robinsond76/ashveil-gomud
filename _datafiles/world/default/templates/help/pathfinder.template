@@ -19,4 +19,7 @@ time.
   There is no command: it happens as you walk.
   <ansi fg="command">autoskill pathfinder off</ansi> stops it.
 
+The Pathfinder elite class of the rogue's Scout route is another thing: see
+<ansi fg="command">help elite-pathfinder</ansi>.
+
 See also: <ansi fg="command">help specialists</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help survival</ansi>.

@@ -74,6 +74,7 @@ func ResetAbilitiesForTest() {
 	clear(abilityTurns)
 	clear(abilityStrikes)
 	clear(abilityDown)
+	clear(abilityKind)
 }
 
 // abilityPass lets every member of every battle that is about to swing use
@@ -83,6 +84,7 @@ func abilityPass() {
 	clear(abilityTurns)
 	clear(abilityStrikes)
 	clear(abilityDown)
+	clear(abilityKind)
 	for k, round := range abilityReady {
 		if round <= abilityRounds {
 			delete(abilityReady, k)
@@ -121,6 +123,12 @@ func abilityPass() {
 			if surprised(a.who.userId, a.who.mobId) {
 				continue
 			}
+			// Phase 38c2: a second Overwatch shot last round spends this turn.
+			if rt := a.char.RT; rt != nil && rt.WatchDebt {
+				rt.WatchDebt = false
+				abilityTurns[a.who] = true
+				continue
+			}
 			// Phase 39d: a Doll Master's turn is its dolls' strike.
 			if dollStrike(a, u, foes, room) {
 				continue
@@ -144,11 +152,18 @@ func abilityPass() {
 			sit.Ambush = ambushing(a, b)
 			sit.Close = close
 			halberdSituation(&sit, a, u, f, foe, room, foes)
+			// Phase 38c2: a Pathfinder opens a foe that has not acted yet;
+			// a Sentinel holds when a foe could strike its middle or back row.
+			sit.PathOpen = pathOpens(a, foe, b)
+			sit.Watch = a.char.ClassEffects().Has(classes.Overwatch) && watchThreat(a, u, f, foes, room)
 			id, use := strategy.DecideAbility(sit)
 			if !use {
 				continue
 			}
-			useAbility(a, foe, id, room, foes)
+			if id == strategy.OpeningStrike && sit.PathOpen && !sit.Ambush && !sit.FoeDown && !sit.FoeStunned && !sit.FoeStaggered && !sit.FoeExposed {
+				a.char.RTState().OpensUsed++
+			}
+			useAbility(a, foe, id, room, foes, u)
 		}
 	}
 }
@@ -212,6 +227,9 @@ func abilitySituation(a actor, u *users.UserRecord, foe *mobs.Mob) strategy.Abil
 	}
 	// Phase 39a: an ability may come at a level.
 	known = strategy.AtLevel(known, a.char.Level)
+	// Phase 38c2: a class may give one (a Sentinel's Overwatch).
+	class, _ := a.char.ClassState()
+	known = strategy.WithClass(known, class, a.char.Level)
 	weapon, backstab := wielding(a.char)
 	return strategy.AbilitySituation{
 		Known: known,
@@ -277,7 +295,7 @@ func wielding(c *characters.Character) (strategy.WeaponKind, bool) {
 
 // useAbility carries out an ability: its cooldown, its line, its event,
 // and its effect.
-func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, foes map[int]bool) {
+func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, foes map[int]bool, u *users.UserRecord) {
 	spec, ok := strategy.SpecOf(id)
 	if !ok {
 		return
@@ -286,6 +304,8 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 	target := mobHolder(foe)
 	event := combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: target.ref, Status: spec.Name}
 	switch id {
+	case strategy.Overwatch:
+		useOverwatch(a, room, u, foes)
 	case strategy.Sweep:
 		useSweep(a, foe, room, foes)
 	case strategy.Brace:
@@ -324,6 +344,12 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		}
 	case strategy.OpeningStrike, strategy.AimedShot:
 		abilityStrikes[a.who] = true
+		abilityKind[a.who] = id
+		// The Perfect Shot is spent when the shot is loosed (combat), so a
+		// turn lost before it never wastes it (Phase 38c2 review).
+		if rt := a.char.RTState(); id == strategy.AimedShot && a.char.ClassEffects().Has(classes.PerfectShot) && !rt.ShotUsed {
+			rt.ShotNow = true
+		}
 		a.char.Aggro.Type = characters.BackStab
 		emitCombat(event)
 		if id == strategy.OpeningStrike {
@@ -345,7 +371,15 @@ func verbatim(s string) string { return strings.ReplaceAll(s, "%", "%%") }
 // first, or its turn was lost) back to a plain attack, after the round's
 // blows.
 func endAbilityStrikes() {
+	clear(abilityKind)
 	for who := range abilityStrikes {
+		if who.userId > 0 {
+			if u := users.GetByUserId(who.userId); u != nil && u.Character != nil && u.Character.RT != nil {
+				u.Character.RT.ShotNow = false
+			}
+		} else if m := mobs.GetInstance(who.mobId); m != nil && m.Character.RT != nil {
+			m.Character.RT.ShotNow = false
+		}
 		var c *characters.Character
 		if who.userId > 0 {
 			if u := users.GetByUserId(who.userId); u != nil {

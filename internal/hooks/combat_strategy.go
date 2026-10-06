@@ -382,6 +382,12 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		tempoChanted[a.who], tempoBlocked[a.who] = true, true
 	}
 	emitCast(combatstream.CastStart, a.ref, spellId, ``, roomId)
+	if a.who.mobId > 0 {
+		noteActed(a.char)
+		if m := mobs.GetInstance(a.who.mobId); m != nil {
+			chantBegun(m)
+		}
+	}
 	if a.who.userId > 0 {
 		events.AddToQueue(events.SkillUsed{UserId: a.who.userId, Skill: `cast`, Details: spellId})
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: a.who.userId})
