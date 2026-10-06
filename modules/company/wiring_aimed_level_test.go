@@ -1,6 +1,7 @@
 package company
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/strategy"
@@ -36,7 +37,13 @@ func aimedShotDamage(t *testing.T, level int) int {
 
 // Phase 35b: an Aimed Shot adds 2 + level/3 damage to its blow.
 func TestAimedShotGrowsWithLevel(t *testing.T) {
-	low, high := aimedShotDamage(t, 1), aimedShotDamage(t, 60)
+	// Each brawl in its own subtest, so the first one's listeners are gone
+	// before the second begins.
+	shot := func(level int) (damage int) {
+		t.Run(fmt.Sprint(level), func(t *testing.T) { damage = aimedShotDamage(t, level) })
+		return damage
+	}
+	low, high := shot(1), shot(60)
 	t.Logf("level 1: %d, level 60: %d", low, high)
 	// The bonus joins the blow before armor, so the foe's armor trims a
 	// little of the difference.
