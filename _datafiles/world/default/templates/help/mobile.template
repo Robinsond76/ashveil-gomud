@@ -26,6 +26,9 @@ an ordinary command for you (<ansi fg="command">help webclient</ansi> describes 
                  places <ansi fg="command">walkto</ansi> understands); pick one and your company
                  walks there. While a walk is under way the list starts with
                  "Stop walking" and a <ansi fg="yellow">Stop</ansi> button appears (<ansi fg="command">walkto stop</ansi>).
+                 The last entry, "Find a visited room...", opens a search box:
+                 type part of a room's name to list every room in this zone the
+                 map has seen, nearest first, and tap one to walk there.
   <ansi fg="yellow">Look, Inventory, Status, Camp</ansi>   type those commands and switch to the
                  Game view, where their answer appears.
   The small arrow at the left folds the bar away and brings it back.
