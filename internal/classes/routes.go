@@ -521,7 +521,7 @@ func init() {
 			rank(30, "Tremor", "when its Stoneskin lands, the ground shakes under the foes' front row: each has a 25% chance to be knocked down (a boss 10%)", Tremor, 25),
 			rank(35, "Granite", "Stoneskin gives +25 armor", Stoneskin, 25),
 			rank(40, "Steady stance", "allies in its row take 8% less damage", AuraResolv, 8),
-			rank(45, "Deep tremor", "Tremor knocks a foe down 35% of the time (a boss 15%)", Tremor, 35),
+			rank(45, "Deep tremor", "Tremor knocks a foe down 35% of the time (a boss 20%)", Tremor, 35),
 			rank(50, "Mountain's weight", "Stoneskin gives +30 armor", Stoneskin, 30),
 			rank(55, "Deep reserves", "+25% maximum mana", ManaPct, 25),
 			rank(60, "Stone cloak", "Stoneskin covers a whole row", StoneRow, 1),

@@ -27,3 +27,16 @@ func TestRowFoesAreTheAimsRowNearestFirst(t *testing.T) {
 	assert.Empty(t, rowFoes(g, 4, []int{1, 2, 3, 4}), "alone in its row")
 	assert.Empty(t, rowFoes(g, 9, []int{1, 2}), "an unplaced aim has no row")
 }
+
+// Review fix: a Tempest Lord whose aim stands alone in its row still chains
+// Lightning to a second foe, as its Full fork rank promises.
+func TestStormWallStillChainsWhenTheAimIsAloneInItsRow(t *testing.T) {
+	var f company.Formation
+	require.NoError(t, f.Place(mobparty.MemberKeyFor(1), 0, 0))
+	require.NoError(t, f.Place(mobparty.MemberKeyFor(2), 0, 2))
+	require.NoError(t, f.Place(mobparty.MemberKeyFor(4), 1, 1))
+	g := enemyparty.Group{Party: mobparty.Party{Members: []int{1, 2, 4}, Formation: f}}
+	assert.Equal(t, []int{2}, stormWall(g, 1, []int{1, 2, 4}), "the row")
+	assert.Equal(t, []int{1}, stormWall(g, 4, []int{1, 2, 4}), "alone in its row: a second foe all the same")
+	assert.Empty(t, stormWall(g, 4, []int{4}), "no other foe")
+}

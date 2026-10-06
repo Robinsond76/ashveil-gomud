@@ -354,7 +354,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 		// Phase 39i: a Tempest Lord's Storm wall chains Lightning through every
 		// other foe in its target's row.
 		if action.Kind == strategy.Storm && a.char.ClassEffects().Has(classes.ChainRow) {
-			info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, rowFoes(g, id, foes)...)
+			info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, stormWall(g, id, foes)...)
 		} else if (action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage)) ||
 			(action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0) ||
 			(action.Spell == "arcanelance" && a.char.ClassEffects().Int(classes.LanceTwin) > 0) {
@@ -598,6 +598,21 @@ func pruneCastAims() {
 func canRaise(a actor, leader int) bool {
 	n := a.char.ClassEffects().Int(classes.Raise)
 	return n > 0 && n > a.char.RTState().Raised && summons.HasFallen(leader)
+}
+
+// stormWall are the foes a Tempest Lord's Lightning chains on to after its
+// aim: every other foe in the aim's row, or, with the aim alone in its row,
+// one other foe as a Stormcaller's chain reaches.
+func stormWall(g enemyparty.Group, id int, foes []int) []int {
+	if row := rowFoes(g, id, foes); len(row) > 0 {
+		return row
+	}
+	for _, other := range foes {
+		if other != id {
+			return []int{other}
+		}
+	}
+	return nil
 }
 
 // rowFoes are the other standing foes of the group in the same formation
