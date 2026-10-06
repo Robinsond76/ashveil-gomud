@@ -720,13 +720,13 @@
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    96,
-    96
+    72,
+    72
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 94,
+   "feet_baseline": 70,
    "facing": "right",
    "size_class": "L",
    "family": "reptile",
@@ -734,8 +734,8 @@
     "crocodile"
    ],
    "size": [
-    384,
-    96
+    288,
+    72
    ]
   },
   "battle/units/dog-junkyard/idle.png": {
@@ -786,13 +786,13 @@
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    96,
-    96
+    72,
+    72
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 94,
+   "feet_baseline": 70,
    "facing": "right",
    "size_class": "L",
    "family": "plant",
@@ -800,8 +800,8 @@
     "ent"
    ],
    "size": [
-    384,
-    96
+    288,
+    72
    ]
   },
   "battle/units/faerie/idle.png": {
@@ -1011,13 +1011,13 @@
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    96,
-    96
+    72,
+    72
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 94,
+   "feet_baseline": 70,
    "facing": "right",
    "size_class": "L",
    "family": "ice",
@@ -1025,8 +1025,8 @@
     "ice guardian"
    ],
    "size": [
-    384,
-    96
+    288,
+    72
    ]
   },
   "battle/units/ice-warrior/idle.png": {
@@ -1077,13 +1077,13 @@
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    96,
-    96
+    72,
+    72
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 94,
+   "feet_baseline": 70,
    "facing": "right",
    "size_class": "L",
    "family": "undead",
@@ -1092,21 +1092,21 @@
    ],
    "note": "boss",
    "size": [
-    384,
-    96
+    288,
+    72
    ]
   },
   "battle/units/ogre-forest/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    96,
-    96
+    72,
+    72
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 94,
+   "feet_baseline": 70,
    "facing": "right",
    "size_class": "L",
    "family": "ogre",
@@ -1114,8 +1114,8 @@
     "forest ogre"
    ],
    "size": [
-    384,
-    96
+    288,
+    72
    ]
   },
   "battle/units/poacher-shieldman/idle.png": {
@@ -1456,13 +1456,13 @@
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    128,
-    128
+    96,
+    96
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 126,
+   "feet_baseline": 94,
    "facing": "right",
    "size_class": "XL",
    "family": "spider",
@@ -1471,8 +1471,8 @@
    ],
    "note": "boss",
    "size": [
-    512,
-    128
+    384,
+    96
    ]
   },
   "battle/units/spider-warrior/idle.png": {
@@ -1609,20 +1609,20 @@
    "kind": "battle-unit",
    "set": "S3",
    "frame": [
-    96,
-    96
+    72,
+    72
    ],
    "frames": 4,
    "frame_ms": 180,
    "anchor": "bottom-center",
-   "feet_baseline": 94,
+   "feet_baseline": 70,
    "facing": "right",
    "size_class": "L",
    "family": "fallback",
    "note": "fallback silhouette",
    "size": [
-    384,
-    96
+    288,
+    72
    ]
   },
   "battle/units/warrior/idle.png": {

@@ -20,6 +20,8 @@ type spriteMeta struct {
 	Frames int      `json:"frames"`
 	Rows   []string `json:"rows"`
 	Kind   string   `json:"kind"`
+	// SizeClass is a battle unit's S, M, L or XL.
+	SizeClass string `json:"size_class"`
 }
 
 type spriteManifest struct {
@@ -302,7 +304,7 @@ func TestSpriteSetsS2S3AreComplete(t *testing.T) {
 func TestBattleUnitSpritesFollowAnchorRules(t *testing.T) {
 	dir := spriteDir(t)
 	m := loadSpriteManifest(t, dir)
-	sizes := map[string]int{"S": 48, "M": 64, "L": 96, "XL": 128}
+	sizes := map[string]int{"S": 48, "M": 64, "L": 72, "XL": 96}
 	n := 0
 	for rel, meta := range m.Files {
 		if !strings.HasPrefix(rel, "battle/units/") || !strings.HasSuffix(rel, "/idle.png") {
@@ -315,12 +317,10 @@ func TestBattleUnitSpritesFollowAnchorRules(t *testing.T) {
 			t.Errorf("%s: want 4 frames of %d, got %dx%d", rel, fs, img.Bounds().Dx(), img.Bounds().Dy())
 			continue
 		}
-		valid := false
-		for _, s := range sizes {
-			valid = valid || s == fs
-		}
-		if !valid {
-			t.Errorf("%s: frame %d is not a size class", rel, fs)
+		// L and XL are drawn large and shrunk 3/4 so they cover two
+		// formation cells at 1x, not three (40s review).
+		if want, ok := sizes[meta.SizeClass]; !ok || want != fs {
+			t.Errorf("%s: size class %q wants frame %d, got %d", rel, meta.SizeClass, want, fs)
 		}
 		floating := strings.Contains(rel, "bats-echo")
 		differ := false

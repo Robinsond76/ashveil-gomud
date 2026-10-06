@@ -211,7 +211,7 @@ def mock_battle_scene(W=320, H=180):
     import backgrounds
     import roster
     bg = backgrounds.forest()
-    f = lambda uid: roster.BY_ID[uid].draw(0)
+    f = lambda uid: roster.BY_ID[uid].frames()[0]
     company = {(1, 3): f("warrior"), (2, 2): f("cleric"), (3, 1): f("wizard")}
     enemies = {(1, 2): f("ogre-forest"), (2, 1): f("goblin"), (2, 3): f("goblin")}
     return formation_scene(bg, company, enemies, W, H)

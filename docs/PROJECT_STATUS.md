@@ -1,5 +1,22 @@
 # Ashveil Project Status
 
+**Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
+battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
+`frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
+ids, and the `unknown-humanoid/-beast/-large` race fallbacks). Accepted and
+fixed: (1) L and XL units covered three formation cells at 1x and hid whole
+units behind them; they are now drawn at 96/128 and shrunk 3/4 to 72/96 with
+the outline re-closed (`roster.shrink`), so they stand about 1.5x a person and
+the test checks each size class's frame; (2) the `lit` status was a white star
+read as `cold`, now a warm brass lantern; `staggered` is a plum spiral (was a
+white one like `hidden`); `hobbled` gained a chain and iron ball so it reads
+apart from `hamstrung`; (3) the forest backdrop's light shafts were bright
+grey dither crossing the units, now sparse green. Rejected: redrawing large
+units natively at 72 (timeboxed; the shrink keeps their silhouettes). UI
+follow-ups for 40f/40g: when a large unit stands in front, the client should
+still mark units it hides (draw their status and health pips above it, or
+ghost it); the crocodile is 71 px long and fills its lane.
+
 **Phase 40s2 + 40s3 built: art sets S2 (terrain) and S3 (battle) (2026-10-06):**
 `make sprites` now also writes 179 files: S3 battle art (16 backgrounds
 320x180, 56 battle units with 4-frame idles, 7 formation markers, 47 status,

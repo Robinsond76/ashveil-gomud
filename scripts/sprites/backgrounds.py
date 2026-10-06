@@ -112,8 +112,9 @@ def forest():
         for y in range(0, HORIZON - 2):
             for dx in range(6):
                 xx = x0 + y // 3 + dx
-                if (xx + y) % 2 == 0 and noise(xx, y, k) > 0.3:
-                    cv.put(xx, y, "wool.d" if y % 4 else "moss.l")
+                # sparse and green, so the shafts stay quieter than the units
+                if (xx + y) % 2 == 0 and noise(xx, y, k) > 0.55:
+                    cv.put(xx, y, "moss.l")
     ground(cv, base="moss.m", dark="moss.d", light="moss.m", seed=3, density=0.07)
     # moss and leaf litter, only dark flecks
     for x in range(0, W, 7):

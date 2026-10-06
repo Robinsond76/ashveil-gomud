@@ -8,7 +8,10 @@ import humanoids
 from kit import BREATH, shift
 from pixels import Canvas, rect, line, thick, ellipse
 
-FRAME = {"S": 48, "M": 64, "L": 96, "XL": 128}
+FRAME = {"S": 48, "M": 64, "L": 72, "XL": 96}
+# Large and boss units are drawn on a bigger canvas and shrunk by 3/4, so they
+# stand about 1.5x a person and cover two formation cells, not three, at 1x.
+DRAW = {"L": 96, "XL": 128}
 
 CLASS_IDS = ["warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer"]
 
@@ -22,12 +25,26 @@ class Unit:
     def frames(self):
         """Four idle frames, shifted as one so the feet rest on row frame-2 (the anchor rule)."""
         out = [self.draw(t) for t in range(4)]
+        if self.size in DRAW:
+            out = [shrink(c, self.frame) for c in out]
         assert all(c.w == self.frame and c.h == self.frame for c in out), self.id
         if self.floating:
             return out
         low = max(max(y for y in range(c.h) if any(p is not None for p in c.g[y])) for c in out)
         d = self.frame - 2 - low
         return [shift(c, 0, d) for c in out] if d else out
+
+
+def shrink(cv, n):
+    """Nearest-neighbour shrink of a square canvas to n x n, then re-close the
+    outline wherever a dropped row or column opened it."""
+    out = Canvas(n, n)
+    s = cv.w / n
+    for y in range(n):
+        for x in range(n):
+            out.g[y][x] = cv.g[int((y + 0.5) * s)][int((x + 0.5) * s)]
+    out.outline()
+    return out
 
 
 def dummy_training(t, W=64):
