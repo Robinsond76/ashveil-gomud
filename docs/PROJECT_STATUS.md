@@ -1,5 +1,23 @@
 # Ashveil Project Status
 
+**Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
+takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
+school, reach 1 to the whole group by level, three new statuses (Asleep,
+Paralyzed, Blighted), a resist roll and a shared immunity so no foe is held
+past half a fight, a `controller` strategy role that hexes on its own, a
+recruitable Witch, `help witch`, `help hexes` and tutorial pointers. See the
+[plan](plans/2026-10-06-phase-38a-witch.md). Balance: the Witch matches the
+Wizard in the equal mirror and neither beats a warrior there (about half of
+casters' chants break); timeboxed, no retune.
+Independent review: accepted (fixed with tests) two stale company tests,
+the missing `.d.ts` entries for `CastHex` and `HexTargets`, one shared
+immunity for sleep, paralysis and knockdown (the half-of-a-fight rule held
+only per status), and Dread Whisper no longer cast at unbreakable foes;
+poison waking a sleeper was confirmed and now tested. Rejected: manual
+Miasma row limiting (a hand `cast` is a utility outside battle; the help now
+says so); "hex the largest group" (a battle has one group); design HP 1.75 a
+level (the shipped HP scale is 0.55, noted in the plan).
+
 **Neutral classes design approved (2026-10-05):** the owner asked for a
 glaive class and classes with no good or evil path, inspired by Ogre Battle
 and Unicorn Overlord. Added the [neutral classes design](designs/2026-10-05-neutral-classes-design.md):

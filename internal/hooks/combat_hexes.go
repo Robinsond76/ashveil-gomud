@@ -18,7 +18,7 @@ import (
 
 // hexEligible reports whether a foe is worth the hex: it doesn't carry its
 // status, isn't immune to it, isn't already the target of a hex of the same
-// kind being chanted, and (Blight) heals.
+// kind being chanted, (Blight) heals, and (Dread) can lose nerve.
 func hexEligible(h hexes.Hex, a actor, id int) bool {
 	m := mobs.GetInstance(id)
 	if m == nil || m.Character.Health < 1 {
@@ -33,6 +33,9 @@ func hexEligible(h hexes.Hex, a actor, id int) bool {
 	}
 	if hexes.Default.Immune(fmt.Sprintf(`m%d`, id), buff) {
 		return false
+	}
+	if h.Morale && enemyTemperament(m) == "unbreakable" {
+		return false // a dread that can't move it isn't worth the mana
 	}
 	if h.NeedsHealer && strategy.Role(m.EnemyRole()) != strategy.Healer {
 		return false

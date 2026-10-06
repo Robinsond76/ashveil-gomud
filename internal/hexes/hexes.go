@@ -153,7 +153,16 @@ type Ledger struct {
 // NewLedger is an empty ledger.
 func NewLedger() *Ledger { return &Ledger{until: map[string]int{}} }
 
-func key(holder string, buff int) string { return fmt.Sprintf("%s/%d", holder, buff) }
+// key names an immunity. The statuses that take a foe's actions share one
+// key, so a Slumber then a Binding Hex then an Earthbind can't chain a foe
+// past the half-of-the-fight bound.
+func key(holder string, buff int) string {
+	switch buff {
+	case buffAsleep, buffParalyzed, buffKnockedDown:
+		buff = buffAsleep
+	}
+	return fmt.Sprintf("%s/%d", holder, buff)
+}
 
 // Immune reports whether holder is immune to buff now.
 func (l *Ledger) Immune(holder string, buff int) bool {

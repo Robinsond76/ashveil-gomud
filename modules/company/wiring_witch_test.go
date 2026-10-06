@@ -332,7 +332,12 @@ func TestDreadWhisperMakesAFoeTakeAMoraleCheck(t *testing.T) {
 func TestDreadWhisperMovesNoUnbreakableFoe(t *testing.T) {
 	b := witchBrawl(t, 15)
 	b.witchHexes("dread")
+	for _, m := range b.livingBandits() {
+		m.NeverBreak = true
+	}
 	b.startWitchFight()
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, "hex", b.aria.Character.Aggro.SpellInfo.SpellId, "no mana spent on a foe that can't break: the weak curse")
 	var out string
 	for i := 0; i < 3; i++ {
 		b.toughen()
@@ -341,6 +346,30 @@ func TestDreadWhisperMovesNoUnbreakableFoe(t *testing.T) {
 	}
 	assert.NotContains(t, out, "loses nerve and flees.")
 	assert.Len(t, b.livingBandits(), 5)
+}
+
+// Review: poison, a script's AddHealth, wakes a sleeper like any damage.
+func TestScriptDamageWakesASleeper(t *testing.T) {
+	b := witchBrawl(t, 1)
+	b.startWitchFight()
+	foe := b.livingBandits()[0]
+	foe.Character.AddBuff(status.Asleep, false, 3)
+	require.True(t, status.Live(&foe.Character, status.Asleep))
+	scripting.GetMob(foe.InstanceId).AddHealth(-1)
+	assert.False(t, status.Live(&foe.Character, status.Asleep))
+}
+
+// Review: sleep, paralysis and knockdown share one immunity, so chaining
+// them can't hold a foe past the half-of-a-fight bound.
+func TestActionLosingHexesShareOneImmunity(t *testing.T) {
+	hexes.Default.Reset()
+	t.Cleanup(hexes.Default.Reset)
+	hexes.Default.Land("m1", status.Asleep, 2)
+	for _, buff := range []int{status.Asleep, status.Paralyzed, status.KnockedDown} {
+		assert.True(t, hexes.Default.Immune("m1", buff), "buff %d", buff)
+	}
+	assert.False(t, hexes.Default.Immune("m1", status.Blighted))
+	assert.False(t, hexes.Default.Immune("m2", status.Paralyzed))
 }
 
 func TestBlightIsNotCastWithoutAHealer(t *testing.T) {

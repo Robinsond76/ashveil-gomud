@@ -23,7 +23,8 @@ the hexcraft school, which only a Witch may learn.
   Curse of Frailty   12     10     2     exposed: blows against it crit far more
                                          often
   Dread Whisper      15     14     3     one morale check on the foe, which may yield
-                                         or flee (<ansi fg="command">help morale</ansi>); unbreakable foes hold
+                                         or flee (<ansi fg="command">help morale</ansi>); a Witch never
+                                         casts it at an unbreakable foe
   Blight             18     12     2     healing it receives is halved for 3 rounds;
                                          cast only at enemy healers
 
@@ -34,7 +35,8 @@ A Witch learns a hex when it reaches its level, and keeps it for good.
 A hex reaches 1 foe at level 1, <ansi fg="yellow">2</ansi> at level 8, <ansi fg="yellow">3</ansi> at level 16, <ansi fg="yellow">4</ansi> at level 24,
 and the whole enemy group from level 30. The first is the one it aims at;
 the rest come from the same row, then the nearest others. Miasma covers one
-row only, up to the same number.
+row only, up to the same number. In a battle the Witch chooses on her own;
+a hex cast by hand reaches the first foes in the room.
 
 <ansi fg="yellow-bold">Resisting</ansi>
 
@@ -47,9 +49,10 @@ line says <ansi fg="command">(resisted)</ansi>; a foe already under a hex isn't 
 
 <ansi fg="yellow-bold">No endless holds</ansi>
 
-After a hex lands, that foe can't be put under the same status again until it
-has been over for 2 combat rounds. Together with sleep's 2 rounds and
-paralysis's 1 or 2, no foe is held for more than half of a fight's rounds.
+After a hex lands, that foe can't be put to sleep, paralyzed or knocked down
+again (any of the three) until the status has been over for 2 combat rounds,
+and no other hex is cast twice at it in that time either. So no foe loses
+more than half of a fight's rounds to hexes.
 Sleep ends at the first damage; poison's damage does too.
 
 Statuses count combat rounds, never game rounds, and end when the fight ends.
