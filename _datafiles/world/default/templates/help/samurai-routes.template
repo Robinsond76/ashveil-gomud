@@ -11,7 +11,7 @@ your alignment, at level 10 or at level 30.
   20 Deep focus         Focus builds up to +20%
   25 Opening edge       Iaijutsu deals 75% more damage
 
-  <ansi fg="yellow-bold">Sword Saint</ansi> (30, still to come): Focus to +25% and an Iaijutsu that strikes twice.
+  <ansi fg="yellow-bold">Sword Saint</ansi> (30): Focus to +25% and, at 60, an Iaijutsu that strikes twice (<ansi fg="command">help sword-saint</ansi>).
 
 <ansi fg="yellow-bold">Hatamoto</ansi>
 
@@ -23,7 +23,7 @@ your alignment, at level 10 or at level 30.
   20 Loyal blade        Bodyguard: 3 times a battle
   25 Shield wall        allies in its row take 5% less damage
 
-  <ansi fg="yellow-bold">Shogun</ansi> (30, still to come): every ally in the company opens a battle sooner.
+  <ansi fg="yellow-bold">Shogun</ansi> (30): every ally in the company opens a battle sooner, and its row fights under a banner (<ansi fg="command">help shogun</ansi>).
 
 <ansi fg="yellow-bold">Ronin</ansi>
 
@@ -32,9 +32,8 @@ your alignment, at level 10 or at level 30.
   20 Deeper vengeance   +15% damage for each fallen ally
   25 Lone blade         +3 Evasion
 
-  <ansi fg="yellow-bold">Kenshi</ansi> (30, still to come): when it stands alone it cannot be knocked down.
+  <ansi fg="yellow-bold">Kenshi</ansi> (30): when it stands alone it cannot be knocked down (<ansi fg="command">help kenshi</ansi>).
 
-Elite classes are named but not open yet; until they are, a Samurai keeps its
-advanced class's ranks. Routes are final.
+At level 30 each route promotes again to its elite class (<ansi fg="command">help elite</ansi>). Routes are final.
 
 See also: <ansi fg="command">help samurai</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help guardian</ansi>.

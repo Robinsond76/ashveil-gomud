@@ -419,7 +419,16 @@ func init() {
 			rank(25, "Opening edge", "Iaijutsu deals 75% more damage", IaiDamage, 75),
 		}})
 	register(Class{ID: "sword-saint", Name: "Sword Saint", Lineage: "samurai", Tier: TierElite, Parent: "kensai", Gate: GateAny,
-		Role: "Focus to +25%, and Iaijutsu that strikes twice", Planned: true})
+		Role: "a patient Focus that builds higher, and an Iaijutsu that strikes twice",
+		Ranks: []Rank{
+			rank(30, "Still mind", "Focus builds +5% for each quiet round, up to +25%", Focus, 5, FocusMax, 25),
+			rank(35, "Perfect cut", "+4 Attack", Attack, 6),
+			rank(40, "Piercing sight", "Iaijutsu's critical chance is +20%", IaiCrit, 20),
+			rank(45, "Lingering Zanshin", "Zanshin gives three quarters of a turn", Zanshin, 75),
+			rank(50, "Deeper edge", "Iaijutsu deals 100% more damage", IaiDamage, 100),
+			rank(55, "Saint's eye", "+4% critical chance", Crit, 4),
+			rank(60, "Twin draw", "Iaijutsu carries the edge of its first two strikes of a battle", IaiExtra, 1),
+		}})
 	register(Class{ID: "hatamoto", Name: "Hatamoto", Lineage: "samurai", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a sworn bodyguard who stands in for the company leader",
 		Ranks: []Rank{
@@ -429,7 +438,16 @@ func init() {
 			rank(25, "Shield wall", "allies in its row take 5% less damage", AuraResolv, 5),
 		}})
 	register(Class{ID: "shogun", Name: "Shogun", Lineage: "samurai", Tier: TierElite, Parent: "hatamoto", Gate: GateAny,
-		Role: "a commander whose whole company starts a battle sooner", Planned: true})
+		Role: "a commander whose whole company starts a battle sooner, and a banner that sharpens its row",
+		Ranks: []Rank{
+			rank(30, "Commander's presence", "every ally's action meter starts a battle 15 points higher", ScoutMeter, 15),
+			rank(35, "Sworn guard", "Bodyguard: 4 times a battle", Bodyguard, 4),
+			rank(40, "Bannerline", "allies in its row take 8% less damage", AuraResolv, 8),
+			rank(45, "Lacquered armor", "+4 armor", Armor, 4),
+			rank(50, "Rallying standard", "allies in its row gain +6 Evasion", AuraEvade, 6),
+			rank(55, "Hardened command", "+10% maximum health and +3 Attack", HealthPct, 10, Attack, 3),
+			rank(60, "Banner of war", "allies in its row gain +5 Attack while it stands", AuraAttack, 5),
+		}})
 	register(Class{ID: "ronin", Name: "Ronin", Lineage: "samurai", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a masterless blade that grows fiercer as the company falls",
 		Ranks: []Rank{
@@ -439,7 +457,16 @@ func init() {
 			rank(25, "Lone blade", "+3 Evasion", Evasion, 3),
 		}})
 	register(Class{ID: "kenshi", Name: "Kenshi", Lineage: "samurai", Tier: TierElite, Parent: "ronin", Gate: GateAny,
-		Role: "vengeance that cannot be knocked down when it stands alone", Planned: true})
+		Role: "vengeance that cannot be knocked down when it stands alone, and a Zanshin that never stops",
+		Ranks: []Rank{
+			rank(30, "Last stand", "it cannot be knocked down while it is the last of its company standing", LastStand, 1),
+			rank(35, "Grim tally", "+20% damage for each fallen ally", Vengeance, 20),
+			rank(40, "Cold edge", "+4 Attack", Attack, 6),
+			rank(45, "Lone wolf", "+6 Evasion", Evasion, 9),
+			rank(50, "Deeper tally", "+25% damage for each fallen ally", Vengeance, 25),
+			rank(55, "Death's eye", "+5% critical chance", Crit, 5),
+			rank(60, "Endless stillness", "Zanshin works every time it fells a foe, not once a round", ZanshinFree, 1),
+		}})
 
 	// ----- Shaman (Phase 39c: a neutral lineage, no alignment gates) -----
 	register(Class{ID: "stormcaller", Name: "Stormcaller", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,
@@ -451,7 +478,16 @@ func init() {
 			rank(25, "Stormborn", "+20% spell damage", SpellPct, 20),
 		}})
 	register(Class{ID: "tempest-lord", Name: "Tempest Lord", Lineage: "shaman", Tier: TierElite, Parent: "stormcaller", Gate: GateAny,
-		Role: "Rain that lasts the whole battle, and lightning that chains through a row", Planned: true})
+		Role: "Rain that lasts the whole battle, and lightning that chains through a whole row",
+		Ranks: []Rank{
+			rank(30, "Endless rain", "its Rain lasts the whole battle", RainEndless, 1),
+			rank(35, "Rolling storm", "+20% spell damage", SpellPct, 40),
+			rank(40, "Storm thrift", "spells cost 15% less mana", SpellCost, 15),
+			rank(45, "Full fork", "the second foe takes all of Lightning's damage", Chain, 100),
+			rank(50, "Tempest", "+20% spell damage", SpellPct, 60),
+			rank(55, "Deep reserves", "+25% maximum mana", ManaPct, 25),
+			rank(60, "Storm wall", "Lightning also strikes every other foe in its target's row", ChainRow, 1, Chain, 100),
+		}})
 	register(Class{ID: "mistweaver", Name: "Mistweaver", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a fog that hides the company and weather that lingers",
 		Ranks: []Rank{
@@ -461,7 +497,16 @@ func init() {
 			rank(25, "Lingering weather", "its weather calls last two rounds longer", WeatherLong, 2),
 		}})
 	register(Class{ID: "veil-mother", Name: "Veil Mother", Lineage: "shaman", Tier: TierElite, Parent: "mistweaver", Gate: GateAny,
-		Role: "weather that lasts five rounds, and a fog that hides the back row", Planned: true})
+		Role: "weather that lasts seven rounds, and a fog that hides the back row",
+		Ranks: []Rank{
+			rank(30, "Long weather", "its weather calls last four rounds longer than a Shaman's (seven in all)", WeatherLong, 4),
+			rank(35, "Mother's veil", "Fog gives allies +10 Evasion", FogEvade, 10),
+			rank(40, "Deep reserves", "+25% maximum mana", ManaPct, 25),
+			rank(45, "Spell edge", "+25% spell damage", SpellPct, 25),
+			rank(50, "Heavy mist", "Fog gives allies +12 Evasion", FogEvade, 12),
+			rank(55, "Hearth's hide", "+4 armor and +20% spell damage", Armor, 4, SpellPct, 45),
+			rank(60, "Hidden ranks", "while its Fog lasts, foes cannot reach the company's back row with extended reach", FogHides, 1),
+		}})
 	register(Class{ID: "earthspeaker", Name: "Earthspeaker", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,
 		Role: "turns the earth's armor on an ally",
 		Ranks: []Rank{
@@ -471,5 +516,14 @@ func init() {
 			rank(25, "Deep roots", "Stoneskin gives +20 armor", Stoneskin, 20),
 		}})
 	register(Class{ID: "mountain-speaker", Name: "Mountain Speaker", Lineage: "shaman", Tier: TierElite, Parent: "earthspeaker", Gate: GateAny,
-		Role: "Stoneskin over a whole row, and a tremor that knocks foes down", Planned: true})
+		Role: "Stoneskin that grows heavier, a tremor that knocks foes down, and stone over a whole row",
+		Ranks: []Rank{
+			rank(30, "Tremor", "when its Stoneskin lands, the ground shakes under the foes' front row: each has a 25% chance to be knocked down (a boss 10%)", Tremor, 25),
+			rank(35, "Granite", "Stoneskin gives +25 armor", Stoneskin, 25),
+			rank(40, "Steady stance", "allies in its row take 8% less damage", AuraResolv, 8),
+			rank(45, "Deep tremor", "Tremor knocks a foe down 35% of the time (a boss 20%)", Tremor, 35),
+			rank(50, "Mountain's weight", "Stoneskin gives +30 armor", Stoneskin, 30),
+			rank(55, "Deep reserves", "+25% maximum mana", ManaPct, 25),
+			rank(60, "Stone cloak", "Stoneskin covers a whole row", StoneRow, 1),
+		}})
 }

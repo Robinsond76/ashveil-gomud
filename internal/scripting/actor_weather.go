@@ -42,7 +42,7 @@ func (a ScriptActor) Weather() string {
 // battle for 3 combat rounds, plus what its class adds (WeatherLong), and
 // replaces any other: the old weather's statuses come off the foes at once.
 // Fog and Chill Wind put their status on every foe standing in the battle.
-// It returns {landed, reason, rounds, replaced}: reason is "landed", "same"
+// It returns {landed, reason, rounds, replaced, endless}: reason is "landed", "same"
 // (that weather is already up) or "invalid" (no battle, or no such weather).
 func (a ScriptActor) CallWeather(kind string) map[string]any {
 	out := map[string]any{`landed`: false, `reason`: `invalid`, `rounds`: 0, `replaced`: ``}
@@ -60,6 +60,12 @@ func (a ScriptActor) CallWeather(kind string) map[string]any {
 		return out
 	}
 	rounds := stormcraft.Rounds + a.characterRecord.ClassEffects().Int(classes.WeatherLong)
+	// Phase 39i: a Tempest Lord's Rain lasts the whole battle.
+	endless := k == stormcraft.Rain && a.characterRecord.ClassEffects().Has(classes.RainEndless)
+	if endless {
+		rounds = stormcraft.EndlessRounds
+	}
+	out[`endless`] = endless
 	replaced, _ := battle.CallWeather(leader, k, stormcraft.Triggers(rounds))
 	out[`landed`], out[`reason`], out[`rounds`], out[`replaced`] = true, `landed`, rounds, string(replaced)
 	for id := range b.Enemies {

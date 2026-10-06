@@ -112,6 +112,9 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		defender.say(spec.EndYou, spec.EndOther, ` (woken by the blow)`)
 		emitCombat(combatstream.Event{Kind: combatstream.StatusExpired, RoomId: defender.roomId, Target: defender.ref, BuffId: spec.Id, Status: spec.Word})
 	}
+	if rt := attacker.char.RT; rt != nil && rt.Cut > 0 {
+		rt.Cut = 0 // Phase 39i: the cut strings weakened this one attack
+	}
 	samuraiBlow(attacker, defender, r)   // Phase 39b
 	arbalistBlow(defender, r)            // Phase 39h
 	beastBlow(attacker, defender, r)     // Phase 39e

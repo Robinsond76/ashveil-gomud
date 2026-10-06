@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">grand-puppeteer</ansi>
+
+The Grand Puppeteer is the neutral elite of the Puppeteer. Its dolls grow
+sturdier and harder-hitting, and at the top rank a third doll joins the other
+two.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Grand dolls     each doll has 65% of the health of a single doll
+  35 Finer strings   +2 Attack on each doll's blows
+  40 Heartwood       each doll has 75% of the health of a single doll
+  45 Deep lacquer    each doll carries 8% armor of its own
+  50 Ironwood        each doll has 85% of the health of a single doll
+  55 Master carving  +1 damage on each doll's blows
+  60 Third doll      you drive a third doll; each doll has 70% of the health
+                     of a single doll, and Puppet Strike drives all three
+
+It needs the Puppeteer first (<ansi fg="command">help dollmaster-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] grand-puppeteer confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Doll Master talents (levels 35, 45, 55): Iron Hide (+5 Armor), Heartwood
+(+15 health on every doll), Master Carver (+2 damage on every doll's blows).
+See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

@@ -119,7 +119,7 @@ func abilityPass() {
 		for _, a := range side {
 			// Phase 39a: a held brace lasts until its halberdier's next turn.
 			if a.char.RT != nil {
-				a.char.RT.Brace = false
+				a.char.RT.Brace, a.char.RT.BraceUsed = false, 0
 			}
 			if surprised(a.who.userId, a.who.mobId) {
 				continue
