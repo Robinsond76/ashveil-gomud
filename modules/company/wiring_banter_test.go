@@ -209,3 +209,15 @@ func TestCompanionKilledInTheFightDrawsFallLines(t *testing.T) {
 		}
 	}
 }
+
+// 38e review: a hound and a stone golem keep the company but never speak at
+// the fire.
+func TestCreaturesDoNotTalk(t *testing.T) {
+	creatureBrawl(t)
+	banterPercents(t, 0, 100, 0)
+	for range 20 {
+		for _, s := range module.CampBanter(7, banter.CtxCamp) {
+			assert.NotContains(t, []int{5, 6}, s.Member, "%s spoke", s.Name)
+		}
+	}
+}

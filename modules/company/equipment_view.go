@@ -251,6 +251,9 @@ func (m *CompanyModule) EquipmentViewForMember(id int, member, focus string) dom
 		return choice
 	}
 	for _, slot := range characters.AllSlots() {
+		if itm := actor.Equipment.Get(slot); itm != nil && itm.IsDisabled() {
+			continue // 38e review: a slot its body can't use (a hound's weapon hand) isn't offered
+		}
 		entry := domain.EquipmentSlot{Slot: string(slot), Label: strings.TrimSuffix(characters.SlotLabel(slot), ":"), Choices: []domain.EquipmentChoice{}}
 		entry.Pending = focus != "" && focus != string(slot)
 		if itm := actor.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {

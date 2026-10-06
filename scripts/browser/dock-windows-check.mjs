@@ -299,6 +299,25 @@ check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brothe
 check(JSON.stringify(await dropData('x', '#company-inventory section[aria-label="Cargo"]', { from: 'worn', member: '#1', slot: 'weapon', ref: '!5:club' })) === '["company remove #1 weapon"]', 'dropping worn gear on the cargo takes it off');
 check(await page.locator('#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot[draggable=true]').count() === 1 && await page.locator('#company-inventory section[aria-label="Cargo"] .cmp-item[draggable=true]').count() > 0, 'worn gear and cargo items are draggable');
 if (outdir) { await page.locator('#company-inventory').screenshot({ path: path.join(outdir, 'companion-gear-company-panel.png') }); }
+// 38e review: a creature shows only the slots its body has, and only gear cut
+// for its species is offered to it (and to no one else).
+{
+  const withHound = JSON.parse(JSON.stringify(sharedInventory));
+  withHound.members.push({ key: 'companion:5', name: 'Brindle', available: true, grams: 0, worn: [], carried: [], closed: ['weapon', 'offhand'], species: 'hound' });
+  withHound.cargo.push({ ref: '!20500:harness', name: 'hound harness', grams: 900, count: 1, type: 'body', subtype: 'wearable', worn_by: ['hound'] });
+  await page.evaluate(i => window.gmcp('Company.Inventory', i), withHound);
+  const houndBox = page.locator('#company-inventory [aria-label="Brindle equipment"]');
+  const houndText = await houndBox.textContent();
+  check(!houndText.includes('Weapon') && !houndText.includes('Offhand') && houndText.includes('Body'), 'a hound lists only the slots its body has');
+  await houndBox.locator('button', { hasText: 'Body' }).click();
+  const houndMenu = await page.locator('body').textContent();
+  check(houndMenu.includes('Equip hound harness') && !houndMenu.includes('Equip quilted coat'), 'a hound is offered only gear cut for it');
+  await page.keyboard.press('Escape');
+  await equipBox.locator('button', { hasText: 'Body' }).click();
+  check(!(await page.locator('body').textContent()).includes('Equip hound harness'), 'a person is not offered gear cut for a creature');
+  await page.keyboard.press('Escape');
+  check((await dropData('x', '#company-inventory [aria-label="Brindle equipment"]', { from: 'cargo', ref: '!9:coat', type: 'body', worn_by: [] })).length === 0, 'dropping ordinary gear on a hound does nothing');
+}
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
 
 // Phase 34a: inherited black text is visible even under a dark theme.

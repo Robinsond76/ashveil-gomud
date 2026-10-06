@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	deathdomain "github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -410,5 +411,28 @@ func TestDeathInTheAreaWakesInTheHub(t *testing.T) {
 
 	tr.run("testarea", "return")
 	assert.Equal(t, 5, u.Character.Level)
+	tr.assertAsBefore(b)
+}
+
+// 38e review: the area recruits a hound and a stone golem, keeps each
+// species (a creature's body is its template), refuses to turn the admin
+// into one, hands out stone mortar, and the return undoes the recruits.
+func TestCreaturesInTheArea(t *testing.T) {
+	tr := newTrip(t)
+	tr.withCompany()
+	b := tr.before()
+	tr.run("testarea", "")
+
+	assert.Contains(t, tr.run("testarea", "companion add hound 12"), "Recruited")
+	assert.Contains(t, tr.run("testarea", "companion add stone-golem"), "Recruited")
+	assert.Contains(t, tr.run("testarea", "companion class brindle warrior"), "can't trade places")
+	assert.Contains(t, tr.run("testarea", "companion class dummy hound"), "can't trade places")
+	assert.Contains(t, tr.run("testarea", "companion level cairn 20"), "level 20")
+	assert.Contains(t, tr.run("testarea", "class hound"), "creature species")
+	ids, ok := kitItems("supplies")
+	require.True(t, ok)
+	assert.Contains(t, ids, creatures.RepairItemID, "stone mortar is in the supplies kit")
+
+	tr.run("testarea", "return")
 	tr.assertAsBefore(b)
 }

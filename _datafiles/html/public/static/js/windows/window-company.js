@@ -883,6 +883,13 @@
         return type === slot || (slot === 'offhand' && type === 'weapon');
     }
 
+    // fitsMember: a creature (Phase 38e) wears only gear cut for its
+    // species, and nobody else wears that gear.
+    function fitsMember(i, m) {
+        const cut = Array.isArray(i.worn_by) ? i.worn_by : [];
+        return m.species ? cut.indexOf(m.species) >= 0 : cut.length === 0;
+    }
+
     function equipCommand(sel, i, slot) {
         // A slot can be named only with an exact (instance) reference.
         return 'company equip ' + sel + ' ' + i.ref + (i.ref && i.ref.charAt(0) === '!' && i.ref.indexOf(':') > 0 ? ' ' + slot : '');
@@ -951,9 +958,10 @@
             }
             if (!ready) { box.appendChild(el('div', 'cmp-note', 'Away from you: gear can change when they rejoin.')); }
             const ul = el('ul', 'cmp-items');
-            slots.forEach(slot => {
+            const closed = Array.isArray(m.closed) ? m.closed : [];
+            slots.filter(slot => closed.indexOf(slot.slot) < 0).forEach(slot => {
                 const worn = (m.worn || []).find(w => w.slot === slot.slot);
-                const picks = ready ? (inv.cargo || []).filter(i => fitsSlot(i, slot.slot)) : [];
+                const picks = ready ? (inv.cargo || []).filter(i => fitsSlot(i, slot.slot) && fitsMember(i, m)) : [];
                 const menu = () => {
                     const out = [];
                     if (worn) {
@@ -979,13 +987,13 @@
                 if (worn) { row.title = itemTip(worn); }
                 if (ready && worn && worn.slot !== 'pack') { draggable(row, { from: 'worn', member: sel, slot: slot.slot, ref: worn.ref }); }
                 if (ready) {
-                    dropTarget(row, d => d.from === 'cargo' && fitsSlot(d, slot.slot), d => send(equipCommand(sel, d, slot.slot)));
+                    dropTarget(row, d => d.from === 'cargo' && fitsSlot(d, slot.slot) && fitsMember(d, m), d => send(equipCommand(sel, d, slot.slot)));
                 }
                 li.appendChild(row);
                 ul.appendChild(li);
             });
             box.appendChild(ul);
-            if (ready) { dropTarget(box, d => d.from === 'cargo' && (d.type || '') !== '', d => send('company equip ' + sel + ' ' + d.ref)); }
+            if (ready) { dropTarget(box, d => d.from === 'cargo' && (d.type || '') !== '' && fitsMember(d, m), d => send('company equip ' + sel + ' ' + d.ref)); }
             section.appendChild(box);
         });
         return section;
@@ -1107,7 +1115,7 @@
         cargo.appendChild(ch);
         cargo.appendChild(inv.cargo && inv.cargo.length
             ? itemList(inv.cargo, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }],
-                inv.shared ? (i => ({ from: 'cargo', ref: i.ref, type: (i.type || '').toLowerCase() })) : null)
+                inv.shared ? (i => ({ from: 'cargo', ref: i.ref, type: (i.type || '').toLowerCase(), worn_by: i.worn_by || [] })) : null)
             : el('div', 'cmp-note', 'empty'));
         if (inv.shared) {
             // Dropping worn gear on the cargo takes it off, back to cargo.

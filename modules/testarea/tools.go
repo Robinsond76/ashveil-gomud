@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -341,6 +342,9 @@ func kitItems(kind string) ([]int, bool) {
 				consider(string(s.Type)+"|"+fam, s)
 			}
 		case "supplies", "consumables":
+			if s.ItemId == creatures.RepairItemID { // Phase 38e review: mortar repairs a stone golem
+				direct = append(direct, s.ItemId)
+			}
 			switch s.Type {
 			case items.Potion, items.Food, items.Drink, items.Scroll, items.Grenade:
 				consider(string(s.Type)+"|"+s.Name, s)

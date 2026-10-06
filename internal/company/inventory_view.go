@@ -35,6 +35,8 @@ type InventoryItem struct {
 	UsesMax int // the spec's uses; 0 or 1 for an item without uses
 	Type    string
 	Subtype string
+	// WornBy names the creature species the item is cut for (Phase 38e).
+	WornBy []string
 	// Slot is the worn slot, "" for a carried item.
 	Slot string
 }
@@ -51,6 +53,13 @@ type InventoryMember struct {
 	Pack           string // the pack that counts, "" for none
 	PackBonusGrams int
 	Worn, Carried  []InventoryItem
+	// Closed lists the slots its body can't use (a race's disabled slots,
+	// such as a hound's weapon hand; 38e review), so the web client shows
+	// only the slots that can take gear.
+	Closed []string
+	// Species is a creature's species (its archetype id, Phase 38e), "" for
+	// a person: a creature wears only gear cut for it (an item's WornBy).
+	Species string
 }
 
 // ItemLabel is an item's name as players see it, with its edge.
@@ -65,6 +74,7 @@ func inventoryItem(itm items.Item, slot string) InventoryItem {
 	out := InventoryItem{Ref: itm.ShorthandId(), Name: itm.Name(), Label: PlainLabel(itm), Grams: itm.Weight(), Count: 1, Uses: itm.Uses, Slot: slot}
 	if spec := items.GetItemSpec(itm.ItemId); spec != nil {
 		out.UsesMax, out.Type, out.Subtype = spec.Uses, string(spec.Type), string(spec.Subtype)
+		out.WornBy = spec.WornBy
 	}
 	return out
 }
@@ -73,7 +83,11 @@ func inventoryItem(itm items.Item, slot string) InventoryItem {
 func InventoryMemberOf(key MemberKey, name string, s MemberState) InventoryMember {
 	m := InventoryMember{Key: key, Name: name, Worn: []InventoryItem{}, Carried: []InventoryItem{}}
 	for _, slot := range characters.AllSlots() {
-		if itm := s.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {
+		itm := s.Equipment.Get(slot)
+		if itm != nil && itm.ItemId == items.ItemDisabledSlot.ItemId {
+			m.Closed = append(m.Closed, string(slot))
+		}
+		if itm != nil && itm.ItemId > 0 {
 			m.Worn = append(m.Worn, inventoryItem(*itm, string(slot)))
 			m.Grams += itm.Weight()
 		}

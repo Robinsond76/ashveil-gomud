@@ -146,10 +146,43 @@ func TestHoundAndGolemBothFightUnderTheirOwnRules(t *testing.T) {
 	b.cmd("attack", "bandit captain")
 	b.hardenBandits()
 	hound, golem := b.companion(5), b.companion(6)
-	assert.Equal(t, 30, hound.Character.ClassEffects().Int(classes.Pounce), "the hound's rank is live in the real mob")
+	assert.Equal(t, 20, hound.Character.ClassEffects().Int(classes.Pounce), "the hound's rank is live in the real mob")
 	assert.Equal(t, 15, golem.Character.ClassEffects().Int(classes.Slow), "the golem's rank is live in the real mob")
 	assert.Equal(t, 25, golem.Character.ClassEffects().Int(classes.SpellWeak))
 	for range 4 {
 		b.fight()
 	}
+}
+
+// 38e review: the web client's gear views offer a creature only the slots
+// its body has and only gear cut for it, so a tap or a drag can't propose a
+// sword for a hound.
+func TestCreatureGearViewsOfferOnlyItsSlotsAndGear(t *testing.T) {
+	b := creatureBrawl(t)
+	harness := items.New(20500)
+	b.aria.Character.Items = []items.Item{items.New(20003), harness}
+	members, ok := module.CompanyInventory(7)
+	require.True(t, ok)
+	byKey := map[string]int{}
+	for i, m := range members {
+		byKey[string(m.Key)] = i
+	}
+	hound := members[byKey["companion:5"]]
+	assert.Equal(t, creatures.Hound, hound.Species)
+	assert.Contains(t, hound.Closed, string(items.Weapon), "a hound has no weapon hand")
+	assert.NotContains(t, hound.Closed, string(items.Neck))
+	golem := members[byKey["companion:6"]]
+	assert.Equal(t, creatures.StoneGolem, golem.Species)
+	assert.Contains(t, golem.Closed, string(items.Neck))
+	person := members[byKey["companion:1"]]
+	assert.Empty(t, person.Species)
+	assert.Empty(t, person.Closed)
+
+	view := module.EquipmentViewForMember(7, "#5", "")
+	var slots []string
+	for _, s := range view.Slots {
+		slots = append(slots, s.Slot)
+	}
+	assert.NotContains(t, slots, string(items.Weapon))
+	assert.Contains(t, slots, string(items.Body))
 }

@@ -31,6 +31,8 @@ type inventoryItem struct {
 	Type    string `json:"type"`
 	Subtype string `json:"subtype"`
 	Slot    string `json:"slot,omitempty"`
+	// WornBy (Phase 38e): the creature species the item is cut for.
+	WornBy []string `json:"worn_by,omitempty"`
 }
 
 type inventoryMember struct {
@@ -44,6 +46,10 @@ type inventoryMember struct {
 	PackBonusG int             `json:"pack_bonus_g"`
 	Worn       []inventoryItem `json:"worn"`
 	Carried    []inventoryItem `json:"carried"`
+	// Closed and Species (38e review): slots its body can't use, and a
+	// creature's species (it wears only gear whose worn_by names it).
+	Closed  []string `json:"closed,omitempty"`
+	Species string   `json:"species,omitempty"`
 }
 
 type inventoryHorse struct {
@@ -117,7 +123,7 @@ func nativeInventorySources() inventorySources {
 
 func inventoryItemOf(i company.InventoryItem) inventoryItem {
 	return inventoryItem{Ref: i.Ref, Name: i.Name, Label: i.Label, Grams: i.Grams, Count: i.Count, Uses: i.Uses, UsesMax: i.UsesMax,
-		Type: i.Type, Subtype: i.Subtype, Slot: i.Slot}
+		Type: i.Type, Subtype: i.Subtype, Slot: i.Slot, WornBy: i.WornBy}
 }
 
 func inventoryItems(in []company.InventoryItem) []inventoryItem {
@@ -130,7 +136,7 @@ func inventoryItems(in []company.InventoryItem) []inventoryItem {
 
 func inventoryMemberOf(m company.InventoryMember) inventoryMember {
 	return inventoryMember{Available: m.Available, Key: string(m.Key), Name: m.Name, Fallen: m.Fallen, Unrecorded: m.Unrecorded, Grams: m.Grams,
-		Pack: m.Pack, PackBonusG: m.PackBonusGrams, Worn: inventoryItems(m.Worn), Carried: inventoryItems(m.Carried)}
+		Pack: m.Pack, PackBonusG: m.PackBonusGrams, Worn: inventoryItems(m.Worn), Carried: inventoryItems(m.Carried), Closed: m.Closed, Species: m.Species}
 }
 
 // cargoItem is a cargo stack. Its reference is "!<item id>", which
@@ -140,6 +146,7 @@ func cargoItem(s encumbrance.CargoStack) inventoryItem {
 	out := inventoryItem{Ref: "!" + strconv.Itoa(s.ItemId), Name: itm.Name(), Label: company.PlainLabel(itm), Count: s.Count, Uses: s.Uses}
 	if spec := items.GetItemSpec(s.ItemId); spec != nil {
 		out.Grams, out.UsesMax, out.Type, out.Subtype = spec.Weight, spec.Uses, string(spec.Type), string(spec.Subtype)
+		out.WornBy = spec.WornBy
 		if out.Uses == 0 {
 			out.Uses = spec.Uses // a full stack
 		}

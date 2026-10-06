@@ -24,7 +24,7 @@ func TestHoundPouncesOnAFoeThatIsDownExposedOrHobbled(t *testing.T) {
 	for _, id := range []int{status.Exposed, status.KnockedDown, status.Hobbled} {
 		down := classed("", 1)
 		down.AddBuff(id, true)
-		assert.Equal(t, 13, classBlowDamage(hound, down, 10), "+30%% against status %d", id)
+		assert.Equal(t, 12, classBlowDamage(hound, down, 10), "+20%% against status %d", id)
 	}
 }
 
@@ -32,7 +32,7 @@ func TestHoundSavagePursuitGrowsThePounce(t *testing.T) {
 	defenseSpecs(t)
 	foe := classed("", 20)
 	foe.AddBuff(status.Hobbled, true)
-	assert.Equal(t, 15, classBlowDamage(creature("hound", 20), foe, 10), "+50% from rank 20")
+	assert.Equal(t, 14, classBlowDamage(creature("hound", 20), foe, 10), "+35% from rank 20")
 }
 
 func TestStoneGolemIsSlowerThanTheSlowestPerson(t *testing.T) {

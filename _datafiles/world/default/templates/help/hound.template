@@ -6,8 +6,8 @@ so it is kept like any companion (<ansi fg="command">help creatures</ansi>).
 
 <ansi fg="yellow-bold">What the Hound is</ansi>
 
-  Health      3 to start, 0.6 a level (<ansi fg="command">help health</ansi>)
-  Skill       Attack 0.75 and Evasion 1.0 a level (<ansi fg="command">help evasion</ansi>)
+  Health      0 to start, 0.6 a level (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.68 and Evasion 1.0 a level (<ansi fg="command">help evasion</ansi>)
   Gear        a collar and a harness only (<ansi fg="command">help armor</ansi>)
   Attack      two bites a turn, 1d4 each
   Stats       speed 3, strength 3, perception 2, vitality 2 (<ansi fg="command">help growth</ansi>)
@@ -18,12 +18,12 @@ so it is kept like any companion (<ansi fg="command">help creatures</ansi>).
 
 <ansi fg="yellow-bold">Ranks of the Hound</ansi>
 
-  Level 1   <ansi fg="yellow">Run down</ansi>        its bites deal +30% damage to a foe that is exposed,
+  Level 1   <ansi fg="yellow">Run down</ansi>        its bites deal +20% damage to a foe that is exposed,
                             knocked down or hobbled (<ansi fg="command">help statuses</ansi>)
-  Level 5   <ansi fg="yellow">Worry</ansi>           its bites deal +25% damage to a foe at or below half
+  Level 5   <ansi fg="yellow">Worry</ansi>           its bites deal +15% damage to a foe at or below half
                             health
-  Level 10  <ansi fg="yellow">Fleet</ansi>           +3 Evasion
-  Level 20  <ansi fg="yellow">Savage pursuit</ansi>  the Run down bonus grows to +50% in all
+  Level 10  <ansi fg="yellow">Fleet</ansi>           +2 Evasion
+  Level 20  <ansi fg="yellow">Savage pursuit</ansi>  the Run down bonus grows to +35% in all
 
 A Hound has ranks but no promotion and no talents. Its default target rule
 is <ansi fg="command">wounded</ansi>: it goes for the foe that is already hurt. Put it in the front
