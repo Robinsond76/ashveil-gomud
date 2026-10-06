@@ -25,6 +25,8 @@ A cooked meal (seared game meat, thyme-roasted game, hunter's stew,
 grilled fish) also gives the eater a buff for its next few battles; the
 message names it. See ~help cooking~.
 
+Raw game meat fills a little but always gives a gut-ache (~help ailments~).
+
 To feed your whole company at once, from the cargo and everyone's packs, type ~company eat~ or ~company meal~ (see ~help company meal~).
 
 Find out more about referring to items by name by typing ~help item-names~.

@@ -45,11 +45,16 @@ Built under Robinson's full-autonomy rule; each decision has its reason.
 - **No world distribution of recipe pages yet.** The world is temporary
   (Robinson, 2026-10-06), so the pages exist as shipped items and tests, and
   the replacement world places them (trainers, loot).
-- **Remedies (phase 55, PR #111) are not on this book yet.** That PR was still
-  in review; remedies are made with `camp prepare remedy` from fixed herb lists.
-  The book keys on item ids, so a remedy needs only an id of its own to join
-  it. Recorded as phase 56b in the roadmap rather than building a second
-  system or editing unmerged code.
+- **Remedies (phase 55) share the book.** Phase 55 merged while this was
+  built, so remedies are discovered the same way rather than by a second system:
+  the book holds `r:<ailment>` entries beside dish ids. Thyme tea (chill) is
+  common knowledge (`Common` on its ailment spec); gut-ache and fever are
+  learned with `camp prepare remedy with [herb]...`, which tries exactly that
+  mix on the ailing company. The right mix for someone who is ill cures them
+  and teaches the remedy; any other mix, or the right one when nobody needs it,
+  spends its herbs (a guess always costs, so the mixes cannot be probed for
+  free). A plain `camp prepare remedy` makes only known remedies and names the
+  ones it skipped; `camp supplies`, `recipes` and the Camp tab list known ones.
 
 ## Help
 

@@ -236,6 +236,7 @@ type ItemSpec struct {
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
 	Recipe          int               `yaml:"recipe,omitempty"`      // Phase 56: a recipe page teaches this dish (an item ID) when used; never resold
 	Meal            string            `yaml:"meal,omitempty"`        // Phase 50: a cooked meal's buff kind (survival.MealKinds), given when eaten
+	Ailment         string            `yaml:"ailment,omitempty"`     // Phase 55: an ailment kind (survival.AilmentKinds) eating this gives (raw game meat's Gut-ache)
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
 	Sling           bool              `yaml:"sling,omitempty"`       // cold delays this weapon, never inferred from its name

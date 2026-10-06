@@ -910,6 +910,7 @@
 
         const focusedSkill = panel.contains(document.activeElement) ? document.activeElement.dataset.skill : null;
         const sorted = [...skillList].sort((a, b) => skillTitle(a).localeCompare(skillTitle(b)));
+        keepScroll(panel);
         panel.innerHTML = '';
 
         sorted.forEach(function(skill) {
@@ -966,6 +967,7 @@
     function updateCapabilities() {
         const panel = document.getElementById('cw-capabilities');
         if (!panel) { return; }
+        keepScroll(panel);
         panel.textContent = '';
         const caps = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Capabilities;
         if (!caps) { node('div', 'csk-none', 'Current capabilities unavailable', panel); return; }
@@ -993,6 +995,7 @@
     function updateCompanySkills() {
         const panel = document.getElementById('cw-company-skills');
         if (!panel) { return; }
+        keepScroll(panel);
         panel.textContent = '';
         const company = Client.GMCPStructs.Company;
         const members = (company && Array.isArray(company.members)) ? company.members : [];
@@ -1019,6 +1022,8 @@
         panel.querySelectorAll('.cq-item.expanded').forEach(el => {
             expanded.add(el.dataset.questName);
         });
+
+        keepScroll(panel);
 
         panel.innerHTML = '';
 
@@ -1070,6 +1075,7 @@
         if (!panel) { return; }
         const all = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Conditions;
         const state = all && all.leader;
+        keepScroll(panel);
         panel.textContent = '';
         if (state) {
             [['effects', 'Active effects', 'effect'], ['wounds', 'Wounds', 'wound'], ['bonuses', 'Persistent bonuses', 'bonus']].forEach(group => {

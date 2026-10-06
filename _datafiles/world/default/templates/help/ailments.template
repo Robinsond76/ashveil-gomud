@@ -1,0 +1,74 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">ailments</ansi>
+
+Three sicknesses can lay a member of your company low. Each has one cause
+you can see coming, one clear penalty in battle, and a remedy you make at
+camp from herbs you gathered. They are never random and never come from a
+place: they come from what your company chose to do.
+
+  <ansi fg="yellow">Ailment</ansi>    <ansi fg="yellow">Caught by</ansi>                          <ansi fg="yellow">In battle</ansi>         <ansi fg="yellow">Lasts</ansi>
+  Chill       walking or ending a journey out     -10% damage dealt  4 battles
+              of doors, or ending a camp rest,
+              while Frozen
+  Gut-ache    eating raw game meat                +10% damage taken  3 battles
+  Fever       a lasting puncture wound left       -15% damage dealt  5 battles
+              open through 3 battles
+
+<ansi fg="yellow-bold">Where they come from</ansi>
+
+  Chill      Frozen means frostbitten or worse (<ansi fg="command">help temperature</ansi>): a member whose
+             warmth reads frostbitten, hypothermic or freezing to death. A
+             comfortable or merely chilled member is fine, and a step or a
+             journey's end under a roof, or a night at an inn, never gives one. Warm
+             clothes, a fire and a warming draught keep it away.
+  Gut-ache   <ansi fg="command">eat raw game meat</ansi> (or <ansi fg="command">eat raw game meat [member]</ansi>) fills 10 Hunger and
+             always gives it. <ansi fg="command">company eat</ansi> never serves raw meat: cook it first
+             (<ansi fg="command">help cooking</ansi>).
+  Fever      each battle a member fights with a lasting puncture wound still
+             open counts one (<ansi fg="command">help wounds</ansi>); on the third the wound festers.
+             Treating the wound (a bandage, a surgeon's kit, tending, an inn or
+             a physician) starts its count over, even if it stays partly
+             open. A member with a fever is not counted again.
+
+<ansi fg="yellow-bold">What they do</ansi>
+
+An ailment sets the battle condition like hunger does (<ansi fg="command">help survival</ansi>): it is
+fixed when the battle begins, adds to any hunger or thirst penalty, and
+counts one battle off for each battle the member fights. When the battles
+run out it fades by itself. A well-kept company with no ailments fights as
+it always has.
+
+<ansi fg="yellow-bold">Remedies</ansi>
+
+  <ansi fg="command">camp prepare remedy</ansi> [member|all]
+  At your camp, makes the remedy for each ailing member from the herbs the
+  company carries, and ends the ailment at once. It asks for all the herbs
+  first and uses none if any are short.
+
+  <ansi fg="yellow">Ailment</ansi>    <ansi fg="yellow">Remedy</ansi>                     <ansi fg="yellow">Herbs</ansi>
+  Chill       thyme tea                  2 wild thyme
+  Gut-ache    thyme and mushroom tisane  1 wild thyme, 1 mushroom
+  Fever       cooling fever draught      1 glacial mint, 1 wild thyme
+
+Thyme tea is common knowledge. You make the other two only once you have
+worked them out: <ansi fg="command">camp prepare remedy with</ansi> [herb] [herb] tries exactly that mix of
+herbs on your ailing company. The right mix for someone who is ill cures them
+and goes into your recipe book (<ansi fg="command">help recipes</ansi>), so you never name it again. Any
+other mix, or the right one when nobody needs it, only uses up its herbs. A
+plain <ansi fg="command">camp prepare remedy</ansi> makes only the remedies you know.
+
+Wild thyme and mushrooms grow in most places, and glacial mint most often on
+the Frost Lake, and now and then as a rare find elsewhere (<ansi fg="command">help gathering</ansi>).
+A remedy is used up as it is made: you cannot carry one, and nobody buys one. <ansi fg="command">camp supplies</ansi> lists the herbs each remedy you know takes and
+how many you carry. The rules are those of <ansi fg="command">help camp supplies</ansi>: an established
+camp in the room, no rest running and no fight.
+
+<ansi fg="yellow-bold">Where you see them</ansi>
+
+The fight opens with a "Going in:" line naming each member's ailments;
+<ansi fg="command">status</ansi>, <ansi fg="command">conditions</ansi> and <ansi fg="command">survival</ansi> list them with the battles left; and
+in the web client the vitals strip warns of each ailing member, Company >
+Status shows the "In battle" line, the Camp tab lists who is ailing while
+you are at your camp, with a Make remedies button, and the battle screen marks the member.
+
+See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help wounds</ansi>, <ansi fg="command">help temperature</ansi>, <ansi fg="command">help cooking</ansi>,
+<ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help conditions</ansi>.

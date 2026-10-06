@@ -882,6 +882,8 @@
         const focusedFid = (inside && focused.getAttribute('data-fid')) || null;
         const setupOpen = !!root.querySelector('details.cbt-setup[open]');
 
+        keepScroll(root);
+
         root.textContent = '';
         if (battle) {
             renderBattle(root, battle, data);

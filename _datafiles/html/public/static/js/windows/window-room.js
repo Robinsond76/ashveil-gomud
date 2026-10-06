@@ -443,6 +443,7 @@
         const count = document.getElementById('rws-count-' + id);
         if (!body || !count) { return; }
 
+        keepScroll(body);
         body.innerHTML = '';
         count.textContent = rows.length;
         count.classList.toggle('zero', rows.length === 0);

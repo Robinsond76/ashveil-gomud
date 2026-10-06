@@ -387,6 +387,11 @@
         panel.setAttribute('role', 'menu');
         panel.setAttribute('aria-label', 'Quick commands');
         document.body.appendChild(panel);
+        // Take the focus off the command box while the menu is up: Firefox
+        // opens its saved-logins dropdown ("Manage passwords") on the arrow
+        // keys in a focused text box, and the menu needs those keys.
+        var box = document.getElementById('command-input');
+        if (box && document.activeElement === box) { box.blur(); }
         stack = [];
         push('Quick commands', build(state()));
     }

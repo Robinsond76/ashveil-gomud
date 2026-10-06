@@ -83,6 +83,11 @@ func larderEntry(spec items.ItemSpec) (larderItem, bool) {
 	if !edible && !drinkable {
 		return larderItem{}, false
 	}
+	// Phase 55: food that makes the eater ill (raw game meat) is a choice
+	// made by hand, never the company's meal.
+	if spec.Ailment != "" {
+		return larderItem{}, false
+	}
 	for _, id := range spec.BuffIds {
 		if !mealBuffs[id] {
 			return larderItem{}, false

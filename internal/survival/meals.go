@@ -103,7 +103,14 @@ type Condition struct {
 	HungerCut int // percent off its damage from hunger
 	ThirstCut int // percent more damage it takes from thirst
 	Meal      MealSpec
-	Words     []string // what is wrong, as labels: "Hungry", "Parched", "Exhausted"
+	Ailments  []ActiveAilment // Phase 55: ailments the member has
+	Words     []string        // what is wrong, as labels: "Hungry", "Parched", "Exhausted"
+}
+
+// ActiveAilment is an ailment a member has, with the battles it has left.
+type ActiveAilment struct {
+	AilmentSpec
+	Battles int
 }
 
 // Neutral reports whether the condition changes nothing in battle.
@@ -131,6 +138,9 @@ func (c Condition) Summary(battles int) string {
 	}
 	if c.Meal.Kind != "" {
 		parts = append(parts, fmt.Sprintf("%s: %s (%s)", c.Meal.Name, c.Meal.Effect(), BattlesLeft(battles)))
+	}
+	for _, a := range c.Ailments {
+		parts = append(parts, fmt.Sprintf("%s: %s (%s)", a.Name, a.Effect(), BattlesLeft(a.Battles)))
 	}
 	return strings.Join(parts, "; ")
 }
@@ -165,6 +175,11 @@ func ConditionFor(n Needs) Condition {
 		c.GuardPct += m.GuardPct
 		c.ManaPct += m.ManaPct
 	}
+	for _, a := range ActiveAilments(n) {
+		c.Ailments = append(c.Ailments, ActiveAilment{AilmentSpec: a, Battles: battlesOf(n, a.Kind)})
+		c.DamagePct -= a.DamagePct
+		c.GuardPct -= a.GuardPct
+	}
 	return c
 }
 
@@ -183,19 +198,22 @@ func (r *Registry) SetMeal(leaderUserID int, key MemberKey, kind string) error {
 	return r.PutNeeds(leaderUserID, key, needs)
 }
 
-// SpendMealBattle counts one battle off each named member's meal buff, and
-// reports whether anything changed.
+// SpendMealBattle counts one battle off each named member's meal buff and
+// ailments (Phase 55), and reports whether anything changed.
 func (r *Registry) SpendMealBattle(leaderUserID int, keys []MemberKey) bool {
 	changed := false
 	for _, key := range keys {
 		needs, ok := r.NeedsFor(leaderUserID, key)
-		if !ok || needs.MealBattles <= 0 {
+		if !ok || (needs.MealBattles <= 0 && !HasAilment(needs)) {
 			continue
 		}
-		needs.MealBattles--
-		if needs.MealBattles == 0 {
-			needs.Meal = ""
+		if needs.MealBattles > 0 {
+			needs.MealBattles--
+			if needs.MealBattles == 0 {
+				needs.Meal = ""
+			}
 		}
+		spendAilmentBattle(&needs)
 		if r.PutNeeds(leaderUserID, key, needs) == nil {
 			changed = true
 		}

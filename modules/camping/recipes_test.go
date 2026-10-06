@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -143,11 +144,14 @@ func TestCookRejectsNonIngredientsAndBadNames(t *testing.T) {
 func TestRecipesCommandListsTheBook(t *testing.T) {
 	w, _ := discoveryWorld(t)
 	lines := w.m.recipesLines(w.user)
-	require.Len(t, lines, 1, "only the common dish at first")
+	require.Len(t, lines, 2, "the common dish and the common remedy at first")
 	assert.Contains(t, lines[0], "seared game meat")
+	assert.Contains(t, lines[1], "thyme tea (remedy for chill)")
 	cookbook.Learn(w.user.Character, 30019)
+	cookbook.LearnRemedy(w.user.Character, survival.AilmentFever)
 	lines = w.m.recipesLines(w.user)
-	require.Len(t, lines, 2)
+	require.Len(t, lines, 4)
+	assert.Contains(t, lines[3], "cooling fever draught (remedy for fever)")
 	assert.Contains(t, lines[0], "hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)")
 }
 
@@ -193,11 +197,11 @@ func TestCampStateAndCapabilityListOnlyKnownDishes(t *testing.T) {
 	w, cargo := discoveryWorld(t)
 	state, ok := w.m.CampStateOf(7, 100, []string{"camping"})
 	require.True(t, ok)
-	require.Len(t, state.Recipes, 1)
+	require.Len(t, state.Recipes, 2)
 	assert.Contains(t, state.Recipes[0], "seared game meat: 1 raw game meat")
 	cookbook.Learn(w.user.Character, 30020)
 	state, _ = w.m.CampStateOf(7, 100, []string{"camping"})
-	require.Len(t, state.Recipes, 2)
+	require.Len(t, state.Recipes, 3)
 	cargo.stacks[29] = 1
 	cargo.stacks[30018] = 1
 	view, _ := w.m.CookingCapability(7)

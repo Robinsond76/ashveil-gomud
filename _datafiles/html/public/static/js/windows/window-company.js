@@ -933,6 +933,8 @@
         const focusedCell = (focused && panel.contains(focused) && focused.getAttribute('data-cell')) || null;
         const hasParty  = !!(partyData && ((partyData.Members && partyData.Members.length) || (partyData.Vitals && Object.keys(partyData.Vitals).length)));
 
+        keepScroll(panel);
+
         panel.textContent = '';
         if (company) {
             panel.appendChild(companySection());
@@ -1253,6 +1255,7 @@
 
     function buildInventory(panel) {
         const inv = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Inventory;
+        keepScroll(panel);
         panel.textContent = '';
         const pad = el('div', 'cmp-pad');
         panel.appendChild(pad);
@@ -1414,6 +1417,7 @@
     function buildCamp(panel) {
         const camp = (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Camp) || {};
         const data = CompanyData.read();
+        keepScroll(panel);
         panel.textContent = '';
         const pad = el('div', 'cmp-pad');
         panel.appendChild(pad);
@@ -1437,6 +1441,29 @@
         }
         if (camp.has_camp && Array.isArray(camp.supplies) && camp.supplies.length) {
             pad.appendChild(el('div', 'cmp-line', 'Supplies: ' + camp.supplies.join(', ') + ' (camp prepare).'));
+        }
+        if (camp.has_camp && camp.here) {
+            const ailing = [];
+            data.members.forEach(m => {
+                if (!m || m.status === 'dead') { return; }
+                const list = data.vitals(m.key).ailments;
+                if (Array.isArray(list) && list.length) {
+                    ailing.push((m.key === 'leader' ? 'You' : m.name) + ': ' + list.join(', '));
+                }
+            });
+            if (ailing.length) {
+                pad.appendChild(el('div', 'cmp-line', 'Ailing: ' + ailing.join('; ') + '. Make the remedy from gathered herbs with camp prepare remedy (help ailments).'));
+                if (!camp.resting) {
+                    // 55 review: the cure is one press, like the camp's other actions.
+                    const b = el('button', 'cmp-btn', 'Make remedies');
+                    b.type = 'button';
+                    b.title = 'camp prepare remedy all: uses gathered herbs (help ailments)';
+                    b.addEventListener('click', () => send('camp prepare remedy all'));
+                    const row = el('div');
+                    row.appendChild(b);
+                    pad.appendChild(row);
+                }
+            }
         }
         if (camp.has_camp && Array.isArray(camp.prepared) && camp.prepared.length) {
             pad.appendChild(el('div', 'cmp-line', 'Set by for the next rest: ' + camp.prepared.join(', ') + '.'));

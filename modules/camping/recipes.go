@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -173,6 +174,12 @@ func (m *CampingModule) recipesLines(user *users.UserRecord) []string {
 			need = fmt.Sprintf(" (%s %d)", r.Skill, r.MinLevel)
 		}
 		lines = append(lines, fmt.Sprintf("%s: %s%s", itemName(r.Output), cookbook.Describe(r.Inputs), need))
+	}
+	// Remedies (Phase 55) are in the same book.
+	for _, a := range survival.Ailments() {
+		if remedyKnown(user, a) {
+			lines = append(lines, fmt.Sprintf("%s (remedy for %s): %s", a.RemedyName, strings.ToLower(a.Name), cookbook.Describe(remedyRecipe(a))))
+		}
 	}
 	return lines
 }

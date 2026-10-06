@@ -131,6 +131,7 @@ help:
       - travel
       - walkto
       - survival
+      - ailments
       - strain
       - weather
       - temperature
@@ -433,6 +434,7 @@ help-aliases:
   fieldsmith:       [field-smith, smith]
   vigil:            [vigils]
   forage:           [foraging]
+  ailments:         [ailment, chill, gut-ache, gutache, fever, sickness, illness, remedy, remedies, camp prepare remedy, raw meat]
   survival:         [needs, hunger, thirst, fatigue, battle-condition, battle condition, going-in]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]

@@ -169,6 +169,7 @@
     function render(root, data) {
         const panel = root.querySelector('.tutorial-content');
         if (!panel) { return; }
+        keepScroll(panel);
         panel.textContent = '';
         const checks = data && Array.isArray(data.checklist) ? data.checklist : [];
         announce(root, data, checks);

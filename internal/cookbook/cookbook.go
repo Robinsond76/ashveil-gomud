@@ -42,15 +42,46 @@ type Recipe struct {
 // Basic reports whether everyone knows the dish from the start.
 func (r Recipe) Basic() bool { return r.MinLevel <= BasicLevel }
 
-// Learned lists the dishes a character has learned, ascending.
-func Learned(c *characters.Character) []int {
+// tokens are the book's entries: a dish is its item ID, a remedy is
+// "r:<ailment kind>".
+func tokens(c *characters.Character) []string {
 	if c == nil {
 		return nil
 	}
 	raw, _ := c.GetMiscData(BookKey).(string)
-	var out []int
+	var out []string
 	for _, part := range strings.Split(raw, ",") {
-		if id, err := strconv.Atoi(strings.TrimSpace(part)); err == nil && id > 0 {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func hasToken(c *characters.Character, token string) bool {
+	for _, t := range tokens(c) {
+		if t == token {
+			return true
+		}
+	}
+	return false
+}
+
+func addToken(c *characters.Character, token string) bool {
+	if c == nil || hasToken(c, token) {
+		return false
+	}
+	have := append(tokens(c), token)
+	sort.Strings(have)
+	c.SetMiscData(BookKey, strings.Join(have, ","))
+	return true
+}
+
+// Learned lists the dishes a character has learned, ascending.
+func Learned(c *characters.Character) []int {
+	var out []int
+	for _, t := range tokens(c) {
+		if id, err := strconv.Atoi(t); err == nil && id > 0 {
 			out = append(out, id)
 		}
 	}
@@ -61,37 +92,27 @@ func Learned(c *characters.Character) []int {
 // Knows reports whether the character can cook the recipe without
 // experimenting: it is basic or in the book.
 func Knows(c *characters.Character, r Recipe) bool {
-	if r.Basic() {
-		return true
-	}
-	for _, id := range Learned(c) {
-		if id == r.Output {
-			return true
-		}
-	}
-	return false
+	return r.Basic() || hasToken(c, strconv.Itoa(r.Output))
 }
 
 // Learn writes a dish into the character's book; false when it was already
 // there.
 func Learn(c *characters.Character, output int) bool {
-	if c == nil || output < 1 {
+	if output < 1 {
 		return false
 	}
-	have := Learned(c)
-	for _, id := range have {
-		if id == output {
-			return false
-		}
-	}
-	have = append(have, output)
-	sort.Ints(have)
-	parts := make([]string, len(have))
-	for i, id := range have {
-		parts[i] = strconv.Itoa(id)
-	}
-	c.SetMiscData(BookKey, strings.Join(parts, ","))
-	return true
+	return addToken(c, strconv.Itoa(output))
+}
+
+// KnowsRemedy reports whether the character can make the remedy for an
+// ailment kind: it is common knowledge (common) or in the book.
+func KnowsRemedy(c *characters.Character, kind string, common bool) bool {
+	return common || hasToken(c, "r:"+kind)
+}
+
+// LearnRemedy writes a remedy into the book; false when already there.
+func LearnRemedy(c *characters.Character, kind string) bool {
+	return kind != "" && addToken(c, "r:"+kind)
 }
 
 // Known filters recipes to those the character can cook, keeping order.
@@ -160,11 +181,17 @@ type Stack struct {
 // word names nothing the cook holds, more are named than are held, or the
 // attempt is empty or too large.
 func Resolve(words []string, stock []Stack) ([]int, string) {
+	return ResolveWith(words, stock, nil)
+}
+
+// ResolveWith is Resolve with extra items allowed in the mix (a remedy's
+// herbs that are not plain food).
+func ResolveWith(words []string, stock []Stack, extra func(itemID int) bool) ([]int, string) {
 	have := map[int]int{}
 	var order []int
 	for _, s := range stock {
 		spec := items.GetItemSpec(s.ItemID)
-		if s.Count < 1 || !IsIngredient(spec) {
+		if s.Count < 1 || !(IsIngredient(spec) || (extra != nil && extra(s.ItemID))) {
 			continue
 		}
 		if _, seen := have[s.ItemID]; !seen {

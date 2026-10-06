@@ -36,10 +36,19 @@ both use.
   have the skill and the ingredients: a dish you have not learned is
   not cooked by a bare <ansi fg="command">camp cook</ansi>, by <ansi fg="command">use hearth</ansi>, or by a member on the cook duty.
 
+<ansi fg="yellow-bold">Remedies are in the book too</ansi>
+
+  <ansi fg="command">camp prepare remedy with [herb] [herb] ...</ansi>
+  Tries exactly that mix of herbs on the ailing members of your company
+  (<ansi fg="command">help ailments</ansi>). If it is the remedy for an ailment someone has, it
+  cures them and you learn the remedy; after that a plain
+  <ansi fg="command">camp prepare remedy</ansi> makes it. Any other mix uses up its herbs and
+  teaches nothing. Thyme tea, for the chill, is common knowledge.
+
 <ansi fg="yellow-bold">Your recipe book</ansi>
 
   <ansi fg="command">recipes</ansi>
-  Lists every dish you have learned and what it takes. The web client's
+  Lists every dish and remedy you have learned and what it takes. The web client's
   Company window shows the same list on its Camp tab. <ansi fg="command">look hearth</ansi> lists
   only the dishes you know.
 

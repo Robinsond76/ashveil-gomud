@@ -28,7 +28,7 @@ func TestRecipesHelpRendersAndIsIndexed(t *testing.T) {
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(want, "")
 	for _, phrase := range []string{"cook [ingredient]", "makeshift meal", "at most 4", "learn it", "recipe book",
-		"camp cook", "use hearth", "common knowledge", "Recipe pages", "never buy a page", "Camp tab"} {
+		"camp cook", "use hearth", "common knowledge", "Recipe pages", "never buy a page", "Camp tab", "camp prepare remedy with", "Thyme tea"} {
 		assert.Contains(t, plain, phrase)
 	}
 	for _, alias := range []string{"recipe", "recipe book", "recipe pages", "experiment"} {

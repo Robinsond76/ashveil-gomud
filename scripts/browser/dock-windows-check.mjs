@@ -430,6 +430,25 @@ await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: tr
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '49-camp-banter.png') }); }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Around the fire'), 'no banter block before any talk (49)');
+// Phase 55: who is ailing, and one press to make the remedies.
+{
+  const ill = JSON.parse(JSON.stringify(company));
+  ill.vitals.leader.ailments = ['Chill (3 battles)'];
+  ill.vitals['companion:1'].ailments = ['Fever (5 battles)'];
+  await page.evaluate(c => window.gmcp('Company', c), ill);
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+  const text = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(text.includes('Ailing: You: Chill (3 battles); Oswin: Fever (5 battles).'), 'the Ailing line names each ailing member (55)');
+  const got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).click(); });
+  check(JSON.stringify(got) === '["camp prepare remedy all"]', 'Make remedies sends camp prepare remedy all (55)');
+  check((await strip()).includes('You: chill (3 battles)'), 'the vitals strip warns of an ailment (55)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '55-camp-ailing.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 10, rest_seconds: 60, can_camp: false, inn: false }));
+  check(await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).count() === 0, 'no Make remedies while resting (55)');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+  check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Ailing'), 'no Ailing line when everyone is well (55)');
+}
 // Phase 51: the rest duty picker, a row per member at the camp.
 {
   const opts = ['sleep', 'watch', 'tend', 'forage', 'cook'];
@@ -1036,6 +1055,22 @@ check(await page.evaluate(() => {
 }), 'Skills text is in the compact Company scale, not the dock\'s full size');
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
 check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[["Help","track"]]', 'clicking a skill asks for its help page');
+// The test area's armory catalog: a screen with search, type chips and Take.
+await page.evaluate(() => { window.sent = []; window.gmcp('Armory', { filter: '', items: [
+  { id: 11, name: 'Iron Sword', type: 'weapon', subtype: 'sword', tier: 1 },
+  { id: 12, name: '<img src=x onerror="window.__xss=1">', type: 'weapon', subtype: 'staff', tier: 2 },
+  { id: 13, name: 'Leather Cap', type: 'head', family: 'leather', tier: 1 }] }); });
+check(await page.locator('#armory .arm-row').count() === 3, 'the armory catalog lists every item');
+check(await page.evaluate(() => !window.__xss && document.querySelector('#armory input').autocomplete === 'off'), 'the catalog sets names as text and keeps the browser from offering saved passwords');
+await page.locator('#armory .arm-chip', { hasText: 'head' }).click();
+check(await page.locator('#armory .arm-row').count() === 1, 'a type chip narrows the catalog');
+await page.locator('#armory .arm-chip', { hasText: 'All' }).click();
+await page.locator('#armory input').fill('sword');
+check(await page.locator('#armory .arm-row').count() === 1, 'typing filters the catalog');
+await page.locator('#armory .arm-count').selectOption('5');
+await page.getByRole('button', { name: 'Take Iron Sword' }).click();
+check(JSON.stringify(await page.evaluate(() => window.sent)) === '["testarea give 11 5"]', 'Take sends testarea give with the id and count');
+await page.keyboard.press('Escape');
 // The Help screen: it takes focus from the control that opened it, nothing behind it keeps a hover, and Escape returns focus.
 await page.evaluate(() => { document.dispatchEvent(new Event('DOMContentLoaded')); });
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).focus();

@@ -60,6 +60,9 @@ member fights counts one off, even one you retreat from at once.
 <ansi fg="command">eat</ansi> and <ansi fg="command">company eat</ansi> name the buff; <ansi fg="command">survival</ansi> and <ansi fg="command">status</ansi> show the battles
 left. A meal's buff adds to the member's battle condition (<ansi fg="command">help survival</ansi>).
 
+Raw game meat can be eaten as it is, for 10 Hunger, but it always gives a
+gut-ache (<ansi fg="command">help ailments</ansi>); <ansi fg="command">company eat</ansi> never serves it. Cook it first.
+
 <ansi fg="yellow-bold">Cooking at camp</ansi>
 
   <ansi fg="command">camp cook</ansi>

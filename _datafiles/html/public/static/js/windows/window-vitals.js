@@ -412,6 +412,7 @@
                 if (n && n.warn && n.label) { out.push(who + ': ' + n.label); }
             });
             if (v.warmth) { out.push(who + ': ' + v.warmth); }
+            (v.ailments || []).forEach(a => { out.push(who + ': ' + a.toLowerCase()); });
             if (typeof v.hp_limit === 'number') { out.push(who + ': wounded, limit ' + v.hp_limit); }
         });
         const load = data.company && data.company.load;
