@@ -13,18 +13,21 @@ import (
 func TestSetTacticsSavesAndReloads(t *testing.T) {
 	m, store, _, _ := testModule(t)
 	assert.Equal(t, domain.Tactics{}, m.StoredTactics(4401))
-	require.NoError(t, m.SetTactics(4401, domain.Tactics{Focus: domain.Leader, Healing: 70}))
-	assert.Equal(t, domain.Tactics{Focus: domain.Leader, Healing: 70}, store.saved.Tactics[4401])
+	require.NoError(t, m.SetTactics(4401, domain.Tactics{Focus: domain.Leader, Healing: 70, Patch: 65}))
+	assert.Equal(t, domain.Tactics{Focus: domain.Leader, Healing: 70, Patch: 65}, store.saved.Tactics[4401])
 
 	fresh := newModule()
 	fresh.store = store
 	fresh.load()
-	assert.Equal(t, domain.Tactics{Focus: domain.Leader, Healing: 70}, fresh.StoredTactics(4401))
+	assert.Equal(t, domain.Tactics{Focus: domain.Leader, Healing: 70, Patch: 65}, fresh.StoredTactics(4401), "the patch threshold survives a reload")
 
-	// Back to the defaults: nothing stored.
-	require.NoError(t, m.SetTactics(4401, domain.Tactics{Focus: domain.NoFocus, Healing: 50}))
+	// Back to the defaults: nothing stored. A focus of "none" is a choice
+	// (Phase 35d: a blank focus takes the level's default), so it is kept.
+	require.NoError(t, m.SetTactics(4401, domain.Tactics{Healing: 50, Patch: 80}))
 	_, kept := store.saved.Tactics[4401]
 	assert.False(t, kept)
+	require.NoError(t, m.SetTactics(4401, domain.Tactics{Focus: domain.NoFocus}))
+	assert.Equal(t, domain.NoFocus, store.saved.Tactics[4401].Focus)
 }
 
 func TestSetTacticsRollsBack(t *testing.T) {
@@ -54,13 +57,15 @@ func TestDecodeRegistryDropsBadTactics(t *testing.T) {
 		8:  {Focus: "assist"},
 		9:  {Healing: 45},
 		10: {Focus: "none"},
+		11: {Patch: 30},
+		12: {Patch: 90},
 		-1: {Focus: "leader"},
 	}}
 	data, err := yaml.Marshal(raw)
 	require.NoError(t, err)
 	r := NewRegistry()
 	require.NoError(t, decodeRegistry(data, r))
-	assert.Equal(t, map[int]domain.Tactics{7: {Focus: domain.Strongest, Healing: 30}}, r.Tactics)
+	assert.Equal(t, map[int]domain.Tactics{7: {Focus: domain.Strongest, Healing: 30}, 10: {Focus: domain.NoFocus}, 12: {Patch: 90}}, r.Tactics, "a patch under 50 drops the entry")
 }
 
 func TestUserPurgedForgetsTactics(t *testing.T) {

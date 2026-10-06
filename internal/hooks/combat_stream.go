@@ -98,6 +98,7 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		Defenses:   r.Defenses,
 		Damage:     r.DamageToTarget,
 		Crit:       r.Hit && r.Crit,
+		Quality:    blowQuality(r),
 		WeaponType: weaponType(attacker),
 	}}
 	status := func(on combatstream.Ref, buffId int) combatstream.Event {
@@ -121,6 +122,21 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		out = append(out, status(source, buffId))
 	}
 	return out
+}
+
+// blowQuality is the quality a landed blow wore when it was not solid
+// (Phase 35d): the strongest word of the round's strikes.
+func blowQuality(r combat.AttackResult) string {
+	word := ``
+	for _, q := range r.Qualities {
+		if q == combat.QualityTelling {
+			return q
+		}
+		if q == combat.QualityGlancing {
+			word = q
+		}
+	}
+	return word
 }
 
 func emitAttack(source, target combatstream.Ref, roomId int, attacker *characters.Character, r combat.AttackResult) {

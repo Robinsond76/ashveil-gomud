@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -448,9 +449,18 @@ func combatPronouns(character *characters.Character, actorType SourceTarget) cha
 // defender's line what their armor absorbed, " (5 damage, 2 absorbed)"
 // (Phase 30g2: "blocked" is a shield's now).
 func damageSuffix(damage int, crit bool, absorbed int, statuses ...string) string {
+	return damageSuffixQuality(damage, crit, absorbed, QualitySolid, statuses...)
+}
+
+// damageSuffixQuality is damageSuffix naming a glancing or telling blow
+// (Phase 35d): " (telling, 12 damage)", " (glancing, 2 damage)".
+func damageSuffixQuality(damage int, crit bool, absorbed int, quality string, statuses ...string) string {
 	out := fmt.Sprintf("%d damage", damage)
 	if crit {
 		out = "critical hit, " + out
+	}
+	if quality == QualityGlancing || quality == QualityTelling {
+		out = quality + ", " + out
 	}
 	if absorbed > 0 {
 		out += fmt.Sprintf(", %d absorbed", absorbed)
@@ -602,6 +612,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				attackTargetReduction := 0
 				edgeBonus := 0
 				isCrit := false
+				hitQuality := QualitySolid
 
 				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
 				if hit {
@@ -620,6 +631,17 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 					attackResult.Hit = true
 					attackTargetDamage = util.RollDice(dCount, dSides) + dBonus
+					// Phase 35d: a blow that lands is glancing, solid or
+					// telling, by a roll the combined edge shifts. A wind-up's
+					// telegraphed blow is always solid.
+					if attackTargetDamage > 0 && power == nil {
+						qRoll := util.Rand(100)
+						util.LogRoll(`Quality`, qRoll, 0)
+						var qFactor float64
+						qFactor, hitQuality = blowQuality(hitEdge(&sourceChar, &targetChar), qRoll)
+						attackTargetDamage = max(1, int(math.Round(float64(attackTargetDamage)*qFactor)))
+					}
+					attackResult.Qualities = append(attackResult.Qualities, hitQuality)
 					// Phase 30d2: a wind-up's blow multiplies what it rolled.
 					if power != nil && power.Multiplier > 1 {
 						attackTargetDamage *= power.Multiplier
@@ -715,9 +737,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				// Phase 29c: every hit says what it did, in all four lines.
 				if attackTargetDamage > 0 {
-					suffix := powerSuffix(power, damageSuffix(attackTargetDamage, isCrit, 0, critStatuses...))
+					suffix := powerSuffix(power, damageSuffixQuality(attackTargetDamage, isCrit, 0, hitQuality, critStatuses...))
 					toAttackerMsg = items.ItemMessage(string(toAttackerMsg) + suffix)
-					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + powerSuffix(power, damageSuffix(attackTargetDamage, isCrit, attackTargetReduction, critStatuses...)))
+					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + powerSuffix(power, damageSuffixQuality(attackTargetDamage, isCrit, attackTargetReduction, hitQuality, critStatuses...)))
 					toAttackerRoomMsg = items.ItemMessage(string(toAttackerRoomMsg) + suffix)
 					if len(string(toDefenderRoomMsg)) > 0 {
 						toDefenderRoomMsg = items.ItemMessage(string(toDefenderRoomMsg) + suffix)

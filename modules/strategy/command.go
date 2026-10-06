@@ -224,9 +224,11 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 			return fmt.Sprintf(`"%s" is neither a role nor a target. Roles: %s. %s`, word, rolesList(), rulesList())
 		}
 	}
-	// A setting equal to the default is stored as blank.
+	// A setting equal to the default is stored as blank, except a warrior's
+	// fighter role (Phase 35d): a blank warrior guards the healer by default,
+	// so choosing to fight is kept.
 	d := domain.Default(mb.archetype)
-	if next.Role == d.Role {
+	if next.Role == d.Role && !(mb.archetype == "warrior" && next.Role == domain.Fighter && !mb.isPlayer) {
 		next.Role = ""
 	}
 	if next.Rule == d.Rule {

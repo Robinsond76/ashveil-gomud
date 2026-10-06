@@ -422,8 +422,18 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 		oswin := &b.companion(2).Character
 		oswin.Mana, oswin.ManaMax.Value = 0, 0
 	}
+	// Phase 35d: an untouched company now has the level ladder's defaults (a
+	// focus by leader level, a warrior guarding the healer), so the modes
+	// that mean something else say so: their warriors fight, and spread and
+	// kit keep every member to its own rule.
+	if companyMode != companyDefault && companyMode != companyTactics {
+		for _, who := range []string{"tamsin", "garrick"} {
+			b.cmd("strategy", who+" fighter")
+		}
+	}
 	switch companyMode {
 	case companySpread, companyKit:
+		b.saveTactics(strategy.Tactics{Focus: strategy.NoFocus})
 		for _, s := range []string{"tamsin nearest", "garrick strongest", "ysolde furthest", "oswin wounded"} {
 			require.Contains(t, b.cmd("strategy", s), "will go for", s)
 		}

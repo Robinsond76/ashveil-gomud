@@ -106,7 +106,7 @@ func (m *CompanyModule) patchCommand(user *users.UserRecord) string {
 
 // patchIdle says why `company patch` did nothing.
 func (m *CompanyModule) patchIdle(user *users.UserRecord, members []woundMember) string {
-	healBelow := strategy.TacticsFor(user.UserId).Healing
+	healBelow := strategy.TacticsFor(user.UserId).Patch
 	hurt, knowers := false, false
 	for _, p := range patientsOf(members) {
 		if p.Health >= 1 && p.Health < wounds.HealTarget(p, healBelow) {
@@ -118,7 +118,7 @@ func (m *CompanyModule) patchIdle(user *users.UserRecord, members []woundMember)
 	}
 	switch {
 	case !hurt:
-		return fmt.Sprintf("No one is below the company's healing threshold (%d%% of their wound limit). Use heal wounds to tend everyone fully.", healBelow)
+		return fmt.Sprintf("No one is below the company's patch threshold (%d%% of their wound limit). Use heal wounds to tend everyone fully.", healBelow)
 	case !knowers:
 		return "There's no one in the company who can heal. Use heal wounds to open the packs."
 	default:
@@ -126,7 +126,7 @@ func (m *CompanyModule) patchIdle(user *users.UserRecord, members []woundMember)
 	}
 }
 
-// patch heals the company to its healing threshold with Minor Heal, each
+// patch heals the company to its patch threshold with Minor Heal, each
 // healer stopping at its reserve, applies it, and narrates it. healed is
 // whether anyone was healed.
 func (m *CompanyModule) patch(user *users.UserRecord) (lines []string, healed bool) {
@@ -152,7 +152,7 @@ func (m *CompanyModule) patch(user *users.UserRecord) (lines []string, healed bo
 	if len(healers) == 0 {
 		return nil, false
 	}
-	res := wounds.Patch(patientsOf(members), healers, rules, strategy.TacticsFor(user.UserId).Healing, util.Rand)
+	res := wounds.Patch(patientsOf(members), healers, rules, strategy.TacticsFor(user.UserId).Patch, util.Rand)
 	if len(res.Steps) == 0 {
 		return nil, false
 	}

@@ -143,6 +143,60 @@ func hitChanceForEdge(edge float64) int {
 	return clampToHit(floorChance(chance))
 }
 
+// Blow qualities (Phase 35d).
+const (
+	QualityGlancing = "glancing"
+	QualitySolid    = "solid"
+	QualityTelling  = "telling"
+)
+
+// qualityShares returns the percent shares of glancing and telling blows at
+// an edge: each moves linearly from its even value toward its full-edge
+// value, solid taking the rest.
+func qualityShares(edge float64) (glancing, telling float64) {
+	cfg := configs.GetCombatConfig()
+	edge = max(-1, min(1, edge))
+	if math.IsNaN(edge) {
+		edge = 0
+	}
+	ge, gf, gl := float64(cfg.GlanceEven), float64(cfg.GlanceFull), float64(cfg.GlanceLeast)
+	te, tf, tl := float64(cfg.TellingEven), float64(cfg.TellingFull), float64(cfg.TellingLeast)
+	if edge >= 0 {
+		glancing = ge + edge*(gl-ge)
+		telling = te + edge*(tf-te)
+	} else {
+		glancing = ge - edge*(gf-ge)
+		telling = te - edge*(tl-te)
+	}
+	if glancing+telling > 100 {
+		scale := 100 / (glancing + telling)
+		glancing, telling = glancing*scale, telling*scale
+	}
+	return glancing, telling
+}
+
+// blowQuality picks a landed blow's quality from a roll in 0..99: glancing
+// from the bottom, telling from the top, solid between.
+func blowQuality(edge float64, roll int) (factor float64, word string) {
+	cfg := configs.GetCombatConfig()
+	glancing, telling := qualityShares(edge)
+	switch r := float64(roll); {
+	case r < glancing:
+		return float64(cfg.GlanceFactor), QualityGlancing
+	case r >= 100-telling:
+		return float64(cfg.TellingFactor), QualityTelling
+	}
+	return 1, QualitySolid
+}
+
+// expectedQualityFactor is the mean damage factor of a landed blow at an
+// edge, the expected-damage twin of blowQuality.
+func expectedQualityFactor(edge float64) float64 {
+	cfg := configs.GetCombatConfig()
+	glancing, telling := qualityShares(edge)
+	return (glancing*float64(cfg.GlanceFactor) + telling*float64(cfg.TellingFactor) + (100 - glancing - telling)) / 100
+}
+
 // hitEdge is a blow's combined edge: the attacker's Attack against the
 // defender's Evasion, plus the Speed edge (Phase 35a2).
 func hitEdge(atk, def *characters.Character) float64 {
@@ -596,7 +650,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 		// Subtract the expected fraction of hits that get dodged.
 		effHit *= (1.0 - dodgePct)
 
-		rawDmg := (avgDmg + critBonus) * effHit
+		// Phase 35d: a landed blow is glancing, solid or telling.
+		rawDmg := (avgDmg*expectedQualityFactor(hitEdge(&atkChar, &defChar)) + critBonus) * effHit
 		netDmg := rawDmg * (1.0 - defenseFraction)
 
 		for atkIdx := 0; atkIdx < attacks; atkIdx++ {

@@ -98,6 +98,21 @@ func (m *CompanyModule) CompanionArchetype(leaderUserID, companionID int) (strin
 	return "", false
 }
 
+// LivingCompanionIDs implements domain.RosterProvider.
+func (m *CompanyModule) LivingCompanionIDs(leaderUserID int) []int {
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return nil
+	}
+	var ids []int
+	for _, c := range record.Companions {
+		if c.Death == nil {
+			ids = append(ids, c.ID)
+		}
+	}
+	return ids
+}
+
 // archetypeLabel is a companion's archetype for display.
 func archetypeLabel(archetype string) string {
 	if archetype == "" {

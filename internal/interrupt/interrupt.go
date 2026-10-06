@@ -8,6 +8,9 @@
 // it; any other blow breaks it more often the harder it lands, against the
 // chanter's max health. There is no pressure meter.
 //
+// A one-round heal (Phase 35d, ResolvesHeal) breaks only on heavy force too,
+// never on an ordinary blow, for enemy healers as for the company's.
+//
 // A physical wind-up (Phase 30d2, internal/windup) breaks only on heavy
 // force, never on an ordinary blow.
 //
@@ -57,6 +60,24 @@ func BreakChance(damage, maxHP int, heavy bool, difficulty int) int {
 	}
 	chance := BreakChanceMin + 2*(damage*100/maxHP) + max(difficulty, 0)/5
 	return min(max(chance, BreakChanceMin), BreakChanceMax)
+}
+
+// ResolvesHeal reports whether a chant is a one-round heal (Phase 35d): a
+// restoration spell that helps its target and takes one wait round (Minor
+// Heal, Tend Wounds). Such a chant is broken only by heavy force; the rule
+// is the same for both sides.
+func ResolvesHeal(waitRounds int, helpful, restoration bool) bool {
+	return waitRounds == 1 && helpful && restoration
+}
+
+// BreakChanceFor is BreakChance for a chant that may resolve (Phase 35d):
+// when resolves is set (ResolvesHeal) only heavy force breaks it, never an
+// ordinary blow.
+func BreakChanceFor(damage, maxHP int, heavy bool, difficulty int, resolves bool) int {
+	if resolves && !heavy {
+		return 0
+	}
+	return BreakChance(damage, maxHP, heavy, difficulty)
 }
 
 // RollBreak rolls a break at chance percent. roll(n) returns 0..n-1

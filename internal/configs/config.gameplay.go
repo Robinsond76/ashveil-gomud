@@ -63,6 +63,19 @@ type CombatConfig struct {
 	ToHitMax  ConfigInt `yaml:"ToHitMax"`  // Maximum hit chance (percent, 0-100)
 	ToHitEven ConfigInt `yaml:"ToHitEven"` // Hit chance when even (percent, within the bounds)
 
+	// Blow quality (Phase 35d): a blow that lands is glancing, solid or
+	// telling. Each share moves linearly from its even value to its full-edge
+	// value: "Full" is a full edge against the attacker for glancing and for
+	// the attacker for telling; "Least" is the opposite end.
+	GlanceEven    ConfigInt   `yaml:"GlanceEven"`    // Glancing share at an even edge (percent)
+	GlanceFull    ConfigInt   `yaml:"GlanceFull"`    // Glancing share at a full edge against the attacker (percent)
+	GlanceLeast   ConfigInt   `yaml:"GlanceLeast"`   // Glancing share at a full edge for the attacker (percent)
+	TellingEven   ConfigInt   `yaml:"TellingEven"`   // Telling share at an even edge (percent)
+	TellingLeast  ConfigInt   `yaml:"TellingLeast"`  // Telling share at a full edge against the attacker (percent)
+	TellingFull   ConfigInt   `yaml:"TellingFull"`   // Telling share at a full edge for the attacker (percent)
+	GlanceFactor  ConfigFloat `yaml:"GlanceFactor"`  // Damage multiplier of a glancing blow
+	TellingFactor ConfigFloat `yaml:"TellingFactor"` // Damage multiplier of a telling blow
+
 	// Legacy extra-attack keys: readable for old overrides, unused since 30g5.
 	ExtraAttacksMin ConfigInt `yaml:"ExtraAttacksMin"` // Minimum extra attacks
 	ExtraAttacksMax ConfigInt `yaml:"ExtraAttacksMax"` // Maximum extra attacks
@@ -281,6 +294,22 @@ func (c *CombatConfig) validate() {
 		c.ToHitEven = 60
 	}
 	c.ToHitEven = max(c.ToHitMin, min(c.ToHitMax, c.ToHitEven))
+
+	// Blow quality (Phase 35d). Zero values give the shipped defaults; a
+	// factor of 1 for both turns the quality roll off.
+	if c.GlanceEven == 0 && c.GlanceFull == 0 && c.GlanceLeast == 0 && c.TellingEven == 0 && c.TellingFull == 0 && c.TellingLeast == 0 {
+		c.GlanceEven, c.GlanceFull, c.GlanceLeast = 25, 50, 5
+		c.TellingEven, c.TellingFull, c.TellingLeast = 20, 50, 5
+	}
+	if c.GlanceFactor <= 0 {
+		c.GlanceFactor = 0.5
+	}
+	if c.TellingFactor <= 0 {
+		c.TellingFactor = 1.4
+	}
+	for _, v := range []*ConfigInt{&c.GlanceEven, &c.GlanceFull, &c.GlanceLeast, &c.TellingEven, &c.TellingFull, &c.TellingLeast} {
+		*v = max(0, min(100, *v))
+	}
 
 	// Stat edge
 	if math.IsNaN(float64(c.StatEdgeSpan)) || math.IsInf(float64(c.StatEdgeSpan), 0) || c.StatEdgeSpan <= 0 {

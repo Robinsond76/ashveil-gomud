@@ -31,6 +31,9 @@ func edgeSpecs(t *testing.T) {
 	cfg.Combat.DamageBonusMax = 10
 	cfg.Combat.DamagePerStrength = 0
 	cfg.Combat.DamageEdgeMax = 0
+	// Phase 35d: every landed blow is solid unless a test opts in.
+	cfg.Combat.GlanceEven, cfg.Combat.GlanceFull, cfg.Combat.GlanceLeast = 0, 0, 0
+	cfg.Combat.TellingEven, cfg.Combat.TellingFull, cfg.Combat.TellingLeast = 0, 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
 	races.LoadDataFiles()
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: edgeSwordID, Name: "test sword", Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Damage: items.Damage{DiceRoll: "1d1", Attacks: 1, DiceCount: 1, SideCount: 1}})

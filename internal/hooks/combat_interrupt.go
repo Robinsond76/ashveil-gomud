@@ -108,7 +108,7 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		return
 	}
 	if defender.char.Health >= 1 && interrupt.CanBreak(r.Hit, r.DamageToTarget, defender.chanting()) {
-		chance := interrupt.BreakChance(r.DamageToTarget, defender.char.HealthMax.Value, heavyBlow(r), chantDifficulty(defender))
+		chance := interrupt.BreakChanceFor(r.DamageToTarget, defender.char.HealthMax.Value, heavyBlow(r), chantDifficulty(defender), chantResolves(defender))
 		if interrupt.RollBreak(chance, breakRoll) {
 			breakChant(attacker, defender)
 		} else {
@@ -130,6 +130,20 @@ func chantDifficulty(h statusHolder) int {
 		return sp.Difficulty
 	}
 	return 0
+}
+
+// chantResolves reports whether the holder is chanting a one-round heal,
+// which only heavy force breaks (Phase 35d).
+func chantResolves(h statusHolder) bool {
+	if h.char.Aggro == nil {
+		return false
+	}
+	sp := spells.GetSpell(h.char.Aggro.SpellInfo.SpellId)
+	if sp == nil {
+		return false
+	}
+	helpful := sp.Type == spells.HelpSingle || sp.Type == spells.HelpMulti
+	return interrupt.ResolvesHeal(sp.WaitRounds, helpful, sp.School == spells.SchoolRestoration)
 }
 
 // heavyBlow reports whether a blow lands with heavy force, which always

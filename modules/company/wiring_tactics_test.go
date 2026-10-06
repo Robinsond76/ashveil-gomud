@@ -190,6 +190,7 @@ func TestEnemyPersonalities(t *testing.T) {
 			b := newBrawl(t)
 			b.withArchetypes("")
 			b.unplaced()
+			b.cmd("strategy", "tamsin fighter") // Phase 35d: no default guard to step in
 			captain, _, _, _, _ := b.shapeBandits()
 			b.cmd("attack", fmt.Sprintf("#%d", captain))
 			b.hold(nil)
@@ -235,10 +236,11 @@ func TestTacticsCommand(t *testing.T) {
 	assert.Contains(t, b.cmd("company", "tactics focus sideways"), "Choose one of: none, leader, casters")
 	assert.Contains(t, b.cmd("company", "tactics healing 70"), "below 70% of their health")
 	assert.Contains(t, b.cmd("company", "tactics healing 45"), "from 10 to 90, in tens")
-	assert.Equal(t, strategy.Tactics{Focus: strategy.Leader, Healing: 70}, strategy.TacticsFor(7))
-	assert.Contains(t, b.cmd("company", "tactics focus default"), "focus is now none")
+	assert.Equal(t, strategy.Tactics{Focus: strategy.Leader, Healing: 70, Patch: 80}, strategy.TacticsFor(7))
+	assert.Contains(t, b.cmd("company", "tactics focus none"), "focus is now none")
+	assert.Contains(t, b.cmd("company", "tactics focus default"), "back to the default for your level")
 	assert.Contains(t, b.cmd("company", "tactics default"), "back to the defaults")
-	assert.Equal(t, strategy.Tactics{Focus: strategy.NoFocus, Healing: 50}, strategy.TacticsFor(7))
+	assert.Equal(t, strategy.Tactics{Focus: strategy.NoFocus, Healing: 50, Patch: 80}, strategy.TacticsFor(7))
 	assert.Contains(t, b.cmd("company", "tactics sideways"), "Usage: company tactics")
 }
 

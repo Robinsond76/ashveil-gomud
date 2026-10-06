@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var damageSuffix = regexp.MustCompile(`\((critical hit, )?(\d+) damage(, \d+ absorbed)?(, [a-z ]+)*\)`)
+var damageSuffix = regexp.MustCompile(`\(((?:glancing|telling), )?(critical hit, )?(\d+) damage(, \d+ absorbed)?(, [a-z ]+)*\)`)
 
 // poolPattern matches any line of a pool of "%s" lines.
 func poolPattern(pool []string) *regexp.Regexp {
@@ -75,9 +75,12 @@ func TestNarrationThroughTheRealRound(t *testing.T) {
 	for _, line := range lines {
 		for _, m := range damageSuffix.FindAllStringSubmatchIndex(line, -1) {
 			assert.Equal(t, len(strings.TrimRight(line, " ")), m[1], "the suffix ends its line: %q", line)
-			key := line[m[4]:m[5]] // N
-			if m[2] >= 0 {
+			key := line[m[6]:m[7]] // N
+			if m[4] >= 0 {
 				key = "critical hit, " + key
+			}
+			if m[2] >= 0 { // Phase 35d: a glancing or telling blow is named first
+				key = line[m[2]:m[3]] + key
 			}
 			narrated[key]++
 		}
@@ -90,6 +93,9 @@ func TestNarrationThroughTheRealRound(t *testing.T) {
 			key := fmt.Sprint(e.Damage)
 			if e.Crit {
 				key = "critical hit, " + key
+			}
+			if e.Quality != "" { // Phase 35d: the line names a glancing or telling blow
+				key = e.Quality + ", " + key
 			}
 			hits[key]++
 		case e.Kind == combatstream.FightStart:

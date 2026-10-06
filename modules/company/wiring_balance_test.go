@@ -201,6 +201,9 @@ func TestBalanceStrengthDamageThroughDoCombat(t *testing.T) {
 	cfg.Combat.BlockChanceMin, cfg.Combat.BlockChanceMax = 0, 0
 	cfg.Combat.ParryChanceMin, cfg.Combat.ParryChanceMax = 0, 0
 	cfg.Combat.DodgeChanceMin, cfg.Combat.DodgeChanceMax = 0, 0
+	// Phase 35d: every blow solid, so the bound below is the strength bonus's.
+	cfg.Combat.GlanceEven, cfg.Combat.GlanceFull, cfg.Combat.GlanceLeast = 0, 0, 0
+	cfg.Combat.TellingEven, cfg.Combat.TellingFull, cfg.Combat.TellingLeast = 0, 0, 0
 	// Pin the damage knobs: equal Strength 12 gives 2 + 21, capped at 20.
 	cfg.Combat.DamageBonusMin, cfg.Combat.DamageBonusMax, cfg.Combat.DamagePerStrength = 2, 20, 1.75
 	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
