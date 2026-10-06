@@ -24,6 +24,16 @@ its kit's "padded jerkin" is the catalog padded jack (20163). 35b's flaky
 Verification:
 `make generate`, `make validate`, `go test -race ./...`, `make js-lint`.
 
+**Phase 38b built, in review (2026-10-06):** class promotion at level 10 and
+30, talents at 5/15/25/35/45/55, the six lineages' routes, and the faith routes
+(Priest and Hierarch with an Angel, Blood Priest and Demonologist with a Demon,
+Knight and Paladin, Blackguard and Dread Knight), with extension points for the
+neutral classes 39a-39h. See the [plan](plans/2026-10-06-phase-38b-promotions-talents.md).
+Lay on Hands uses reset in memory by a rest and refill on restart (deliberate
+leniency). Terror, Soul feast and Hellfire rank texts were reworded to what is
+built. No balance simulation was run (see the plan). Build thread did not run
+its own review; the review thread's outcome goes here.
+
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
 school, reach 1 to the whole group by level, three new statuses (Asleep,
