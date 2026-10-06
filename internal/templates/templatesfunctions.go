@@ -15,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/language"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/mattn/go-runewidth"
@@ -148,8 +147,7 @@ var (
 		},
 		"profession": func(char characters.Character) string {
 
-			allRanks := char.GetAllSkillRanks()
-			return skills.GetProfession(allRanks)
+			return char.ClassTitle()
 		},
 		"roundstotime": func(rounds int) string {
 			if rounds >= buffs.TriggersLeftUnlimited {
