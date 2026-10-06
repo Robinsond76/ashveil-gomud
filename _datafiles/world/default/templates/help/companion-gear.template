@@ -39,9 +39,9 @@ A fallen companion keeps its gear while it waits to be raised.
 
 <ansi fg="yellow-bold">Dolls</ansi>
 
-A Doll Master's dolls are dressed with <ansi fg="command">doll wield</ansi> and <ansi fg="command">doll wear</ansi> (<ansi fg="command">help doll</ansi>). If their
-Master leaves the company, what you dressed them in comes back to your cargo
-too, except the cudgel every doll starts with.
+Only your own dolls can be dressed (<ansi fg="command">doll wield</ansi>, <ansi fg="command">doll wear</ansi>, <ansi fg="command">help doll</ansi>).
+A companion Doll Master's dolls keep their plain cudgels; you can see them
+with <ansi fg="command">doll [member]</ansi> and mend them.
 
 <ansi fg="yellow-bold">In the browser</ansi>
 
