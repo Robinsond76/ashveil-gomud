@@ -51,6 +51,15 @@ help:
       - warrior-routes
       - elite
       - warlord
+      - archon
+      - archmage
+      - necromancer
+      - thrall
+      - wizard-routes
+      - wise-one
+      - coven-mother
+      - crone-of-ash
+      - witch-routes
       - rogue-routes
       - ranger-routes
       - elite-pathfinder
@@ -328,6 +337,15 @@ help-aliases:
   marksman:         [marksmen, called-shot, second-nock, perfect-shot, pinning-crit]
   ravager:          [ravagers, hunt-down, harrow, apex, bloodscent]
   warlord:          [warlords, marked-for-ruin, battle-cry, sunder, relentless]
+  archon:           [archons, counterspell, counter-spell, aegis, mana-shield, reflection]
+  archmage:         [archmages, overchannel, storm, arcane-barrage, barrage]
+  necromancer:      [necromancers, raise-the-fallen, raise the fallen, raisefallen, lich, liches, death-harvest]
+  thrall:           [thralls, risen]
+  wizard-routes:    [theurgist, arcanist, warlock, life-drain, wizard-class, wizard-classes]
+  wise-one:         [wise-ones, hearthward, hearth-ward, mend-charm, ward-of-life, deep-slumber]
+  coven-mother:     [coven-mothers, covens-will, coven-circle, twin-hex, lasting-hexes]
+  crone-of-ash:     [crone, crones, ashen-curse, soul-rot, lingering-curse, crones-doom]
+  witch-routes:     [hedge-witch-route, coven-sage, hag, witch-class, witch-classes]
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]

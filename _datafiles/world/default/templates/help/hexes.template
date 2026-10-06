@@ -51,7 +51,8 @@ line says <ansi fg="command">(resisted)</ansi>; a foe already under a hex isn't 
 After a hex lands, that foe can't be put to sleep, paralyzed or knocked down
 again (any of the three) until the status has been over for 2 combat rounds,
 and no other hex is cast twice at it in that time either. So no foe loses
-more than half of a fight's rounds to hexes.
+more than half of a fight's rounds to hexes. (A Wise One's or Coven Mother's
+longer holds are followed by as long an immunity, so the half still stands.)
 Sleep ends at the first damage; poison's damage does too.
 
 Statuses count combat rounds, never game rounds, and end when the fight ends.

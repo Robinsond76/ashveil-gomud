@@ -41,7 +41,8 @@ A Witch companion hexes the same way. Recruits are hired like any other
 of fighters and one Witch fights best when the Witch's hexes take the foes
 the fighters are about to face.
 
-At level 10 a Witch promotes to a Hedge Witch, Coven Sage or Hag (<ansi fg="command">help classes</ansi>).
+At level 10 a Witch promotes to a Hedge Witch, Coven Sage or Hag, and at 30 to a
+Wise One, Coven Mother or Crone of Ash (<ansi fg="command">help witch-routes</ansi>, <ansi fg="command">help classes</ansi>).
 
 Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">spells</ansi>, <ansi fg="command">help hexes</ansi>.
 

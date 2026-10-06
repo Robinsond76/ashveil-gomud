@@ -20,6 +20,9 @@ type SpellAggroInfo struct {
 	SpellRest            string
 	TargetUserIds        []int
 	TargetMobInstanceIds []int
+	// Over (Phase 38c3) is the percent more damage an Archmage's Overchannel
+	// (50) or Storm (100) puts into this cast; 0 for an ordinary one.
+	Over int `yaml:"-"`
 }
 
 // RetreatInfo is an ephemeral ordered withdrawal, never saved.

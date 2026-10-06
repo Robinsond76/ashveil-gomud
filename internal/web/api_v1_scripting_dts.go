@@ -64,6 +64,13 @@ declare interface ActorObject {
     CleanseOne(source: string): string;
     HurtAllies(others: boolean): ActorObject[];
     MostHurtAlly(others: boolean): ActorObject | null;
+    AllAllies(others: boolean): ActorObject[];
+    WardGifts(target: ActorObject): void;
+    WardExtra(target: ActorObject, cap: number, blows: number): ActorObject[];
+    CastTargets(): ActorObject[];
+    GiveStatus(buffId: number, rounds: number): void;
+    Raise(): string;
+    PoisonScale(): number;
     HealFactor(): number;
     WoundNote(rolled: number, healed: number): string;
     TendWound(points: number): { closed: number; wound: string; limit: number; max: number };
