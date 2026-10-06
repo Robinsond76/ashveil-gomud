@@ -9,6 +9,8 @@ biome: fort
 exits:
   east:
     roomid: 880
+resources:
+- shelter
 mapx: -20
 mapy: -4
 mapz: 0

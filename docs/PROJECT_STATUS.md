@@ -58,6 +58,52 @@ stays until the battle ends; morale (nerve) is not drawn yet. Flaky test seen: `
 the cleric) and passed alone five times and in a package re-run; this PR
 touches no company code, so it is left as a follow-up to make robust.
 
+**Phase 40a complete, merged via [PR #32](https://github.com/Robinsond76/ashveil-gomud/pull/32): room resources (2026-10-06):** rooms carry a validated
+`resources` list (water, forage, shelter; herbs, firewood, fishing and game
+are accepted in data but hidden until 40a2). `look` prints a "Here:" line,
+GMCP `Room.Info` and `World.Map` send `resources` (omitted when none), and
+the web map draws a coloured corner dot per resource with a tooltip row and
+an on/off setting (S1 sprites replace the dots later). Rules: `drink water`
+or `drink source` (40 Thirst plus Hydrated, free, refused in battle), `fill`
+and `company fill` (waterskin gains `refillable: water`; pack, companion
+packs and cargo), `company drink` at a source waters everyone free, a camp
+rest at a forage room gets +1 find, and a shelter room halves the weather
+rest penalty. 291 default-world rooms are tagged (lakeshore, waterfall,
+Fernhollow trough and the tutorial Weather Yard water; forest and island
+forage; caves, keeps and lodges shelter). Help: new `help resources`
+(indexed under `road`, aliases water, fill, spring, shelter), updates to
+drink, survival, forage, camp, company meal and webclient, and a Survival
+lesson hint. Design: [40a](designs/2026-10-05-phase-40a-room-resources-design.md).
+Decisions (owner delegation): `drink water` yields to an item exactly
+named "water" and keeps its old waterskin meaning away from a source (no
+surprise for existing habits); a source drink also gives the Hydrated buff
+(same as a waterskin glug); `company fill` refills part-used cargo by
+withdraw-then-deposit through the existing cargo API (no new cargo
+interface); the shelter bonus never beats a full rest. Review (2026-10-06, Opus):
+the three builder decisions are kept. Accepted findings: (1) forage and
+shelter were tagged on ~225 rooms where no camp can be made (only two
+default rooms admit `camp`), so the markers promised a rule that could not
+act; rooms now show them only where the camping module says a camp can be
+made (`rooms.SetCampableCheck`), keeping the data for when 41/42 place
+camps; (2) `company drink` at a source gave one glug each, so a parched
+member stayed thirsty beside free water; members now drink until no longer
+thirsty (at most three); (3) the Room Info panel did not show resources;
+it now has a badge per resource that opens `help resources`. Help updated
+(resources, webclient). Rejected: withdraw-then-deposit can lose part-used
+cargo if the deposit's save fails right after a good withdraw (logged as
+an error; same failure mode as other cargo moves). Browser check: dots,
+tooltip, toggle and badge render and read clearly
+(`/mnt/project-files/screens/40a-map.png`). Follow-ups: a waterskin is
+destroyed by its last glug, so `fill` only tops up part-used skins (keep
+an empty refillable container); the water dot on blue shore tiles is
+low-contrast until the S1 icons land; the root package's
+`world_party_follow_test.go` (already on master) leaves an ignored
+`config-overrides.yaml` and two user files in the default world, which can
+break a later `internal/usercommands` run that loads that world (the 40a
+battle test no longer loads it).
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
+
 **Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
 `scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
 `_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,

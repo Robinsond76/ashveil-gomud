@@ -38,7 +38,26 @@
         connectionColor: '#7a4a1a',  // color of corridor lines between rooms
         mapBackground:   '#111111',  // canvas background color
         defaultZoom:     null,       // null = no default; number = zoom level to ease to on room change
+        showResources:   true,       // Phase 40a: draw room-resource icons in tile corners
     };
+
+    // Phase 40a: room resources. Until the S1 icon sprites exist each one
+    // is a small coloured dot; tooltips name them.
+    var RESOURCE_INFO = {
+        water:    { label: 'Fresh water', color: '#4aa3ff' },
+        forage:   { label: 'Forage',      color: '#7ccf3c' },
+        shelter:  { label: 'Shelter',     color: '#d1a15f' },
+        herbs:    { label: 'Herbs',       color: '#3fbf8f' },
+        firewood: { label: 'Firewood',    color: '#c8742c' },
+        fishing:  { label: 'Fishing',     color: '#5fd0d0' },
+        game:     { label: 'Game',        color: '#c85a5a' },
+    };
+    var RESOURCE_ICON_MAX = 3;
+
+    function resourcesFor(roomId) {
+        var info = roomInfoStore.get(roomId);
+        return (info && Array.isArray(info.resources)) ? info.resources : [];
+    }
 
     var mapSettings = (function () {
         try {
@@ -255,6 +274,15 @@
                 html += '<div class="tt-row"><span class="tt-label">' + r.label +
                         '</span><span class="tt-value">' + r.value + '</span></div>';
             });
+        }
+
+        if (Array.isArray(info.resources) && info.resources.length > 0) {
+            var resNames = info.resources.map(function (r) {
+                return (RESOURCE_INFO[r] && RESOURCE_INFO[r].label) || r;
+            });
+            html += '<hr class="tt-divider"><div class="tt-row">' +
+                    '<span class="tt-label">Here</span>' +
+                    '<span class="tt-value">' + resNames.join(', ') + '</span></div>';
         }
 
         var details    = info.details || [];
@@ -701,6 +729,36 @@
                 ctx.font         = 'bold ' + scaledFont + 'px monospace';
                 ctx.textAlign    = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(room.symbol || '\u2022', p.px, p.py);
+                if (mapSettings.showResources) {
+                    var resIds = resourcesFor(id);
+                    if (resIds.length > 0) {
+                        var dot   = Math.max(3, scaledSize * 0.16);
+                        var shown = resIds.slice(0, RESOURCE_ICON_MAX);
+                        var inset = useCircle ? Math.max(2, half * 0.45) : Math.max(2, scaledSize * 0.1);
+                        shown.forEach(function (rid, i) {
+                            var meta = RESOURCE_INFO[rid];
+                            ctx.fillStyle = (meta && meta.color) || '#aaaaaa';
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = 1;
+                            var dx = p.px - half + inset + i * (dot * 2 + 1) + dot * 0.5;
+                            var dy = p.py - half + inset;
+                            if (useCircle) {
+                                dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
+                                dy = p.py - half * 0.62;
+                            }
+                            ctx.beginPath();
+                            ctx.arc(dx, dy, dot, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                        });
+                        if (resIds.length > RESOURCE_ICON_MAX) {
+                            ctx.fillStyle = symColor;
+                            ctx.font = 'bold ' + Math.max(6, dot * 2) + 'px monospace';
+                            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                            ctx.fillText('+', p.px - half + inset + RESOURCE_ICON_MAX * (dot * 2 + 1), p.py - half + inset);
+                        }
+                    }
+                }
                 if (room.hasUp || room.hasDown) {
                     var arrowSize = Math.max(5, scaledSize * 0.28);
                     ctx.font      = 'bold ' + arrowSize + 'px monospace';
@@ -949,6 +1007,12 @@
                 function (v) { mapSettings.roomShape = v; }
             ));
             panel.appendChild(shapeRow);
+
+            panel.appendChild(row('Resources', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.showResources !== false; },
+                function (v) { mapSettings.showResources = v; }
+            )));
 
             var slider = document.createElement('input');
             slider.type  = 'range';

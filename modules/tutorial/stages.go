@@ -107,6 +107,7 @@ func init() {
 			Goal:  "Eat something and drink something, then check the weather, the temperature, your strain, and your cargo.",
 			Hints: []string{
 				`<ansi fg="command">eat <food></ansi> and <ansi fg="command">drink <drink></ansi>, e.g. <ansi fg="command">eat sandwich</ansi> and <ansi fg="command">drink waterskin</ansi>. Add a companion's name to feed them instead: <ansi fg="command">eat sandwich tamsin</ansi>.`,
+				`This yard has a water trough (see the "Here:" line in <ansi fg="command">look</ansi>): <ansi fg="command">drink water</ansi> drinks from it for free, and <ansi fg="command">fill</ansi> tops up your waterskin. <ansi fg="command">company fill</ansi> fills everyone's. <ansi fg="command">help resources</ansi> lists what rooms can offer.`,
 				`<ansi fg="command">weather</ansi> shows the sky. Storms slow travel and spoil rest.`,
 				`<ansi fg="command">temperature</ansi> shows how warm you are. Try it here in the open, then back in the Waking Hall: shelter, a fire, and warm clothes all help.`,
 				`<ansi fg="command">strain</ansi> shows how worn your company is from walking; <ansi fg="command">cargo</ansi> shows your load. Too heavy a load tires everyone faster, and a full company can't pick up anything more. Each member, a pack, and a horse add room (<ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>).`,

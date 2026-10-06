@@ -18,6 +18,8 @@ spawninfo:
 - mobid: 33
   message: A branch is pushed aside as an Imp enters the area.
   respawnrate: 6 real minutes
+resources:
+- forage
 mapx: 35
 mapy: 5
 mapz: 0

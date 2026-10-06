@@ -16,6 +16,9 @@ tags:
 exits:
   west:
     roomid: 2002
+resources:
+- forage
+- shelter
 mapx: 1
 mapy: -1
 mapz: 0

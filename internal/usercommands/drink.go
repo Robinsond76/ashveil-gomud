@@ -18,6 +18,11 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
+	// Phase 40a: a water source in the room.
+	if handled, err := drinkFromSource(rest, user, room); handled || err != nil {
+		return true, err
+	}
+
 	// Check whether the user has an item in their inventory that matches
 	matchItem, selector, found := findConsumable(rest, user)
 
