@@ -286,3 +286,17 @@ func TestSummaryWoundLimits(t *testing.T) {
 	assert.Equal(t, 13, s.Companions[0].HPLimit)
 	assert.Equal(t, 16, s.Companions[1].HPLimit, "a view with no limit reads as unwounded")
 }
+
+// Phase 35d: a player with no saved focus is shown the level's default, the
+// focus the battle really uses.
+func TestSummaryTacticsShowLevelDefaultFocus(t *testing.T) {
+	src := fullSources()
+	src.tactics = func(int) strategy.Tactics { return strategy.Tactics{}.Resolve() }
+	u := testUser()
+	u.Character.Level = 12
+	s := src.summary(u)
+	assert.Equal(t, strategy.Weakest, s.Tactics.Focus)
+	assert.Equal(t, strategy.DefaultPatch, s.Tactics.Patch)
+	u.Character.Level = 4
+	assert.Equal(t, strategy.NoFocus, src.summary(u).Tactics.Focus)
+}

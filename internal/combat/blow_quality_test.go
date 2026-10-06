@@ -123,3 +123,24 @@ func TestBlowQualityFollowsTheEdge(t *testing.T) {
 	assert.LessOrEqual(t, tellingAgainst, 0.08)
 	assert.InDelta(t, 0.5, glancingAgainst, 0.04)
 }
+
+// A blow that armor absorbs whole reports no glancing or telling quality.
+func TestAbsorbedBlowReportsNoQuality(t *testing.T) {
+	qualityOn(t)
+	const plateID = 90361
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: plateID, Name: "test plate", Type: items.Body, DamageReduction: 100000})
+	t.Cleanup(func() { items.RemoveTestItemSpec(plateID) })
+	for i := 0; i < 400; i++ {
+		src, target := edgeFighter(90231), edgeFighter(90231)
+		src.Equipment.Weapon = items.New(qualityClubID)
+		target.Equipment.Body = items.New(plateID)
+		res := calculateCombat(*src, *target, User, Mob, 0, 0)
+		if res.DamageToTarget != 0 {
+			continue
+		}
+		require.Len(t, res.Qualities, 1)
+		assert.Equal(t, QualitySolid, res.Qualities[0])
+		return
+	}
+	t.Fatal("no fully absorbed blow")
+}

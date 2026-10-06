@@ -677,6 +677,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				}
 
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+				if attackTargetDamage < 1 && len(attackResult.Qualities) > 0 {
+					// Phase 35d: a blow armor absorbed whole has no quality to report.
+					hitQuality = QualitySolid
+					attackResult.Qualities[len(attackResult.Qualities)-1] = QualitySolid
+				}
 
 				// Phase 30a: a critical hit that got through the armor leaves
 				// its weapon's status: the weapon's own crit buffs, else the

@@ -201,6 +201,13 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	if src.tactics != nil {
 		s.Tactics = src.tactics(uid)
 	}
+	// Phase 35d: no stored focus means the level's default, which is what
+	// the battle really uses.
+	if s.Tactics.Focus == strategy.NoFocus {
+		if f, defaulted := strategy.FocusFor(uid, c.Level); defaulted {
+			s.Tactics.Focus = f
+		}
+	}
 	if src.archetypeReporting() {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {

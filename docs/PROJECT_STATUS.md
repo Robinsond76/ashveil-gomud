@@ -134,6 +134,27 @@ stay hidden; PvP camp visibility is deferred. Documentation only.
 Verification: relative Markdown links and the diff checked; no Go tests
 required.
 
+**35d combat feel built (2026-10-06, PR open for review):** every landed
+blow is glancing (x0.5), solid or telling (x1.4) by a roll the skill edge
+shifts; `ToHitEven` is 88; one-round heals (Minor Heal, Tend Wounds) break
+only on heavy force, for both sides; the patch threshold is 80% and settable
+(`company tactics patch`); level defaults (weakest from 10, casters first
+from 25, first companion warrior guards the first healer) apply until the
+player sets their own, and a stored focus of `none` stays a choice. Shipped
+help (attack, evasion, interrupts, tactics, patch, heal, combat, guardian,
+health), keyword aliases and tutorial hints. `HPAfterFull` is **0.3**, not
+the design's 0.4: 0.4 breaks the 1.6x level-60 cap. Measurements and the
+settled misses (dead swings 35 to 39%, six-fight mana run, boss wins above
+target, rounds are 8 s not 4 s) are in the
+[measurements](plans/2026-10-06-phase-35d-measurements.md). A pre-35d player
+who stored only `focus none` now gets the level default (accepted).
+Independent review accepted: GMCP/summary tactics ignored the level default
+and patch (fixed, tests); an armor-absorbed blow reported a quality (fixed,
+test); equipment role advice ignored the default guard (fixed). Rejected: a
+battle-view quality field (the combat lines carry the word), partial
+blow-quality config (zero shares are a documented "off" used by tests), and
+glancing rounding on tiny dice (negligible).
+
 **35d combat feel designed (2026-10-06):** at the owner's request, a second
 opinion on the 35b balance misses traced them to rules, not tuning: about 45%
 of swings produce nothing, one-round heals break on any touch, patching stops
