@@ -324,3 +324,33 @@ func TestRoutePaceThroughMountSeam(t *testing.T) {
 		assert.Equal(t, tc.want, store.saved.Sessions[7].DurationPct, "everyone rides: %v", tc.everyoneRides)
 	}
 }
+
+// Phase 46: a city origin has weather that changes nothing for travel, so the
+// journey takes its destination's weather, as it did when cities had none.
+func TestNeutralOriginWeatherDefersToTheDestination(t *testing.T) {
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+	env := &multiplierEnv{conditions: map[string]weather.Condition{
+		"Origin": {Name: "clear", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100},
+		"Forest": rain(),
+	}}
+	env.install(module)
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	assert.Equal(t, 115, store.saved.Sessions[7].DurationPct, "the forest's rain, not the city's calm")
+}
+
+func TestOriginWeatherThatChangesTravelStillWins(t *testing.T) {
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+	env := &multiplierEnv{conditions: map[string]weather.Condition{
+		"Origin": {Name: "storm", TravelDurationPct: 140, ExertionPct: 130},
+		"Forest": rain(),
+	}}
+	env.install(module)
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	assert.Equal(t, 140, store.saved.Sessions[7].DurationPct)
+}

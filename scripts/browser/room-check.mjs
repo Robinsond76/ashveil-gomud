@@ -55,6 +55,20 @@ await page.evaluate(() => window.gmcp('Room.Gather', { phase: 'start', kind: 'fi
 await page.evaluate(() => window.gmcp('Room.Gather', { phase: 'stopped', kind: 'fishing', label: 'fishing', lines: ['You stop what you were doing; the work is abandoned.'] }));
 const stopped = await page.evaluate(() => document.getElementById('rw-gather-what').textContent + ' / ' + document.getElementById('rw-gather-result').textContent);
 check(stopped.includes('Work stopped') && stopped.includes('abandoned'), 'a stopped job says so: ' + stopped);
+// Phase 46: a client that reconnected mid-work asks for Room.Gather on its
+// first room and resumes the bar where the work stands.
+await page.evaluate(() => { window.requests = []; Client.GMCPRequest = function(id) { window.requests.push(id); }; });
+await page.reload();
+await page.evaluate(() => { window.requests = []; Client.GMCPRequest = function(id) { window.requests.push(id); }; });
+await page.evaluate(() => window.gmcp('Room.Info', { name: 'A Mossy Yard', area: 'Frost Vale', environment: 'land', exits: {}, Contents: {} }));
+await page.evaluate(() => window.gmcp('Room.Info', { name: 'A Mossy Yard', area: 'Frost Vale', environment: 'land', exits: {}, Contents: {} }));
+const asked = await page.evaluate(() => window.requests.filter(r => r === 'Room.Gather').length);
+check(asked === 1, 'the Room window asks for the work in progress once, on its first room: ' + asked);
+await page.evaluate(() => window.gmcp('Room.Gather', { phase: 'start', kind: 'herbs', label: 'gathering herbs', seconds: 20, elapsed: 15 }));
+const resumedLeft = await page.evaluate(() => document.getElementById('rw-gather-left').textContent);
+check(/^(5|6)s left$/.test(resumedLeft), 'a resumed bar shows only the time left: ' + resumedLeft);
+const resumedWidth = await page.evaluate(() => document.getElementById('rw-gather-fill').getBoundingClientRect().width / document.getElementById('rw-gather-track').getBoundingClientRect().width);
+check(resumedWidth > 0.7, 'and starts most of the way along: ' + resumedWidth.toFixed(2));
 // Room.Info still works beside it.
 await page.evaluate(() => window.gmcp('Room.Info', { name: 'The Road', area: 'Frost Vale', environment: 'land', exits: {}, Contents: {} }));
 check(await page.evaluate(() => document.getElementById('rw-room-name').textContent.includes('The Road')), 'Room.Info still updates the window');

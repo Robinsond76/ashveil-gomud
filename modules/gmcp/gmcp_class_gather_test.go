@@ -3,8 +3,10 @@ package gmcp
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,4 +36,23 @@ func TestRoomGatherCarriesTheWorksProgress(t *testing.T) {
 	raw, err := json.Marshal(out[1].Payload)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"phase":"done","kind":"herbs","label":"gathering herbs","lines":["Your company gathers 2 thyme."]}`, string(raw), "colour tags are stripped for the panel")
+}
+
+// Phase 46: a client that reconnects mid-work asks for Room.Gather and gets a
+// start payload carrying how much of the work is already done.
+func TestRoomGatherResumesWorkInProgress(t *testing.T) {
+	gathering.SetProgressProvider(func(userID int) (gathering.Progress, bool) {
+		if userID != 7 {
+			return gathering.Progress{}, false
+		}
+		return gathering.Progress{Kind: "herbs", Label: "gathering herbs", Total: 20 * time.Second, Remaining: 12*time.Second + 300*time.Millisecond}, true
+	})
+	t.Cleanup(func() { gathering.SetProgressProvider(nil) })
+
+	resume, ok := gatherResume(7)
+	require.True(t, ok)
+	assert.Equal(t, GMCPRoomGatherPayload{Phase: "start", Kind: "herbs", Label: "gathering herbs", Seconds: 20, Elapsed: 7}, resume)
+
+	_, ok = gatherResume(8)
+	assert.False(t, ok, "no work, nothing to resume")
 }
