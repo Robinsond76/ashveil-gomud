@@ -199,3 +199,30 @@ func TestAWarhoundsBiteHobblesAWoundedFoe(t *testing.T) {
 	}
 	assert.True(t, hobbled, "a wounded foe is hobbled by the bite")
 }
+
+func TestAPlayerBeastTamerSendsItsBeastIn(t *testing.T) {
+	hooks.ResetBeastsForTest()
+	domain.ResetBeastsForTest()
+	t.Cleanup(domain.ResetBeastsForTest)
+	t.Cleanup(beasts.UseSpawnHookForTest(func(m *mobs.Mob) {
+		m.Character.HealthMax.Value = 1000
+		m.Character.Health = 1000
+	}))
+	b, stream := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+	b.withArchetypesFor("beasttamer", map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+	for _, who := range []string{"tamsin", "garrick", "ysolde", "oswin"} {
+		b.cmd("strategy", who+" abilities off")
+	}
+	alwaysLand(t)
+	b.start()
+	b.hardenBandits()
+	n := len(*stream)
+	out := b.fight()
+	tamer, ok := beasts.Of(7, domain.LeaderMemberKey)
+	require.True(t, ok)
+	beast, standing := beasts.Live(tamer)
+	require.True(t, standing, "the player's beast stands\n%s", out)
+	assert.NotEmpty(t, swingsBy(since(*stream, n), beast.Character.Name), "it bites on its own turn")
+	assert.Equal(t, 7, beast.Character.RT.Beast.OwnerUser)
+	assert.Contains(t, out, "(sic)")
+}
