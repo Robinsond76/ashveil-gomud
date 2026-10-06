@@ -69,7 +69,6 @@ type Character struct {
 	gearFx   map[string]int
 	gearSets []items.ActiveSet
 	mergedFx classes.Effects
-	mergedOn uintptr
 	// Aura is what allies' class auras give this character this round
 	// (Phase 38b); the combat round sets it and nothing saves it.
 	Aura ClassAura `yaml:"-"`

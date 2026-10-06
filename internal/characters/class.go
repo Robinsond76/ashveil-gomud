@@ -1,7 +1,6 @@
 package characters
 
 import (
-	"reflect"
 	"slices"
 	"strconv"
 
@@ -48,10 +47,10 @@ func (c *Character) ClassEffects() classes.Effects {
 		return own
 	}
 	// Phase 36d: worn relics add their signature and set bonuses on top.
-	on := reflect.ValueOf(own).Pointer()
-	if c.mergedFx == nil || c.mergedOn != on {
+	// classOwnEffects and wornGear drop mergedFx whenever either side is
+	// remade, so the merge is redone only then.
+	if c.mergedFx == nil {
 		c.mergedFx = classes.WithGear(own, gear)
-		c.mergedOn = on
 	}
 	return c.mergedFx
 }
@@ -107,12 +106,16 @@ func (c *Character) classOwnEffects() classes.Effects {
 		}
 	}
 	if class == "" && len(talents) == 0 && lineage == "" {
+		if c != nil && c.fxValid {
+			c.fxValid, c.mergedFx = false, nil // 36d review: no class now, so no merge on the old one
+		}
 		return nil
 	}
 	if c.fxValid && c.fxClass == class && c.fxLineage == lineage && c.fxLevel == c.Level && slices.Equal(c.fxTalents, talents) {
 		return c.fx
 	}
 	c.fx = classes.EffectsForLineage(lineage, class, c.Level, talents)
+	c.mergedFx = nil // 36d review: the gear merge sits on top of the old map
 	c.fxClass, c.fxLineage, c.fxLevel, c.fxTalents, c.fxValid = class, lineage, c.Level, slices.Clone(talents), true
 	return c.fx
 }
@@ -414,7 +417,12 @@ func (c *Character) GuardFall(dmg, room int, warded bool) (int, string) {
 
 // ShieldBlow spends a Divine Shield on a blow, once a battle.
 func (c *Character) ShieldBlow() bool {
-	if c.RT == nil || c.RT.ShieldUsed || !c.ClassEffects().Has(classes.DivineShield) {
+	if !c.ClassEffects().Has(classes.DivineShield) {
+		return false
+	}
+	// 36d review: a relic gives a classless wearer the shield, and it may be
+	// struck before it has acted (and so before it has runtime state).
+	if rt := c.RTState(); rt.ShieldUsed {
 		return false
 	}
 	c.RT.ShieldUsed = true

@@ -123,3 +123,51 @@ func TestRelicBargainLeavesOneHealthOnce(t *testing.T) {
 	dmg, saved = c.GuardFall(50, 10, false)
 	assert.Equal(t, []any{50, ""}, []any{dmg, saved}, "once a battle")
 }
+
+// 36d review: a relic's Divine Shield works for a classless wearer struck
+// before it has acted, when it has no runtime state yet.
+func TestRelicDivineShieldHoldsBeforeTheWearerActs(t *testing.T) {
+	const shieldID = 99606
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: shieldID, Name: "relic shield", Type: items.Offhand, Subtype: items.Wearable, Tier: 6, DamageReduction: 5,
+		Relic: &items.RelicSpec{Signature: "Unbroken", Effects: map[string]int{classes.DivineShield: 1}, ILvl: 20, Mob: 1, Chance: 5}})
+	t.Cleanup(func() { items.RemoveTestItemSpec(shieldID) })
+	c := New()
+	c.Level = 30
+	assert.False(t, c.ShieldBlow(), "no shield without the relic")
+	wear(t, c, shieldID)
+	require.Nil(t, c.RT, "a fresh wearer has no runtime state")
+	assert.True(t, c.ShieldBlow(), "the first blow is ignored")
+	assert.False(t, c.ShieldBlow(), "once a battle")
+	c.EndFightRT()
+	assert.True(t, c.ShieldBlow(), "and again next battle")
+}
+
+// 36d review: the gear merge is redone when the class's own effects are,
+// so a level gained while wearing a relic shows its new ranks.
+func TestWornRelicsFollowTheClassAsItGrows(t *testing.T) {
+	relicGear(t)
+	c := New()
+	c.Level = 10
+	c.SetClassState("warlord", nil)
+	wear(t, c, relicBladeID)
+	_ = c.ClassEffects()
+	c.Level = 30
+	want := classes.WithGear(c.classOwnEffects(), map[string]int{classes.Wounded: 20, classes.Armor: 3, classes.Bargain: 1})
+	assert.Equal(t, want, c.ClassEffects())
+}
+
+// 36d review: a relic's percent more health reaches maximum health through
+// the real Validate that equip runs.
+func TestRelicHealthPctRaisesMaximumHealth(t *testing.T) {
+	const axeID = 99607
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: axeID, Name: "relic jack", Type: items.Body, Subtype: items.Wearable, Tier: 4, DamageReduction: 5,
+		Relic: &items.RelicSpec{Signature: "Giantfelling", Effects: map[string]int{classes.HealthPct: 10}, ILvl: 20, Mob: 1, Chance: 5}})
+	t.Cleanup(func() { items.RemoveTestItemSpec(axeID) })
+	c := New()
+	c.Level = 30
+	c.Validate(true)
+	before := c.HealthMax.Value
+	c.Equipment.Body = items.New(axeID)
+	c.Validate(true)
+	assert.Equal(t, classPct(before, 10), c.HealthMax.Value)
+}

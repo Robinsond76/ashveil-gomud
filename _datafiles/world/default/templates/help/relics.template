@@ -34,8 +34,10 @@ progress with the bonuses in force.
 <ansi fg="yellow-bold">Where they come from</ansi>
 
 Every relic belongs to one boss, and a Scribe of rank 4 can read which. Each
-company that beats the boss rolls once for it: a few percent a kill, for one
-of that boss's relics. Allied companies each roll for themselves.
+company that beats the boss rolls once a kill for at most one of its relics.
+Each relic has a few percent, so a boss that carries several drops one more
+often: from about one kill in twelve to one in four. Allied companies each roll
+for themselves.
 
 <ansi fg="yellow-bold">Bad luck</ansi>
 

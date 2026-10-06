@@ -102,7 +102,8 @@ func TestShippedRelicsAreCompleteAndSourced(t *testing.T) {
 	}
 	assert.GreaterOrEqual(t, legendaries, 5)
 	for boss, total := range chance {
-		assert.LessOrEqual(t, total, 100, "boss %d's relic chances", boss)
+		// help relics: "from about one kill in twelve to one in four".
+		assert.True(t, total >= 8 && total <= 25, "boss %d's relic chances total %d%%, outside what help relics says", boss, total)
 		assert.Greater(t, total, 0)
 	}
 	require.Len(t, pieces, len(sets), "every set has pieces")

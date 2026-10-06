@@ -6,6 +6,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,6 +93,19 @@ func TestGMCPItemListsCarryRelicText(t *testing.T) {
 	assert.Equal(t, "set", helm.Rarity)
 
 	data, err := json.Marshal(newInventory_Item(items.New(989403)))
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "relic")
+
+	// 36d review: the Company window's gear and cargo rows carry it too,
+	// so a relic handed to a companion still says what it does.
+	var eq characters.Worn
+	eq.Weapon = items.New(989401)
+	member := company.InventoryMemberOf("ysolde", "Ysolde", company.MemberState{Equipment: eq})
+	worn := inventoryMemberOf(member).Worn
+	require.NotEmpty(t, worn)
+	assert.Equal(t, blade.Relic, worn[0].Relic)
+	assert.Equal(t, helm.Relic, cargoItem(encumbrance.CargoStack{ItemId: 989402, Count: 1}).Relic)
+	data, err = json.Marshal(cargoItem(encumbrance.CargoStack{ItemId: 989403, Count: 1}))
 	require.NoError(t, err)
 	assert.NotContains(t, string(data), "relic")
 }
