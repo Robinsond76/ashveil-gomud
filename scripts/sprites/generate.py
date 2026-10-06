@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the Ashveil sprite sets (S0 style, S1 map basics, S2 terrain, S3 battle).
+"""Generate the Ashveil sprite sets (S0 style, S1 map basics, S2 terrain, S3 battle, S5 promoted classes).
 
     python3 scripts/sprites/generate.py [--out DIR] [--preview FILE]
 
@@ -22,6 +22,7 @@ import icons  # noqa: E402
 import scenes  # noqa: E402
 import backgrounds  # noqa: E402
 import landmarks  # noqa: E402
+import promoted  # noqa: E402
 import roster  # noqa: E402
 import terrain  # noqa: E402
 import uiicons  # noqa: E402
@@ -167,7 +168,7 @@ def write_s3(w):
         w.canvas(f"battle/backgrounds/{bid}.png", fn(), kind="battle-background", set="S3",
                  frame=[320, 180], frames=1, biomes=biomes, ground_band=[16, 100, 304, 176])
     for u in roster.UNITS:
-        meta = dict(kind="battle-unit", set="S3", frame=[u.frame, u.frame], frames=4, frame_ms=180,
+        meta = dict(kind="battle-unit", set="S5" if u.family in ("promoted class", "summon") else "S3", frame=[u.frame, u.frame], frames=4, frame_ms=180,
                     anchor="bottom-center", feet_baseline=u.frame - 2, facing="right",
                     size_class=u.size, family=u.family)
         if u.names:
@@ -197,6 +198,17 @@ def write_s3(w):
         for name, fn in table.items():
             w.canvas(f"ui/{folder}/{name}.png", fn(), kind="ui-icon", set="S3", frame=[16, 16],
                      frames=1, anchor="center", group=folder)
+
+
+def write_s5(w):
+    """Map sprites for the promoted classes (the battle idles come from the roster)."""
+    for cls in promoted.CLASS_IDS:
+        base = dict(kind="map-unit", set="S5", frame=[32, 32], rows=DIRECTIONS,
+                    anchor="bottom-center", feet_baseline=30, variant_of=promoted.LINEAGE[cls])
+        w.canvas(f"map/units/{cls}/idle.png", sheet(promoted.map_idle(cls)), frames=2,
+                 frame_ms=500, **base)
+        w.canvas(f"map/units/{cls}/walk.png", sheet(promoted.map_walk(cls)), frames=4,
+                 frame_ms=120, **base)
 
 
 def write_battle_mapping(w):
@@ -245,6 +257,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=DEFAULT_OUT, help="output directory")
     ap.add_argument("--preview", help="also write the S0/S1 contact sheet PNG here")
+    ap.add_argument("--preview-s5", help="also write the S5 (promoted classes, summons) contact sheet PNG here")
     ap.add_argument("--preview-s23", help="also write the S2/S3 contact sheet PNG here")
     args = ap.parse_args(argv)
     w = Writer(args.out)
@@ -252,6 +265,7 @@ def main(argv=None):
     write_s1(w)
     write_s2(w)
     write_s3(w)
+    write_s5(w)
     write_battle_mapping(w)
     write_manifest(w)
     if args.preview:
@@ -260,6 +274,9 @@ def main(argv=None):
     if args.preview_s23:
         import preview
         preview.contact_sheet_s23(w.out, args.preview_s23)
+    if args.preview_s5:
+        import preview
+        preview.contact_sheet_s5(w.out, args.preview_s5)
     print(f"wrote {len(w.manifest)} files to {w.out}")
 
 

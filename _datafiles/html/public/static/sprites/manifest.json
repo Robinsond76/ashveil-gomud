@@ -537,6 +537,71 @@
     64
    ]
   },
+  "battle/units/angel/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "summon",
+   "names": [
+    "angel"
+   ],
+   "note": "a Hierarch's summon",
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/arcanist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "wizard",
+   "note": "wizard line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/assassin/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "rogue",
+   "note": "rogue line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/bats-echo/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -558,6 +623,48 @@
    "size": [
     192,
     48
+   ]
+  },
+  "battle/units/blackguard/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "warrior",
+   "note": "warrior line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/blood-priest/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "cleric",
+   "note": "cleric line",
+   "size": [
+    256,
+    64
    ]
   },
   "battle/units/bone-warden/idle.png": {
@@ -671,6 +778,27 @@
     64
    ]
   },
+  "battle/units/coven-sage/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "witch",
+   "note": "witch line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/creeper-abyssal/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -738,6 +866,50 @@
     72
    ]
   },
+  "battle/units/demon/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "summon",
+   "names": [
+    "demon"
+   ],
+   "note": "a Demonologist's summon",
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/demonologist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "cleric",
+   "note": "cleric line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/dog-junkyard/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -760,6 +932,69 @@
     64
    ]
   },
+  "battle/units/dread-knight/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "warrior",
+   "note": "warrior line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/druid/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "cleric",
+   "note": "cleric line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/duelist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "rogue",
+   "note": "rogue line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/dummy-training/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -777,6 +1012,27 @@
    "names": [
     "training dummy"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/elder-druid/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "cleric",
+   "note": "cleric line",
    "size": [
     256,
     64
@@ -887,6 +1143,29 @@
    "family": "goblin",
    "names": [
     "loot goblin"
+   ],
+   "variant_of": "goblin",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/goblin-shaman/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "goblin",
+   "names": [
+    "goblin shaman"
    ],
    "variant_of": "goblin",
    "size": [
@@ -1007,6 +1286,90 @@
     64
    ]
   },
+  "battle/units/hag/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "witch",
+   "note": "witch line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/hedge-witch/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "witch",
+   "note": "witch line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/hierarch/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "cleric",
+   "note": "cleric line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/hunter/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "ranger",
+   "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/ice-guardian/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1073,6 +1436,27 @@
     48
    ]
   },
+  "battle/units/knight/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "warrior",
+   "note": "warrior line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/lich/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1096,6 +1480,27 @@
     72
    ]
   },
+  "battle/units/mercenary/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "warrior",
+   "note": "warrior line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/ogre-forest/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1116,6 +1521,27 @@
    "size": [
     288,
     72
+   ]
+  },
+  "battle/units/paladin/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "warrior",
+   "note": "warrior line",
+   "size": [
+    256,
+    64
    ]
   },
   "battle/units/poacher-shieldman/idle.png": {
@@ -1157,6 +1583,27 @@
    "names": [
     "lake poacher"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/priest/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "cleric",
+   "note": "cleric line",
    "size": [
     256,
     64
@@ -1313,6 +1760,27 @@
    "names": [
     "ruffian"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/scout/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "rogue",
+   "note": "rogue line",
    "size": [
     256,
     64
@@ -1520,6 +1988,27 @@
     64
    ]
   },
+  "battle/units/stalker/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "ranger",
+   "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/straw-archer/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1560,6 +2049,27 @@
    "names": [
     "straw footman"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/theurgist/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "wizard",
+   "note": "wizard line",
    "size": [
     256,
     64
@@ -1623,6 +2133,48 @@
    "size": [
     288,
     72
+   ]
+  },
+  "battle/units/warden/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "ranger",
+   "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/warlock/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "wizard",
+   "note": "wizard line",
+   "size": [
+    256,
+    64
    ]
   },
   "battle/units/warrior/idle.png": {
@@ -2934,6 +3486,182 @@
     96
    ]
   },
+  "map/units/arcanist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/arcanist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/assassin/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/assassin/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/blackguard/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/blackguard/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/blood-priest/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/blood-priest/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/cleric/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -2971,6 +3699,622 @@
    ],
    "anchor": "bottom-center",
    "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/coven-sage/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/coven-sage/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/demonologist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/demonologist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/dread-knight/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/dread-knight/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/druid/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/druid/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/duelist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/duelist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/elder-druid/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/elder-druid/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/hag/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/hag/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/hedge-witch/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/hedge-witch/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/hierarch/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/hierarch/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/hunter/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/hunter/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/knight/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/knight/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/mercenary/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/mercenary/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/paladin/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/paladin/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/priest/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/priest/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "cleric",
    "size": [
     128,
     96
@@ -3055,6 +4399,226 @@
    ],
    "anchor": "bottom-center",
    "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/scout/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/scout/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "rogue",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/stalker/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/stalker/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/theurgist/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/theurgist/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/warden/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/warden/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "ranger",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/warlock/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/warlock/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "wizard",
    "size": [
     128,
     96

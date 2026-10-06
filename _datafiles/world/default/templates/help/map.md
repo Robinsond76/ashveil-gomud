@@ -14,3 +14,5 @@ With each level of training, your mapping skill will become more effective, cove
 (Lvl 4) ~map [wide]~ Map a 17x9 area around you, or if "wide" is specified, twice the distance zoomed out.
 
 Your maps continue to expand with your perception: **Perception/5**
+
+Playing in the web client? Its Map window is a picture of the same rooms: ~help worldmap~.

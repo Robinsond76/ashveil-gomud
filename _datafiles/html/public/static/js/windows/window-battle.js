@@ -26,6 +26,19 @@
  *   Company.Battle.Event  (Client.onBattleEvents) hits, heals, casts,
  *                         statuses, falls, yields, the fight's end
  *
+ * Phase 40g animates it. Each Company.Battle.Event batch is planned by
+ * battle-timeline.js (pure, tested under Node) into steps that this file
+ * plays: a fighter steps in and strikes, a shot flies, a caster chants and
+ * releases, the struck flinch, block, parry or dodge, statuses appear as
+ * their events arrive, the fallen collapse, the beaten yield and the routed
+ * run, with hit effects and damage digits. Animation is client-side only:
+ * it never sends anything and never changes or delays the battle. The
+ * setting `battleAnimations` is full, reduced (no projectile travel, flashes
+ * or shake) or off (the 40f static screen); the default follows the
+ * system's reduced-motion request. A unit without S4 art for a pose
+ * (battle/units/<key>/<pose>.png) nudges its idle figure instead, and
+ * effects without art are drawn in code.
+ *
  * Units known by a "?" ref (an enemy the player can't make out) are drawn
  * as one unseen presence. Enemy health is shown in five bands, never as
  * numbers. A spell's results arrive on the line after its cast line, so a
@@ -40,10 +53,12 @@
 (function() {
 
     const el = CompanyData.el;
+    const TL = window.BattleTimeline;
 
     const W = 320;
     const H = 180;
     const SETTING_KEY = 'ashveil-battle-screen';
+    const ANIM_KEY = 'ashveil-battle-animations';
     const OUTCOME_MS = 3000;
     const FOCI = ['none', 'leader', 'casters', 'healers', 'nearest', 'weakest', 'strongest', 'wounded'];
 
@@ -102,6 +117,7 @@
         #battle-screen .bs-title { font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #battle-screen .bs-banners { color: var(--t-text-secondary); }
         #battle-screen canvas { display: block; margin: 4px auto; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+        #battle-screen .bs-last { min-height: 1.3em; text-align: center; font-style: italic; }
         #battle-screen .bs-caption { min-height: 1.3em; color: var(--t-text-secondary); text-align: center; }
         #battle-screen .bs-outcome { text-align: center; font-weight: bold; min-height: 1.3em; }
         #battle-screen .bs-foot { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; }
@@ -172,6 +188,15 @@
     let ended = false;          // fight-end came: this battle's last snapshots change nothing
     let hover = null;           // the unit id under the pointer
     let raf = 0;
+    let zone = '';              // Room.Info.area, for a zone's own backdrop
+    let roundNo = 0;            // the round of the latest events
+    let lastBlow = '';          // the latest happening, in words
+    let sched = new TL.Scheduler();
+    let paceHistory = [];       // how event batches arrived, to infer the combat pace
+    let holding = new Set();    // units whose fall or exit is still to play
+    let outcomeQueued = false;  // a fight-end is scheduled: its outcome shows when it plays
+    let shakeUntil = 0;
+    let endExtra = 0;
 
     function setting() {
         try { return localStorage.getItem(SETTING_KEY) === 'manual' ? 'manual' : 'auto'; } catch (err) { return 'auto'; }
@@ -183,6 +208,28 @@
     }
     let memorySetting = null;
     function currentSetting() { return memorySetting || setting(); }
+
+    // battleAnimations: full, reduced or off. The default is reduced when
+    // the system asks for reduced motion.
+    const MOTIONS = ['full', 'reduced', 'off'];
+    let memoryMotion = null;
+    function systemReducedMotion() {
+        try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (err) { return false; }
+    }
+    function motion() {
+        if (memoryMotion) { return memoryMotion; }
+        try {
+            const v = localStorage.getItem(ANIM_KEY);
+            if (MOTIONS.indexOf(v) >= 0) { return v; }
+        } catch (err) { /* unavailable: the default */ }
+        return systemReducedMotion() ? 'reduced' : 'full';
+    }
+    function saveMotion(v) {
+        if (MOTIONS.indexOf(v) < 0) { return; }
+        memoryMotion = v;
+        try { localStorage.setItem(ANIM_KEY, v); } catch (err) { /* the choice lasts this page */ }
+        if (v === 'off') { collapseNow(); }
+    }
 
     // ---------------------------------------------------------------------
     // Layout: the 3x3 formations on the 320x180 canvas
@@ -244,10 +291,12 @@
             u.label = m.name || m.key;
             u.klass = String(m.archetype || '').toLowerCase();
             u.sprite = u.klass || 'adventurer';
+            u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
+            u.className = m.class_name || '';
             u.cell = cell;
             u.leader = m.key === 'leader';
             u.role = (m.strategy && m.strategy.role) || '';
-            u.fallen = m.status === 'dead';
+            u.fallen = m.status === 'dead' && !holding.has(m.key);
             u.frac = (v.hp !== null && v.hp !== undefined && v.hp_max > 0) ? Math.max(0, Math.min(1, v.hp / v.hp_max)) : (u.fallen ? 0 : 1);
             u.band = '';
             seen.add(m.key);
@@ -266,14 +315,14 @@
                 u.yielded = false;
                 seen.add(e.id);
             });
-            (battle.fallen || []).forEach(f => { if (units.has(f.id)) { unit(f.id).fallen = true; seen.add(f.id); } });
+            (battle.fallen || []).forEach(f => { if (units.has(f.id)) { unit(f.id).fallen = !holding.has(f.id); seen.add(f.id); } });
             (battle.surrendered || []).forEach(f => { if (units.has(f.id)) { const u = unit(f.id); u.yielded = true; seen.add(f.id); } });
             if (battle.dark) { unseen(); seen.add('?'); }
         }
         // Anyone no longer in the fight leaves the picture; the unseen
         // presence stays while an event still names one.
         units.forEach((u, id) => {
-            if (!seen.has(id) && !(id === '?' && u.keep)) { units.delete(id); }
+            if (!seen.has(id) && !(id === '?' && u.keep) && !holding.has(id)) { units.delete(id); }
         });
     }
 
@@ -299,9 +348,157 @@
         return units.get(ref) || null;
     }
 
+    // narrate is a happening in a few plain words, for the last-blow line.
+    // Damage in parentheses, as the narration has it; no exclamations.
+    function nameOf(ref) {
+        const u = refUnit(ref);
+        return u ? (u.id === 'leader' ? (u.label || 'You') : u.label) : '';
+    }
+
+    function narrate(e) {
+        const a = nameOf(e.src), t = nameOf(e.tgt);
+        const dmg = e.damage ? ' (' + e.damage + ')' : '';
+        switch (e.kind) {
+        case 'attack':
+            if (!a || !t) { return ''; }
+            if (e.outcome === 'miss') { return a + ' misses ' + t; }
+            if ((e.defenses || []).length && !e.damage) { return t + ' ' + e.defenses[0] + ' ' + a; }
+            return a + (e.crit ? ' strikes ' + t + ' hard' : ' hits ' + t) + dmg;
+        case 'spell-hit': {
+            // An unseen caster's spell goes unnamed, as its chant does.
+            const sp = e.src === '?' ? 'a spell' : (e.spell_name || e.spell || 'a spell');
+            if (!t) { return ''; }
+            const who = a && e.src !== '?' ? a + '\'s ' + sp : sp.charAt(0).toUpperCase() + sp.slice(1);
+            return who + ' strikes ' + t + dmg;
+        }
+        case 'heal': return t ? (a ? a + ' mends ' : 'Mended: ') + t + (e.amount ? ' (+' + e.amount + ')' : '') : '';
+        case 'cast-start': return a ? a + ' begins a chant' : '';
+        case 'cast-complete': return a && e.outcome === 'interrupted' ? a + '\'s chant is broken' : '';
+        case 'status-tick': return t && e.damage ? t + ' suffers ' + (e.status || 'a wound') + ' (' + e.damage + ')' : '';
+        case 'death': return t ? t + ' falls' : '';
+        case 'yield': return a ? a + ' yields' : '';
+        case 'flee': return a ? a + ' flees' : '';
+        case 'guard-used': return a && t ? a + ' guards ' + t : '';
+        default: return '';
+        }
+    }
+
+    // normRef gives events the ids the units are kept by.
+    function normRef(ref) { return ref === 'me' ? 'leader' : (ref || ''); }
+
     function onEvents(body) {
-        (body.events || []).forEach(applyEvent);
+        const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) }));
+        // fight_round counts this fight's rounds; round is the server's counter.
+        if (body.fight_round) { roundNo = body.fight_round; paintChrome(); }
+        paceHistory.push({ at: Date.now(), n: evs.length });
+        if (paceHistory.length > 8) { paceHistory.shift(); }
+        if (motion() === 'off') {
+            evs.forEach(e => { const line = narrate(e); if (line) { lastBlow = line; } applyEvent(e); });
+            paintCaption();
+            draw();
+            return;
+        }
+        playEvents(evs);
         draw();
+    }
+
+    // hasArt answers the planner: does this unit have art for that pose?
+    function hasArt(id, anim) {
+        const u = id === '*company*' ? null : units.get(id);
+        return !!(u && art('battle/units/' + u.sprite + '/' + anim + '.png'));
+    }
+
+    // playEvents plans a batch and schedules it. Hidden, or when the screen
+    // cannot play (no scheduler time to give), the happenings collapse to
+
+
+    function playEvents(evs) {
+        const now = Date.now();
+        evs.forEach(e => {
+            // Refs seen for the first time make their units (an unseen '?').
+            if (e.src === '?' || e.tgt === '?') { refUnit('?'); }
+        });
+        // Start and end of the fight are not animated: they take effect now
+        // (a fight-start before this batch's happenings are held).
+        evs.forEach(e => {
+            if (e.kind === 'fight-start') { sched.collapse(); holding = new Set(); outcomeQueued = false; applyEvent(e); }
+            else if (e.kind === 'fight-end') { ended = true; paintBadge(); }
+        });
+        const happenings = TL.plan(evs, {
+            pace: TL.inferPace(paceHistory), motion: motion(), has: hasArt,
+        });
+        const bySeq = new Map(evs.map(e => [e.seq, e]));
+        happenings.forEach(h => {
+            const e = bySeq.get(h.seq);
+            if (e) {
+                const line = narrate(e);
+                if (line) { h.steps[0].ops.push({ op: 'log', when: 'start', text: line }); }
+            }
+            // The outcome shows when the fight's end plays, after the last
+            // blow; the screen is ended (no more snapshots change it) now.
+            if (h.kind === 'fight-end') {
+                const fe = bySeq.get(h.seq);
+                // Why it ended is read now, while the last snapshot stands.
+                const outcome = fe ? fe.outcome : '';
+                h.steps[0].ops.push({ op: 'outcome', when: 'start', outcome: outcome, why: outcomeReason(outcome) });
+                outcomeQueued = true;
+            }
+            h.steps.forEach(st => st.ops.forEach(o => {
+                if (o.op === 'fallen' || o.op === 'remove') { holding.add(o.unit); }
+            }));
+        });
+        const collapsed = sched.push(happenings, now);
+        collapsed.forEach(applyOp);
+        if (!isShown()) {
+            sched.collapse().forEach(applyOp);
+        }
+        wake();
+    }
+
+    // collapseNow ends all animation at once, to the picture's final state.
+    function collapseNow() {
+        sched.collapse().forEach(applyOp);
+        holding = new Set();
+        floaters = [];
+        draw();
+    }
+
+    // applyOp changes the picture's state: what a step carries that is not
+    // a pose or an effect.
+    function applyOp(o) {
+        const u = o.unit ? (o.unit === '?' ? units.get('?') : units.get(o.unit)) : null;
+        switch (o.op) {
+        case 'casting': if (u) { u.casting = o.spell || ''; } break;
+        case 'status+': if (u && !u.unseen && o.status) { u.statuses.add(o.status); } break;
+        case 'status-': if (u && !u.unseen && o.status) { u.statuses.delete(o.status); } break;
+        case 'yielded': if (u) { u.yielded = true; } break;
+        case 'fallen':
+            holding.delete(o.unit);
+            if (u) { u.fallen = true; u.casting = ''; }
+            break;
+        case 'remove':
+            holding.delete(o.unit);
+            units.delete(o.unit);
+            break;
+        case 'log': lastBlow = o.text; paintCaption(); break;
+        case 'outcome': outcomeQueued = false; beginOutcome(o.outcome, o.why); break;
+        case 'react': react(o); break;
+        default: break;
+        }
+    }
+
+    // react shows what a step's start brings: a tint, digits, a feedback icon.
+    function react(o) {
+        const u = units.get(o.unit);
+        if (!u) { return; }
+        const now = Date.now();
+        const p = u.cell ? slot(u.side, u.cell.row, u.cell.col) : { x: W / 2, y: 120 };
+        if (o.tint && motion() === 'full') { u.flash = now + 260; u.flashColor = o.tint; }
+        (o.digits || []).forEach((d, i) => {
+            floaters.push({ x: p.x, y: p.y - 34 - i * 8, text: d.text, color: d.color, born: now, big: !!d.big, dim: !!d.dim });
+        });
+        if (o.icon) { floaters.push({ x: p.x + 8, y: p.y - 24, icon: o.icon, born: now }); }
+        if (o.bigHit && motion() === 'full') { shakeUntil = now + 160; }
     }
 
     function applyEvent(e) {
@@ -330,7 +527,7 @@
             break;
         case 'cast-start':
             // A spell cast by one the player can't make out stays unnamed.
-            if (src) { src.casting = e.src === '?' ? 'a spell' : (e.spell || 'a spell'); wake(); }
+            if (src) { src.casting = e.src === '?' ? 'a spell' : (e.spell_name || e.spell || 'a spell'); wake(); }
             break;
         case 'cast-complete':
         case 'interrupt':
@@ -369,12 +566,35 @@
 
     const OUTCOMES = { victory: 'Victory', defeat: 'Defeat', 'broken-off': 'The company breaks off' };
 
-    function beginOutcome(outcome) {
+    // outcomeReason says why the fight ended, from the last snapshot.
+    function outcomeReason(outcome) {
+        if (outcome === 'victory') { return 'no foe is left standing'; }
+        if (outcome === 'defeat') { return 'the company has fallen'; }
+        if (outcome === 'broken-off') { return battle && battle.retreat ? 'the company withdrew' : 'the battle was broken off'; }
+        return '';
+    }
+
+    function beginOutcome(outcome, reason) {
         if (!isShown()) { return; }
-        outcomeText = OUTCOMES[outcome] || 'The battle is over';
+        const head = OUTCOMES[outcome] || 'The battle is over';
+        const why = reason === undefined ? outcomeReason(outcome) : reason;
+        outcomeText = why ? head + ': ' + why : head;
         if (outcomeTimer) { clearTimeout(outcomeTimer); }
-        outcomeTimer = setTimeout(() => { outcomeTimer = null; endBattleView(); }, OUTCOME_MS);
+        endExtra = 0;
+        outcomeTimer = setTimeout(holdOver, OUTCOME_MS);
         paintChrome();
+    }
+
+    // holdOver closes the screen after the hold, unless the animations are
+    // still playing out the fight's last moments (a little longer at most).
+    function holdOver() {
+        outcomeTimer = null;
+        if (!sched.idle(Date.now()) && endExtra < 6000 && motion() !== 'off') {
+            endExtra += 500;
+            outcomeTimer = setTimeout(holdOver, 500);
+            return;
+        }
+        endBattleView();
     }
 
     function clearOutcome() {
@@ -386,6 +606,11 @@
         outcomeText = '';
         units = new Map();
         floaters = [];
+        sched = new TL.Scheduler();
+        holding = new Set();
+        outcomeQueued = false;
+        lastBlow = '';
+        roundNo = 0;
         userOpened = false;
         minimised = false;
         hide();
@@ -425,7 +650,7 @@
     // DOM
     // ---------------------------------------------------------------------
 
-    let titleNode, bannerNode, captionNode, outcomeNode, retreatBtn, autoBox, focusBtns = [];
+    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, retreatBtn, autoBox, animSelect, focusBtns = [];
 
     function build() {
         if (overlay) { return; }
@@ -456,9 +681,12 @@
         ctx = canvas.getContext('2d');
         overlay.appendChild(canvas);
 
+        lastNode = el('div', 'bs-last');
+        lastNode.setAttribute('aria-live', 'off');
         captionNode = el('div', 'bs-caption');
         outcomeNode = el('div', 'bs-outcome');
         outcomeNode.setAttribute('role', 'status');
+        overlay.appendChild(lastNode);
         overlay.appendChild(captionNode);
         overlay.appendChild(outcomeNode);
 
@@ -477,6 +705,15 @@
             focusBtns.push(b);
             foot.appendChild(b);
         });
+        const animLabel = el('label');
+        animSelect = document.createElement('select');
+        animSelect.title = 'Battle animations: full, reduced (no flashes, shake or travelling shots), or off (a still picture)';
+        MOTIONS.forEach(m => { const o = el('option', null, m); o.value = m; animSelect.appendChild(o); });
+        animSelect.value = motion();
+        animSelect.addEventListener('change', () => saveMotion(animSelect.value));
+        animLabel.appendChild(document.createTextNode('Animation '));
+        animLabel.appendChild(animSelect);
+        foot.appendChild(animLabel);
         const label = el('label');
         autoBox = document.createElement('input');
         autoBox.type = 'checkbox';
@@ -521,7 +758,7 @@
 
     function paintChrome() {
         if (!overlay) { return; }
-        titleNode.textContent = battle ? 'Battle: ' + (battle.group || 'the enemy') : 'Battle';
+        titleNode.textContent = battle ? 'Battle: ' + (battle.group || 'the enemy') + (roundNo ? ', round ' + roundNo : '') : 'Battle';
         const banners = [];
         if (battle) {
             if (battle.dark) { banners.push('dark'); }
@@ -538,14 +775,17 @@
         });
         retreatBtn.disabled = !battle || !!outcomeText;
         autoBox.checked = currentSetting() === 'auto';
+        animSelect.value = motion();
         paintCaption();
     }
 
     function paintCaption() {
         if (!captionNode) { return; }
+        lastNode.textContent = battle && !outcomeText ? lastBlow : '';
         const u = hover ? units.get(hover) : null;
         if (!u) { captionNode.textContent = battle && !outcomeText ? HINT : ''; return; }
         let text = u.label;
+        if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'enemy' && u.band) { text += ', ' + u.band; }
         if (u.side === 'company' && u.fallen) { text += ', fallen'; }
         if (u.yielded) { text += ', surrendered'; }
@@ -594,15 +834,77 @@
         draw();
         const now = Date.now();
         floaters = floaters.filter(f => now - f.born < 900);
-        let live = floaters.length > 0;
+        let live = floaters.length > 0 || !sched.idle(now) || shakeUntil > now;
         units.forEach(u => { if (u.flash > now) { live = true; } });
         if (live) { wake(); }
     }
+
+    // ---------------------------------------------------------------------
+    // Poses: what a unit is doing now, from the steps under way
+    // ---------------------------------------------------------------------
+
+    // tri rises from 0 to 1 at the middle of a step and falls back.
+    function tri(p) { return p < 0.5 ? p * 2 : (1 - p) * 2; }
+
+    // poseOf reads a unit's active steps into a pose: an offset from its
+    // slot, a vertical squash, and the art animation to draw (with its
+    // progress) when the art has it. Without art the idle figure nudges.
+    function poseOf(u, p0, now) {
+        const dir = u.side === 'company' ? 1 : -1;
+        const pose = { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1 };
+        const full = motion() === 'full';
+        sched.active(now).forEach(st => {
+            if (st.unit !== u.id && !(st.unit === '*company*' && u.side === 'company')) { return; }
+            const p = Math.max(0, Math.min(1, (now - st.start) / Math.max(1, st.end - st.start)));
+            let anim = st.anim;
+            if (st.lunge && units.get(st.lunge) && units.get(st.lunge).cell) {
+                // Step in toward the target, strike at the middle, step back.
+                const t = units.get(st.lunge);
+                const tp = slot(t.side, t.cell.row, t.cell.col);
+                const e = tri(p);
+                pose.dx += (tp.x - dir * 16 - p0.x) * e;
+                pose.dy += (tp.y - p0.y) * e;
+                // Art: walk in, the blow in the middle, walk back.
+                if (p < 0.3 || p > 0.7) { if (hasArt(u.id, 'walk')) { anim = 'walk'; } }
+            }
+            pose.anim = anim || pose.anim;
+            pose.p = p;
+            pose.loop = !!st.loop;
+            if (st.exit) {
+                pose.dx += dir * -1 * p * (W / 2 - 10);
+                pose.alpha = 1 - p * 0.6;
+            } else if (st.fade) {
+                pose.alpha = 1 - p;
+            }
+            if (st.nudge || !anim) {
+                // No art for this pose: the idle figure moves a little.
+                switch (st.anim === '' ? st.role : (FALLBACK_NAME[st.anim] || st.anim)) {
+                case 'attack': case 'shoot': if (!st.lunge) { pose.dx += dir * 5 * tri(p); } break;
+                case 'hurt': case 'block': case 'parry': pose.dx -= dir * 3 * tri(p); break;
+                case 'dodge': pose.dx -= dir * 6 * tri(p); pose.dy -= 2 * tri(p); break;
+                case 'windup': pose.dx -= dir * 3; break;
+                case 'cast': pose.dy -= Math.abs(Math.sin(p * Math.PI * 4)); break;
+                case 'prone': pose.squash = p < 0.6 ? 0.45 : 0.45 + (p - 0.6) * 1.4; break;
+                case 'down': pose.squash = 1 - 0.7 * p; break;
+                case 'victory': pose.dy -= 2 * Math.abs(Math.sin(p * Math.PI * 2)); break;
+                default: break;
+                }
+            }
+        });
+        if (!full) { pose.dx = Math.round(pose.dx); pose.dy = Math.round(pose.dy); }
+        // A winding-up unit holds its pose until the blow lands.
+        if (u.statuses.has('winding-up') && !pose.anim && pose.dx === 0) { pose.dx = -dir * 3; pose.anim = 'windup'; pose.p = 1; }
+        return pose;
+    }
+
+    const FALLBACK_NAME = { 'cast-release': 'cast', 'shield-bash': 'hurt', 'guard-step': 'walk' };
 
     function rect(x, y, w, h, c) {
         ctx.fillStyle = c;
         ctx.fillRect(Math.round(x), Math.round(y), w, h);
     }
+
+    function zoneSlug() { return zone.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
     function scene() {
         return SCENES[biome] || SCENES.land;
@@ -610,7 +912,8 @@
 
     function drawBackground() {
         const s = scene();
-        const bg = art('battle/backgrounds/' + s.bg + '.png');
+        // A zone's own backdrop, when the art set has one, comes first.
+        const bg = (zoneSlug() && art('battle/backgrounds/zone-' + zoneSlug() + '.png')) || art('battle/backgrounds/' + s.bg + '.png');
         if (bg) { ctx.drawImage(bg.img, 0, 0, W, H); return; }
         const g = ctx.createLinearGradient(0, 0, 0, 100);
         g.addColorStop(0, s.sky[0]);
@@ -651,13 +954,42 @@
 
     // drawFigure draws one unit standing with its feet at (x, y), facing
     // the centre line.
-    function drawFigure(u, x, y, now) {
+    function drawFigure(u, x, y, now, pose) {
+        pose = pose || { dx: 0, dy: 0, squash: 1, anim: '', p: 0, loop: false, alpha: 1 };
         const dir = u.side === 'company' ? 1 : -1;       // +1 faces right
         const dim = battle && battle.dark ? 0.5 : 1;
         const flashing = u.flash > now;
         // Shadow.
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.fillRect(Math.round(x - 7), y - 1, 14, 2);
+        // The pose moves the figure; its shadow stays on the ground.
+        ctx.save();
+        ctx.globalAlpha = pose.alpha;
+        if (pose.dx || pose.dy || pose.squash !== 1) {
+            ctx.translate(Math.round(x + pose.dx), Math.round(y + pose.dy));
+            ctx.scale(1, pose.squash);
+            ctx.translate(-Math.round(x), -y);
+        }
+        drawBody(u, x, y, now, pose, dir, dim);
+        ctx.restore();
+        if (flashing && !u.fallen && !u.tinted) {
+            ctx.fillStyle = u.flashColor;
+            ctx.globalAlpha = 0.45;
+            ctx.fillRect(Math.round(x + pose.dx - 10), Math.round(y + pose.dy - 32), 20, 33);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // tintLayer is a scratch canvas the size of a frame, for tinting art.
+    let tintCanvas = null;
+    function tintLayer(w, h) {
+        if (!tintCanvas) { tintCanvas = document.createElement('canvas'); }
+        if (tintCanvas.width < w || tintCanvas.height < h) { tintCanvas.width = Math.max(w, tintCanvas.width); tintCanvas.height = Math.max(h, tintCanvas.height); }
+        return tintCanvas.getContext('2d');
+    }
+
+    function drawBody(u, x, y, now, pose, dir, dim) {
+        u.tinted = false;
         if (u.fallen) {
             // Lying down: a flat shape, the figure's body hue.
             const c = u.side === 'company' ? (CLASS_HUES[u.klass] || DEFAULT_HUES)[0] : '#6a4a4a';
@@ -670,18 +1002,38 @@
             rect(x - 4, y - 30, 8, 6, 'rgba(10,10,16,0.75)');
             return;
         }
-        const sheet = art('battle/units/' + u.sprite + '/idle.png');
+        // Art: the pose's own sheet when there is one (S4), else the idle
+        // loop, anchored bottom-centre, enemies mirrored. A promoted member
+        // (40s5) keeps to its class's sheets once its idle exists, so it never
+        // flickers into the base class's poses.
+        const key = u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
+        const posed = pose.anim ? art('battle/units/' + key + '/' + pose.anim + '.png') : null;
+        const sheet = posed || art('battle/units/' + key + '/idle.png');
         if (sheet) {
-            // Art: the idle loop, anchored bottom-centre, enemies mirrored.
             const fw = (sheet.info.frame || [64, 64])[0], fh = (sheet.info.frame || [64, 64])[1];
             const frames = sheet.info.frames || 1;
-            const i = Math.floor(now / (sheet.info.frame_ms || 250)) % frames;
+            const i = posed && !pose.loop ? Math.min(frames - 1, Math.floor(pose.p * frames))
+                : Math.floor(now / (sheet.info.frame_ms || 250)) % frames;
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }
             if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
             ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            if (u.flash > now) {
+                // A hit tints the figure's own shape, not a box around it.
+                const t = tintLayer(fw, fh);
+                t.clearRect(0, 0, fw, fh);
+                t.globalCompositeOperation = 'source-over';
+                t.drawImage(sheet.img, i * fw, 0, fw, fh, 0, 0, fw, fh);
+                t.globalCompositeOperation = 'source-atop';
+                t.globalAlpha = 0.55;
+                t.fillStyle = u.flashColor;
+                t.fillRect(0, 0, fw, fh);
+                t.globalAlpha = 1;
+                ctx.drawImage(tintCanvas, 0, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            }
             ctx.restore();
+            u.tinted = u.flash > now;
         } else if (u.side === 'company') {
             const hues = CLASS_HUES[u.klass] || DEFAULT_HUES;
             const body = shade(hues[0], dim), trim = shade(hues[1], dim);
@@ -723,12 +1075,6 @@
                 rect(dir > 0 ? x + w / 2 + 2 : x - w / 2 - 3, y - h * 0.7, 1, h * 0.45, '#b0b4bc'); // a weapon in the leading hand
             }
         }
-        if (flashing) {
-            ctx.fillStyle = u.flashColor;
-            ctx.globalAlpha = 0.45;
-            ctx.fillRect(Math.round(x - 10), y - 32, 20, 33);
-            ctx.globalAlpha = 1;
-        }
     }
 
     // drawInfo draws the bar, role badge, statuses and chant mark.
@@ -767,6 +1113,9 @@
     function draw() {
         if (!ctx || !isShown()) { return; }
         const now = Date.now();
+        sched.due(now).forEach(applyOp);
+        ctx.save();
+        if (shakeUntil > now) { ctx.translate(Math.round((Math.random() - 0.5) * 3), 0); }
         ctx.imageSmoothingEnabled = false;
         drawBackground();
         // Back to front by lane (then row), so nearer units overlap.
@@ -774,9 +1123,15 @@
         list.sort((a, b) => (a.cell.col - b.cell.col) || (b.cell.row - a.cell.row));
         list.forEach(u => {
             const p = slot(u.side, u.cell.row, u.cell.col);
-            drawFigure(u, p.x, p.y, now);
+            drawFigure(u, p.x, p.y, now, poseOf(u, p, now));
+        });
+        // Bars, roles and statuses go over every figure, so a large unit in
+        // front never hides the health of those behind it.
+        list.forEach(u => {
+            const p = slot(u.side, u.cell.row, u.cell.col);
             drawInfo(u, p.x, p.y);
         });
+        drawEffects(now);
         // Target lines for the hovered unit, and anyone striking it.
         if (hover && units.get(hover)) {
             ctx.strokeStyle = 'rgba(255,255,255,0.7)';
@@ -797,15 +1152,206 @@
         }
         floaters.forEach(f => {
             const age = (now - f.born) / 900;
-            ctx.font = 'bold 9px monospace';
-            ctx.fillStyle = f.color;
             ctx.globalAlpha = Math.max(0, 1 - age);
-            ctx.fillText(f.text, Math.round(f.x - 4), Math.round(f.y - age * 14));
+            if (f.icon) {
+                drawFeedback(f.icon, Math.round(f.x), Math.round(f.y - age * 8), age);
+            } else {
+                ctx.font = (f.big ? 'bold 13px' : (f.dim ? '8px' : 'bold 9px')) + ' monospace';
+                ctx.fillStyle = f.color;
+                ctx.fillText(f.text, Math.round(f.x - 4), Math.round(f.y - age * 14));
+            }
             ctx.globalAlpha = 1;
         });
         if (battle && battle.dark) {
             ctx.fillStyle = 'rgba(0,0,10,0.5)';
             ctx.fillRect(0, 0, W, H);
+        }
+        // A fight that ends in defeat or a breaking off fades the screen.
+        sched.active(now).forEach(st => {
+            if (st.fadeScreen) {
+                ctx.fillStyle = 'rgba(0,0,0,' + (0.55 * (now - st.start) / Math.max(1, st.end - st.start)) + ')';
+                ctx.fillRect(0, 0, W, H);
+            }
+        });
+        ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------
+    // Effects: hits, projectiles, glows (S4 art when listed, else code)
+    // ---------------------------------------------------------------------
+
+    function centreOf(id) {
+        const u = units.get(id);
+        if (!u || !u.cell) { return null; }
+        const p = slot(u.side, u.cell.row, u.cell.col);
+        return { x: p.x, y: p.y - 12, u: u };
+    }
+
+    function spellHue(spell) { return spell ? hashHue(spell) : 220; }
+
+    function drawEffects(now) {
+        sched.activeFx(now).forEach(f => {
+            if (f.kind === 'projectile') {
+                const a = centreOf(f.from), b = centreOf(f.to);
+                if (!a || !b) { return; }
+                const x = a.x + (b.x - a.x) * f.p, y = a.y + (b.y - a.y) * f.p - Math.sin(f.p * Math.PI) * 6;
+                if (f.style === 'arrow') {
+                    const dx = Math.sign(b.x - a.x) * 4;
+                    ctx.fillStyle = '#d8d0b0';
+                    ctx.fillRect(Math.round(Math.min(x, x - dx)), Math.round(y), 5, 1);
+                    ctx.fillStyle = '#b0b4bc';
+                    ctx.fillRect(Math.round(x + (dx > 0 ? 1 : -2)), Math.round(y) - 1, 2, 3);
+                } else {
+                    ctx.fillStyle = 'hsl(' + spellHue(f.spell) + ',80%,70%)';
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillRect(Math.round(x - 3), Math.round(y - 3), 6, 6);
+                    ctx.globalAlpha = 1;
+                    ctx.fillRect(Math.round(x - 1), Math.round(y - 1), 3, 3);
+                }
+                return;
+            }
+            const c = centreOf(f.on || f.unit);
+            if (!c) { return; }
+            if (f.kind === 'hit') { drawHit(f, c); }
+            else if (f.kind === 'glow') { drawGlow(f, c); }
+            else if (f.kind === 'fade-glow') { drawGlow(f, c, 1 - f.p); }
+            else if (f.kind === 'heal') {
+                ctx.fillStyle = '#5fd08a';
+                for (let i = 0; i < 3; i++) {
+                    const px = Math.round(c.x - 6 + i * 6), py = Math.round(c.y + 6 - f.p * 18 - i * 3);
+                    ctx.globalAlpha = 1 - f.p;
+                    ctx.fillRect(px, py - 2, 1, 5);
+                    ctx.fillRect(px - 2, py, 5, 1);
+                }
+                ctx.globalAlpha = 1;
+            } else if (f.kind === 'tick') {
+                ctx.fillStyle = '#c06a3a';
+                ctx.globalAlpha = 0.5 * (1 - f.p);
+                ctx.fillRect(Math.round(c.x - 6), Math.round(c.y - 8), 12, 18);
+                ctx.globalAlpha = 1;
+            } else if (f.kind === 'armor-shatter') {
+                ctx.fillStyle = '#b8bcc4';
+                for (let i = 0; i < 6; i++) {
+                    const a = i * 1.05;
+                    ctx.fillRect(Math.round(c.x + Math.cos(a) * f.p * 12), Math.round(c.y + Math.sin(a) * f.p * 12 + f.p * f.p * 8), 2, 2);
+                }
+            } else if (f.kind === 'highlight') {
+                ctx.strokeStyle = 'rgba(255,255,255,' + (0.8 * (1 - f.p)) + ')';
+                ctx.strokeRect(Math.round(c.x - 7) + 0.5, Math.round(c.y - 16) + 0.5, 14, 28);
+            }
+        });
+    }
+
+    function drawGlow(f, c, fade) {
+        const hue = spellHue(f.spell);
+        const r = (f.burst ? 8 + f.p * 8 : 5 + Math.sin(f.p * Math.PI * 4) * 2);
+        ctx.globalAlpha = (fade === undefined ? (f.burst ? 1 - f.p : 0.6) : 0.6 * fade);
+        ctx.strokeStyle = 'hsl(' + hue + ',80%,70%)';
+        ctx.beginPath();
+        ctx.arc(Math.round(c.x), Math.round(c.y - 14), r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+
+    // drawHit draws a hit effect: the S4 sheet (battle/effects/hits/<id>.png,
+    // 32x32, 4 frames) when listed, else a few strokes in code. A critical
+    // hit layers a starburst over the blow.
+    function drawHit(f, c) {
+        const sheet = art('battle/effects/hits/' + f.id + '.png');
+        if (sheet) {
+            const frames = sheet.info.frames || 4;
+            const i = Math.min(frames - 1, Math.floor(f.p * frames));
+            ctx.drawImage(sheet.img, i * 32, 0, 32, 32, Math.round(c.x - 16), Math.round(c.y - 16), 32, 32);
+        } else {
+            drawHitCode(f.id, c.x, c.y, f.p, f.spell);
+        }
+        if (f.crit) { drawHitCode('crit', c.x, c.y, f.p); }
+    }
+
+    function drawHitCode(id, x, y, p, spell) {
+        x = Math.round(x); y = Math.round(y);
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - p * p);
+        ctx.lineWidth = 1;
+        switch (id) {
+        case 'slash': case 'cleave':
+            ctx.strokeStyle = id === 'cleave' ? '#f0d0a0' : '#f0e8e8';
+            ctx.lineWidth = id === 'cleave' ? 2 : 1;
+            ctx.beginPath(); ctx.arc(x, y + 6, 12, -2.2 + p * 0.8, -0.9 + p * 0.8); ctx.stroke();
+            break;
+        case 'stab':
+            ctx.fillStyle = '#f0e8e8';
+            ctx.fillRect(x - 8 + Math.round(p * 6), y, 10, 1);
+            ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + Math.round(p * 6), y - 1, 2, 3);
+            break;
+        case 'blunt':
+            ctx.strokeStyle = '#e8d8b8';
+            ctx.beginPath(); ctx.arc(x, y, 3 + p * 9, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = '#a89878'; ctx.fillRect(x - 6, y + 8, 3, 2); ctx.fillRect(x + 4, y + 8, 3, 2);
+            break;
+        case 'claw':
+            ctx.strokeStyle = '#f0e0d0';
+            for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x - 6 + i * 4, y - 8); ctx.lineTo(x + 2 + i * 4, y + 8 * (0.4 + p)); ctx.stroke(); }
+            break;
+        case 'bite':
+            ctx.strokeStyle = '#f0e0d0';
+            ctx.beginPath(); ctx.moveTo(x - 7, y - 4 - p * 3); ctx.lineTo(x, y + 2); ctx.lineTo(x + 7, y - 4 - p * 3); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x - 7, y + 8 + p * 3); ctx.lineTo(x, y + 2); ctx.lineTo(x + 7, y + 8 + p * 3); ctx.stroke();
+            break;
+        case 'arrow-hit':
+            ctx.fillStyle = '#c8a878';
+            for (let i = 0; i < 5; i++) { ctx.fillRect(x + Math.round(Math.cos(i * 1.3) * p * 9), y + Math.round(Math.sin(i * 1.3) * p * 9), 1, 1); }
+            break;
+        case 'magic-hit':
+            ctx.strokeStyle = 'hsl(' + spellHue(spell) + ',85%,70%)';
+            ctx.beginPath(); ctx.arc(x, y, 2 + p * 11, 0, Math.PI * 2); ctx.stroke();
+            break;
+        case 'crit':
+            ctx.strokeStyle = '#ffd23f';
+            for (let i = 0; i < 8; i++) {
+                const a = i * Math.PI / 4;
+                ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 4, y + Math.sin(a) * 4); ctx.lineTo(x + Math.cos(a) * (8 + p * 8), y + Math.sin(a) * (8 + p * 8)); ctx.stroke();
+            }
+            break;
+        case 'shield-bash':
+            ctx.fillStyle = '#ffd23f';
+            for (let i = 0; i < 3; i++) { ctx.fillRect(x - 8 + i * 8, y - 18 - Math.round(Math.sin(p * 6 + i) * 2), 2, 2); }
+            ctx.strokeStyle = '#c8ccd4'; ctx.strokeRect(x - 5.5, y - 5.5, 11, 11);
+            break;
+        case 'chant-broken':
+            ctx.fillStyle = '#9ab0ff';
+            for (let i = 0; i < 6; i++) { ctx.fillRect(x + Math.round(Math.cos(i * 1.05) * p * 14), y - 14 + Math.round(Math.sin(i * 1.05) * p * 10), 2, 2); }
+            break;
+        case 'guard-intercept':
+            ctx.strokeStyle = '#d8e0f0'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(x, y, 7 + p * 3, -1.2, 1.2); ctx.stroke();
+            break;
+        default: break;
+        }
+        ctx.restore();
+    }
+
+    // drawFeedback draws a defense icon (S4: 16x16 art when listed): a
+    // whoosh for a miss, a shield, crossed blades, an afterimage, a grey
+    // pulse for a lost action.
+    function drawFeedback(id, x, y, age) {
+        const sheet = art('battle/effects/feedback/' + id + '.png');
+        if (sheet) {
+            const frames = sheet.info.frames || 3;
+            ctx.drawImage(sheet.img, Math.min(frames - 1, Math.floor(age * frames)) * 16, 0, 16, 16, x - 8, y - 8, 16, 16);
+            return;
+        }
+        ctx.strokeStyle = '#d8dce4';
+        ctx.fillStyle = '#d8dce4';
+        switch (id) {
+        case 'miss': ctx.fillRect(x - 6, y, 10, 1); ctx.fillRect(x - 3, y + 2, 8, 1); break;
+        case 'blocked': ctx.strokeRect(x - 3.5, y - 4.5, 7, 8); ctx.fillRect(x - 1, y - 2, 2, 2); break;
+        case 'parried':
+            ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke();
+            break;
+        case 'dodged': ctx.globalAlpha *= 0.5; ctx.fillRect(x - 4, y - 5, 4, 10); ctx.fillRect(x + 1, y - 5, 4, 10); break;
+        case 'skip': ctx.fillStyle = '#8a8f99'; ctx.beginPath(); ctx.arc(x, y, 3 + age * 4, 0, Math.PI * 2); ctx.fill(); break;
+        default: break;
         }
     }
 
@@ -823,6 +1369,12 @@
             ended = false;
             units = new Map();
             floaters = [];
+            sched = new TL.Scheduler();
+            holding = new Set();
+            outcomeQueued = false;
+            paceHistory = [];
+            lastBlow = '';
+            roundNo = 0;
             minimised = false;
             userOpened = false;
         }
@@ -836,8 +1388,9 @@
         } else if (was) {
             // The fight is over. The outcome event normally started the
             // three-second hold; if none came, show a plain ending.
-            if (!outcomeTimer) { beginOutcome(''); }
-            if (!outcomeTimer) { endBattleView(); }
+            // While the fight's end is still to play, its outcome follows.
+            if (!outcomeTimer && !outcomeQueued) { beginOutcome(''); }
+            if (!outcomeTimer && !outcomeQueued) { endBattleView(); }
             paintChrome();
         }
         paintBadge();
@@ -866,7 +1419,9 @@
             }
             if (namespace === 'Room' || namespace === 'Room.Info') {
                 const info = body && (body.Info || body);
-                if (info && typeof info.environment === 'string') { biome = info.environment; draw(); }
+                if (info && typeof info.environment === 'string') { biome = info.environment; }
+                if (info && typeof info.area === 'string') { zone = info.area; }
+                if (info) { draw(); }
                 return;
             }
             if ((namespace === 'Company' || namespace === 'Company.Vitals') && battle) {
@@ -883,6 +1438,7 @@
     window.BattleScreen = {
         open,
         close,
+        setMotion: saveMotion,
         slot,
         // state is what a test reads: the units and where they stand.
         state() {
@@ -891,11 +1447,21 @@
                 minimised,
                 outcome: outcomeText,
                 biome,
+                zone,
+                round: roundNo,
+                lastBlow,
+                motion: motion(),
+                backlog: sched.backlog(Date.now()),
+                fx: sched.activeFx(Date.now()).map(f => f.kind + (f.id ? ':' + f.id : '')),
+                digits: floaters.filter(f => f.text).map(f => f.text),
+                icons: floaters.filter(f => f.icon).map(f => f.icon),
+                shaking: shakeUntil > Date.now(),
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
-                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, cell: u.cell, frac: u.frac, band: u.band,
+                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
-                    statuses: Array.from(u.statuses), casting: u.casting,
+                    statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
+                    pose: u.cell ? poseOf(u, slot(u.side, u.cell.row, u.cell.col), Date.now()) : null,
                     at: u.cell ? slot(u.side, u.cell.row, u.cell.col) : null,
                 })),
             };

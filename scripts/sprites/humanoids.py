@@ -393,6 +393,27 @@ def g_hexer(r, t):
     cv.fill({(r.tx0 + 1, r.ysh + 3), (r.tx0 + 3, r.ysh + 5)}, "bone.l")
 
 
+def g_shaman(r, t):
+    """A herb-healer: a staff crowned with bundled moss, a ragged moss mantle,
+    bone charms and a strung herb bunch at the belt."""
+    cv = r.cv
+    sx, ty = w_staff(r, t)
+    cv.part({(sx - 1, ty), (sx, ty - 1), (sx + 1, ty - 1), (sx + 2, ty), (sx - 1, ty + 1), (sx + 2, ty + 1),
+             (sx, ty), (sx + 1, ty)}, "moss", flat="m")
+    cv.fill({(sx, ty - 2 - (t == 2)), (sx + 1, ty - 2)}, "moss.l")
+    cv.fill(line(sx - 1, ty + 2, sx + 2, ty + 2), "bone.m")  # the cord
+    for dx in (-1, 2):  # dried herbs hanging from it
+        cv.fill(line(sx + dx, ty + 3, sx + dx, ty + 6 + (t + dx) % 2), "ochre.m")
+    cv.put(sx + 1, ty - 1, "ember.l" if t % 2 else "moss.l")  # a dim healing glimmer
+    # moss mantle over the shoulders, ragged at the hem
+    cv.part(rect(r.tx0 - 2, r.ysh, r.tx1 + 1, r.ysh + 4), "moss")
+    for x in range(r.tx0 - 2, r.tx1 + 2, 2):
+        cv.put(x, r.ysh + 5, "moss.d")
+    cv.fill({(r.tx0 + 1, r.ysh + 7), (r.tx0 + 3, r.ysh + 8)}, "bone.l")  # bone charms
+    cv.fill(line(r.tx0, r.yhip - 1, r.tx0, r.yhip + 3 + (t == 2)), "moss.m")  # herbs at the belt
+    cv.put(r.tx0 + 1, r.yhip + 1, "ochre.l")
+
+
 def g_loot(r, t):
     cv = r.cv
     # a heavy stolen sack hunched on the back
@@ -421,6 +442,7 @@ def goblin(name, gear, **kw):
 H["goblin"] = goblin("e-goblin", g_spear)
 H["goblin-hexer"] = goblin("e-goblin-hexer", g_hexer)
 H["goblin-loot"] = goblin("e-goblin-loot", g_loot)
+H["goblin-shaman"] = goblin("e-goblin-shaman", g_shaman)
 
 # -- cave stalker and the generic foe --------------------------------------------------------
 
