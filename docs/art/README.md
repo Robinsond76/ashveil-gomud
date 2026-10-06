@@ -33,12 +33,18 @@ turns a delivered sheet into the client's sheet layout.
 
 | Files | Where | In git? |
 |---|---|---|
-| **Masters:** the agent's large originals (1–3 MB each, 200–400 MB in all) | The shared art folder, a cloud drive or bucket the owner chooses. Its layout mirrors `art/source/`: `A0/`, `A1/map/units/warrior.png` and so on. | **No.** Git would keep every version forever, and every clone would download them all. |
+| **Masters:** the agent's large originals (1–3 MB each, 200–400 MB in all) | The shared art folder: the Google Drive folder **Ashveil Art Masters** (link: *to be added by the owner*). Its layout mirrors `art/source/`: `A0/`, `A1/map/units/warrior.png` and so on. | **No.** Git would keep every version forever, and every clone would download them all. |
 | **Local staging:** `art/source/` in a checkout | A copy of the phase being imported. It's listed in `.gitignore`. | No |
 | **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're small (about 20–40 MB for the whole program) and are what players download. |
 
-Back the shared folder up and keep old versions there if you want them. To
-re-import at a different size later, import again from the masters.
+Drive keeps earlier versions of a replaced file, so a regenerated sheet
+can be uploaded over the old one. To re-import at a different size later,
+import again from the masters.
+
+**Getting a phase to the lead:** a cloud coding session can't read Google
+Drive unless a Drive connector is set up. Until then, the owner downloads
+the phase's folder from Drive (Drive zips it) and attaches the zip to the
+session. The lead unzips it into `art/source/`.
 
 Phases run in order. **A0 is an approval gate:** nothing else starts until
 the owner signs off on the style anchors.
@@ -84,9 +90,9 @@ folder until the matching step is merged.
    heads on the map** and **6–7 in battle**: adult and never chibi. Confirm
    this at A0.
 2. **Source storage (decided 2026-10-06).** Masters stay outside git in
-   the shared art folder, and only the compressed runtime files are
-   committed (see "Where the files live"). The owner still needs to name
-   the folder.
+   the Google Drive folder "Ashveil Art Masters", and only the compressed
+   runtime files are committed (see "Where the files live"). The owner
+   adds the folder's link here.
 3. **Battle animations.** The battle screen animates with code effects
    today, so only idle sheets are drawn (S4 in the old spec). Full attack
    and hurt sheets can be a later phase once A7 is approved.
