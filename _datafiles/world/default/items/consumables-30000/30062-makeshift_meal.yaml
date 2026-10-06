@@ -1,0 +1,10 @@
+itemid: 30062
+name: makeshift meal
+namesimple: scraps
+description: Whatever went into the pot, boiled or charred into something filling. It does little for a traveler beyond easing hunger.
+type: food
+subtype: edible
+uses: 1
+value: 1
+nutrition: 25
+weight: 300

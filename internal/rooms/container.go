@@ -110,12 +110,16 @@ func (c *Container) ReadyRecipes() []int {
 
 // SelectRecipe picks the lowest ready output itemId whose requirement the actor meets,
 // given a skill-level lookup. When recipes are ready but all are gated, it returns 0 and
-// the easiest unmet requirement (lowest level, then lowest output id).
-func (c *Container) SelectRecipe(skillLevel func(skillId string) int) (int, RecipeRequirement) {
+// the easiest unmet requirement (lowest level, then lowest output id). known (Phase 56)
+// limits the choice to dishes the actor has learned; nil allows every recipe.
+func (c *Container) SelectRecipe(skillLevel func(skillId string) int, known func(finalItemId int) bool) (int, RecipeRequirement) {
 
 	var blocked RecipeRequirement
 
 	for _, finalItemId := range c.ReadyRecipes() {
+		if known != nil && !known(finalItemId) {
+			continue
+		}
 		req, gated := c.RecipeRequirements[finalItemId]
 		if !gated || skillLevel(req.SkillId) >= req.MinLevel {
 			return finalItemId, RecipeRequirement{}

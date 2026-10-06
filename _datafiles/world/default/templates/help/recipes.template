@@ -1,0 +1,53 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">recipes</ansi>
+
+Nobody hands you a cookbook. You learn a dish by trying a mix of
+ingredients, or by reading a recipe page someone wrote down. Everything you
+have learned goes in your recipe book, which a hearth and your campfire
+both use.
+
+<ansi fg="yellow-bold">Trying a new mix</ansi>
+
+  <ansi fg="command">cook [ingredient] [ingredient] ...</ansi>
+  At a hearth, or at your own camp with its fire lit, cooks exactly the
+  ingredients you name from your pack and company cargo. Name them by their
+  short names (<ansi fg="command">cook meat thyme</ansi>) or with a count (<ansi fg="command">cook 2 meat thyme</ansi>).
+  A pot takes at most 4 ingredients.
+
+  If the mix is a dish you can make, you cook it, and the first time you
+  do, you learn it: the recipe goes in your book and you will not need
+  to name its ingredients again. If the mix matches nothing, you get a
+  <ansi fg="itemname">makeshift meal</ansi>, plain food that eases hunger a little and gives no
+  buff. The ingredients are spent either way.
+
+  A mix that would make a dish above your Cooking level is refused,
+  and nothing is spent. At camp the best cook with you cooks, as with
+  <ansi fg="command">camp cook</ansi>; at a hearth it is your own Cooking.
+
+  Only raw game, fish and herbs go in the pot. A cooked meal, a drink
+  or a tool does not.
+
+<ansi fg="yellow-bold">Cooking what you know</ansi>
+
+  <ansi fg="command">camp cook</ansi>
+  <ansi fg="command">use hearth</ansi>
+  Cook a dish already in your book, without naming ingredients. Dishes
+  that need no more than Cooking 1 (seared game meat, grilled fish) are
+  common knowledge. Every other dish must be learned first, even if you
+  have the skill and the ingredients: a dish you have not learned is
+  not cooked by a bare <ansi fg="command">camp cook</ansi>, by <ansi fg="command">use hearth</ansi>, or by a member on the cook duty.
+
+<ansi fg="yellow-bold">Your recipe book</ansi>
+
+  <ansi fg="command">recipes</ansi>
+  Lists every dish you have learned and what it takes. The web client's
+  Company window shows the same list on its Camp tab. <ansi fg="command">look hearth</ansi> lists
+  only the dishes you know.
+
+<ansi fg="yellow-bold">Recipe pages</ansi>
+
+A recipe page teaches one dish when you <ansi fg="command">use</ansi> it, and crumbles as it does.
+Merchants never buy a page back, nor a cooked meal. You still need the
+Cooking level to make the dish.
+
+See also: <ansi fg="command">help cooking</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp duties</ansi>, <ansi fg="command">help use</ansi>,
+<ansi fg="command">help skills</ansi>.

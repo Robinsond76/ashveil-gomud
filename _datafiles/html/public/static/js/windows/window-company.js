@@ -1255,6 +1255,12 @@
         if (camp.has_camp && Array.isArray(camp.prepared) && camp.prepared.length) {
             pad.appendChild(el('div', 'cmp-line', 'Set by for the next rest: ' + camp.prepared.join(', ') + '.'));
         }
+        if (Array.isArray(camp.recipes) && camp.recipes.length) {
+            pad.appendChild(el('div', 'cmp-line', 'Recipes you know (type recipes; cook to try a new mix):'));
+            camp.recipes.forEach(function (r) {
+                pad.appendChild(el('div', 'cmp-line', '\u2022 ' + r));
+            });
+        }
         if (camp.has_camp && camp.theft_risk) {
             pad.appendChild(el('div', 'cmp-line', 'Thieves work this road: without bells and trip lines, a rest here may be robbed.'));
         }

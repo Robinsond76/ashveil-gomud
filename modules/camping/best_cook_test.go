@@ -58,13 +58,13 @@ func TestCampCookUsesTheBestCookPresent(t *testing.T) {
 	setPresence(t, presentCompanions{formationMap: formationMap{1: 97301, 2: 97302, 3: 97303}, present: []int{3, 2, 1}})
 
 	// Nobody can cook: the refusal names the best rank there is.
-	text := w.m.cook(w.user, w.room)
+	text := w.m.cook(w.user, w.room, nil)
 	assert.Contains(t, text, "it needs cooking 1", "no Cooking at all")
 	assert.Contains(t, text, "the best in your company here is you, with cooking 0")
 
 	// A companion with Cooking 1 cooks the simpler dish, named.
 	mira.Character.SetSkill("cooking", 1)
-	text = w.m.cook(w.user, w.room)
+	text = w.m.cook(w.user, w.room, nil)
 	assert.Contains(t, text, "Mira cooks")
 	assert.Contains(t, text, "seared game meat")
 	assert.Equal(t, 1, cargo.stacks[30021])
@@ -75,7 +75,7 @@ func TestCampCookUsesTheBestCookPresent(t *testing.T) {
 	mira.Character.SetSkill("cooking", 2)
 	brannoc.Character.SetSkill("cooking", 2)
 	fallen.Character.SetSkill("cooking", 4)
-	text = w.m.cook(w.user, w.room)
+	text = w.m.cook(w.user, w.room, nil)
 	assert.Contains(t, text, "Brannoc cooks")
 	assert.Contains(t, text, "thyme-roasted game")
 
@@ -83,7 +83,7 @@ func TestCampCookUsesTheBestCookPresent(t *testing.T) {
 	cargo.stacks[29] = 1
 	w.user.Character.StoreItem(items.New(30018))
 	w.user.Character.Skills = map[string]int{"cooking": 2}
-	text = w.m.cook(w.user, w.room)
+	text = w.m.cook(w.user, w.room, nil)
 	assert.True(t, strings.HasPrefix(text, "You cook"), text)
 }
 

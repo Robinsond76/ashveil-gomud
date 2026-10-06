@@ -44,10 +44,10 @@ kit, the pot or the forage, paid for with their own sleep.
            Foragers share the camp's forage cooldown (<ansi fg="command">help forage</ansi>), so a
            second rest soon after finds
            nothing new, and the report says the ground is picked over.
-  <ansi fg="command">cook</ansi>    Cooks one dish when the rest ends, from your pack and cargo,
+  <ansi fg="command">cook</ansi>    Cooks one dish you know when the rest ends, from your pack and cargo,
            using that member's own Cooking rank (<ansi fg="command">help cooking</ansi>). It needs no
            lit fire, because the rest was the fire. The dish gives its meal buff
-           to whoever eats it (<ansi fg="command">help cooking</ansi>).
+           to whoever eats it (<ansi fg="command">help cooking</ansi>). Only dishes in your recipe book are cooked (<ansi fg="command">help recipes</ansi>).
   <ansi fg="command">brew</ansi>    Alchemists only. Refills flasks from your reagents, and is
            served before the other Alchemists when reagents are short
            (<ansi fg="command">help brew</ansi>). Alchemists still brew on their own at the end of every

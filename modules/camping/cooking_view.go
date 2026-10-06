@@ -19,7 +19,8 @@ func (m *CampingModule) CookingCapability(userID int) (camping.CookingView, bool
 	cook := m.bestCook(u, recipes)
 	v := camping.CookingView{Rank: cook.rank(campCookSkill)}
 	descriptions := []string{}
-	for _, r := range recipes {
+	// Phase 56: only the dishes the leader has learned are listed.
+	for _, r := range knownCampRecipes(u, recipes) {
 		need := "no trained skill required"
 		if r.Skill != "" {
 			need = fmt.Sprintf("%s rank %d", r.Skill, r.MinLevel)
@@ -43,7 +44,7 @@ func (m *CampingModule) CookingCapability(userID int) (camping.CookingView, bool
 	case chosen == nil && blocked != nil:
 		v.Reason = fmt.Sprintf("%s needs %s rank %d", itemName(blocked.Output), blocked.Skill, blocked.MinLevel)
 	case chosen == nil:
-		v.Reason = "Missing recipe ingredients or trained ranks"
+		v.Reason = "Missing recipe ingredients or trained ranks, or no learned dish to make (recipes)"
 	case !has || camp.RoomID != u.Character.RoomId:
 		v.Reason = "Requires your own camp here"
 	case !camp.FireLit:

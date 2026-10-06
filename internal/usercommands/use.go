@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -32,7 +33,9 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				return true, nil
 			}
 
-			recipeReadyItemId, blocked := container.SelectRecipe(user.Character.GetSkillLevel)
+			recipeReadyItemId, blocked := container.SelectRecipe(user.Character.GetSkillLevel, func(finalItemId int) bool {
+				return cookbook.Knows(user.Character, HearthRecipe(container, finalItemId))
+			})
 
 			if recipeReadyItemId == 0 && blocked.MinLevel > 0 {
 				user.SendText("")
@@ -43,7 +46,7 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if recipeReadyItemId == 0 {
 				user.SendText("")
-				user.SendText(fmt.Sprintf(`The <ansi fg="container">%s</ansi> seems to be missing something.`, containerName))
+				user.SendText(fmt.Sprintf(`The <ansi fg="container">%s</ansi> seems to be missing something, or you don't know a dish to make from it. To try a new combination, <ansi fg="command">cook</ansi> it (<ansi fg="command">help recipes</ansi>).`, containerName))
 				user.SendText("")
 				return true, nil
 			}
@@ -90,6 +93,24 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		user.Character.CancelBuffsWithFlag("hidden")
 
+		// Phase 56: a recipe page teaches its dish.
+		if itemSpec.Recipe > 0 {
+			dish := items.GetItemSpec(itemSpec.Recipe)
+			if dish == nil {
+				user.SendText(fmt.Sprintf(`The <ansi fg="itemname">%s</ansi> is too smudged to read.`, matchItem.DisplayName()))
+				return true, nil
+			}
+			if usesLeft := user.Character.UseItem(matchItem); usesLeft < 1 {
+				events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: matchItem, Gained: false})
+			}
+			if cookbook.Learn(user.Character, itemSpec.Recipe) {
+				user.SendText(fmt.Sprintf(`You study the <ansi fg="itemname">%s</ansi> and learn to cook <ansi fg="itemname">%s</ansi>. It is in your recipe book (<ansi fg="command">recipes</ansi>).`, matchItem.DisplayName(), dish.Name))
+			} else {
+				user.SendText(fmt.Sprintf(`You already know how to cook <ansi fg="itemname">%s</ansi>; the page crumbles in your hands.`, dish.Name))
+			}
+			return true, nil
+		}
+
 		user.SendText(fmt.Sprintf(`You use the <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()))
 		room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> uses their <ansi fg="itemname">%s</ansi>.`, user.Character.Name, matchItem.DisplayName()), user.UserId)
 
@@ -118,4 +139,14 @@ func recipeSkillName(skillId string) string {
 		return s.Name
 	}
 	return skillId
+}
+
+// HearthRecipe is a hearth container's recipe for an output item as the
+// cookbook sees it (Phase 56): ungated dishes are basic.
+func HearthRecipe(container rooms.Container, finalItemId int) cookbook.Recipe {
+	r := cookbook.Recipe{Output: finalItemId, Inputs: container.Recipes[finalItemId]}
+	if req, gated := container.RecipeRequirements[finalItemId]; gated {
+		r.Skill, r.MinLevel = req.SkillId, req.MinLevel
+	}
+	return r
 }

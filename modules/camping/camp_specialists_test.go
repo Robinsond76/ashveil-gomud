@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -61,11 +62,11 @@ func TestSharedCampCookCountsRepeatedIngredientsOnceAndHandlesSaveFailure(t *tes
 	encumbrance.SetProvider(cargo)
 	t.Cleanup(func() { encumbrance.SetProvider(nil) })
 	w.user.Character.Items = []items.Item{a, herb}
-	assert.Contains(t, w.m.cook(w.user, w.room), "nothing to cook", "one meat isn't counted through two inventory paths")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "nothing to cook", "one meat isn't counted through two inventory paths")
 	assert.Len(t, w.user.Character.Items, 2)
 	w.user.Character.Items = []items.Item{a, b, herb}
 	cargo.err = errors.New("atomic save failed")
-	assert.Contains(t, w.m.cook(w.user, w.room), "nothing was cooked")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "nothing was cooked")
 	assert.Len(t, w.user.Character.Items, 3)
 	assert.Len(t, cargo.inputs, 3)
 	assert.NotEqual(t, cargo.inputs[0].UUID, cargo.inputs[1].UUID)
@@ -215,6 +216,10 @@ func newRaidWorld(t *testing.T, chance int, rolls ...int) *raidWorld {
 	rooms.SetTestRoom(w.room)
 	t.Cleanup(func() { rooms.RemoveTestRoom(100) })
 	w.user = campUser(t, 7, 100)
+	// Phase 56: these tests are about cooking, so the leader knows the dishes.
+	for _, dish := range []int{30019, 30020, 30021, 30024} {
+		cookbook.Learn(w.user.Character, dish)
+	}
 	require.NotContains(t, m.establish(w.user, w.room), "can't")
 	m.lightFire(w.user, w.room)
 	return w
@@ -414,23 +419,23 @@ func TestCampCookUsesPackAndCargoAndSkill(t *testing.T) {
 	skills.SetTestData([]*skills.Skill{{SkillId: "cooking", Name: "Cooking", MaxLevel: 4}}, nil)
 	t.Cleanup(func() { skills.SetTestData(nil, nil) })
 
-	assert.Contains(t, w.m.cook(w.user, w.room), "it needs cooking 1", "no Cooking at all")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "it needs cooking 1", "no Cooking at all")
 	w.user.Character.Skills = map[string]int{"cooking": 1}
-	assert.Contains(t, w.m.cook(w.user, w.room), "seared game meat", "Cooking 1 makes the simpler dish")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "seared game meat", "Cooking 1 makes the simpler dish")
 	assert.Equal(t, 0, cargo.stacks[29], "the meat came from the cargo")
 	assert.Equal(t, 1, cargo.stacks[30021], "the dish went into it")
 
 	cargo.stacks[29] = 1
 	w.user.Character.Skills["cooking"] = 2
-	assert.Contains(t, w.m.cook(w.user, w.room), "thyme-roasted game")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "thyme-roasted game")
 	_, kept := packItem(w.user, 30018)
 	assert.False(t, kept, "the thyme came from the pack")
 
 	w.m.inBattle = func(int) bool { return true }
-	assert.Contains(t, w.m.cook(w.user, w.room), "middle of a fight")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "middle of a fight")
 	w.m.inBattle = func(int) bool { return false }
 	other := &rooms.Room{RoomId: 555, Zone: "Road"}
-	assert.Contains(t, w.m.cook(w.user, other), "your own camp here")
+	assert.Contains(t, w.m.cook(w.user, other, nil), "your own camp here")
 }
 
 // TestShippedCampConfigParses (33f3).
@@ -604,7 +609,7 @@ func TestCampCookCommandAndItsSafety(t *testing.T) {
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: 30021, Name: "seared game meat", Type: items.Food, Weight: 900})
 	cargo.stacks[29] = 1
 	cargo.capacity, cargo.grams = 100, 100
-	assert.Contains(t, w.m.cook(w.user, w.room), "too much for your company to carry")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "too much for your company to carry")
 	assert.Equal(t, 1, cargo.stacks[29], "nothing taken")
 }
 
@@ -618,7 +623,7 @@ func TestCampCookPutsBackWhatAFailedWithdrawalTook(t *testing.T) {
 	useCargo(t, cargo)
 	cargo.stacks[29], cargo.stacks[30018] = 1, 1
 	cargo.failWithdraw = map[int]bool{30018: true}
-	assert.Contains(t, w.m.cook(w.user, w.room), "couldn't be gathered")
+	assert.Contains(t, w.m.cook(w.user, w.room, nil), "couldn't be gathered")
 	assert.Equal(t, 1, cargo.stacks[29], "the meat was put back")
 	assert.Equal(t, 1, cargo.stacks[30018])
 	assert.Zero(t, cargo.stacks[30020])
