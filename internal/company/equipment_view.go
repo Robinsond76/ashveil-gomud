@@ -7,6 +7,8 @@ type EquipmentStats struct {
 	EdgeStrikes        int            `json:"edge_strikes"`
 	OffhandEdgeBonus   int            `json:"offhand_edge_bonus"`
 	OffhandEdgeStrikes int            `json:"offhand_edge_strikes"`
+	WeaponCoat         string         `json:"weapon_coat,omitempty"`
+	OffhandCoat        string         `json:"offhand_coat,omitempty"`
 	Hands              int            `json:"hands"`
 	Reach              bool           `json:"reach"`
 	Shield             bool           `json:"shield"`

@@ -303,6 +303,24 @@ func TestSummaryTacticsShowLevelDefaultFocus(t *testing.T) {
 	assert.Equal(t, strategy.NoFocus, src.summary(u).Tactics.Focus)
 }
 
+// TestCompanyLevelAveragesLeaderAndCompanions (37c): the level a zone band
+// is rated against is the rounded average of everyone, the fallen included.
+func TestCompanyLevelAveragesLeaderAndCompanions(t *testing.T) {
+	mk := func(known bool, leader int, companions ...int) Summary {
+		s := Summary{CompanyKnown: known, Leader: Member{Level: leader}}
+		for _, l := range companions {
+			s.Companions = append(s.Companions, Member{Level: l})
+		}
+		return s
+	}
+	assert.Equal(t, 8, CompanyLevel(mk(true, 8)), "a leader alone")
+	assert.Equal(t, 8, CompanyLevel(mk(true, 6, 8, 10)))
+	assert.Equal(t, 11, CompanyLevel(mk(true, 6, 12, 12, 12, 12)), "10.8 rounds up")
+	assert.Equal(t, 6, CompanyLevel(mk(true, 12, 5, 5, 5, 5)), "6.4 rounds down")
+	assert.Equal(t, 12, CompanyLevel(mk(false, 12, 1, 1, 1)), "unreadable company: the leader alone")
+	assert.Equal(t, 1, CompanyLevel(mk(true, 0)), "never below 1")
+}
+
 // Phase 38c1: the summary names each member's class, tier, rank and
 // promotion state, derived from lineage, class, level and alignment.
 func TestSummaryMemberClasses(t *testing.T) {

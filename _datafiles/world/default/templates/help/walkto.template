@@ -1,0 +1,59 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">walkto</ansi>
+
+Walkto walks your company to a place you have already visited, one ordinary
+step after another, so a dense area does not mean typing every direction.
+In the web client you can also click a tile on the map.
+
+<ansi fg="yellow-bold">Usage</ansi>
+
+  <ansi fg="command">walkto [place]</ansi>
+  Walk to a visited room in the zone you stand in. The place is a landmark
+  word from the room's type, such as <ansi fg="command">walkto inn</ansi> or <ansi fg="command">walkto bridge</ansi>, or the
+  start of a room's name, or a room number from the map. When several
+  rooms match, you go to the nearest.
+
+  <ansi fg="command">walkto</ansi>
+  Shows where you are headed and how many steps are left.
+
+  <ansi fg="command">walkto stop</ansi>
+  Stops where you are.
+
+<ansi fg="yellow-bold">On the map</ansi>
+
+  Click a room on the web client's map and pick <ansi fg="yellow">Walk to [room]</ansi>. The path
+  shows as small dots on the rooms ahead, and a flag marks where you will
+  end up. They clear when you arrive or stop. While you walk, the same click
+  also offers <ansi fg="yellow">Stop walking</ansi> (<ansi fg="command">help worldmap</ansi>).
+
+<ansi fg="yellow-bold">The numbers</ansi>
+
+  One step every 1.5 seconds of real time, at most 60 steps in one walk.
+  Only your party's leader sets the walk; companions and party members who
+  follow you come along as they do when you type a direction.
+
+<ansi fg="yellow-bold">Where it goes</ansi>
+
+  Only through rooms you have visited, by exits you can use. It never takes a
+  secret exit you have not found, a journey exit (<ansi fg="command">help travel</ansi>), or a locked
+  door unless you carry its key. If no known way exists it tells you why
+  and stays put.
+
+<ansi fg="yellow-bold">What it stops for</ansi>
+
+  It stops, and tells you why in one line, when you arrive; a battle starts;
+  a hostile creature is in the room; the way ahead is blocked or has
+  changed; or you or your company becomes hungry, thirsty or too tired
+  (a warning that was already showing does not stop it again).
+  Any command you type, other than <ansi fg="command">look</ansi>, <ansi fg="command">map</ansi> or <ansi fg="command">walkto</ansi>, stops it too,
+  and so does quitting, falling or a server restart.
+
+<ansi fg="yellow-bold">It is still walking</ansi>
+
+  Every step is an ordinary move: it costs the same strain as typing the
+  direction (<ansi fg="command">help strain</ansi>), hunger and thirst, weather and light apply, and a
+  dangerous room can still spring a random encounter (<ansi fg="command">help encounters</ansi>).
+  Walking never moves the game's clock, and a walk is not saved: after a
+  restart you are simply not walking.
+
+See also: <ansi fg="command">help worldmap</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help encounters</ansi>,
+<ansi fg="command">help webclient</ansi>.

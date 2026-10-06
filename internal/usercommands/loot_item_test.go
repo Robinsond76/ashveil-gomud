@@ -24,7 +24,7 @@ const lootMailID = 99701
 
 func lootMail(t *testing.T) {
 	t.Helper()
-	spec := &items.ItemSpec{ItemId: lootMailID, Name: "test hauberk", NameSimple: "hauberk", Type: items.Body, Subtype: items.Wearable, Weight: 3000, DamageReduction: 6, Value: 100, Bulk: items.BulkLight}
+	spec := &items.ItemSpec{ItemId: lootMailID, Name: "test byrnie", NameSimple: "byrnie", Type: items.Body, Subtype: items.Wearable, Weight: 3000, DamageReduction: 6, Value: 100, Bulk: items.BulkLight}
 	require.NoError(t, spec.Validate())
 	items.SetTestItemSpec(spec)
 	t.Cleanup(func() { items.RemoveTestItemSpec(lootMailID) })
@@ -51,22 +51,22 @@ func TestEquipRefusesRolledGearBelowItsLevelRequirement(t *testing.T) {
 	user.Character.Name = "Wren"
 	user.Character.RaceId = 1
 	user.Character.Level = 9
-	hauberk := rolledMail(items.RarityRare, 20, true) // requires level 15
-	require.Equal(t, 15, hauberk.LevelRequirement())
-	require.True(t, user.Character.StoreItem(hauberk))
+	byrnie := rolledMail(items.RarityRare, 20, true) // requires level 15
+	require.Equal(t, 15, byrnie.LevelRequirement())
+	require.True(t, user.Character.StoreItem(byrnie))
 
 	messages := captureLookMessages(t)
-	_, err := Equip("test hauberk", user, &rooms.Room{RoomId: 1}, 0)
+	_, err := Equip("test byrnie", user, &rooms.Room{RoomId: 1}, 0)
 	require.NoError(t, err)
 	events.ProcessEvents()
 	said := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
-	assert.Contains(t, said, "The test hauberk requires level 15 to use (the wearer is level 9).")
+	assert.Contains(t, said, "The test byrnie requires level 15 to use (the wearer is level 9).")
 	assert.Zero(t, user.Character.Equipment.Body.ItemId, "nothing was worn")
 	assert.Len(t, user.Character.Items, 1, "the item stays in the pack")
 
 	user.Character.Level = 15
 	*messages = nil
-	_, err = Equip("test hauberk", user, &rooms.Room{RoomId: 1}, 0)
+	_, err = Equip("test byrnie", user, &rooms.Room{RoomId: 1}, 0)
 	require.NoError(t, err)
 	events.ProcessEvents()
 	said = tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
@@ -74,7 +74,7 @@ func TestEquipRefusesRolledGearBelowItsLevelRequirement(t *testing.T) {
 	worn := user.Character.Equipment.Body
 	assert.Equal(t, lootMailID, worn.ItemId)
 	assert.Equal(t, 3, worn.GetSpec().StatMods.Get("strength"), "the worn item carries its identified affix")
-	assert.Equal(t, 6+1, worn.GetSpec().DamageReduction, "a fine hauberk protects 1 more than a standard one")
+	assert.Equal(t, 6+1, worn.GetSpec().DamageReduction, "a fine byrnie protects 1 more than a standard one")
 }
 
 func TestEquipUnidentifiedGearGivesBaseNumbersOnly(t *testing.T) {
@@ -88,11 +88,11 @@ func TestEquipUnidentifiedGearGivesBaseNumbersOnly(t *testing.T) {
 	require.True(t, user.Character.StoreItem(rolledMail(items.RarityRare, 20, false)))
 
 	messages := captureLookMessages(t)
-	_, err := Equip("hauberk", user, &rooms.Room{RoomId: 1}, 0)
+	_, err := Equip("byrnie", user, &rooms.Room{RoomId: 1}, 0)
 	require.NoError(t, err)
 	events.ProcessEvents()
 	said := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
-	assert.Contains(t, said, "You wear your fine test hauberk")
+	assert.Contains(t, said, "You wear your fine test byrnie")
 	assert.Contains(t, said, "unidentified")
 	worn := user.Character.Equipment.Body
 	assert.False(t, worn.IsIdentified())
@@ -100,7 +100,8 @@ func TestEquipUnidentifiedGearGivesBaseNumbersOnly(t *testing.T) {
 }
 
 // The admin spawn loot command rolls through the real generator, drops the
-// item in the room, and refuses bad words.
+// item in the room, and refuses bad words. The test item is a "byrnie" because
+// the shipped scale hauberk also answers "hauberk" (a flake, review 40d).
 func TestSpawnLootRollsAnItemIntoTheRoom(t *testing.T) {
 	useWorld(t, "default")
 	lootMail(t)
@@ -112,12 +113,12 @@ func TestSpawnLootRollsAnItemIntoTheRoom(t *testing.T) {
 	room := &rooms.Room{RoomId: 1}
 
 	messages := captureLookMessages(t)
-	handled, err := Spawn("loot hauberk 40 epic fine", user, room, 0)
+	handled, err := Spawn("loot byrnie 40 epic fine", user, room, 0)
 	require.NoError(t, err)
 	assert.True(t, handled)
 	events.ProcessEvents()
 	said := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
-	assert.Contains(t, said, "fine test hauberk")
+	assert.Contains(t, said, "fine test byrnie")
 	assert.Contains(t, said, "unidentified")
 	require.Len(t, room.Items, 1)
 	got := room.Items[0]
@@ -129,7 +130,7 @@ func TestSpawnLootRollsAnItemIntoTheRoom(t *testing.T) {
 	assert.False(t, got.IsIdentified(), "Rare and better drop unidentified")
 
 	*messages = nil
-	_, _ = Spawn("loot hauberk banana", user, room, 0)
+	_, _ = Spawn("loot byrnie banana", user, room, 0)
 	events.ProcessEvents()
 	assert.Contains(t, strings.Join(*messages, "\n"), "is not an item level, rarity or quality")
 	_, _ = Spawn("loot", user, room, 0)
@@ -157,7 +158,7 @@ func TestLookAtRolledItemShowsLayersAndScribeDetail(t *testing.T) {
 	require.True(t, user.Character.StoreItem(rolledMail(items.RarityRare, 20, true)))
 
 	messages := captureLookMessages(t)
-	_, err := Look("hauberk", user, room, 0)
+	_, err := Look("byrnie", user, room, 0)
 	require.NoError(t, err)
 	events.ProcessEvents()
 	said := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
@@ -169,7 +170,7 @@ func TestLookAtRolledItemShowsLayersAndScribeDetail(t *testing.T) {
 
 	user.Character.Skills = map[string]int{"scribe": 4}
 	*messages = nil
-	_, err = Look("hauberk", user, room, 0)
+	_, err = Look("byrnie", user, room, 0)
 	require.NoError(t, err)
 	events.ProcessEvents()
 	assert.Contains(t, tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), ""), "(tier 1, 1 to 3)")
@@ -193,7 +194,7 @@ func TestGearupSkipsRefusedGearAndWearsTheExactInstance(t *testing.T) {
 	require.Greater(t, tooHigh.GetSpec().Value, plain.GetSpec().Value)
 
 	best := user.Character.BestUpgrades()[items.Body]
-	assert.Equal(t, plain.UUID, best.UUID, "the refused hauberk is not the upgrade")
+	assert.Equal(t, plain.UUID, best.UUID, "the refused byrnie is not the upgrade")
 
 	user.Character.Level = 15
 	best = user.Character.BestUpgrades()[items.Body]

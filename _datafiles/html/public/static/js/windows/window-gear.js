@@ -802,7 +802,7 @@
             return String(value);
         }
         const rows = [
-            ['Weapon damage', 'damage'], ['Offhand damage', 'offhand_damage'], ['Weapon edge bonus', 'edge_bonus'], ['Weapon edge strikes', 'edge_strikes'], ['Offhand edge bonus', 'offhand_edge_bonus'], ['Offhand edge strikes', 'offhand_edge_strikes'], ['Hands', 'hands'], ['Reach', 'reach'], ['Shield', 'shield'], ['Protection (%)', 'defense'], ['Maximum health', 'health_max'], ['Maximum mana', 'mana_max'],
+            ['Weapon damage', 'damage'], ['Offhand damage', 'offhand_damage'], ['Weapon edge bonus', 'edge_bonus'], ['Weapon edge strikes', 'edge_strikes'], ['Offhand edge bonus', 'offhand_edge_bonus'], ['Offhand edge strikes', 'offhand_edge_strikes'], ['Weapon poison', 'weapon_coat'], ['Offhand poison', 'offhand_coat'], ['Hands', 'hands'], ['Reach', 'reach'], ['Shield', 'shield'], ['Protection (%)', 'defense'], ['Maximum health', 'health_max'], ['Maximum mana', 'mana_max'],
             ['Worn weight (g)', 'worn_g'], ['Burden', 'burden'], ['Dodge retained (%)', 'dodge_pct'],
             ['Pack capacity (g)', 'pack_capacity_g'], ['Company capacity (g)', 'capacity_g'], ['Cargo weight (g)', 'cargo_g']
         ];
@@ -818,7 +818,7 @@
             editorNode('td', String(view.current.stats[key]), row);
             if (after) { editorNode('td', String(after.stats[key]), row); }
         });
-        editorNode('p', 'Burden reduces dodge. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. The foe and combat conditions affect actual damage.', panel);
+        editorNode('p', 'Burden reduces dodge. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. A poison coating (time and hits left) may leave a poison on a foe your blade wounds. The foe and combat conditions affect actual damage.', panel);
         if (candidate) {
             if (candidate.returned && candidate.returned.length) { editorNode('p', 'Returns to cargo: ' + candidate.returned.join(', '), panel); }
             if (!candidate.allowed) { const reason = editorNode('p', candidate.reason, panel); reason.setAttribute('role', 'status'); }

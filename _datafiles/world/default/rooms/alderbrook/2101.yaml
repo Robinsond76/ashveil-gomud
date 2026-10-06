@@ -1,0 +1,16 @@
+roomid: 2101
+zone: Alderbrook
+title: Trappers' Track
+description: A narrow track leaves the Trappers' Post and drops east out of the forest. Beyond
+  the last pines a green valley opens, and a smudge of chimney smoke rises from a
+  hamlet.
+biome: road
+exits:
+  east:
+    roomid: 2111
+  west:
+    roomid: 2005
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

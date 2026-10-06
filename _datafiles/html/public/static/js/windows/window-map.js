@@ -42,10 +42,13 @@
         sprites:         true,       // Phase 40b: your class sprite, company badge and ally sprites; off = the classic red square and hearts
         showCamp:        true,       // Phase 40b: your camp and your party's camps
         style:           'tiles',    // Phase 40c: 'tiles' (terrain art, landmarks, walls, fog) | 'classic' (coloured squares and letters)
+        dayNight:        true,       // Phase 40d: shade outdoor tiles by the game's time of day
     };
 
-    // Phase 40a: room resources. Until the S1 icon sprites exist each one
-    // is a small coloured dot; tooltips name them.
+    // Phase 40a: room resources. The tiles style draws each one's S1 icon in
+    // the tile's corner (Phase 40d); the classic style, a tile too small for
+    // an icon and an icon still loading keep the small coloured dot. Tooltips
+    // name them.
     var RESOURCE_INFO = {
         water:    { label: 'Fresh water', color: '#4aa3ff' },
         forage:   { label: 'Forage',      color: '#7ccf3c' },
@@ -264,7 +267,7 @@
         document.body.appendChild(tooltip);
     }
 
-    function showTooltip(mouseX, mouseY, info) {
+    function showTooltip(mouseX, mouseY, info, canWalk) {
         ensureTooltip();
         clearTimeout(tooltipHideTimer);
 
@@ -294,6 +297,11 @@
             html += '<hr class="tt-divider"><div class="tt-row">' +
                     '<span class="tt-label">Here</span>' +
                     '<span class="tt-value">' + resNames.join(', ') + '</span></div>';
+        }
+
+        if (canWalk) {
+            html += '<hr class="tt-divider"><div class="tt-row"><span class="tt-label">Click</span>' +
+                    '<span class="tt-value">walk here</span></div>';
         }
 
         var details    = info.details || [];
@@ -559,7 +567,10 @@
             fadeStart: -1,
         };
         var animTimer = null;
-        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0 }; // what the last render drew (browser checks)
+        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0 }; // what the last render drew (browser checks)
+        var walkInfo = null;   // Phase 40d: Walkto { target, path: [room ids ahead] } while a walk is under way
+        var timeInfo = null;   // Phase 40d: Gametime, for the day/night shading
+        var nightQuant = -1;   // the shading level last drawn, in tenths
 
         function faceOf(dx, dy, prev) {
             if (dx === 0 && dy === 0) { return prev || { face: 'down', flip: false }; }
@@ -1054,6 +1065,148 @@
             return 'glyph';
         }
 
+        // drawResources marks what a room offers in its corner: the S1 icon
+        // for each (a depleted one gets the empty-basket overlay), at most
+        // RESOURCE_ICON_MAX with a "+" for the rest. A classic map, a tile
+        // under 24 px and an icon not loaded yet fall back to coloured dots,
+        // hollow with a slash once picked clean.
+        function drawResources(id, p, tilePx, scaledSize, half, useCircle, tiles, tiled, symColor, nowMs) {
+            var resIds = resourcesFor(id);
+            if (resIds.length === 0) { return; }
+            var goneIds = depletedFor(id);
+            var shown = resIds.slice(0, RESOURCE_ICON_MAX);
+            var iconMult = Math.max(0.5, spriteMult(tilePx) / 2);   // 8 px icons on a 32 px tile, 16 px on a 64 px one
+            var iconPx = 16 * iconMult;
+            var useIcons = tiles && tiled && tilePx >= 24;
+            var dot = Math.max(3, scaledSize * 0.16);
+            var inset = (useCircle && !tiles) ? Math.max(2, half * 0.45) : Math.max(2, scaledSize * 0.1);
+
+            shown.forEach(function (rid, i) {
+                var picked = goneIds.indexOf(rid) !== -1;
+                if (useIcons) {
+                    var cx = p.px - tilePx / 2 + 1 + iconPx / 2 + i * (iconPx + 1);
+                    var cy = p.py - tilePx / 2 + 1 + iconPx / 2;
+                    var path = 'map/resources/' + (RESOURCE_INFO[rid] ? rid : 'unknown') + '.png';
+                    if (drawIcon(path, cx, cy, iconMult, nowMs)) {
+                        drawn.icons++;
+                        if (picked) { drawIcon('map/resources/depleted.png', cx, cy, iconMult, nowMs); }
+                        return;
+                    }
+                }
+                var meta = RESOURCE_INFO[rid];
+                var dx = p.px - half + inset + i * (dot * 2 + 1) + dot * 0.5;
+                var dy = p.py - half + inset;
+                if (useCircle && !tiles) {
+                    dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
+                    dy = p.py - half * 0.62;
+                }
+                drawn.dots++;
+                ctx.fillStyle = (meta && meta.color) || '#aaaaaa';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(dx, dy, dot, 0, Math.PI * 2);
+                if (picked) {
+                    // depleted: the dot is hollow with a slash through it
+                    ctx.fillStyle = mapSettings.mapBackground;
+                    ctx.fill();
+                    ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(dx - dot, dy + dot);
+                    ctx.lineTo(dx + dot, dy - dot);
+                    ctx.stroke();
+                } else {
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            });
+            if (resIds.length > RESOURCE_ICON_MAX) {
+                var plusX = useIcons ? p.px - tilePx / 2 + 1 + RESOURCE_ICON_MAX * (iconPx + 1) + 2
+                                     : p.px - half + inset + RESOURCE_ICON_MAX * (dot * 2 + 1);
+                var plusY = useIcons ? p.py - tilePx / 2 + 1 + iconPx / 2 : p.py - half + inset;
+                ctx.fillStyle = tiled ? '#ffffff' : symColor;
+                ctx.font = 'bold ' + Math.max(6, (useIcons ? iconPx : dot * 2)) + 'px monospace';
+                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                ctx.fillText('+', plusX, plusY);
+            }
+        }
+
+        // nightLevel is how far into night the game's clock is, 0 (day) to 1
+        // (night), with an hour of dusk before NightStart and of dawn after
+        // DayStart. Without a clock it is 0.
+        function nightLevel() {
+            var g = timeInfo;
+            if (!g || typeof g.hour24 !== 'number') { return 0; }
+            var h = g.hour24 + ((g.minute || 0) / 60);
+            var ds = g.day_start, ns = g.night_start;
+            if (typeof ds !== 'number' || typeof ns !== 'number' || ds >= ns) { return g.night ? 1 : 0; }
+            if (h >= ns) { return 1; }
+            if (h >= ns - 1) { return h - (ns - 1); }
+            if (h >= ds + 1) { return 0; }
+            if (h >= ds) { return 1 - (h - ds); }
+            return 1;
+        }
+
+        var NIGHT_STRENGTH = 0.55;   // how dark full night multiplies a tile
+
+        // drawNightShade darkens and cools the tiles the sky reaches (not
+        // indoor or dark biomes) by the time of day; labels stay readable
+        // because only terrain, landmark and icon layers sit under it.
+        function drawNightShade(drewTiles, tilePx) {
+            var level = nightLevel();
+            nightQuant = Math.round(level * 10);
+            if (!mapSettings.dayNight || level <= 0.02) { return; }
+            var t = level * NIGHT_STRENGTH;
+            var r = Math.round(255 - t * (255 - 70)), g = Math.round(255 - t * (255 - 85)), b = Math.round(255 - t * (255 - 150));
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+            rooms.forEach(function (room, id) {
+                if (!drewTiles[id]) { return; }
+                var biome = biomeTable[room.env];
+                if (biome && (biome.indoor || biome.dark)) { return; }
+                var p = gridToCanvas(room.x, room.y);
+                ctx.fillRect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
+                drawn.shaded++;
+            });
+            ctx.restore();
+        }
+
+        // drawWalkPath marks the planned walk: a breadcrumb on each room
+        // ahead and the destination flag on the last (S1 markers). Rooms off
+        // this map level or zone are skipped.
+        function drawWalkPath(tilePx, nowMs) {
+            if (!walkInfo || !Array.isArray(walkInfo.path)) { return false; }
+            var mult = spriteMult(tilePx);
+            var animated = false;
+            walkInfo.path.forEach(function (rid) {
+                var room = rooms.get(rid);
+                if (!room) { return; }
+                var p = gridToCanvas(room.x, room.y);
+                var isTarget = rid === walkInfo.target;
+                var drew;
+                if (isTarget) {
+                    drew = drawIcon('map/markers/walk-target.png', p.px, p.py - 4 * mult, mult, nowMs);
+                    animated = animated || drew;
+                } else {
+                    drew = drawIcon('map/markers/walk-dot.png', p.px, p.py, mult, nowMs);
+                }
+                if (!drew) {
+                    ctx.save();
+                    ctx.fillStyle = isTarget ? '#f2c14e' : '#ffffff';
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(p.px, p.py, Math.max(2, tilePx * (isTarget ? 0.14 : 0.08)), 0, Math.PI * 2);
+                    ctx.fill(); ctx.stroke();
+                    ctx.restore();
+                }
+                drawn.path++;
+            });
+            return animated;
+        }
+
         // drawChevrons marks a room with stairs up or down (S1 chevrons).
         // It returns false when the art is not ready, so the glyph stands.
         function drawChevrons(room, p, now) {
@@ -1111,7 +1264,7 @@
             var useCircle = (mapSettings.roomShape === 'circle');
 
             var tiles = tilesOn();
-            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0 };
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0 };
             var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
@@ -1268,48 +1421,7 @@
                     if (mark === 'landmark') { drawn.landmarks++; } else if (mark === 'glyph') { drawn.glyphs++; }
                 }
                 if (mapSettings.showResources) {
-                    var resIds = resourcesFor(id);
-                    var goneIds = depletedFor(id);
-                    if (resIds.length > 0) {
-                        var dot   = Math.max(3, scaledSize * 0.16);
-                        var shown = resIds.slice(0, RESOURCE_ICON_MAX);
-                        var inset = (useCircle && !tiles) ? Math.max(2, half * 0.45) : Math.max(2, scaledSize * 0.1);
-                        shown.forEach(function (rid, i) {
-                            var meta = RESOURCE_INFO[rid];
-                            ctx.fillStyle = (meta && meta.color) || '#aaaaaa';
-                            ctx.strokeStyle = '#000000';
-                            ctx.lineWidth = 1;
-                            var dx = p.px - half + inset + i * (dot * 2 + 1) + dot * 0.5;
-                            var dy = p.py - half + inset;
-                            if (useCircle && !tiles) {
-                                dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
-                                dy = p.py - half * 0.62;
-                            }
-                            var picked = goneIds.indexOf(rid) !== -1;
-                            ctx.beginPath();
-                            ctx.arc(dx, dy, dot, 0, Math.PI * 2);
-                            if (picked) {
-                                // depleted: the dot is hollow with a slash through it
-                                ctx.fillStyle = mapSettings.mapBackground;
-                                ctx.fill();
-                                ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
-                                ctx.stroke();
-                                ctx.beginPath();
-                                ctx.moveTo(dx - dot, dy + dot);
-                                ctx.lineTo(dx + dot, dy - dot);
-                                ctx.stroke();
-                            } else {
-                                ctx.fill();
-                                ctx.stroke();
-                            }
-                        });
-                        if (resIds.length > RESOURCE_ICON_MAX) {
-                            ctx.fillStyle = tiled ? '#ffffff' : symColor;
-                            ctx.font = 'bold ' + Math.max(6, dot * 2) + 'px monospace';
-                            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                            ctx.fillText('+', p.px - half + inset + RESOURCE_ICON_MAX * (dot * 2 + 1), p.py - half + inset);
-                        }
-                    }
+                    drawResources(id, p, tilePx, scaledSize, half, useCircle, tiles, tiled, symColor, nowMs);
                 }
                 if (room.hasUp || room.hasDown) {
                     if (tiled && drawChevrons(room, p, nowMs)) { return; }
@@ -1332,9 +1444,14 @@
                 }
             });
 
+            // Phase 40d: the time of day shades the outdoor tiles, and a walk
+            // under way draws its path over them.
+            if (tiles) { drawNightShade(drewTiles, tilePx); }
+            var walkAnim = drawWalkPath(tilePx, nowMs);
+
             // Animated tiles (water, shore, swamp, snow, desert) cycle on a
             // timer while the map is drawn; reduced motion keeps them still.
-            if (animTiles && !reducedMotion() && !document.hidden) { scheduleAnim(false); }
+            if ((animTiles || walkAnim) && !reducedMotion() && !document.hidden) { scheduleAnim(false); }
 
             drawCamps(nowMs, spriteOn);
 
@@ -1424,7 +1541,8 @@
                 }
                 var id   = roomAtPoint(e.clientX - rect.left, e.clientY - rect.top);
                 var info = id !== null ? roomInfoStore.get(id) : null;
-                if (info) { clearTimeout(tooltipHideTimer); showTooltip(e.clientX, e.clientY, info); }
+                canvas.style.cursor = (id !== null && id !== currentRoomId) ? 'pointer' : '';
+                if (info) { clearTimeout(tooltipHideTimer); showTooltip(e.clientX, e.clientY, info, id !== currentRoomId); }
                 else      { hideTooltip(); }
             });
             canvas.addEventListener('mouseup', function (e) {
@@ -1436,13 +1554,26 @@
             canvas.addEventListener('click', function (e) {
                 if (canvas.dataset.suppressClick) { delete canvas.dataset.suppressClick; return; }
                 var charInfo = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Info;
-                if (!charInfo || charInfo.role !== 'admin') { return; }
+                var isAdmin = !!charInfo && charInfo.role === 'admin';
                 var rect = canvas.getBoundingClientRect();
                 var id   = roomAtPoint(e.clientX - rect.left, e.clientY - rect.top);
                 if (id === null) { return; }
                 e.stopPropagation();
-                uiMenu(e, [{ label: 'teleport ' + id, cmd: 'teleport ' + id },
-                            { label: 'room info ' + id, cmd: 'room info ' + id }]);
+                // Phase 40d: a click on a room you can reach offers a walk there
+                // (one pick confirms it); the server only walks a visited room.
+                var items = [];
+                if (id !== currentRoomId) {
+                    var info = roomInfoStore.get(id);
+                    items.push({ label: 'Walk to ' + ((info && info.name) || ('room ' + id)), cmd: 'walkto ' + id });
+                }
+                if (walkInfo) { items.push({ label: 'Stop walking', cmd: 'walkto stop' }); }
+                if (isAdmin) {
+                    items.push({ label: 'teleport ' + id, cmd: 'teleport ' + id },
+                               { label: 'room info ' + id, cmd: 'room info ' + id });
+                }
+                if (items.length === 0) { return; }
+                hideTooltip();
+                uiMenu(e, items);
             });
             canvas.addEventListener('wheel', function (e) {
                 e.preventDefault();
@@ -1614,6 +1745,12 @@
                 function (v) { mapSettings.showResources = v; }
             )));
 
+            panel.appendChild(row('Day/night', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.dayNight !== false; },
+                function (v) { mapSettings.dayNight = v; }
+            )));
+
             panel.appendChild(row('Sprites', btnGroup(
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
                 function () { return mapSettings.sprites !== false; },
@@ -1751,7 +1888,25 @@
                 companions = list; render();
             },
             setCamp: function (camp) { campInfo = camp; render(); },
+            // Phase 40d: the walk under way ({} or null when none) and the clock.
+            setWalk: function (walk) {
+                var next = (walk && Array.isArray(walk.path) && walk.path.length > 0) ? { target: walk.target, path: walk.path.slice() } : null;
+                if (JSON.stringify(next) === JSON.stringify(walkInfo)) { return; }
+                walkInfo = next; render();
+            },
+            setTime: function (time) {
+                timeInfo = time || null;
+                var q = Math.round(nightLevel() * 10);
+                if (q !== nightQuant) { render(); }
+            },
             redraw: function () { render(); },
+            // pointOf is a room's centre in client pixels, for the browser checks.
+            pointOf: function (roomId) {
+                var room = rooms.get(roomId);
+                if (!room || !canvas) { return null; }
+                var p = gridToCanvas(room.x, room.y), r = canvas.getBoundingClientRect();
+                return { x: r.left + p.px, y: r.top + p.py };
+            },
             // state is for the browser checks (scripts/browser/map-check.mjs).
             state: function () {
                 var res = resolveSheet(chainKeys(identity.classid, identity.lineage), false);
@@ -1764,6 +1919,7 @@
                     }),
                     style: tilesOn() ? 'tiles' : 'classic', drawn: drawn, zoom: zoomScale,
                     camp: campInfo, fading: unit.fadeStart >= 0,
+                    walk: walkInfo, night: nightLevel(),
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
                     allies: Object.keys(partyHeartEase).map(function (n) {
@@ -1883,7 +2039,7 @@
     view2d.setupResizeObserver(win);
     Sprites.onChange(function () { view2d.redraw(); });
     Sprites.data('map/landmarks.json'); // start the landmark table loading
-    window.MapView = { state: function () { return view2d.state(); } };
+    window.MapView = { state: function () { return view2d.state(); }, pointOf: function (id) { return view2d.pointOf(id); } };
 
     // =========================================================================
     // GMCP update logic
@@ -1932,6 +2088,15 @@
         var c = Client.GMCPStructs.Char;
         var info = c && c.Info;
         view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '');
+    }
+
+    // Phase 40d: the planned walk (Walkto) and the game's time of day.
+    function updateWalk() {
+        view2d.setWalk(Client.GMCPStructs.Walkto || null);
+    }
+
+    function updateTime() {
+        view2d.setTime(Client.GMCPStructs.Gametime || null);
     }
 
     function updateCompany() {
@@ -1991,12 +2156,16 @@
 
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals', 'Char', 'Company'],
+        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals', 'Char', 'Company', 'Walkto', 'Gametime'],
         onGMCP: function (namespace) {
             if (namespace === 'Char.Info' || namespace === 'Char') {
                 updateIdentity();
             } else if (namespace.indexOf('Company') === 0) {
                 updateCompany();
+            } else if (namespace === 'Walkto') {
+                updateWalk();
+            } else if (namespace === 'Gametime') {
+                updateTime();
             } else if (namespace === 'World.Map') {
                 updateWorldMap();
             } else if (namespace === 'World.Resources') {

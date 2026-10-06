@@ -6,9 +6,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -44,6 +46,13 @@ func init() {
 	events.RegisterListener(GMCPRoomUpdate{}, g.buildAndSendGMCPPayload)
 	events.RegisterListener(events.ItemOwnership{}, g.itemOwnershipHandler)
 	events.RegisterListener(events.AggroChanged{}, g.aggroChangedHandler)
+	companyview.OnRefresh.Register(bandRatings.onRefresh)
+	events.RegisterListener(events.PlayerDespawn{}, func(e events.Event) events.ListenerReturn {
+		if evt, ok := e.(events.PlayerDespawn); ok {
+			bandRatings.forget(evt.UserId)
+		}
+		return events.Continue
+	})
 	events.RegisterListener(events.RoomResourcesChanged{}, g.resourcesChangedHandler)
 	events.RegisterListener(events.GatherProgress{}, g.gatherProgressHandler)
 
@@ -496,7 +505,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		payload.Details = []string{}
 		if cfg := rooms.GetZoneConfig(room.Zone); cfg != nil && cfg.Encounters.Band.Valid() {
 			b := cfg.Encounters.Band
-			payload.LevelBand = &GMCPRoomModule_Payload_LevelBand{Low: b.Low, High: b.High, Rating: encounters.Rating(user.Character.Level, b)}
+			payload.LevelBand = &GMCPRoomModule_Payload_LevelBand{Low: b.Low, High: b.High, Rating: encounters.Rating(companyview.LevelFor(user), b)}
 		}
 
 		// Coordinates
@@ -735,4 +744,40 @@ func npcGroups(room *rooms.Room) map[int]string {
 		}
 	}
 	return out
+}
+
+// bandRatings resends Room.Info when the company's level changes (Phase
+// 37c), so the web header's zone rating follows a level-up, a recruit or a
+// dismissal at once, not only when the next room loads.
+var bandRatings = &bandWatch{last: map[int]int{}}
+
+type bandWatch struct {
+	mu   sync.Mutex
+	last map[int]int
+}
+
+func (b *bandWatch) forget(userID int) {
+	b.mu.Lock()
+	delete(b.last, userID)
+	b.mu.Unlock()
+}
+
+func (b *bandWatch) onRefresh(r companyview.Refreshed) companyview.Refreshed {
+	if r.User == nil || r.User.Character == nil {
+		return r
+	}
+	level := companyview.CompanyLevel(r.Summary)
+	b.mu.Lock()
+	prev, seen := b.last[r.User.UserId]
+	b.last[r.User.UserId] = level
+	b.mu.Unlock()
+	if !seen || prev == level {
+		return r
+	}
+	if room := rooms.LoadRoom(r.User.Character.RoomId); room != nil {
+		if cfg := rooms.GetZoneConfig(room.Zone); cfg != nil && cfg.Encounters.Band.Valid() {
+			events.AddToQueue(GMCPRoomUpdate{UserId: r.User.UserId, Identifier: `Room.Info`})
+		}
+	}
+	return r
 }

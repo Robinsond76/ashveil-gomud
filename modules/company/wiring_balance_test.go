@@ -450,8 +450,13 @@ func TestBalanceEnemyEarnedTurnSurvivesAnEarlierKill(t *testing.T) {
 // Review (30g6a): the mirror's cleric casts nothing, yet caster-targeting
 // enemies still find him: the casters cell measures caster targeting.
 func TestBalanceMirrorClericIsACasterWhoCastsNothing(t *testing.T) {
-	t.Cleanup(hooks.UseAimRollForTest(func(n int) int { return n - 1 })) // never the noise
 	f := newBalanceFight(t, 10, companySpread, enemyCasters)
+	// Pinned after the fixture, which installs the real random roll for the
+	// balance runs: set first, the pin was silently replaced and the
+	// coordination tier's noise floor sent one enemy in five at a random
+	// member, so the cleric drew fewer than two aims in about 1 run in 40
+	// (37c).
+	t.Cleanup(hooks.UseAimRollForTest(func(n int) int { return n - 1 })) // never the noise
 	casts := 0
 	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
 		if e.Kind == combatstream.CastStart && sideOf(e.Source) == sideCompany {

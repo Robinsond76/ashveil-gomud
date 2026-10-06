@@ -1,0 +1,5 @@
+flag: mirethorn
+name: "Mirethorn"
+description: "The holder's dodge chance is down 10 points."
+locked: true
+harmful: true

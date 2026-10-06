@@ -1,0 +1,12 @@
+itemid: 282
+name: vial of leadroot
+namesimple: leadroot vial
+description: A stoppered glass vial of a heavy, grey draught. One dose coats one bladed
+  weapon (coat leadroot); a wounding blow then has a 40% chance to leave it in
+  the wound (physical damage dealt cut by 15% for 2 rounds). The coating lasts 10 minutes or 8 wounding blows
+  (help poisons).
+type: object
+subtype: mundane
+uses: 1
+value: 6
+weight: 30
