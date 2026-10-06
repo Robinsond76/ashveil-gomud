@@ -47,6 +47,12 @@ gets through also leaves a wound, from any weapon, fists and bites too:
                   not break it. A Witch's Binding Hex, 1 round (2 from level 20).
   <ansi fg="yellow">Blighted</ansi>      healing it receives is halved, for 3 rounds. A Witch's
                   Blight, cast at enemy healers.
+  <ansi fg="yellow">Fogbound</ansi>      its ranged attacks lose 10 points of accuracy and its
+                  spells hit 10% weaker. A Shaman's Call Fog
+                  (<ansi fg="command">help shaman</ansi>), 3 rounds.
+  <ansi fg="yellow">Windchilled</ansi>   its spell chants and sling shots take one extra round to
+                  begin, as in the cold (<ansi fg="command">help temperature</ansi>). A Shaman's
+                  Chill Wind, 3 rounds.
   <ansi fg="yellow">Overloaded</ansi>    casts poorly (-30 to its chance to cast) and moves slowly
                   (-3 speed), for 3 rounds. Shower of Sparks overloads what
                   it sears.

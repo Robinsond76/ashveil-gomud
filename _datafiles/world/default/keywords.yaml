@@ -49,6 +49,8 @@ help:
       - warlord
       - samurai
       - samurai-routes
+      - shaman
+      - shaman-routes
       - summoning
     company:
       - company
@@ -304,6 +306,8 @@ help-aliases:
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
   samurai-routes:   [kensai, hatamoto, ronin, sword-saint, sword saint, shogun, kenshi, bodyguard, vengeance]
+  shaman:           [shamans, weather-caller, stormcraft, call-fog, callfog, gust, chill-wind, chillwind, lightning, battle-weather, fogbound, windchilled]
+  shaman-routes:    [stormcaller, mistweaver, earthspeaker, tempest-lord, tempest lord, veil-mother, veil mother, mountain-speaker, mountain speaker, stoneskin, chain-lightning]
   witch:            [witches, hedge-witch, hexcraft]
   halberdier:       [halberdiers, sweep, brace, hook, crowded]
   halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]

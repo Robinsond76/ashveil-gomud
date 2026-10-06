@@ -588,6 +588,14 @@
         }
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
+        // Phase 39c: a Shaman's weather over the battle (help shaman).
+        if (battle.weather && battle.weather.name) {
+            const w = battle.weather;
+            const note = el('div', 'cbt-note cbt-weather',
+                'Weather: ' + w.name + ', ' + w.rounds + (w.rounds === 1 ? ' round' : ' rounds') + ' (' + w.effect + ')');
+            note.title = 'A Shaman\'s weather, this battle only (help shaman)';
+            root.appendChild(note);
+        }
         if (battle.outlook && battle.outlook.text) {
             const outlook = el('div', 'cbt-note cbt-outlook cbt-risk-' + String(battle.outlook.risk || '').replace(/[^a-z]/g, ''),
                 'Outlook: ' + battle.outlook.text);

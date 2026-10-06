@@ -110,13 +110,13 @@ func (s Strategy) IsZero() bool {
 	return s.Role == "" && s.Rule == "" && s.Ward == "" && !s.NoAbilities && s.Reserve == 0
 }
 
-// DefaultRole is an archetype's role: a cleric heals, a wizard casts, a
+// DefaultRole is an archetype's role: a cleric heals, a wizard (and a shaman) casts, a
 // witch controls, everyone else fights.
 func DefaultRole(archetype string) Role {
 	switch strings.ToLower(archetype) {
 	case "cleric":
 		return Healer
-	case "wizard":
+	case "wizard", "shaman":
 		return Caster
 	case "witch":
 		return Controller
