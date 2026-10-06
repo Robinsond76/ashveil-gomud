@@ -9,6 +9,7 @@ package status
 import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
@@ -157,6 +158,13 @@ func each(c *characters.Character, fn func(b *buffs.Buff, s *Spec)) {
 	}
 }
 
+// standsFast reports whether c shrugs the status off (Phase 39i): a Kenshi
+// that is the last of its company standing cannot be knocked down. The buff
+// may sit on it and tick away, but it holds nothing: it is never live.
+func standsFast(c *characters.Character, id int) bool {
+	return id == KnockedDown && c.RT != nil && c.RT.Alone && c.ClassEffects().Has(classes.LastStand)
+}
+
 func stacks(b *buffs.Buff) int {
 	if b.Stacks < 1 {
 		return 1
@@ -203,7 +211,7 @@ func Tick(c *characters.Character) []Change {
 func LostAction(c *characters.Character) (*Spec, bool) {
 	var found *Spec
 	each(c, func(b *buffs.Buff, s *Spec) {
-		if found != nil || b.Expired() {
+		if found != nil || b.Expired() || standsFast(c, s.Id) {
 			return
 		}
 		spec := buffs.GetBuffSpec(b.BuffId)
@@ -298,7 +306,7 @@ func Words(buffIds []int) []string {
 func Live(c *characters.Character, id int) bool {
 	live := false
 	each(c, func(b *buffs.Buff, s *Spec) {
-		if s.Id == id && !b.Expired() {
+		if s.Id == id && !b.Expired() && !standsFast(c, id) {
 			live = true
 		}
 	})
@@ -321,7 +329,7 @@ func Wake(c *characters.Character) bool {
 func Grounded(c *characters.Character) bool {
 	grounded := false
 	each(c, func(b *buffs.Buff, s *Spec) {
-		if !b.Expired() && (s.Id == KnockedDown || s.Id == Stunned || s.Id == Asleep || s.Id == Paralyzed) {
+		if !b.Expired() && !standsFast(c, s.Id) && (s.Id == KnockedDown || s.Id == Stunned || s.Id == Asleep || s.Id == Paralyzed) {
 			grounded = true
 		}
 	})

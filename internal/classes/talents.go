@@ -239,6 +239,12 @@ var (
 	tLongDraw      = defineEliteTalent(Talent{ID: "long-draw", Name: "Long Draw", Text: "+10% damage with a shooting weapon", Add: Effects{RangedPct: 10}})
 	tEagleEye      = defineEliteTalent(Talent{ID: "eagle-eye", Name: "Eagle Eye", Text: "+5 Attack with a shooting weapon", Add: Effects{RangedAttack: 5}})
 	tQuickNock     = defineEliteTalent(Talent{ID: "quick-nock", Name: "Quick Nock", Text: "starts a battle with 15 points on its action meter", Add: Effects{OpenMeter: 15}})
+	// Phase 39i: the neutral lineages' elite talents reuse the shared ones
+	// above where the effect fits (Iron Hide, Veteran's Edge, Second Wind,
+	// Razor's Edge, Quick Hands, Shadow Footing, Deep Reserves, Spell Edge,
+	// Focused Will); the Doll Master has two of its own.
+	tHeartwood    = defineEliteTalent(Talent{ID: "heartwood", Name: "Heartwood", Text: "your dolls have 15% more health", Add: Effects{DollHPBonus: 15}})
+	tMasterCarver = defineEliteTalent(Talent{ID: "master-carver", Name: "Master Carver", Text: "+2 damage on the doll's blows", Add: Effects{DollDamage: 2}})
 )
 
 func init() {
@@ -248,6 +254,10 @@ func init() {
 	offerElite("witch", tDeepReserves, tIronWill, tHexReach)
 	offerElite("rogue", tShadowFooting, tRazorsEdge, tQuickHands)
 	offerElite("ranger", tLongDraw, tEagleEye, tQuickNock)
+	offerElite("halberdier", tIronHide, tVeteransEdge, tSecondWind)
+	offerElite("samurai", tRazorsEdge, tQuickHands, tShadowFooting)
+	offerElite("shaman", tDeepReserves, tSpellEdge, tFocusedWill)
+	offerElite("dollmaster", tIronHide, tHeartwood, tMasterCarver)
 	offer("cleric", tMendingHands, tSteadfast, tDeepWell, tSanctuary, tGentleRest)
 	offer("warrior", tToughness, tHeavyHands, tKeenEdge, tFootwork, tTackleDril)
 	offer("rogue", tKeenEdge, tFootwork, tDeepCuts, tPatientHand, tHeavyHands)

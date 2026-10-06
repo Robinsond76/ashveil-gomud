@@ -39,7 +39,8 @@ cost merge order, not a dependency.
 | 38c | Elite promotions at 30, ranks 30–60, six lineages; three slices 38c1–38c3 ([plan](2026-10-06-phase-38c-elite-routes.md)) | 38b, 38c-d | After 38b |
 | 38d | Expanded class catalogue bundles, Sorcerer first | 38c | Later |
 | 38e | Creature recruits (Hound and Stone Golem pilot) | 38d, 39e | Later |
-| 39i | Elite ranks for the eight neutral lineages (new) | 38c, 39a–39h | Later |
+| 39i | Elite ranks for Halberdier, Samurai, Shaman and Doll Master, plus the balance items (**in review**) | 38c, 39a–39h | PR open |
+| 39i2 | Elite ranks for Beast Tamer, Gryphon Rider, Alchemist and Arbalist (new, split from 39i) | 39i | Next |
 | 36d | Tier 4–6 gear, Legendary signatures, Set bonuses (loot slice 5) | 36c, 38c | Later |
 | 40a2 | Gathering | 40a | After 40a |
 | 40a3 | Camp gear (already approved) | 40a2 | After 40a2 |
@@ -130,6 +131,15 @@ each lane.
 The neutral classes design says their elite ranks ship with 38c+. 38c
 covers the six original lineages; 39i adds ranks 30–60 for the eight
 neutral lineages once all of them and 38c are in.
+
+39i split in two to fit one reviewable PR: **39i** ships the four earliest
+lineages (Halberdier, Samurai, Shaman, Doll Master; twelve elites) and the
+balance items; **39i2** ships the other four (Beast Tamer, Gryphon Rider,
+Alchemist, Arbalist; twelve elites, each still `Planned`), reusing 39i's
+pattern: seven-rank tables, elite talents offered through `offerElite`, a
+wiring test that fires each signature in a real round, a mirror sim
+(`TestPhase39iNeutralElites`, extend its lineage table), one help page per
+elite and the lineage routes page updated.
 
 ### 40a4 Camp theft
 

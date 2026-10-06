@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tempest-lancer</ansi>
+
+The Tempest Lancer is the neutral elite of the Valkyrie. Its Charged Sweep
+sends each bolt on to the row behind, the lightning grows to 1d14, and a bolt
+can leave a foe paralyzed.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Arcing bolt      each bolt of a Charged Sweep also arcs to a foe in the
+                      row behind the one it struck, for half its damage
+  35 Rolling thunder  the lightning is 1d12
+  40 Practiced hands  +3 Attack
+  45 Forked arc       the arc deals 75% of the bolt
+  50 Thunderhead      the lightning is 1d14
+  55 Storm heart      your mana pool is three times its base
+  60 Stormstruck      a bolt that strikes may leave its foe paralyzed for a
+                      round (35%; a boss resists, 10%); a foe is never
+                      paralyzed twice in 3 rounds
+
+It needs the Valkyrie first (<ansi fg="command">help halberdier-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] tempest-lancer confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Halberdier talents (levels 35, 45, 55): Iron Hide (+5 Armor), Veteran's
+Edge (+3 Attack), Second Wind (once a battle, below a quarter of its health at
+the start of its turn, heals a tenth of its maximum). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.
