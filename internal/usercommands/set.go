@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -74,6 +75,13 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		user.SendText(``)
 
 		user.SendText(`<ansi fg="yellow-bold">combatpace:</ansi> ` + combatPaceText(user))
+		user.SendText(``)
+
+		onTxt = `<ansi fg="red">OFF</ansi>`
+		if banter.Enabled(user.GetConfigOption(banter.OptionKey)) {
+			onTxt = `<ansi fg="green">ON</ansi>`
+		}
+		user.SendText(`<ansi fg="yellow-bold">banter:</ansi> ` + onTxt)
 		user.SendText(``)
 
 		currentPrompt := user.GetConfigOption(`prompt`)
@@ -201,6 +209,36 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		return true, nil
 
+	}
+
+	// Ashveil Phase 49: the company's camp talk and after-battle banter. On
+	// when unset; `set banter on|off` sets it, bare `set banter` toggles.
+	if setTarget == banter.OptionKey {
+		on := !banter.Enabled(user.GetConfigOption(banter.OptionKey))
+		if len(args) > 0 {
+			switch strings.ToLower(args[0]) {
+			case `on`:
+				on = true
+			case `off`:
+				on = false
+			default:
+				user.SendText(`Usage: <ansi fg="command">set banter on|off</ansi> (<ansi fg="command">help banter</ansi>)`)
+				return true, nil
+			}
+		}
+		if on {
+			user.SendText(`Company banter toggled <ansi fg="green">ON</ansi>.`)
+		} else {
+			user.SendText(`Company banter toggled <ansi fg="red">OFF</ansi>.`)
+		}
+		user.SetConfigOption(banter.OptionKey, on)
+
+		events.AddToQueue(events.UserSettingChanged{
+			UserId: user.UserId,
+			Name:   banter.OptionKey,
+		})
+
+		return true, nil
 	}
 
 	// Ashveil Phase 29f: how fast combat text is paced out.

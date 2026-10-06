@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -71,4 +72,30 @@ func TestSetCombatPace(t *testing.T) {
 	reader.ScreenReader = true
 	out, _ = setOutput(t, reader, "")
 	assert.Contains(t, out, "combatpace: off (default)")
+}
+
+// Phase 49: `set banter` toggles company banter, which is on when unset.
+func TestSetBanter(t *testing.T) {
+	user := users.NewUserRecord(4202, 1)
+
+	out, _ := setOutput(t, user, "")
+	assert.Contains(t, out, "banter: ON", "set lists banter, on by default")
+
+	out, changed := setOutput(t, user, "banter off")
+	assert.Contains(t, out, "Company banter toggled OFF.")
+	assert.Equal(t, false, user.GetConfigOption(banter.OptionKey))
+	assert.Equal(t, []string{banter.OptionKey}, changed)
+	out, _ = setOutput(t, user, "")
+	assert.Contains(t, out, "banter: OFF")
+
+	out, _ = setOutput(t, user, "banter")
+	assert.Contains(t, out, "Company banter toggled ON.", "bare set banter toggles")
+	assert.Equal(t, true, user.GetConfigOption(banter.OptionKey))
+	out, _ = setOutput(t, user, "banter off")
+	out, _ = setOutput(t, user, "banter on")
+	assert.Contains(t, out, "toggled ON.")
+
+	out, changed = setOutput(t, user, "banter loudly")
+	assert.Contains(t, out, "Usage: set banter on|off")
+	assert.Empty(t, changed)
 }

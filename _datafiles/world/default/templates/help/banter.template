@@ -1,0 +1,44 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">banter</ansi>
+
+Your companions are not silent. At camp, and now and then after a won
+fight, two or three of them trade a line or two, so the company feels like
+comrades. It is only talk: it changes no numbers, costs nothing, and never
+moves the clock.
+
+<ansi fg="yellow-bold">When they talk</ansi>
+
+  as a camp rest begins   always (<ansi fg="command">help camp</ansi>)
+  as a camp rest ends     about one rest in two
+  after a won battle      about one battle in three, never in the middle of one
+
+A flight, a defeat, or a broken-off fight draws no banter.
+
+<ansi fg="yellow-bold">What they say</ansi>
+
+Each companion has a <ansi fg="command">personality</ansi> rolled when it joins your company, and it keeps
+it: stoic, cheerful, grim, boastful, wry or devout. What a companion says
+also follows its archetype (a warrior talks about shields, a wizard about
+spells) and its alignment, good, neutral or evil (<ansi fg="command">help alignment</ansi>). Some
+lines are said in answer to another companion's, and some mention another
+member, or you, by name.
+
+After a battle the talk follows how it went:
+
+  a close call    someone was left at under a third of their health
+  a fall          a companion was lost in the fight (<ansi fg="command">help resurrect</ansi>)
+  a clean win     nobody was hurt much
+  anything else   a plain victory
+
+A companion does not repeat a line it said lately, so the talk stays fresh.
+Only companions who are with you can speak, and it takes at least two.
+
+<ansi fg="yellow-bold">Turning it off</ansi>
+
+  <ansi fg="command">set banter off</ansi>   no more camp or battle talk
+  <ansi fg="command">set banter on</ansi>    bring it back (it is on by default)
+  <ansi fg="command">set banter</ansi>       flip it; <ansi fg="command">set</ansi> shows where it stands
+
+In the web client, Company > Camp shows the company's latest talk under
+"Around the fire" (<ansi fg="command">help webclient</ansi>).
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>.

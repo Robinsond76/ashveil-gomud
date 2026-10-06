@@ -323,6 +323,15 @@ check((await page.evaluate(() => document.getElementById('company-camp').textCon
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '43a-camp-supplies.png') }); }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], resting: false, rested: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Set by for the next rest') && !(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Supplies:'), 'no supplies lines with none carried or queued (43a)');
+// Phase 49: the company's latest talk shows under the camp, and only when there is some.
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, banter: [{ name: 'Hild Marrow', verb: 'mutters', text: 'Keep the fire low.' }, { name: 'Brann', verb: 'remarks', text: 'Cheerful as ever, Hild.' }] }));
+{
+  const camp = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(camp.includes('Around the fire') && camp.includes('Hild Marrow mutters, \u201cKeep the fire low.\u201d') && camp.includes('Brann remarks'), 'the banter lines on the Camp tab (49)');
+}
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '49-camp-banter.png') }); }
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Around the fire'), 'no banter block before any talk (49)');
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work this road'), 'no bells on a thieves road: the warning (40a4)');

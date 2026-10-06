@@ -3,6 +3,7 @@ package company
 import (
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
@@ -721,4 +722,42 @@ func CompanionClassState(leaderUserID, companionID int) (string, []string, bool)
 		return "", nil, false
 	}
 	return cp.CompanionClassState(leaderUserID, companionID)
+}
+
+// BanterProvider is optionally implemented by the registered
+// FormationProvider (Phase 49): the company's camp talk, so the camping
+// module can show it without importing modules/company.
+type BanterProvider interface {
+	// CampBanter is an exchange for the leader's camp, in context
+	// banter.CtxCamp (a rest begins) or banter.CtxRested (it is over). It
+	// returns nil when the leader has banter off, the roll does not come
+	// up, or too few members can talk.
+	CampBanter(leaderUserID int, context string) []banter.Said
+	// LastBanter is the latest exchange the company had, for the web
+	// client's Camp tab; nil before the first.
+	LastBanter(leaderUserID int) []banter.Said
+}
+
+func banterProvider() BanterProvider {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	bp, _ := p.(BanterProvider)
+	return bp
+}
+
+// CampBanter calls through to the provider; nil without one.
+func CampBanter(leaderUserID int, context string) []banter.Said {
+	if bp := banterProvider(); bp != nil {
+		return bp.CampBanter(leaderUserID, context)
+	}
+	return nil
+}
+
+// LastBanter calls through to the provider; nil without one.
+func LastBanter(leaderUserID int) []banter.Said {
+	if bp := banterProvider(); bp != nil {
+		return bp.LastBanter(leaderUserID)
+	}
+	return nil
 }

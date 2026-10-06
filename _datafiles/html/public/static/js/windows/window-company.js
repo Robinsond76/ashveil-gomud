@@ -1039,6 +1039,21 @@
             pad.appendChild(el('div', 'cmp-line', data.live.rest.tier + ' for ' + CompanyData.formatSeconds(data.live.rest.seconds) + '.'));
         }
 
+        // Phase 49: the company's latest talk, at camp or after a battle.
+        if (Array.isArray(camp.banter) && camp.banter.length) {
+            const talk = el('div', 'cmp-banter');
+            talk.setAttribute('role', 'log');
+            talk.setAttribute('aria-label', 'Company talk');
+            talk.appendChild(el('div', 'cmp-note', 'Around the fire'));
+            camp.banter.forEach(line => {
+                const row = el('div', 'cmp-line');
+                row.appendChild(el('b', null, line.name));
+                row.appendChild(document.createTextNode(' ' + (line.verb || 'says') + ', \u201c' + line.text + '\u201d'));
+                talk.appendChild(row);
+            });
+            pad.appendChild(talk);
+        }
+
         // Each button only when it would work.
         const actions = el('div', 'cmp-actions');
         if (camp.can_camp) { actions.appendChild(button('Make camp', 'camp', 'Make camp here (camp)')); }

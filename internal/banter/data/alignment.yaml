@@ -1,0 +1,44 @@
+# Phase 49: lines by alignment bucket (good, neutral, evil), from the
+# member's alignment: good at 20 and above, evil at -20 and below.
+
+# --- good ---
+- {text: "We help where we can. It is the best use of a sword.", ctx: [camp], align: [good]}
+- {text: "I think about the people we have helped. It makes the road shorter.", ctx: [camp], align: [good]}
+- {text: "If we find someone in need tomorrow, we stop. I do not care how late we are.", ctx: [camp], align: [good]}
+- {text: "There is good in most people, if you wait long enough.", ctx: [camp], align: [good]}
+- {text: "Share the last of the bread. We will find more.", ctx: [camp], align: [good]}
+- {text: "I hope we have left someone safer today than we found them.", ctx: [rested], align: [good]}
+- {text: "I take no joy in this. Only relief that we are still standing to help.", ctx: [win], align: [good]}
+- {text: "We did right today. That is worth more than any pay.", ctx: [win], align: [good]}
+- {text: "Let us see if the enemy dropped anything we can return to the people it was taken from.", ctx: [win], align: [good]}
+- {text: "I would not trade any of you for a king's ransom. Not even close.", ctx: [close], align: [good]}
+- {text: "{fallen} was the best of us. We must not let that go unspoken.", ctx: [fall], align: [good]}
+- {text: "We fought well and fought clean. Nothing to regret.", ctx: [flawless], align: [good]}
+
+# --- neutral ---
+- {text: "I do not much care who is right. I care who is paying, and who is fed.", ctx: [camp], align: [neutral]}
+- {text: "A fair price for a fair day's work. That is all anyone should ask.", ctx: [camp], align: [neutral]}
+- {text: "Sides are for people with more time than I have.", ctx: [camp], align: [neutral]}
+- {text: "Some days I am good, some days I am not. Mostly I am tired.", ctx: [camp], align: [neutral]}
+- {text: "I go where the road goes. It has not lied to me yet.", ctx: [camp], align: [neutral]}
+- {text: "I have no quarrel with the morning. Let us walk.", ctx: [rested], align: [neutral]}
+- {text: "It was them or us. I will take us.", ctx: [win], align: [neutral]}
+- {text: "No pride in it. No shame, either. It happened.", ctx: [win], align: [neutral]}
+- {text: "That was a business matter that got personal. I would rather avoid it.", ctx: [close], align: [neutral]}
+- {text: "We lost {fallen}. It is a rough way to learn what a day costs.", ctx: [fall], align: [neutral]}
+- {text: "Neat. Efficient. I could get used to fighting like that.", ctx: [flawless], align: [neutral]}
+
+# --- evil ---
+- {text: "Mercy is a luxury. I save mine for people who will pay for it.", ctx: [camp], align: [evil]}
+- {text: "I have never met a lock I did not think was an insult.", ctx: [camp], align: [evil]}
+- {text: "Someone out there has something I want. I will find them.", ctx: [camp], align: [evil]}
+- {text: "I stay with this company because it suits me. Do not mistake it for kindness.", ctx: [camp], align: [evil]}
+- {text: "A smart person takes what they can before anyone else does.", ctx: [camp], align: [evil]}
+- {text: "I do not pray, I do not hope. I only plan.", ctx: [camp], align: [evil]}
+- {text: "Another day. Another few coins' worth of misery for someone else.", ctx: [rested], align: [evil]}
+- {text: "Mercy for the dead is a waste. Let us see what they were carrying.", ctx: [win], align: [evil]}
+- {text: "It would have been worse if I had been any gentler.", ctx: [win], align: [evil]}
+- {text: "I enjoyed that, a little. Do not look at me like that.", ctx: [win], align: [evil]}
+- {text: "I will take what I am owed. And a bit more, for the scare.", ctx: [close], align: [evil]}
+- {text: "{fallen} is gone. A shame. They carried a good deal of our gear.", ctx: [fall], align: [evil]}
+- {text: "Clean. Good. The weak never see it coming, and we are not weak.", ctx: [flawless], align: [evil]}
