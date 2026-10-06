@@ -46,5 +46,16 @@ Markets are found in a settlement's market square — Dunmar's Market
 Square and Trappers' Post on the Old Kings Road are the ones known so
 far. Not every settlement has one.
 
+<ansi fg="yellow-bold">Goods and saturation</ansi>
+
+Both markets trade the trade goods you haul (<ansi fg="command">help goods</ansi>): trophies, salvage,
+materials, valuables and curios. Dunmar takes them all and pays most for
+materials and valuables; the Trappers' Post deals in trophies and salvage at
+lower prices, so they are cheap there and dear in town. Selling many of one
+good into one market is saturation: each unit lowers the price of the next,
+and a market stops buying a good altogether once it is glutted. Stock drifts
+back toward its target every round, so a glut clears within a minute or so;
+selling to another market, or another good, has no such penalty.
+
 See also: <ansi fg="command">help standing</ansi>, <ansi fg="command">help rumors</ansi>, <ansi fg="command">help buy</ansi>, <ansi fg="command">help sell</ansi>,
 <ansi fg="command">help cargo</ansi>.

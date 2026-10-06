@@ -234,6 +234,37 @@ healers default also overriding a member's own `strategy` rule at levels 5-9
 is intended (company-wide default; `company tactics focus none` opts out,
 as `help tactics` says).
 
+**Phase 36c complete: loot economy (2026-10-06):** merchants buy rolled gear
+(priced by quality, unread Rare+ by rarity at a discount), `mark [item] junk`
+and `sell junk`, `salvage` at smiths, identification fees at `appraise`
+(60/150/400), all 24 trade goods in the Dunmar and Trappers' Post markets
+with stock-driven saturation, and GMCP/web labels for rolled names. Plan:
+[36c plan](plans/2026-10-06-phase-36c-loot-economy.md). Decisions and
+deferrals (scrolls) are recorded there.
+Review (PR #37, Opus review thread), exploit search: buy-and-sell of gear
+can't pay (shops sell plain items; merchants pay at most 25%); no shop-sold
+piece salvages into more than its price even at Dunmar's market price
+(scanned every shipped item); appraise-then-sell is a gold sink, not a gain
+(a Rare's fee exceeds what reading adds at tier 1). **Accepted:** Brynja
+sold iron ore and tanned leather (18/16) under Dunmar's target-stock price
+(23/21), a risk-free loop; her prices are now 24/22 and
+`TestShopkeepersNeverUndercutMarketsOnTradedGoods` holds every shipped
+shopkeeper at or above every market's target-stock price for a traded good.
+**Accepted (UI):** `offer` and `sell` now say why a price is low (unread
+gear, or a pile already on hand; `TestSaleNoteExplainsALowPrice`); GMCP
+inventory details carry `junk`, so the web gear window shows the mark; help
+`sell` no longer claims paid reading "usually pays", and `goods`/`market`
+no longer say saturation recovers "as the days pass" (market stock drifts
+every round, so a glut clears within a minute). **Confirmed fair:** the two
+"hide" test updates (bear hide made bare "hide" ambiguous; the tests now
+assert the question and use "wolf hide", same prices). Follow-ups: market
+saturation is weak because stock drifts every 4-second round (37b or a
+market pass could slow drift for the 36c goods); a `salvage` preview of
+what an item would give; legacy weapons with no family (sharp stick, tree
+trunk, sling) salvage as metal; rarity colours in web windows.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
+
 **Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
 now receives `Company.Battle.Event`, one entry per combat happening of its
 fight (attack, spell, heal, status, wind-up, guard, yield, flee, death, fight
@@ -600,7 +631,7 @@ their dependencies and those decisions is the
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
-| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, review pending | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
 | 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |

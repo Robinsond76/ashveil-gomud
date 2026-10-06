@@ -1,0 +1,26 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mark</ansi>
+
+Mark the things you never want to carry away from a merchant, then sell
+them all at once.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">mark [item] junk</ansi>
+  Marks an item you carry as junk. It shows a <ansi fg="item-flags">j</ansi> flag in your pack.
+
+  <ansi fg="command">mark [item] keep</ansi>
+  Takes the mark off again.
+
+  <ansi fg="command">mark</ansi>
+  Lists what you have marked.
+
+  <ansi fg="command">sell junk</ansi>
+  At a merchant, sells everything marked, plus plain junk-type items, in one
+  transaction with one summary line per item. Any item no merchant here
+  wants stays in your pack. A marked item is sold at the usual price, so
+  mark gear you are done with, not gear you might still wear.
+
+Quest items cannot be marked. The mark stays on an item when you hand it
+to a companion, stash it or store it.
+
+See also: <ansi fg="command">help sell</ansi>, <ansi fg="command">help salvage</ansi>, <ansi fg="command">help goods</ansi>.
