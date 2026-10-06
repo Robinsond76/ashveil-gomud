@@ -11,6 +11,7 @@ Requires Pillow.  See scripts/sprites/README.md.
 import argparse
 import json
 import os
+import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -29,6 +30,7 @@ import uiicons  # noqa: E402
 from palette import PAL  # noqa: E402
 from pixels import Canvas, sheet  # noqa: E402
 
+IMPORTED = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imported")
 DEFAULT_OUT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..",
     "_datafiles", "html", "public", "static", "sprites")
@@ -240,6 +242,24 @@ def write_battle_mapping(w):
     w.manifest["battle/mapping.json"] = {"kind": "mapping", "set": "S3"}
 
 
+def write_imported(w):
+    """Copy imported art (see import_sheet.py) over the drawn placeholders.
+
+    Imported files keep their own manifest entries, which may declare a
+    density above 1; the drawn sprite for the same path is replaced.
+    """
+    index = os.path.join(IMPORTED, "imported.json")
+    if not os.path.exists(index):
+        return
+    with open(index) as f:
+        entries = json.load(f)
+    for rel, meta in sorted(entries.items()):
+        dst = os.path.join(w.out, rel)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copyfile(os.path.join(IMPORTED, rel), dst)
+        w.manifest[rel] = meta
+
+
 def write_manifest(w):
     doc = {
         "version": 1,
@@ -268,6 +288,7 @@ def main(argv=None):
     write_s3(w)
     write_s5(w)
     write_battle_mapping(w)
+    write_imported(w)
     write_manifest(w)
     if args.preview:
         import preview

@@ -618,15 +618,26 @@
             return tilePx < 16 ? 0.5 : Math.max(1, Math.round(tilePx / 32));
         }
 
+        // artSmoothing turns smoothing on only for high-density art, which
+        // is drawn below its native size; 1x pixel art stays crisp.
+        function artSmoothing(info) {
+            var hi = (info.density || 1) > 1;
+            ctx.imageSmoothingEnabled = hi;
+            if (hi) { ctx.imageSmoothingQuality = 'high'; }
+        }
+
+        // A sheet with density N has frames N times the 1x size; it is
+        // drawn at the same on-map size as 1x art (mult is per 1x pixel).
         function drawFrame(sheet, row, flip, cx, feetY, mult, now, startMs, alpha) {
             var info = sheet.info;
             var r = Math.max(0, (info.rows || []).indexOf(row));
             var f = Sprites.frame(info, r, now, startMs);
-            var w = f.sw * mult, h = f.sh * mult;
+            var d = info.density || 1;
+            var w = f.sw * mult / d, h = f.sh * mult / d;
             var x = Math.round(cx - w / 2);
             var y = Math.round(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
             ctx.save();
-            ctx.imageSmoothingEnabled = false;
+            artSmoothing(info);
             ctx.globalAlpha = alpha;
             if (flip) {
                 ctx.translate(x + w, 0);
@@ -644,9 +655,10 @@
             var a = Sprites.art(path);
             if (!a) { return false; }
             var f = Sprites.frame(a.info, 0, now, 0);
-            var w = f.sw * mult, h = f.sh * mult;
+            var d = a.info.density || 1;
+            var w = f.sw * mult / d, h = f.sh * mult / d;
             ctx.save();
-            ctx.imageSmoothingEnabled = false;
+            artSmoothing(a.info);
             ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h);
             ctx.restore();
             return true;
@@ -845,15 +857,24 @@
         }
 
         // -- Helpers -----------------------------------------------------------
+        // The canvas backing store is sized in device pixels so art stays
+        // sharp on high-resolution screens; all drawing uses CSS pixels
+        // (viewW x viewH) through the transform render() sets.
+        var viewW = 1, viewH = 1, pixelRatio = 1;
         function resizeCanvas() {
             if (!canvas || !container) { return; }
-            canvas.width  = container.clientWidth  || 1;
-            canvas.height = container.clientHeight || 1;
+            pixelRatio = window.devicePixelRatio || 1;
+            viewW = container.clientWidth  || 1;
+            viewH = container.clientHeight || 1;
+            canvas.width  = Math.round(viewW * pixelRatio);
+            canvas.height = Math.round(viewH * pixelRatio);
+            canvas.style.width  = viewW + 'px';
+            canvas.style.height = viewH + 'px';
         }
 
         function gridToCanvas(gx, gy) {
-            var midX = Math.floor(canvas.width  / 2);
-            var midY = Math.floor(canvas.height / 2);
+            var midX = Math.floor(viewW / 2);
+            var midY = Math.floor(viewH / 2);
             var step = getBaseStep() * zoomScale;
             return {
                 px: midX + (gx - cameraX - panOffsetX) * step,
@@ -978,7 +999,7 @@
             var fw = a.info.frame[0], fh = a.info.frame[1];
             var f = animated ? Sprites.frame(a.info, 0, now, 0) : { sx: variant * fw, sy: 0, sw: fw, sh: fh };
             ctx.save();
-            ctx.imageSmoothingEnabled = false;
+            artSmoothing(a.info);
             ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(px - size / 2), Math.round(py - size / 2), size, size);
             ctx.restore();
             return true;
@@ -1261,9 +1282,10 @@
 
         function render() {
             if (!ctx || !canvas) { return; }
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            ctx.clearRect(0, 0, viewW, viewH);
             ctx.fillStyle = mapSettings.mapBackground;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, viewW, viewH);
 
             var ROOM_SIZE = getRoomSize();
             var BASE_STEP = getBaseStep();
@@ -1916,7 +1938,7 @@
             // window resize; measure then too, in case the observer missed
             // the panel coming back into sight.
             window.addEventListener('resize', function () {
-                if (container && container.clientWidth && canvas && (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight)) { resizeCanvas(); render(); }
+                if (container && container.clientWidth && canvas && (viewW !== container.clientWidth || viewH !== container.clientHeight || pixelRatio !== (window.devicePixelRatio || 1))) { resizeCanvas(); render(); }
             });
             var orig = win.open.bind(win);
             win.open = function () { orig(); if (container) { ro.observe(container); } };

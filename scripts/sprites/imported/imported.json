@@ -1,0 +1,48 @@
+{
+ "map/units/witch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/witch/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ }
+}

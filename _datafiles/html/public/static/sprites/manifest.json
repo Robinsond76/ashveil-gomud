@@ -7018,46 +7018,50 @@
    ]
   },
   "map/units/witch/idle.png": {
-   "frames": 2,
-   "frame_ms": 500,
-   "kind": "map-unit",
-   "set": "S1",
+   "anchor": "bottom-center",
+   "density": 4,
+   "feet_baseline": 120,
    "frame": [
-    32,
-    32
+    128,
+    128
    ],
+   "frame_ms": 500,
+   "frames": 2,
+   "kind": "map-unit",
    "rows": [
     "down",
     "up",
     "side"
    ],
-   "anchor": "bottom-center",
-   "feet_baseline": 30,
+   "set": "S1",
    "size": [
-    64,
-    96
-   ]
+    256,
+    384
+   ],
+   "source": "imported"
   },
   "map/units/witch/walk.png": {
-   "frames": 4,
-   "frame_ms": 120,
-   "kind": "map-unit",
-   "set": "S1",
+   "anchor": "bottom-center",
+   "density": 4,
+   "feet_baseline": 120,
    "frame": [
-    32,
-    32
+    128,
+    128
    ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "map-unit",
    "rows": [
     "down",
     "up",
     "side"
    ],
-   "anchor": "bottom-center",
-   "feet_baseline": 30,
+   "set": "S1",
    "size": [
-    128,
-    96
-   ]
+    768,
+    384
+   ],
+   "source": "imported"
   },
   "map/units/wizard/idle.png": {
    "frames": 2,
