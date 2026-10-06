@@ -1,7 +1,7 @@
 # Phase 39c: a Shaman's small wind spell; sized at about 70% of Magic Missile.
 spellid: gust
 name: Gust
-description: Hurts for 5+1d4, plus 1 per 10 caster levels and 1 per 15 Mysticism, scaled by skill
+description: Hurts for 5+1d4, plus 1 per 7 caster levels and 1 per 15 Mysticism, scaled by skill
 type: harmsingle
 school: stormcraft
 cost: 5
@@ -10,5 +10,5 @@ difficulty: 75
 power:
   base: 5
   dice: 1d4
-  leveldiv: 10
+  leveldiv: 7
   mysticismdiv: 15

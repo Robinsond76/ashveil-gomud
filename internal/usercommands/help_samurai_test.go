@@ -37,7 +37,7 @@ func TestSamuraiHelp(t *testing.T) {
 	for alias, topic := range map[string]string{
 		"duelist": "samurai", "iaijutsu": "samurai", "zanshin": "samurai",
 		"kensai": "samurai-routes", "hatamoto": "samurai-routes", "ronin": "samurai-routes",
-		"bodyguard": "samurai-routes", "shogun": "samurai-routes",
+		"bodyguard": "samurai-routes", "shogun": "shogun",
 	} {
 		want, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)

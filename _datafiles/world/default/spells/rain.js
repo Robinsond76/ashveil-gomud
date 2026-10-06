@@ -37,7 +37,7 @@ function onMagic(sourceActor, single) {
         SendUserMessage(sourceActor.UserId(), 'The sky does not answer. (no effect)');
         return;
     }
-    var suffix = ' (' + result.rounds + ' rounds, Lightning 50% stronger)';
+    var suffix = result.endless ? ' (the whole battle, Lightning 50% stronger)' : ' (' + result.rounds + ' rounds, Lightning 50% stronger)';
     var replaced = result.replaced != '' ? ' It replaces the ' + (result.replaced == 'chill' ? 'chill wind' : result.replaced) + '.' : '';
     SendUserMessage(sourceActor.UserId(), 'Rain drives down over the battle.' + replaced + suffix);
     SendRoomMessage(sourceActor.GetRoomId(), fill(sourceActor, '%S calls, and rain drives down over the battle.') + replaced + suffix, sourceActor.UserId());

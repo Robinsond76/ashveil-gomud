@@ -30,8 +30,7 @@ classes, and any alignment may choose any of them. Each class adds four ranks
   20 Gathered storm     the lightning is 1d10
   25 Deep reserves      your mana pool is two and a half times its base
 
-The elite classes of these routes (Reaper, Linebreaker, Tempest Lancer) are
-still to come; until then a Halberdier keeps its advanced class's ranks.
+At level 30 each route promotes again: Reaper (<ansi fg="command">help reaper</ansi>), Linebreaker (<ansi fg="command">help linebreaker</ansi>) and Tempest Lancer (<ansi fg="command">help tempest-lancer</ansi>).
 
 Sweep Drill (a talent) makes Sweep ready a round sooner; take it once.
 

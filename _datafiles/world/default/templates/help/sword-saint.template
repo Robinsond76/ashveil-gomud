@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">sword-saint</ansi>
+
+The Sword Saint is the neutral elite of the Kensai. It is the duelist's end:
+Focus builds higher, Iaijutsu hits harder and more surely, and at the top rank
+the first draw is followed by a second.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Still mind         Focus builds +5% for each quiet round, up to +25%
+  35 Perfect cut        +4 Attack
+  40 Piercing sight     Iaijutsu's critical chance is +20%
+  45 Lingering Zanshin  Zanshin gives three quarters of a turn
+  50 Deeper edge        Iaijutsu deals 100% more damage
+  55 Saint's eye        +4% critical chance
+  60 Twin draw          Iaijutsu carries the edge of its first two strikes of
+                        a battle
+
+It needs the Kensai first (<ansi fg="command">help samurai-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] sword-saint confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Samurai talents (levels 35, 45, 55): Razor's Edge (+5% critical chance
+on every blow), Quick Hands (starts a battle with 15 points on its action
+meter), Shadow Footing (+5 Evasion). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

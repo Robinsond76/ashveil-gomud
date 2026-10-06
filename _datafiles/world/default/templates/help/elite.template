@@ -58,11 +58,26 @@ list, the elite talents (every elite of a lineage shares one), beside the lineag
   Wise One        good      Hedge Witch route: Hearthward           <ansi fg="command">help wise-one</ansi>
   Coven Mother    neutral   Coven Sage route: surer, longer hexes   <ansi fg="command">help coven-mother</ansi>
   Crone of Ash    evil      Hag route: curses that spread and kill  <ansi fg="command">help crone-of-ash</ansi>
+  <ansi fg="yellow-bold">Halberdier</ansi>
+  Reaper          neutral   Sweeper route: Sweep reaches the row behind  <ansi fg="command">help reaper</ansi>
+  Linebreaker     neutral   Vanguard route: a column that takes less damage  <ansi fg="command">help linebreaker</ansi>
+  Tempest Lancer  neutral   Valkyrie route: arcing, paralyzing bolts  <ansi fg="command">help tempest-lancer</ansi>
+  <ansi fg="yellow-bold">Samurai</ansi>
+  Sword Saint     neutral   Kensai route: Focus to +25%, a twin draw  <ansi fg="command">help sword-saint</ansi>
+  Shogun          neutral   Hatamoto route: a banner and a quick company  <ansi fg="command">help shogun</ansi>
+  Kenshi          neutral   Ronin route: fights on alone  <ansi fg="command">help kenshi</ansi>
+  <ansi fg="yellow-bold">Shaman</ansi>
+  Tempest Lord    neutral   Stormcaller route: endless rain, chained row  <ansi fg="command">help tempest-lord</ansi>
+  Veil Mother     neutral   Mistweaver route: long fog hides the back  <ansi fg="command">help veil-mother</ansi>
+  Mountain Speaker neutral  Earthspeaker route: tremor, stone over a row  <ansi fg="command">help mountain-speaker</ansi>
+  <ansi fg="yellow-bold">Doll Master</ansi>
+  Grand Puppeteer neutral   Puppeteer route: a third doll  <ansi fg="command">help grand-puppeteer</ansi>
+  Golem Lord      neutral   Golemancer route: knockdown, a second rising  <ansi fg="command">help golem-lord</ansi>
+  String Sovereign neutral  Marionettist route: weakening strings  <ansi fg="command">help string-sovereign</ansi>
 
-The Samurai's elite classes (Sword Saint, Shogun and Kenshi) and the other
-neutral lineages' elites are still to come; until they arrive those characters
-keep their advanced class's ranks.
+The elites of the Beast Tamer, Gryphon Rider, Alchemist and Arbalist are still
+to come; until they arrive those characters keep their advanced class's ranks.
 
-Routes in depth: <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>.
+Routes in depth: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>, <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help cleric-routes</ansi>.
 
 See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help alignment</ansi>.

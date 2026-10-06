@@ -31,9 +31,7 @@ classes, and any alignment may choose any of them. Each class adds four ranks
   20 Taut line          Tangle pushes a foe back 10 more meter points
   25 Steady hands       +2 damage on the doll's blows
 
-The elite classes of these routes (Grand Puppeteer, Golem Lord, String
-Sovereign) are still to come; until then a Doll Master keeps its advanced
-class's ranks.
+At level 30 each route promotes again: Grand Puppeteer (<ansi fg="command">help grand-puppeteer</ansi>), Golem Lord (<ansi fg="command">help golem-lord</ansi>) and String Sovereign (<ansi fg="command">help string-sovereign</ansi>).
 
 <ansi fg="yellow-bold">Talents</ansi>
 

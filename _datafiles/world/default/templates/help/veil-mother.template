@@ -1,0 +1,29 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">veil-mother</ansi>
+
+The Veil Mother is the neutral elite of the Mistweaver. Its weather lasts
+seven rounds, its Fog hides the company and, at the top rank, keeps foes with
+extended reach from finding the back row.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Long weather   its weather calls last four rounds longer than a Shaman's
+                    (seven in all)
+  35 Mother's veil  Fog gives allies +10 Evasion
+  40 Deep reserves  +25% maximum mana
+  45 Spell edge     +25% spell damage
+  50 Heavy mist     Fog gives allies +12 Evasion
+  55 Hearth's hide  +4 armor and +20% spell damage
+  60 Hidden ranks   while its Fog lasts, foes cannot reach the company's back
+                    row with extended reach
+
+It needs the Mistweaver first (<ansi fg="command">help shaman-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] veil-mother confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Shaman talents (levels 35, 45, 55): Deep Reserves (+10% maximum mana),
+Spell Edge (+10% spell damage), Focused Will (blows break your chant 25% less
+often). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

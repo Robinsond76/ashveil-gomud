@@ -11,8 +11,8 @@ alignment, at level 10 or at level 30.
   20 Forked lightning   the second foe takes 75% of Lightning's damage
   25 Stormborn          +20% spell damage
 
-  <ansi fg="yellow-bold">Tempest Lord</ansi> (30, still to come): Rain lasts the whole battle and lightning
-  chains through a row.
+  <ansi fg="yellow-bold">Tempest Lord</ansi> (30): Rain lasts the whole battle and lightning
+  chains through a row (<ansi fg="command">help tempest-lord</ansi>).
 
 <ansi fg="yellow-bold">Mistweaver</ansi>
 
@@ -21,8 +21,8 @@ alignment, at level 10 or at level 30.
   20 Deep veil          Fog gives allies +8 Evasion
   25 Lingering weather  its weather calls last two rounds longer
 
-  <ansi fg="yellow-bold">Veil Mother</ansi> (30, still to come): weather that lasts five rounds, and a fog
-  that hides the back row from extended reach.
+  <ansi fg="yellow-bold">Veil Mother</ansi> (30): weather that lasts seven rounds, and a fog
+  that hides the back row from extended reach (<ansi fg="command">help veil-mother</ansi>).
 
 <ansi fg="yellow-bold">Earthspeaker</ansi>
 
@@ -32,10 +32,9 @@ alignment, at level 10 or at level 30.
   20 Steady ground      allies in its row take 5% less damage
   25 Deep roots         Stoneskin gives +20 armor
 
-  <ansi fg="yellow-bold">Mountain Speaker</ansi> (30, still to come): Stoneskin over a whole row, and a
-  tremor that may knock a row of foes down.
+  <ansi fg="yellow-bold">Mountain Speaker</ansi> (30): Stoneskin over a whole row, and a
+  tremor that may knock the front row down (<ansi fg="command">help mountain-speaker</ansi>).
 
-Elite classes are named but not open yet; until they are, a Shaman keeps its
-advanced class's ranks. Routes are final.
+At level 30 each route promotes again to its elite class (<ansi fg="command">help elite</ansi>). Routes are final.
 
 See also: <ansi fg="command">help shaman</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

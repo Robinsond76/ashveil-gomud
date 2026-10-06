@@ -11,11 +11,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Phase 39d: the Doll Master. A Master's dolls stand in the formation for
@@ -219,6 +221,9 @@ func dollStrike(a actor, u *users.UserRecord, foes map[int]bool, room *rooms.Roo
 			if r.Hit && !tangled && target.Character.Health > 0 {
 				tangled = tangleFoes(a, d, target, foes, room)
 			}
+			if r.Hit && target.Character.Health > 0 {
+				golemKnock(a, d, target)
+			}
 		}
 	}
 	return true
@@ -296,10 +301,7 @@ func tangleFoes(a actor, d *mobs.Mob, foe *mobs.Mob, foes map[int]bool, room *ro
 	if round, held := tangledUntil[foe.InstanceId]; held && round >= abilityRounds {
 		return false
 	}
-	n := 1 + fx.Int(classes.TangleFoes)
-	if n < 1 {
-		n = 1
-	}
+	n := max(1, fx.Int(classes.TangleFoes))
 	targets := []*mobs.Mob{foe}
 	if n > 1 {
 		ids := make([]int, 0, len(foes))
@@ -334,11 +336,47 @@ func tangleFoes(a actor, d *mobs.Mob, foe *mobs.Mob, foes map[int]bool, room *ro
 		if st := tempoMeters[caster{mobId: t.InstanceId}]; st != nil {
 			st.meter.Points -= float64(push)
 		}
+		suffix := ` (tangled)`
+		// A String Sovereign's Cut strings leave the foe's next attack weaker.
+		if cut := fx.Int(classes.TangleWeak); cut > 0 {
+			t.Character.RTState().Cut = cut
+			suffix = fmt.Sprintf(` (tangled, -%d Attack on its next attack)`, cut)
+		}
 		a.holder.say(fmt.Sprintf(`Strings snag %s and drag at it.`, mobHolder(t).tag()),
-			`Strings from %s snag `+verbatim(mobHolder(t).tag())+`.`, ` (tangled)`)
+			`Strings from %s snag `+verbatim(mobHolder(t).tag())+`.`, suffix)
 		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(t), Status: `Tangle`})
 	}
 	return true
+}
+
+// dollKnockRoll rolls a golem's knockdown; tests replace it.
+var dollKnockRoll = util.Rand
+
+// UseDollKnockRollForTest replaces the golem's knockdown dice until the
+// returned restore is called.
+func UseDollKnockRollForTest(roll func(int) int) (restore func()) {
+	prev := dollKnockRoll
+	dollKnockRoll = roll
+	return func() { dollKnockRoll = prev }
+}
+
+// golemKnock is a Golem Lord's Hammering blows: a blow its doll lands may
+// knock the foe down (a boss, half as often).
+func golemKnock(master actor, d *mobs.Mob, foe *mobs.Mob) {
+	chance := master.char.ClassEffects().Int(classes.DollKnock)
+	if chance <= 0 || foe.Character.Health < 1 || status.Live(&foe.Character, status.KnockedDown) {
+		return
+	}
+	if foe.Boss {
+		chance /= 2
+	}
+	if dollKnockRoll(100) >= chance {
+		return
+	}
+	events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`})
+	master.holder.say(fmt.Sprintf(`The doll's blow knocks %s down.`, mobHolder(foe).tag()),
+		`The doll's blow knocks `+verbatim(mobHolder(foe).tag())+` down.`, ` (knocked down)`)
+	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: master.char.RoomId, Source: master.ref, Target: mobRef(foe), Status: `Hammer blow`, Outcome: combatstream.OutcomeSucceeded})
 }
 
 // dollMasterOf is the character that drives a doll, nil when it is gone.
@@ -390,6 +428,17 @@ func dollFalls(d *mobs.Mob) {
 				room.SendText(fmt.Sprintf(`%s's strings snap taut and it lurches back to its feet.`, named(mobTag(mobName(d.InstanceId)))))
 			}
 			emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: d.Character.RoomId, Target: mobRef(d), Status: `Emergency Splice`, Outcome: combatstream.OutcomeSucceeded})
+			return
+		}
+		// Phase 39i: a Golem Lord's golem stands a second time, at half its
+		// health, and the Master spends no turn on it.
+		if fx.Has(classes.SplicePlus) && !rt.SplicedAgain {
+			rt.SplicedAgain = true
+			d.Character.Health = max(1, d.Character.HealthLimit()/2)
+			if room != nil {
+				room.SendText(fmt.Sprintf(`%s grinds back up from the rubble, whole again.`, named(mobTag(mobName(d.InstanceId)))))
+			}
+			emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: d.Character.RoomId, Target: mobRef(d), Status: `Rise Again`, Outcome: combatstream.OutcomeSucceeded})
 			return
 		}
 	}
