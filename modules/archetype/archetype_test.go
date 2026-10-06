@@ -467,7 +467,7 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	m.store = &fakeStore{}
 	m.load()
 
-	assert.Equal(t, 8, m.table.Len())
+	assert.Equal(t, 9, m.table.Len())
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
 	assert.Equal(t, map[string]int{"cast": 1}, wiz.GrantSkills)
