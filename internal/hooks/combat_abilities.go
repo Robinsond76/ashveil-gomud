@@ -133,18 +133,24 @@ func abilityPass() {
 			// the front row would shield is not reached by an ability,
 			// and a tackle needs the foe within hand-to-hand reach.
 			reached, close := abilityReach(a, u, foe, room)
-			if !reached {
-				continue
-			}
 			sit := abilitySituation(a, u, foe)
+			// Phase 39f: a Dive passes the front row, so it is the one
+			// ability that can strike a foe the swing could not reach.
+			sit.DiveOpen = diveOpen(a, u, foe, room)
+			if !reached {
+				sit.Known = diveOnly(sit.Known)
+				if len(sit.Known) == 0 || !sit.DiveOpen {
+					continue
+				}
+			}
 			sit.Ambush = ambushing(a, b)
-			sit.Close = close
+			sit.Close = close && reached
 			halberdSituation(&sit, a, u, f, foe, room, foes)
 			id, use := strategy.DecideAbility(sit)
 			if !use {
 				continue
 			}
-			useAbility(a, foe, id, room, foes)
+			useAbility(a, u, foe, id, room, foes)
 		}
 	}
 }
@@ -247,6 +253,8 @@ func abilityCooldown(c *characters.Character, id strategy.Ability, base int) int
 		cut = fx.Int(classes.AimCD)
 	case strategy.Sweep:
 		cut = fx.Int(classes.SweepCD) // Phase 39a
+	case strategy.Dive:
+		cut = fx.Int(classes.DiveCD) // Phase 39f
 	}
 	return max(1, base-cut)
 }
@@ -273,7 +281,7 @@ func wielding(c *characters.Character) (strategy.WeaponKind, bool) {
 
 // useAbility carries out an ability: its cooldown, its line, its event,
 // and its effect.
-func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, foes map[int]bool) {
+func useAbility(a actor, u *users.UserRecord, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, foes map[int]bool) {
 	spec, ok := strategy.SpecOf(id)
 	if !ok {
 		return
@@ -286,6 +294,8 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		useSweep(a, foe, room, foes)
 	case strategy.Brace:
 		useBrace(a, room)
+	case strategy.Dive:
+		useDive(a, u, foe, room)
 	case strategy.Tackle:
 		abilityTurns[a.who] = true
 		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj, characters.SkillEdge(a.char.AttackSkill(), foe.Character.Evasion()))
@@ -361,4 +371,15 @@ func endAbilityStrikes() {
 	}
 	clear(abilityStrikes)
 	clear(abilityDown)
+}
+
+// diveOnly keeps a Dive among the abilities a member knows.
+func diveOnly(known []strategy.Ability) []strategy.Ability {
+	var out []strategy.Ability
+	for _, id := range known {
+		if id == strategy.Dive {
+			out = append(out, id)
+		}
+	}
+	return out
 }

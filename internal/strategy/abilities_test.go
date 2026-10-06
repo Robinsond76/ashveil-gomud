@@ -128,3 +128,42 @@ func TestAbilityScaling(t *testing.T) {
 		t.Error("a tackle's knockdown lasts one round more from level 20")
 	}
 }
+
+// Phase 39f: Dive needs a melee weapon and open sky within lateral range, and
+// the gryphon rider's default aim is the healers rule.
+func TestDecideDive(t *testing.T) {
+	known := []Ability{Dive}
+	ready := func(Ability) bool { return true }
+	cases := []struct {
+		name string
+		sit  AbilitySituation
+		want bool
+	}{
+		{"open sky, a spear", AbilitySituation{Known: known, Ready: ready, Weapon: Melee, DiveOpen: true}, true},
+		{"no open sky", AbilitySituation{Known: known, Ready: ready, Weapon: Melee}, false},
+		{"unarmed", AbilitySituation{Known: known, Ready: ready, Weapon: Unarmed, DiveOpen: true}, false},
+		{"a bow", AbilitySituation{Known: known, Ready: ready, Weapon: Shooting, DiveOpen: true}, false},
+		{"resting", AbilitySituation{Known: known, Ready: func(Ability) bool { return false }, Weapon: Melee, DiveOpen: true}, false},
+		{"abilities off", AbilitySituation{Known: known, Ready: ready, Weapon: Melee, DiveOpen: true, Off: true}, false},
+	}
+	for _, c := range cases {
+		id, ok := DecideAbility(c.sit)
+		assert.Equal(t, c.want, ok, c.name)
+		if c.want {
+			assert.Equal(t, Dive, id)
+		}
+	}
+}
+
+func TestGryphonRiderAbilityAndDefaults(t *testing.T) {
+	assert.Equal(t, []Ability{Dive}, CompanionAbilities("gryphon-rider"))
+	assert.Equal(t, []Ability{Dive}, PlayerAbilities(func(s string) int {
+		if s == "skirmish" {
+			return 1
+		}
+		return 0
+	}))
+	assert.Equal(t, Healers, DefaultRule("gryphon-rider"))
+	assert.Equal(t, Fighter, DefaultRole("gryphon-rider"))
+	assert.Equal(t, Healers, Default("Gryphon-Rider").Rule)
+}

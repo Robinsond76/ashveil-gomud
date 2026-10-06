@@ -31,6 +31,9 @@ const (
 	// Brace (halberdier): holds the turn; the first foe to strike into the
 	// halberdier's place takes a held blow at once.
 	Brace Ability = "brace"
+	// Dive (gryphon rider, Phase 39f): the whole turn, a stooping blow that
+	// may pass a standing front-row foe to strike one in the rows behind.
+	Dive Ability = "dive"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -62,6 +65,9 @@ var Abilities = []AbilitySpec{
 	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 3,
 		When: "its Sweep is not ready (or has no second foe to strike), it wields a melee weapon, and a foe is striking at its place in the line",
 		Does: "holds its turn; the first foe that strikes it takes a held blow at once, 25% harder than an ordinary one"},
+	{ID: Dive, Name: "Dive", Archetype: "gryphon-rider", Skill: "skirmish", Cooldown: 3,
+		When: "it wields a melee weapon, its foe stands within a column of its own or the next, and the ground is open sky (not indoors, in a cave or on narrow ground)",
+		Does: "one stooping blow that may pass a standing front-row foe to strike the middle or back row (a guardian can still step in); 25% harder from level 8; a landed blow from level 3 leaves the foe bleeding; the rider has -10 Evasion until its next turn; the whole turn"},
 }
 
 // SpecOf is an ability's spec.
@@ -163,6 +169,9 @@ type AbilitySituation struct {
 	// Vanguard, at its column) and no brace is held yet: a brace has
 	// something to answer (Phase 39a).
 	Struck bool
+	// DiveOpen is true when a dive at this foe is possible: open sky, and the
+	// foe's column is the rider's own or the next (Phase 39f).
+	DiveOpen bool
 }
 
 // DecideAbility is the ability a member uses this turn, if any: the first
@@ -194,6 +203,10 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 			}
 		case Brace:
 			if s.Weapon == Melee && s.Struck {
+				return id, true
+			}
+		case Dive:
+			if s.Weapon == Melee && s.DiveOpen {
 				return id, true
 			}
 		}
@@ -292,3 +305,7 @@ func HookChance(level int) int {
 // SweepWide reports whether a halberdier's sweep reaches every foe in its
 // target's row, not only one beside it.
 func SweepWide(level int) bool { return level >= SweepRowLevel }
+
+// DiveEvasionCost is the Evasion a rider loses after a dive, until its next
+// turn (Phase 39f). Its other numbers are class ranks (internal/classes).
+const DiveEvasionCost = 10

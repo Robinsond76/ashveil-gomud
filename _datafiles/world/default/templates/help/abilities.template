@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">abilities</ansi>
 
-Warriors, rogues, rangers and halberdiers each have a class ability they use on their
+Warriors, rogues, rangers, halberdiers and gryphon riders each have a class ability they use on their
 own in a battle, when the moment comes. Nobody types it: like a healer's
 heal, it follows from how your company is set up. Who has which:
 
@@ -36,6 +36,17 @@ heal, it follows from how your company is set up. Who has which:
     Does: holds the turn; the first foe to strike into its place is
     answered at once with a blow at 125% damage. With no strike, the turn
     is lost. At most once every round.
+
+  <ansi fg="command">Dive</ansi>             gryphon riders; for you, the <ansi fg="skill">skirmish</ansi> skill
+    When: it wields a melee weapon, its foe stands within a column of its
+    own or the next, and the ground is open sky: not indoors, not in a
+    cave and not on narrow ground (the gryphon cannot fly there).
+    Does: one stooping blow that may pass a standing front-row foe to
+    strike the middle or back row; a foe's guardian can still step in
+    for it. From level 3 a Dive that lands leaves the foe bleeding; from
+    level 8 it is 25% harder. The rider has -10 Evasion until its next
+    turn. It is the whole turn. At most once every 3 combat rounds
+    (<ansi fg="command">help gryphon-rider</ansi>).
 
   <ansi fg="command">Opening Strike</ansi>   rogues; for you, the <ansi fg="skill">skulduggery</ansi> skill
     When: its foe is knocked down, stunned, staggered, or exposed, and it

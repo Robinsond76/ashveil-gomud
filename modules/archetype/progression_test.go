@@ -17,7 +17,7 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	archetypes.SetProvider(m)
 	t.Cleanup(func() { archetypes.SetProvider(nil) })
 	// Phase 35a2: small growth from a higher floor.
-	want := map[string]float64{"warrior": 1, "cleric": 0.6, "ranger": 0.8, "rogue": 0.7, "wizard": 0.5, "witch": 0.55, "samurai": 0.85, "halberdier": 0.9, "shaman": 0.5}
+	want := map[string]float64{"warrior": 1, "cleric": 0.6, "ranger": 0.8, "rogue": 0.7, "wizard": 0.5, "witch": 0.55, "samurai": 0.85, "halberdier": 0.9, "shaman": 0.5, "gryphon-rider": 0.8}
 	assert.Equal(t, want, m.HealthArchetypes())
 	for _, choice := range m.CreationChoices() {
 		assert.Contains(t, choice.Description, "HP:")
