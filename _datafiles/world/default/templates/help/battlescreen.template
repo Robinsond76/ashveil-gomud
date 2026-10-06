@@ -30,9 +30,12 @@ change the company's focus.
   name and health, and to see whom it strikes.
 - A member who has been promoted (<ansi fg="command">help promotion</ansi>) is drawn as that
   class, a Paladin in white and brass rather than a plain warrior, and
-  hovering names the class.
-- A small coloured mark over a figure is a status on it. A bright mark
-  means it is chanting a spell. A flash and a number show a blow, a heal,
+  hovering names the class. The neutral lines have their own figures too:
+  a Halberdier carries a halberd, a Samurai wears lacquered plates and a
+  katana, a Shaman a hide mantle and a feathered totem staff.
+- A small coloured mark over a figure is a status on it; hover or tap the
+  figure and the line under the picture names each one ("poisoned, stunned").
+  A bright mark means it is chanting a spell. A flash and a number show a blow, a heal,
   or a miss as it lands. A fallen figure lies down.
 - Under the picture, a line tells the latest blow in words ("Wren hits the
   second wolf (6)"), and the title shows the round. Hovering a figure shows

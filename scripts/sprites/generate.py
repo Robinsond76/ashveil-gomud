@@ -34,7 +34,8 @@ DEFAULT_OUT = os.path.join(
     "_datafiles", "html", "public", "static", "sprites")
 
 BASE_CLASSES = ["warrior", "rogue", "ranger", "cleric", "wizard", "witch"]
-MAP_UNITS = BASE_CLASSES + ["adventurer"]
+NEUTRAL_LINEAGES = ["halberdier", "samurai", "shaman"]
+MAP_UNITS = BASE_CLASSES + ["adventurer"] + NEUTRAL_LINEAGES
 DIRECTIONS = ["down", "up", "side"]
 
 

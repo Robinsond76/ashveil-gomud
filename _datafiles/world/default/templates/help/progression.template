@@ -20,7 +20,7 @@ starts with a head start and gains a little each level through level {{ config "
   Warrior 10 to start, 1 HP per level; ranger 6 and 0.8; rogue 4 and 0.7;
   samurai 6 and 0.85; cleric 2 and 0.6; witch 1 and 0.55;
   halberdier 7 and 0.9;
-  wizard none and 0.5 (a shaman the same).
+  doll master 1 and 0.55; wizard none and 0.5 (a shaman the same).
 <ansi fg="command">archetype</ansi> lists each archetype's current rates.
 After that, a ranger gains {{ config "GamePlay.Progression.HPAfterFull" }} HP per level, and each other archetype
 gains in proportion to its rate: a warrior more, a wizard less.

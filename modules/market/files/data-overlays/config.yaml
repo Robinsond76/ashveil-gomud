@@ -85,6 +85,15 @@ Markets:
         TargetStock: 10
         StartStock: 8
         DriftStep: 1
+      - ItemId: 70 # doll parts (Phase 39d); mend a Doll Master's dolls
+        BasePrice: 12
+        MinPrice: 8
+        MaxPrice: 24
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 10
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 43b: weapon poison vials, one dose each (help poisons).
       - ItemId: 280 # vial of bitterleaf (Phase 43b)
         BasePrice: 6

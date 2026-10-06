@@ -1017,6 +1017,27 @@
     64
    ]
   },
+  "battle/units/earthspeaker/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "shaman",
+   "note": "shaman line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/elder-druid/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1307,6 +1328,49 @@
     64
    ]
   },
+  "battle/units/halberdier/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit halberdier"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/hatamoto/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "samurai",
+   "note": "samurai line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/hedge-witch/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1436,6 +1500,27 @@
     48
    ]
   },
+  "battle/units/kensai/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "samurai",
+   "note": "samurai line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/knight/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1496,6 +1581,27 @@
    "family": "promoted class",
    "variant_of": "warrior",
    "note": "warrior line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/mistweaver/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "shaman",
+   "note": "shaman line",
    "size": [
     256,
     64
@@ -1698,6 +1804,27 @@
     64
    ]
   },
+  "battle/units/ronin/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "samurai",
+   "note": "samurai line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/ruffian-dangerous/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1765,6 +1892,28 @@
     64
    ]
   },
+  "battle/units/samurai/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit samurai"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/scout/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -1825,6 +1974,28 @@
    "family": "shadow guild",
    "names": [
     "shadow trainee"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/shaman/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit shaman"
    ],
    "size": [
     256,
@@ -2009,6 +2180,27 @@
     64
    ]
   },
+  "battle/units/stormcaller/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "shaman",
+   "note": "shaman line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/straw-archer/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -2049,6 +2241,27 @@
    "names": [
     "straw footman"
    ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/sweeper/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "halberdier",
+   "note": "halberdier line",
    "size": [
     256,
     64
@@ -2135,6 +2348,48 @@
     72
    ]
   },
+  "battle/units/valkyrie/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "halberdier",
+   "note": "halberdier line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/vanguard/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "halberdier",
+   "note": "halberdier line",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/warden/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -2172,6 +2427,27 @@
    "family": "promoted class",
    "variant_of": "wizard",
    "note": "wizard line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/warlord/idle.png": {
+   "kind": "battle-unit",
+   "set": "S5",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "promoted class",
+   "variant_of": "warrior",
+   "note": "warrior line",
    "size": [
     256,
     64
@@ -3924,6 +4200,50 @@
     96
    ]
   },
+  "map/units/earthspeaker/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "shaman",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/earthspeaker/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "shaman",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/elder-druid/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4007,6 +4327,92 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "witch",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/halberdier/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/halberdier/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/hatamoto/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "samurai",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/hatamoto/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "samurai",
    "size": [
     128,
     96
@@ -4144,6 +4550,50 @@
     96
    ]
   },
+  "map/units/kensai/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "samurai",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/kensai/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "samurai",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/knight/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4227,6 +4677,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "warrior",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/mistweaver/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "shaman",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/mistweaver/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "shaman",
    "size": [
     128,
     96
@@ -4404,6 +4898,92 @@
     96
    ]
   },
+  "map/units/ronin/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "samurai",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/ronin/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "samurai",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/samurai/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/samurai/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/scout/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4443,6 +5023,48 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "rogue",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/shaman/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/shaman/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
    "size": [
     128,
     96
@@ -4492,6 +5114,94 @@
     96
    ]
   },
+  "map/units/stormcaller/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "shaman",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/stormcaller/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "shaman",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/sweeper/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "halberdier",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/sweeper/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "halberdier",
+   "size": [
+    128,
+    96
+   ]
+  },
   "map/units/theurgist/idle.png": {
    "frames": 2,
    "frame_ms": 500,
@@ -4531,6 +5241,94 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/valkyrie/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "halberdier",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/valkyrie/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "halberdier",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/vanguard/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "halberdier",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/vanguard/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "halberdier",
    "size": [
     128,
     96
@@ -4619,6 +5417,50 @@
    "anchor": "bottom-center",
    "feet_baseline": 30,
    "variant_of": "wizard",
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/warlord/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/warlord/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S5",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "variant_of": "warrior",
    "size": [
     128,
     96

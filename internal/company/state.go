@@ -23,6 +23,9 @@ type MemberState struct {
 	// gear so a respawn doesn't refill it. Nil (a record from before 33h2)
 	// spawns full once.
 	Vitals *Vitals `yaml:"vitals,omitempty"`
+	// Dolls are a Doll Master companion's dolls (Phase 39d): name, wear,
+	// broken flag and gear, snapshotted with the companion.
+	Dolls []characters.DollState `yaml:"dolls,omitempty"`
 }
 
 // Vitals are a companion's saved health and mana (Phase 33h2). Percent,
@@ -66,6 +69,7 @@ func cloneItem(i items.Item) items.Item {
 func (s MemberState) Clone() MemberState {
 	out := s
 	out.Wounds = append([]wounds.Wound(nil), s.Wounds...)
+	out.Dolls = characters.CloneDolls(s.Dolls)
 	if s.Vitals != nil {
 		v := *s.Vitals
 		out.Vitals = &v

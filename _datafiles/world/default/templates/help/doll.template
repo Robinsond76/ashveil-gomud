@@ -1,0 +1,35 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">doll</ansi>
+
+A Doll Master's dolls are kept, named and dressed with the doll command, and
+mended with doll parts. It works only out of a battle (<ansi fg="command">help dollmaster</ansi>).
+
+  <ansi fg="command">doll</ansi>
+  Show each Doll Master's dolls in your company: name, condition (whole,
+  worn, badly worn or broken), health and what each wears, and the doll
+  parts you carry.
+
+  <ansi fg="command">doll [member]</ansi>
+  Show a companion Doll Master's dolls (<ansi fg="command">doll tamsin</ansi>).
+
+  <ansi fg="command">doll wield [number] [item]</ansi>
+  <ansi fg="command">doll wear [number] [item]</ansi>
+  Put a weapon in a doll's hand, or armor on its body, from your pack.
+  What it wore comes back to your pack. A doll is number 1 unless you name
+  another (<ansi fg="command">doll wear 2 helm</ansi>). A golem can only hold a weapon: its body is its
+  armor.
+
+  <ansi fg="command">doll remove [number] [slot or item]</ansi>
+  Take something off a doll (<ansi fg="command">doll remove weapon</ansi>).
+
+  <ansi fg="command">doll name [number] [name]</ansi>
+  Name a doll (2 to 20 letters).
+
+  <ansi fg="command">doll mend</ansi>
+  Mend the company's dolls with your doll parts, broken dolls first. Each
+  part mends 10 health plus 3 for each level of the doll's Master. The end of
+  a camp rest does the same for you.
+
+Your companion Doll Masters' dolls keep a plain cudgel; you can see them
+with <ansi fg="command">doll [member]</ansi> and mend them, but only your own dolls can be dressed.
+
+See also: <ansi fg="command">help dollmaster</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help formation</ansi>.
