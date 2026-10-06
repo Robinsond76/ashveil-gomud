@@ -132,5 +132,5 @@ a tier for every shipped weapon and armor piece. Branch
   pricing, class rules, generator rolls on every catalog item, help render.
 - [x] Help pages, aliases, hub links and the Departure hint.
 - [x] Independent full-diff review (below); findings fixed with regressions.
-- [ ] Final checks: `make generate`, `make validate`, `go test -race ./...`,
+- [x] Final checks: `make generate`, `make validate`, `go test -race ./...`,
   `make js-lint`. Project Status entry, PR.
