@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 )
 
 // Phase 38b: class auras. Each combat round, before any blow, a company
@@ -70,6 +71,10 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 	evade := map[int]int{}
 	resolve := map[int]int{}
 	rally := 0
+	// Phase 39c: a Mistweaver's Veil of mist, while its Fog lasts, covers
+	// the whole company.
+	fogged := battle.WeatherOf(uid).Kind == stormcraft.Fog
+	fogEvade := 0
 	for _, a := range side {
 		// An Angel's wings cover the owner's row.
 		if sm := summonInfo(a.char); sm != nil && sm.Wings > 0 && a.char.Health >= 1 {
@@ -83,6 +88,9 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 		}
 		row := rowOf(a)
 		rally = max(rally, fx.Int(classes.AuraCompan))
+		if fogged {
+			fogEvade = max(fogEvade, fx.Int(classes.FogEvade))
+		}
 		if row < 0 {
 			continue // an unplaced member holds no row
 		}
@@ -92,7 +100,7 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 	for _, a := range side {
 		row := rowOf(a)
 		a.char.Aura = characters.ClassAura{
-			Evasion: evade[row],
+			Evasion: max(evade[row], fogEvade),
 			Resolve: max(resolve[row], rally),
 		}
 		// A Knight guarding a ward holds its shield the firmer.

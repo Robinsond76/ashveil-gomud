@@ -1,0 +1,41 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">shaman-routes</ansi>
+
+The Shaman lineage splits at level 10 into a master of lightning, a weaver of
+mist or a speaker of the earth. None of the three asks anything of your
+alignment, at level 10 or at level 30.
+
+<ansi fg="yellow-bold">Stormcaller</ansi>
+
+  10 Chain lightning    Lightning also strikes a second foe for 50% of its damage
+  15 Thunderhead        +10% spell damage
+  20 Forked lightning   the second foe takes 75% of Lightning's damage
+  25 Stormborn          +20% spell damage
+
+  <ansi fg="yellow-bold">Tempest Lord</ansi> (30, still to come): Rain lasts the whole battle and lightning
+  chains through a row.
+
+<ansi fg="yellow-bold">Mistweaver</ansi>
+
+  10 Veil of mist       while its Fog lasts, allies gain +5 Evasion
+  15 Long mist          its weather calls last a round longer
+  20 Deep veil          Fog gives allies +8 Evasion
+  25 Lingering weather  its weather calls last two rounds longer
+
+  <ansi fg="yellow-bold">Veil Mother</ansi> (30, still to come): weather that lasts five rounds, and a fog
+  that hides the back row from extended reach.
+
+<ansi fg="yellow-bold">Earthspeaker</ansi>
+
+  10 Stoneskin          one ally gains +10 armor for the battle; chant 1, cost 8
+                        (the Earthspeaker casts it on its own, as a Druid does Barkskin)
+  15 Hard earth         Stoneskin gives +15 armor
+  20 Steady ground      allies in its row take 5% less damage
+  25 Deep roots         Stoneskin gives +20 armor
+
+  <ansi fg="yellow-bold">Mountain Speaker</ansi> (30, still to come): Stoneskin over a whole row, and a
+  tremor that may knock a row of foes down.
+
+Elite classes are named but not open yet; until they are, a Shaman keeps its
+advanced class's ranks. Routes are final.
+
+See also: <ansi fg="command">help shaman</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

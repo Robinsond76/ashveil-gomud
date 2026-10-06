@@ -3,9 +3,11 @@ package scripting
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,4 +40,21 @@ func TestSpellAndHealFactors(t *testing.T) {
 	healer.characterRecord.Equipment.Offhand = items.New(symbolID)
 	healer.characterRecord.Validate(true)
 	assert.InDelta(t, 1.05, healer.HealFactor(), 1e-9)
+}
+
+// Phase 39c: a fogbound caster's spells hit 10% weaker.
+func TestSpellFactorUnderFog(t *testing.T) {
+	g := configs.GetGamePlayConfig()
+	g.Combat.SkillEdgeSpan = 20
+	g.Combat.DefaultAttackRate, g.Combat.DefaultEvasionRate = 1, 1
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
+	mk := func() ScriptActor {
+		c := characters.New()
+		c.Level = 20
+		return ScriptActor{characterRecord: c}
+	}
+	caster, target := mk(), mk()
+	assert.InDelta(t, 1.0, caster.SpellFactor(target), 1e-9)
+	caster.characterRecord.Buffs.List = []*buffs.Buff{{BuffId: status.Fogbound, TriggersLeft: 3}}
+	assert.InDelta(t, 0.9, caster.SpellFactor(target), 1e-9)
 }

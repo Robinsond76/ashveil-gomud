@@ -302,4 +302,36 @@ func init() {
 		}})
 	register(Class{ID: "kenshi", Name: "Kenshi", Lineage: "samurai", Tier: TierElite, Parent: "ronin", Gate: GateAny,
 		Role: "vengeance that cannot be knocked down when it stands alone", Planned: true})
+
+	// ----- Shaman (Phase 39c: a neutral lineage, no alignment gates) -----
+	register(Class{ID: "stormcaller", Name: "Stormcaller", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,
+		Role: "lightning that leaps from one foe to the next",
+		Ranks: []Rank{
+			rank(10, "Chain lightning", "Lightning also strikes a second foe for 50% of its damage", Chain, 50),
+			rank(15, "Thunderhead", "+10% spell damage", SpellPct, 10),
+			rank(20, "Forked lightning", "the second foe takes 75% of Lightning's damage", Chain, 75),
+			rank(25, "Stormborn", "+20% spell damage", SpellPct, 20),
+		}})
+	register(Class{ID: "tempest-lord", Name: "Tempest Lord", Lineage: "shaman", Tier: TierElite, Parent: "stormcaller", Gate: GateAny,
+		Role: "Rain that lasts the whole battle, and lightning that chains through a row", Planned: true})
+	register(Class{ID: "mistweaver", Name: "Mistweaver", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,
+		Role: "a fog that hides the company and weather that lingers",
+		Ranks: []Rank{
+			rank(10, "Veil of mist", "while its Fog lasts, allies gain +5 Evasion", FogEvade, 5),
+			rank(15, "Long mist", "its weather calls last a round longer", WeatherLong, 1),
+			rank(20, "Deep veil", "Fog gives allies +8 Evasion", FogEvade, 8),
+			rank(25, "Lingering weather", "its weather calls last two rounds longer", WeatherLong, 2),
+		}})
+	register(Class{ID: "veil-mother", Name: "Veil Mother", Lineage: "shaman", Tier: TierElite, Parent: "mistweaver", Gate: GateAny,
+		Role: "weather that lasts five rounds, and a fog that hides the back row", Planned: true})
+	register(Class{ID: "earthspeaker", Name: "Earthspeaker", Lineage: "shaman", Tier: TierAdvanced, Gate: GateAny,
+		Role: "turns the earth's armor on an ally",
+		Ranks: []Rank{
+			teaches(rank(10, "Stoneskin", "one ally gains +10 armor for the battle; chant 1, cost 8", Stoneskin, 10), "stoneskin"),
+			rank(15, "Hard earth", "Stoneskin gives +15 armor", Stoneskin, 15),
+			rank(20, "Steady ground", "allies in its row take 5% less damage", AuraResolv, 5),
+			rank(25, "Deep roots", "Stoneskin gives +20 armor", Stoneskin, 20),
+		}})
+	register(Class{ID: "mountain-speaker", Name: "Mountain Speaker", Lineage: "shaman", Tier: TierElite, Parent: "earthspeaker", Gate: GateAny,
+		Role: "Stoneskin over a whole row, and a tremor that knocks foes down", Planned: true})
 }

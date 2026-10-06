@@ -1,0 +1,71 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">shaman</ansi>
+
+The Shaman calls weather into a battle. Fog, a cold wind or rain settles over
+the fight and changes both sides' odds for a few rounds; between calls the
+Shaman answers with wind and lightning. It has no creed: no alignment gate
+stands in front of any of its routes.
+
+<ansi fg="yellow-bold">What the Shaman is</ansi>
+
+  Health      none to start, 0.5 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.7 and Evasion 0.75 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        light armor, no shield (<ansi fg="command">help armor</ansi>)
+  Mana        40, plus 10 a level (<ansi fg="command">help mana</ansi>)
+  Stats       mysticism 4, smarts 3, perception 2, speed 1 (<ansi fg="command">help growth</ansi>)
+  Starter kit an ash staff, a hooded robe, a student's amulet, food, a
+              waterskin, a knapsack and one minor mana draught
+  Utility     Weather Sense, which forecasts the world's weather (<ansi fg="command">help forecast</ansi>)
+
+<ansi fg="yellow-bold">The spells</ansi>
+
+Stormcraft is the Shaman's school; only a Shaman may learn it.
+
+  <ansi fg="yellow">Spell</ansi>        <ansi fg="yellow">level</ansi>  <ansi fg="yellow">mana</ansi>  <ansi fg="yellow">chant</ansi>  <ansi fg="yellow">what it does</ansi>
+  Call Fog       1      6     1     for 3 rounds, foes' ranged attacks lose 10
+                                    points of accuracy and their spells hit
+                                    10% weaker (they are fogbound)
+  Gust           1      5     2     a small wind spell, about 70% of Magic Missile
+  Chill Wind     3     12     2     for 3 rounds, foes' spell chants and sling
+                                    shots take one extra round to begin, as in
+                                    the cold (they are windchilled)
+  Rain           6     10     2     for 3 rounds, Lightning strikes 50% harder
+  Lightning      8     12     2     a heavy bolt at one foe, 50% more in Rain
+
+At level 5 the Shaman chooses its first talent, and at level 10 it promotes to
+a Stormcaller, Mistweaver or Earthspeaker (<ansi fg="command">help shaman-routes</ansi>).
+
+<ansi fg="yellow-bold">How weather works</ansi>
+
+A weather belongs to one battle. It never touches the world's weather
+(<ansi fg="command">help weather</ansi>), which every player shares, and it ends with the battle.
+Only one weather is up at a time: a new call replaces the old one, and the
+foes' marks from the old one come off. A call lasts 3 rounds; a Mistweaver
+and the Long Weather talent make it last longer. A foe that arrives after the
+call is not marked by it. Weather never advances the world's clock.
+
+The battle tells you when a weather is called, what it does, and when it
+passes: <ansi fg="command">A gray fog rolls over the battle. (3 rounds, foe ranged attacks and
+spells weaker)</ansi>, then <ansi fg="command">The fog thins and lifts.</ansi>. In the web client the battle
+screen's header and the Combat tab name the weather and its rounds left
+(<ansi fg="command">help battlescreen</ansi>). <ansi fg="command">conditions</ansi> shows the mark on a foe you consider, and
+<ansi fg="command">help statuses</ansi> lists Fogbound and Windchilled.
+
+<ansi fg="yellow-bold">How a Shaman fights</ansi>
+
+A battle plays out on its own. A Shaman's role is <ansi fg="command">caster</ansi>: with no weather up,
+it calls one first. Chill Wind and Fog are worth their mana only against foes
+that shoot or cast, so it saves them for those; it calls Rain once it knows
+Lightning. Then it casts Lightning while mana lasts, else Gust, else swings.
+<ansi fg="command">strategy me [role] [rule]</ansi> changes that (<ansi fg="command">help strategy</ansi>). Keep it in the back
+row (<ansi fg="command">help formation</ansi>) with a guardian in front (<ansi fg="command">help guardian</ansi>): a blow that
+draws blood can break a chant (<ansi fg="command">help interrupts</ansi>).
+
+<ansi fg="yellow-bold">Other Shamans</ansi>
+
+A Shaman companion calls weather and casts the same way, knows the spells its
+level allows, and promotes and chooses talents like any other
+(<ansi fg="command">help company</ansi>). Recruits are hired like any other and arrive with an ash staff.
+
+Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">talent</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">spells</ansi>.
+
+See also: <ansi fg="command">help shaman-routes</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help statuses</ansi>.

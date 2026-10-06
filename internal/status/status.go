@@ -26,6 +26,8 @@ const (
 	Asleep      = 1109 // Phase 38a: the Witch's hexes
 	Paralyzed   = 1110
 	Blighted    = 1111
+	Fogbound    = 1112 // Phase 39c: a Shaman's weather on foes
+	Windchilled = 1113
 )
 
 // Buff flags the statuses carry.
@@ -35,10 +37,12 @@ const (
 	FlagLoseFirstAction = "lose-first-action" // loses its next action only
 	FlagArmorBroken     = "armor-broken"
 	FlagExposed         = "exposed"
-	FlagNoDodge         = "no-dodge" // no active defense at all: block, parry, or dodge (stunned)
-	FlagNoBlock         = "no-block" // can't block with a shield (stunned)
-	FlagAsleep          = "asleep"   // blows against it hit more often; damage wakes it (38a)
-	FlagBlighted        = "blighted" // healing it receives is halved (38a)
+	FlagNoDodge         = "no-dodge"    // no active defense at all: block, parry, or dodge (stunned)
+	FlagNoBlock         = "no-block"    // can't block with a shield (stunned)
+	FlagAsleep          = "asleep"      // blows against it hit more often; damage wakes it (38a)
+	FlagBlighted        = "blighted"    // healing it receives is halved (38a)
+	FlagFogbound        = "fogbound"    // its ranged attacks and spells are dimmed (39c)
+	FlagWindchilled     = "windchilled" // its chants and sling shots take a round longer (39c)
 )
 
 // AsleepHitBonus is the points added to the chance to hit a sleeper.
@@ -93,11 +97,15 @@ var specs = map[int]*Spec{
 		EndYou: "Your limbs answer you again.", EndOther: "%s's limbs answer again."},
 	Blighted: {Id: Blighted, Word: "blighted",
 		EndYou: "The blight lifts from you.", EndOther: "The blight lifts from %s."},
+	Fogbound: {Id: Fogbound, Word: "fogbound",
+		EndYou: "The fog thins around you.", EndOther: "The fog thins around %s."},
+	Windchilled: {Id: Windchilled, Word: "windchilled",
+		EndYou: "The cold wind dies on you.", EndOther: "The cold wind dies on %s."},
 }
 
 // Ids lists every status's buff id.
 func Ids() []int {
-	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted}
+	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted, Fogbound, Windchilled}
 }
 
 // Get is the status with buff id, or nil for a buff that is not one.
