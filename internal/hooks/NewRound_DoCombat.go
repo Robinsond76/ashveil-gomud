@@ -78,6 +78,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// blow; a fall they cause is resolved at once.
 	statusPass()
 	warlordPass() // Phase 38c1: Relentless and Warlord's Command push the meters below
+	cursePass()   // Phase 38c3: Lingering Curse and Crone's Doom
 
 	// Ashveil Phase 32d: healers and casters cast by their strategies,
 	// before any blow.

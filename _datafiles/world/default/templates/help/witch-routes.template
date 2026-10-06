@@ -1,0 +1,29 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">witch-routes</ansi>
+
+A witch promotes at level 10 to one of three advanced classes, and at level 30
+to the elite class that continues its route (<ansi fg="command">help promotion</ansi>). All of
+them hex on their own (<ansi fg="command">help witch</ansi>, <ansi fg="command">help hexes</ansi>).
+
+<ansi fg="yellow-bold">Hedge Witch</ansi> (good, alignment +30)  hexes that also shield the company
+  10 Warding hex      a hex that lands also shields the most hurt ally from one
+                      blow, up to one average hit of the witch's level
+  15 Long slumber     Slumber lasts a round longer
+  20 Double ward      a ward absorbs two blows
+  25 Steady chant     blows break its chant 25% less often
+  Elite: Wise One (<ansi fg="command">help wise-one</ansi>)
+
+<ansi fg="yellow-bold">Coven Sage</ansi> (neutral)  reach: more hex targets and shorter chants
+  10 Wider hex        every hex reaches one more foe
+  15 Quick chant      two-round hexes chant one round less
+  20 Widest hex       every hex reaches two more foes
+  25 Thrifty hexes    spells cost 10% less mana
+  Elite: Coven Mother (<ansi fg="command">help coven-mother</ansi>)
+
+<ansi fg="yellow-bold">Hag</ansi> (evil, alignment -30)  curses: hexed foes take more damage
+  10 Curse            foes under one of the Hag's hexes take 15% more damage
+  15 Cruel hex        +5 to a hex's chance to land
+  20 Deeper curse     hexed foes take 25% more damage
+  25 Wider hex        every hex reaches one more foe
+  Elite: Crone of Ash (<ansi fg="command">help crone-of-ash</ansi>)
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help hexes</ansi>.

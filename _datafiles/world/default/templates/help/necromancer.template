@@ -1,0 +1,36 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">necromancer</ansi>
+
+The Necromancer is the elite class of the Warlock (evil wizard route). It
+needs alignment -30 or lower at level 30. It drains the living and raises the
+dead: a foe that falls in the battle can rise as a thrall (see
+<ansi fg="command">help thrall</ansi>).
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Raise the Fallen  once a battle, when a foe has fallen, a 2-round chant
+                       (a tenth of its mana) raises it as a thrall with 60% of
+                       its health, its weapon attacks and no spells. Bosses
+                       can't be raised
+  35 Deeper drain      Life Drain heals 150% of the damage it deals, and
+                       spells deal 35% more damage in all
+  40 Grave Chill       Life Drain also hobbles its first target
+  45 Grim rising       a thrall rises with 85% of its health
+  50 Raise again       Raise the Fallen twice a battle
+  55 Death's Harvest   each foe that falls restores 3% of its mana
+  60 Lich's Bargain    once a battle, a blow that would fell the Necromancer
+                       leaves it at 1 health, and its thrall (if any) crumbles
+                       instead
+
+<ansi fg="yellow-bold">How it plays</ansi>
+
+A Necromancer raises a fallen foe before it does anything else, and drains
+foes with Life Drain (a Warlock's spell, learned at level 10) while an ally is
+hurt. Both are automatic. The raise costs a tenth of its maximum mana and a
+blow can break the chant; the fallen foe is remembered until the battle ends.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Wizard elite talents (levels 35, 45, 55): Deep Reserves, Focused Will, Spell
+Edge. See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help thrall</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help wizard-routes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help promotion</ansi>.

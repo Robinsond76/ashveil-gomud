@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
+	"github.com/GoMudEngine/GoMud/internal/summons"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -117,6 +118,11 @@ func strategyPass() {
 			if role == strategy.Fighter || role == strategy.Guardian {
 				continue
 			}
+			// Phase 38c3: an Archon holds its turn to counter a chant, or to
+			// ward the whole company.
+			if archonTurn(a, side, u, foes) {
+				continue
+			}
 			action := strategy.Decide(strategy.Situation{
 				Role:   role,
 				Mana:   a.char.Mana,
@@ -134,6 +140,8 @@ func strategyPass() {
 				Reserve: st.Reserve,
 				// Phase 38a: a hex goes only at a foe worth it.
 				CanHex: hexReady(a, foes),
+				// Phase 38c3: a Necromancer raises a foe that has fallen.
+				CanRaise: canRaise(a, uid),
 				// Phase 39c: a Shaman calls a weather when none is up.
 				Weather:    string(b.Weather.Kind),
 				CanWeather: weatherReady(a, foes),
@@ -294,7 +302,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 			return info, false
 		}
 		add(side[action.Ally])
-	case strategy.Summon, strategy.Weather:
+	case strategy.Summon, strategy.Raise, strategy.Weather:
 		add(a) // the call has no target; the caster stands for it
 	case strategy.Row:
 		if action.Ally < 0 || action.Ally >= len(side) {
@@ -325,8 +333,10 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 			return info, false
 		}
 		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, id)
-		// Phase 39c: a Stormcaller's Lightning chains to a second foe.
-		if action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0 {
+		// Phase 38c3: an Archmage's Arcane Barrage reaches a second foe; Phase 39c:
+		// a Stormcaller's Lightning chains to a second foe.
+		if (action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage)) ||
+			(action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0) {
 			for _, other := range foes {
 				if other != id {
 					info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, other)
@@ -369,13 +379,43 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		// Phase 33i2: an enemy aimed at a player turns back to them.
 		enemyCastAims[a.who.mobId] = agg.UserId
 	}
-	a.char.Mana -= a.char.SpellCost(sp)
+	cost := a.char.SpellCost(sp)
+	// Phase 38c3: an Archmage's Overchannel (more damage for more mana) or
+	// its Storm (double damage, once a battle, free).
+	if pct, mana, storm := overchannel(a.char, sp, cost); pct > 0 {
+		info.Over, cost = pct, mana
+		if rt := a.char.RTState(); storm {
+			rt.StormUsed = true
+		} else {
+			rt.OverSpent, rt.OverRound = true, combatRound.Load()
+		}
+		announceOverchannel(a, pct, mana, storm)
+	}
+	a.char.Mana -= cost
 	wait := sp.WaitRounds
+	if sp.Type == spells.HarmSingle || sp.Type == spells.HarmMulti {
+		// Phase 38c3: Quick casting trims every other damage spell's chant.
+		if trim := a.char.ClassEffects().Int(classes.ChantTrim); trim > 0 {
+			rt := a.char.RTState()
+			rt.QuickCasts++
+			if rt.QuickCasts%2 == 1 {
+				wait = max(0, wait-trim)
+			}
+		}
+	}
 	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
 		wait = max(0, wait-a.char.ClassEffects().Int(classes.SummonSooner)) // Swift Host, Mastered binding
 	}
 	if _, isHex := hexes.For(spellId); isHex {
 		wait = max(0, wait-a.char.ClassEffects().Int(classes.HexChant)) // Phase 38b: a Witch's quicker chant
+		// Phase 38c3: a Crone's Quick curses trims every other hex's chant.
+		if trim := a.char.ClassEffects().Int(classes.HexQuick); trim > 0 {
+			rt := a.char.RTState()
+			rt.QuickCasts++
+			if rt.QuickCasts%2 == 1 {
+				wait = max(0, wait-trim)
+			}
+		}
 	}
 	a.char.SetCast(wait, info)
 	if tempoActive {
@@ -509,4 +549,11 @@ func pruneCastAims() {
 			delete(castAims, who)
 		}
 	}
+}
+
+// canRaise reports whether a character may raise a fallen foe now: its class
+// allows another thrall this battle and a foe has fallen.
+func canRaise(a actor, leader int) bool {
+	n := a.char.ClassEffects().Int(classes.Raise)
+	return n > 0 && n > a.char.RTState().Raised && summons.HasFallen(leader)
 }

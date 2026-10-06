@@ -26,6 +26,7 @@ const (
 	Asleep      = 1109 // Phase 38a: the Witch's hexes
 	Paralyzed   = 1110
 	Blighted    = 1111
+	Poisoned    = 13   // the shipped poison buff (Miasma's hex; Phase 38c3 reads it as a hex's mark)
 	Fogbound    = 1112 // Phase 39c: a Shaman's weather on foes
 	Windchilled = 1113
 	// Phase 43b: weapon poisons (items.Poisons), one at a time per victim.
