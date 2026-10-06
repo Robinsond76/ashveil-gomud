@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -360,6 +361,7 @@ func (fs fightSides) end(outcome string) {
 	if fs.leader == nil {
 		return
 	}
+	sum.Spoils = loot.TakeSpoils(fs.leader.UserId) // Phase 37: read once, shown or not
 	if on := fs.leader.GetConfigOption(BattleSummarySetting); on != nil {
 		if enabled, isBool := on.(bool); isBool && !enabled {
 			return

@@ -15,3 +15,6 @@ mapx: 36
 mapy: 1
 mapz: 0
 hascoordinates: true
+encounter:
+  enabled: true
+  table: woodland

@@ -207,6 +207,12 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				return true, nil
 			}
 
+			// Phase 37: a random encounter belongs to the company it sprang on.
+			if parties.ReservedFrom(m.EncounterOwner, user.UserId) {
+				user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> has set upon another company. Join their party or alliance to fight beside them.`, m.Character.Name))
+				return true, nil
+			}
+
 			// Ashveil Phase 32c: the fight is with the mob's whole group, and
 			// the first member struck is chosen by the player's strategy
 			// (32d: enemyparty.Aim), as is each companion's.

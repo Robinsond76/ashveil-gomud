@@ -1,6 +1,8 @@
 package rooms
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/encounters"
+	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -16,7 +18,11 @@ type ZoneConfig struct {
 	IdleMessages []string             `yaml:"idlemessages,omitempty"` // list of messages that can be displayed to players in the zone, assuming a room has none defined
 	MusicFile    string               `yaml:"musicfile,omitempty"`    // background music to play when in this zone
 	DefaultBiome string               `yaml:"defaultbiome,omitempty"` // city, swamp etc. see biomes.go
-	RoomIds      map[int]struct{}     `yaml:"-"`                      // Does not get written. Built dyanmically when rooms are loaded.
+	// Phase 37: the zone's recommended level band and its random encounter
+	// tables (they enable no room by themselves), and its drop profile.
+	Encounters encounters.ZoneConfig `yaml:"encounters,omitempty"`
+	Loot       loot.ZoneProfile      `yaml:"loot,omitempty"`
+	RoomIds    map[int]struct{}      `yaml:"-"` // Does not get written. Built dyanmically when rooms are loaded.
 }
 
 // Generates a random number between min and max

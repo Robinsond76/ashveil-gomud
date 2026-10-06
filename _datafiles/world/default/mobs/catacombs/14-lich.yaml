@@ -3,6 +3,9 @@ zone: Catacombs
 itemdropchance: 15
 hostile: true
 solitary: true
+boss: true
+windups:
+  crushing-blow: 35
 maxwander: 0
 groups: 
   - catacomb-denizen

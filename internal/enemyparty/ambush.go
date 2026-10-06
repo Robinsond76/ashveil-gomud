@@ -52,6 +52,17 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 		}
 		groupName = mobparty.Generate(summaries).Name
 	}
+	engage(roomID, room, foes, leaderUserID, group, groupName, true, 0)
+	return mob.InstanceId, nil
+}
+
+// engage rolls the company's detection of the foes, then sets the foes upon
+// the leader: hostile, unmoving, in their spawn group. Camp raids, travel
+// ambushes and random room encounters (Phase 37) all end here.
+// A room encounter (surprise false) is a sudden appearance, not an ambush:
+// neither side loses its opening round. delay holds the foes' attack back that
+// many seconds, so a company walking in behind its leader arrives first.
+func engage(roomID int, room *rooms.Room, foes []*mobs.Mob, leaderUserID int, group, groupName string, surprise bool, delay float64) {
 	observer, perception, visibility := "you", 0, room.GetVisibility()
 	if u := users.GetByUserId(leaderUserID); u != nil && u.Character != nil {
 		found := u.Character.Health > 0 && u.Character.RoomId == roomID && !u.Character.CombatWithdrawn
@@ -89,7 +100,10 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 	if room.HasTag("ambush-cover") {
 		cover = 10
 	}
-	_, advantage := formationcombat.Detection(perception, stealth, visibility, cover, ambushRoll(100), false)
+	advantage := 0
+	if surprise {
+		_, advantage = formationcombat.Detection(perception, stealth, visibility, cover, ambushRoll(100), false)
+	}
 	for _, foe := range foes {
 		foe.AmbushOwner, foe.AmbushAdvantage, foe.AmbushObserver = leaderUserID, advantage, observer
 		foe.Hostile = true
@@ -97,9 +111,12 @@ func SpawnAmbush(roomID, mobTemplateID, leaderUserID int) (int, error) {
 		foe.SpawnGroup = group
 		foe.GroupName = groupName
 		room.AddMob(foe.InstanceId)
-		foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
+		if delay > 0 {
+			foe.Command(fmt.Sprintf("attack @%d", leaderUserID), delay)
+		} else {
+			foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
+		}
 	}
-	return mob.InstanceId, nil
 }
 
 // EncounterGroup names an encounter's spawn group after its first foe.

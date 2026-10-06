@@ -149,12 +149,15 @@ lua-lint: ## Run Luacheck using a local install when available, otherwise Docker
 	fi
 
 ## Running Locally
-.PHONY: run run-new clean-instances https-setup reset-admin-pw client
+.PHONY: run run-new sprites clean-instances https-setup reset-admin-pw client
 
 run: generate ## Start the server with `go run .`.
 	@go run .
 
 run-new: clean-instances generate run ## Delete room instance data and start a fresh world.
+
+sprites: ## Regenerate the code-drawn sprite sets and the review contact sheet (needs Pillow).
+	python3 scripts/sprites/generate.py --preview docs/verification/40s1-contact-sheet.png
 
 clean-instances: ## Delete generated room instance data for bundled worlds.
 	rm -Rf _datafiles/world/default/rooms.instances

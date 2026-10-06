@@ -11,6 +11,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"
 	_ "github.com/GoMudEngine/GoMud/modules/company"
 	_ "github.com/GoMudEngine/GoMud/modules/death"
+	_ "github.com/GoMudEngine/GoMud/modules/encounters"
 	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
 	_ "github.com/GoMudEngine/GoMud/modules/expedition"
 	_ "github.com/GoMudEngine/GoMud/modules/exposure"

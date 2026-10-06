@@ -1,0 +1,68 @@
+GIMP Palette
+Name: Ashveil master palette
+Columns: 8
+#
+ 21  18  15	outline
+138  90  64	skin.d
+181 125  90	skin.m
+212 163 124	skin.l
+ 47  51  56	iron.d
+ 85  89  95	iron.m
+130 134 139	iron.l
+ 95 102 110	steel.d
+149 155 162	steel.m
+205 210 212	steel.l
+ 58  37  25	leather.d
+ 94  63  39	leather.m
+134  96  58	leather.l
+ 84  68  47	wood.d
+130 107  72	wood.m
+176 152 112	wood.l
+127 118  96	wool.d
+174 164 138	wool.m
+214 205 178	wool.l
+107  84  32	brass.d
+161 130  47	brass.m
+207 178  85	brass.l
+138 132 115	bone.d
+189 184 166	bone.m
+232 228 212	bone.l
+ 60  21  24	oxblood.d
+106  34  36	oxblood.m
+147  56  58	oxblood.l
+ 46  29  48	plum.d
+ 80  52  80	plum.m
+122  85 120	plum.l
+ 29  29  34	charcoal.d
+ 52  52  60	charcoal.m
+ 79  79  89	charcoal.l
+ 38  51  34	moss.d
+ 68  89  58	moss.m
+109 133  83	moss.l
+ 38  48  64	slate.d
+ 70  86 107	slate.m
+114 132 154	slate.l
+ 59  47  69	heather.d
+101  85 119	heather.m
+143 128 160	heather.l
+ 58  66  52	ashmoss.d
+ 95 110  85	ashmoss.m
+138 154 124	ashmoss.l
+ 52  64  28	grass.d
+ 88 106  40	grass.m
+136 154  58	grass.l
+ 22  40  30	forest.d
+ 39  67  48	forest.m
+ 61  96  68	forest.l
+ 31  52  70	water.d
+ 53  89 122	water.m
+ 94 138 166	water.l
+ 94  69  25	ochre.d
+148 107  42	ochre.m
+194 154  74	ochre.l
+ 59  57  53	stone.d
+104 100  92	stone.m
+152 147 138	stone.l
+110  30  16	ember.d
+196  86  28	ember.m
+240 176  74	ember.l

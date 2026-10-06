@@ -16,15 +16,27 @@ const (
 	Quick                // an indented follow-up line
 )
 
-// Release is a held line now due, for its player.
+// Release is a held entry now due, for its player: a line of text, or (when
+// IsData) a data entry the caller delivers some other way (Phase 40e: the
+// web client's structured combat events), carried in Data.
 type Release struct {
 	UserId int
 	Text   string
+	Data   any
+	IsData bool
 }
 
+// held is one entry of a round's queue. A data entry takes no beat of its
+// own: it goes out with the next text line, or at the round's end.
 type held struct {
-	text string
-	beat Beat
+	text   string
+	beat   Beat
+	data   any
+	isData bool
+}
+
+func (h held) release(userId int) Release {
+	return Release{UserId: userId, Text: h.text, Data: h.data, IsData: h.isData}
 }
 
 // queue is one player's held lines of one combat round.
@@ -121,28 +133,42 @@ func (p *Pacer) beatOf(text string) Beat {
 	return Plain
 }
 
-// Hold queues a line of round's text for a player. Lines of an older round
+// Hold queues a line of round's text for a player. Entries of an older round
 // still held are returned first, for the caller to send at once: a round's
 // lines never run into the next round's. A late line of an older round (a
 // caused event requeued past the round's end) joins the newer round's
 // lines rather than cutting them short.
-func (p *Pacer) Hold(userId int, round uint64, text string, spec Spec, now time.Time) (flushed []string) {
+func (p *Pacer) Hold(userId int, round uint64, text string, spec Spec, now time.Time) (flushed []Release) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	return p.holdLocked(userId, round, held{text: text, beat: p.beatOf(text)}, spec, now)
+}
+
+// HoldData queues a data entry among a player's held lines, in order. It
+// takes no beat of its own: it is released with the next text line that
+// follows it, or when the last line goes out. Older rounds' entries come
+// back as Hold's do.
+func (p *Pacer) HoldData(userId int, round uint64, data any, spec Spec, now time.Time) (flushed []Release) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.holdLocked(userId, round, held{data: data, isData: true}, spec, now)
+}
+
+func (p *Pacer) holdLocked(userId int, round uint64, h held, spec Spec, now time.Time) (flushed []Release) {
 	q := p.queues[userId]
 	if q != nil && round < q.round {
-		q.lines = append(q.lines, held{text: text, beat: p.beatOf(text)})
+		q.lines = append(q.lines, h)
 		return nil
 	}
 	if q != nil && q.round != round {
-		flushed = q.remaining()
+		flushed = q.remaining(userId)
 		q = nil
 	}
 	if q == nil {
 		q = &queue{round: round, start: now, spec: spec}
 		p.queues[userId] = q
 	}
-	q.lines = append(q.lines, held{text: text, beat: p.beatOf(text)})
+	q.lines = append(q.lines, h)
 	return flushed
 }
 
@@ -160,10 +186,22 @@ func (p *Pacer) Follow(userId int, text string) bool {
 	return true
 }
 
-func (q *queue) remaining() []string {
-	out := make([]string, 0, len(q.lines)-q.next)
+// FollowData is Follow for a data entry.
+func (p *Pacer) FollowData(userId int, data any) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	q := p.queues[userId]
+	if q == nil || q.next >= len(q.lines) {
+		return false
+	}
+	q.lines = append(q.lines, held{data: data, isData: true})
+	return true
+}
+
+func (q *queue) remaining(userId int) []Release {
+	out := make([]Release, 0, len(q.lines)-q.next)
 	for _, l := range q.lines[q.next:] {
-		out = append(out, l.text)
+		out = append(out, l.release(userId))
 	}
 	q.next = len(q.lines)
 	return out
@@ -179,21 +217,41 @@ func (s Spec) gap(b Beat) time.Duration {
 	return s.Gap
 }
 
-// offsets is each line's time after the round's first line: its gaps,
-// scaled down together when they would overrun the window.
+// offsets is each entry's time after the round's first line: its gaps,
+// scaled down together when they would overrun the window. A data entry
+// takes the offset of the next text line, or of the last one.
 func (q *queue) offsets() []time.Duration {
 	out := make([]time.Duration, len(q.lines))
 	var total time.Duration
-	for i := 1; i < len(q.lines); i++ {
-		total += q.spec.gap(q.lines[i].beat)
+	first := true
+	for i, l := range q.lines {
+		if l.isData {
+			continue
+		}
+		if !first {
+			total += q.spec.gap(l.beat)
+		}
+		first = false
 		out[i] = total
 	}
+	scale := 1.0
 	if total > q.spec.Window && total > 0 {
 		// Scale in floating point: offset × window overflows int64
 		// nanoseconds once a round runs past a dozen seconds of gaps.
-		scale := float64(q.spec.Window) / float64(total)
-		for i := range out {
-			out[i] = time.Duration(float64(out[i]) * scale)
+		scale = float64(q.spec.Window) / float64(total)
+		for i, l := range q.lines {
+			if !l.isData {
+				out[i] = time.Duration(float64(out[i]) * scale)
+			}
+		}
+		total = time.Duration(float64(total) * scale)
+	}
+	next := total
+	for i := len(q.lines) - 1; i >= 0; i-- {
+		if q.lines[i].isData {
+			out[i] = next
+		} else {
+			next = out[i]
 		}
 	}
 	return out
@@ -208,7 +266,7 @@ func (p *Pacer) Due(now time.Time) (out []Release, drained []int) {
 		q := p.queues[userId]
 		offs := q.offsets()
 		for q.next < len(q.lines) && !now.Before(q.start.Add(offs[q.next])) {
-			out = append(out, Release{UserId: userId, Text: q.lines[q.next].text})
+			out = append(out, q.lines[q.next].release(userId))
 			q.next++
 		}
 		if q.next >= len(q.lines) {
@@ -245,14 +303,14 @@ func (p *Pacer) userIdsLocked() []int {
 // Flush returns a player's held lines, in order, and ends their round:
 // ended is true when they were Busy, so views held back with them can
 // catch up.
-func (p *Pacer) Flush(userId int) (lines []string, ended bool) {
+func (p *Pacer) Flush(userId int) (lines []Release, ended bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	_, ended = p.open[userId]
 	delete(p.open, userId)
 	if q := p.queues[userId]; q != nil {
 		delete(p.queues, userId)
-		lines = q.remaining()
+		lines = q.remaining(userId)
 		ended = true
 	}
 	return lines, ended
@@ -264,9 +322,7 @@ func (p *Pacer) FlushAll() (out []Release, drained []int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	for _, userId := range p.userIdsLocked() {
-		for _, text := range p.queues[userId].remaining() {
-			out = append(out, Release{UserId: userId, Text: text})
-		}
+		out = append(out, p.queues[userId].remaining(userId)...)
 		delete(p.queues, userId)
 		delete(p.open, userId)
 		drained = append(drained, userId)

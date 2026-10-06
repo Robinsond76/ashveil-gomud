@@ -9,6 +9,7 @@ itemdropchance: 10
 sweep: true
 hostile: true
 solitary: true
+boss: true
 maxwander: 1
 groups:
   - forest-creature

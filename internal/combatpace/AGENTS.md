@@ -23,6 +23,11 @@
 - Timing values live in `specs`. `help combatpace` quotes them; update it
   whenever they change.
 
+- Phase 40e: a queue also holds data entries (`HoldData`, `FollowData`),
+  opaque to the pacer: they take no beat, and are released with the next text
+  line (or at the round's last). `Release.IsData` marks them; `Hold`,
+  `Flush`, `FlushAll` and `Due` return them in order with the text.
+
 ## Verification
 
 - `go test ./internal/combatpace` covers the scheduling.

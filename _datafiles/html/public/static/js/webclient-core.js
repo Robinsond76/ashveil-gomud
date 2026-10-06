@@ -1786,6 +1786,38 @@ const Client = (() => {
     }
 
     // -----------------------------------------------------------------------
+    // Battle events (Phase 40e)
+    //
+    // Company.Battle.Event is a stream of combat happenings, released in step
+    // with the narration: { fight, round, events: [{ seq, kind, src, tgt, ... }] }.
+    // It is not state, so it is never stored in GMCPStructs and never reaches
+    // the windows' onGMCP handlers; a listener added with
+    // Client.onBattleEvents(fn) gets each message (the battle screen,
+    // Phases 40f and 40g). Refs match Company.Battle: a member key (the
+    // player is "leader", their cell's key), "me" for a player leading no
+    // company, "m:<instance>", "u:<id>", or "?" for an enemy that can't be
+    // made out.
+    // -----------------------------------------------------------------------
+    const _battleEventListeners = [];
+
+    function onBattleEvents(fn) {
+        if (typeof fn !== 'function') { return function() {}; }
+        _battleEventListeners.push(fn);
+        return function() {
+            const i = _battleEventListeners.indexOf(fn);
+            if (i >= 0) { _battleEventListeners.splice(i, 1); }
+        };
+    }
+
+    function _dispatchBattleEvents(body) {
+        if (!body || !Array.isArray(body.events)) { return; }
+        debugLog('Company.Battle.Event ' + JSON.stringify(body));
+        _battleEventListeners.slice().forEach(function(fn) {
+            try { fn(body); } catch (err) { console.error('battle event listener failed', err); }
+        });
+    }
+
+    // -----------------------------------------------------------------------
     // WebSocket
     // -----------------------------------------------------------------------
     let socket               = null;
@@ -1928,6 +1960,10 @@ const Client = (() => {
                 const gmcpBody      = JSON.parse(gmcpPayload.slice(jsonIndex).trim());
                 gmcpInBytes[gmcpNamespace] = (gmcpInBytes[gmcpNamespace] || 0) + event.data.length;
                 gmcpInCount[gmcpNamespace] = (gmcpInCount[gmcpNamespace] || 0) + 1;
+                if (gmcpNamespace === 'Company.Battle.Event') {
+                    _dispatchBattleEvents(gmcpBody);
+                    return;
+                }
                 _applyGMCPPayload(gmcpNamespace, gmcpBody);
                 VirtualWindows.handleGMCP(gmcpNamespace, gmcpBody);
                 return;
@@ -2716,6 +2752,7 @@ const Client = (() => {
 
         // Extension points for window modules
         registerShortcut,
+        onBattleEvents,
 
         // Functions called from HTML event handlers
         init,
