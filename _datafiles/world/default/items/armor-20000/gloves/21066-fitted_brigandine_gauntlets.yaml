@@ -1,0 +1,11 @@
+itemid: 21066
+name: fitted brigandine gauntlets
+namesimple: gauntlets
+description: 'Plates riveted inside a close-fitted coat, a master armorer''s best work. It is hand protection of the medium path.'
+type: gloves
+subtype: wearable
+bulk: medium
+tier: 4
+family: medium
+damagereduction: 5
+weight: 600

@@ -1,0 +1,11 @@
+itemid: 21067
+name: runescale gauntlets
+namesimple: gauntlets
+description: Runesteel scales sewn to a backing, flexible and nearly unbreakable. It is hand protection of the medium path.
+type: gloves
+subtype: wearable
+bulk: medium
+tier: 5
+family: medium
+damagereduction: 5
+weight: 600

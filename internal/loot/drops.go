@@ -81,7 +81,7 @@ func (p ZoneProfile) BaseTier(ilvl int) int {
 func bases() map[int][]int {
 	out := map[int][]int{}
 	for _, spec := range items.GetAllItemSpecs() {
-		if spec.Tier < 1 || !Rollable(spec) {
+		if spec.Tier < 1 || !Rollable(spec) || spec.Relic != nil { // relics drop only from their boss
 			continue
 		}
 		out[spec.Tier] = append(out[spec.Tier], spec.ItemId)

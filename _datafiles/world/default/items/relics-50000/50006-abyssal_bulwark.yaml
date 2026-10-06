@@ -1,0 +1,20 @@
+itemid: 50006
+name: Abyssal Bulwark
+namesimple: shield
+description: 'A tall kite shield of black stone-grey metal, cold and heavy, its face scored by claws that never found a way through.'
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 6
+family: kite shield
+damagereduction: 19
+weight: 5800
+value: 1750
+relic:
+  signature: Unbroken
+  effects: {divineshield: 1, auraresolv: 6}
+  ilvl: 50
+  mob: 25
+  chance: 6
+  lore: 'It was dragged up from the deep caves with the creeper that guarded it, and it has not yet been breached.'

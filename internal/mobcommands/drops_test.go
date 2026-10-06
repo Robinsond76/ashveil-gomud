@@ -1,8 +1,11 @@
 package mobcommands
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/classes"
+	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/classes"
+	"gopkg.in/yaml.v2"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -241,3 +244,128 @@ func TestTrailwiseFattensTheCacheGold(t *testing.T) {
 	assert.Less(t, cacheGold("scout"), 27, "level 6 caches hold 24 to 36 gold")
 	assert.GreaterOrEqual(t, cacheGold("pathfinder"), 27, "and 15% more with Trailwise")
 }
+
+// Phase 36d: boss relics. A relic names its boss (the mob template id) and a
+// chance per kill by one company.
+const (
+	relicBossMob   = 98861
+	relicSetMob    = 98862
+	relicWeaponID  = 98871
+	relicLuckID    = 98872
+	relicWeaponChn = 100
+)
+
+func relicSpecs(t *testing.T) {
+	t.Helper()
+	spec := &items.ItemSpec{ItemId: relicWeaponID, Name: "Test Reaper", Type: items.Weapon, Subtype: items.Slashing, Hands: 2, Tier: 6, Value: 500, Weight: 3000,
+		Damage: items.Damage{Attacks: 1, DiceCount: 1, SideCount: 12},
+		Relic:  &items.RelicSpec{Signature: "Reaping", Effects: map[string]int{classes.Wounded: 20}, ILvl: 30, Mob: relicBossMob, Chance: relicWeaponChn}}
+	items.SetTestItemSpec(spec)
+	// A rarer relic of another boss, for the bad-luck count.
+	rare := *spec
+	rare.ItemId, rare.Name = relicLuckID, "Test Rarity"
+	rare.Relic = &items.RelicSpec{Signature: "Rarity", Effects: map[string]int{classes.Wounded: 10}, ILvl: 30, Mob: relicSetMob, Chance: 1}
+	items.SetTestItemSpec(&rare)
+	t.Cleanup(func() { items.RemoveTestItemSpec(relicWeaponID); items.RemoveTestItemSpec(relicLuckID) })
+	prev := loot.Affixes()
+	loot.SetAffixes(loot.AffixSet{})
+	t.Cleanup(func() { loot.SetAffixes(prev) })
+}
+
+func relicInCorpse(w *dropWorld) *items.Item {
+	for _, c := range w.room.Corpses {
+		for i := range c.Items {
+			if c.Items[i].ItemId == relicWeaponID {
+				return &c.Items[i]
+			}
+		}
+	}
+	return nil
+}
+
+// A boss that has relics drops one through the real kill path, alongside
+// its ordinary drops, and the spoils line names it.
+func TestBossKillDropsItsRelic(t *testing.T) {
+	relicSpecs(t)
+	w := newDropWorld(t, 1, encounters.Band{Low: 5, High: 7})
+	boss := w.foe(relicBossMob, func(m *mobs.Mob) { m.Boss, m.EncounterBoss, m.Character.Level = true, true, 7 })
+	t.Cleanup(func() { mobs.RemoveTestInstance(boss.InstanceId) })
+	_, err := Suicide("", boss, w.room)
+	require.NoError(t, err)
+	relic := relicInCorpse(w)
+	require.NotNil(t, relic, "the boss dropped its relic")
+	assert.Equal(t, items.RarityLegendary, relic.RollRarity())
+	assert.Equal(t, 30, relic.Loot.ILvl)
+	assert.Equal(t, "drop foe", relic.Loot.Source, "it names the boss it came from")
+	var gear int
+	for _, it := range w.room.Corpses[0].Items {
+		if it.ItemId == dropWeaponID {
+			gear++
+		}
+	}
+	assert.GreaterOrEqual(t, gear, 2, "ordinary boss drops are unchanged")
+	assert.Contains(t, strings.Join(loot.TakeSpoils(w.users[0].UserId), " "), "Test Reaper")
+}
+
+// Only a boss drops relics: the same template as an ordinary foe does not.
+func TestOrdinaryFoeOfABossTemplateDropsNoRelic(t *testing.T) {
+	relicSpecs(t)
+	w := newDropWorld(t, 1, encounters.Band{Low: 5, High: 7})
+	foe := w.foe(relicBossMob, nil)
+	t.Cleanup(func() { mobs.RemoveTestInstance(foe.InstanceId) })
+	_, err := Suicide("", foe, w.room)
+	require.NoError(t, err)
+	assert.Nil(t, relicInCorpse(w))
+}
+
+// A boss in a zone with no drop profile still drops its relic, and nothing
+// else a profile would add.
+func TestBossOutsideAnyDropProfileStillDropsItsRelic(t *testing.T) {
+	relicSpecs(t)
+	w := newDropWorld(t, 1, encounters.Band{})
+	boss := w.foe(relicBossMob, func(m *mobs.Mob) { m.Boss, m.EncounterID = true, "" })
+	t.Cleanup(func() { mobs.RemoveTestInstance(boss.InstanceId) })
+	_, err := Suicide("", boss, w.room)
+	require.NoError(t, err)
+	require.NotNil(t, relicInCorpse(w))
+	for _, it := range w.room.Corpses[0].Items {
+		assert.NotEqual(t, dropWeaponID, it.ItemId, "no profile, no generated gear")
+	}
+}
+
+// Each company that fought rolls its own relic (personal loot), and the
+// bad-luck count is the leader's, saved on their character.
+func TestRelicBadLuckCountIsKeptPerLeader(t *testing.T) {
+	relicSpecs(t)
+	w := newDropWorld(t, 2, encounters.Band{Low: 5, High: 7})
+	boss := &mobs.Mob{MobId: relicSetMob}
+	missSource := &scripted{vals: []int{99}}
+	for kill := 1; kill < loot.BadLuckKills; kill++ {
+		got, err := relicDrop(boss, w.users[0].UserId, "the boss", missSource)
+		require.NoError(t, err)
+		require.Empty(t, got, "kill %d is a miss", kill)
+	}
+	assert.Equal(t, loot.BadLuckKills-1, w.users[0].Character.GetMiscData(relicLuckKey(relicSetMob)))
+	assert.Nil(t, w.users[1].Character.GetMiscData(relicLuckKey(relicSetMob)), "another company's count is its own")
+
+	got, err := relicDrop(boss, w.users[0].UserId, "the boss", missSource)
+	require.NoError(t, err)
+	require.Len(t, got, 1, "the 20th kill is guaranteed a relic")
+	assert.Equal(t, relicLuckID, got[0].ItemId)
+	assert.Equal(t, 0, w.users[0].Character.GetMiscData(relicLuckKey(relicSetMob)), "a drop resets the count")
+
+	// The count survives a save: a restart does not reset a leader's luck.
+	w.users[1].Character.SetMiscData(relicLuckKey(relicSetMob), 7)
+	data, err := yaml.Marshal(w.users[1].Character.MiscData)
+	require.NoError(t, err)
+	var back map[string]any
+	require.NoError(t, yaml.Unmarshal(data, &back))
+	assert.Equal(t, 7, back[relicLuckKey(relicSetMob)], "it reads back as a number")
+}
+
+type scripted struct {
+	vals []int
+	i    int
+}
+
+func (s *scripted) Intn(n int) int { v := s.vals[s.i%len(s.vals)]; s.i++; return v % n }

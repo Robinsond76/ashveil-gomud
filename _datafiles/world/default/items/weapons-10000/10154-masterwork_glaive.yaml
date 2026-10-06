@@ -1,0 +1,14 @@
+itemid: 10154
+name: masterwork glaive
+namesimple: glaive
+description: A glaive of masterwork steel, its long blade polished to a mirror and its balance perfect.
+type: weapon
+hands: 2
+subtype: slashing
+weaponclass: glaive
+tier: 4
+family: glaive
+reach: true
+damage:
+  diceroll: 1d12+4
+weight: 3500

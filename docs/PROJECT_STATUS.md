@@ -1221,6 +1221,8 @@ trunk, sling) salvage as metal; rarity colours in web windows.
 Verification: `make generate`, `make validate`, `go test -race ./...`,
 `make js-lint`.
 
+**Phase 36d complete: tier 4-6 gear, Legendary signatures and Set bonuses (2026-10-06):** tier 4 and 5 plain gear for every family (drops only), 33 named tier 6 relics (Legendaries with a signature, Set pieces with no affixes) across three sets, dropped by bosses at per-relic chances with bad-luck protection (forced on the 20th relic-less kill, saved on the character). Relic effects merge into `ClassEffects()` so combat reads them with no new plumbing; `help relics`, an inventory "Relics worn" panel, GMCP `relic`/`relic_lore` and the gear tooltip show them. Plan and decisions: [36d plan](plans/2026-10-06-phase-36d-relics.md). Economy (owner ruling: treasure pays): relics sell and salvage, valued 705-1750 gold; plain tier 4+ pieces trim their runestone when it would out-pay the piece. Follow-ups: smart loot bias, collection log, rarity colours in other web windows, Scribe rank 4 naming the boss, tier 6 plain bases, zone placement of relic bosses (Phase 42). Review: independent review happens in the review thread.
+
 **Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
 now receives `Company.Battle.Event`, one entry per combat happening of its
 fight (attack, spell, heal, status, wind-up, guard, yield, flee, death, fight
@@ -1647,7 +1649,7 @@ their dependencies and those decisions is the
 | 38c3 | Complete, merged via [PR #62](https://github.com/Robinsond76/ashveil-gomud/pull/62). Wizard and witch elites (Archon, Archmage, Necromancer with its thrall, Wise One, Coven Mother, Crone of Ash) | Elite routes design | 38c1 |
 | 38d | Sorcerer bundle merged (PR #78); further catalogue bundles (Elementalist, Illusionist, others) later | Expanded catalogue | 38c1 |
 | 38e | Merged (PR #86). Creature recruits, Hound and Stone Golem pilot. [Plan](plans/2026-10-06-phase-38e-creature-recruits.md) | Expanded catalogue | 38d, 39e (not needed by the pilot) |
-| 36d | Tier 4–6 gear, Legendary signatures and Set bonuses | Loot slice 5 | 36c, 38c1–38c3 |
+| 36d | Tier 4–6 gear, Legendary signatures and Set bonuses. [Plan](plans/2026-10-06-phase-36d-relics.md), complete, in review | Loot slice 5 | 36c, 38c1–38c3 |
 | 39a–39h | Neutral base classes, one per phase: Halberdier, Samurai, Shaman, Doll Master, Beast Tamer, Gryphon Rider, Alchemist, Arbalist; at most two building at once | [Neutral classes design](designs/2026-10-05-neutral-classes-design.md) | 38b (39e also 39d) |
 | 39i | Elite ranks 30–60 for the eight neutral lineages | Neutral classes design §12 | 38c1, 39a–39h |
 | 41 | World building, levels 1–15, tile-ready | Owner 2026-10-05 | 40d, 37b |

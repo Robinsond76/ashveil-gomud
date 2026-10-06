@@ -1,0 +1,13 @@
+itemid: 10104
+name: masterwork broadsword
+namesimple: sword
+description: A broadsword forged and balanced by a regional master, true in the hand and keen to the last inch.
+type: weapon
+hands: 1
+subtype: slashing
+weaponclass: sword
+tier: 4
+family: sword
+damage:
+  diceroll: 1d8+2
+weight: 1400

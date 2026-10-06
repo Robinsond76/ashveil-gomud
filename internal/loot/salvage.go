@@ -122,5 +122,26 @@ func SalvageYield(item items.Item) []SalvagePart {
 	if tier >= 4 || (item.IsRolled() && item.Loot.Rarity.Rank() >= items.RarityEpic.Rank()) {
 		parts = append(parts, SalvagePart{ItemID: MaterialRunestone, Count: 1})
 	}
+	// Phase 36d: a plain piece never breaks down into more than it is worth,
+	// so the runestone shard of a tier 4+ piece goes to pieces that can bear
+	// it (a masterwork glove is worth less than the shard).
+	if !item.IsRolled() && len(parts) == 2 && partsWorth(parts) > spec.Value {
+		parts = parts[:1]
+	}
 	return parts
+}
+
+// materialWorth is the shipped value of each salvage material; a test holds
+// it equal to the item files.
+var materialWorth = map[int]int{
+	MaterialScrapIron: 7, MaterialIronOre: 18, MaterialSteelIngot: 45, MaterialRunestone: 60,
+	MaterialAshwood: 14, MaterialSilk: 38, MaterialTannedHide: 16,
+}
+
+func partsWorth(parts []SalvagePart) int {
+	worth := 0
+	for _, p := range parts {
+		worth += materialWorth[p.ItemID] * p.Count
+	}
+	return worth
 }

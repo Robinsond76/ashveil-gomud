@@ -1,10 +1,13 @@
 package characters
 
 import (
+	"reflect"
 	"slices"
+	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/hexes"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
@@ -36,6 +39,64 @@ func (c *Character) ClassState() (string, []string) {
 // its route's ranks reached and the talents it has earned. Nil for a
 // character with neither.
 func (c *Character) ClassEffects() classes.Effects {
+	own := c.classOwnEffects()
+	if c == nil {
+		return own
+	}
+	key, gear := c.wornGear()
+	if key == "" {
+		return own
+	}
+	// Phase 36d: worn relics add their signature and set bonuses on top.
+	on := reflect.ValueOf(own).Pointer()
+	if c.mergedFx == nil || c.mergedOn != on {
+		c.mergedFx = classes.WithGear(own, gear)
+		c.mergedOn = on
+	}
+	return c.mergedFx
+}
+
+// WornGear is what the character's worn relics grant (Phase 36d): the
+// gear effects and each set's progress. Empty for a character in plain gear.
+func (c *Character) WornGear() (map[string]int, []items.ActiveSet) {
+	key, fx := c.wornGear()
+	if key == "" {
+		return nil, nil
+	}
+	return fx, c.gearSets
+}
+
+// wornGear returns a key naming the relics worn ("" when none) and the
+// effects they grant, recomputed only when the relics worn change.
+func (c *Character) wornGear() (string, map[string]int) {
+	key := ""
+	for _, slot := range AllSlots() {
+		if slot == items.Pack {
+			continue
+		}
+		if it := c.Equipment.Get(slot); it.ItemId > 0 && items.IsRelicItem(it.ItemId) {
+			key += strconv.Itoa(it.ItemId) + ","
+		}
+	}
+	if key == "" {
+		c.gearKey = ""
+		return "", nil
+	}
+	if key != c.gearKey {
+		var worn []items.Item
+		for _, slot := range AllSlots() {
+			if slot != items.Pack {
+				worn = append(worn, *c.Equipment.Get(slot))
+			}
+		}
+		c.gearFx, c.gearSets = items.GearEffects(worn)
+		c.gearKey = key
+		c.mergedFx = nil
+	}
+	return key, c.gearFx
+}
+
+func (c *Character) classOwnEffects() classes.Effects {
 	class, talents := c.ClassState()
 	// Phase 39b: a neutral lineage's base ranks (the Samurai's Iaijutsu)
 	// count from level 1, before any promotion.

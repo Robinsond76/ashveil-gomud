@@ -1,0 +1,18 @@
+itemid: 50031
+name: "Deepdelver's Helm"
+namesimple: helm
+description: 'A heavy iron-black helm with a slit visor and a lamp bracket long since broken off.'
+type: head
+subtype: wearable
+bulk: heavy
+tier: 6
+family: heavy
+damagereduction: 11
+weight: 2000
+value: 1050
+relic:
+  set: deepdelver
+  ilvl: 50
+  mob: 25
+  chance: 5
+  lore: 'The ones who went into the Mirror Caves wore armor made to be argued with by the dark.'

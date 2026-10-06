@@ -1,0 +1,13 @@
+itemid: 10105
+name: runesteel sword
+namesimple: sword
+description: A sword of runesteel, its fuller etched with faint runes that hum when it is drawn.
+type: weapon
+hands: 1
+subtype: slashing
+weaponclass: sword
+tier: 5
+family: sword
+damage:
+  diceroll: 1d10+2
+weight: 1400

@@ -33,5 +33,8 @@ none, so neither needs reading.
   Rank 2  Epic          Rank 4  the same, and shows each affix's tier and
                                 range, and where the item came from
 
+A relic's signature is never hidden, and a Set piece has no affixes to read
+(<ansi fg="command">help relics</ansi>); a Legendary's two affixes are read at rank 3.
+
 Usage: <ansi fg="command">scribe</ansi>, <ansi fg="command">scribe [item]</ansi>, <ansi fg="command">scribe [member] [item]</ansi>, <ansi fg="command">autoskill scribe on|off</ansi>, <ansi fg="command">appraise [item]</ansi>
 See also: <ansi fg="command">help scribe</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help sell</ansi>.

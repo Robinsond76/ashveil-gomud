@@ -1,0 +1,11 @@
+itemid: 21064
+name: runescale hauberk
+namesimple: hauberk
+description: Runesteel scales sewn to a backing, flexible and nearly unbreakable. It is body armor of the medium path.
+type: body
+subtype: wearable
+bulk: medium
+tier: 5
+family: medium
+damagereduction: 20
+weight: 4000

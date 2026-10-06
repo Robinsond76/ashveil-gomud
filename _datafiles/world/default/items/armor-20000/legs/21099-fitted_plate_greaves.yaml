@@ -1,0 +1,11 @@
+itemid: 21099
+name: fitted plate greaves
+namesimple: greaves
+description: Plate fitted to the wearer by a master armorer, close and sure. It is leg armor of the heavy path.
+type: legs
+subtype: wearable
+bulk: heavy
+tier: 4
+family: heavy
+damagereduction: 11
+weight: 3500
