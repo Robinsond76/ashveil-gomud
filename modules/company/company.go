@@ -614,6 +614,18 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		}
 		return "No companions."
 	}
+	// A companion levels up on its live mob; the record's snapshot (the
+	// level shown below) is only refreshed on save, so read the live state
+	// first or the roster keeps showing the old level after a fight.
+	refreshed := false
+	for _, c := range record.Companions {
+		if m.refreshSnapshot(leaderUserID, c.ID) {
+			refreshed = true
+		}
+	}
+	if refreshed {
+		record, _ = m.registry.Get(leaderUserID)
+	}
 	lines := []string{fmt.Sprintf("Company companions (%d/%d):", len(record.Companions), m.maxCompanions())}
 	if average, ok := m.companyAverage(leaderUserID); ok {
 		lines = append(lines, fmt.Sprintf("Company alignment: %s", alignmentLabel(average)))

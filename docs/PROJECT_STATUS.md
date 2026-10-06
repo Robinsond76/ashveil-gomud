@@ -1,5 +1,66 @@
 # Ashveil Project Status
 
+**Phase 44b complete (2026-10-06): world smoke playtest.** `make
+smoke-world` (`live_smoke_world_test.go`) plays a Warrior that skipped the
+tutorial through the world on a real server: recruiting at the Waymark Inn,
+the Old Kings Road journey (the fallen tree and `travel resume`), a random
+encounter fight and its loot, `gather firewood` and a camp, a restart, a
+salvage at the Frostfang armorer, a sale at the Dunmar market and a night at
+the Dunmar inn; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is its
+own target (about four minutes). Three things are bent in the test's own
+copy of the world only: new characters start at Dunmar's West Gate, the Old
+Kings Road gets an always-springing encounter table (two unarmed brigands),
+and the account is made an admin for the restart so it can teleport to
+Frostfang, which no shipped road reaches. Live bugs it found, each fixed with
+a regression test: (1) **a journey that ended in a room that springs random
+encounters froze the whole server**: `moveAndFinishLocked` held the expedition
+lock while the encounter roll asked the expedition module whether the leader
+could move (the arrival is now queued and heard after the lock is released;
+no shipped room was both a journey end and an encounter room, so only this
+run met it); (2) **a new character skipping the tutorial woke at 11/59 HP**
+(the engine seeds 10 health under the archetype's raised maximum; creation
+now starts at full health); (3) `company status` kept a companion's old level
+after it levelled in a fight (it showed the last save's snapshot); (4) "Your
+company gathers 3 firewood bundle" (now plural); (5) the phase 44 open item,
+"The battle is under way" lingering after a fight's summary: an aim at a foe
+already slain counted as a battle until the next round cleared it, so
+`loot`, `go`, `eat` and the rest were refused (it now does not). The fifth
+fix is read-only (the two reverted attempts cleared the aim); the world smoke
+loot step logs how long it waited, and the tutorial run keeps `doAfterBattle`
+as a safety net. Not fixed, noted for later: Dunmar has a market but no
+merchant or smith, and no road joins it to Frostfang, so gear a Dunmar
+company loots can only be sold or salvaged after a trip no shipped route
+makes; the only two camp rooms (the tutorial campground and the Fork) have free
+deadfall, so gathered firewood bundles have no use at a camp in the shipped
+world (a camp elsewhere would burn one) and markets never buy them; `weather`
+in Dunmar and Frostfang (city biomes) says "You can't tell what the weather
+is like here" because only the forest biome has a weather table (a content
+gap, not a code bug); a camp rest was not played in the world run, because the
+Fork's 15% camp-raid roll would make it depend on dice (the tutorial run covers
+a rest). One observation not reproduced: the prompt briefly showed
+"Overloaded" with 12.9 of 30 kg carried after `camp break` and a step.
+Merging master (39b's Samurai) renumbered the creation menus and broke both
+smoke runs; they now answer the race and archetype prompts by name.
+Verification: `make generate`, `make validate`, `go test -race ./...`, `make
+js-lint`, `make js-test`, `make smoke`, `make smoke-world` (all pass on the merged tree).
+
+**Phase 44b reviewed and merged via [PR #55](https://github.com/Robinsond76/ashveil-gomud/pull/55) (2026-10-06, Opus review thread):**
+checked the deadlock fix: the travel timer already completes on the event
+loop, so queuing `journeyArrived` only moves the encounter roll past the
+expedition lock; the encounter roll re-checks that the leader is still in the
+arrival room, so a late arrival can't spring on someone who moved or logged
+off. The smoke's world bending (start room, fixture encounter table, unarmed
+brigands, admin role) only writes the test's temp copy and its overrides file.
+`AimedAtMob` reads the mob map on the game loop like every other caller; the
+`company status` refresh is the save path's own snapshot. No fixes needed.
+Decisions: (1) the city-weather gap stays a follow-up, not a quick table,
+because a city table would change journey weather (a Dunmar departure now
+takes the forest's weather from its destination); (2) the firewood-at-camp
+and Dunmar merchant/smith gaps go to world building 41, which places camps
+and shops; (3) a camp rest stays out of the world run (the tutorial run covers
+it). UI: the fixes are themselves the player-visible changes (HP, roster level,
+plural, battle refusals); no help change needed.
+
 **Phase 39c complete, merged via [PR #54](https://github.com/Robinsond76/ashveil-gomud/pull/54) (2026-10-06): the Shaman neutral lineage.** A weather-caller: Call Fog and Gust at level 1, Chill Wind 3, Rain 6, Lightning 8. One battle-local weather at a time, 3 rounds, a new call replaces the old: Fog (Fogbound foes: ranged -10 to hit, spells -10%), Chill Wind (Windchilled: chants and sling shots one round slower), Rain (Lightning +50%). Routes Stormcaller (chain lightning at 50%), Mistweaver (+5 Evasion to allies in fog, longer weather), Earthspeaker (Stoneskin: +10/15/20 armor); elites planned (39i). Long Weather talent, recruit mob 150, `help shaman` and `help shaman-routes`, creation-lesson tutorial hint, strategy uses `weather` and `storm`. Plan: [39c](plans/2026-10-06-phase-39c-shaman.md). Decisions: Caster role, not a new support role; Fog and Chill are buffs so `conditions` shows them; weather marks only foes standing at the call; a spell with an apostrophe in its script text silently disabled the spell (fixed, `node --check` each spell script). Merged master (39a Halberdier) before the PR; powers are learned spells, so the strategy list, company summary and capability panel show them only once known, and route ranks reuse 39b's "New rank" level-up line. Follow-ups: Shaman battle sprites (art pass), elite ranks (39i).
 
 **Phase 39c review (Opus review thread):** accepted and fixed: (1) Rain promised "fire damage halved on both sides" in its spell text, cast line and `help shaman`, but nothing in the game deals fire damage (Burning is never applied), so the claim is gone and the dead `FireDamage` helper removed; Rain now only feeds Lightning. (2) UI: the player could not see which weather was up or for how long; `Company.Battle` now carries `weather` {kind, name, rounds, effect}, the battle screen's header names it ("fog (3 rounds: foe ranged attacks and spells weaker)") and the Combat tab's Battle view adds a Weather note; `help battlescreen` and `help shaman` say so (`TestBattleFeedCarriesTheWeather`, `scripts/browser/battle-check.mjs`). (3) Balance was too strong at 100 fights a cell: Shaman 62/69/33% against Wizard 28/40/29% and Witch 44/41/22% at levels 5/10/20. Experiments showed the weather itself is worth little in the mirror (a Shaman that never calls weather still won 55% at level 5); the edge was its sturdier body and focused single-target Gust, and the Wizard underperforms because it chants Shower of Sparks at a group instead of Magic Missile. Tuned: health and Evasion to the Wizard's (no head start, 0.5 a level, Evasion 0.75), Wizard-like growth (mysticism 4, smarts 3, perception 2, speed 1), Gust base 6 to 5 (about 70% of Magic Missile), Lightning base 10 to 9, Chill Wind cost 8 to 12. Result at 150 fights: Shaman 44/52/32%, within 5 points of the Witch at level 5 and of the Wizard at 20; level 10 stays about 10 points above both (Rain's Lightning bonus at 30% instead of 50% made no measurable difference, so the design's 50% stays). Routes after tuning (80 fights a cell, base/Stormcaller/Mistweaver/Earthspeaker): level 15 38/32/27/36%, level 25 16/23/21/30%; at 15 the routes sit within noise of the base class (Mistweaver lowest), at 25 all beat it; left for the 39i balance pass with the elites. Rejected: the Mistweaver's fog Evasion covering all blows, not only melee as the design said (simpler and visible; kept). Mob 150 and buffs 1112/1113 collide with nothing on master or open branches at merge time. Follow-ups: the Wizard picks Shower of Sparks over Magic Missile against groups and trails the other casters (balance candidate); Earthspeaker's Stoneskin is not listed in `strategy` spell lists for casters (minor); Mistweaver trails at level 15 (39i balance pass); Shaman sprites (art pass) and elite ranks (39i).
@@ -1422,6 +1483,7 @@ their dependencies and those decisions is the
 | 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
+| 44b | World smoke playtest (`make smoke-world`): journey, encounter fight and loot, gathering, camp, restart, salvage, market and inn on a live server; fixed a journey-arrival deadlock and four other live bugs. Complete, in review | Roadmap 2026-10-06 | 44, 37, 36c, 40a2 |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 37c | Test stability (flaky tests found by shuffled and repeated runs) and the zone band rating by company level, refreshed on level change. Built, in review | Roadmap 2026-10-06 | 37b |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
