@@ -1,0 +1,15 @@
+roomid: 90006
+zone: Test Area
+title: Weather Deck
+description: >-
+  An open platform above the hub where the sky is plain to see. testarea weather <condition> holds this zone's weather at a condition (testarea weather lists them), and testarea weather auto lets it change again. The world's clock is shared and never moves for tests.
+biome: forest
+tags:
+  - lit
+exits:
+  down:
+    roomid: 90001
+mapx: 0
+mapy: 0
+mapz: 1
+hascoordinates: true

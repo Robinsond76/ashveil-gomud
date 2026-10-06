@@ -17,6 +17,7 @@ package encounters
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
 	"sync"
@@ -127,6 +128,7 @@ func init() {
 	events.RegisterListener(events.BattleEnded{}, m.onBattleEnded)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	walking.AddStepListener(m.onStep)
 	walking.AddArrivalListener(m.onArrival)
 	encounters.SetAttemptProvider(m)

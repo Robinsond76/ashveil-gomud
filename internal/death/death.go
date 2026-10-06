@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 // Kind is a settlement's kind. Only a city's church can be a player's
@@ -217,4 +218,27 @@ func Active() (Provider, bool) {
 	providerMu.RLock()
 	defer providerMu.RUnlock()
 	return provider, provider != nil
+}
+
+var wakeOverride atomic.Pointer[func(fellRoomID int) (int, bool)]
+
+// SetWakeOverride names, for a player who fell in a room, where they wake
+// instead of a church (ok false: the church as usual). The admin test area
+// (modules/testarea) keeps its dead inside. nil clears it.
+func SetWakeOverride(fn func(fellRoomID int) (int, bool)) {
+	if fn == nil {
+		wakeOverride.Store(nil)
+		return
+	}
+	wakeOverride.Store(&fn)
+}
+
+// WakeOverride is the room a player who fell in fellRoomID wakes in, when
+// an override claims that room.
+func WakeOverride(fellRoomID int) (int, bool) {
+	fn := wakeOverride.Load()
+	if fn == nil {
+		return 0, false
+	}
+	return (*fn)(fellRoomID)
 }

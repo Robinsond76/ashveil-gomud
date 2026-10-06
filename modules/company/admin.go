@@ -1,0 +1,168 @@
+package company
+
+// The admin test area's company tools (modules/testarea): recruit a
+// companion of any class at any level and change a companion's class or
+// level. They bypass the recruit rules on purpose and are reached only by an
+// admin command; nothing here is a player path.
+
+import (
+	"errors"
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/classes"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
+)
+
+var _ domain.AdminProvider = (*CompanyModule)(nil)
+
+// maxAdminLevel caps the levels the admin tools set.
+const maxAdminLevel = 100
+
+// adminClass resolves a base archetype id or a class id to the archetype a
+// companion of it has and the class record (blank for a base archetype).
+func adminClass(id string) (archetype, class string, ok bool) {
+	id = strings.ToLower(strings.TrimSpace(id))
+	if c, found := classes.Get(id); found {
+		return c.Lineage, c.ID, true
+	}
+	if archetypes.Exists(id) {
+		return id, "", true
+	}
+	return "", "", false
+}
+
+// templateFor is the companion template configured for an archetype: the
+// generated-recruit templates (80 and up) first, lowest id first.
+func (m *CompanyModule) templateFor(archetype string) (int, bool) {
+	var ids []int
+	for id, a := range m.companionArchetypes() {
+		if a == archetype {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return 0, false
+	}
+	slices.Sort(ids)
+	for _, id := range ids {
+		if id >= 80 {
+			return id, true
+		}
+	}
+	return ids[0], true
+}
+
+// AdminRecruit implements domain.AdminProvider.
+func (m *CompanyModule) AdminRecruit(leaderUserID, roomID int, class string, level int) (string, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return "", err
+	}
+	archetype, classID, ok := adminClass(class)
+	if !ok {
+		return "", fmt.Errorf("there is no archetype or class called %q", class)
+	}
+	templateID, ok := m.templateFor(archetype)
+	if !ok {
+		return "", fmt.Errorf("no companion template is configured for %s", archetype)
+	}
+	if record, has := m.registry.Get(leaderUserID); has && len(record.Companions) >= m.maxCompanions() {
+		return "", domain.ErrCompanyFull
+	}
+	companion, err := m.enlist(leaderUserID, roomID, templateID, map[int]struct{}{templateID: {}}, false, nil)
+	if err != nil {
+		return "", err
+	}
+	if classID == "" && level <= 0 {
+		return fmt.Sprintf("Recruited %s (#%d), a %s.", nameOf(companion, templateName(templateID, "a companion")), companion.ID, archetype), nil
+	}
+	text, err := m.AdminSetMember(leaderUserID, roomID, fmt.Sprintf("#%d", companion.ID), classID, level)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Recruited %s (#%d), a %s. %s", nameOf(companion, templateName(templateID, "a companion")), companion.ID, archetype, text), nil
+}
+
+// AdminSetMember implements domain.AdminProvider. A base archetype id sets
+// the archetype and clears the class; a class id sets both. Gear is kept.
+func (m *CompanyModule) AdminSetMember(leaderUserID, roomID int, selector, class string, level int) (string, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return "", err
+	}
+	if class == "" && level <= 0 {
+		return "", errors.New("give a class, a level, or both")
+	}
+	if level > maxAdminLevel {
+		return "", fmt.Errorf("level is at most %d", maxAdminLevel)
+	}
+	var archetype, classID string
+	if class != "" {
+		var ok bool
+		if archetype, classID, ok = adminClass(class); !ok {
+			return "", fmt.Errorf("there is no archetype or class called %q", class)
+		}
+	}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return "", domain.ErrUnknownMember
+	}
+	companion, ok := resolveCompanion(record, selector)
+	if !ok {
+		return "", fmt.Errorf("no companion matches %q", selector)
+	}
+	// What the live mob carries is the truth: record it before the respawn.
+	m.refreshSnapshot(leaderUserID, companion.ID)
+	record, _ = m.registry.Get(leaderUserID)
+	companion, _ = resolveCompanion(record, fmt.Sprintf("#%d", companion.ID))
+	state, err := m.ensureState(leaderUserID, companion)
+	if err != nil {
+		return "", err
+	}
+	if state == nil {
+		return "", fmt.Errorf("companion #%d has no template to build from", companion.ID)
+	}
+	before := record
+	for i := range record.Companions {
+		if record.Companions[i].ID != companion.ID {
+			continue
+		}
+		if archetype != "" {
+			record.Companions[i].Archetype = archetype
+			record.Companions[i].Class = classID
+			record.Companions[i].Talents = nil
+		}
+		if level > 0 {
+			s := state.Clone()
+			s.Level, s.Experience, s.Vitals = level, 0, nil
+			record.Companions[i].State = &s
+		}
+	}
+	m.registry.Put(record)
+	if err := m.save(); err != nil {
+		m.registry.Put(before)
+		return "", err
+	}
+	if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
+		if m.runtime.IsLive(instanceID) {
+			m.runtime.Detach(leaderUserID, instanceID)
+		}
+		m.clearInstance(leaderUserID, companion.ID)
+	}
+	if err := m.restoreForLeader(leaderUserID, roomID); err != nil {
+		return "", err
+	}
+	var parts []string
+	if archetype != "" {
+		label := archetype
+		if classID != "" {
+			label = classID
+		}
+		parts = append(parts, "is now a "+label)
+	}
+	if level > 0 {
+		parts = append(parts, fmt.Sprintf("is now level %d", level))
+	}
+	return fmt.Sprintf("%s (#%d) %s.", nameOf(companion, templateName(companion.MobTemplateID, "The companion")), companion.ID, strings.Join(parts, " and ")), nil
+}

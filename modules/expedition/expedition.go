@@ -12,6 +12,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"math/rand"
 	"os"
 	"strconv"
@@ -313,6 +314,7 @@ func init() {
 	m.plug.Callbacks.SetOnLoad(m.load)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	userstate.Register(stateContributor{m})
 	events.RegisterListener(travelTimerDue{}, onTravelTimerDue)
 	events.RegisterListener(journeyArrived{}, onJourneyArrived)
 	m.plug.Callbacks.SetOnSave(func() {
