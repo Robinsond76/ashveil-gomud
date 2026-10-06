@@ -3,6 +3,7 @@
  "notes": "Mob names (lowercase) map to battle unit ids; biomes map to background ids; zone overrides win over biomes.  Units without art fall back to unknown-humanoid, unknown-beast or unknown-large.",
  "units": {
   "abyssal creeper": "creeper-abyssal",
+  "angel": "angel",
   "baby spider": "spider-hatchling",
   "back-alley bonesetter": "bonesetter",
   "big rat": "rat-big",
@@ -15,6 +16,7 @@
   "dangerous ruffian": "ruffian-dangerous",
   "dark acolyte": "acolyte-dark",
   "dark acolyte trainer": "acolyte-dark",
+  "demon": "demon",
   "echo bats": "bats-echo",
   "ent": "ent",
   "faerie folk": "faerie",
@@ -22,6 +24,7 @@
   "forest ogre": "ogre-forest",
   "goblin": "goblin",
   "goblin hexer": "goblin-hexer",
+  "goblin shaman": "goblin-shaman",
   "grave chanter": "grave-chanter",
   "guard": "guard",
   "ice guardian": "ice-guardian",

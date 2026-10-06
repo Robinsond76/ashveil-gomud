@@ -193,7 +193,7 @@ func (m *CampingModule) currentWeather(zone string) (weather.Condition, bool) {
 // campRecovery is the fatigue a camp rest in room restores: FatigueRecovery
 // scaled by the zone's weather RestRecoveryPct (rounded half up, at least
 // 1). scaled reports a weather penalty worth mentioning.
-func (m *CampingModule) campRecovery(room *rooms.Room) (int, weather.Condition, bool) {
+func (m *CampingModule) campRecovery(room *rooms.Room, tent bool) (int, weather.Condition, bool) {
 	recovery := camping.FatigueRecovery
 	if room == nil {
 		return recovery, weather.Condition{}, false
@@ -203,8 +203,9 @@ func (m *CampingModule) campRecovery(room *rooms.Room) (int, weather.Condition, 
 		return recovery, weather.Condition{}, false
 	}
 	pct := condition.RestRecoveryPct
-	// Phase 40a: a shelter room halves the weather's penalty.
-	if pct < 100 && room.HasResource(rooms.ResourceShelter) {
+	// Phase 40a: a shelter room halves the weather's penalty; so does a
+	// tent (Phase 40a3), and the two do not stack.
+	if pct < 100 && (room.HasResource(rooms.ResourceShelter) || tent) {
 		pct += (100 - pct) / 2
 	}
 	scaled := (recovery*pct + 50) / 100

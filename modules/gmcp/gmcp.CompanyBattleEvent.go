@@ -28,6 +28,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -40,22 +41,25 @@ const battleUnseen = "?"
 // battleEvent is one combat happening. Fields a kind doesn't use are
 // omitted.
 type battleEvent struct {
-	Seq      uint64   `json:"seq"`
-	Kind     string   `json:"kind"`
-	Src      string   `json:"src,omitempty"`
-	Tgt      string   `json:"tgt,omitempty"`
-	Prev     string   `json:"prev,omitempty"` // target-change: the target before
-	Outcome  string   `json:"outcome,omitempty"`
-	Damage   int      `json:"damage,omitempty"`
-	Crit     bool     `json:"crit,omitempty"`
-	Quality  string   `json:"quality,omitempty"` // glancing or telling
-	Weapon   string   `json:"weapon,omitempty"`
-	Spell    string   `json:"spell,omitempty"`
-	Amount   int      `json:"amount,omitempty"`
-	HeldBack int      `json:"held_back,omitempty"`
-	Status   string   `json:"status,omitempty"`
-	Rule     string   `json:"rule,omitempty"`
-	Defenses []string `json:"defenses,omitempty"`
+	Seq     uint64 `json:"seq"`
+	Kind    string `json:"kind"`
+	Src     string `json:"src,omitempty"`
+	Tgt     string `json:"tgt,omitempty"`
+	Prev    string `json:"prev,omitempty"` // target-change: the target before
+	Outcome string `json:"outcome,omitempty"`
+	Damage  int    `json:"damage,omitempty"`
+	Crit    bool   `json:"crit,omitempty"`
+	Quality string `json:"quality,omitempty"` // glancing or telling
+	Weapon  string `json:"weapon,omitempty"`
+	Spell   string `json:"spell,omitempty"`
+	// SpellName is the spell's display name (40g review: the battle
+	// screen's last-blow line), as the narration names it.
+	SpellName string   `json:"spell_name,omitempty"`
+	Amount    int      `json:"amount,omitempty"`
+	HeldBack  int      `json:"held_back,omitempty"`
+	Status    string   `json:"status,omitempty"`
+	Rule      string   `json:"rule,omitempty"`
+	Defenses  []string `json:"defenses,omitempty"`
 	// fight-start: who is in the fight (enemies only when seen).
 	Company []string `json:"company,omitempty"`
 	Enemies []string `json:"enemies,omitempty"`
@@ -64,15 +68,19 @@ type battleEvent struct {
 // battleEventItem is what rides the pacer: one entry and the fight and
 // round it belongs to.
 type battleEventItem struct {
-	fight uint64
-	round uint64
-	event battleEvent
+	fight      uint64
+	round      uint64
+	fightRound uint64
+	event      battleEvent
 }
 
 type battleEventPayload struct {
-	Fight  uint64        `json:"fight"`
-	Round  uint64        `json:"round"`
-	Events []battleEvent `json:"events"`
+	Fight uint64 `json:"fight"`
+	Round uint64 `json:"round"` // the server's round counter
+	// FightRound counts the fight's own rounds from 1 (Phase 40g: the
+	// battle screen's title); 0 when the fight's start is unknown.
+	FightRound uint64        `json:"fight_round,omitempty"`
+	Events     []battleEvent `json:"events"`
 }
 
 // wantsBattleEvents reports whether a connection takes the feed: a web
@@ -151,6 +159,11 @@ func buildBattleEvent(v battleViewer, e combatstream.Event, fi combatstream.Figh
 		Rule:     e.Rule,
 		Defenses: e.Defenses,
 	}
+	if e.SpellId != "" {
+		if sp := spells.GetSpell(e.SpellId); sp != nil {
+			be.SpellName = sp.Name
+		}
+	}
 	if e.Kind == combatstream.FightEnd {
 		// The leader named in Source is the receiver; nothing else rides it.
 		be.Src = ""
@@ -224,7 +237,22 @@ func onCombatEvent(e combatstream.Event) {
 	if !ok {
 		return
 	}
-	events.AddToQueue(events.CombatData{UserId: leaderId, Data: battleEventItem{fight: e.FightID, round: e.Round, event: be}})
+	events.AddToQueue(events.CombatData{UserId: leaderId, Data: battleEventItem{fight: e.FightID, round: e.Round, fightRound: fightRound(e, fi, haveFight), event: be}})
+}
+
+// fightRound is the event's round counted from the fight's first (1), from
+// the open fight or, for a fight-end, its summary; 0 when unknown.
+func fightRound(e combatstream.Event, fi combatstream.FightInfo, haveFight bool) uint64 {
+	start := uint64(0)
+	if haveFight {
+		start = fi.StartRound
+	} else if e.Summary != nil {
+		start = e.Summary.StartRound
+	}
+	if start == 0 || e.Round < start {
+		return 0
+	}
+	return e.Round - start + 1
 }
 
 // sendBattleEvents sends a released batch as messages, one per fight and
@@ -248,7 +276,7 @@ func sendBattleEvents(userId int, batch []any) {
 		}
 		if cur == nil || cur.Fight != it.fight || cur.Round != it.round {
 			flush()
-			cur = &battleEventPayload{Fight: it.fight, Round: it.round}
+			cur = &battleEventPayload{Fight: it.fight, Round: it.round, FightRound: it.fightRound}
 		}
 		cur.Events = append(cur.Events, it.event)
 	}

@@ -49,8 +49,21 @@ func TestCampLifecycle(t *testing.T) {
 	if err != nil || camp.Rest == nil || camp.Rest.State != Completed {
 		t.Fatalf("complete rest: %#v, %v", camp, err)
 	}
-	if _, err := camp.StartRest(campTime.Add(2 * RestDuration)); !errors.Is(err, ErrRestAlreadyCompleted) {
-		t.Fatalf("restart completed error = %v", err)
+	// Phase 40a3: the fire burned down to embers, which keep the camp
+	// warm but must be fed before another rest.
+	if camp.FireLit || !camp.Embers {
+		t.Fatalf("a finished rest should leave embers: %#v", camp)
+	}
+	if _, err := camp.StartRest(campTime.Add(2 * RestDuration)); !errors.Is(err, ErrFireNotLit) {
+		t.Fatalf("rest on embers error = %v", err)
+	}
+	fed, err := camp.LightFire()
+	if err != nil || !fed.FireLit || fed.Embers {
+		t.Fatalf("feeding the embers: %#v, %v", fed, err)
+	}
+	again, err := fed.StartRest(campTime.Add(2 * RestDuration))
+	if err != nil || again.Rest == nil || again.Rest.State != Resting || !again.Rest.StartedAtUTC.Equal(campTime.Add(2*RestDuration)) {
+		t.Fatalf("second rest at the same camp: %#v, %v", again, err)
 	}
 	camp, err = camp.Break()
 	if err != nil || camp != (Camp{}) {

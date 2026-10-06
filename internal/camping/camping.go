@@ -48,6 +48,29 @@ type RestSession struct {
 	// Broken (Phase 33f3): an unspotted raid caught the company asleep, so
 	// the rest earns no Rested tier and no camp rewards.
 	Broken bool `yaml:"broken,omitempty"`
+	// Gear (Phase 40a3) is what the company had at camp when the rest
+	// began, locked then: losing it mid-rest changes nothing.
+	// Bedrolls are the member keys sleeping on one (+25% fatigue
+	// recovery each); Bells that bells and trip lines were strung (one
+	// use spent); Kit that a field surgeon's kit was packed.
+	Bedrolls []string `yaml:"bedrolls,omitempty"`
+	Bells    bool     `yaml:"bells,omitempty"`
+	Kit      bool     `yaml:"kit,omitempty"`
+}
+
+// BedrollBonusPct is the extra fatigue a member on a bedroll recovers from
+// a camp rest (Phase 40a3).
+const BedrollBonusPct = 25
+
+// HasBedroll reports whether member (a survival member key) sleeps on a
+// bedroll this rest.
+func (s RestSession) HasBedroll(member string) bool {
+	for _, key := range s.Bedrolls {
+		if key == member {
+			return true
+		}
+	}
+	return false
 }
 
 // Raid is a camp raid planned at rest start (Phase 33f3): raiders of MobID
@@ -125,7 +148,13 @@ type Camp struct {
 	FireLit      bool `yaml:"fire_lit"`
 	// Damp is a fire lit with damp wood (Phase 40a2): it burns and gives
 	// light but no warmth.
-	Damp bool         `yaml:"damp,omitempty"`
+	Damp bool `yaml:"damp,omitempty"`
+	// Embers (Phase 40a3): a finished rest burns the fire down to embers.
+	// They keep their warmth until the camp is broken, but resting again
+	// needs the fire fed (camp fire).
+	Embers bool `yaml:"embers,omitempty"`
+	// Tent (Phase 40a3): an oiled canvas tent is pitched at the camp.
+	Tent bool         `yaml:"tent,omitempty"`
 	Rest *RestSession `yaml:"rest,omitempty"`
 }
 
@@ -159,23 +188,23 @@ func (c Camp) LightFire() (Camp, error) {
 		return c, ErrFireAlreadyLit
 	}
 	c.FireLit = true
+	c.Embers = false
+	c.Damp = false
 	return c, nil
 }
 
 // StartRest returns a copy with a new resting session. A camp must have a lit
-// fire, and only one session may ever be created for a camp.
+// fire. A finished rest burns the fire to embers (CompleteRest), so a
+// completed session is replaced only after the fire is fed again.
 func (c Camp) StartRest(startedAtUTC time.Time) (Camp, error) {
 	if err := c.Validate(); err != nil {
 		return c, err
 	}
+	if c.Rest != nil && c.Rest.State == Resting {
+		return c, ErrRestAlreadyStarted
+	}
 	if !c.FireLit {
 		return c, ErrFireNotLit
-	}
-	if c.Rest != nil {
-		if c.Rest.State == Completed {
-			return c, ErrRestAlreadyCompleted
-		}
-		return c, ErrRestAlreadyStarted
 	}
 	if startedAtUTC.IsZero() {
 		return c, ErrInvalidCamp
@@ -219,7 +248,17 @@ func (c Camp) CompleteRest(now ...time.Time) (Camp, error) {
 	rest := *c.Rest
 	rest.State = Completed
 	c.Rest = &rest
+	c.BurnDown()
 	return c, nil
+}
+
+// BurnDown reduces a lit fire to embers (Phase 40a3). A fire already out
+// is left as it is, embers included.
+func (c *Camp) BurnDown() {
+	if c.FireLit {
+		c.FireLit = false
+		c.Embers = true
+	}
 }
 
 // Break removes an idle camp. Resting camps cannot be broken; a completed

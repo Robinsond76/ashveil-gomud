@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/death"
@@ -36,8 +37,11 @@ type Member struct {
 	// when no provider can say (the leader only).
 	Archetype      string
 	ArchetypeKnown bool
-	HasHP          bool
-	HP, HPMax      int
+	// Class is the id of the advanced or elite class it promoted into (Phase
+	// 38b); "" before promotion. The web client draws the class's art.
+	Class     string
+	HasHP     bool
+	HP, HPMax int
 	// HPLimit is the wound limit (Phase 30b): HPMax when unwounded.
 	HPLimit int
 	// HasMP is false when the member has no mana to show: none at all, or
@@ -199,6 +203,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			s.Leader.Row, s.Leader.Col = 0, 0
 		}
 	}
+	s.Leader.Class = classes.PlayerClass(uid).Class
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
 	s.Leader.Abilities = strategy.AtLevel(strategy.PlayerAbilities(c.GetSkillLevel), c.Level)
 	s.Tactics = strategy.Tactics{}.Resolve()
@@ -235,7 +240,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.CompanyKnown = true
 		for _, v := range views {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
-				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col,
+				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Class: v.Class, Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
 			m.Strategy = src.strategy(uid, m.Key)
 			m.Abilities = strategy.AtLevel(strategy.CompanionAbilities(v.Archetype), v.Level)
