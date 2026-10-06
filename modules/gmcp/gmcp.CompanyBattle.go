@@ -51,6 +51,9 @@ type battleFacts struct {
 	// whether an order may be given (none waiting for the next round).
 	Focus, SavedFocus string
 	FocusReady        bool
+	// Phase 35e: the company is on its healers default and an enemy healer
+	// stands (it goes for the healer first).
+	HealersFirst bool
 	// Phase 30c2: each guardian on the player's side.
 	Guards []guardFact
 	// Phase 33i1: the company's assessment of the battle's group, as scout
@@ -159,6 +162,8 @@ type battlePayload struct {
 	Focus      string `json:"focus"`
 	SavedFocus string `json:"saved_focus"`
 	FocusReady bool   `json:"focus_ready"`
+	// Phase 35e: the default focus is on the enemy healer first.
+	HealersFirst bool `json:"healers_first,omitempty"`
 	// Phase 30c2: guardians' guards (the battle view's guard counts).
 	Guards []guardFact `json:"guards,omitempty"`
 	// Phase 33i1: the company's outlook (the battle view's assessment).
@@ -180,9 +185,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -268,6 +273,14 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	}
 	if rule, ok := enemyparty.Focus(user.UserId); ok {
 		f.Focus = string(rule)
+	}
+	if enemyparty.HealersDefault(user.UserId) {
+		for id := range b.Enemies {
+			if m := mobs.GetInstance(id); m != nil && m.Character.Health > 0 && strategy.Role(m.EnemyRole()) == strategy.Healer {
+				f.HealersFirst = true
+				break
+			}
+		}
 	}
 	f.Guards = gatherGuards(user, room)
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {

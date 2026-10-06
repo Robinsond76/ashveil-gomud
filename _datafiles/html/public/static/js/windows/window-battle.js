@@ -45,7 +45,7 @@
     const H = 180;
     const SETTING_KEY = 'ashveil-battle-screen';
     const OUTCOME_MS = 3000;
-    const FOCI = ['none', 'leader', 'casters', 'nearest', 'weakest', 'strongest', 'wounded'];
+    const FOCI = ['none', 'leader', 'casters', 'healers', 'nearest', 'weakest', 'strongest', 'wounded'];
 
     // Health words from the server, as the fraction of the bar they fill.
     const BANDS = { 'unhurt': 1, 'scratched': 0.8, 'wounded': 0.6, 'badly wounded': 0.4, 'near death': 0.2 };

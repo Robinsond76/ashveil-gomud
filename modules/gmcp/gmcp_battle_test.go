@@ -298,3 +298,14 @@ func TestBattleEnemiesCarrySprites(t *testing.T) {
 		assert.Equal(t, want, raceSprite(race), race)
 	}
 }
+
+// Phase 35e: the payload says when the default focus is on the healer.
+func TestBattlePayloadHealersFirst(t *testing.T) {
+	p := buildBattle(battleFacts{InBattle: true, HealersFirst: true}).(battlePayload)
+	if !p.HealersFirst {
+		t.Fatal("healers_first is sent")
+	}
+	if q := buildBattle(battleFacts{InBattle: true}).(battlePayload); q.HealersFirst {
+		t.Fatal("healers_first is absent by default")
+	}
+}
