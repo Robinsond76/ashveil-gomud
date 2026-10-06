@@ -20,10 +20,11 @@ random intervals, without anyone doing anything.
   the weather through it instead.
 
   Cities have weather too (clear, overcast, rain, mist), but their walls
-  shelter you: city weather never slows a walk, tires you or spoils a
-  rest, and a journey that sets out from a city takes the weather of
-  the road it heads for. Zones with no weather table of their own (caves,
-  dungeons) have none to show.
+  shelter you: city weather never slows a walk, adds to a step's strain
+  or spoils a rest, and a journey that sets out from a city takes the
+  weather of the road it heads for. City rain and mist still chill the
+  air a few degrees (<ansi fg="command">help temperature</ansi>). Zones with no
+  weather table of their own (caves, dungeons) have none to show.
 
 <ansi fg="yellow-bold">How weather affects you</ansi>
 
