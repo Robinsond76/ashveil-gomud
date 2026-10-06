@@ -541,10 +541,16 @@
         const header = el('div', 'party-member-header');
         header.appendChild(el('span', 'party-member-name', m.name + (m.key === 'leader' ? ' \u2605' : '')));
         if (m.level) { header.appendChild(el('span', 'party-member-level', 'Lv ' + m.level)); }
-        if (m.archetype) { header.appendChild(el('span', 'party-member-rank', m.archetype)); }
+        // A promoted member shows its class (Phase 40s5), its lineage on hover.
+        const rank = m.class_name || m.archetype;
+        if (rank) {
+            const node = el('span', 'party-member-rank', rank);
+            if (m.class_name && m.archetype) { node.title = m.archetype + ' line'; }
+            header.appendChild(node);
+        }
         card.appendChild(header);
 
-        const spoken = [m.name, m.level ? 'level ' + m.level : '', m.archetype || ''];
+        const spoken = [m.name, m.level ? 'level ' + m.level : '', rank || ''];
         if (m.status === 'dead') {
             const rescue = live.rescue && live.rescue[m.key];
             const left = typeof rescue === 'number' ? 'Fallen: ' + formatSeconds(rescue) + ' to raise' : 'Fallen';

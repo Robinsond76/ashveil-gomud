@@ -110,6 +110,10 @@ brings a ranger's forage (<ansi fg="command">help forage</ansi>) and a cleric's 
 In the web client, Company > Camp shows your camp and a rest's progress,
 with buttons for what you can do right now (<ansi fg="command">help webclient</ansi>).
 
+The web client's map also marks your camp as a tent on its tile, with its
+fire and a sleeping mark while you rest. The camps of your own party show
+as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
+
 See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
 <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.
 
