@@ -43,10 +43,10 @@ a summary (clearing the aim at victory did not change the brawl harness, so
 the live cause is elsewhere; `doAfterBattle` covers the smoke run); `weather`
 in the Weather Yard (only the forest biome has a weather table, so the
 tutorial and Frostfang show none: a content gap, not a code bug); input
-typed during the tutorial hand-off; a full race run also showed random
-failures in `TestLegacySkillsDoNotOverwriteBattleActions` and
-`TestAimedShotGrowsWithLevel` (both pass alone and on master's code) and
-the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` (37b).
+typed during the tutorial hand-off. A package run before the fixes showed
+the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` flake (37b).
+Verification after review: `make generate`, `make validate`, `make
+js-lint`, `go test -race ./...` (pass), `make smoke`.
 
 **Phase 40f built: battle screen in the web client (2026-10-06):** a battle
 opens as a picture (`window-battle.js`): the company left, the enemy right,
