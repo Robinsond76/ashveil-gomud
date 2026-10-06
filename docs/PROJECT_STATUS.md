@@ -24,7 +24,11 @@ against a world mob with loot, travel on the Old Kings Road, and Dunmar's
 inn (the gate lands in Frostfang; the one shipped travel route starts in
 Dunmar, and no step of this run reached it), all needing 37's encounters.
 Verification: `make generate`, `make validate`, `go test -race ./...`,
-`make js-lint`, `make smoke`.
+`make js-lint`, `make smoke`. One flake seen: `TestAttackOnAWaitingGroupIsRefused`
+(modules/company) failed once in the full race run (its battle was already
+over after one round) and passed on a rerun of the package; it is random,
+not from this phase.
+
 **Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
 `scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
 `_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,
