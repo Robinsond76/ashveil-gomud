@@ -1,0 +1,11 @@
+itemid: 21102
+name: fitted plate boots
+namesimple: boots
+description: Plate fitted to the wearer by a master armorer, close and sure. It is footwear of the heavy path.
+type: feet
+subtype: wearable
+bulk: heavy
+tier: 4
+family: heavy
+damagereduction: 7
+weight: 1800

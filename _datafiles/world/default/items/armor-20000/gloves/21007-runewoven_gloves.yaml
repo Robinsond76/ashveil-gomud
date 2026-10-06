@@ -1,0 +1,11 @@
+itemid: 21007
+name: runewoven gloves
+namesimple: gloves
+description: Cloth woven with runethread, light as linen and far harder to cut. It is hand protection of the cloth path.
+type: gloves
+subtype: wearable
+bulk: light
+tier: 5
+family: cloth
+damagereduction: 1
+weight: 150

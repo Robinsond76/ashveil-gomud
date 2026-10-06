@@ -283,6 +283,10 @@ func (i *Item) GetLongDescriptionFor(scribeRank int) string {
 
 	}
 
+	if iSpec.Relic != nil {
+		longDesc.WriteString("\n")
+		longDesc.WriteString(i.RelicDescription())
+	}
 	if i.IsRolled() {
 		longDesc.WriteString("\n")
 		longDesc.WriteString(i.RolledDescription(scribeRank))

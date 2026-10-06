@@ -1,0 +1,11 @@
+itemid: 21070
+name: runescale chausses
+namesimple: chausses
+description: Runesteel scales sewn to a backing, flexible and nearly unbreakable. It is leg armor of the medium path.
+type: legs
+subtype: wearable
+bulk: medium
+tier: 5
+family: medium
+damagereduction: 11
+weight: 2200

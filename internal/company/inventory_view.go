@@ -39,6 +39,9 @@ type InventoryItem struct {
 	WornBy []string
 	// Slot is the worn slot, "" for a carried item.
 	Slot string
+	// Relic is an authored relic's signature, or its set and bonuses, in
+	// words (Phase 36d review); nil for anything else.
+	Relic []string
 }
 
 // InventoryMember is one member's gear.
@@ -76,6 +79,7 @@ func inventoryItem(itm items.Item, slot string) InventoryItem {
 		out.UsesMax, out.Type, out.Subtype = spec.Uses, string(spec.Type), string(spec.Subtype)
 		out.WornBy = spec.WornBy
 	}
+	out.Relic = itm.RelicLines()
 	return out
 }
 

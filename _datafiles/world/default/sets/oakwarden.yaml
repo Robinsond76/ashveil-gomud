@@ -1,0 +1,8 @@
+setid: oakwarden
+name: "Oakwarden's Regalia"
+lore: "The wardens of the old wood wore what the wood gave them."
+bonuses:
+  - pieces: 2
+    effects: {evasion: 4}
+  - pieces: 3
+    effects: {secondwind: 12, auraevade: 4}

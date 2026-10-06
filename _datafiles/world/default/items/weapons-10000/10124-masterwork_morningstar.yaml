@@ -1,0 +1,13 @@
+itemid: 10124
+name: masterwork morningstar
+namesimple: morningstar
+description: A flanged and spiked head on a balanced haft, built to break plate and the arm inside it.
+type: weapon
+hands: 1
+subtype: bludgeoning
+weaponclass: mace
+tier: 4
+family: mace
+damage:
+  diceroll: 1d6+3
+weight: 2000

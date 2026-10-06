@@ -1,0 +1,14 @@
+itemid: 10165
+name: runewood staff
+namesimple: staff
+description: A staff of rune-bound wood, pale and smooth, that never seems to warp or crack.
+type: weapon
+hands: 2
+subtype: bludgeoning
+weaponclass: staff
+tier: 5
+family: staff
+parry: 9
+damage:
+  diceroll: 1d10+2
+weight: 2000

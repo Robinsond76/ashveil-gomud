@@ -1,0 +1,12 @@
+itemid: 20311
+name: runesteel buckler
+namesimple: shield
+description: A runesteel buckler, rune-ringed and light as a dinner plate.
+type: offhand
+subtype: wearable
+shieldsize: buckler
+bulk: light
+tier: 5
+family: buckler
+damagereduction: 9
+weight: 1700

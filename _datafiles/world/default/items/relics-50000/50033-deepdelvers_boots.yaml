@@ -1,0 +1,18 @@
+itemid: 50033
+name: "Deepdelver's Boots"
+namesimple: boots
+description: 'Iron-shod boots with studded soles, meant for stone and ledges and worse.'
+type: feet
+subtype: wearable
+bulk: heavy
+tier: 6
+family: heavy
+damagereduction: 8
+weight: 1800
+value: 1050
+relic:
+  set: deepdelver
+  ilvl: 50
+  mob: 25
+  chance: 5
+  lore: 'The ones who went into the Mirror Caves wore armor made to be argued with by the dark.'

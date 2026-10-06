@@ -1,0 +1,12 @@
+itemid: 20312
+name: masterwork round shield
+namesimple: shield
+description: A round shield faced in steel over seasoned boards.
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 4
+family: round shield
+damagereduction: 11
+weight: 3700
