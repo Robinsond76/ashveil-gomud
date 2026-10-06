@@ -200,7 +200,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		}
 	}
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
-	s.Leader.Abilities = strategy.PlayerAbilities(c.GetSkillLevel)
+	s.Leader.Abilities = strategy.AtLevel(strategy.PlayerAbilities(c.GetSkillLevel), c.Level)
 	s.Tactics = strategy.Tactics{}.Resolve()
 	if src.tactics != nil {
 		s.Tactics = src.tactics(uid)
@@ -238,7 +238,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
 			m.Strategy = src.strategy(uid, m.Key)
-			m.Abilities = strategy.CompanionAbilities(v.Archetype)
+			m.Abilities = strategy.AtLevel(strategy.CompanionAbilities(v.Archetype), v.Level)
 			switch v.Status {
 			case company.MemberDead:
 				s.Dead++

@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -208,10 +207,7 @@ func abilitySituation(a actor, u *users.UserRecord, foe *mobs.Mob) strategy.Abil
 		known = strategy.CompanionAbilities(a.archetype)
 	}
 	// Phase 39a: an ability may come at a level.
-	known = slices.DeleteFunc(known, func(id strategy.Ability) bool {
-		spec, _ := strategy.SpecOf(id)
-		return spec.MinLevel > a.char.Level
-	})
+	known = strategy.AtLevel(known, a.char.Level)
 	weapon, backstab := wielding(a.char)
 	return strategy.AbilitySituation{
 		Known: known,

@@ -103,7 +103,7 @@ const (
 
 	// The Halberdier's routes (Phase 39a). Hook and the wider Sweep are the
 	// lineage's own, by level, so they have no key.
-	SweepPct    = "sweeppct"    // percent of a blow's damage each foe a Sweep strikes takes (a Sweeper's 100, else 80)
+	SweepPct    = "sweeppct"    // percent of a blow's damage each foe a Sweep strikes takes (a Sweeper's 100, else 90)
 	SweepCD     = "sweepcd"     // rounds off Sweep's cooldown
 	BraceCol    = "bracecol"    // Brace answers a blow at anyone in the Halberdier's column, not only itself
 	BraceDown   = "bracedown"   // the held blow knocks the foe down when it hits

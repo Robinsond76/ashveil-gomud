@@ -84,3 +84,11 @@ func TestCrowdedIsTheHalberdiersDefaultRule(t *testing.T) {
 	assert.Equal(t, Crowded, r)
 	assert.Contains(t, Rules, Crowded)
 }
+
+// Phase 39a review: Brace comes at level 3, so the displays and the battle
+// leave it out below that.
+func TestAtLevelLeavesOutAbilitiesNotYetCome(t *testing.T) {
+	known := CompanionAbilities("halberdier")
+	assert.Equal(t, []Ability{Sweep}, AtLevel(known, 2))
+	assert.Equal(t, []Ability{Sweep, Brace}, AtLevel(known, 3))
+}

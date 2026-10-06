@@ -95,7 +95,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 		manaMax:   user.Character.ManaMax.Value,
 		present:   true,
 		knows:     PlayerKnows(user),
-		abilities: domain.PlayerAbilities(user.Character.GetSkillLevel),
+		abilities: domain.AtLevel(domain.PlayerAbilities(user.Character.GetSkillLevel), user.Character.Level),
 	}}
 	form, hasForm := company.FormationFor(user.UserId)
 	if hasForm {
@@ -108,7 +108,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 			name:      v.Name,
 			archetype: v.Archetype,
 			knows:     CompanionKnows(v.Archetype, v.Class, v.Level),
-			abilities: domain.CompanionAbilities(v.Archetype),
+			abilities: domain.AtLevel(domain.CompanionAbilities(v.Archetype), v.Level),
 		}
 		if hasForm {
 			_, mb.col, mb.placed = form.Find(company.CompanionMemberKey(v.ID))

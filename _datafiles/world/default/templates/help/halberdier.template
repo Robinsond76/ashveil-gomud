@@ -28,7 +28,8 @@ and use no mana (<ansi fg="command">help abilities</ansi>):
   <ansi fg="yellow-bold">Brace</ansi>   from level 3, it holds its turn with the glaive set. The first foe
           that strikes into its place in the line is answered at once with
           a blow at 125% damage. If no foe strikes, the turn is lost. Used
-          when Sweep is not ready and a foe is striking at its place.
+          when Sweep is not ready (or has no second foe to strike) and a
+          foe is striking at its place.
   <ansi fg="yellow-bold">Hook</ansi>    from level 6, a glaive hit has a 20% chance (40% from level 20) to
           drag a leaping foe (a wolf, a hound, a spider) off its feet. A
           foe on the ground can't dodge or block.

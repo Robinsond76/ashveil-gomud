@@ -127,7 +127,7 @@ type ClassRT struct {
 	Bless         int         // rounds of Bless left
 	// Phase 39a: the Halberdier. Brace is a held blow waiting for a foe's
 	// strike; BlowPct, when set, scales the damage of the blow being
-	// resolved (a Sweep's 80%, a held blow's 125%) and is cleared at once.
+	// resolved (a Sweep's 90%, a held blow's 125%) and is cleared at once.
 	Brace   bool
 	BlowPct int
 }

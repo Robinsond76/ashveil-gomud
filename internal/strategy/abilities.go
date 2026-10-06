@@ -60,7 +60,7 @@ var Abilities = []AbilitySpec{
 		When: "it wields a melee weapon, and its foe stands in a row with another foe",
 		Does: "one swing strikes its foe and one foe beside it in the same row (every foe in the row from level 8), each at 90% of the damage and each defending separately; the whole turn"},
 	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 3,
-		When: "its Sweep is not ready, it wields a melee weapon, and a foe is striking at its place in the line",
+		When: "its Sweep is not ready (or has no second foe to strike), it wields a melee weapon, and a foe is striking at its place in the line",
 		Does: "holds its turn; the first foe that strikes it takes a held blow at once, 25% harder than an ordinary one"},
 }
 
@@ -82,6 +82,19 @@ func CompanionAbilities(archetype string) []Ability {
 		if archetype != "" && a.Archetype == archetype {
 			out = append(out, a.ID)
 		}
+	}
+	return out
+}
+
+// AtLevel keeps the abilities a character of this level has: one that
+// comes at a level (Phase 39a: Brace at 3) is left out below it.
+func AtLevel(list []Ability, level int) []Ability {
+	out := make([]Ability, 0, len(list))
+	for _, id := range list {
+		if spec, ok := SpecOf(id); ok && spec.MinLevel > level {
+			continue
+		}
+		out = append(out, id)
 	}
 	return out
 }

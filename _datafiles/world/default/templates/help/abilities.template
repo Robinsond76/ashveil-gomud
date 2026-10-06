@@ -31,7 +31,8 @@ heal, it follows from how your company is set up. Who has which:
     combat rounds (<ansi fg="command">help halberdier</ansi>).
 
   <ansi fg="command">Brace</ansi>            halberdiers, from level 3
-    When: its Sweep is not ready and a foe is striking at its place.
+    When: its Sweep is not ready (or has no second foe to strike) and a
+    foe is striking at its place.
     Does: holds the turn; the first foe to strike into its place is
     answered at once with a blow at 125% damage. With no strike, the turn
     is lost. At most once every round.
