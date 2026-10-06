@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Phase 38b: a class's effects reach the combat formulas.
@@ -82,4 +83,39 @@ func TestAurasAddEvasionAndArmor(t *testing.T) {
 	c.Aura = characters.ClassAura{Evasion: 3, Resolve: 10}
 	assert.Equal(t, base+3, c.Evasion())
 	assert.Equal(t, armor+10, c.GetDefense())
+}
+
+func TestAWardAbsorbsABlowUpToItsSizeAndIsSpent(t *testing.T) {
+	defenseSpecs(t)
+	defenseOdds(t, 0, 0, 0)
+	base := strikeAt(armed(edgeSwordID), armed(0))
+	require.True(t, base.Hit)
+
+	target := armed(0)
+	target.RTState().Ward, target.RTState().WardCap = 1, 1000
+	r := strikeAt(armed(edgeSwordID), target)
+	assert.True(t, r.Hit)
+	assert.Zero(t, r.DamageToTarget, "a big ward takes the whole blow")
+	assert.Zero(t, target.RT.Ward, "and is spent")
+	assert.Equal(t, base.DamageToTarget, strikeAt(armed(edgeSwordID), target).DamageToTarget, "the next blow lands whole")
+
+	small := armed(0)
+	small.RTState().Ward, small.RTState().WardCap = 2, 1
+	r = strikeAt(armed(edgeSwordID), small)
+	assert.Equal(t, max(0, base.DamageToTarget-1), r.DamageToTarget, "a small ward takes its size")
+	assert.Equal(t, 1, small.RT.Ward, "a two-blow ward has one left")
+}
+
+func TestDivineShieldIgnoresTheFirstBlowOfABattleOnly(t *testing.T) {
+	defenseSpecs(t)
+	defenseOdds(t, 0, 0, 0)
+	paladin := armed(0)
+	paladin.Level = 60
+	paladin.SetClassState("paladin", nil)
+	paladin.RTState()
+	assert.Zero(t, strikeAt(armed(edgeSwordID), paladin).DamageToTarget)
+	assert.True(t, paladin.RT.ShieldUsed)
+	assert.Positive(t, strikeAt(armed(edgeSwordID), paladin).DamageToTarget, "only once a battle")
+	paladin.EndFightRT()
+	assert.False(t, paladin.RT.ShieldUsed, "a new battle renews it")
 }

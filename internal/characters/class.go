@@ -94,3 +94,65 @@ type ClassAura struct {
 	Evasion int
 	Resolve int
 }
+
+// ClassRT is a character's class state for the battle it is in: nothing in
+// it is saved, and a fight's end clears all of it but the Lay on Hands
+// uses, which come back with rest.
+type ClassRT struct {
+	Ward, WardCap int  // blows a ward absorbs, and the most it takes from each
+	Bark, Thorns  int  // Barkskin's armor and the damage a striker takes
+	Rejuv, Per    int  // rounds of Rejuvenation left and its heal each round
+	ShieldUsed    bool // Divine Shield has been spent this battle
+	OathBlows     int  // Blood Oath blows left this battle
+	Cleansed      map[string]bool
+	Guards        int // an Angel's Guard uses spent
+	Hands         int // Lay on Hands uses since the last rest
+	Summoned      bool
+	Bless         int // rounds of Bless left
+}
+
+// RTState is the character's class battle state, made on first use.
+func (c *Character) RTState() *ClassRT {
+	if c.RT == nil {
+		c.RT = &ClassRT{}
+	}
+	return c.RT
+}
+
+// EndFightRT clears the battle's class state, keeping what rest restores.
+func (c *Character) EndFightRT() {
+	if c.RT == nil {
+		return
+	}
+	c.RT = &ClassRT{Hands: c.RT.Hands}
+	c.Aura = ClassAura{}
+}
+
+// AbsorbWard takes a ward's share of one blow, and returns what is left.
+func (c *Character) AbsorbWard(dmg int) (left, absorbed int) {
+	if c.RT == nil || c.RT.Ward <= 0 || dmg <= 0 {
+		return dmg, 0
+	}
+	absorbed = min(dmg, max(c.RT.WardCap, 0))
+	c.RT.Ward--
+	return dmg - absorbed, absorbed
+}
+
+// ShieldBlow spends a Divine Shield on a blow, once a battle.
+func (c *Character) ShieldBlow() bool {
+	if c.RT == nil || c.RT.ShieldUsed || !c.ClassEffects().Has(classes.DivineShield) {
+		return false
+	}
+	c.RT.ShieldUsed = true
+	return true
+}
+
+// Bless is a cleric's blessing: Attack and Evasion points while it lasts.
+const BlessPoints = 5
+
+func (c *Character) blessPoints() int {
+	if c.RT != nil && c.RT.Bless > 0 {
+		return BlessPoints
+	}
+	return 0
+}

@@ -52,6 +52,14 @@ declare interface ActorObject {
     SpellPower(spellId: string): number;
     HexTargets(targets: ActorObject[]): ActorObject[];
     CastHex(spellId: string, target: ActorObject): { landed: boolean; reason: string; rounds: number };
+    ClassEffect(key: string): number;
+    RowAllies(rows: number): ActorObject[];
+    GrantWard(cap: number, blows: number): boolean;
+    GrantBark(armor: number, thorns: number): boolean;
+    StartRejuv(rounds: number, total: number): boolean;
+    GrantBless(rounds: number): boolean;
+    CleanseOne(source: string): string;
+    MostHurtAlly(others: boolean): ActorObject | null;
     HealFactor(): number;
     WoundNote(rolled: number, healed: number): string;
     TendWound(points: number): { closed: number; wound: string; limit: number; max: number };

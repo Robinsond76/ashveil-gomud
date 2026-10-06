@@ -1,0 +1,9 @@
+# Phase 38b: an Elder Druid's hex (internal/hexes): one foe is hobbled for 2 rounds.
+spellid: entangle
+name: Entangle
+description: Roots hobble one foe for 2 rounds
+type: harmmulti
+school: restoration
+cost: 10
+waitrounds: 1
+difficulty: 40

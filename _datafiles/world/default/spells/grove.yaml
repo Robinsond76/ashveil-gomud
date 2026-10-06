@@ -1,0 +1,10 @@
+# Phase 38b: an Elder Druid's rejuvenation on a whole row. Sized by heal.yaml's power.
+spellid: grove
+name: Grove
+description: Rejuvenation on a whole row of the formation
+type: helpsingle
+school: restoration
+cost: 8
+waitrounds: 2
+difficulty: 5
+scope: member

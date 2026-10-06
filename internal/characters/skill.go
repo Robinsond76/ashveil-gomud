@@ -69,14 +69,14 @@ func (c *Character) skillPenalty() int {
 // template's offset, less the untrained-armor loss.
 func (c *Character) AttackSkill() int {
 	rate, _ := c.skillRates()
-	return levelRating(c.Level, rate) + c.AttackOffset - c.skillPenalty() + c.ClassEffects().Int(classes.Attack)
+	return levelRating(c.Level, rate) + c.AttackOffset - c.skillPenalty() + c.ClassEffects().Int(classes.Attack) + c.blessPoints()
 }
 
 // Evasion is the character's Evasion: floor(level × rate) plus an enemy
 // template's offset, less the untrained-armor loss.
 func (c *Character) Evasion() int {
 	_, rate := c.skillRates()
-	bonus := c.ClassEffects().Int(classes.Evasion) + c.Aura.Evasion
+	bonus := c.ClassEffects().Int(classes.Evasion) + c.Aura.Evasion + c.blessPoints()
 	if c.Aggro != nil && c.Aggro.Type == SpellCast {
 		bonus += c.ClassEffects().Int(classes.ChantEvade) // Phase 38b: Sanctuary
 	}

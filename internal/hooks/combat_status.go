@@ -259,11 +259,13 @@ func clearFightStatuses(fi combatstream.FightInfo) {
 		case r.UserId > 0:
 			if u := users.GetByUserId(r.UserId); u != nil && u.Character != nil {
 				status.Clear(u.Character)
+				u.Character.EndFightRT()
 				u.Character.Wounds = wounds.CloseLight(u.Character.Wounds)
 			}
 		case r.MobInstanceId > 0:
 			if m := mobs.GetInstance(r.MobInstanceId); m != nil {
 				status.Clear(&m.Character)
+				m.Character.EndFightRT()
 				m.Character.Wounds = wounds.CloseLight(m.Character.Wounds)
 			}
 		}

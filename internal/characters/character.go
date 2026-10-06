@@ -64,6 +64,9 @@ type Character struct {
 	// Aura is what allies' class auras give this character this round
 	// (Phase 38b); the combat round sets it and nothing saves it.
 	Aura ClassAura `yaml:"-"`
+	// RT is the class's battle state (wards, barkskin, rejuvenation); a
+	// pointer, so the copies combat makes share it. Nil until needed.
+	RT *ClassRT `yaml:"-"`
 	// Phase 35a2: an enemy template's Attack and Evasion offsets (±5).
 	AttackOffset  int `yaml:"-"`
 	EvasionOffset int `yaml:"-"`
@@ -662,6 +665,9 @@ func (c *Character) GetDefense() int {
 	// Phase 38b: a class's own protection (a Druid's Barkskin, a summon's
 	// hide) stacks on the worn armor.
 	reduction += c.ClassEffects().Int(classes.Armor) + c.Aura.Resolve
+	if c.RT != nil {
+		reduction += c.RT.Bark
+	}
 
 	if reduction > 100 {
 		reduction = 100

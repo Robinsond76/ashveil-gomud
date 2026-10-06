@@ -679,6 +679,15 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+				// Phase 38b: a Divine Shield turns the first blow of a battle
+				// aside, and a ward takes its share of one.
+				if attackTargetDamage > 0 && targetChar.ShieldBlow() {
+					attackTargetReduction += attackTargetDamage
+					attackTargetDamage = 0
+				} else if left, absorbed := targetChar.AbsorbWard(attackTargetDamage); absorbed > 0 {
+					attackTargetDamage = left
+					attackTargetReduction += absorbed
+				}
 				if attackTargetDamage < 1 && len(attackResult.Qualities) > 0 {
 					// Phase 35d: a blow armor absorbed whole has no quality to report.
 					hitQuality = QualitySolid

@@ -13,6 +13,12 @@ func rank(level int, name, text string, set ...any) Rank {
 	return Rank{Level: level, Name: name, Text: text, Set: e}
 }
 
+// teaches adds the spells a rank grants.
+func teaches(r Rank, spells ...string) Rank {
+	r.Spells = spells
+	return r
+}
+
 func init() {
 	// ----- Warrior -----
 	register(Class{ID: "knight", Name: "Knight", Lineage: "warrior", Tier: TierAdvanced, Gate: GateGood,
@@ -68,8 +74,8 @@ func init() {
 	register(Class{ID: "priest", Name: "Priest", Lineage: "cleric", Tier: TierAdvanced, Gate: GateGood,
 		Role: "the best direct healer; wards the company",
 		Ranks: []Rank{
-			rank(10, "Ward", "Ward: one ally's next blow is absorbed, up to one average hit of the Priest's level; chant 1, cost 10, one ward per ally", Ward, 1, WardBlows, 1),
-			rank(15, "Greater Heal", "heals about two average hits; chant 2, cost 14", GreaterHeal, 1),
+			teaches(rank(10, "Ward", "Ward: one ally's next blow is absorbed, up to one average hit of the Priest's level; chant 1, cost 10, one ward per ally", Ward, 1, WardBlows, 1), "ward"),
+			teaches(rank(15, "Greater Heal", "heals about two average hits; chant 2, cost 14", GreaterHeal, 1), "greaterheal"),
 			rank(20, "Double ward", "a ward absorbs two blows", WardBlows, 2),
 			rank(25, "Prayer of Mending", "after-battle patching costs 20% less mana", PatchCost, 20),
 		}})
@@ -87,18 +93,18 @@ func init() {
 	register(Class{ID: "druid", Name: "Druid", Lineage: "cleric", Tier: TierAdvanced, Gate: GateAny,
 		Role: "healing over time and nature's protection",
 		Ranks: []Rank{
-			rank(10, "Rejuvenation", "one ally heals over 3 rounds for 130% of a Minor Heal, at a Minor Heal's cost", Rejuvenation, 3, RejuvPct, 130),
-			rank(15, "Barkskin", "one ally gains +10 armor for the battle", Barkskin, 10),
+			teaches(rank(10, "Rejuvenation", "one ally heals over 3 rounds for 130% of a Minor Heal, at a Minor Heal's cost", Rejuvenation, 3, RejuvPct, 130), "rejuvenation"),
+			teaches(rank(15, "Barkskin", "one ally gains +10 armor for the battle", Barkskin, 10), "barkskin"),
 			rank(20, "Lasting growth", "Rejuvenation lasts 4 rounds (160%)", Rejuvenation, 4, RejuvPct, 160),
 			rank(25, "Thornhide", "a foe that strikes a Barkskinned ally takes 2 damage", Thornhide, 2),
 		}})
 	register(Class{ID: "elder-druid", Name: "Elder Druid", Lineage: "cleric", Tier: TierElite, Parent: "druid", Gate: GateAny,
 		Role: "heals whole rows at once",
 		Ranks: []Rank{
-			rank(30, "Grove", "Rejuvenation on a whole formation row at 60% each", Grove, 1, GrovePct, 60),
+			teaches(rank(30, "Grove", "Rejuvenation on a whole formation row at 60% each", Grove, 1, GrovePct, 60), "grove"),
 			rank(35, "Nature's patience", "after-battle patching costs 20% less mana", PatchCost, 20),
 			rank(40, "Deep grove", "Grove at 80%", GrovePct, 80),
-			rank(45, "Entangle", "one foe is hobbled for 2 rounds; chant 1, cost 10", Entangle, 1),
+			teaches(rank(45, "Entangle", "one foe is hobbled for 2 rounds; chant 1, cost 10", Entangle, 1), "entangle"),
 			rank(50, "Wide bark", "Barkskin covers a whole row", BarkRow, 1),
 			rank(55, "Wild growth", "Rejuvenation also cures poison", WildGrowth, 1),
 			rank(60, "Two groves", "Grove covers two rows", Grove, 2),
@@ -106,7 +112,7 @@ func init() {
 	register(Class{ID: "blood-priest", Name: "Blood Priest", Lineage: "cleric", Tier: TierAdvanced, Gate: GateEvil,
 		Role: "heals by draining foes; dark healing is hungry",
 		Ranks: []Rank{
-			rank(10, "Siphon", "damages one foe for a Magic Missile's worth and heals the most hurt ally for the damage dealt; chant 1, cost 10; ordinary heals and patching cost 25% more mana", Siphon, 1, SiphonCost, 10, HealCost, 25),
+			teaches(rank(10, "Siphon", "damages one foe for a Magic Missile's worth and heals the most hurt ally for the damage dealt; chant 1, cost 10; ordinary heals and patching cost 25% more mana", Siphon, 1, SiphonCost, 10, HealCost, 25), "siphon"),
 			rank(15, "Cheaper siphon", "Siphon costs 8", SiphonCost, 8),
 			rank(20, "Twin siphon", "Siphon also strikes a second foe and heals a second ally, at 60%", Siphon, 2),
 			rank(25, "Blood ward", "Siphon healing beyond an ally's full health becomes a ward of up to half a hit", BloodWard, 1),
@@ -191,7 +197,7 @@ func init() {
 	register(Class{ID: "theurgist", Name: "Theurgist", Lineage: "wizard", Tier: TierAdvanced, Gate: GateGood,
 		Role: "protective arcane support",
 		Ranks: []Rank{
-			rank(10, "Arcane Ward", "Arcane Ward: one ally's next blow is absorbed, up to one average hit of the Theurgist's level; chant 1, cost 10, one ward per ally", Ward, 1, WardBlows, 1),
+			teaches(rank(10, "Arcane Ward", "Arcane Ward: one ally's next blow is absorbed, up to one average hit of the Theurgist's level; chant 1, cost 10, one ward per ally", Ward, 1, WardBlows, 1), "arcaneward"),
 			rank(15, "Steady chant", "blows break the Theurgist's chant 25% less often", ChantBreak, 25),
 			rank(20, "Double ward", "a ward absorbs two blows", WardBlows, 2),
 			rank(25, "Deep reserves", "+10% maximum mana", ManaPct, 10),
