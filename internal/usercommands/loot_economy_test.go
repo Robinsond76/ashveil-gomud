@@ -33,7 +33,7 @@ func shopRoom(t *testing.T, stock ...int) (*users.UserRecord, *rooms.Room, *mobs
 	keywords.LoadAliases()
 	useShippedItems(t, ironShortSword, ironShortSpear, 212, 220, 221, 222, 223, 224, 225, 20, 20104, 20134, 20194, 20160, 200, 20300)
 	setupCarry(t, map[int]int{7: 50000})
-	room := testRoom()
+	room := rooms.NewEmptyRoom()
 	room.RoomId = 988501
 	seller := carrier(t, 7, "Dain", room)
 	seller.Character.Gold = 0
@@ -213,7 +213,7 @@ func TestMarkAndSellJunk(t *testing.T) {
 	assert.Zero(t, left[ironShortSpear], "the marked spear sold")
 
 	// No merchant, no sale.
-	empty := testRoom()
+	empty := rooms.NewEmptyRoom()
 	empty.RoomId = 988599
 	assert.Contains(t, run(t, Sell, "junk", seller, empty), "no merchant here")
 	assert.Contains(t, run(t, Sell, "junk", seller, room), "wants your junk")
@@ -259,7 +259,7 @@ func TestSalvageThroughTheRealCommand(t *testing.T) {
 	mobs.SetTestInstance(trader)
 	t.Cleanup(func() { mobs.RemoveTestInstance(trader.InstanceId) })
 	assert.False(t, trader.IsSmith())
-	shop := testRoom()
+	shop := rooms.NewEmptyRoom()
 	shop.RoomId = 988598
 	shop.AddMob(trader.InstanceId)
 	seller.Character.RoomId = shop.RoomId
