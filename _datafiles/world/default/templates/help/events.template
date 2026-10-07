@@ -11,8 +11,9 @@ with numbered choices. Answer it, and what you chose happens.
   - You finish a camp rest, and the camp has a visitor.
   - Each scene comes once for your company, or again after a long wait if
     it is the kind that returns (those never pay gold, items or goodwill).
-    It is remembered through a restart, and a scene you answered and then
-    left behind is over.
+    It is remembered through a restart (the web client shows it again
+    once you are back in; <ansi fg="command">event</ansi> brings it up any time), and a scene you
+    answered and then left behind is over.
   - Never in a fight, on a journey, or while you rest, and you cannot
     answer one during a fight or a rest either.
 

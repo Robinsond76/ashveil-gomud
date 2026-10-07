@@ -101,7 +101,7 @@ func (r Roll) Describe(viewerUserId int) []string {
 	}
 	result := "missed"
 	switch {
-	case r.Damage > 0 && critLanded(r.Strikes, r.Crit):
+	case r.Damage > 0 && CritLanded(r.Strikes, r.Crit):
 		result = fmt.Sprintf("landed a critical hit for %d", r.Damage)
 	case r.Damage > 0:
 		result = fmt.Sprintf("hit for %d", r.Damage)
@@ -141,10 +141,10 @@ func Breakdown(strikes []Strike) []string {
 // Breakdown is the roll's strikes in plain lines.
 func (r Roll) Breakdown() []string { return Breakdown(r.Strikes) }
 
-// critLanded is whether a critical strike got damage through (Phase 62
+// CritLanded is whether a critical strike got damage through (Phase 62
 // review): a crit armor took whole reads as no crit, as the narration has it.
 // A round with no strikes recorded keeps the event's flag.
-func critLanded(strikes []Strike, crit bool) bool {
+func CritLanded(strikes []Strike, crit bool) bool {
 	if len(strikes) == 0 {
 		return crit
 	}

@@ -75,6 +75,6 @@ they go.
 
 In the web client, the Combat tab lists each member's orders under their
 row, with an Orders button whose menu adds, removes and reorders them
-(<ansi fg="command">help webclient</ansi>).
+(it leaves out an order the member already has; <ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help stances</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help combat</ansi>.

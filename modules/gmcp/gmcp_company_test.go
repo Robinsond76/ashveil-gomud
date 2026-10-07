@@ -562,6 +562,7 @@ func TestCompanyPayloadBattleOrders(t *testing.T) {
 		"When an ally is below 50% health, heal that ally first.",
 		"When a foe is chanting, turn on the chanter to break its chant.",
 	}, got["members"].([]any)[0].(map[string]any)["orders"])
+	assert.Equal(t, []any{"ally 50 then heal", "chanting then break"}, got["members"].([]any)[0].(map[string]any)["order_cmds"])
 	assert.NotContains(t, got["leader"].(map[string]any), "orders")
 	assert.NotContains(t, got["members"].([]any)[1].(map[string]any), "orders")
 
@@ -598,4 +599,23 @@ func TestCompanyPayloadWeaponStance(t *testing.T) {
 	stance.SetProvider(fakeStances{})
 	f.update(7, s)
 	require.Len(t, *out, 2, "taking the stance off resends the snapshot")
+}
+
+// Phase 78: the stance menu offers only what a member's gear can use. The
+// leader's gear is always known (empty hands fit nothing, said as []); a
+// companion away has no readable gear and no field, so the menu offers all.
+func TestCompanyStancesFitGear(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	u := users.NewUserRecord(7, 71)
+	users.SetTestUser(u)
+
+	fit := stancesFit(7, company.LeaderMemberKey)
+	require.NotNil(t, fit)
+	assert.Empty(t, *fit)
+	raw, err := json.Marshal(companyMember{StancesFit: fit})
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), `"stances_fit":[]`)
+
+	assert.Nil(t, stancesFit(7, company.MemberKey("companion:1")), "a companion not out has no readable gear")
 }

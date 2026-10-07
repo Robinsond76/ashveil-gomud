@@ -174,7 +174,7 @@ func buildBattleEvent(v battleViewer, e combatstream.Event, fi combatstream.Figh
 		Prev:     v.refID(e.Previous),
 		Outcome:  e.Outcome,
 		Damage:   e.Damage,
-		Crit:     e.Crit,
+		Crit:     e.Crit && (e.Kind != combatstream.Attack || combatstream.CritLanded(e.Strikes, e.Crit)),
 		Quality:  e.Quality,
 		Weapon:   e.WeaponType,
 		Spell:    e.SpellId,

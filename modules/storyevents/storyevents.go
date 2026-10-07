@@ -174,6 +174,7 @@ func init() {
 	m.plug.AddUserCommand("event", m.eventCommand, true, false)
 	m.plug.AddUserCommand("choose", m.chooseCommand, true, false)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	storyevents.OnPushRequest.Register(func(userID int) int { m.repush(userID); return userID })
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	userstate.Register(stateContributor{m})
 	walking.AddStepListener(func(userID, _, roomID int) { m.entered(userID, roomID, false) })

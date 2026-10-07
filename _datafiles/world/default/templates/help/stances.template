@@ -47,7 +47,8 @@ the company.
 <ansi fg="command">strategy [who] default</ansi> leaves a stance alone.
 
 In the web client, the Combat tab lists each member's stance under their
-orders, with a Stance button whose menu picks one; the battle screen names it
+orders, with a Stance button whose menu picks one (it offers only the stances the
+member's weapon and shield can use); the battle screen names it
 when you tap a figure (<ansi fg="command">help webclient</ansi>).
 
 A weapon stance is not the Mountain Speaker's Steady stance, which is a class
