@@ -158,17 +158,9 @@ func ambiguousCompanion(record domain.Record, selector string) (int, bool) {
 	if _, err := strconv.Atoi(strings.TrimPrefix(selector, "#")); err == nil {
 		return 0, false
 	}
-	exact, partial := 0, 0
-	for _, c := range record.Companions {
-		name := strings.ToLower(nameOf(c, ""))
-		if name == selector {
-			exact++
-		} else if strings.Contains(name, selector) {
-			partial++
-		}
-	}
-	if exact > 1 || (exact == 0 && partial > 1) {
-		return exact + partial, true
+	exact, partial := domain.SplitNameMatches(record.Companions, selector, func(c domain.Companion) string { return nameOf(c, "") })
+	if len(exact) > 1 || (len(exact) == 0 && len(partial) > 1) {
+		return len(exact) + len(partial), true
 	}
 	return 0, false
 }
