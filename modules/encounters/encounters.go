@@ -26,6 +26,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -315,7 +316,8 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	if !ok {
 		return false
 	}
-	enc, err := m.spawn(roomID, userID, encounters.Plan(comp, zone.Band, m.rng))
+	foes := encounters.Soften(encounters.Plan(comp, zone.Band, m.rng), companyview.LevelFor(users.GetByUserId(userID)), zone.Band)
+	enc, err := m.spawn(roomID, userID, foes)
 	if err != nil {
 		mudlog.Warn("encounters: spawn failed", "room", roomID, "composition", comp.ID, "error", err)
 		return false

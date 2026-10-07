@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 )
 
 // encounterAttackDelay holds a room encounter's attack back a second: the
@@ -58,6 +59,20 @@ func SpawnEncounter(roomID, leaderUserID int, foes []encounters.Foe) (Encounter,
 			boss = true
 			mob.Boss = true
 			mob.Character.HealthMax.Training += int(float64(mob.Character.HealthMax.Value) * encounters.BossHPBonus)
+			mob.Character.RecalculateStats()
+			mob.Character.Health = mob.Character.HealthMax.Value
+		} else if f.HPPercent > 0 && f.HPPercent < 100 {
+			// An ordinary group's foe is softer than its level against a
+			// company the zone is meant for (encounters.HPPercent).
+			mob.Character.HealthMax.Training -= mob.Character.HealthMax.Value * (100 - f.HPPercent) / 100
+			// ... and spreads its blows, as encounters.Spread says.
+			rule, noise, ok := mob.Personality()
+			if !ok {
+				rule = string(strategy.Weakest)
+			}
+			if spread := encounters.Spread(f.HPPercent); noise < spread {
+				mob.Targeting, mob.TargetingNoise = rule, spread
+			}
 			mob.Character.RecalculateStats()
 			mob.Character.Health = mob.Character.HealthMax.Value
 		}
