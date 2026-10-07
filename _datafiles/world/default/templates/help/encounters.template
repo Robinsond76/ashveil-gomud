@@ -35,10 +35,18 @@ normal battle begins with your company set up as it is.
   nothing rolls while you are fighting, travelling or camped.
 
 <ansi fg="yellow-bold">Who you meet</ansi>
-  Two or three foes, now and then four, set by the zone's level band and
-  never by your level: a zone for levels 8 to 10 sends foes you can beat at
-  those levels, and a company well under the band risks losing. Foes are
-  drawn from the zone's own kinds, and a healer is in about one group in
+  Two or three foes, now and then four, at levels set by the zone's band:
+  a zone for levels 8 to 10 sends foes you can beat at those levels, and a
+  company well under the band risks losing. A company at or above the
+  band's low end meets ordinary groups with about two-fifths of the health
+  their level would give, so they fall in a few rounds and cost a company
+  little: a full company of five can fight fifteen or more before it needs
+  a rest, a smaller one fewer, and a leader alone will struggle. They
+  strike at whoever they can reach, not all at your weakest member. Each
+  level your company is under the band toughens them, until at five under
+  they have full health and pick their targets as they please: the way to
+  more of a challenge is a zone for higher levels. Bosses and their
+  escorts are not softened. Foes are drawn from the zone's own kinds, and a healer is in about one group in
   six and never in a group of four. A company that has set its tactics to
   focus the healer (<ansi fg="command">help tactics</ansi>) cuts such a group down faster. Four foes come from the band's low
   end. How well each fights together follows their level
