@@ -148,20 +148,57 @@ resell for profit (looted rare goods may).
 
 ## Tasks
 
-- [ ] Music skill model: family, level, practice, persisted on players and
+- [x] Music skill model: family, level, practice, persisted on players and
       companions; teacher NPC and `learn` flow.
-- [ ] Instrument items for each family and tier; crude recipes in crafting,
+- [x] Instrument items for each family and tier; crude recipes in crafting,
       fine via recipe pages; masterworks in lair loot tables; no-profit
       resale for the first three tiers.
-- [ ] Camp song: `camp music`, strength, effects, ensemble upgrade, raid
+- [x] Camp song: `camp music`, strength, effects, ensemble upgrade, raid
       and weather costs, practice, room lines.
-- [ ] Inn gigs: notice board window, `inn gig`, pay, both limits.
-- [ ] Banter `onSong` hook and lines.
-- [ ] GMCP payloads and the Camp tab, Company panel and inn views.
-- [ ] Help and tutorial: the pages and hint above.
-- [ ] Tests: each family effect, ensemble threshold and tent non-stacking,
+- [x] Inn gigs: notice board window, `inn gig`, pay, both limits.
+- [x] Banter `onSong` hook and lines.
+- [x] GMCP payloads and the Camp tab, Company panel and inn views.
+- [x] Help and tutorial: the pages and hint above.
+- [x] Tests: each family effect, ensemble threshold and tent non-stacking,
       raid scaling in the single roll, spoiled rest, practice levels,
       persistence across restart, resale caps, gig window and limits,
       help renders, `TestTutorialHelpPointersExist`.
-- [ ] Short tuning run: full ensemble against the large tent; gig pay
+- [x] Short tuning run: full ensemble against the large tent; gig pay
       against an hour's hunting at two bands. Timeboxed.
+
+## Build decisions (2026-10-07, full autonomy)
+
+Each is the builder's call, with a one-line reason.
+
+- Skills live in the camping registry by leader and member key, not on
+  characters: companions are not characters between sessions, and it keeps
+  one persisted store (with purge and the test-area snapshot).
+- Instruments are company-wide: one carried instrument of a family serves,
+  the best tier is played. Reason: no per-member inventory bookkeeping.
+- Winds' Fatigue is added at recovery time, so a spoiled rest gets none.
+- Practice counts at the grant, once per rest (and once per paid gig), so a
+  spoiled rest is no practice and a restart cannot double-count.
+- Voice shortens each ailment's remaining battles by ceil(left x pct), at
+  least one, so small percentages still matter.
+- Drumbeat (buffs 9401-9405) ends with the first `BattleEnded` or expires
+  with the rest buff.
+- Masterworks are sold, never salvaged: instruments have no salvage line.
+- Gig pay = (zone band top + 2) x summed family strengths / 2, x1.25 for an
+  ensemble, x1.5 for a full one; zones with no band pay as band 5 (Dunmar).
+- Crafting happens at the leader's camp, from packs and cargo.
+- A gig that never finishes spends neither the evening nor the cooldown; the
+  pay is credited once on the game loop and saved as settled first.
+- Teacher is the room tag `music-teacher` (Alderbrook green); the shop is
+  Dunmar's market, supply only. Fine recipe pages lie in three fen and down
+  rooms (the stock world is temporary).
+- Masterwork lairs: Wren's rainfiddle (boss 85), hollow king's horn (lich
+  14), ent-heart drum (ent 34), 25% each per company kill.
+
+## Tuning note
+
+Analytic, not simulated (timeboxed). A full ensemble (levels 4, fine
+instruments: strengths 7, 7, 7, 5) in a band-15 zone earns (17 x 26 / 2) x 1.5
+= 331 gold a gig, at most one per 3 hours, so it stays below an hour's
+hunting at that band and never beats it per hour. The ensemble gives Well
+Rested without the 20 kg pavilion but costs +50% to +70% raid chance, against
+the pavilion's +50%, and needs 3 trained members and 3 instruments.

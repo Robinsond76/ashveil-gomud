@@ -706,6 +706,16 @@ func (m *SurvivalModule) CureAilment(leaderUserID int, key domain.MemberKey, kin
 	})
 }
 
+// FadeAilment implements domain.AilmentFader (camp music): it shortens a
+// member's ailment to battles left, durably at once.
+func (m *SurvivalModule) FadeAilment(leaderUserID int, key domain.MemberKey, kind string, battles int) (bool, error) {
+	return m.changeAilment(leaderUserID, key, func() (bool, error) {
+		return m.registry.FadeAilment(leaderUserID, key, kind, battles)
+	})
+}
+
+var _ domain.AilmentFader = (*SurvivalModule)(nil)
+
 func (m *SurvivalModule) changeAilment(leaderUserID int, key domain.MemberKey, change func() (bool, error)) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

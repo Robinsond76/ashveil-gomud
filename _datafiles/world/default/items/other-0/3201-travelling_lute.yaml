@@ -1,0 +1,10 @@
+itemid: 3201
+name: 'travelling lute'
+namesimple: 'lute'
+description: 'A plain, sturdy lute with a round belly and a strap for the road. A company that carries one can play strings at camp (help instruments).'
+type: object
+subtype: mundane
+instrument: strings
+instrumenttier: 2
+value: 40
+weight: 1500

@@ -4,8 +4,11 @@ title: Alderbrook Green
 description: Alderbrook's green lies at the heart of the hamlet, a ring of cottages around a
   stone well and a trampled common. Geese patrol the grass, and villagers stop at the
   well to trade news of the road. A hand-lettered board by the well lists lost goats
-  and found boots, and a stable lad waves travelers toward the lake path.
+  and found boots, and a stable lad waves travelers toward the lake path. A wandering bard sits on
+  the well's rim tuning a fiddle, and will teach a song for a fee (help music).
 biome: city
+tags:
+  - music-teacher
 exits:
   east:
     roomid: 2115

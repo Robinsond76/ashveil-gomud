@@ -31,6 +31,7 @@ const (
 	defaultBanterBattlePercent    = 33
 	defaultBanterCampStartPercent = 100
 	defaultBanterRestedPercent    = 50
+	defaultBanterSongPercent      = 60 // camp music: a song gets a comment more often than not
 	// A member at or under this share of its health at the battle's end
 	// makes it a close call; every member over the flawless share makes it
 	// a flawless win.
@@ -209,6 +210,8 @@ func (m *CompanyModule) CampBanter(leaderUserID int, context string) []banter.Sa
 		percent = m.banterPercent("BanterCampStartPercent", defaultBanterCampStartPercent)
 	case banter.CtxRested:
 		percent = m.banterPercent("BanterRestedPercent", defaultBanterRestedPercent)
+	case banter.CtxSong: // camp music: always comment when a song plays
+		percent = m.banterPercent("BanterSongPercent", defaultBanterSongPercent)
 	default:
 		return nil
 	}

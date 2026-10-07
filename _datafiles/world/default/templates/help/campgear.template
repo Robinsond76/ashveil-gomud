@@ -69,7 +69,9 @@ the pitched tent is fixed when a rest begins.
   as often. A member on a duty still misses the buff, and the rest's
   wounds and Mana follow a camp rest, not an inn stay. It needs a pack
   horse of its own: 20 kg is a real share of a company's load
-  (<ansi fg="command">help cargo</ansi>).
+  (<ansi fg="command">help cargo</ansi>). A strong ensemble of musicians gives the same Well
+  Rested (<ansi fg="command">help music</ansi>); the two do not stack, and a pitched tent also
+  keeps rain off the instruments.
 
   <ansi fg="command">camp tent</ansi>                 lists the tents you carry and the one pitched.
   <ansi fg="command">camp tent</ansi> [canvas|fur|camouflaged|large]   pitches one you carry, at your camp,

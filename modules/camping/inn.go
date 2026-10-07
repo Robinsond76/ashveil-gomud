@@ -18,7 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/weather"
 )
 
-const innUsage = "Usage: inn | inn status | inn rest"
+const innUsage = "Usage: inn | inn status | inn rest | inn gig [status]"
 
 // innSettings is the Phase 16 inn configuration.
 type innSettings struct {
@@ -125,6 +125,12 @@ func (m *CampingModule) resetInnState() {
 	m.restedDuties = map[int]map[string]string{}
 	m.restedTents = map[int]camping.TentKind{}
 	m.tentChoices = map[int]camping.TentKind{}
+	m.musicSkills = map[int]map[string]camping.MusicSkill{}
+	m.musicOff = map[int]bool{}
+	m.restedSongs = map[int]camping.Song{}
+	m.gigLogs = map[int]camping.GigLog{}
+	m.gigTimers = map[int]Timer{}
+	m.gigGeneration = map[int]uint64{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }
@@ -233,6 +239,10 @@ func (m *CampingModule) innCommand(rest string, user *users.UserRecord, room *ro
 		user.SendText(m.innStatus(user, room))
 	case args[0] == "rest":
 		user.SendText(m.innRest(user, room))
+	case args[0] == "gig" && len(args) > 1 && args[1] == "status":
+		user.SendText(m.gigStatus(user, room))
+	case args[0] == "gig":
+		user.SendText(m.innGig(user, room)) // camp music
 	default:
 		user.SendText(innUsage)
 	}
@@ -298,6 +308,9 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 	}
 	if camp, ok := m.camps[user.UserId]; ok && camp.Rest != nil && camp.Rest.State == camping.Resting {
 		return "You are already resting at camp."
+	}
+	if blocked, why := m.gigBlockLocked(user.UserId); blocked {
+		return why
 	}
 	if _, ok := m.stays[user.UserId]; ok {
 		if err := m.syncStayLocked(user.UserId); err != nil {

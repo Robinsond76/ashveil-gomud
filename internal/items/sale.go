@@ -22,6 +22,10 @@ var unidentifiedRarityPct = map[Rarity]int{
 // plain food from the ingredients, never bought back.
 const MakeshiftMealItemId = 30062
 
+// MasterworkInstrumentTier is the instrument tier that is looted, never
+// bought or crafted, and so may be sold for profit.
+const MasterworkInstrumentTier = 4
+
 // IsSpecialForSale is IsSpecial for merchants: a blob, spent uses and a
 // hand-edited spec still keep an item from sale, but a rolled item's own
 // override and roll do not (36a left rolled gear unsellable). A cooked meal
@@ -30,6 +34,11 @@ const MakeshiftMealItemId = 30062
 // page (Phase 56) is knowledge, not goods, and is not bought either.
 func (i *Item) IsSpecialForSale() bool {
 	if i.GetSpec().Meal != "" || i.GetSpec().Recipe > 0 || i.ItemId == MakeshiftMealItemId {
+		return true
+	}
+	// Camp music: a crude, common or fine instrument is bought or crafted,
+	// so no merchant buys it back; only a looted masterwork may be sold.
+	if spec := i.GetSpec(); spec.Instrument != "" && spec.InstrumentTier < MasterworkInstrumentTier {
 		return true
 	}
 	if len(i.Blob) > 0 {

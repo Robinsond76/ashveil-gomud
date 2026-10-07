@@ -497,6 +497,8 @@ type restPrep struct {
 	// present are the member keys at the camp when the rest begins
 	// (Phase 51): only they take their rest duties.
 	present map[string]bool
+	// song (camp music) is the song planned for the rest.
+	song camping.Song
 }
 
 // clearQueue is the queue with what the rest settled removed.

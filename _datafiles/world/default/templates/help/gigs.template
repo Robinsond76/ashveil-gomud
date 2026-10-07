@@ -1,0 +1,33 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">gigs</ansi>
+
+An inn pays musicians. Your company can take the floor for coin with the
+songs it can play (<ansi fg="command">help music</ansi>).
+
+<ansi fg="yellow-bold">Rules</ansi>
+
+  - Only in the evening: 19:00 to 21:00 on the world clock.
+  - At least two families must be playing (and their instruments carried).
+  - The whole company must be at the inn. The gig takes about a minute of
+    real time and the company can't leave until it is over.
+  - One paid gig for each inn each game evening, and one paid gig every 3
+    real hours for the company. Both are remembered through a restart.
+  - You can't gig while resting, in a fight, or travelling.
+
+<ansi fg="yellow-bold">Pay</ansi>
+
+  Pay is gold from the crowd when the gig ends, once, and grows with the
+  zone's level band and with the strength of every family: more families
+  and better instruments pay more. Three strong families earn a quarter
+  more; all four, half more again. A full ensemble in a hard zone earns
+  about what an hour's hunting does; a pair of beginners earns pennies.
+  A gig also counts as practice for each player.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">inn gig</ansi>          take the floor
+  <ansi fg="command">inn gig status</ansi>   the notice board: the window, what you can field,
+                    what it would pay, and why you can't just now
+
+The web client's Company > Camp tab shows the same at an inn, with a button.
+
+See also: <ansi fg="command">help music</ansi>, <ansi fg="command">help instruments</ansi>, <ansi fg="command">help inn</ansi>.

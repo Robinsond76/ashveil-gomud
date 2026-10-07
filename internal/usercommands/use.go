@@ -111,10 +111,14 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			if usesLeft := user.Character.UseItem(matchItem); usesLeft < 1 {
 				events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: matchItem, Gained: false})
 			}
+			verb, where := "cook", `It is in your recipe book (<ansi fg="command">recipes</ansi>).`
+			if dish.Instrument != "" { // camp music: a fine instrument's page
+				verb, where = "make", `Make it with <ansi fg="command">music craft</ansi> (<ansi fg="command">help instruments</ansi>).`
+			}
 			if cookbook.Learn(user.Character, itemSpec.Recipe) {
-				user.SendText(fmt.Sprintf(`You study the <ansi fg="itemname">%s</ansi> and learn to cook <ansi fg="itemname">%s</ansi>. It is in your recipe book (<ansi fg="command">recipes</ansi>).`, matchItem.DisplayName(), dish.Name))
+				user.SendText(fmt.Sprintf(`You study the <ansi fg="itemname">%s</ansi> and learn to %s <ansi fg="itemname">%s</ansi>. %s`, matchItem.DisplayName(), verb, dish.Name, where))
 			} else {
-				user.SendText(fmt.Sprintf(`You already know how to cook <ansi fg="itemname">%s</ansi>; the page crumbles in your hands.`, dish.Name))
+				user.SendText(fmt.Sprintf(`You already know how to %s <ansi fg="itemname">%s</ansi>; the page crumbles in your hands.`, verb, dish.Name))
 			}
 			return true, nil
 		}

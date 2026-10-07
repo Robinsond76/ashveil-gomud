@@ -1,0 +1,56 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">music</ansi>
+
+Your company can sing and play at camp. A song is played as a camp rest
+begins and gifts the rest: longer Rested, more Fatigue, a faster first
+battle, quicker recovery from ailments. It is camp only: nobody plays in a
+battle. Musicians still sleep and may take rest duties like anyone else
+(<ansi fg="command">help camp duties</ansi>).
+
+<ansi fg="yellow-bold">Learning</ansi>
+
+  A music teacher (Alderbrook's green has one) teaches a member level 1 of
+  one family for 30 gold: <ansi fg="command">music learn</ansi> [family] [member]. The families are
+  <ansi fg="yellow">strings</ansi>, <ansi fg="yellow">winds</ansi>, <ansi fg="yellow">drums</ansi> and <ansi fg="yellow">voice</ansi>. Each member learns one family.
+  Levels 2, 3 and 4 come from practice, not gold: 10, 25 and 50 songs. A song
+  played at a camp rest or an inn gig counts once for each member who played.
+  Changing family starts that member at level 1 of the new one and is paid
+  again, so it asks you to say <ansi fg="command">confirm</ansi> first.
+
+<ansi fg="yellow-bold">Playing</ansi>
+
+  A member plays when the company carries an instrument of their family
+  (<ansi fg="command">help instruments</ansi>). The voice needs none. One instrument serves the
+  whole family; the best you carry is played. A family's strength is its best
+  player's level plus the instrument's tier (a voice: level plus 1), from 2 to 8.
+
+  <ansi fg="yellow">Strings</ansi>   Rested and Well Rested last 5% longer for each point (up to 40%).
+  <ansi fg="yellow">Winds</ansi>     the rest restores 1 more Fatigue for each point (up to 8).
+  <ansi fg="yellow">Drums</ansi>     +1 speed for every 2 points (up to +4), in the first battle after the
+             rest only.
+  <ansi fg="yellow">Voice</ansi>     ailments fade 5% faster for each point (up to 40%): at least a battle
+             shorter, and a short one may go entirely.
+
+  <ansi fg="yellow-bold">Ensemble:</ansi> three or more families at strength 4 or better make those
+  who sleep wake <ansi fg="yellow">Well Rested</ansi>, as a large pavilion tent does. The two do
+  not stack: you get Well Rested once. All four families at strength 4 or
+  better make every effect a quarter stronger.
+
+<ansi fg="yellow-bold">What it costs</ansi>
+
+  Music carries across the dark. Each family that plays makes raiders and
+  thieves 10% likelier to come (drums, 20%), rolled once as the rest begins.
+  Rain or snow halves strings and winds unless a tent is pitched. A rest that
+  raiders spoil gives none of the song's gifts and counts as no practice.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">music</ansi>                         who plays what, and what the next song gives
+  <ansi fg="command">music learn</ansi> [family] [member]  learn a family at a teacher (30 gold)
+  <ansi fg="command">music craft</ansi> [instrument]       make an instrument at your camp
+  <ansi fg="command">music on</ansi> | <ansi fg="command">music off</ansi>            turn the camp song on or off
+  <ansi fg="command">camp music</ansi> [on|off]           the same, from camp
+
+The web client's Company > Camp tab shows the families covered, the effects
+and a Song on/off button; the Company panel shows each member's music.
+
+See also: <ansi fg="command">help instruments</ansi>, <ansi fg="command">help gigs</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help banter</ansi>.

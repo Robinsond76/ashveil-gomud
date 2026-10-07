@@ -1,0 +1,10 @@
+itemid: 3204
+name: 'reed pipes'
+namesimple: 'pipes'
+description: 'A set of reed pipes bound with waxed thread, sweet and a little hollow. A company that carries them can play winds at camp (help instruments).'
+type: object
+subtype: mundane
+instrument: winds
+instrumenttier: 2
+value: 35
+weight: 400

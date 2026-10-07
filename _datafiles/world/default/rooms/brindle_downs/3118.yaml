@@ -21,3 +21,6 @@ hascoordinates: true
 encounter:
   enabled: true
   table: downs
+spawninfo:
+- itemid: 3221
+  respawnrate: 1 real hour

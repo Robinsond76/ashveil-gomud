@@ -475,6 +475,36 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(true));
   check(await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty button')].every(b => b.disabled)) && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('fixed for this rest'), 'duties lock while resting (51)');
 }
+// Camp music: the Music row and the inn's gig notice on the Camp tab.
+{
+  const music = {
+    off: false, covered: '2 of 4',
+    players: [
+      { key: 'leader', name: 'Wren', label: 'Strings 2', family: 'strings', instrument: 'travelling lute' },
+      { key: 'companion:1', name: 'Brother Oswin', label: 'Voice 1', family: 'voice' },
+      { key: 'companion:5', name: 'Mira' },
+    ],
+    effects: ['Strings (strength 4): Rested and Well Rested last 20% longer', 'Voice (strength 2): ailments fade 10% faster'],
+  };
+  const gig = { window: '19:00 to 21:00', ready: true, families: 2, pay: 38 };
+  const campWith = (m, g) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true, music: m, gig: g });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(music, gig));
+  const text = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(text.includes('Wren (you): Strings 2, on the travelling lute') && text.includes('Brother Oswin: Voice 1, sings') && text.includes('Mira: no music yet') && text.includes('Families covered: 2 of 4'), 'the Music row lists each member and the families covered (music)');
+  check(text.includes('Rested and Well Rested last 20% longer'), 'the Music row shows the next song\'s effects (music)');
+  let got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Song off' }).click(); });
+  check(JSON.stringify(got) === '["camp music off"]', 'Song off sends camp music off (music)');
+  got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Play a gig' }).click(); });
+  check(JSON.stringify(got) === '["inn gig"]', 'Play a gig sends inn gig (music)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, 'music-camp.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the Music row fits a phone (music)');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ ...music, off: true }, { window: '19:00 to 21:00', ready: false, reason: 'Your company played for pay not long ago.', families: 2, pay: 38 }));
+  const off = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(off.includes('The camp song is off.') && off.includes('played for pay not long ago') && !off.includes('Play a gig'), 'an off song and a refused gig read plainly (music)');
+  check(await page.locator('#company-camp').getByRole('button', { name: 'Song on' }).count() === 1, 'Song on appears when the song is off (music)');
+}
 // Phase 56: the recipe book, folded under the camp's buttons.
 {
   const recipes = ['seared game meat: 1 raw game meat (cooking 1)', 'grilled fish: 1 raw fish (cooking 1)', "hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)", 'thyme tea (remedy for chill): 2 wild thyme'];
