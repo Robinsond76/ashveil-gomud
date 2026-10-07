@@ -51,6 +51,17 @@ func (c ordersContributor) Restore(userID, _ int, data []byte) error {
 		return nil
 	}
 	err := userstate.Maps{c.m.registry.Orders}.Apply(userID, data)
+	// A snapshot is checked as a saved file is (61 review).
+	for key, list := range c.m.registry.Orders[userID] {
+		if clean := cleanOrders(list); len(clean) == 0 {
+			delete(c.m.registry.Orders[userID], key)
+		} else {
+			c.m.registry.Orders[userID][key] = clean
+		}
+	}
+	if len(c.m.registry.Orders[userID]) == 0 {
+		delete(c.m.registry.Orders, userID)
+	}
 	c.m.mu.Unlock()
 	if err != nil {
 		return err

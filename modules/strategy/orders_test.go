@@ -23,6 +23,7 @@ func TestOrdersAddListRemoveAndReorder(t *testing.T) {
 	assert.Contains(t, runOrders(m, u, ""), "None set")
 	assert.Contains(t, runOrders(m, u, "dain add ally 50 then guard"), "Order 1 for Dain: When an ally is below 50% health, guard that ally.")
 	assert.Contains(t, runOrders(m, u, "dain add chanting then break"), "Order 2 for Dain")
+	assert.Contains(t, runOrders(m, u, "dain add chant then interrupt"), "already carries that order (number 2)", "the same order twice is refused")
 	assert.Contains(t, runOrders(m, u, "dain add boss then strongest"), "Order 3 for Dain")
 	assert.Contains(t, runOrders(m, u, "dain add first then hold"), "most there are", "three at most")
 	require.Len(t, store.saved.Orders[u.UserId]["companion:1"], 3, "every change is saved")

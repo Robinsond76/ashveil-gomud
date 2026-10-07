@@ -16,11 +16,13 @@ holding (a guard, a hold) is noted when it starts, not every round.
 
   <ansi fg="command">ally [n]</ansi>        an ally is below n% of its health (n is a multiple of 5,
                   from 10 to 90). It means the most hurt ally who is not the
-                  member itself; a fallen ally does not count.
+                  member itself. A player who is down but still alive
+                  counts (and is the most hurt); a dead one does not.
   <ansi fg="command">self [n]</ansi>        the member itself is below n% of its health.
   <ansi fg="command">chanting</ansi>        a foe is chanting a spell (<ansi fg="command">help interrupts</ansi>).
   <ansi fg="command">boss</ansi>            a boss stands among the foes.
-  <ansi fg="command">first</ansi>           it is the battle's first round.
+  <ansi fg="command">first</ansi>           it is the battle's first round (against each group in
+                  turn, where several wait).
   <ansi fg="command">foe [kind]</ansi>      a foe of that kind stands: <ansi fg="command">caster</ansi> or <ansi fg="command">healer</ansi>.
 
 <ansi fg="yellow-bold">Actions</ansi>
@@ -32,16 +34,22 @@ holding (a guard, a hold) is noted when it starts, not every round.
                   <ansi fg="command">self</ansi>.
   <ansi fg="command">break</ansi>       turn on the foe the condition named: for <ansi fg="command">chanting</ansi>, the chanter,
                   to break its chant. A fighter strikes it if it can reach it;
-                  a member that casts (or cannot reach it) sends an attack
-                  spell at it. Goes with <ansi fg="command">chanting</ansi>, <ansi fg="command">boss</ansi> or <ansi fg="command">foe</ansi>.
+                  a member that casts (or a fighter that cannot reach it)
+                  sends an attack spell at it, whatever its mana reserve. A
+                  healer or caster with no attack spell to send passes the
+                  order over. With two chanters, it takes the first it can
+                  turn on. Goes with <ansi fg="command">chanting</ansi>, <ansi fg="command">boss</ansi> or <ansi fg="command">foe</ansi>.
   <ansi fg="command">guard</ansi>       step in front of the ally the condition named for this
                   round, as a guardian would (<ansi fg="command">help guardian</ansi>): it spends the
-                  member's guards, and is read again every round. Goes with
-                  <ansi fg="command">ally</ansi>.
+                  member's guards, and is read again every round. With no
+                  guard left, or the ally too far off to guard, the order is
+                  passed over. Goes with <ansi fg="command">ally</ansi>.
   <ansi fg="command">strongest</ansi>   cast the strongest attack spell it knows and can pay for,
                   whatever its mana reserve says. Any condition.
-  <ansi fg="command">hold</ansi>        cast no attack spell this round, keeping its mana: heals
-                  and everything else go on as usual. Any condition.
+  <ansi fg="command">hold</ansi>        cast no attack spell this round (Lightning included),
+                  keeping its mana: heals, hexes, wards, summons and weather
+                  go on as usual. A fighter casts nothing anyway, so a hold
+                  means nothing to one. Any condition.
 
 An order whose action the member cannot carry out (no healing spell, no
 mana, nothing in reach) is passed over for the next. <ansi fg="command">orders</ansi> warns when a member

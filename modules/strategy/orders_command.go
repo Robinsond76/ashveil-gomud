@@ -56,6 +56,11 @@ func (m *StrategyModule) runOrders(user *users.UserRecord, args []string) string
 		if err != nil {
 			return fmt.Sprintf(`That is not an order: %s. %s`, err.Error(), ordersMenu())
 		}
+		for i, had := range list {
+			if had == o {
+				return fmt.Sprintf("%s already %s that order (number %d).", mb.name, verb(mb, "carry", "carries"), i+1)
+			}
+		}
 		next := append(list, o)
 		if err := m.setOrders(user.UserId, mb.key, next); err != nil {
 			return err.Error()

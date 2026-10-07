@@ -293,19 +293,49 @@ type Fire struct {
 
 // Evaluate reads the orders in order and returns the first whose condition
 // holds and that usable accepts (usable says whether the action can be
-// carried out now: a heal needs a heal spell, a break a foe in reach). ok is
-// false when none fires.
+// carried out now: a heal needs a heal spell, a break a foe in reach). A
+// foe condition tries each foe that meets it, so a chanter out of reach
+// gives way to one in reach. ok is false when none fires.
 func Evaluate(list []Order, s Snapshot, usable func(Fire) bool) (Fire, bool) {
 	for i, o := range list {
-		f, held := condition(o, i, s)
-		if !held {
-			continue
-		}
-		if usable == nil || usable(f) {
-			return f, true
+		for _, f := range candidates(o, i, s) {
+			if usable == nil || usable(f) {
+				return f, true
+			}
 		}
 	}
 	return Fire{}, false
+}
+
+// candidates are the ways the order's condition holds now: the ally it
+// names, or each foe that meets it, in battle order.
+func candidates(o Order, index int, s Snapshot) []Fire {
+	switch o.When {
+	case Chanting, Boss, FoeKind:
+		var out []Fire
+		for _, foe := range s.Foes {
+			if foeMeets(o, foe) {
+				out = append(out, Fire{Index: index, Order: o, Ally: -1, Foe: foe.ID})
+			}
+		}
+		return out
+	}
+	if f, held := condition(o, index, s); held {
+		return []Fire{f}
+	}
+	return nil
+}
+
+func foeMeets(o Order, foe FoeInfo) bool {
+	switch o.When {
+	case Chanting:
+		return foe.Chanting
+	case Boss:
+		return foe.Boss
+	case FoeKind:
+		return (o.Kind == "caster" && foe.Caster) || (o.Kind == "healer" && foe.Healer)
+	}
+	return false
 }
 
 func share(a Ally) int {
@@ -316,7 +346,8 @@ func share(a Ally) int {
 	return a.HP * 1000 / max
 }
 
-// condition is whether the order's condition holds, and what it names.
+// condition is whether an ally, self or first-round condition holds, and
+// the ally it names.
 func condition(o Order, index int, s Snapshot) (Fire, bool) {
 	f := Fire{Index: index, Order: o, Ally: -1}
 	switch o.When {
@@ -342,29 +373,8 @@ func condition(o Order, index int, s Snapshot) (Fire, bool) {
 			return f, true
 		}
 		return f, false
-	case Chanting:
-		for _, foe := range s.Foes {
-			if foe.Chanting {
-				f.Foe = foe.ID
-				return f, true
-			}
-		}
-	case Boss:
-		for _, foe := range s.Foes {
-			if foe.Boss {
-				f.Foe = foe.ID
-				return f, true
-			}
-		}
 	case FirstRound:
 		return f, s.FirstRound
-	case FoeKind:
-		for _, foe := range s.Foes {
-			if (o.Kind == "caster" && foe.Caster) || (o.Kind == "healer" && foe.Healer) {
-				f.Foe = foe.ID
-				return f, true
-			}
-		}
 	}
 	return f, false
 }

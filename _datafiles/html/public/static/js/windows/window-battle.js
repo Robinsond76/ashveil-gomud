@@ -501,15 +501,19 @@
         return u ? (u.id === 'leader' ? (u.label || 'You') : u.label) : '';
     }
 
-    // orderLine says a battle order carried out: member a, subject t.
+    // orderLine says a battle order carried out: member a, subject t, as the
+    // text lines say it ("You tend Oswin", "Oswin tends you").
     function orderLine(status, a, t) {
         const ORDERED = ', as ordered';
         if (!a) { return ''; }
-        if (status === 'heal') { return t ? a + (a === t ? ' looks to their own wounds' : ' tends ' + t) + ORDERED : ''; }
-        if (status === 'break') { return t ? a + ' turns on ' + t + ORDERED : ''; }
-        if (status === 'guard') { return t ? a + ' moves to guard ' + t + ORDERED : ''; }
-        if (status === 'strongest') { return a + ' puts everything into the next spell' + ORDERED; }
-        if (status === 'hold') { return a + ' holds back mana' + ORDERED; }
+        const you = a === 'You';
+        const v = (mine, theirs) => you ? mine : theirs;
+        const them = t === 'You' ? 'you' : t;
+        if (status === 'heal') { return t ? a + (a === t ? v(' look to your own wounds', ' looks to a wound of their own') : v(' tend ', ' tends ') + them) + ORDERED : ''; }
+        if (status === 'break') { return t ? a + v(' turn on ', ' turns on ') + them + ORDERED : ''; }
+        if (status === 'guard') { return t ? a + v(' move to guard ', ' moves to guard ') + them + ORDERED : ''; }
+        if (status === 'strongest') { return a + v(' put everything into your next spell', ' puts everything into the next spell') + ORDERED; }
+        if (status === 'hold') { return a + v(' hold back your mana', ' holds back mana') + ORDERED; }
         return '';
     }
 

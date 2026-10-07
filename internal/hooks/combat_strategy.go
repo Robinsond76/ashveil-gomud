@@ -85,6 +85,7 @@ func strategyPass() {
 		if !ok || u == nil || u.Character == nil || u.Character.RoomId != b.RoomId {
 			continue
 		}
+		openingRound := firstOrdersRound(b.FightID) // Phase 61: the "first" condition
 		room := rooms.LoadRoom(b.RoomId)
 		if room == nil {
 			continue
@@ -123,16 +124,14 @@ func strategyPass() {
 			st := enemyparty.MemberStrategy(uid, a.key)
 			role := st.Role
 			// Phase 61: battle orders come before the role and target rule.
-			reserve := st.Reserve
+			hold := false
 			if list := orders.For(uid, string(a.key)); len(list) > 0 {
-				turn := runOrders(orderCtx{a: a, u: u, side: side, allies: allies, autoSpells: autoSpells, g: g, foes: foes, room: room, b: b,
+				turn := runOrders(orderCtx{a: a, u: u, side: side, allies: allies, autoSpells: autoSpells, g: g, foes: foes, room: room, b: b, first: openingRound,
 					meleeFirst: role == strategy.Fighter || role == strategy.Guardian}, list)
 				if turn.handled {
 					continue
 				}
-				if turn.hold {
-					reserve = 100 // keeps every point of mana from attack spells
-				}
+				hold = turn.hold
 			}
 			// A guardian fights as a fighter (Phase 30c2).
 			if role == strategy.Fighter || role == strategy.Guardian {
@@ -157,7 +156,9 @@ func strategyPass() {
 				HealBelow: healBelow,
 				// Phase 33e: the member's mana reserve.
 				MaxMana: a.char.ManaMax.Value,
-				Reserve: reserve,
+				Reserve: st.Reserve,
+				// Phase 61: a hold order keeps it from attack spells.
+				Hold: hold,
 				// Phase 38a: a hex goes only at a foe worth it.
 				CanHex: hexReady(a, foes),
 				// Phase 38c3: a Necromancer raises a foe that has fallen.

@@ -257,3 +257,63 @@ func TestASelfHealOrderHealsTheMember(t *testing.T) {
 	assert.Equal(t, []int{oswin.InstanceId}, oswin.Character.Aggro.SpellInfo.TargetMobInstanceIds)
 	assert.Contains(t, out, "looks to a wound of their own, as ordered.")
 }
+
+// Phase 61 review: the boss and foe-kind conditions in a real round, each
+// turning a fighter on the foe it names.
+func TestABreakOrderTurnsOnABossOrAHealer(t *testing.T) {
+	for _, tc := range []struct {
+		order string
+		mark  func(m *mobs.Mob)
+	}{
+		{"boss then break", func(m *mobs.Mob) { m.Boss = true }},
+		{"foe healer then break", func(m *mobs.Mob) { m.Role = "healer" }},
+	} {
+		t.Run(tc.order, func(t *testing.T) {
+			b := newBrawl(t)
+			b.withArchetypes("")
+			b.unplaced()
+			captain, _, slinger, _, _ := b.shapeBandits()
+			stream := b.listen()
+			tamsin := b.companion(1)
+			b.cmd("strategy", "tamsin fighter")
+			b.cmd("orders", "tamsin add "+tc.order)
+			b.cmd("attack", fmt.Sprintf("#%d", captain))
+			forceBlows(t, false)
+			b.toughen()
+			b.fight()
+			require.NotEqual(t, slinger, aimOf(&tamsin.Character), "nothing to turn on yet")
+			assert.Empty(t, orderEvents(*stream, "break"))
+
+			tc.mark(mobs.GetInstance(slinger))
+			out := b.fight()
+			assert.Equal(t, slinger, aimOf(&tamsin.Character), "she turns on the slinger")
+			assert.Contains(t, out, "Tamsin Reed turns on")
+			assert.NotContains(t, out, "to break its chant")
+			fired := orderEvents(*stream, "break")
+			require.Len(t, fired, 1)
+			assert.Equal(t, slinger, fired[0].Target.MobInstanceId)
+			// Already on it: the order does not fire again.
+			b.fight()
+			assert.Len(t, orderEvents(*stream, "break"), 1)
+		})
+	}
+}
+
+// Phase 61 review: a guard order with no guard left gives way to the next
+// order instead of claiming a guard that never happens.
+func TestAGuardOrderWithNoGuardLeftGivesWay(t *testing.T) {
+	b := guardBrawl(t, "orders tamsin add ally 70 then guard", "orders tamsin add chanting then break")
+	_, _, slinger, _, _ := b.shapeBandits()
+	for {
+		if _, ok := battle.SpendGuard(7, "companion:1"); !ok {
+			break
+		}
+	}
+	got := b.listen()
+	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 500
+	b.mobCasts(mobs.GetInstance(slinger), "mm")
+	out := b.fight()
+	assert.NotContains(t, out, "moves to guard you, as ordered")
+	assert.Empty(t, orderEvents(*got, "guard"), "no guard left: the guard order is passed over")
+	assert.Contains(t, out, "to break its chant, as ordered.", "the next order fires")
+}

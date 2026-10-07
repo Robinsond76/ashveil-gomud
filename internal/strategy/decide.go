@@ -172,6 +172,10 @@ type Situation struct {
 	// Flask only while more than FlaskKeep remain, so a heal is never left
 	// without one.
 	Flasks int
+	// Hold (Phase 61) is a battle order to hold mana: no attack spell
+	// (Lightning included) this round; heals, hexes, buffs, summons and
+	// weather go on.
+	Hold bool
 }
 
 // ActionKind is what a character does this round.
@@ -224,6 +228,9 @@ func Decide(s Situation) Action {
 			return Spell{}, false
 		}
 		if use == UseFlame && s.Flasks <= FlaskKeep {
+			return Spell{}, false
+		}
+		if s.Hold && (use == UseAttack || use == UseAttackAll || use == UseBurst || use == UseStorm) {
 			return Spell{}, false
 		}
 		if (use == UseAttack || use == UseAttackAll || use == UseBurst) && s.Reserve > 0 && (s.Mana-sp.Cost)*100 < s.Reserve*s.MaxMana {

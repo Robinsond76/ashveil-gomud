@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/flasks"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -40,7 +41,25 @@ var orderStreak = map[caster]orderStreakEntry{}
 
 type orderStreakEntry struct {
 	round uint64
+	fight uint64
 	tag   string
+}
+
+// fightOpened is the round each battle's orders were first read: a battle
+// that begins at a round's end (the next group stepping up) has its first
+// orders round after its StartRound, so "first" is the first round read,
+// not StartRound (61 review).
+var fightOpened = map[uint64]uint64{}
+
+// firstOrdersRound is whether this is the first round the battle's orders
+// are read.
+func firstOrdersRound(fightID uint64) bool {
+	round := combatRound.Load()
+	at, seen := fightOpened[fightID]
+	if !seen {
+		fightOpened[fightID], at = round, round
+	}
+	return at == round
 }
 
 // orderedWard is whom a guard order has the member guard this round.
@@ -69,6 +88,8 @@ type orderCtx struct {
 	// meleeFirst is whether the member's role fights with weapon or fists
 	// (a fighter or guardian), so a break order strikes rather than casts.
 	meleeFirst bool
+	// first is whether this is the battle's first round of orders.
+	first bool
 }
 
 func (c orderCtx) caster() orders.Caster {
@@ -79,7 +100,7 @@ func (c orderCtx) caster() orders.Caster {
 func runOrders(c orderCtx, list []orders.Order) orderTurn {
 	foeList := enemyparty.Foes(c.g, c.a.att)
 	reach := map[int]bool{}
-	snap := orders.Snapshot{FirstRound: combatRound.Load() == c.b.StartRound}
+	snap := orders.Snapshot{FirstRound: c.first}
 	for _, f := range foeList {
 		reach[f.ID] = f.Reachable
 		boss := false
@@ -101,9 +122,17 @@ func runOrders(c orderCtx, list []orders.Order) orderTurn {
 			spell, ok := sp.Heal(orderShare(al))
 			return strategy.Action{Kind: strategy.Heal, Spell: spell.ID, Ally: f.Ally}, false, ok
 		case orders.Guard:
-			return strategy.Action{}, false, true
+			// Only with a guard left and the ward within guarding ground
+			// (61 review), so a guard that cannot happen gives way.
+			battle.CaptureGuards(c.u.UserId, string(c.a.key), c.a.char.Level)
+			if battle.GuardsLeft(c.u.UserId, string(c.a.key)) < 1 || !ableToGuard(guardMember{key: c.a.key, char: c.a.char}) {
+				return strategy.Action{}, false, false
+			}
+			form, _ := company.FormationFor(c.u.UserId)
+			return strategy.Action{}, false, formationcombat.GuardGround(form, c.a.key, c.side[f.Ally].key, enemyparty.Narrow(c.room))
 		case orders.Hold:
-			return strategy.Action{}, false, sp.KnowsAttack()
+			// A fighter casts nothing by its role, so a hold changes nothing.
+			return strategy.Action{}, false, !c.meleeFirst && sp.KnowsAttack()
 		case orders.Strongest:
 			spell, kind, ok := sp.Attack(len(c.foes), false)
 			return strategy.Action{Kind: kind, Spell: spell.ID}, false, ok
@@ -115,7 +144,9 @@ func runOrders(c orderCtx, list []orders.Order) orderTurn {
 			if spell, kind, ok := sp.Attack(len(c.foes), true); ok && !aimedByCast(c.a.char, f.Foe) {
 				return strategy.Action{Kind: kind, Spell: spell.ID}, false, true
 			}
-			return strategy.Action{}, true, canMelee
+			// A healer or caster with no attack spell to send does not
+			// give up its turn to a swing (61 review).
+			return strategy.Action{}, false, false
 		}
 		return strategy.Action{}, false, false
 	}
@@ -190,8 +221,8 @@ func aimedByCast(c *characters.Character, foe int) bool {
 func (c orderCtx) noteOnce(f orders.Fire, tag string, subject *actor) {
 	round := combatRound.Load()
 	last, had := orderStreak[c.a.who]
-	orderStreak[c.a.who] = orderStreakEntry{round: round, tag: tag}
-	if had && last.tag == tag && last.round+1 >= round {
+	orderStreak[c.a.who] = orderStreakEntry{round: round, fight: c.b.FightID, tag: tag}
+	if had && last.tag == tag && last.fight == c.b.FightID && last.round+1 >= round {
 		return
 	}
 	c.note(f, subject, 0)
@@ -264,12 +295,23 @@ func (c orderCtx) note(f orders.Fire, ally *actor, foe int) {
 }
 
 // pruneOrderStreaks forgets members whose guard or hold order has not
-// fired for a few rounds.
+// fired for a few rounds, and battles that have ended.
 func pruneOrderStreaks() {
 	round := combatRound.Load()
 	for who, e := range orderStreak {
 		if e.round+3 < round {
 			delete(orderStreak, who)
+		}
+	}
+	live := map[uint64]bool{}
+	for _, uid := range battle.Players() {
+		if b, ok := battle.Current(uid); ok {
+			live[b.FightID] = true
+		}
+	}
+	for id := range fightOpened {
+		if !live[id] {
+			delete(fightOpened, id)
 		}
 	}
 }

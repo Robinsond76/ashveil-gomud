@@ -225,3 +225,14 @@ func TestAttackPrefersTheHeavyBoltAndHonoursSingleTarget(t *testing.T) {
 		t.Error("KnowsAttack should read the known spells, not the mana")
 	}
 }
+
+// Phase 61 review: a foe condition tries each foe that meets it, so a
+// chanter out of reach gives way to another chanter in reach.
+func TestEvaluateTriesEachFoeThatMeetsTheCondition(t *testing.T) {
+	list := []Order{mustParse(t, "chanting then break")}
+	snap := Snapshot{Foes: []FoeInfo{{ID: 3, Chanting: true}, {ID: 4}, {ID: 5, Chanting: true}}}
+	f, ok := Evaluate(list, snap, func(f Fire) bool { return f.Foe != 3 })
+	if !ok || f.Foe != 5 {
+		t.Fatalf("the second chanter should be taken, got %+v %v", f, ok)
+	}
+}

@@ -665,9 +665,18 @@ got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders
 check(JSON.stringify(got) === '["orders me preset"]', 'orders: the class starting set (yourself is "me")');
 await page.evaluate(c => {
   const g = JSON.parse(JSON.stringify(c));
-  g.members[0].orders = ['One.', 'Two.', 'Three.'];
+  g.members[0].orders = ['When an ally is below 50% health, heal that ally first.', 'When a foe is chanting, turn on the chanter to break its chant.', 'When a boss stands among the foes, cast its strongest attack, whatever its reserve.'];
   window.gmcp('Company', g);
 }, company);
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, '61-combat-orders.png') }); }
+await page.setViewportSize({ width: 360, height: 800 });
+check(await page.evaluate(() => { const p = document.getElementById('combat-window'); return p.scrollWidth <= p.clientWidth + 1; }), 'orders: three long orders fit a phone (61 review)');
+await page.getByRole('button', { name: 'Orders (3)' }).click();
+check(await page.evaluate(() => { const m = [...document.querySelectorAll('body > div')].pop().getBoundingClientRect(); return m.left >= 0 && m.right <= window.innerWidth + 1; }), 'orders: the menu fits a phone (61 review)');
+if (outdir) { await page.screenshot({ path: path.join(outdir, '61-combat-orders-phone.png') }); }
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.setViewportSize({ width: 1280, height: 900 });
 await page.getByRole('button', { name: 'Orders (3)' }).click();
 const full = await page.evaluate(() => [...[...document.querySelectorAll('body > div')].pop().children].map(c => c.textContent));
 check(!full.some(l => l.startsWith('Add: ')) && full.includes('Remove order 3'), 'orders: with three, none can be added, any can be removed');
