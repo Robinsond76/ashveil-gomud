@@ -44,3 +44,7 @@ them flakes.
 ## Help and tutorial
 
 No player-facing change, so no help page.
+
+## Status
+
+Paused 2026-10-07 at the owner's request (only the combat overhaul proceeds). Work is complete and gated; PR #185 is open and unmerged, waiting for the review thread.
