@@ -463,6 +463,8 @@ const (
 	MemberFled
 	// MemberSeparated is off the map, finding its way back (Phase 33h3).
 	MemberSeparated
+	// MemberErrand is away on an errand, due back at a saved time (Phase 70).
+	MemberErrand
 )
 
 // MemberView is one companion as the information surfaces show it.

@@ -251,7 +251,7 @@ func (m *CompanyModule) bondsCampRest(leaderUserID int) {
 	}
 	var camped []domain.Companion
 	for _, c := range record.Companions {
-		if bondMember(c) && !c.Separated() {
+		if bondMember(c) && !c.Away() {
 			camped = append(camped, c)
 		}
 	}

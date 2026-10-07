@@ -201,6 +201,8 @@ func absence(s company.MemberStatus) string {
 		return "awaiting"
 	case company.MemberSeparated:
 		return "separated"
+	case company.MemberErrand:
+		return "on an errand"
 	}
 	return "away"
 }

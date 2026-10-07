@@ -815,7 +815,7 @@ func gatherAllies(user *users.UserRecord, b battle.Battle) []allyFact {
 		fact := allyFact{Leader: au.UserId, Name: au.Character.Name}
 		add := func(m companyview.Member) {
 			cell, ok := cells[string(m.Key)]
-			if !ok || m.Status == company.MemberAwaiting || m.Status == company.MemberFled || m.Status == company.MemberSeparated {
+			if !ok || m.Status == company.MemberAwaiting || m.Status == company.MemberFled || m.Status == company.MemberSeparated || m.Status == company.MemberErrand {
 				return
 			}
 			class := ""

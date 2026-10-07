@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -195,6 +196,10 @@ type CompanyModule struct {
 	// native check of where, and whether, a separated companion may rejoin.
 	strays     map[int]map[int]int
 	leaderFree func(leaderUserID int) (roomID int, free bool)
+	// Phase 70: errandSeam is nil for the running game's; errandRng is the
+	// game-loop source of an errand's seed.
+	errandSeam errandWorld
+	errandRng  *rand.Rand
 }
 
 // module is the registered instance, for wiring tests.
@@ -220,7 +225,9 @@ func init() {
 	m.plug.AddUserCommand("brew", m.brewCommand, false, false)        // Phase 39g: an Alchemist's flasks
 	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed while downed
 	m.plug.AddUserCommand("bonds", m.bondsCommand, true, false)       // Phase 65: read-only too
-	opinions.Observe(m.onOpinionBonds)                                // Phase 65: agreeing over a choice moves a bond
+	m.plug.AddUserCommand("errand", m.errandCommand, false, false)    // Phase 70: send a benched companion away
+	m.plug.AddUserCommand("errands", m.errandCommand, false, false)
+	opinions.Observe(m.onOpinionBonds) // Phase 65: agreeing over a choice moves a bond
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.
@@ -257,7 +264,7 @@ func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 			Key:  survival.CompanionMemberKey(companion.ID),
 			Name: nameOf(companion, strconv.Itoa(companion.MobTemplateID)),
 			Dead: companion.Dead(),
-			Away: companion.Separated(),
+			Away: companion.Away(),
 			// Phase 38e: a construct needs no food, drink or rest.
 			Needless: creatures.KindOf(companion.Archetype) == creatures.Construct,
 		})
@@ -628,6 +635,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		state := "awaiting restoration"
 		if c.PendingReturn {
 			state = "fled; awaiting battle settlement"
+		}
+		if c.OnErrand() {
+			state = m.errandState(*c.Errand)
 		}
 		if c.Separated() {
 			state = "separated; back in " + roundsText(c.Separation.RoundsLeft)
@@ -1000,7 +1010,7 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			}
 			continue
 		}
-		if companion.Dead() || companion.PendingReturn || companion.Separated() {
+		if companion.Dead() || companion.PendingReturn || companion.Away() {
 			continue // dead await resurrection; fled await settlement; the separated their way back (33h3)
 		}
 		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {

@@ -19,6 +19,8 @@ func (m *CompanyModule) CompanyConditions(leaderUserID int) ([]domain.MemberCond
 		switch {
 		case c.Dead():
 			v.State = "dead"
+		case c.OnErrand():
+			v.State = "errand"
 		case c.Separated():
 			v.State = "separated"
 			if c.State != nil {

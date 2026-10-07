@@ -25,6 +25,9 @@
  *   Bonds     - how each pair of companions feels about the other, and what
  *               that does in a battle (Phase 65); `bonds` reads the same in
  *               text.
+ *   Errands   - who is away on an errand and when they are due, and a card
+ *               to send each free companion (Phase 70); `errands` reads the
+ *               same in text.
  *
  * Every name and label is set with textContent, never innerHTML. Menus
  * name items by the reference the server sends ("!<id>:<uuid>"), which
@@ -44,6 +47,11 @@
  *                       [{key, id, name, personality, loyalty, mood, likes,
  *                       dislikes, notes: [{label, verdict, ago, subject}],
  *                       deeds}] }
+ *   Company.Errands   - the Errands sub-tab: { now, here, where, zone, band,
+ *                       rows: [{id, name, level, state: away|ready|busy, why,
+ *                       kind_label, zone, returns_at, remaining, due, waiting}],
+ *                       options: [{kind, label, blurb, lengths: [{length,
+ *                       label}]}], recent: [string] }
  *   Company.Bonds     - the Bonds sub-tab: { pairs: [{a, b, a_name, b_name,
  *                       value, tier, phrase, effect, warned}], members: [{id,
  *                       name, feelings: [{id, name, words, tier}]}] }
@@ -175,6 +183,12 @@
         .cmp-bond-mid { position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1px; background: var(--t-text-secondary); }
         .cmp-bond-fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--t-accent); }
         .cmp-bond-card[data-feel="rival"] .cmp-bond-fill { background: #b5584f; }
+        .cmp-err-card { display: flex; flex-direction: column; gap: 3px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
+        .cmp-err-card[data-state="away"] { border-left-color: var(--t-accent); }
+        .cmp-err-head { font-weight: bold; }
+        .cmp-err-sub { color: var(--t-text-secondary); font-weight: normal; }
+        .cmp-err-pick { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+        .cmp-err-pick select { max-width: 100%; }
 
         .cmp-recipes summary { cursor: pointer; font-weight: bold; }
         .cmp-recipes ul { margin: 4px 0; padding-left: 18px; }
@@ -495,6 +509,7 @@
         { id: 'company-chronicle', label: 'Chronicle' },
         { id: 'company-opinions',  label: 'Opinions' },
         { id: 'company-bonds',     label: 'Bonds' },
+        { id: 'company-errands',   label: 'Errands' },
     ];
     const SUBTAB_KEY = 'companySubTab';
 
@@ -840,6 +855,9 @@
         } else if (m.status === 'separated') {
             card.appendChild(el('div', 'company-status', 'Separated: finding the way back'));
             spoken.push('separated');
+        } else if (m.status === 'errand') {
+            card.appendChild(el('div', 'company-status', 'Away on an errand (see Errands)'));
+            spoken.push('away on an errand');
         }
         if (m.status !== 'dead' && typeof v.hp === 'number' && typeof v.hp_max === 'number') {
             const label = 'Health ' + v.hp + ' of ' + v.hp_max;
@@ -890,6 +908,7 @@
         if (state) {
             const states = { away: 'Away: live effects unknown; wounds last recorded',
                 separated: 'Separated: live effects unknown; wounds last recorded',
+                errand: 'On an errand: effects unknown until they return',
                 'away-live': 'Away from you: current effects and wounds', dead: 'Fallen: no active member effects',
                 unavailable: 'Conditions unavailable', unknown: 'Conditions unknown' };
             if (states[state.state]) {
@@ -1014,7 +1033,7 @@
         // Inventory the companions out (names only, so not on vitals). The
         // Chronicle keeps its own payload; it is redrawn here so a window
         // closed and opened again shows it at once.
-        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); }
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); updateErrands(); }
         updateCamp();
     }
 
@@ -1898,6 +1917,117 @@
         keepFocus(panel, () => buildBonds(panel));
     }
 
+    // --- Errands (Phase 70) ---
+    // errandData is the newest Company.Errands payload; errandPick is what
+    // each free companion's job and length selectors show, kept across the
+    // rebuilds a new payload causes. errandClock offsets the server's real
+    // time against this browser's, so a countdown is right whatever the
+    // browser's clock says; the panel redraws each half minute while a
+    // companion is away.
+    let errandData = null;
+    let errandClock = 0;
+    let errandTimer = null;
+    const errandPick = {};
+
+    function errandLeft(seconds) {
+        if (seconds <= 0) { return 'due now'; }
+        if (seconds < 90) { return 'a minute'; }
+        if (seconds < 90 * 60) { return Math.round(seconds / 60) + ' minutes'; }
+        return Math.round(seconds / 3600) + ' hours';
+    }
+
+    function errandSelect(label, options, current, onPick) {
+        const sel = el('select', 'cmp-select');
+        sel.setAttribute('aria-label', label);
+        options.forEach(o => {
+            const opt = el('option', null, o.label);
+            opt.value = o.value;
+            if (o.value === current) { opt.selected = true; }
+            sel.appendChild(opt);
+        });
+        sel.addEventListener('change', () => onPick(sel.value));
+        return sel;
+    }
+
+    function buildErrands(panel) {
+        const data = errandData || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Errands) || null;
+        keepScroll(panel);
+        panel.textContent = '';
+        const pad = el('div', 'cmp-pad');
+        panel.appendChild(pad);
+        const rows = data && Array.isArray(data.rows) ? data.rows : [];
+        if (!rows.length) {
+            pad.appendChild(el('div', 'cmp-note', 'Companions who sit out the formation can be sent on errands from an inn. Recruit one first (help errands).'));
+            return;
+        }
+        const options = Array.isArray(data.options) ? data.options : [];
+        const here = !!data.here;
+        pad.appendChild(el('div', 'cmp-line', data.where || ''));
+        if (here && data.zone) {
+            pad.appendChild(el('div', 'cmp-note', data.zone + (data.band ? ', a zone for levels ' + data.band + ': the pay follows the band, and a companion under it risks a wound.' : ': it names no level band, so the pay follows the companion.')));
+        }
+        // The server's clock, as of when this payload arrived.
+        const nowSec = () => Math.floor(Date.now() / 1000) + errandClock;
+        let anyAway = false;
+        rows.forEach(r => {
+            const card = el('div', 'cmp-err-card');
+            card.setAttribute('data-state', r.state || 'busy');
+            const head = el('div', 'cmp-err-head', r.name || 'Companion');
+            head.appendChild(el('span', 'cmp-err-sub', ' (level ' + (Number(r.level) || '?') + ')'));
+            card.appendChild(head);
+            if (r.state === 'away') {
+                anyAway = true;
+                const left = (Number(r.returns_at) || 0) - nowSec();
+                const line = (r.due || left <= 0)
+                    ? 'Away on ' + (r.kind_label || 'an errand') + ': due back, ' + (r.waiting || 'as soon as you are free') + '.'
+                    : 'Away on ' + (r.kind_label || 'an errand') + (r.zone ? ' in ' + r.zone : '') + '; back in ' + errandLeft(left) + '.';
+                card.appendChild(el('div', 'cmp-line', line));
+                card.appendChild(button('Call back', 'errand recall #' + r.id, 'Bring them home now, with nothing to show for it'));
+            } else if (r.state === 'ready') {
+                if (here && options.length) {
+                    const pick = errandPick[r.id] || (errandPick[r.id] = { kind: options[0].kind, length: options[0].lengths[0].length });
+                    const row = el('div', 'cmp-err-pick');
+                    row.appendChild(errandSelect('Errand for ' + r.name, options.map(o => ({ value: o.kind, label: o.label })), pick.kind, v => { pick.kind = v; updateErrands(); }));
+                    const chosen = options.find(o => o.kind === pick.kind) || options[0];
+                    row.appendChild(errandSelect('Length for ' + r.name, chosen.lengths.map(l => ({ value: l.length, label: l.label })), pick.length, v => { pick.length = v; }));
+                    // The command is built when clicked, so a length picked
+                    // after the card was drawn is the one sent.
+                    const go = el('button', 'cmp-btn', 'Send');
+                    go.type = 'button';
+                    go.setAttribute('data-focus', 'btn|Send|' + r.id);
+                    go.title = 'Send ' + r.name + ' away from here';
+                    go.addEventListener('click', () => send('errand send #' + r.id + ' ' + pick.kind + ' ' + pick.length));
+                    row.appendChild(go);
+                    card.appendChild(row);
+                    if (chosen.blurb) { card.appendChild(el('div', 'cmp-note', 'Goes ' + chosen.blurb + '.')); }
+                } else {
+                    card.appendChild(el('div', 'cmp-note', 'Free to send, from an inn.'));
+                }
+            } else {
+                card.appendChild(el('div', 'cmp-note', r.why || 'Not free right now.'));
+            }
+            pad.appendChild(card);
+        });
+        const recent = Array.isArray(data.recent) ? data.recent : [];
+        if (recent.length) {
+            pad.appendChild(el('div', 'cmp-line', 'Lately:'));
+            recent.forEach(t => pad.appendChild(el('div', 'cmp-note', t)));
+        }
+        pad.appendChild(el('div', 'cmp-note', 'An errand runs in real time, so it carries on while you are away and ends when its time is up: the companion comes home with modest gold, a small find, word of a lair or a wound. Only those out of the formation can go (help errands).'));
+        if (anyAway && !errandTimer) {
+            errandTimer = setInterval(updateErrands, 30000);
+        } else if (!anyAway && errandTimer) {
+            clearInterval(errandTimer);
+            errandTimer = null;
+        }
+    }
+
+    function updateErrands() {
+        const panel = document.getElementById('company-errands');
+        if (!panel) { return; }
+        keepFocus(panel, () => buildErrands(panel));
+    }
+
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Party'],
@@ -1912,6 +2042,13 @@
                 townsfolk = body && typeof body === 'object' ? body : null;
                 win.open();
                 if (win.isOpen()) { updateChronicle(); }
+                return;
+            }
+            if (namespace === 'Company.Errands') {
+                errandData = body && typeof body === 'object' ? body : null;
+                errandClock = errandData && Number(errandData.now) ? Number(errandData.now) - Math.floor(Date.now() / 1000) : 0;
+                win.open();
+                if (win.isOpen()) { updateErrands(); }
                 return;
             }
             if (namespace === 'Company.Bonds') {

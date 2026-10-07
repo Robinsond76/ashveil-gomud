@@ -4,6 +4,7 @@ package company
 import (
 	"errors"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/errands"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"slices"
 	"strings"
@@ -86,6 +87,10 @@ type Companion struct {
 	// Opinions is what it remembers saying about the leader's choices
 	// (Phase 64). Nil until it has said anything.
 	Opinions *OpinionMemory `yaml:"opinions,omitempty"`
+	// Errand is set while the companion is away on an errand (Phase 70):
+	// off the map until it is due and the leader is free, its State the
+	// snapshot taken as it left.
+	Errand *errands.Errand `yaml:"errand,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -245,6 +250,10 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		}
 		if c.Opinions != nil {
 			record.Companions[i].Opinions = c.Opinions.Clone()
+		}
+		if c.Errand != nil {
+			errand := *c.Errand
+			record.Companions[i].Errand = &errand
 		}
 		record.Companions[i].Skills = cloneRanks(c.Skills)
 		record.Companions[i].GrantedSkills = cloneRanks(c.GrantedSkills)
@@ -525,6 +534,9 @@ func (r *Registry) PlaceMember(leaderUserID int, key MemberKey, row, col int) er
 	if record.isDead(key) {
 		return ErrMemberDead
 	}
+	if record.isAway(key) {
+		return ErrMemberAway
+	}
 	if err := record.Formation.Place(key, row, col); err != nil {
 		return err
 	}
@@ -544,6 +556,9 @@ func (r *Registry) SwapMembers(leaderUserID int, a, b MemberKey) error {
 	}
 	if record.isDead(a) || record.isDead(b) {
 		return ErrMemberDead
+	}
+	if record.isAway(a) || record.isAway(b) {
+		return ErrMemberAway
 	}
 	if err := record.Formation.Swap(a, b); err != nil {
 		return err

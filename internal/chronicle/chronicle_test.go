@@ -183,3 +183,16 @@ func TestAwakenedDeedHasProseWordsAndObservers(t *testing.T) {
 	Record(7, Entry{Kind: "nonsense"})
 	assert.Len(t, seen, 1, "an invalid deed is not observed")
 }
+
+// Phase 70: an errand deed reads as a sentence and answers to its filter words.
+func TestErrandDeedProseAndWords(t *testing.T) {
+	e := Entry{Kind: Errand, Members: []string{"Ysolde"}, Subject: "a hunt", Place: "Brindle Downs", Detail: "with 45 gold"}
+	assert.Equal(t, "Ysolde came back from a hunt at Brindle Downs with 45 gold.", Prose(e))
+	assert.Equal(t, "Ysolde came back from an errand.", Prose(Entry{Kind: Errand, Members: []string{"Ysolde"}}))
+	for _, w := range []string{"errand", "errands"} {
+		k, ok := KindByWord(w)
+		assert.True(t, ok, w)
+		assert.Equal(t, Errand, k)
+	}
+	assert.True(t, Errand.Valid())
+}

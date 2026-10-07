@@ -235,6 +235,8 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	// Phase 33h3: separate strays, then count the separated home.
 	m.sweepStrays()
 	m.tickSeparations()
+	// Phase 70: bring home the errands that are due.
+	m.tickErrands()
 	_, every := m.alignmentConfig()
 	if m.registry.DriftIn <= 0 || m.registry.DriftIn > every {
 		m.registry.DriftIn = every

@@ -155,7 +155,7 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds","Errands"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds, Errands');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
@@ -1439,6 +1439,57 @@ await page.setViewportSize({ width: 1280, height: 900 });
   if (outdir) { await page.locator('#company-bonds').screenshot({ path: path.join(outdir, '65-bonds.png') }); }
   await page.evaluate(() => window.gmcp('Company.Bonds', { pairs: [], members: [] }));
   check((await bndText()).includes('Bonds form between companions'), 'Bonds: an empty company says so');
+}
+
+// Phase 70: the Errands tab.
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const nowSec = Math.floor(Date.now() / 1000);
+  const lengths = [{ length: 'short', label: 'half an hour', seconds: 1800 }, { length: 'medium', label: 'two hours', seconds: 7200 }, { length: 'long', label: 'eight hours', seconds: 28800 }];
+  const err = {
+    now: nowSec, here: true, where: 'You can send companions from here.', zone: 'Brindle Downs', band: '7-9',
+    rows: [
+      { id: 1, name: 'Oswin', level: 8, state: 'busy', why: 'Oswin stands in your formation.' },
+      { id: 2, name: xss, level: 8, state: 'away', kind: 'hunt', kind_label: 'a hunt', length: 'medium', zone: 'Brindle Downs', returns_at: nowSec + 5400, remaining: 5400 },
+      { id: 3, name: 'Tamsin', level: 7, state: 'ready' },
+      { id: 4, name: 'Ysolde', level: 8, state: 'away', kind: 'scout', kind_label: 'a scouting job', returns_at: nowSec - 30, due: true, waiting: 'waiting for you to be out of any fight, journey or rest' },
+    ],
+    options: [
+      { kind: 'escort', label: 'an escort job', blurb: 'down the road: steady pay, and no danger', lengths },
+      { kind: 'hunt', label: 'a hunt', blurb: 'off the road: better spoils, and a wound\'s risk', lengths },
+    ],
+    recent: ['Tamsin came back from an escort job at Brindle Downs with 32 gold.'],
+  };
+  const errText = () => page.evaluate(() => document.getElementById('company-errands').textContent);
+  await page.getByRole('tab', { name: 'Errands', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Errands', c), err);
+  check(await page.locator('#company-errands .cmp-err-card').count() === 4, 'Errands: a card for each companion');
+  check((await errText()).includes('Away on a hunt in Brindle Downs; back in 2 hours.') || (await errText()).includes('back in 90 minutes'), 'Errands: an away companion shows its countdown');
+  check((await errText()).includes('due back, waiting for you to be out of any fight'), 'Errands: a due errand says what it waits for');
+  check((await errText()).includes('Oswin stands in your formation.'), 'Errands: a companion who cannot go says why');
+  check((await errText()).includes('Tamsin came back from an escort job'), 'Errands: the latest deeds are shown');
+  check(await page.evaluate(() => window.__xss === undefined), 'Errands: a name is text, not markup');
+  const sentErr = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  let cmds = await sentErr(() => page.locator('#company-errands .cmp-err-card').nth(2).getByRole('button', { name: 'Send' }).click());
+  check(JSON.stringify(cmds) === JSON.stringify(['errand send #3 escort short']), 'Errands: Send sends the chosen errand by number (' + JSON.stringify(cmds) + ')');
+  await page.locator('#company-errands .cmp-err-card').nth(2).locator('select').first().selectOption('hunt');
+  await page.locator('#company-errands .cmp-err-card').nth(2).locator('select').nth(1).selectOption('long');
+  cmds = await sentErr(() => page.locator('#company-errands .cmp-err-card').nth(2).getByRole('button', { name: 'Send' }).click());
+  check(JSON.stringify(cmds) === JSON.stringify(['errand send #3 hunt long']), 'Errands: the picked job and length are sent (' + JSON.stringify(cmds) + ')');
+  await page.evaluate(c => window.gmcp('Company.Errands', c), err);
+  check(await page.locator('#company-errands .cmp-err-card').nth(2).locator('select').first().inputValue() === 'hunt', 'Errands: a pick survives a refresh');
+  cmds = await sentErr(() => page.locator('#company-errands .cmp-err-card').nth(1).getByRole('button', { name: 'Call back' }).click());
+  check(JSON.stringify(cmds) === JSON.stringify(['errand recall #2']), 'Errands: Call back sends the recall');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-errands'); return p.scrollWidth <= p.clientWidth + 1; }), 'Errands fit a phone');
+  if (outdir) { await page.locator('#company-errands').screenshot({ path: path.join(outdir, '70-errands-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-errands').screenshot({ path: path.join(outdir, '70-errands.png') }); }
+  await page.evaluate(c => window.gmcp('Company.Errands', c), { ...err, here: false, where: 'Companions can be sent from an inn. Find one in a town.' });
+  check((await errText()).includes('Free to send, from an inn.'), 'Errands: away from an inn a free companion cannot be sent');
+  check(await page.locator('#company-errands').getByRole('button', { name: 'Send' }).count() === 0, 'Errands: no Send button away from an inn');
+  await page.evaluate(() => window.gmcp('Company.Errands', { rows: [], options: [], recent: [] }));
+  check((await errText()).includes('Recruit one first'), 'Errands: an empty company says so');
 }
 
 await browser.close();

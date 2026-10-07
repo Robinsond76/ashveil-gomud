@@ -215,6 +215,13 @@ other when one is hurt; a guardian will not guard a rival, and a rivalry
 pushed to its end sends one away. <ansi fg="command">bonds</ansi> reads them, and the Company window has
 a Bonds tab (<ansi fg="command">help bonds</ansi>).
 
+<ansi fg="yellow-bold">Errands</ansi>
+
+A companion sitting out the formation can be sent away from an inn on an
+errand of half an hour to eight hours, and comes home with modest gold, a
+small find, word of a lair, or a wound. <ansi fg="command">errands</ansi> shows who is away, and the
+Company window has an Errands tab (<ansi fg="command">help errands</ansi>).
+
 <ansi fg="yellow-bold">The chronicle</ansi>
 
 Your company keeps a record of its deeds: who joined, left or fell, the

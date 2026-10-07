@@ -74,7 +74,7 @@ func (m *CompanyModule) constructs(leaderUserID int) []repairNeed {
 	}
 	var out []repairNeed
 	for _, c := range record.Companions {
-		if !bound(c) || c.Dead() || c.Separated() {
+		if !bound(c) || c.Dead() || c.Away() {
 			continue
 		}
 		instanceID, tracked := m.instance(leaderUserID, c.ID)

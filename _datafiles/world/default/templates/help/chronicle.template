@@ -30,6 +30,7 @@ with a button to filter by kind. It fits a phone as it does the desktop.
   promotions   someone took a new class (<ansi fg="command">help classes</ansi>)
   stories      a scene on the road ended, and how (<ansi fg="command">help events</ansi>)
   awakenings   a relic woke a new power while it was worn (<ansi fg="command">help awakenings</ansi>)
+  errands      a companion came home from an errand (<ansi fg="command">help errands</ansi>)
 
 Each deed names who was involved, where it happened and how long ago.
 

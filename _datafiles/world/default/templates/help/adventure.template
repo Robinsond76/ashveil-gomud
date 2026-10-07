@@ -36,6 +36,7 @@ a band. Every part has its own page:
   <ansi fg="command">help townsfolk</ansi>     towns that remember those deeds
   <ansi fg="command">help opinions</ansi>      what your companions think of your choices
   <ansi fg="command">help bonds</ansi>         how your companions feel about each other
+  <ansi fg="command">help errands</ansi>       sending a companion who is sitting out on an errand
 
 <ansi fg="yellow-bold">Rest</ansi>
   <ansi fg="command">help camp</ansi>          making camp and resting in the wild
