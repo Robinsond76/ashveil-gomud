@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,6 +78,20 @@ func forceCrits(t *testing.T) {
 	gameplay := configs.GetGamePlayConfig()
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 100, 100
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+}
+
+// noCrits makes every critical roll miss. alwaysLand zeroes only the base
+// crit chance; a class (a Deadeye's Eagle's eye) and an exposed foe add to it,
+// so a test that must not see a critical hit pins the percentile roll to its
+// top, which is a miss below a chance of 100. Other rolls stay random.
+func noCrits(t *testing.T) {
+	t.Helper()
+	t.Cleanup(util.UseRandForTest(func(n int) int {
+		if n == 100 {
+			return 99
+		}
+		return rand.Intn(n)
+	}))
 }
 
 // noCounters makes every counter roll fail, so a test about chants is not

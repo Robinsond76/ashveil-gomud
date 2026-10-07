@@ -425,13 +425,21 @@ func (b *brawl) livingBandits() []*mobs.Mob {
 // and the invariants are checked over all of it. fightToTheEnd renews it
 // every round.
 func (b *brawl) toughen() {
-	b.aria.Character.HealthMax.Value = 1000
-	b.aria.Character.Health = 1000
+	hardTo(b.aria.Character, 1000)
 	for id := 1; id <= 4; id++ {
-		mob := b.companion(id)
-		mob.Character.HealthMax.Value = 1000
-		mob.Character.Health = 1000
+		hardTo(&b.companion(id).Character, 1000)
 	}
+}
+
+// hardTo makes a fighter hard to kill: full health of hp, and a max that a
+// stat recalculation keeps. A buff or status change (a knockdown ending)
+// recalculates a character's stats, and HealthMax.Value is rebuilt from
+// Training plus Mods, so setting Value alone let a foe drop back to its
+// natural 48 health mid-fight and die before the test's own scenario ran out.
+func hardTo(c *characters.Character, hp int) {
+	c.HealthMax.Training = hp - c.HealthMax.Mods
+	c.HealthMax.Value, c.HealthMax.ValueAdj = hp, hp
+	c.Health = hp
 }
 
 // fightToTheEnd runs rounds until no bandit is standing, checking every
@@ -654,5 +662,24 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		b.toughen()
 		assert.NotContains(t, b.fight(), "bandit fence turns toward")
+	}
+}
+
+func TestHardenedFightersKeepTheirHealthThroughARecalculation(t *testing.T) {
+	// A status ending recalculates stats; a bandit that fell back to its natural
+	// health mid-fight made the Warlord's Relentless test fail about 1 run in 120.
+	b := newBrawl(t)
+	b.shapeBandits()
+	b.hardenBandits()
+	b.toughen()
+	fighters := []*characters.Character{b.aria.Character, &b.companion(1).Character}
+	for _, m := range b.livingBandits() {
+		fighters = append(fighters, &m.Character)
+	}
+	require.GreaterOrEqual(t, len(fighters), 3)
+	for _, c := range fighters {
+		c.RecalculateStats()
+		assert.Equal(t, 1000, c.HealthMax.Value, "%s is still hard to kill", c.Name)
+		assert.Equal(t, 1000, c.Health)
 	}
 }
