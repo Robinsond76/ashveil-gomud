@@ -37,3 +37,7 @@ Phase 30f templates may opt into `leap` and `sweep`; both replace normal enemy m
 ## Ashveil Phase 38a: bosses
 
 `boss: true` on a mob template marks a boss: the Witch's hexes (`internal/hexes`) resist it 25 points more and hold it half as long. Nothing else reads it yet.
+
+## Ashveil: idle chatter limits
+
+Says, saytos, shouts and emotes a mob queues during its idle turn (`BeginIdle`/`EndIdle`, set by `internal/hooks` `HandleIdleMobs`) pass `idleChatterAllowed` (`chatter.go`): one decision per turn from the cooldown (`GamePlay.MobChatterCooldownRounds`) and each listener's memory of the line (`GamePlay.MobChatterMemoryRounds`). Commands queued outside an idle turn are never held back, so don't wrap replies, combat or conversation steps in an idle turn.
