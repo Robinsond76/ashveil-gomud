@@ -51,3 +51,19 @@ mechanics.
 
 `help stances`, `help orders`, `help campduties`, `help events` and
 `help townsfolk` say what changed.
+
+## Review (2026-10-07)
+
+Independent review found no defects. Checked and kept:
+
+- **Scene window.** A second push redraws the same page (`show` is
+  idempotent), and `repush` sends nothing when no page waits, so an answered
+  or abandoned scene never reopens.
+- **Stance menu vs `stance`.** The menu offers what fits; the command still
+  accepts any stance with its "does nothing until" note, so a player can set
+  one before changing gear. Kept on purpose.
+- **Same-named members.** `#id` (or the bare number) is how `strategy` and
+  `orders` pick a companion; camp refuses an ambiguous bare name where those
+  take the first match, which is the safer choice for duties.
+- **Phone width.** Added a 360 px check of the stance line and the filtered
+  menu (`scripts/browser/dock-windows-check.mjs`).

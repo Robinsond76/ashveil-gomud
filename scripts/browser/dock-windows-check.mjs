@@ -745,6 +745,14 @@ await page.getByRole('button', { name: 'Orders (1)' }).click();
 menu = await page.evaluate(() => [...document.querySelectorAll('[role=menu] [role=menuitem], [role=menu] button')].map(b => b.textContent));
 check(!menu.includes('Add: Ally below 50%: heal them') && menu.includes('Add: Ally below 25%: heal them'), 'orders: the menu leaves out an order already set (78)');
 if (outdir) { await page.screenshot({ path: path.join(outdir, '78-combat-menus.png') }); }
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.setViewportSize({ width: 360, height: 800 });
+check(await page.evaluate(() => { const p = document.getElementById('combat-window'); const l = p.querySelector('.cbt-stance-line'); return p.scrollWidth <= p.clientWidth + 1 && !!l && l.getBoundingClientRect().right <= p.getBoundingClientRect().right + 1; }), 'stance: the needs line fits a phone (78 review)');
+await page.getByRole('button', { name: 'Stance: Heavy blows' }).click();
+check(await page.evaluate(() => { const m = [...document.querySelectorAll('body > div')].pop().getBoundingClientRect(); return m.left >= 0 && m.right <= window.innerWidth + 1; }), 'stance: the filtered menu fits a phone (78 review)');
+if (outdir) { await page.screenshot({ path: path.join(outdir, '78-combat-menus-phone.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
 
 await page.keyboard.press('Escape');
 await page.mouse.click(5, 5);
