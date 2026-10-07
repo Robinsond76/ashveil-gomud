@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -399,4 +401,50 @@ func TestBossKillDropsItsMasterworkInstrument(t *testing.T) {
 	_, err = Suicide("", foe, w2.room)
 	require.NoError(t, err)
 	assert.False(t, find(w2), "an ordinary foe drops none")
+}
+
+// Phase 63: a boss kill and its relic are written in each company's
+// chronicle, by the real death path; an ordinary foe and a mercy kill are
+// not boss deeds.
+func TestBossKillAndRelicAreWrittenInTheChronicle(t *testing.T) {
+	mem := chronicle.NewMemory()
+	chronicle.SetProvider(mem)
+	t.Cleanup(func() { chronicle.SetProvider(nil) })
+	relicSpecs(t)
+	w := newDropWorld(t, 2, encounters.Band{Low: 5, High: 7})
+	boss := w.foe(relicBossMob, func(m *mobs.Mob) { m.Boss, m.EncounterBoss, m.Character.Level = true, true, 7 })
+	t.Cleanup(func() { mobs.RemoveTestInstance(boss.InstanceId) })
+	_, err := Suicide("", boss, w.room)
+	require.NoError(t, err)
+	for _, u := range w.users {
+		log := mem.Log(u.UserId)
+		require.Equal(t, 1, log.Tally[chronicle.Boss], "each company that fought writes the kill")
+		bossDeed := log.Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Boss}})[0]
+		assert.Equal(t, "drop foe", bossDeed.Subject)
+		assert.Equal(t, "mob:"+strconv.Itoa(relicBossMob), bossDeed.Ref)
+		relic := log.Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Relic}})
+		require.Len(t, relic, 1, "and its own relic roll")
+		assert.Equal(t, "drop foe", relic[0].Detail, "the relic names the boss it came from")
+		assert.True(t, strings.HasPrefix(relic[0].Ref, "item:"))
+	}
+}
+
+func TestOrdinaryFoeAndMercyKillWriteNoBossDeed(t *testing.T) {
+	mem := chronicle.NewMemory()
+	chronicle.SetProvider(mem)
+	t.Cleanup(func() { chronicle.SetProvider(nil) })
+	relicSpecs(t)
+	w := newDropWorld(t, 1, encounters.Band{Low: 5, High: 7})
+	foe := w.foe(relicBossMob, nil)
+	t.Cleanup(func() { mobs.RemoveTestInstance(foe.InstanceId) })
+	_, err := Suicide("", foe, w.room)
+	require.NoError(t, err)
+	assert.Zero(t, chronicle.Total(w.users[0].UserId, chronicle.Boss), "an ordinary foe is not a boss deed")
+	assert.Zero(t, chronicle.Total(w.users[0].UserId, chronicle.Relic))
+
+	boss := w.foe(relicBossMob+1, func(m *mobs.Mob) { m.Boss, m.EncounterID = true, "" })
+	t.Cleanup(func() { mobs.RemoveTestInstance(boss.InstanceId) })
+	_, err = Suicide("mercy", boss, w.room)
+	require.NoError(t, err)
+	assert.Zero(t, chronicle.Total(w.users[0].UserId, chronicle.Boss), "an execution is written by the mercy answer, not as a kill")
 }

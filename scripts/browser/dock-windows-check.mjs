@@ -155,7 +155,7 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp"]', 'Company sub-tabs: Status, Inventory, Camp');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
@@ -1243,6 +1243,39 @@ for (const name of ['Overview', 'Gear', 'Skills']) {
   check(await page.evaluate(() => [...document.querySelectorAll('#character-window .cw-tab-panel.active')].every(p => p.scrollWidth <= p.clientWidth + 1)), name + ' fits a 360px viewport (57)');
 }
 await page.setViewportSize({ width: 1280, height: 900 });
+
+// --- Phase 63: the Chronicle sub-tab ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const chronicle = {
+    total: 9,
+    tally: { joined: 2, boss: 1, relic: 1, fell: 1 },
+    entries: [
+      { seq: 5, at: 1, ago: '2 hours ago', kind: 'relic', label: 'Relics', text: 'The company took the Pale Crown from the Hollow King at the Throne Room.' },
+      { seq: 4, at: 1, ago: '2 hours ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King at the Throne Room.' },
+      { seq: 3, at: 1, ago: '1 day ago', kind: 'fell', label: 'Fallen', text: xss + ' fell to a wolf.' },
+      { seq: 2, at: 1, ago: '3 days ago', kind: 'joined', label: 'Joined', text: 'Oswin joined the company at the Waymark Inn.' },
+    ],
+  };
+  const chron = () => page.evaluate(() => document.getElementById('company-chronicle').textContent);
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), chronicle);
+  check((await chron()).includes('9 deeds recorded') && (await chron()).includes('The company slew the Hollow King'), 'Chronicle: the deeds in prose');
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: one row a deed');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-chronicle img')), 'Chronicle: server text is text, never markup');
+  await page.locator('#company-chronicle').getByRole('button', { name: 'Bosses' }).click();
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 1, 'Chronicle: the filter narrows to a kind');
+  check(await page.locator('#company-chronicle').getByRole('button', { name: 'Bosses' }).getAttribute('aria-pressed') === 'true', 'Chronicle: the filter button shows it is pressed');
+  await page.locator('#company-chronicle').getByRole('button', { name: 'All', exact: true }).click();
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: All shows every deed again');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-chronicle'); return p.scrollWidth <= p.clientWidth + 1; }), 'Chronicle fits a phone');
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '63-chronicle-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '63-chronicle.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Chronicle', { total: 0, tally: {}, entries: [] }));
+  check((await chron()).includes('Nothing is written yet'), 'Chronicle: an empty record says so');
+}
 
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }

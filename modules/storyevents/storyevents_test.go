@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/storyevents"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -751,4 +752,29 @@ func TestALoyaltyLineOnlyWhenLoyaltyMoved(t *testing.T) {
 	r.w.user.Character.RoomId = 11
 	r.choose(1)
 	assert.Contains(t, strings.Join(r.w.sent, "\n"), "frowns")
+}
+
+// Phase 63: a scene's end is written in the company's chronicle, once, with
+// the choice that ended it and who took it; a page that only leads on is
+// not a deed yet.
+func TestAScenesEndIsWrittenInTheChronicle(t *testing.T) {
+	mem := chronicle.NewMemory()
+	chronicle.SetProvider(mem)
+	t.Cleanup(func() { chronicle.SetProvider(nil) })
+
+	r := newRig(t)
+	require.True(t, r.enter(10))
+	r.choose(2) // leads on to the ledge
+	assert.Empty(t, mem.Log(7).Entries, "a page that leads on is not a deed")
+	r.choose(1) // search the pack: on to the top
+	assert.Empty(t, mem.Log(7).Entries, "still leading on")
+	r.choose(1) // done
+	require.Nil(t, r.pending())
+	entries := mem.Log(7).Entries
+	require.Len(t, entries, 1)
+	assert.Equal(t, chronicle.Story, entries[0].Kind)
+	assert.Equal(t, "The Cliff", entries[0].Subject)
+	assert.Equal(t, "event:cliff", entries[0].Ref)
+	assert.NotEmpty(t, entries[0].Detail, "the choice that ended it")
+	assert.Contains(t, chronicle.Prose(entries[0]), "At The Cliff,")
 }

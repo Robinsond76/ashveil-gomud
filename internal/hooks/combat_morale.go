@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -530,6 +531,12 @@ func resolveMercy(uid int, q *mercyQueue) error {
 				mobcommands.Suicide("mercy", m, r)
 			}
 		}
+		// Phase 63: the answer is the company's deed, whichever way it went.
+		deed := chronicle.Executed
+		if q.spare {
+			deed = chronicle.Spared
+		}
+		chronicle.Record(uid, chronicle.Entry{Kind: deed, Subject: m.Character.Name, Ref: fmt.Sprintf("mob:%d", m.MobId)})
 		combatstream.Default().Emit(combatstream.Event{Kind: combatstream.Mercy, FightID: q.fight, Source: userRef(u), Target: mobRef(m), RoomId: q.room, Outcome: outcome})
 	}
 	for _, line := range q.lines {

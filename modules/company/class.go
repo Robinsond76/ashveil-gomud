@@ -15,6 +15,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
@@ -590,6 +591,11 @@ func (m *CompanyModule) promote(user *users.UserRecord, room *rooms.Room, rest [
 		mudlog.Warn("company: promote", "leader", user.UserId, "error", cerr)
 		return "Your records couldn't be saved; nothing changed. Please try again."
 	}
+	promoted := s.name
+	if s.player {
+		promoted = user.Character.Name
+	}
+	chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Promoted, Members: []string{promoted}, Subject: chosen.Name, Ref: "class:" + chosen.ID})
 	text := fmt.Sprintf("%s %s now a %s.", s.label(), s.are(), chosen.Name)
 	if s.player {
 		text = fmt.Sprintf("You are now a %s.", chosen.Name)

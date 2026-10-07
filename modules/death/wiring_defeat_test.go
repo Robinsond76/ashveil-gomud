@@ -2,6 +2,7 @@ package death
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"os"
 	"path/filepath"
 	"strings"
@@ -565,4 +566,21 @@ func TestDefeatKillerKindChoosesTheScenario(t *testing.T) {
 	assert.Equal(t, map[domain.ScenarioKind]bool{domain.Rescued: true, domain.LeftForDead: true}, kinds(wolfRace, wolfGroups))
 	assert.Equal(t, map[domain.ScenarioKind]bool{domain.Rescued: true, domain.Captured: true, domain.Robbed: true}, kinds(brigandRace, brigandGroups))
 	assert.Equal(t, map[domain.ScenarioKind]bool{domain.Rescued: true}, kinds("", nil), "an unknown killer only rescues")
+}
+
+// Phase 63: a defeat the company wakes from is written in its chronicle,
+// by the real death path, with what became of it.
+func TestDefeatScenarioIsWrittenInTheChronicle(t *testing.T) {
+	mem := chronicle.NewMemory()
+	chronicle.SetProvider(mem)
+	t.Cleanup(func() { chronicle.SetProvider(nil) })
+	env := newDefeatEnv(t, 86)
+	forceScenario(t, "brigand-robbery")
+	env.foe(86)
+	env.run("suicide", "")
+	got := mem.Log(env.user.UserId).Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Defeated}})
+	require.Len(t, got, 1)
+	assert.Equal(t, "scenario:brigand-robbery", got[0].Ref)
+	assert.Equal(t, "They were robbed of what they carried.", got[0].Detail)
+	assert.Contains(t, chronicle.Prose(got[0]), "The company was beaten")
 }

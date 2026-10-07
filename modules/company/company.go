@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
@@ -535,6 +536,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		}
 	}
 	m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Joined, Members: []string{nameOf(companion, "A companion")}, Ref: fmt.Sprintf("mob:%d", templateID)})
 	return companion, nil
 }
 
@@ -678,6 +680,7 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if err != nil {
 		return "", err
 	}
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: []string{name}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
 	text := fmt.Sprintf("Companion dismissed: %s (#%d).", name, companion.ID)
 	if line := gearReturnLine(leaderUserID, name, returned, gold); line != "" {
 		text += " " + line
@@ -689,7 +692,13 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 // Phase 21a desertion): survival state, the record, and the live mob. A
 // failed save restores record, the pre-removal record, and survival state.
 func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, companion domain.Companion) error {
-	return m.dropCompanion(leaderUserID, record, companion, nil)
+	if err := m.dropCompanion(leaderUserID, record, companion, nil); err != nil {
+		return err
+	}
+	// Phase 63: every caller is a desertion (loyalty ran out); dismissal
+	// has its own path and its own deed.
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Deserted, Members: []string{nameOf(companion, "A companion")}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
+	return nil
 }
 
 // dropCompanion is removeCompanion; with lost (Phase 25b expiry), the
@@ -826,6 +835,11 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	if leader != nil && (len(returned) > 0 || gold > 0) {
 		m.finishGearReturn(leader)
 	}
+	var names []string
+	for _, companion := range record.Companions {
+		names = append(names, nameOf(companion, "A companion"))
+	}
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: names})
 	text := fmt.Sprintf("Dismissed %d companion(s).", count)
 	if line := gearReturnLine(leaderUserID, "The company", returned, gold); line != "" {
 		text += " " + line

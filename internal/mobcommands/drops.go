@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -170,5 +171,7 @@ func relicDrop(mob *mobs.Mob, uid int, label string, src loot.Source) ([]items.I
 	if err != nil || itm == nil {
 		return nil, err
 	}
+	// Phase 63: the find is the company's deed.
+	chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Relic, Subject: itm.DisplayName(), Detail: label, Ref: fmt.Sprintf("item:%d", itm.ItemId)})
 	return []items.Item{*itm}, nil
 }

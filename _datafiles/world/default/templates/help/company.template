@@ -200,3 +200,10 @@ Browser Company Status shows owned members' active effects and wounds,
 with duration and mechanical meaning, apart from persistent bonuses.
 Away, fallen and unavailable conditions are labelled explicitly.
 See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help wounds</ansi>.
+
+<ansi fg="yellow-bold">The chronicle</ansi>
+
+Your company keeps a record of its deeds: who joined, left or fell, the
+bosses it killed, the relics it found, mercy and executions, promotions,
+defeats and how scenes on the road ended. <ansi fg="command">chronicle</ansi> reads it, and the web
+client's Company window has a Chronicle tab (<ansi fg="command">help chronicle</ansi>).

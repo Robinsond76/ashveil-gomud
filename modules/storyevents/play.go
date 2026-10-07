@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/storyevents"
 )
@@ -93,6 +94,9 @@ func (m *Module) choose(userID, n int, page string) {
 		m.show(userID, ev, next, lines)
 		return
 	}
+	// Phase 63: a scene's end is a deed, with the answer that ended it and
+	// whoever took it.
+	chronicle.Record(userID, chronicle.Entry{Kind: chronicle.Story, Members: []string{actor.Name}, Subject: ev.Title, Detail: c.Label, Ref: "event:" + ev.ID})
 	m.finish(userID, ev, lines)
 }
 

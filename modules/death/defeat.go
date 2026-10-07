@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	domain "github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -176,6 +177,8 @@ func defaultText(sc domain.Scenario, where string) string {
 func (m *DeathModule) applyScenario(user *users.UserRecord, sc domain.Scenario, room *rooms.Room) []string {
 	c := user.Character
 	var lines []string
+	// Phase 63: a defeat the company woke from is a deed of the chronicle.
+	chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Defeated, Detail: defeatPhrase(sc.Kind), Ref: "scenario:" + sc.ID, Place: roomTitleOf(room)})
 	switch sc.Kind {
 	case domain.Rescued:
 		m.wearDown(user.UserId, sc)
@@ -604,4 +607,26 @@ func parseScenarios(raw any) []domain.Scenario {
 		out = append(out, sc)
 	}
 	return out
+}
+
+// defeatPhrase is what the chronicle says became of a beaten company.
+func defeatPhrase(k domain.ScenarioKind) string {
+	switch k {
+	case domain.Rescued:
+		return "A traveller carried them to safety."
+	case domain.Captured:
+		return "They woke in captivity."
+	case domain.LeftForDead:
+		return "They were left for dead."
+	case domain.Robbed:
+		return "They were robbed of what they carried."
+	}
+	return ""
+}
+
+func roomTitleOf(r *rooms.Room) string {
+	if r == nil {
+		return ""
+	}
+	return r.Title
 }
