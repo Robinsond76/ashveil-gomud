@@ -542,7 +542,7 @@ func GigWindowText() string {
 }
 
 // GigPay is the gold a gig earns: the zone band's top level plus two, times
-// the families' summed strength, halved; a three-strong ensemble earns a
+// the families' summed strength, times one and a half; a three-strong ensemble earns a
 // quarter more and a full one half again. A weak pair of players earns
 // pennies; a full ensemble in a high zone earns about an hour's hunting.
 func GigPay(bandHigh int, song Song) int {
@@ -553,7 +553,9 @@ func GigPay(bandHigh int, song Song) int {
 	for _, p := range song.Plays {
 		sum += p.Strength
 	}
-	pay := (bandHigh + 2) * sum / 2
+	// Review: x3/2 rather than /2, so a top gig at a band is worth about an
+	// hour of that band's encounter caches (CacheGold), as the spec asks.
+	pay := (bandHigh + 2) * sum * 3 / 2
 	switch {
 	case song.Full():
 		pay = pay * 3 / 2

@@ -178,6 +178,22 @@ func TestGigPayScalesWithBandAndStrengthAndEnsemble(t *testing.T) {
 	assert.Greater(t, GigPay(5, ens), (5+2)*ens.Strength(FamilyStrings)*3/2, "ensemble bonus")
 }
 
+// Review tuning: a top gig (full ensemble, masterworks at Music 4, so
+// strengths 8, 8, 8 and voice 5) is worth about an hour's hunting at its
+// band: 10 to 20 average encounter caches (loot.CacheGold averages five
+// gold a level), and a beginner pair earns pennies.
+func TestGigPayTuning(t *testing.T) {
+	top := PlanSong([]Player{player("a", FamilyStrings, 4, InstrumentMasterwork), player("b", FamilyWinds, 4, InstrumentMasterwork), player("c", FamilyDrums, 4, InstrumentMasterwork), player("d", FamilyVoice, 4, 0)}, false)
+	assert.True(t, top.Full())
+	for _, band := range []int{5, 15, 30} {
+		caches := GigPay(band, top) / (band * 5)
+		assert.GreaterOrEqual(t, caches, 10, "band %d", band)
+		assert.LessOrEqual(t, caches, 20, "band %d", band)
+	}
+	beginners := PlanSong([]Player{player("a", FamilyStrings, 1, InstrumentCrude), player("b", FamilyVoice, 1, 0)}, false)
+	assert.Less(t, GigPay(5, beginners), 5*5*2, "a weak pair earns under two caches")
+}
+
 func TestGigRefusalLimits(t *testing.T) {
 	now := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)
 	song := twoFamilies()
