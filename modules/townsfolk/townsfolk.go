@@ -34,7 +34,9 @@ const (
 	// maxHeard is how many told deeds a player's memory keeps: the chronicle
 	// keeps 300, so an older deed is gone before its memory is.
 	maxHeard = chronicle.MaxEntries
-	// maxTold is how many recent tellings the views show.
+	// maxTold is how many recent tellings the views show. It is also how
+	// far back "heard lately" looks: a background line the listener heard
+	// within this many tellings no longer beats plain lines.
 	maxTold = 12
 	// queryLimit is how many of the newest deeds a choice reads.
 	queryLimit = 80

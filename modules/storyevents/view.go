@@ -82,7 +82,7 @@ func (m *Module) choiceViews(page storyevents.Page, members []storyevents.Facts,
 			}
 		case c.Require.MemberSet():
 			v.Who = who.Name
-			if name, ok := lifestory.TagName(c.Require.Tag); ok {
+			if name, ok := lifestory.TagName(c.Require.Tag); ok && who.Leader {
 				v.Because = "life story: " + name
 			}
 		}

@@ -16,6 +16,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -382,7 +384,8 @@ func TagName(tag string) (string, bool) {
 			continue
 		}
 		if o, ok := d.Option(stage, id); ok && o.Name != `` {
-			return strings.ToLower(o.Name[:1]) + o.Name[1:], true
+			r, size := utf8.DecodeRuneInString(o.Name)
+			return string(unicode.ToLower(r)) + o.Name[size:], true
 		}
 	}
 	return ``, false

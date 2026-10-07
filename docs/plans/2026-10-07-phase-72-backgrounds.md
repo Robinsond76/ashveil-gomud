@@ -14,9 +14,10 @@ left: story-event choices and town lines can now require a life-story tag.
 - `modules/storyevents/backgrounds.go` registers the tag source
   (`storyevents.RegisterTagSource`). Story events and `townsfolk` both read it
   through `storyevents.TagsFor`.
-- Town lines: a deed line with `member_tag` set now beats a plain line of the
-  same kind (a specific `ref` line still beats both). Before, the two were
-  picked at random, so a background line would often lose to a plain one.
+- Town lines: a deed line with `member_tag` set beats a plain line of the
+  same kind while the listener has not heard it lately (within their last 12
+  tellings); after that it joins the plain pool, so it is not said of every
+  deed of its kind. A specific `ref` line still beats both.
 - Test content only (the world is temporary): one background choice in each
   of the three test scenes (gorge: `upbringing-hunters-get`; deserter:
   `trade-soldier`; shrine: `trade-acolyte`), and two town lines in
@@ -40,10 +41,14 @@ left: story-event choices and town lines can now require a life-story tag.
 4. **`help backgrounds` stays an alias of `help lifestory`** (72a ruling): the
    trades are placeholder data, so a page listing what each opens would go
    stale. The page says what kinds of things a background opens; the choice
-   itself names it in play (`closed: needs you, once a soldier`).
-5. **No web client change.** The story modal already lists a closed choice
-   with its hint and names the member who takes an open one, which is where a
-   player sees their background mattered.
+   itself names it in play (`closed: needs a leader who was a soldier`).
+5. **The choice note names the life story (review).** An open choice a life
+   story opened reads `(Aldous, life story: a soldier)` in the terminal and
+   the web modal (`because` in the `Event` payload), so a player sees their
+   past mattered; a closed one shows its hint. Only the leader's note says
+   "life story". A tag with no hint reads `life story: a soldier`, not the
+   raw tag. The Chronicle tab needs nothing: a background town line names
+   the background in its own words.
 
 ## Acceptance
 
