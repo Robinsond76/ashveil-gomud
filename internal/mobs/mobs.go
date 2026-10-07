@@ -118,6 +118,8 @@ type Mob struct {
 	conversationId  int              // Identifier of conversation currently involved in.
 	lastCommandTurn uint64           // The last turn a command was scheduled for
 	playersAttacked map[int]struct{} // all players this mob has attacked at some point
+	idle            *idleChatter     // set while the mob runs its idle turn (chatter.go)
+	lastChatter     uint64           // round this mob last chattered while idle (chatter.go)
 }
 
 func MobInstanceExists(instanceId int) bool {
@@ -473,6 +475,10 @@ func (m *Mob) command(inputTxt string, order *events.MemberOrder, waitSeconds ..
 	}
 
 	for i, cmd := range strings.Split(inputTxt, `;`) {
+
+		if !m.idleChatterAllowed(cmd) {
+			continue
+		}
 
 		// Update lastCommandTurn to whenever this command is scheduled for
 		m.lastCommandTurn = readyTurn + turnDelay + uint64(i)

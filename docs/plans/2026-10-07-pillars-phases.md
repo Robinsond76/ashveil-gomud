@@ -248,12 +248,14 @@ which creature drops what.
 
 **Why.** Pillars' backgrounds open dialogue options.
 
-**Scope.** A background chosen at character creation (soldier, scholar,
-outlaw, acolyte, labourer, noble), offered to existing characters once.
-Story events (60) and town lines (68) can require one.
+**Scope.** Choosing the background at creation moved to
+[phase 72a](2026-10-07-phase-72a-character-creation.md) (2026-10-07): its
+life story's trade stage is the background. Phase 72 keeps the hooks:
+story events (60) and town lines (68) can require a background, and
+`help backgrounds` lists what each one opens. Depends on 72a, 60, 68.
 
-**Accept.** Creation flow; at least one background choice in each test
-event; `help backgrounds`.
+**Accept.** At least one background choice in each test event; a town
+line that needs one; `help backgrounds` lists what each background opens.
 
 ## 73 Faith creeds
 

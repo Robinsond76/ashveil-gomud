@@ -431,6 +431,16 @@ GamePlay:
   # - MobConverseChance -
   #   Chance in 100 that the mob will attempt to converse when idle.
   MobConverseChance: 3
+  # - MobChatterCooldownRounds -
+  #   Rounds an idle mob waits between says and emotes (and before starting a
+  #   conversation). 60 rounds is about 4 minutes at 4-second rounds.
+  #   Set to 0 for no limit.
+  MobChatterCooldownRounds: 60
+  # - MobChatterMemoryRounds -
+  #   Rounds before a player can hear the same idle line from the same kind of
+  #   mob again; until then the mob stays quiet instead. 900 rounds is about an
+  #   hour. Set to 0 for no limit.
+  MobChatterMemoryRounds: 900
   # - AlignmentDecayRounds -
   #   How many rounds between each alignment decay step toward neutral.
   #   Set to 0 to disable alignment decay entirely.

@@ -29,9 +29,12 @@ type GamePlay struct {
 	// PVP Restrictions
 	PVP GameplayPVP `yaml:"PVP"`
 	// XpScale (difficulty)
-	XPScale              ConfigFloat `yaml:"XPScale"`
-	MobConverseChance    ConfigInt   `yaml:"MobConverseChance"`    // Chance 1-100 of attempting to converse when idle
-	AlignmentDecayRounds ConfigInt   `yaml:"AlignmentDecayRounds"` // Rounds between each alignment decay step toward neutral (0 = disabled)
+	XPScale           ConfigFloat `yaml:"XPScale"`
+	MobConverseChance ConfigInt   `yaml:"MobConverseChance"` // Chance 1-100 of attempting to converse when idle
+	// Idle chatter limits (internal/mobs/chatter.go)
+	MobChatterCooldownRounds ConfigInt `yaml:"MobChatterCooldownRounds"` // Rounds between an idle mob's says and emotes (0 = no limit)
+	MobChatterMemoryRounds   ConfigInt `yaml:"MobChatterMemoryRounds"`   // Rounds before a player may hear the same idle line again (0 = no limit)
+	AlignmentDecayRounds     ConfigInt `yaml:"AlignmentDecayRounds"`     // Rounds between each alignment decay step toward neutral (0 = disabled)
 	// Elite mob settings
 	EliteLevelBonus ConfigInt `yaml:"EliteLevelBonus"` // Percent level increase for elite mob spawns (e.g. 20 = 20% higher level)
 	EliteXPBonus    ConfigInt `yaml:"EliteXPBonus"`    // Percent XP bonus for killing an elite mob (e.g. 10 = 10% more XP)
@@ -242,6 +245,14 @@ func (g *GamePlay) Validate() {
 		g.MobConverseChance = 0
 	} else if g.MobConverseChance > 100 {
 		g.MobConverseChance = 100
+	}
+
+	if g.MobChatterCooldownRounds < 0 {
+		g.MobChatterCooldownRounds = 60
+	}
+
+	if g.MobChatterMemoryRounds < 0 {
+		g.MobChatterMemoryRounds = 900
 	}
 
 	if g.AlignmentDecayRounds < 0 {
