@@ -1580,8 +1580,6 @@
 
     VirtualWindows.register({
         window:       win,
-        // handleGMCP calls a handler once per matching level; registering
-        // only the top names gives one call per payload.
         gmcpHandlers: ['Company', 'Party'],
         onGMCP(namespace) {
             if (namespace === 'Company.Inventory') {

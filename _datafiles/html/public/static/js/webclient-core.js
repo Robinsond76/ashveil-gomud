@@ -1437,9 +1437,11 @@ const WINDOW_DOCK_DEFAULTS = [
 //   }
 //
 // Multiple modules may register for the same namespace - all handlers are called.
-// handleGMCP(namespace, body) walks from the most-specific to least-specific
-// namespace segment and calls every handler registered at the first level that
-// has any handlers.
+// handleGMCP(namespace, body) calls each registered window once per message:
+// every module with a handler on the message's namespace or on one of its
+// parent namespaces ('Party' also receives 'Party.Vitals'), most specific
+// first, then the '*' handlers. A module listing several matching namespaces
+// still gets one call.
 // openAll() opens every registered window immediately - called by Client.init().
 // ---------------------------------------------------------------------------
 const VirtualWindows = (() => {
@@ -1476,7 +1478,7 @@ const VirtualWindows = (() => {
             }
             // Store the handler alongside its window so dispatch can skip
             // handlers whose window has been closed by the user.
-            _handlers[ns].push({ fn: descriptor.onGMCP.bind(descriptor), win });
+            _handlers[ns].push({ fn: descriptor.onGMCP.bind(descriptor), win, owner: descriptor });
         });
         if (win) {
             _windows.push(win);
@@ -1611,28 +1613,25 @@ const VirtualWindows = (() => {
     }
 
     function handleGMCP(namespace, body) {
-        // Walk from most-specific to least-specific namespace segment.
-        // Call all handlers registered at the first matching level,
-        // skipping any whose associated window has been closed.
+        // Walk from most-specific to least-specific namespace segment, then
+        // the '*' handlers. Each descriptor is called at most once per
+        // message, and handlers whose window has been closed are skipped.
         var handled = false;
+        const called = new Set();
+        const run = list => {
+            (list || []).forEach(entry => {
+                if (called.has(entry.owner)) { return; }
+                if (entry.win && !entry.win.isOpen()) { return; }
+                called.add(entry.owner);
+                entry.fn(namespace, body);
+                handled = true;
+            });
+        };
         const parts = namespace.split('.');
         for (let i = parts.length; i >= 1; i--) {
-            const path = parts.slice(0, i).join('.');
-            if (_handlers['*'] && _handlers['*'].length > 0) {
-                _handlers['*'].forEach(entry => {
-                    if (entry.win && !entry.win.isOpen()) { return; }
-                    entry.fn(namespace, body);
-                    handled = true;
-                });
-            }
-            if (_handlers[path] && _handlers[path].length > 0) {
-                _handlers[path].forEach(entry => {
-                    if (entry.win && !entry.win.isOpen()) { return; }
-                    entry.fn(namespace, body);
-                    handled = true;
-                });
-            }
+            run(_handlers[parts.slice(0, i).join('.')]);
         }
+        run(_handlers['*']);
         if (!handled) {
             console.log('GMCP (unhandled):', namespace, body);
         }
@@ -1735,6 +1734,93 @@ const VirtualWindows = (() => {
 // Shared state and services that window modules may read or call.
 // Nothing here is truly private - window modules are trusted collaborators.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Shared UI helpers: Client.tooltip and Client.tabs
+//
+// Client.tooltip(id) returns a controller for one floating tooltip element
+// (created on first show, styled by the caller's CSS for #id):
+//   show(content, place, opts)  content is HTML (or plain text with
+//                               opts.text); place is an anchor element
+//                               (tooltip beside it) or {x, y} (beside the
+//                               pointer); opts.topOffset lowers the anchor
+//                               placement without clamping to the viewport
+//   position(place)             re-place a shown tooltip (mouse moves)
+//   hide(delay)                 hide after delay ms (default 80, 0 = now)
+//   isShown()
+// Client.tabs(root, {button, panel}) wires click-to-switch tab buttons whose
+// data-panel names a panel id under root; it returns select(panelId).
+// ---------------------------------------------------------------------------
+const UiHelpers = (() => {
+    function tooltip(id) {
+        let el = null;
+        let hideTimer = null;
+        const ensure = () => {
+            if (el) { return el; }
+            el = document.createElement('div');
+            el.id = id;
+            document.body.appendChild(el);
+            return el;
+        };
+        const position = (place, opts) => {
+            if (!el || !place) { return; }
+            const ttW = el.offsetWidth;
+            const ttH = el.offsetHeight;
+            const vw  = window.innerWidth;
+            const vh  = window.innerHeight;
+            let left, top;
+            if (typeof place.getBoundingClientRect === 'function') {
+                const rect = place.getBoundingClientRect();
+                left = rect.right + 8;
+                if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
+                if (opts && opts.topOffset !== undefined) {
+                    el.style.left = Math.max(8, left) + 'px';
+                    el.style.top  = (rect.top + opts.topOffset) + 'px';
+                    return;
+                }
+                top = rect.top;
+            } else {
+                left = place.x + 14;
+                if (left + ttW > vw - 8) { left = place.x - ttW - 14; }
+                top = place.y - Math.floor(ttH / 2);
+            }
+            if (top + ttH > vh - 8) { top = vh - ttH - 8; }
+            el.style.left = Math.max(8, left) + 'px';
+            el.style.top  = Math.max(8, top) + 'px';
+        };
+        return {
+            show(content, place, opts) {
+                ensure();
+                clearTimeout(hideTimer);
+                if (opts && opts.text) { el.textContent = content; } else { el.innerHTML = content; }
+                el.style.display = 'block';
+                position(place, opts);
+            },
+            position(place, opts) { position(place, opts); },
+            hide(delay) {
+                if (!el) { return; }
+                clearTimeout(hideTimer);
+                const ms = delay === undefined ? 80 : delay;
+                if (ms <= 0) { el.style.display = 'none'; return; }
+                hideTimer = setTimeout(() => { el.style.display = 'none'; }, ms);
+            },
+            isShown() { return !!el && el.style.display === 'block'; },
+        };
+    }
+
+    function tabs(root, opts) {
+        const btns   = root.querySelectorAll(opts.button);
+        const panels = root.querySelectorAll(opts.panel);
+        const select = panelId => {
+            btns.forEach(b => b.classList.toggle('active', b.dataset.panel === panelId));
+            panels.forEach(p => p.classList.toggle('active', p.id === panelId));
+        };
+        btns.forEach(btn => btn.addEventListener('click', () => select(btn.dataset.panel)));
+        return select;
+    }
+
+    return { tooltip, tabs };
+})();
+
 const Client = (() => {
 
     // -----------------------------------------------------------------------
@@ -2823,6 +2909,8 @@ const Client = (() => {
 
         // Extension points for window modules
         registerShortcut,
+        tooltip: UiHelpers.tooltip,
+        tabs:    UiHelpers.tabs,
         onBattleEvents,
         dispatchBattleEvents: _dispatchBattleEvents, // for browser checks that feed the screen
 
