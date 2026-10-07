@@ -69,7 +69,7 @@ func TestEnchantingHelp(t *testing.T) {
 		assert.Contains(t, strings.ToLower(flat), spec.Name, "the page lists %s", spec.Name)
 		assert.Contains(t, []int{20, 25}, spec.Trophy.Chance, "the page says about 1 in 5 or 1 in 4 for %s", spec.Name)
 		fx := strings.Join(classes.DescribeGearEffects(spec.Trophy.Effects), "; ")
-		want := strings.ReplaceAll(fx, "+2% damage reduction on top of worn armor", "+2% damage reduction")
+		want := strings.ReplaceAll(fx, " damage reduction on top of worn armor", " damage reduction")
 		assert.Contains(t, flat, want, "the page says what %s gives", spec.Name)
 	}
 }

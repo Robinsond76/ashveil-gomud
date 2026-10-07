@@ -9,4 +9,4 @@ trophy:
   part: ash
   races: ["undead", "ghostly spirit", "demon"]
   chance: 25
-  effects: {spellpct: 6}
+  effects: {spellpct: 3}

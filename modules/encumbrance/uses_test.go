@@ -73,3 +73,28 @@ func TestCargoPutRefusesRolledGear(t *testing.T) {
 	assert.Len(t, user.Character.Items, 1, "still in the pack")
 	assert.Empty(t, store.saved.Cargo[7].Stacks, "nothing was stowed")
 }
+
+// Phase 71 review: a trophy enchant and a relic's awakening progress live on
+// the item, so cargo (an item id and a count) would wipe them. The piece
+// stays in the pack.
+func TestCargoPutRefusesAnEnchantedOrWakingPiece(t *testing.T) {
+	const trophyId = 98871
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: trophyId, Name: "test heart", Type: items.Commodity,
+		Trophy: &items.TrophySpec{Part: items.TrophyHeart, Races: []string{"ogre"}, Chance: 20, Effects: map[string]int{"damage": 1}}})
+	t.Cleanup(func() { items.RemoveTestItemSpec(trophyId) })
+	for name, edit := range map[string]func(*items.Item){
+		"enchanted": func(i *items.Item) { i.Trophy = trophyId },
+		"waking":    func(i *items.Item) { i.Awaken = []int{2} },
+	} {
+		user := testUser(t, 7)
+		piece := testItem(waterId)
+		edit(&piece)
+		user.Character.Items = []items.Item{piece}
+		store := &fakeStore{}
+		module := newTestModule(store, user)
+
+		assert.Contains(t, module.put(user, "waterskin"), "cargo would lose", name)
+		assert.Len(t, user.Character.Items, 1, name+": still in the pack")
+		assert.Empty(t, store.saved.Cargo[7].Stacks, name+": nothing was stowed")
+	}
+}

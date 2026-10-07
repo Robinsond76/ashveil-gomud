@@ -36,10 +36,16 @@ type TrophySpec struct {
 	Effects map[string]int `yaml:"effects"` // classes.GearEffect keys the enchanted item grants while worn
 }
 
-// maxTrophyEffect is the most one trophy may add to a gear effect: a third
-// of the effect's cap, at least 1 (the awakening rule). One-shot effects
-// cannot be enchanted in.
-func maxTrophyEffect(e classes.GearEffect) int { return maxAwakenedEffect(e) }
+// maxTrophyEffect is the most one trophy may add to a gear effect: what all
+// of a wearer's enchants together may give (Phase 71 review), so one
+// trophy can fill a wearer's share of an effect and a second adds nothing.
+// One-shot effects cannot be enchanted in.
+func maxTrophyEffect(e classes.GearEffect) int {
+	if e.Max <= 1 {
+		return 0
+	}
+	return TrophyAggregateCap(e)
+}
 
 func (t *TrophySpec) validate(spec *ItemSpec) error {
 	switch t.Part {
@@ -188,8 +194,11 @@ func (i *Item) EnchantWithTrophy(trophyId int) error {
 }
 
 // TrophyAggregateCap is the most all of a wearer's enchants together may add
-// to one gear effect: half its cap, at least 1.
-func TrophyAggregateCap(e classes.GearEffect) int { return max(1, e.Max/2) }
+// to one gear effect: a sixth of its cap, at least 1 (+2 Attack, +1 damage).
+// Phase 71 review: at half the cap a fully enchanted company won every hard
+// even fight (75% -> 100%, health lost 180 -> 15), worth two or three levels
+// in the balance mirror; at a sixth a full set is worth about one level.
+func TrophyAggregateCap(e classes.GearEffect) int { return max(1, e.Max/6) }
 
 // TrophyGear sums the enchants of the worn items, held to the aggregate cap
 // for each effect.

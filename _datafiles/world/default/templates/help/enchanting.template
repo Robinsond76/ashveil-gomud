@@ -22,11 +22,11 @@ goods, not these: <ansi fg="command">help goods</ansi>.)
 
 <ansi fg="yellow-bold">Which creature drops which trophy</ansi>
 
-  Beast hide     canines, beasts, rodents, hares, reptiles    +2% damage reduction
+  Beast hide     canines, beasts, rodents, hares, reptiles    +1% damage reduction
   Brute's heart  ogres, trolls, goblins                       +1 damage on every landed blow
-  Chitin plate   giant spiders, insects                       +4 Evasion
-  Grave ash      the undead, ghostly spirits, demons          +6% spell damage
-  Hollow heart   eldritch horrors, trees, fungi               +4 Attack
+  Chitin plate   giant spiders, insects                       +2 Evasion
+  Grave ash      the undead, ghostly spirits, demons          +3% spell damage
+  Hollow heart   eldritch horrors, trees, fungi               +2 Attack
 
 Each company that fights makes its own roll when a creature falls: about 1
 kill in 5 for a beast, brute or horror, 1 in 4 for the rest, twice that for
@@ -42,10 +42,15 @@ may yield (<ansi fg="command">help bestiary</ansi>).
   - A relic may be enchanted too, but its signature, awakenings and the
     enchant together never pass what that effect may ever reach
     (<ansi fg="command">help relics</ansi>); an enchant that would is trimmed.
-  - Every enchant is small, and all of one wearer's enchants together give at
-    most half of what that effect may ever reach, so a full set of trophies is
-    a sidegrade, never a runaway.
-  - It follows the item: into the pack, cargo or a companion's gear.
+  - Every enchant is small, and one wearer's enchants do not stack: all of
+    them together give no more of an effect than one trophy of the best kind
+    (+2 Attack, +2 Evasion, +1 damage, +1% damage reduction, +3% spell
+    damage). Give each piece a different trophy, so a fully enchanted member
+    gains a little of several things.
+  - It follows the item into the pack and a companion's gear. Company cargo
+    refuses an enchanted piece, which would lose its enchant there.
+  - If a relic already holds all of what a trophy gives, the enchanter
+    refuses it, and you keep the trophy and your gold.
   - <ansi fg="command">look</ansi> at a piece, or hover it in the gear window, to read its enchant. In a
     battle, <ansi fg="command">why</ansi> names an enchant that raised a blow (<ansi fg="command">help why</ansi>).
 

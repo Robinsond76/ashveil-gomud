@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	yamlv2 "gopkg.in/yaml.v2"
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
@@ -24,7 +25,7 @@ func trophySpec(id int, name, part string, fx map[string]int) *ItemSpec {
 func useTrophyItems(t *testing.T) {
 	t.Helper()
 	SetTestItemSpec(trophySpec(trophyHeartID, "test heart", TrophyHeart, map[string]int{classes.Damage: 1}))
-	SetTestItemSpec(trophySpec(trophyHideID, "test hide", TrophyHide, map[string]int{classes.Armor: 3}))
+	SetTestItemSpec(trophySpec(trophyHideID, "test hide", TrophyHide, map[string]int{classes.Armor: 1}))
 	SetTestItemSpec(&ItemSpec{ItemId: trophyBladeID, Name: "plain blade", Type: Weapon, Subtype: Slashing, Hands: 1, Tier: 2, Value: 100,
 		Damage: Damage{Attacks: 1, DiceCount: 1, SideCount: 6}})
 	SetTestItemSpec(&ItemSpec{ItemId: trophyMailID, Name: "plain mail", Type: Body, Subtype: Wearable, Tier: 3, Value: 200})
@@ -40,17 +41,17 @@ func TestTrophySpecsAreHeldToTheGearCaps(t *testing.T) {
 	require.NoError(t, good().Trophy.validate(good()))
 
 	cases := map[string]func(s *ItemSpec){
-		"unknown part":         func(s *ItemSpec) { s.Trophy.Part = "tooth" },
-		"not a commodity":      func(s *ItemSpec) { s.Type = Weapon },
-		"no races":             func(s *ItemSpec) { s.Trophy.Races = nil },
-		"uppercase race":       func(s *ItemSpec) { s.Trophy.Races = []string{"Ogre"} },
-		"chance 0":             func(s *ItemSpec) { s.Trophy.Chance = 0 },
-		"chance over 100":      func(s *ItemSpec) { s.Trophy.Chance = 101 },
-		"no effects":           func(s *ItemSpec) { s.Trophy.Effects = nil },
-		"unknown effect":       func(s *ItemSpec) { s.Trophy.Effects = map[string]int{"luck": 1} },
-		"over a third of cap":  func(s *ItemSpec) { s.Trophy.Effects = map[string]int{classes.Damage: 2} }, // cap 4
-		"a one-shot effect":    func(s *ItemSpec) { s.Trophy.Effects = map[string]int{classes.Bargain: 1} },
-		"armor over its third": func(s *ItemSpec) { s.Trophy.Effects = map[string]int{classes.Armor: 4} }, // cap 10
+		"unknown part":        func(s *ItemSpec) { s.Trophy.Part = "tooth" },
+		"not a commodity":     func(s *ItemSpec) { s.Type = Weapon },
+		"no races":            func(s *ItemSpec) { s.Trophy.Races = nil },
+		"uppercase race":      func(s *ItemSpec) { s.Trophy.Races = []string{"Ogre"} },
+		"chance 0":            func(s *ItemSpec) { s.Trophy.Chance = 0 },
+		"chance over 100":     func(s *ItemSpec) { s.Trophy.Chance = 101 },
+		"no effects":          func(s *ItemSpec) { s.Trophy.Effects = nil },
+		"unknown effect":      func(s *ItemSpec) { s.Trophy.Effects = map[string]int{"luck": 1} },
+		"over a sixth of cap": func(s *ItemSpec) { s.Trophy.Effects = map[string]int{classes.Damage: 2} }, // cap 4: at most 1
+		"a one-shot effect":   func(s *ItemSpec) { s.Trophy.Effects = map[string]int{classes.Bargain: 1} },
+		"attack over a sixth": func(s *ItemSpec) { s.Trophy.Effects = map[string]int{classes.Attack: 3} }, // cap 12: at most 2
 	}
 	for name, mutate := range cases {
 		s := good()
@@ -100,19 +101,22 @@ func TestTheEnchantFeeIsPerTier(t *testing.T) {
 
 func TestEnchantedPiecesAddToGearEffectsHeldToTheAggregateCap(t *testing.T) {
 	useTrophyItems(t)
+	const ashID = 99825
+	SetTestItemSpec(trophySpec(ashID, "test ash", TrophyAsh, map[string]int{classes.SpellPct: 2})) // a test value; cap 20, a wearer's share 3
+	t.Cleanup(func() { RemoveTestItemSpec(ashID) })
 	var worn []Item
 	for range 4 {
 		it := New(trophyMailID)
-		require.NoError(t, it.EnchantWithTrophy(trophyHideID)) // armor 3 each
+		require.NoError(t, it.EnchantWithTrophy(ashID))
 		worn = append(worn, it)
 	}
 	fx, sets := GearEffects(worn[:1])
 	assert.Empty(t, sets)
-	assert.Equal(t, 3, fx[classes.Armor])
+	assert.Equal(t, 2, fx[classes.SpellPct])
 	fx, _ = GearEffects(worn)
-	armor, _ := classes.GearEffectFor(classes.Armor)
-	assert.Equal(t, TrophyAggregateCap(armor), fx[classes.Armor], "four enchants stop at half the cap")
-	assert.Equal(t, 5, TrophyAggregateCap(armor))
+	spell, _ := classes.GearEffectFor(classes.SpellPct)
+	assert.Equal(t, TrophyAggregateCap(spell), fx[classes.SpellPct], "four enchants stop at a sixth of the cap")
+	assert.Equal(t, 3, TrophyAggregateCap(spell))
 	fx, _ = GearEffects([]Item{New(trophyMailID)})
 	assert.Empty(t, fx, "no enchant, no effect")
 }
@@ -126,7 +130,7 @@ func TestAnEnchantOnARelicStaysInsideItsCap(t *testing.T) {
 	t.Cleanup(func() { RemoveTestItemSpec(awakeBladeID) })
 	relic := New(awakeBladeID)
 	require.NoError(t, relic.EnchantWithTrophy(trophyHideID))
-	assert.Equal(t, map[string]int{classes.Armor: 1}, relic.TrophyEffects(), "armor 9 of 10 leaves 1 of the enchant's 3")
+	assert.Equal(t, map[string]int{classes.Armor: 1}, relic.TrophyEffects(), "armor 9 of 10 leaves room for the enchant's 1")
 	fx, _ := GearEffects([]Item{relic})
 	assert.Equal(t, 10, fx[classes.Armor])
 
@@ -157,4 +161,24 @@ func TestATrophyIsNeverAutoJunk(t *testing.T) {
 	SetTestItemSpec(spec)
 	it := New(trophyHeartID)
 	assert.False(t, it.IsAutoJunk(), "`sell junk` must not take a trophy the player may want")
+}
+
+// Review: the enchant is saved with the item (a player's pack, a worn
+// slot or a companion's state all marshal the Item), and a plain item
+// writes no trophy key.
+func TestATrophyEnchantSurvivesASaveAndLoad(t *testing.T) {
+	for name, codec := range map[string]struct {
+		marshal   func(any) ([]byte, error)
+		unmarshal func([]byte, any) error
+	}{"v2 (user saves)": {yamlv2.Marshal, yamlv2.Unmarshal}, "v3": {yamlv3.Marshal, yamlv3.Unmarshal}} {
+		data, err := codec.marshal(Item{ItemId: 10001, Trophy: 40002})
+		require.NoError(t, err, name)
+		var back Item
+		require.NoError(t, codec.unmarshal(data, &back), name)
+		assert.Equal(t, 40002, back.Trophy, name)
+
+		plain, err := codec.marshal(Item{ItemId: 10001})
+		require.NoError(t, err, name)
+		assert.NotContains(t, string(plain), "trophy", name)
+	}
 }

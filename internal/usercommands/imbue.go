@@ -43,13 +43,10 @@ func Imbue(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	item, inPack := user.Character.FindInBackpack(itemWords)
-	if !inPack {
-		var worn bool
-		if item, worn = user.Character.FindOnBody(itemWords); !worn {
-			user.SendText("You don't have that item.")
-			return true, nil
-		}
+	item, inPack := imbueTarget(user.Character, itemWords)
+	if item.ItemId == 0 {
+		user.SendText("You don't have that item.")
+		return true, nil
 	}
 	trophy, found := user.Character.FindInBackpack(trophyWords)
 	if !found || trophy.GetSpec().Trophy == nil {
@@ -67,6 +64,15 @@ func Imbue(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	case len(item.Blob) > 0:
 		enchanter.Command(`say I'll not touch that; it's more than it seems.`)
+		return true, nil
+	}
+
+	// Review: a relic whose own powers already reach the cap would take the
+	// trophy and the fee for nothing, so the enchanter says so first.
+	trial := item
+	trial.Trophy = trophy.ItemId
+	if len(trial.TrophyEffects()) == 0 {
+		enchanter.Command(`say That piece already holds all of what this trophy gives. Keep it for another.`)
 		return true, nil
 	}
 
@@ -100,6 +106,7 @@ func Imbue(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 					return true, nil
 				}
 				wornSlot, item = slot, *on
+				user.Character.RecalculateStats() // a health enchant raises the maximum at once
 				break
 			}
 		}
@@ -113,8 +120,7 @@ func Imbue(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	user.Character.Gold -= fee
 	enchanter.Character.Gold += fee
 
-	trophySpec := trophy.GetSpec()
-	effects := strings.Join(classes.DescribeGearEffects(trophySpec.Trophy.Effects), "; ")
+	effects := strings.Join(classes.DescribeGearEffects(item.TrophyEffects()), "; ") // as trimmed on a relic
 	user.EventLog.Add(`shop`, fmt.Sprintf(`Had <ansi fg="mobname">%s</ansi> work <ansi fg="itemname">%s</ansi> into your <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>`, enchanter.Character.Name, trophy.DisplayName(), item.DisplayName(), fee))
 	user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> works your <ansi fg="itemname">%s</ansi> into your <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>. While worn it gives: %s.`, enchanter.Character.Name, trophy.DisplayName(), item.DisplayName(), fee, effects))
 	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> works a trophy into <ansi fg="username">%s</ansi>'s <ansi fg="itemname">%s</ansi>.`, enchanter.Character.Name, user.Character.Name, item.DisplayName()), user.UserId)
@@ -138,4 +144,32 @@ func imbueMenu(user *users.UserRecord, enchanter *mobs.Mob) {
 		return
 	}
 	user.SendText("Trophies you carry:\n" + strings.Join(trophies, "\n"))
+}
+
+// imbueTarget finds the piece to enchant (review): a full name match in the
+// pack or on the body before a close one, and a close match that can take
+// a trophy before one that can't, so `imbue heart with heart` finds a worn
+// heart pendant rather than the carried brute's heart.
+func imbueTarget(c *characters.Character, words string) (items.Item, bool) {
+	packClose, packFull := items.FindMatchIn(words, c.Items...)
+	bodyClose, bodyFull := items.FindMatchIn(words, c.Equipment.GetAllItems()...)
+	type pick struct {
+		it     items.Item
+		inPack bool
+	}
+	var picks []pick
+	for _, p := range []pick{{packFull, true}, {bodyFull, false}, {packClose, true}, {bodyClose, false}} {
+		if p.it.ItemId != 0 {
+			picks = append(picks, p)
+		}
+	}
+	for _, p := range picks {
+		if spec := p.it.GetSpec(); items.Enchantable(&spec) {
+			return p.it, p.inPack
+		}
+	}
+	if len(picks) > 0 {
+		return picks[0].it, picks[0].inPack
+	}
+	return items.Item{}, false
 }

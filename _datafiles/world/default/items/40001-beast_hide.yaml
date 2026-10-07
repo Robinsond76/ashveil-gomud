@@ -9,4 +9,4 @@ trophy:
   part: hide
   races: ["canine", "beast", "rodent", "lagomorph", "reptile", "reptilian"]
   chance: 20
-  effects: {armor: 2}
+  effects: {armor: 1}

@@ -26,6 +26,9 @@ const reaper = { id: '!50001:a', name: 'Ashen Reaper', label: 'Ashen Reaper', ra
 const helm = { id: '!50011:b', name: "Ogre-hunter's Helm", label: "Ogre-hunter's Helm", rarity: 'set', type: 'head', subtype: 'wearable', details: [],
   relic: ["Piece of the Ogre-hunter's Kit set (3 pieces).", '  2 worn: +3% damage reduction on top of worn armor.', '  3 worn: +4 Attack; blows deal 15% more to a foe at or below half health.'],
   relic_lore: 'Those who hunt the forest ogre learn to wear what it cannot easily crush.' };
+// Phase 71 review: a plain piece with a trophy enchant (no rarity, no lore).
+const vest = { id: '!20001:c', name: 'leather vest', label: 'leather vest (enchanted: chitin plate)', type: 'body', subtype: 'wearable', details: [],
+  relic: ['Enchanted with chitin plate (while worn): +2 Evasion.'] };
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined });
 for (const [size, viewport] of [['desk', { width: 1280, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
@@ -34,13 +37,13 @@ for (const [size, viewport] of [['desk', { width: 1280, height: 900 }], ['phone'
   await page.goto('file://' + path.join(here, 'dock-windows-harness.html'));
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ashveil-battle-screen', 'manual'); });
   await page.reload();
-  await page.evaluate(([reaper, helm]) => {
+  await page.evaluate(([reaper, helm, vest]) => {
     window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 40 });
     window.gmcp('Char.Inventory', {
-      Worn: { weapon: reaper, head: helm },
+      Worn: { weapon: reaper, head: helm, body: vest },
       Backpack: { items: [], Summary: { count: 0, weight_g: 0, load_g: 0, capacity_g: 50000 } },
     });
-  }, [reaper, helm]);
+  }, [reaper, helm, vest]);
   await page.getByRole('tab', { name: 'Gear' }).click();
   for (const [slot, item] of [['weapon', reaper], ['head', helm]]) {
     await page.hover('#gw-eqrow-' + slot);
@@ -65,6 +68,19 @@ for (const [size, viewport] of [['desk', { width: 1280, height: 900 }], ['phone'
     }
     if (outdir) { await page.screenshot({ path: path.join(outdir, '67-tooltip-' + slot + '-' + size + '.png') }); }
   }
+  // Phase 71 review: the enchanted plain piece shows its enchant line in purple.
+  await page.hover('#gw-eqrow-body');
+  await page.waitForTimeout(100);
+  const ench = await page.evaluate(() => {
+    const t = document.getElementById('gw-item-tooltip');
+    const line = t.querySelector('.gw-tt-ench');
+    const r = t.getBoundingClientRect();
+    return { shown: t.style.display === 'block', text: line && line.textContent, colour: line && getComputedStyle(line).color, left: r.left, right: r.right, vw: window.innerWidth };
+  });
+  check(ench.shown && ench.text === vest.relic[0], size + ': an enchanted plain piece shows its enchant (' + ench.text + ')');
+  check(ench.colour === 'rgb(215, 135, 255)', size + ': the enchant line is purple (' + ench.colour + ')');
+  check(ench.left >= 0 && ench.right <= ench.vw, size + ': the enchant tooltip fits the screen');
+  if (outdir) { await page.screenshot({ path: path.join(outdir, '71-tooltip-enchant-' + size + '.png') }); }
   // The Company window's gear row carries the relic words in its tooltip.
   await page.evaluate(([reaper]) => {
     window.gmcp('Company.Inventory', { shared: true, slots: [{ slot: 'weapon', label: 'Weapon' }], load: { total_g: 1000, capacity_g: 50000, member_capacity_g: 50000, mount_capacity_g: 0, cargo_g: 0 },

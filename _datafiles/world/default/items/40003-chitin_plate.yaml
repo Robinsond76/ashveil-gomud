@@ -9,4 +9,4 @@ trophy:
   part: hide
   races: ["giant spider", "insect"]
   chance: 25
-  effects: {evasion: 4}
+  effects: {evasion: 2}

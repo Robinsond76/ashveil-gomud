@@ -159,6 +159,7 @@ func TestGMCPEnchantedPlainPieceCarriesItsEnchantLine(t *testing.T) {
 	got := newInventory_Item(itm).Relic
 	require.Len(t, got, 1)
 	assert.Equal(t, "Enchanted with brute's heart (while worn): +1 damage on every landed blow.", got[0])
+	assert.Contains(t, newInventory_Item(itm).Label, "(enchanted: brute's heart)", "review: lists tag a plain enchanted piece")
 
 	var eq characters.Worn
 	eq.Weapon = itm

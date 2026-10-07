@@ -374,6 +374,11 @@ func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string 
 	if matchItem.IsRolled() {
 		return fmt.Sprintf(`The <ansi fg="item">%s</ansi> is individually crafted gear; carry it in your pack or give it to a companion with company equip. Company cargo holds only plain goods for now.`, matchItem.DisplayName())
 	}
+	// Phase 71 review: the same holds for a trophy enchant and a relic's
+	// awakening progress, which live on the item.
+	if matchItem.IsTrophyEnchanted() || len(matchItem.Awaken) > 0 {
+		return fmt.Sprintf(`The <ansi fg="item">%s</ansi> carries an enchant or a waking power that cargo would lose; carry it in your pack or give it to a companion with company equip.`, matchItem.DisplayName())
+	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()

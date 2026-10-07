@@ -1143,6 +1143,9 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		d.Rarity = string(itm.RollRarity())
 		d.Unidentified = !itm.IsIdentified()
 	}
+	if d.Label == "" && itm.IsTrophyEnchanted() {
+		d.Label = company.PlainLabel(itm) // Phase 71 review: lists tag a plain enchanted piece too
+	}
 
 	if itmSpec.Relic != nil {
 		d.Relic = itm.RelicLines()

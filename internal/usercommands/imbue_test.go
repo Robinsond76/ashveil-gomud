@@ -154,3 +154,47 @@ func TestImbueIsRefusedInBattle(t *testing.T) {
 	assert.True(t, actionpolicy.Management("imbue"))
 	assert.False(t, strings.Contains(actionpolicy.BattleUnderWay, "imbue"))
 }
+
+// Review: a close name match finds the piece that can take a trophy, worn
+// or carried, before the trophy itself.
+func TestImbueFindsAWornPieceBeforeTheTrophyOfTheSameName(t *testing.T) {
+	seller, room, _, _ := enchantRoom(t)
+	const pendantID = 988601
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: pendantID, Name: "heartstone pendant", Type: items.Neck, Subtype: items.Wearable, Tier: 1})
+	t.Cleanup(func() { items.RemoveTestItemSpec(pendantID) })
+	seller.Character.Equipment.Neck = items.New(pendantID)
+	require.True(t, seller.Character.StoreItem(items.New(bruteHeart)))
+
+	text := run(t, Imbue, "heart with brute", seller, room)
+	assert.Contains(t, text, "works your brute's heart into your heartstone pendant", text)
+	assert.Equal(t, bruteHeart, seller.Character.Equipment.Neck.Trophy)
+	assert.False(t, holds(seller, bruteHeart))
+}
+
+// Review: a relic whose own powers already reach the cap would gain
+// nothing, so the enchanter refuses and takes neither trophy nor gold; a
+// relic with room says what the enchant gives after trimming.
+func TestImbueRefusesARelicThatHoldsTheWholeEffect(t *testing.T) {
+	seller, room, _, enchanter := enchantRoom(t)
+	const fullID, roomyID = 988602, 988603
+	for id, dmg := range map[int]int{fullID: 4, roomyID: 3} {
+		items.SetTestItemSpec(&items.ItemSpec{ItemId: id, Name: map[int]string{fullID: "full relic blade", roomyID: "roomy relic blade"}[id], Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Tier: 1,
+			Relic: &items.RelicSpec{Signature: "Test", Effects: map[string]int{"damage": dmg}, ILvl: 10}})
+		t.Cleanup(func() { items.RemoveTestItemSpec(id) })
+	}
+	require.True(t, seller.Character.StoreItem(items.New(fullID)))
+	require.True(t, seller.Character.StoreItem(items.New(bruteHeart)))
+
+	run(t, Imbue, "full with heart", seller, room) // the enchanter's refusal is a say
+	assert.Equal(t, 500, seller.Character.Gold)
+	assert.Zero(t, enchanter.Character.Gold)
+	assert.True(t, holds(seller, bruteHeart))
+	got, _ := seller.Character.FindInBackpack("full")
+	assert.Zero(t, got.Trophy)
+
+	require.True(t, seller.Character.StoreItem(items.New(roomyID)))
+	text := run(t, Imbue, "roomy with heart", seller, room)
+	assert.Contains(t, text, "+1 damage on every landed blow")
+	got, _ = seller.Character.FindInBackpack("roomy")
+	assert.Equal(t, bruteHeart, got.Trophy)
+}

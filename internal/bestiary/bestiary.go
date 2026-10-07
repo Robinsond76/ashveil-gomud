@@ -382,12 +382,13 @@ func trophyLine(spec *mobs.Mob) string {
 		kind = loot.BossRoll
 	}
 	var names []string
-	for _, t := range loot.Trophies(spec.Character.Race()) {
+	options := loot.Trophies(spec.Character.Race())
+	for _, t := range options {
 		if spec.Boss {
 			names = append(names, t.Name)
 			continue
 		}
-		names = append(names, fmt.Sprintf("%s (about %d in 100 kills)", t.Name, loot.TrophyChance(t, kind)))
+		names = append(names, fmt.Sprintf("%s (about %d in 100 kills)", t.Name, loot.TrophyChance(t, kind)/len(options))) // a kill picks one of the kind's trophies, then rolls it
 	}
 	if len(names) == 0 {
 		return ""

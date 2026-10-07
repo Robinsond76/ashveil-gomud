@@ -9,4 +9,4 @@ trophy:
   part: heart
   races: ["eldritch horror", "tree", "fungus"]
   chance: 20
-  effects: {attack: 4}
+  effects: {attack: 2}
