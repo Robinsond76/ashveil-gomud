@@ -317,7 +317,7 @@ func (c Context) companyDeed(e chronicle.Entry) chronicle.Entry {
 
 // Choose picks what the NPC says to one player: the newest unheard deed
 // that has a line this NPC may say (a ref-specific line beats a plain kind
-// line), else a state line, else nothing.
+// line, and a member_tag line beats an untagged one), else a state line, else nothing.
 func (cat Catalog) Choose(c Context) (Choice, bool) {
 	for i := range c.Entries {
 		e := c.companyDeed(c.Entries[i])
@@ -341,7 +341,17 @@ func (cat Catalog) Choose(c Context) (Choice, bool) {
 		}
 		pool := specific
 		if len(pool) == 0 {
+			// A line that speaks to a member's background beats a plain one.
+			var personal []Line
+			for _, l := range general {
+				if l.MemberTag != "" {
+					personal = append(personal, l)
+				}
+			}
 			pool = general
+			if len(personal) > 0 {
+				pool = personal
+			}
 		}
 		if len(pool) == 0 {
 			continue

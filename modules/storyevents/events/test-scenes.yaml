@@ -48,6 +48,17 @@
             - kind: move
               room: 90014
           fail_next: ledge
+        - label: Read the rope and the ring like a hunter's get
+          stance: prudence
+          require:
+            tag: upbringing-hunters-get
+            leader: true
+          hint: you, raised by a hunter
+          text: "{who} tests the knot, the ring and the weather in the stone, and goes down the safe side of the rope. The pale thing on the ledge is a dead man, not a trap."
+          do:
+            - kind: move
+              room: 90014
+          next: ledge
         - label: Turn back from the edge
           stance: prudence
           text: A bridge that fell is not worth a company that follows it.
@@ -151,6 +162,19 @@
               foes:
                 - mob: 86
                 - mob: 86
+        - label: Speak to him as one soldier to another
+          stance: kindness
+          require:
+            tag: trade-soldier
+            leader: true
+          hint: you, once a soldier
+          text: "{who} knows the coat, the captain's name and the road he means. They talk a while, quietly, and the deserter hands over the sword hilt-first. He asks you to take it where it will be used."
+          do:
+            - kind: item
+              item: 36
+              count: 1
+            - kind: flag
+              flag: soldier-spoke-to-the-deserter
         - label: Tell him to keep his road
           text: You leave him with his fire.
 
@@ -216,5 +240,16 @@
               who: all
               stat: thirst
               amount: 6
+        - label: Say the old words as you were taught
+          stance: reverence
+          require:
+            tag: trade-acolyte
+            leader: true
+          hint: you, once an acolyte
+          text: "{who} says them whole, in the right order, as no one has in this place for a long time. The spring runs a little clearer."
+          do:
+            - kind: loyalty
+              who: all
+              amount: 4
         - label: Leave it as it is
           stance: prudence

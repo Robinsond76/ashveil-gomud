@@ -206,3 +206,10 @@ func TestValidateRejectsMalformedData(t *testing.T) {
 	d.Stage(StageTrade).Options[1].ID = d.Stage(StageTrade).Options[0].ID
 	assert.Error(t, d.Validate(), "a repeated id")
 }
+
+func TestTagsNameEachStagePick(t *testing.T) {
+	picks := Picks{StageHomeland: "hill-clans", StageUpbringing: "farmhand", StageTrade: "soldier", "trade-stat": "strength"}
+	assert.Equal(t, []string{"homeland-hill-clans", "upbringing-farmhand", "trade-soldier"}, Tags(picks))
+	assert.Equal(t, []string{"trade-soldier"}, Tags(PicksWithBackground("soldier")))
+	assert.Empty(t, Tags(nil), "no life story, no tags")
+}

@@ -353,3 +353,16 @@ func Background(picks Picks) string { return picks[StageTrade] }
 // PicksWithBackground is a test helper for later phases: a picks set whose
 // only content is the background id.
 func PicksWithBackground(id string) Picks { return Picks{StageTrade: id} }
+
+// Tags are the member tags a life story gives story events and town lines
+// (Phase 72): one per stage pick, named by stage and option id, e.g.
+// "trade-soldier", "homeland-hill-clans", "upbringing-farmhand".
+func Tags(picks Picks) []string {
+	var out []string
+	for _, stage := range Stages {
+		if id := picks[stage]; id != `` {
+			out = append(out, stage+`-`+id)
+		}
+	}
+	return out
+}

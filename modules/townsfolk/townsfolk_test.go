@@ -711,3 +711,23 @@ func TestANewDeedRefreshesTheView(t *testing.T) {
 	assert.Equal(t, "Company.Townsfolk", last.namespace)
 	require.Len(t, last.payload.(panel).Fresh, 1)
 }
+
+// A shipped town line for a background (Phase 72) is told to a leader who
+// has it, through the module's real choosing and the shipped lines.
+func TestAShippedLineSpeaksToTheLeadersBackground(t *testing.T) {
+	r := newRig(t)
+	r.m.readFiles = readLineFiles
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
+	r.w.tags["7|leader|trade-soldier"] = true
+	sp, ok := r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Contains(t, sp.Text, "A soldier, Mara, and it shows")
+
+	r2 := newRig(t)
+	r2.m.readFiles = readLineFiles
+	r2.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
+	sp, ok = r2.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Contains(t, sp.Text, "put down", "no background, the plain line")
+	assert.NotContains(t, sp.Text, "soldier")
+}
