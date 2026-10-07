@@ -809,3 +809,70 @@ func TestAWonGroupIsWrittenIntoTheChronicleOnce(t *testing.T) {
 	w.m.settleLocked(false)
 	assert.Len(t, chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}}), 1, "a boss group adds no group deed")
 }
+
+// fullHP is the HP of a wood wolf of the level: what an unsoftened foe has.
+func fullHP(t *testing.T, level int) int {
+	t.Helper()
+	m := mobs.NewMobById(96101, woodRm, level)
+	t.Cleanup(func() { mobs.DestroyInstance(m.InstanceId) })
+	return m.Character.HealthMax.Value
+}
+
+func TestOrdinaryFoesSpawnSoftForACompanyTheZoneIsMeantFor(t *testing.T) {
+	w := setup(t)
+	w.user.Character.Level = 8 // the band's low end
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		require.Len(t, r.Foes, 3)
+		for _, id := range r.Foes {
+			foe := mobs.GetInstance(id)
+			want := fullHP(t, foe.Character.Level) * encounters.OrdinaryHPPercent / 100
+			assert.InDelta(t, want, foe.Character.HealthMax.Value, 2, "ordinary foes have the soft share of their level's HP")
+			assert.Equal(t, foe.Character.HealthMax.Value, foe.Character.Health)
+			rule, noise, ok := foe.Personality()
+			require.True(t, ok)
+			assert.Equal(t, "weakest", rule)
+			assert.Equal(t, encounters.Spread(encounters.OrdinaryHPPercent), noise, "and spread their blows")
+		}
+	}
+}
+
+func TestOrdinaryFoesHardenAsTheCompanyFallsUnderTheBand(t *testing.T) {
+	w := setup(t)
+	w.user.Character.Level = 8 - encounters.UnderBandGap
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		for _, id := range r.Foes {
+			foe := mobs.GetInstance(id)
+			assert.Equal(t, fullHP(t, foe.Character.Level), foe.Character.HealthMax.Value, "five levels under the band, full HP: the zone is hard")
+			_, noise, _ := foe.Personality()
+			assert.Zero(t, noise, "and no spreading")
+		}
+	}
+}
+
+func TestBossesEscortsAndStoryGroupsKeepFullHP(t *testing.T) {
+	w := setup(t)
+	w.user.Character.Level = 10
+	w.walk(t, "up")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		for _, id := range r.Foes {
+			foe := mobs.GetInstance(id)
+			if foe.Boss {
+				continue
+			}
+			assert.Equal(t, fullHP(t, foe.Character.Level), foe.Character.HealthMax.Value, "an escort is not softened")
+		}
+	}
+	w.m.active = map[string]*record{}
+	foes := []encounters.Foe{{MobID: 96101, Level: 8}, {MobID: 96101, Level: 8}}
+	require.NoError(t, w.m.StartGroup(userID, startRm, foes))
+	for _, r := range w.m.active {
+		for _, id := range r.Foes {
+			assert.Equal(t, fullHP(t, 8), mobs.GetInstance(id).Character.HealthMax.Value, "a story group is as written")
+		}
+	}
+}

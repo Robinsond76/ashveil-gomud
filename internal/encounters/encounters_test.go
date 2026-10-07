@@ -191,3 +191,33 @@ func TestAvailableDropsOnlyCoolingBosses(t *testing.T) {
 	assert.Len(t, table, 3, "the zone's own table is untouched")
 	assert.Len(t, Available(table, func(string) bool { return true }), 1, "ordinary groups never cool")
 }
+
+func TestOrdinaryFoesSoftenForACompanyAtOrAboveTheBandAndFadeUnderIt(t *testing.T) {
+	band := Band{Low: 10, High: 12}
+	assert.Equal(t, OrdinaryHPPercent, HPPercent(12, band))
+	assert.Equal(t, OrdinaryHPPercent, HPPercent(10, band), "the band's low end is meant for it")
+	assert.Equal(t, OrdinaryHPPercent, HPPercent(30, band), "an over-level company has it easy too")
+	prev := OrdinaryHPPercent
+	for gap := 1; gap <= UnderBandGap; gap++ {
+		got := HPPercent(band.Low-gap, band)
+		assert.Greater(t, got, prev, "each level under the band hardens the foes")
+		prev = got
+	}
+	assert.Equal(t, 100, HPPercent(band.Low-UnderBandGap, band), "full HP at the gap")
+	assert.Equal(t, 100, HPPercent(1, Band{Low: 20, High: 22}), "never past full")
+	assert.Equal(t, 0, Spread(100), "full-HP foes do not spread")
+	assert.Equal(t, 100, Spread(OrdinaryHPPercent), "a fully softened foe aims at random")
+	assert.Equal(t, 50, Spread(70), "halfway to full HP, half its re-aims are random")
+}
+
+func TestSoftenLeavesABossAndItsEscortsAlone(t *testing.T) {
+	band := Band{Low: 8, High: 10}
+	foes := Soften(Plan(Composition{Boss: true, Members: []Member{{1, 1}, {2, 2}}}, band, func(int) int { return 0 }), 8, band)
+	for _, f := range foes {
+		assert.Zero(t, f.HPPercent, "boss and escorts spawn at full HP")
+	}
+	foes = Soften(Plan(Composition{Members: []Member{{1, 3}}}, band, func(int) int { return 0 }), 8, band)
+	for _, f := range foes {
+		assert.Equal(t, OrdinaryHPPercent, f.HPPercent)
+	}
+}

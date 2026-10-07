@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +32,14 @@ func TestBalanceEncounterShapes(t *testing.T) {
 		cm    string
 		em    string
 		opts  balanceFightOptions
+	}
+	// Ordinary groups spawn softer for a company the band is meant for
+	// (encounters.HPPercent); a boss and its escorts do not.
+	soft := func(level int, band encounters.Band, o balanceFightOptions) balanceFightOptions {
+		if !o.Boss {
+			o.OrdinaryHPPercent = encounters.HPPercent(level, band)
+		}
+		return o
 	}
 	for _, band := range [][2]int{{5, 7}, {10, 12}} {
 		low, high := band[0], band[1]
@@ -73,6 +82,7 @@ func TestBalanceEncounterShapes(t *testing.T) {
 		lost := map[string]float64{}
 		order := []string{}
 		for _, c := range cells {
+			c.opts = soft(c.level, encounters.Band{Low: low, High: high}, c.opts)
 			label := fmt.Sprintf("band%d-%d/%s/%dvL%d/%s", low, high, c.shape, c.opts.EnemyCount, c.opts.EnemyLevels[0], c.em)
 			var results []balanceResult
 			var hpLost float64
