@@ -6,6 +6,7 @@ description: A long burnt-timber inn rebuilt in dark oak by charcoal burners. Bl
 biome: city
 tags:
 - inn
+- inn-private
 - indoor
 exits:
   east:

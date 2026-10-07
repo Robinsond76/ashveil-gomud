@@ -13,24 +13,38 @@ the world clock, and weather never spoils it.
   <ansi fg="command">inn gig</ansi> | <ansi fg="command">inn gig status</ansi>
   Plays for pay in the evening (<ansi fg="command">help gigs</ansi>).
 
-  <ansi fg="command">inn rest</ansi>
+  <ansi fg="command">inn rest</ansi> | <ansi fg="command">inn rest private</ansi> | <ansi fg="command">inn rest suite</ansi>
   Pays for the room and starts the stay, about a minute of real time.
-  While resting you can't use ordinary exits, but you can still talk and
-  use most non-movement commands. You can't take a room while
-  travelling.
+  Plain <ansi fg="command">inn rest</ansi> takes the common room. While resting you can't use
+  ordinary exits, but you can still talk and use most non-movement
+  commands. You can't take a room while travelling.
 
-<ansi fg="yellow-bold">Cost</ansi>
+<ansi fg="yellow-bold">Rooms and cost</ansi>
 
-  A room costs 5 gold per company member, taken from your own gold when
-  you pay. A settlement that distrusts your company charges more for a
-  room (<ansi fg="command">help standing</ansi> explains the tiers); one that shuns your
-  company won't give you a room at all.
+  Every inn lets a common room. Bigger inns also let private rooms, and
+  the biggest a suite. <ansi fg="command">inn</ansi> lists what this inn offers. The price is per
+  company member, taken from your own gold when you pay:
+
+    Common    5 gold   Well Rested for 30 minutes
+    Private  15 gold   Well Rested for 1 hour
+    Suite    40 gold   Well Rested for 2 hours
+
+  A dearer room changes only how long the Well Rested lasts. The buff
+  itself, the full health and mana, and the wounds knit are the same in
+  every room: the dearer rooms are for a long expedition, not for the
+  next fight. A short Well Rested never cuts a longer one short:
+  sleeping in the common room after a suite leaves the suite's hours
+  running.
+
+  A settlement that distrusts your company charges more for any room
+  (<ansi fg="command">help standing</ansi> explains the tiers); one that shuns your company
+  won't give you a room at all.
 
 <ansi fg="yellow-bold">Well Rested</ansi>
 
   When the stay finishes, every current company member's Fatigue rises
   by 60, and you and every companion with you gain the <ansi fg="yellow">Well Rested</ansi>
-  buff for 30 minutes of real time — the better rest tier, cutting your
+  buff for the room's length of real time (30 minutes in the common room) — the better rest tier, cutting your
   walking strain more than a camp's Rested does (<ansi fg="command">help camp</ansi>), and
   giving you +2 speed and +2 perception besides. Well Rested always
   replaces Rested, and a camp rest afterward can't
@@ -49,6 +63,9 @@ no camp song plays and no raiders come, so music costs nothing here.
 
 Only one room is bought per stay, for your whole company; there's
 nothing to strike or break afterward.
+
+Which rooms an inn lets is part of the inn: the common room everywhere,
+the private rooms and suite only in the larger towns.
 
 See also: <ansi fg="command">help gigs</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help conditions</ansi>,
 <ansi fg="command">help travel</ansi>, <ansi fg="command">help opinions</ansi> (some companions like a bed, some do not).

@@ -1867,6 +1867,7 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 				notice, _ := m.gigNotice(user, room)
 				s.Gig = &notice
 			}
+			s.InnRooms = m.innRoomRows(leaderUserID, room)
 		}
 	}
 	// 40a4 review: the Camp tab warns when thieves work the camp's road
