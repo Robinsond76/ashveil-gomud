@@ -318,6 +318,8 @@ which creature drops what.
 
 **Accept.** Upgrade path tested end to end; resale check; `help enchanting`.
 
+Built: [phase 71 plan and decisions](2026-10-07-phase-71-trophy-enchanting.md).
+
 ## 72 Backgrounds
 
 **Why.** Pillars' backgrounds open dialogue options.

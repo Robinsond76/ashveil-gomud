@@ -36,4 +36,6 @@ Materials are goods: <ansi fg="command">help goods</ansi>. Sell them at a market
 them for crafting later. Check <ansi fg="command">offer [item]</ansi> first: a merchant who wants the
 item whole may pay more, and salvage suits gear no one here will buy.
 
+A trophy worked into a piece by an enchanter is lost with it (<ansi fg="command">help enchanting</ansi>).
+
 See also: <ansi fg="command">help goods</ansi>, <ansi fg="command">help sell</ansi>, <ansi fg="command">help market</ansi>, <ansi fg="command">help mark</ansi>.

@@ -631,6 +631,9 @@
             if (c.adjectives && c.adjectives.includes('shop')) {
                 menuItems.push({ label: 'list ' + c.name, cmd: 'list ' + c.id });
             }
+            if (c.adjectives && c.adjectives.includes('enchanter')) {
+                menuItems.push({ label: 'imbue (enchant gear)', cmd: 'imbue' });
+            }
             return makeRow(c.name, {
                 aggro: c.aggro,
                 quest: c.quest_flag,

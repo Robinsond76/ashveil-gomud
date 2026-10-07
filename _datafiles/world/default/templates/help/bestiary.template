@@ -54,4 +54,7 @@ heals: <ansi fg="command">orders [who] add foe healer then break</ansi>. A foe t
 (<ansi fg="command">help orders</ansi>). A wind-up is broken by a landed critical hit, a stagger, a
 knockdown or a stun (<ansi fg="command">help interrupts</ansi>).
 
+A creature's habits also say which enchanting trophies it may yield
+(<ansi fg="command">help enchanting</ansi>).
+
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help consider</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help orders</ansi>, <ansi fg="command">help combat</ansi>

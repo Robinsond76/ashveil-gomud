@@ -1,0 +1,17 @@
+mobid: 90311
+zone: Frostfang
+hostile: false
+activitylevel: 5
+maxwander: 0
+idlecommands:
+  - 'say Bring me a trophy from something you hunted and a piece worth keeping, and I will work them together. <ansi fg="command">imbue</ansi> to see what I ask.'
+  - emote turns a hide over in the lamplight
+  - emote sorts a tray of hearts, hides and little jars of ash
+character:
+  name: enchanter
+  description: A lean, ash-fingered artisan in a stained apron, with a workbench of bone needles, wire and small stoppered jars. They look at what you carry the way a smith looks at ore, and ask nothing but gold and a trophy from a thing you hunted yourself.
+  raceid: 1
+  level: 20
+  alignment: 0
+  adjectives:
+    - enchanter

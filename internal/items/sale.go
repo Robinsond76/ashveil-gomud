@@ -75,5 +75,5 @@ func (i *Item) IsJunkMarked() bool { return i.Junk }
 // a junk-type item that is not rolled, quest bound or otherwise special.
 func (i *Item) IsAutoJunk() bool {
 	spec := i.GetSpec()
-	return spec.Type == Junk && spec.QuestToken == `` && !i.IsSpecial()
+	return spec.Type == Junk && spec.QuestToken == `` && spec.Trophy == nil && !i.IsSpecial()
 }
