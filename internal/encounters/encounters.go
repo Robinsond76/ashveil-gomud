@@ -6,6 +6,7 @@
 package encounters
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -419,4 +420,40 @@ func Attempt(userID, roomID, bonusPct int) bool {
 	p := attemptProvider
 	attemptMu.RUnlock()
 	return p != nil && p.Attempt(userID, roomID, bonusPct)
+}
+
+// StartProvider is implemented by the encounters module (Phase 60): a story
+// event's battle outcome sets a named group of foes on the company through
+// the same spawn, cleanup and grace as a random encounter.
+type StartProvider interface {
+	// StartGroup spawns the foes in roomID against the leader and keeps
+	// them until they are beaten or abandoned. It is an error when the
+	// leader already has a group or the foes cannot be spawned.
+	StartGroup(userID, roomID int, foes []Foe) error
+}
+
+var (
+	startMu       sync.RWMutex
+	startProvider StartProvider
+)
+
+// SetStartProvider registers the module. nil clears it.
+func SetStartProvider(p StartProvider) {
+	startMu.Lock()
+	defer startMu.Unlock()
+	startProvider = p
+}
+
+// ErrNoStartProvider is returned by StartGroup when no module is loaded.
+var ErrNoStartProvider = errors.New("encounters: no module to start a group")
+
+// StartGroup starts a scripted group; ErrNoStartProvider without a module.
+func StartGroup(userID, roomID int, foes []Foe) error {
+	startMu.RLock()
+	p := startProvider
+	startMu.RUnlock()
+	if p == nil {
+		return ErrNoStartProvider
+	}
+	return p.StartGroup(userID, roomID, foes)
 }

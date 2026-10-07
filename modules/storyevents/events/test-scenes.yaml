@@ -1,0 +1,208 @@
+# Phase 60 test content: three scenes in the admin test area (rooms 90011 to
+# 90013), enough to try every outcome kind through the real triggers. The
+# world will be replaced; these are placeholders, not story.
+- id: gorge-descent
+  title: The Gorge
+  picture: gorge
+  triggers:
+    - kind: room
+      room: 90011
+  pages:
+    start:
+      text: >-
+        The road ends at air. A rope hangs from the iron ring of a bridge long gone,
+        down into a dark that smells of wet stone. On a ledge far below, something
+        pale lies against the rock. The rope looks sound for a rope that old.
+      choices:
+        - label: Send your best climber down the rope
+          require:
+            classes: [ranger, rogue, gryphon-rider]
+          hint: a ranger, a rogue or a gryphon-rider
+          risk:
+            pct: 25
+          text: "{who} goes down hand over hand and comes back up with the dead man's pack."
+          do:
+            - kind: item
+              item: 36
+              count: 2
+          fail_text: "{who} loses the rope halfway. The fall is short, and it is enough."
+          fail:
+            - kind: wound
+              pct: 20
+        - label: Go down yourself, and the company after you
+          risk:
+            pct: 50
+            less_per_level: 3
+          text: The rope holds. One by one you reach the ledge.
+          do:
+            - kind: move
+              room: 90014
+          next: ledge
+          fail_text: The rope slips through your hands the last stretch. You land on your side, on the ledge, and lie there while the rope swings above you.
+          fail:
+            - kind: wound
+              who: leader
+              pct: 25
+            - kind: move
+              room: 90014
+          fail_next: ledge
+        - label: Turn back from the edge
+          text: A bridge that fell is not worth a company that follows it.
+    ledge:
+      text: >-
+        A shelf of wet rock a spear's length wide. A dead man lies against the stone with
+        his pack on. The rope hangs a few steps along, and the climb back is the same
+        climb you made.
+      choices:
+        - label: Go through the dead man's pack
+          text: Whatever he was carrying, he has no more use for it.
+          do:
+            - kind: item
+              item: 36
+              count: 2
+            - kind: gold
+              amount: 15
+            - kind: flag
+              flag: searched-the-ledge
+          next: ledge-done
+        - label: Climb back up without touching him
+          text: You leave him as he is.
+          do:
+            - kind: move
+              room: 90011
+    ledge-done:
+      text: Nothing else is down here but the cold. The rope waits.
+      choices:
+        - label: Climb back up
+          do:
+            - kind: move
+              room: 90011
+
+- id: stranger-at-the-fire
+  title: A Stranger at the Fire
+  picture: fire
+  triggers:
+    - kind: room
+      room: 90012
+  pages:
+    start:
+      text: >-
+        A man sits by a small fire with a sword across his knees and his leg bound in a
+        sleeve. He does not stand. He says he is a deserter, as if you would not have
+        guessed from the coat, and asks only that you do not shout.
+      choices:
+        - label: Sit and hear him out
+          next: tale
+        - label: Walk on and leave him to it
+          text: He watches you out of sight and does not call after you.
+    tale:
+      text: >-
+        He tells it flat: a lord who stopped paying, a captain who kept the pay, a road
+        south that is quiet this week. His leg is bad. He has not eaten since the
+        stream. He does not ask you for anything again.
+      choices:
+        - label: Share your food and water
+          text: He eats like a man who has forgotten how, and gives you the road south in return.
+          do:
+            - kind: need
+              who: leader
+              stat: hunger
+              amount: 8
+            - kind: loyalty
+              who: all
+              amount: 3
+              line: "{who} saw you share, and says nothing."
+            - kind: flag
+              flag: fed-the-deserter
+        - label: Have a healer bind the leg properly
+          require:
+            classes: [cleric, shaman]
+          hint: a cleric or a shaman
+          text: "{who} unwraps the sleeve, cleans the wound and binds it again. The deserter looks away."
+          do:
+            - kind: loyalty
+              who: all
+              amount: 5
+            - kind: flag
+              flag: healed-the-deserter
+        - label: Take his sword while he sleeps
+          risk:
+            pct: 40
+          text: He sleeps hard, with the leg. The sword is a good one, and so is the purse under it.
+          do:
+            - kind: gold
+              amount: 30
+            - kind: loyalty
+              who: all
+              amount: -4
+            - kind: flag
+              flag: robbed-the-deserter
+          fail_text: He was not asleep, and he was not alone. Two of his old company come out of the dark.
+          fail:
+            - kind: battle
+              foes:
+                - mob: 86
+                - mob: 86
+        - label: Tell him to keep his road
+          text: You leave him with his fire.
+
+- id: burned-shrine
+  title: The Burned Shrine
+  picture: shrine
+  triggers:
+    - kind: room
+      room: 90013
+  pages:
+    start:
+      text: >-
+        Ash and black beams, and an altar the fire could not take. Someone swept the
+        floor after the burning. A bowl sits on the altar with a few coins in it. A
+        spring runs from a crack in the back wall.
+      choices:
+        - label: Have the devout one say the old words
+          require:
+            personality: devout
+          hint: a devout companion
+          text: "{who} says the old words in a low voice. They sound like something remembered from a long way off."
+          do:
+            - kind: loyalty
+              who: all
+              amount: 3
+        - label: Kneel in the ash yourself
+          require:
+            alignment: good
+            leader: true
+          hint: you, of good heart
+          text: You kneel. Nothing answers, and it is easier to stand afterwards.
+          do:
+            - kind: loyalty
+              who: all
+              amount: 2
+        - label: Take the bowl and what is in it
+          risk:
+            pct: 30
+          text: The coins are old and few. Something about taking them feels like robbing a grave.
+          do:
+            - kind: gold
+              amount: 25
+            - kind: loyalty
+              who: all
+              amount: -2
+          fail_text: The bowl is hot, and the ash under it is hotter. {who} drops it and the coins go into the fire.
+          fail:
+            - kind: wound
+              pct: 8
+        - label: Drink from the spring
+          risk:
+            pct: 35
+          text: The water is cold and tastes of iron. It settles well enough.
+          fail_text: The water is cold, and it is wrong. Someone will pay for it before dark.
+          fail:
+            - kind: ailment
+              who: random
+              ailment: gutache
+            - kind: need
+              who: all
+              stat: thirst
+              amount: 6
+        - label: Leave it as it is

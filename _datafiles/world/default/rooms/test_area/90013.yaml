@@ -1,0 +1,15 @@
+roomid: 90013
+zone: Test Area
+title: Burned Shrine
+description: >-
+  Ash and black beams, and a stone altar the fire could not take. Someone swept the floor after the burning, and someone left a bowl on the altar. A spring runs from a crack in the back wall, cold, and nothing grows near it. Walking here opens the shrine scene (help events).
+biome: land
+tags:
+  - lit
+exits:
+  northwest:
+    roomid: 90001
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

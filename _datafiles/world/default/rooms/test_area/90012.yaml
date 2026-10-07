@@ -1,0 +1,15 @@
+roomid: 90012
+zone: Test Area
+title: Stranger's Fire
+description: >-
+  A fire burns small in a hollow between two boulders, fed with wet sticks. A man sits close to it with a sword across his knees and his leg bound in a sleeve. He watches the road, not you. Walking here opens the stranger scene (help events).
+biome: land
+tags:
+  - lit
+exits:
+  southeast:
+    roomid: 90001
+mapx: -1
+mapy: -1
+mapz: 0
+hascoordinates: true

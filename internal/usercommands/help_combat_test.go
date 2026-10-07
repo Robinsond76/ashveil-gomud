@@ -513,3 +513,35 @@ func TestOrdersHelp(t *testing.T) {
 		assert.Contains(t, hub, "help orders", "help %s links to help orders", topic)
 	}
 }
+
+// Phase 60: help events renders, answers to its aliases, and is linked
+// from the adventure hub and the pages about the road and camp.
+func TestEventsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "events", "help index lists events under the road")
+
+	want, err := GetHelpContents("events")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{"Help for", "choose 2", "event", "(closed: needs a rogue)", "chancy", "Nothing here moves the world's clock"} {
+		assert.Contains(t, plain, phrase)
+	}
+	for _, alias := range []string{"event", "scene", "scenes", "story events", "choose"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help events", alias)
+	}
+	for _, hub := range []string{"adventure", "travel", "camp"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "help events", "%s links to help events", hub)
+	}
+}
