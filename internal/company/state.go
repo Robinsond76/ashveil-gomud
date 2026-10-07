@@ -67,6 +67,7 @@ func cloneItem(i items.Item) items.Item {
 		i.Spec = &spec
 	}
 	i.Loot.Affixes = append([]items.RolledAffix(nil), i.Loot.Affixes...)
+	i.Awaken = append([]int(nil), i.Awaken...) // Phase 67
 	return i
 }
 

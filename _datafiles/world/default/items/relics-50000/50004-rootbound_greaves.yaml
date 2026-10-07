@@ -16,4 +16,16 @@ relic:
   ilvl: 40
   mob: 34
   chance: 4
+  awakenings:
+    - name: "Pulled Roots"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 25
+      target: "woodland horrors"
+      effects: {armor: 3}
+    - name: "Deeper Roots"
+      kind: lair
+      mob: 34
+      target: "the ent"
+      effects: {secondwind: 5}
   lore: 'The roots do not die when they are cut from the tree. They hold on.'

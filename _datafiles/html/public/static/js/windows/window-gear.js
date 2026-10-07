@@ -322,6 +322,10 @@
             color: var(--t-text);
         }
 
+        /* Phase 67: a relic's awakenings, woken and asleep. */
+        .gw-tt-relic .gw-tt-awake { color: #ffd75f; }
+        .gw-tt-relic .gw-tt-sleep { color: var(--t-text-secondary); }
+
         .gw-tt-relic .gw-tt-relic-lore {
             color: var(--t-text-secondary);
             font-style: italic;
@@ -457,7 +461,11 @@
                 return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             };
             html += '<hr class="gw-tt-divider"><div class="gw-tt-relic">' +
-                item.relic.map(function (line) { return '<div>' + esc(line) + '</div>'; }).join('');
+                item.relic.map(function (line) {
+                    const cls = line.indexOf('Awakened, ') === 0 ? ' class="gw-tt-awake"'
+                        : line.indexOf('Sleeping, ') === 0 ? ' class="gw-tt-sleep"' : '';
+                    return '<div' + cls + '>' + esc(line) + '</div>';
+                }).join('');
             if (item.relic_lore) {
                 html += '<div class="gw-tt-relic-lore">' + esc(item.relic_lore) + '</div>';
             }

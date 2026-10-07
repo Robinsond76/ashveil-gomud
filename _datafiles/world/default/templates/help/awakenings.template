@@ -1,0 +1,60 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">awakenings</ansi>
+
+A relic is not finished when it drops. Each one carries two or three
+<ansi fg="yellow">awakenings</ansi>: deeds that, done while the relic is worn, wake a further power
+in it (<ansi fg="command">help relics</ansi>). A sleeping awakening shows what it asks and what it will
+give; a woken one shows what it gives.
+
+<ansi fg="yellow-bold">The three kinds of deed</ansi>
+
+  slay    slay a number of foes of a kind: ogres and goblins, undead,
+          spiders. The number is on the item, such as Ogrebane's
+          Giant-Slayer: 15 ogres and goblins.
+  lair    defeat the master of a lair. It counts once, the same boss kill the
+          <ansi fg="command">chronicle</ansi> writes down (<ansi fg="command">help chronicle</ansi>).
+  place   cross into a zone. It counts once, on the step that takes each
+          wearer in (a companion's own step counts while you are in the
+          zone too); walking out and back adds nothing, and nor does
+          logging in there.
+
+<ansi fg="yellow-bold">What counts</ansi>
+
+  - The relic must be worn, by you or by a companion. One in the pack, in
+    cargo or on a shelf waits.
+  - The wearer must be alive and standing with the leader: a companion who
+    fell, fled or is left behind earns the relic nothing.
+  - A foe slain in the training yard counts for nothing.
+  - Progress is kept on the item itself, through a restart. A relic handed
+    to a companion keeps what it has earned, and so does one taken back.
+
+<ansi fg="yellow-bold">What a woken power is</ansi>
+
+A woken power is a small, ordinary gear effect (more Attack, a few points of
+armor, a bonus on every blow, and so on), the same kind a relic's signature
+is. Each one adds at most a third of what that effect may ever reach, and a
+relic's signature and awakenings together (or a full set's bonuses and all
+its pieces' awakenings) never pass the cap, so an awakened relic is a little
+stronger, never a runaway one. A one-shot signature, such as
+a second chance, cannot be awakened.
+
+It works the moment it wakes, for whoever wears the relic, and goes when the
+relic comes off. It is part of the relic's balance (<ansi fg="command">help relics</ansi>), not an extra reward.
+There is no gold, loot or experience in an awakening, and a relic sells for the
+same sleeping or woken (<ansi fg="command">help sell</ansi>).
+
+<ansi fg="yellow-bold">Where to see it</ansi>
+
+  <ansi fg="command">look [relic]</ansi>   each awakening: <ansi fg="yellow">Sleeping, Giant-Slayer (12 of 15)</ansi>, what it asks, and
+                  what it gives, or <ansi fg="yellow">Awakened</ansi> and what it gives
+  <ansi fg="command">inventory</ansi>      each worn relic's awakenings so far, naming the next one
+  <ansi fg="command">chronicle awakenings</ansi>   the awakenings the company has woken
+  web client      the same lines in the Gear tooltip and on the Company window's
+                  gear rows, at any width; they turn gold when woken
+
+When one wakes you are told at once, and the company's chronicle writes it
+down. In battle, <ansi fg="command">why</ansi> names an awakened power on a blow it raised, such as
+"Ogrebane woke Giant-Slayer: +1 damage on every landed blow" (<ansi fg="command">help why</ansi>).
+Awakened defences and health work through the numbers they change, and show
+on the item.
+
+See also: <ansi fg="command">help relics</ansi>, <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help why</ansi>, <ansi fg="command">help company-inventory</ansi>.

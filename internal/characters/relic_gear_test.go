@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,9 @@ func relicGear(t *testing.T) {
 
 func wear(t *testing.T, c *Character, id int) {
 	t.Helper()
+	if races.GetRace(c.GetRaceId()) == nil {
+		loadShippedRaces(t) // Wear reads the race's size; run alone, nothing has loaded races yet
+	}
 	_, worn, reason := c.Wear(items.New(id))
 	require.True(t, worn, reason)
 }

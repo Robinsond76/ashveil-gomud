@@ -780,6 +780,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				if hit && attackTargetDamage != beforeAdjust {
 					strike.Notes = append(strike.Notes, fmt.Sprintf(`Class effects changed the blow by %+d`, attackTargetDamage-beforeAdjust))
 				}
+				if hit && attackTargetDamage > 0 {
+					strike.Notes = append(strike.Notes, awakenedNotes(&sourceChar, &targetChar)...)
+				}
 				beforeAdjust = attackTargetDamage
 				attackTargetDamage = leadrootDamage(&sourceChar, attackTargetDamage)
 				if hit && attackTargetDamage != beforeAdjust {

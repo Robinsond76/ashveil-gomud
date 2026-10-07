@@ -31,6 +31,8 @@ type RelicSpec struct {
 	ILvl      int            `yaml:"ilvl"`          // its fixed item level (the level requirement is five below)
 	Mob       int            `yaml:"mob"`           // the boss that drops it
 	Chance    int            `yaml:"chance"`        // percent a boss kill by one company drops it
+	// Phase 67: deeds that wake further powers while the relic is worn.
+	Awakenings []AwakeningSpec `yaml:"awakenings,omitempty"`
 }
 
 // IsSet reports whether the relic is a set piece.
@@ -59,6 +61,9 @@ func (r RelicSpec) validate(spec *ItemSpec) error {
 		return fmt.Errorf("a relic needs a boss (mob) and a drop chance of 1 to 100")
 	}
 	if err := classes.ValidateGearEffects(r.Effects); err != nil {
+		return err
+	}
+	if err := validateAwakenings(r); err != nil {
 		return err
 	}
 	if r.IsSet() {
@@ -214,6 +219,13 @@ func GearEffects(worn []Item) (map[string]int, []ActiveSet) {
 		}
 		seen[it.ItemId] = true
 		r := spec.Relic
+		// Phase 67: powers the relic has woken add to its own.
+		for k, v := range it.AwakenedEffects() {
+			if fx == nil {
+				fx = map[string]int{}
+			}
+			fx[k] += v
+		}
 		if r.IsSet() {
 			if counts == nil {
 				counts = map[string]map[int]bool{}
@@ -260,7 +272,8 @@ func GearEffects(worn []Item) (map[string]int, []ActiveSet) {
 }
 
 // RelicLines says what a relic does, in plain text: a Legendary's signature
-// and effects, or a set piece's set and each bonus. Empty for no relic.
+// and effects, or a set piece's set and each bonus, then each awakening with
+// its progress (Phase 67). Empty for no relic.
 func (i *Item) RelicLines() []string {
 	spec := i.GetSpec()
 	if spec.Relic == nil {
@@ -268,17 +281,17 @@ func (i *Item) RelicLines() []string {
 	}
 	r := spec.Relic
 	if !r.IsSet() {
-		return []string{fmt.Sprintf("%s (while worn): %s.", r.Signature, strings.Join(classes.DescribeGearEffects(r.Effects), "; "))}
+		return append([]string{fmt.Sprintf("%s (while worn): %s.", r.Signature, strings.Join(classes.DescribeGearEffects(r.Effects), "; "))}, i.AwakeningLines()...)
 	}
 	set, ok := GetSet(r.Set)
 	if !ok {
-		return []string{"Piece of the " + r.Set + " set."}
+		return append([]string{"Piece of the " + r.Set + " set."}, i.AwakeningLines()...)
 	}
 	lines := []string{fmt.Sprintf("Piece of the %s set (%d pieces).", set.Name, len(SetPieces(r.Set)))}
 	for _, bonus := range set.Bonuses {
 		lines = append(lines, fmt.Sprintf("  %d worn: %s.", bonus.Pieces, strings.Join(classes.DescribeGearEffects(bonus.Effects), "; ")))
 	}
-	return lines
+	return append(lines, i.AwakeningLines()...)
 }
 
 // RelicDescription lists a relic's signature or set for look and inspect:
