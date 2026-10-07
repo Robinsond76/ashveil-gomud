@@ -107,6 +107,19 @@ func (p *Prompt) GetNextQuestion() *Question {
 	return nil
 }
 
+// Forget drops a question (answered or not) so the same text can be asked
+// again. Ask caches questions by text, so a step that repeats a question
+// (Ashveil's creation steps, on a redo) forgets it once it has the answer.
+func (p *Prompt) Forget(question string) {
+	kept := p.Questions[:0]
+	for _, q := range p.Questions {
+		if q.Question != question {
+			kept = append(kept, q)
+		}
+	}
+	p.Questions = kept
+}
+
 func (p *Prompt) Store(name string, val any) {
 	p.State[name] = val
 }

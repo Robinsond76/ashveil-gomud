@@ -6,6 +6,9 @@ Columns: 8
 138  90  64	skin.d
 181 125  90	skin.m
 212 163 124	skin.l
+ 47  33  24	hair.d
+ 77  55  39	hair.m
+113  86  64	hair.l
  47  51  56	iron.d
  85  89  95	iron.m
 130 134 139	iron.l

@@ -1,0 +1,138 @@
+# Character looks (Ashveil phase 72a).
+#
+# Each trait is a short list of bands a player picks from at creation (and
+# again, free, at an inn with `appearance edit`). The picks compose into the
+# prose `look` shows. Bands are words only: no numbers, no stat effects.
+#
+# Option fields:
+#   id       lowercase key stored on the character
+#   name     what the creation list shows
+#   adj      goes before the noun    ("A tall, lean woman")
+#   after    goes after the noun     ("... woman past forty")
+#   phrase   a clause or sentence    (see each trait below)
+#   noun     pronouns only: man, woman, person
+#   color    skin and hair colour: the hex the web client paints sprites with
+#   races    limit the option to these lowercase race names (empty: any race)
+#
+# Placeholders in any text field: {their} {they} {them} (and {Their} {They}
+# {Them} for a sentence start). Hair styles may also use {colour}.
+#
+# Placeholder names. The new world's lore renames and extends these.
+
+# Free line a player may add after the generated text, in characters.
+linemax: 160
+# Marks a player may carry.
+maxmarks: 2
+
+traits:
+  - id: pronouns
+    title: "How will others speak of you?"
+    options:
+      - { id: he, name: "he/him", noun: man }
+      - { id: she, name: "she/her", noun: woman }
+      - { id: they, name: "they/them", noun: person }
+
+  - id: age
+    title: "How old are you?"
+    options:
+      - { id: young, name: "young (around 18 to 24)", adj: young }
+      - { id: prime, name: "in your prime", after: "in {their} prime" }
+      - { id: middling, name: "of middling years", after: "of middling years" }
+      - { id: forty, name: "past forty", after: "past forty" }
+      - { id: greying, name: "greying", adj: greying }
+      - { id: old, name: "old", adj: old }
+      - { id: ageless, name: "ageless (elves only)", adj: ageless, races: [elf] }
+
+  - id: height
+    title: "How tall are you?"
+    options:
+      - { id: short, name: "short", adj: short }
+      - { id: below, name: "below middling", adj: small }
+      - { id: middling, name: "middling" }
+      - { id: tall, name: "tall", adj: tall }
+      - { id: very-tall, name: "very tall", adj: towering }
+
+  - id: build
+    title: "What is your build?"
+    options:
+      - { id: gaunt, name: "gaunt", adj: gaunt }
+      - { id: lean, name: "lean", adj: lean }
+      - { id: wiry, name: "wiry", adj: wiry }
+      - { id: sturdy, name: "sturdy", adj: sturdy }
+      - { id: broad, name: "broad", adj: broad-shouldered }
+      - { id: heavy, name: "heavy", adj: heavyset }
+
+  - id: face
+    title: "What is your face like?"
+    options:
+      - { id: sharp, name: "sharp", adj: sharp-featured }
+      - { id: weathered, name: "weathered", adj: weathered }
+      - { id: plain, name: "plain" }
+      - { id: handsome, name: "handsome", adj: handsome }
+      - { id: hard, name: "hard", adj: hard-faced }
+      - { id: pockmarked, name: "pockmarked", adj: pockmarked }
+      - { id: long, name: "long", adj: long-faced }
+
+  # phrase joins the clauses after the noun ("olive-skinned").
+  - id: skin
+    title: "What is your skin like?"
+    options:
+      - { id: pale, name: "pale", phrase: "pale-skinned", color: "#ecd0b4" }
+      - { id: fair, name: "fair", phrase: "fair-skinned", color: "#e0b48c" }
+      - { id: olive, name: "olive", phrase: "olive-skinned", color: "#c89a64" }
+      - { id: tan, name: "tan", phrase: "sun-browned", color: "#a8744a" }
+      - { id: brown, name: "brown", phrase: "brown-skinned", color: "#7c4c2c" }
+      - { id: dark, name: "dark", phrase: "dark-skinned", color: "#52311d" }
+
+  - id: eyes
+    title: "What colour are your eyes?"
+    options:
+      - { id: grey, name: "grey", phrase: "grey-eyed" }
+      - { id: brown, name: "brown", phrase: "brown-eyed" }
+      - { id: dark, name: "dark", phrase: "dark-eyed" }
+      - { id: green, name: "green", phrase: "green-eyed" }
+      - { id: pale-blue, name: "pale blue", phrase: "pale-eyed" }
+      - { id: mismatched, name: "mismatched", phrase: "odd-eyed" }
+
+  # adj is the colour word the hair style phrase uses.
+  - id: haircolor
+    title: "What colour is your hair?"
+    options:
+      - { id: black, name: "black", adj: black, color: "#1c1612" }
+      - { id: brown, name: "brown", adj: brown, color: "#4a3020" }
+      - { id: auburn, name: "auburn", adj: auburn, color: "#7a3b22" }
+      - { id: fair, name: "fair", adj: fair, color: "#c8a45c" }
+      - { id: grey, name: "grey", adj: grey, color: "#8c8c88" }
+      - { id: white, name: "white", adj: white, color: "#dcd8cc" }
+
+  - id: hairstyle
+    title: "How do you wear your hair?"
+    options:
+      - { id: cropped, name: "cropped", phrase: "{their} {colour} hair cropped close" }
+      - { id: long, name: "long", phrase: "{their} {colour} hair worn long" }
+      - { id: braided, name: "braided", phrase: "{their} {colour} hair in a tight braid" }
+      - { id: shaven, name: "shaven", phrase: "{their} head shaved bare" }
+      - { id: matted, name: "matted", phrase: "{their} {colour} hair matted and unkempt" }
+      - { id: tied, name: "tied back", phrase: "{their} {colour} hair tied back" }
+
+  # phrase is a whole sentence.
+  - id: voice
+    title: "What is your voice like?"
+    options:
+      - { id: low, name: "low", phrase: "{Their} voice is low." }
+      - { id: rasping, name: "rasping", phrase: "{Their} voice is a dry rasp." }
+      - { id: soft, name: "soft", phrase: "{Their} voice is soft." }
+      - { id: clipped, name: "clipped", phrase: "{Their} words come short and clipped." }
+      - { id: lilting, name: "lilting", phrase: "{Their} voice has a lilt to it." }
+
+  # phrase is a whole sentence; "none" ends the list.
+  - id: mark
+    title: "Do you carry a mark?"
+    options:
+      - { id: none, name: "none" }
+      - { id: burn, name: "burn scar", phrase: "A burn scar runs across the back of {their} left hand." }
+      - { id: cut, name: "old sword cut", phrase: "An old sword cut has healed pale across {their} forearm." }
+      - { id: brand, name: "brand", phrase: "A brand is burned into {their} shoulder, the lines half faded." }
+      - { id: tattoo, name: "tattoo", phrase: "Faded ink winds up {their} arm." }
+      - { id: finger, name: "missing finger", phrase: "The last finger of {their} right hand is gone." }
+      - { id: nose, name: "broken nose", phrase: "{Their} nose has been broken and badly set." }

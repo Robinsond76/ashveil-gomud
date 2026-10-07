@@ -237,6 +237,7 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 				Aggro:         user.Character.Aggro != nil,
 			}
 			userVitals.Lineage, userVitals.ClassID = classKeys(uId)
+			userVitals.Skin, userVitals.Hair = user.Character.LookColors()
 			if !ok {
 				if uRoom := rooms.LoadRoom(user.Character.RoomId); uRoom != nil {
 					roomTitle = uRoom.Title
@@ -403,4 +404,6 @@ type GMCPPartyModule_Payload_Vitals struct {
 	Aggro          bool   `json:"aggro"`             // Whether the user is currently in aggro state
 	Lineage        string `json:"lineage,omitempty"` // Phase 40b: base archetype id, for the map sprite
 	ClassID        string `json:"classid,omitempty"` // Phase 40b: current class id
+	Skin           string `json:"skin,omitempty"`    // Phase 72a: skin tone (#rrggbb) for the sprite
+	Hair           string `json:"hair,omitempty"`    // Phase 72a: hair colour (#rrggbb) for the sprite
 }

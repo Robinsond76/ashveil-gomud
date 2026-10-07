@@ -183,6 +183,11 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
+	// Ashveil Phase 72a: looks and life story.
+	if startCreationStep(cmdPrompt, user) {
+		return true, nil
+	}
+
 	user.Character.ExtraLives = int(configs.GetGamePlayConfig().LivesStart)
 
 	user.EventLog.Add(`char`, fmt.Sprintf(`Created a new character: <ansi fg="username">%s</ansi>`, user.Character.Name))

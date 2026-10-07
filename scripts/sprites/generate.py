@@ -58,7 +58,7 @@ class Writer:
 
 def write_palette(w):
     names = list(PAL)
-    img = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
+    img = Image.new("RGBA", (8, (len(names) + 7) // 8), (0, 0, 0, 0))
     for i, n in enumerate(names):
         img.putpixel((i % 8, i // 8), PAL[n] + (255,))
     w.png("style/palette.png", img, kind="palette", set="S0", swatches=len(names))

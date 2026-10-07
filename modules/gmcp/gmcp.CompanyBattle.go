@@ -129,6 +129,7 @@ type allyMemberFact struct {
 	Key               string
 	Name, Class       string
 	Promoted          string // the promoted class id (40s5 art key), if any
+	Skin, Hair        string // a leading player's chosen colours (Phase 72a)
 	Row, Col          int
 	Health, HealthMax int
 	Down              bool
@@ -276,10 +277,13 @@ type battleAllyMember struct {
 	Class string `json:"class,omitempty"`
 	// Promoted is the member's promoted class id, the art the battle
 	// screen draws first (as Company members' `class`).
-	Promoted string     `json:"promoted,omitempty"`
-	Cell     battleCell `json:"cell"`
-	Health   string     `json:"health"`
-	Down     bool       `json:"down,omitempty"`
+	Promoted string `json:"promoted,omitempty"`
+	// Skin and Hair are an allied leader's chosen colours (#rrggbb).
+	Skin   string     `json:"skin,omitempty"`
+	Hair   string     `json:"hair,omitempty"`
+	Cell   battleCell `json:"cell"`
+	Health string     `json:"health"`
+	Down   bool       `json:"down,omitempty"`
 }
 
 // allyRef is an allied company's leader ref, and allyMemberRef a member's.
@@ -314,7 +318,7 @@ func buildBattle(f battleFacts) any {
 	for _, a := range f.Allies {
 		ba := battleAlly{ID: allyRef(a.Leader), Name: a.Name, Members: []battleAllyMember{}}
 		for _, m := range a.Members {
-			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class, Promoted: m.Promoted,
+			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class, Promoted: m.Promoted, Skin: m.Skin, Hair: m.Hair,
 				Cell: battleCell{Row: m.Row, Col: m.Col}, Health: enemyparty.HealthWord(m.Health, m.HealthMax), Down: m.Down})
 		}
 		p.Allies = append(p.Allies, ba)
@@ -810,8 +814,12 @@ func gatherAllies(user *users.UserRecord, b battle.Battle) []allyFact {
 			if !m.Leader || m.ArchetypeKnown {
 				class = strings.ToLower(m.Archetype)
 			}
-			fact.Members = append(fact.Members, allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Promoted: m.Class, Row: cell.Row, Col: cell.Col,
-				Health: m.HP, HealthMax: m.HPMax, Down: m.Status == company.MemberDead || (m.HasHP && m.HP < 1)})
+			member := allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Promoted: m.Class, Row: cell.Row, Col: cell.Col,
+				Health: m.HP, HealthMax: m.HPMax, Down: m.Status == company.MemberDead || (m.HasHP && m.HP < 1)}
+			if m.Leader {
+				member.Skin, member.Hair = au.Character.LookColors()
+			}
+			fact.Members = append(fact.Members, member)
 		}
 		add(sum.Leader)
 		for _, m := range sum.Companions {

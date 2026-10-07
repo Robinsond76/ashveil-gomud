@@ -21,6 +21,12 @@
  *                              (Phase 40c: map/landmarks.json) once it has
  *                              loaded, else null; asking starts the load
  *                              and a failure stays null.
+ *   Sprites.tinted(path, look) -> Sprites.art(path) with the figure's skin and
+ *                              hair repainted in look's colours (Phase 72a;
+ *                              sprite-tint.js builds a look). With no look, or
+ *                              before sprite-tint.js has loaded, it is art(path).
+ *                              The repainted canvas is made once per path and
+ *                              look.
  *   Sprites.frame(info, rowIndex, now, startMs)
  *                           -> the { sx, sy, sw, sh } source rectangle of
  *                              the frame an animation shows at time <now>
@@ -64,6 +70,19 @@ window.Sprites = (function () {
         return (images[path] && images[path] !== 'failed') ? { img: images[path], info: manifest.files[path] } : null;
     }
 
+    var tintCache = {};
+
+    function tinted(path, look) {
+        var a = art(path);
+        if (!a || !look || !window.SpriteTint) { return a; }
+        var canvas = window.SpriteTint.canvasFor(a.img, look, function (w, h) {
+            var c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            return c;
+        }, tintCache, path);
+        return { img: canvas, info: a.info };
+    }
+
     function status(path) {
         if (!has(path)) { return 'none'; }
         if (art(path)) { return 'ready'; }
@@ -94,5 +113,5 @@ window.Sprites = (function () {
     function onChange(fn) { listeners.push(fn); }
 
     load();
-    return { art: art, has: has, status: status, data: data, frame: frame, onChange: onChange };
+    return { art: art, tinted: tinted, has: has, status: status, data: data, frame: frame, onChange: onChange };
 }());

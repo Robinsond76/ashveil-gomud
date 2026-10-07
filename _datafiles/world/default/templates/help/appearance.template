@@ -1,0 +1,34 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">appearance</ansi>
+
+How you look, in your own words: your age, height, build, face, skin,
+hair, and any marks. Others read it when they <ansi fg="command">look</ansi> at you.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">appearance</ansi>          shows how you look and what you chose
+  <ansi fg="command">appearance edit</ansi>     chooses your looks again (at an inn only)
+
+<ansi fg="yellow-bold">Choosing</ansi>
+
+You choose your looks when you make a character, one short question at a
+time, and see the description build as you go. A last line of your own
+(up to 160 characters) is optional. Looks are only words: they change no
+numbers and never help or hurt you in a fight.
+
+In the web client the questions open as a panel of buttons, with your
+figure drawn in the skin and hair you chose. Type the same number or word
+at the game line if you prefer; "Type instead" tucks the panel away.
+<ansi fg="command">back</ansi> redoes the last answer.
+
+<ansi fg="yellow-bold">Changing them</ansi>
+
+At any inn, <ansi fg="command">appearance edit</ansi> lets you choose again. It is free, as often as
+you like. Your life story stays as it was (<ansi fg="command">help lifestory</ansi>).
+
+Your pronouns are part of your looks. They are what the game uses when it
+speaks of you in battle.
+
+Characters made before looks existed are asked once, when they next log
+in. You may skip it, and ask later with <ansi fg="command">creation</ansi>.
+
+See also: <ansi fg="command">help lifestory</ansi>, <ansi fg="command">help archetype</ansi>.

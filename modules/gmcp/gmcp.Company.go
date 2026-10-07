@@ -102,7 +102,11 @@ type companyMember struct {
 	Rank      int    `json:"rank,omitempty"`
 	Promotion string `json:"promotion,omitempty"`
 	// Lineage is its base archetype id (Phase 40c), for the map sprite.
-	Lineage   string       `json:"lineage,omitempty"`
+	Lineage string `json:"lineage,omitempty"`
+	// Skin and Hair are the leader's chosen colours (#rrggbb, Phase 72a),
+	// painted on its battle sprite; omitted for companions.
+	Skin      string       `json:"skin,omitempty"`
+	Hair      string       `json:"hair,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -238,6 +242,8 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	out.Class, out.ClassName = m.Class, m.ClassName
 	if !m.Leader {
 		out.Lineage = m.Lineage
+	} else if u := users.GetByUserId(leaderUserID); u != nil {
+		out.Skin, out.Hair = u.Character.LookColors()
 	}
 	if c, ok := classes.Get(m.Class); ok && m.Class != "" && out.ClassName == "" {
 		out.ClassName = c.Name

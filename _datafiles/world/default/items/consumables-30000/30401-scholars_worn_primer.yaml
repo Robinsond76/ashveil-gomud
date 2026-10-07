@@ -1,0 +1,8 @@
+itemid: 30401
+name: scholar's worn primer
+namesimple: primer
+description: A thin primer, its pages soft with handling and its margins crowded with small notes. A keepsake from your trade (help backgrounds).
+type: object
+subtype: mundane
+value: 1
+weight: 50

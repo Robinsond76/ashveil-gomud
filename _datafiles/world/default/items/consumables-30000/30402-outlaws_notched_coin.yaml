@@ -1,0 +1,8 @@
+itemid: 30402
+name: outlaw's notched coin
+namesimple: coin
+description: A copper coin with a notch cut in its rim, worth no more than copper. A keepsake from your trade (help backgrounds).
+type: object
+subtype: mundane
+value: 1
+weight: 50

@@ -1,0 +1,8 @@
+itemid: 30405
+name: noble's cracked signet
+namesimple: signet
+description: A signet ring with a cracked face, its crest worn to a blur. A keepsake from your trade (help backgrounds).
+type: object
+subtype: mundane
+value: 1
+weight: 50
