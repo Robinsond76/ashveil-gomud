@@ -124,8 +124,7 @@ func holdBehindCombat(user *users.UserRecord, text string, spoken bool) bool {
 		if pace == combatpace.Off {
 			return false
 		}
-		spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
-		deliverItems(user, pacer.Hold(user.UserId, round, text, spec, paceNow()))
+		deliverItems(user, pacer.Hold(user.UserId, round, events.Slot(), text, paceSpec(pace), paceNow()))
 		return true
 	}
 	if spoken || events.Typed() {
@@ -134,21 +133,40 @@ func holdBehindCombat(user *users.UserRecord, text string, spoken bool) bool {
 	return pacer.Follow(user.UserId, text)
 }
 
+// paceSpec is the timing a player's held lines follow: by action (one beat
+// a turn) in a round the battle clock resolved (Phase 82c), by line within
+// the round's window on the fixed cadence.
+func paceSpec(pace combatpace.Pace) combatpace.Spec {
+	if clock.active {
+		return pace.Beats()
+	}
+	return pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
+}
+
 // CombatOnCadence is DoCombat's NewRound listener: combat resolves only on
 // every CombatEveryRounds-th game round, with everything it causes tagged
-// with the round. Tests call DoCombat directly and are unaffected.
+// with the round. While a player fights, the battle clock (Phase 82c)
+// resolves the rounds instead, on its own beat. Tests call DoCombat
+// directly and are unaffected.
 func CombatOnCadence(e events.Event) events.ListenerReturn {
 	return combatOnCadence(e, DoCombat)
 }
 
 func combatOnCadence(e events.Event, doCombat events.Listener) events.ListenerReturn {
 	evt, ok := e.(events.NewRound)
-	if !ok || !configs.GetTimingConfig().CombatRoundDue(evt.RoundNumber) {
+	if !ok || !configs.GetTimingConfig().CombatRoundDue(evt.RoundNumber) || playerFightLive() {
 		return events.Continue
 	}
+	return resolveCombatRound(doCombat)
+}
+
+// resolveCombatRound runs one combat round, numbered by the combat round
+// counter, with everything it causes tagged with that round.
+func resolveCombatRound(doCombat events.Listener) events.ListenerReturn {
 	startPacedRound()
+	round := nextCombatRound()
 	result := events.Continue
-	events.WithCause(evt.RoundNumber, func() { result = doCombat(e) })
+	events.WithCause(round, func() { result = doCombat(events.NewRound{RoundNumber: round}) })
 	return result
 }
 
@@ -332,8 +350,7 @@ func CombatData_Hold(e events.Event) events.ListenerReturn {
 			sendCombatData(user.UserId, []any{evt.Data})
 			return events.Continue
 		}
-		spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
-		deliverItems(user, pacer.HoldData(user.UserId, round, evt.Data, spec, paceNow()))
+		deliverItems(user, pacer.HoldData(user.UserId, round, evt.Data, paceSpec(pace), paceNow()))
 		return events.Continue
 	}
 	if events.Typed() || !pacer.FollowData(user.UserId, evt.Data) {

@@ -74,6 +74,7 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.CombatData{}, hooks.CombatData_Hold},
+		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
 	} {
@@ -99,6 +100,8 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 		}
 	}
 	steps = nil
+	hooks.SetCombatRoundCounterForTest(40) // the server's counter is not the fight's
+	starts := clockRoundStarts(t, &now, start)
 	rounds := combatRoundsToPlay(t, b, &now)
 
 	var payloads []*eventPayload
@@ -167,7 +170,11 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 	// are spread over several moments rather than dumped at once.
 	byRound := map[int][]step{}
 	for _, s := range steps {
-		byRound[int(s.at/(8*time.Second))] = append(byRound[int(s.at/(8*time.Second))], s)
+		r := 0
+		for r+1 < len(*starts) && s.at >= (*starts)[r+1] {
+			r++
+		}
+		byRound[r] = append(byRound[r], s)
 	}
 	spread := false
 	for r, list := range byRound {
@@ -200,8 +207,10 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 	assert.Positive(t, rounds)
 }
 
-// combatRoundsToPlay runs the real round loop to the end of the fight and
-// lets the last lines out, returning how many game rounds it ran.
+// combatRoundsToPlay runs the real loop (game rounds every 4s, turns every
+// 50ms; the battle clock resolves the combat rounds on the turns) to the
+// end of the fight and lets the last lines out, returning how many game
+// rounds it ran.
 func combatRoundsToPlay(t *testing.T, b *brawl, now *time.Time) int {
 	t.Helper()
 	var round uint64 = 1
@@ -255,6 +264,7 @@ func TestBattleEventsGoOutAtOnceWithPacingOff(t *testing.T) {
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.CombatData{}, hooks.CombatData_Hold},
+		{events.NewTurn{}, hooks.BattleClock},
 	} {
 		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
@@ -264,8 +274,8 @@ func TestBattleEventsGoOutAtOnceWithPacingOff(t *testing.T) {
 
 	b.toughen()
 	b.aimAt("bandit captain")
-	events.AddToQueue(events.NewRound{RoundNumber: 2})
-	events.ProcessEvents() // no NewTurn: nothing is paced
+	events.AddToQueue(events.NewTurn{})
+	events.ProcessEvents() // the clock's round; no release turn: nothing is paced
 	assert.Positive(t, got, "events went out in the round itself")
 	assert.False(t, combatpace.Default().Busy(7))
 }

@@ -31,6 +31,7 @@ type Release struct {
 type held struct {
 	text   string
 	beat   Beat
+	slot   int // the fighter's turn the line belongs to (Phase 82c), 0 for upkeep
 	data   any
 	isData bool
 }
@@ -137,11 +138,13 @@ func (p *Pacer) beatOf(text string) Beat {
 // still held are returned first, for the caller to send at once: a round's
 // lines never run into the next round's. A late line of an older round (a
 // caused event requeued past the round's end) joins the newer round's
-// lines rather than cutting them short.
-func (p *Pacer) Hold(userId int, round uint64, text string, spec Spec, now time.Time) (flushed []Release) {
+// lines rather than cutting them short. slot is the fighter's turn the
+// line belongs to (0 for the round's upkeep), which paces by action under a
+// Beats spec.
+func (p *Pacer) Hold(userId int, round uint64, slot int, text string, spec Spec, now time.Time) (flushed []Release) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.holdLocked(userId, round, held{text: text, beat: p.beatOf(text)}, spec, now)
+	return p.holdLocked(userId, round, held{text: text, beat: p.beatOf(text), slot: slot}, spec, now)
 }
 
 // HoldData queues a data entry among a player's held lines, in order. It
@@ -182,8 +185,19 @@ func (p *Pacer) Follow(userId int, text string) bool {
 	if q == nil || q.next >= len(q.lines) {
 		return false
 	}
-	q.lines = append(q.lines, held{text: text, beat: p.beatOf(text)})
+	q.lines = append(q.lines, held{text: text, beat: p.beatOf(text), slot: q.lastSlot()})
 	return true
+}
+
+// lastSlot is the slot of the last text line held, so a line that follows
+// the round joins its last turn's beat.
+func (q *queue) lastSlot() int {
+	for i := len(q.lines) - 1; i >= 0; i-- {
+		if !q.lines[i].isData {
+			return q.lines[i].slot
+		}
+	}
+	return 0
 }
 
 // FollowData is Follow for a data entry.
@@ -207,7 +221,20 @@ func (q *queue) remaining(userId int) []Release {
 	return out
 }
 
-func (s Spec) gap(b Beat) time.Duration {
+// gap is the wait before a line: by line from its beat; by action from
+// whether it opens a new turn (newSlot), with the extra before a pain or
+// death line.
+func (s Spec) gap(b Beat, newSlot bool) time.Duration {
+	if s.Beats {
+		d := s.Follow
+		if newSlot {
+			d = s.Beat
+		}
+		if b == Dramatic {
+			d += s.Extra
+		}
+		return d
+	}
 	switch b {
 	case Dramatic:
 		return s.Dramatic
@@ -224,18 +251,20 @@ func (q *queue) offsets() []time.Duration {
 	out := make([]time.Duration, len(q.lines))
 	var total time.Duration
 	first := true
+	prevSlot := 0
 	for i, l := range q.lines {
 		if l.isData {
 			continue
 		}
 		if !first {
-			total += q.spec.gap(l.beat)
+			total += q.spec.gap(l.beat, l.slot != prevSlot)
 		}
 		first = false
+		prevSlot = l.slot
 		out[i] = total
 	}
 	scale := 1.0
-	if total > q.spec.Window && total > 0 {
+	if q.spec.Window > 0 && total > q.spec.Window && total > 0 {
 		// Scale in floating point: offset × window overflows int64
 		// nanoseconds once a round runs past a dozen seconds of gaps.
 		scale = float64(q.spec.Window) / float64(total)
@@ -333,6 +362,27 @@ func (p *Pacer) FlushAll() (out []Release, drained []int) {
 	}
 	sort.Ints(drained)
 	return out, drained
+}
+
+// PlaybackEnd is when the last held line of any player goes out, or the
+// zero time when nothing is held: the battle clock (Phase 82c) starts the
+// next round after it.
+func (p *Pacer) PlaybackEnd() time.Time {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	var end time.Time
+	for _, q := range p.queues {
+		offs := q.offsets()
+		for i := len(q.lines) - 1; i >= 0; i-- {
+			if !q.lines[i].isData {
+				if t := q.start.Add(offs[i]); t.After(end) {
+					end = t
+				}
+				break
+			}
+		}
+	}
+	return end
 }
 
 // Busy reports whether a player is in a combat round whose lines haven't

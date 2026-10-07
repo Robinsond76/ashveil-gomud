@@ -181,6 +181,8 @@ func copyShipped(t *testing.T, dataDir string, rels ...string) {
 func newBrawl(t *testing.T) *brawl {
 	hooks.ResetTempoForTest()
 	t.Cleanup(hooks.ResetTempoForTest)
+	hooks.ResetBattleClockForTest()
+	t.Cleanup(hooks.ResetBattleClockForTest)
 	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 1 }))
 	t.Cleanup(hooks.UseMoraleStateForTest(nil, nil))
 	t.Cleanup(hooks.UseMoraleRollForTest(func(int) int { return 99 }))

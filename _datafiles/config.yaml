@@ -413,6 +413,9 @@ GamePlay:
     TempoSpeedRef: 2
     TempoSpeedSpan: 20
     MaxTurnsPerRound: 2
+    # A battle round lasts as long as its actions' beats need (set combatpace),
+    # never less than this many milliseconds.
+    MinRoundMs: 3000
   # PVP Restrictions
   PVP:
     # - Enabled -
