@@ -133,3 +133,11 @@ Phase 49 banter (`banter.go`, pool in `internal/banter`): `Companion.Personality
 ## Opinions (Phase 64)
 
 `opinions.go` implements `company.OpinionProvider` and `OpinionViewer`. A choice arrives from its source through `company.Opinion`; companions react once per choice and once per cooldown, loyalty moves ±2 within 30..80, and a mercy choice leaves alone any companion alignment already moved. State lives on `Companion.Opinions` (last six reactions and when each kind was last spoken), so it saves, clones (`Registry.Get`) and purges with the company record. `OpinionPanel` feeds `opinions`, `company inspect` and the `Company.Opinions` GMCP extra; see `internal/opinions/AGENTS.md`.
+
+## Phase 65: bonds between companions (`bonds.go`)
+
+- `Record.Bonds` holds one `Bond` per pair of companions (ids `A < B`): a value -100..100, `Warned`, and `At` (when each source last moved the pair, in real unix seconds, the cooldown). `Registry.Put` prunes bonds of companions no longer in the record, so dismissal, desertion and expiry end them in the same save. Rules live in `internal/bonds`.
+- `applyBonds` is the one writer: it skips a change inside its source's cooldown or between anyone but two living, non-creature companions, saves once with rollback, announces a deepening tier and a rivalry's warning, and sends the less loyal of a warned pair at -100 away through `MoraleDesert` and `moraleDepartures`. Don't write `Bonds` anywhere else.
+- Sources: a camp rest (`CampBanter` with `CtxRested` calls `bondsCampRest` whether or not the leader has banter on), a won battle (`onBattleEnded` calls `bondsBattleWon`), banter friend/rival lines (`bondsFromTalk`, from `exchange`), the Phase 64 seam (`opinions.Observe(m.onOpinionBonds)`, registered in `init`), and combat's `company.BondEvent` (a rescue, a refused guard). `BondValue` reads the registry in place: combat calls it per guard decision.
+- `internal/hooks/combat_bonds.go` is the battle side (bond guard, refusal); its wiring tests are `wiring_bonds_test.go`. Balance cells: `ASHVEIL_BALANCE=1 go test ./modules/company -run TestPhase65BondsInTheMirror`.
+

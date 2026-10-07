@@ -545,7 +545,9 @@
         case 'death': return t ? t + ' falls' : '';
         case 'yield': return a ? a + ' yields' : '';
         case 'flee': return a ? a + ' flees' : '';
-        case 'guard-used': return a && t ? a + ' guards ' + t : '';
+        case 'guard-used': return a && t ? a + ' guards ' + t + (e.status === 'bond' ? ' for a friend' : '') : '';
+        // Phase 65: a rival who would have guarded and let the blow fall.
+        case 'guard-refused': return a && t ? a + ' lets the blow fall on ' + t + ' (rivals)' : '';
         // Phase 61: a battle order carried out, said as the text lines say it.
         case 'order-fired': return orderLine(e.status, a, t);
         // An ability names itself (a Sentinel's Overwatch, a Nightblade's Death Mark...).

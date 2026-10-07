@@ -48,8 +48,12 @@ const (
 	WoundChange    Kind = "wound-change"    // Phase 30b
 	GuardUsed      Kind = "guard-used"      // Phase 30c
 	GuardExhausted Kind = "guard-exhausted" // Phase 30c
-	Yield          Kind = "yield"           // Phase 30e
-	Flee           Kind = "flee"
+	// GuardRefused is a rival who would have guarded a ward and let the
+	// blow fall (Phase 65); Status is "bond". A friend's step in is a
+	// GuardUsed with the same Status.
+	GuardRefused Kind = "guard-refused"
+	Yield        Kind = "yield" // Phase 30e
+	Flee         Kind = "flee"
 	// Death is a death or an incapacitation: Outcome is OutcomeSlain,
 	// OutcomeBeaten (a practice foe), or OutcomeIncapacitated. An empty
 	// Source is filled with the victim's last damager in the fight.

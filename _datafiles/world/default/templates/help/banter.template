@@ -47,4 +47,7 @@ A personality also decides what a companion thinks of your choices: mercy,
 camps, sharing food, relics and the choices in scenes on the road
 (<ansi fg="command">help opinions</ansi>).
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>, <ansi fg="command">help opinions</ansi>.
+Friends and rivals sometimes talk about each other, and it nudges their
+bond (<ansi fg="command">help bonds</ansi>).
+
+See also: <ansi fg="command">help bonds</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>, <ansi fg="command">help opinions</ansi>.

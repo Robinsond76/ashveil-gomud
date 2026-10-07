@@ -421,6 +421,7 @@ func TestInnAndCampTimersRaceTheGameLoop(t *testing.T) {
 
 		deadline := time.Now().Add(5 * time.Second)
 		for time.Now().Before(deadline) {
+			events.ProcessEvents() // the real timers queue onto the game loop (Phase 65 review)
 			module.MovementBlocked(7)
 			module.MovementBlocked(8)
 			module.innStatus(innUser, innRoom())

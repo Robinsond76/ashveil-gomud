@@ -248,6 +248,8 @@ type ClassRT struct {
 	QuietStarted bool   // the first round's Focus count has begun
 	ZanshinRound uint64 // the combat round Zanshin last gave its turn back
 	Bodyguards   int    // Bodyguard steps spent this battle
+	BondGuards   int    // bond steps spent this battle: a friend stepped in for a friend (Phase 65)
+	BondRefused  bool   // a rival's refusal to guard has been told this battle (Phase 65)
 	SidePeak     int    // the most of its side standing this battle (Vengeance)
 	Alone        bool   // it is the last of its company standing (a Kenshi's Last stand)
 	EliteRT             // Phase 38c2: the rogue and ranger elites

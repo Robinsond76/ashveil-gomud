@@ -47,7 +47,9 @@ button in them just types a command for you.
               gear, your horses, and the cargo), Camp, Chronicle (the
               company's deeds in sentences, newest first, with a filter by
               kind; help chronicle), and Opinions (what each companion
-              likes, dislikes and has lately said; help opinions).
+              likes, dislikes and has lately said; help opinions), and
+              Bonds (how each pair of companions feels, with a bar for
+              each; help bonds).
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
               Battle view during a battle. A battle also opens as a

@@ -429,5 +429,8 @@ func (m *CompanyModule) inspectMember(leaderUserID int, selector string, exact b
 	if line := m.opinionLine(leaderUserID, c.ID); line != "" { // Phase 64
 		lines = append(lines, line)
 	}
+	if line := m.bondLine(leaderUserID, c.ID); line != "" { // Phase 65
+		lines = append(lines, line)
+	}
 	return strings.Join(lines, "\n"), true
 }

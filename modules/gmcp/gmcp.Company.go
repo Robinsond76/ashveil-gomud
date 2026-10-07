@@ -369,7 +369,7 @@ func newCompanyFeed() *companyFeed {
 		accepting: nativeAccepting,
 		gearOpen:  map[int]gearWatch{},
 	}
-	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle), opinionsExtra()}
+	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle), opinionsExtra(), bondsExtra()}
 	return f
 }
 

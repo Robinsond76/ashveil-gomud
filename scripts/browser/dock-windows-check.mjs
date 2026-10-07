@@ -155,7 +155,7 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
@@ -1377,6 +1377,41 @@ await page.setViewportSize({ width: 1280, height: 900 });
   if (outdir) { await page.locator('#company-opinions').screenshot({ path: path.join(outdir, '64-opinions.png') }); }
   await page.evaluate(() => window.gmcp('Company.Opinions', { spared: 0, executed: 0, members: [] }));
   check((await opnText()).includes('No companions hold opinions yet'), 'Opinions: an empty company says so');
+}
+
+// --- Phase 65: the Bonds sub-tab ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const bnd = {
+    pairs: [
+      { a: 1, b: 3, a_name: 'Oswin', b_name: 'Tamsin', value: 62, tier: 2, phrase: 'Oswin and Tamsin are close',
+        effect: 'Each steps in once a battle for the other when hurt (at 40% health or less).', warned: false },
+      { a: 2, b: 3, a_name: xss, b_name: 'Tamsin', value: -88, tier: -3, phrase: xss + ' and Tamsin cannot bear each other',
+        effect: "Won't guard each other. One of them will leave if this goes on.", warned: true },
+      { a: 1, b: 2, a_name: 'Oswin', b_name: xss, value: 4, tier: 0, phrase: 'Oswin and ' + xss + ' are still getting to know each other', effect: '', warned: false },
+    ],
+    members: [
+      { id: 1, name: 'Oswin', feelings: [{ id: 3, name: 'Tamsin', words: 'is close to Tamsin', tier: 2 }, { id: 2, name: xss, words: 'is still getting to know ' + xss, tier: 0 }] },
+      { id: 3, name: 'Tamsin', feelings: [{ id: 1, name: 'Oswin', words: 'is close to Oswin', tier: 2 }] },
+    ],
+  };
+  const bndText = () => page.evaluate(() => document.getElementById('company-bonds').textContent);
+  await page.getByRole('tab', { name: 'Bonds', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Bonds', c), bnd);
+  check(await page.locator('#company-bonds .cmp-bond-card').count() === 3, 'Bonds: a card for each pair');
+  check((await bndText()).includes('Oswin and Tamsin are close (bond +62)'), 'Bonds: the pair in words, with its number');
+  check((await bndText()).includes('Each steps in once a battle for the other when hurt'), 'Bonds: what a friendship does');
+  check((await bndText()).includes('One of them will leave if this goes on.'), 'Bonds: a warned rivalry says so');
+  check((await bndText()).includes('Oswin is close to Tamsin'), 'Bonds: each companion\'s view');
+  check(await page.locator('#company-bonds .cmp-bond-card[data-feel="rival"]').count() === 1, 'Bonds: a rivalry is marked');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-bonds img')), 'Bonds: server text is text, never markup');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-bonds'); return p.scrollWidth <= p.clientWidth + 1; }), 'Bonds fit a phone');
+  if (outdir) { await page.locator('#company-bonds').screenshot({ path: path.join(outdir, '65-bonds-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-bonds').screenshot({ path: path.join(outdir, '65-bonds.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Bonds', { pairs: [], members: [] }));
+  check((await bndText()).includes('Bonds form between companions'), 'Bonds: an empty company says so');
 }
 
 await browser.close();
