@@ -213,3 +213,20 @@ func TestTagsNameEachStagePick(t *testing.T) {
 	assert.Equal(t, []string{"trade-soldier"}, Tags(PicksWithBackground("soldier")))
 	assert.Empty(t, Tags(nil), "no life story, no tags")
 }
+
+func TestTagNameReadsAPickAsThePlayerSeesIt(t *testing.T) {
+	shipped(t)
+	for tag, want := range map[string]string{
+		"trade-soldier":          "a soldier",
+		"homeland-hill-clans":    "the hill clans",
+		"Upbringing-Hunters-Get": "a hunter's get",
+	} {
+		got, ok := TagName(tag)
+		assert.True(t, ok, tag)
+		assert.Equal(t, want, got, tag)
+	}
+	for _, tag := range []string{"trade-dancer", "soldier", "", "trade-"} {
+		_, ok := TagName(tag)
+		assert.False(t, ok, tag)
+	}
+}

@@ -253,6 +253,10 @@ type Context struct {
 	Leader string
 	// Heard reports whether the player was already told of this deed.
 	Heard func(seq int) bool
+	// LineHeard reports whether the player was told this line lately. A
+	// member_tag line beats plain ones only while fresh, so a background
+	// line is not said of every deed of its kind.
+	LineHeard func(id string) bool
 	// Flag reports a company flag.
 	Flag func(flag string) bool
 	// MemberTag reports whether a member (by company key) carries a tag.
@@ -317,7 +321,8 @@ func (c Context) companyDeed(e chronicle.Entry) chronicle.Entry {
 
 // Choose picks what the NPC says to one player: the newest unheard deed
 // that has a line this NPC may say (a ref-specific line beats a plain kind
-// line, and a member_tag line beats an untagged one), else a state line, else nothing.
+// line, and a member_tag line the player has not heard lately beats an
+// untagged one), else a state line, else nothing.
 func (cat Catalog) Choose(c Context) (Choice, bool) {
 	for i := range c.Entries {
 		e := c.companyDeed(c.Entries[i])
@@ -341,10 +346,11 @@ func (cat Catalog) Choose(c Context) (Choice, bool) {
 		}
 		pool := specific
 		if len(pool) == 0 {
-			// A line that speaks to a member's background beats a plain one.
+			// A line that speaks to a member's background beats a plain one,
+			// until the player has heard it lately; then it joins the rest.
 			var personal []Line
 			for _, l := range general {
-				if l.MemberTag != "" {
+				if l.MemberTag != "" && (c.LineHeard == nil || !c.LineHeard(l.ID)) {
 					personal = append(personal, l)
 				}
 			}

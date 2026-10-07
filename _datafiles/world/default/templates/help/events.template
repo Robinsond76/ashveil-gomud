@@ -35,8 +35,10 @@ as <ansi fg="black-bold">(closed: needs a rogue)</ansi>; recruit differently and
 that asks for nothing is yours, as the leader.
 
 Your life story counts too: a choice may need a background, such as a
-former soldier or an acolyte, and only you carry one. It shows as
-<ansi fg="black-bold">(closed: needs you, once a soldier)</ansi> until it is yours (<ansi fg="command">help lifestory</ansi>).
+former soldier or an acolyte, and only you carry one. One your past opens
+shows as <ansi fg="black-bold">(Mara, life story: a soldier)</ansi>; one it does not shows as
+<ansi fg="black-bold">(closed: needs a leader who was a soldier)</ansi>, and stays closed, since a
+life story is set once (<ansi fg="command">help lifestory</ansi>).
 
 Some choices are risky. The page says so in words: a small risk, chancy,
 a long shot. The better the member does it (their skill, or their level),

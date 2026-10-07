@@ -482,7 +482,7 @@ func TestALifeStoryOpensBackgroundChoicesInTheRealScenes(t *testing.T) {
 
 	// The gorge: the hunter's get reads the rope and goes down for nothing.
 	out := s.run("go", "northeast")
-	assert.Contains(t, out, "3. Read the rope and the ring like a hunter's get (Aldous)")
+	assert.Contains(t, out, "3. Read the rope and the ring like a hunter's get (Aldous, life story: a hunter's get)")
 	out = s.run("choose", "3")
 	assert.Contains(t, out, "tests the knot")
 	assert.Equal(t, 90014, s.room())
@@ -503,9 +503,9 @@ func TestABackgroundChoiceIsClosedWithoutTheBackground(t *testing.T) {
 	s := newScene(t)
 	s.user.Character.LifeStory = map[string]string{"trade": "scholar"}
 	out := s.run("go", "southeast")
-	assert.Contains(t, out, "Say the old words as you were taught (closed: needs you, once an acolyte)")
+	assert.Contains(t, out, "Say the old words as you were taught (closed: needs a leader who was an acolyte)")
 	assert.Contains(t, s.run("choose", "5"), "closed to your company")
 	s.user.Character.LifeStory = map[string]string{"trade": "acolyte"}
-	assert.Contains(t, s.run("event", ""), "Say the old words as you were taught (Aldous)")
+	assert.Contains(t, s.run("event", ""), "Say the old words as you were taught (Aldous, life story: an acolyte)")
 	assert.Contains(t, s.run("choose", "5"), "The spring runs a little clearer.")
 }

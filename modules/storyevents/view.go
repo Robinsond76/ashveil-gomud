@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/lifestory"
 	"github.com/GoMudEngine/GoMud/internal/storyevents"
 )
 
@@ -30,6 +31,10 @@ type choiceView struct {
 	Who string `json:"who,omitempty"`
 	// Needs says what a closed choice asks for.
 	Needs string `json:"needs,omitempty"`
+	// Because says what opened a choice that asks for a life story
+	// (Phase 72), so a player sees their past mattered: "life story: a
+	// soldier".
+	Because string `json:"because,omitempty"`
 	// Risk is a word for how likely it is to go wrong; empty for a sure
 	// thing.
 	Risk string `json:"risk,omitempty"`
@@ -77,6 +82,9 @@ func (m *Module) choiceViews(page storyevents.Page, members []storyevents.Facts,
 			}
 		case c.Require.MemberSet():
 			v.Who = who.Name
+			if name, ok := lifestory.TagName(c.Require.Tag); ok {
+				v.Because = "life story: " + name
+			}
 		}
 		if open && c.Risk != nil {
 			v.Risk = riskWord(c.Risk.RiskPct(c.Require.Rank(who)))
@@ -125,6 +133,9 @@ func render(p payload) string {
 			notes := []string{}
 			if c.Who != "" {
 				notes = append(notes, c.Who)
+			}
+			if c.Because != "" {
+				notes = append(notes, c.Because)
 			}
 			if c.Risk != "" {
 				notes = append(notes, c.Risk)

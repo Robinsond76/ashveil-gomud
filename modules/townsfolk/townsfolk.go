@@ -67,6 +67,16 @@ func (s UserState) heard(seq int) bool {
 	return false
 }
 
+// toldLine reports whether a line is among the player's recent tellings.
+func (s UserState) toldLine(id string) bool {
+	for _, t := range s.Told {
+		if t.Line == id {
+			return true
+		}
+	}
+	return false
+}
+
 // Registry is what the module saves: one memory per player.
 type Registry struct {
 	Users map[int]UserState `yaml:"users"`
@@ -288,6 +298,7 @@ func (m *Module) Speak(npc townsfolk.NPC, listeners []int) (townsfolk.Speech, bo
 			Leader:    name,
 			Entries:   chronicle.Query(uid, chronicle.Filter{Since: since, Limit: queryLimit}),
 			Heard:     st.heard,
+			LineHeard: st.toldLine,
 			Flag:      func(f string) bool { return m.w.Flag(uid, f) },
 			MemberTag: func(key, tag string) bool { return m.w.MemberTag(uid, key, tag) },
 			Weather:   m.w.Weather(npc.Zone),

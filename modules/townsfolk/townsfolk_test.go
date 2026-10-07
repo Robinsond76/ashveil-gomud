@@ -731,3 +731,29 @@ func TestAShippedLineSpeaksToTheLeadersBackground(t *testing.T) {
 	assert.Contains(t, sp.Text, "put down", "no background, the plain line")
 	assert.NotContains(t, sp.Text, "soldier")
 }
+
+// Phase 72 review: a background line beats a plain one only while the
+// listener has not heard it lately, so a soldier is not told the same drill
+// line of every boss.
+func TestABackgroundLineIsNotSaidOfEveryDeed(t *testing.T) {
+	r := newRig(t)
+	r.m.readFiles = func() map[string][]byte {
+		return map[string][]byte{"t.yaml": []byte(testLines + `
+- id: boss-soldier
+  kind: boss
+  member_tag: trade-soldier
+  tags: [gossip]
+  text: "Like drill, {who}."
+`)}
+	}
+	r.w.tags["7|leader|trade-soldier"] = true
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King"})
+	sp, ok := r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "Like drill, Mara.", sp.Text, "first, the line for the background")
+
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Bone Ogre"})
+	sp, ok = r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "Mara put down the Bone Ogre.", sp.Text, "heard lately, it joins the plain lines")
+}

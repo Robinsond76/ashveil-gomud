@@ -366,3 +366,24 @@ func Tags(picks Picks) []string {
 	}
 	return out
 }
+
+// TagName is how a life-story tag reads to a player: the option's name,
+// starting lowercase ("a soldier", "the hill clans", "a hunter's get"). ok
+// is false for a tag that is not a known life-story pick.
+func TagName(tag string) (string, bool) {
+	d := Current()
+	if d == nil {
+		return ``, false
+	}
+	tag = strings.ToLower(strings.TrimSpace(tag))
+	for _, stage := range Stages {
+		id, found := strings.CutPrefix(tag, stage+`-`)
+		if !found {
+			continue
+		}
+		if o, ok := d.Option(stage, id); ok && o.Name != `` {
+			return strings.ToLower(o.Name[:1]) + o.Name[1:], true
+		}
+	}
+	return ``, false
+}
