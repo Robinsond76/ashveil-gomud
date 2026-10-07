@@ -118,3 +118,63 @@ func TestTurnOrderIsListedForTheBattleDataInSlotOrder(t *testing.T) {
 	assert.Zero(t, hooks.CurrentTurnSlot(), "no slot between rounds")
 	assert.Empty(t, hooks.RoundTurnOrder(99), "a player in no fight has no order")
 }
+
+// Phase 82b: a chant is released at its caster's turn, so a faster foe's
+// blow in the same round now breaks it before it lands. `help tempo` makes
+// that claim; before this phase the company always acted first and a chant
+// due this round could only be broken in an earlier one.
+func TestTurnOrderAFasterFoeBreaksAChantBeforeItsRelease(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		foeFirst bool
+	}{
+		{"a faster foe breaks it", true},
+		{"a faster caster lands it", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b := newBrawl(t)
+			b.withArchetypes("wizard")
+			b.unplaced()
+			b.shapeBandits()
+			forceBlows(t, true)
+			noCounters(t)
+			breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
+			stream := b.listen()
+			b.aria.Character.SetSkill("cast", 1)
+			b.aria.Character.LearnSpell("mm")
+			b.aimAt("bandit captain")
+			captain := b.captain()
+			b.toughen()
+			b.hold(nil)
+			b.strike(0, false) // the captain's is the round's only blow, on Aria
+			if tc.foeFirst {
+				b.actsFirst(&captain.Character)
+			} else {
+				b.actsFirst(b.aria.Character)
+			}
+
+			// Her chant is due this round: it is released at her turn.
+			b.aria.Character.ManaMax.Value, b.aria.Character.Mana = 20, 20
+			b.aria.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "mm", TargetMobInstanceIds: []int{captain.InstanceId}})
+			require.NotNil(t, b.aria.Character.Aggro)
+			b.aria.Character.Aggro.RoundsWaiting = 0
+			out := b.fight()
+
+			broken := interruptsOf(*stream, "u:7")
+			var landed []combatstream.Event
+			for _, e := range castsBy(*stream, combatstream.CastComplete, "u:7") {
+				if e.Outcome != combatstream.OutcomeInterrupted {
+					landed = append(landed, e)
+				}
+			}
+			if tc.foeFirst {
+				require.Len(t, broken, 1, "the faster captain broke her chant:\n%s", out)
+				assert.Equal(t, "Magic Missile", broken[0].Status)
+				assert.Empty(t, landed, "the missile never left her hands")
+				return
+			}
+			assert.Empty(t, broken, "she released it before his blow:\n%s", out)
+			require.Len(t, landed, 1, "the missile landed:\n%s", out)
+		})
+	}
+}
