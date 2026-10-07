@@ -6,6 +6,7 @@ package gmcp
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -56,6 +57,18 @@ type campPayload struct {
 	// from a camp, teacher and inn), and the inn's gig board (inns only).
 	Music *musicPayload `json:"music,omitempty"`
 	Gig   *gigPayload   `json:"gig,omitempty"`
+	// Phase 75: the rooms an inn lets, cheapest first, priced for the
+	// company's standing there; the Camp tab's buttons run Command.
+	InnRooms []innRoomRow `json:"inn_rooms,omitempty"`
+}
+
+// innRoomRow is one room of an inn for the Camp tab.
+type innRoomRow struct {
+	Tier    string `json:"tier"`
+	Name    string `json:"name"`
+	Price   int    `json:"price"`
+	Minutes int    `json:"minutes"`
+	Command string `json:"command"`
 }
 
 // musicPayload is the Camp tab's Music block.
@@ -161,6 +174,15 @@ func campPayloadOf(s camping.CampState) campPayload {
 	if s.Gig != nil {
 		gig = &gigPayload{Window: s.Gig.Window, Open: s.Gig.Open, Ready: s.Gig.Ready, Reason: s.Gig.Reason, Families: s.Gig.Families, Pay: s.Gig.Pay}
 	}
+	var innRooms []innRoomRow
+	for _, r := range s.InnRooms {
+		command := "inn rest"
+		if r.Tier != camping.InnCommon {
+			command += " " + string(r.Tier)
+		}
+		name := strings.ToUpper(string(r.Tier)[:1]) + string(r.Tier)[1:]
+		innRooms = append(innRooms, innRoomRow{Tier: string(r.Tier), Name: name, Price: r.Price, Minutes: r.Minutes, Command: command})
+	}
 	tents := make([]tentRow, 0, len(s.Tents))
 	for _, t := range s.Tents {
 		tents = append(tents, tentRow{Kind: string(t.Kind), Name: t.Name, Effect: t.Effect, Pitched: t.Pitched, Command: "camp tent " + camping.TentOf(t.Kind).Short})
@@ -170,7 +192,7 @@ func campPayloadOf(s camping.CampState) campPayload {
 		spec := camping.TentOf(s.TentKind)
 		tentKind, tentName = string(spec.Kind), spec.Name
 	}
-	return campPayload{Music: music, Gig: gig, Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	return campPayload{Music: music, Gig: gig, InnRooms: innRooms, Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

@@ -20,7 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/weather"
 )
 
-const innUsage = "Usage: inn | inn status | inn rest | inn gig [status]"
+const innUsage = "Usage: inn | inn status | inn rest [private|suite] | inn gig [status]"
 
 // innSettings is the Phase 16 inn configuration.
 type innSettings struct {
@@ -42,6 +42,51 @@ type innSettings struct {
 	// Phase 33f3 Field Smith: extra strikes of edge per level of the
 	// company's best field smith (a warrior) present when sharpening.
 	FieldSmithStrikesPerLevel int
+	// Phase 75 room tiers: an inn tagged PrivateRoomTag also lets rooms for
+	// PrivatePricePerMember, and one tagged SuiteRoomTag a suite for
+	// SuitePricePerMember. Each tier's Well Rested lasts its own real-time
+	// length; the buff's strength is the same in every tier.
+	PrivateRoomTag          string
+	SuiteRoomTag            string
+	PrivatePricePerMember   int
+	SuitePricePerMember     int
+	PrivateWellRestedLength time.Duration
+	SuiteWellRestedLength   time.Duration
+}
+
+// innOffer is one tier an inn offers: its price per member before the
+// settlement's markup, and the length of the Well Rested it leaves.
+type innOffer struct {
+	Tier     camping.InnTier
+	Price    int
+	WellRest time.Duration
+}
+
+// innRooms is the tiers a room offers, cheapest first: the common room
+// whenever the room is an inn at all, the others by their tags.
+func (s innSettings) innRooms(room *rooms.Room) []innOffer {
+	if room == nil || !room.HasTag(s.RoomTag) {
+		return nil
+	}
+	out := []innOffer{{camping.InnCommon, s.PricePerMember, s.WellRestedDuration}}
+	if room.HasTag(s.PrivateRoomTag) {
+		out = append(out, innOffer{camping.InnPrivate, s.PrivatePricePerMember, s.PrivateWellRestedLength})
+	}
+	if room.HasTag(s.SuiteRoomTag) {
+		out = append(out, innOffer{camping.InnSuite, s.SuitePricePerMember, s.SuiteWellRestedLength})
+	}
+	return out
+}
+
+// wellRestedFor is the Well Rested length a stay in tier leaves.
+func (s innSettings) wellRestedFor(tier camping.InnTier) time.Duration {
+	switch tier.Normalize() {
+	case camping.InnPrivate:
+		return s.PrivateWellRestedLength
+	case camping.InnSuite:
+		return s.SuiteWellRestedLength
+	}
+	return s.WellRestedDuration
 }
 
 func defaultInnSettings() innSettings {
@@ -61,6 +106,13 @@ func defaultInnSettings() innSettings {
 		SharpenedStrikes: 20,
 
 		FieldSmithStrikesPerLevel: 5,
+
+		PrivateRoomTag:          "inn-private",
+		SuiteRoomTag:            "inn-suite",
+		PrivatePricePerMember:   15,
+		SuitePricePerMember:     40,
+		PrivateWellRestedLength: 60 * time.Minute,
+		SuiteWellRestedLength:   120 * time.Minute,
 	}
 }
 
@@ -103,6 +155,24 @@ func parseInnSettings(get func(string) any) innSettings {
 	}
 	if n, ok := modconfig.Int(get("FieldSmithStrikesPerLevel")); ok && n >= 0 {
 		s.FieldSmithStrikesPerLevel = n
+	}
+	if tag := strings.TrimSpace(modconfig.String(get("InnPrivateRoomTag"))); tag != "" {
+		s.PrivateRoomTag = tag
+	}
+	if tag := strings.TrimSpace(modconfig.String(get("InnSuiteRoomTag"))); tag != "" {
+		s.SuiteRoomTag = tag
+	}
+	if n, ok := modconfig.Int(get("InnPrivatePricePerMember")); ok && n >= 0 {
+		s.PrivatePricePerMember = n
+	}
+	if n, ok := modconfig.Int(get("InnSuitePricePerMember")); ok && n >= 0 {
+		s.SuitePricePerMember = n
+	}
+	if d, ok := modconfig.Duration(get("InnPrivateWellRestedDuration")); ok && d > 0 {
+		s.PrivateWellRestedLength = d
+	}
+	if d, ok := modconfig.Duration(get("InnSuiteWellRestedDuration")); ok && d > 0 {
+		s.SuiteWellRestedLength = d
 	}
 	return s
 }
@@ -208,12 +278,14 @@ func innOperationID(stay camping.InnStay) string {
 	return fmt.Sprintf("inn-rest-%d-%d-%d", stay.LeaderUserID, stay.RoomID, stay.Rest.StartedAtUTC.UnixNano())
 }
 
-func (m *CampingModule) innPrice(leaderUserID int, pricing standing.Standing) (price, members int) {
+// innPrice is the price of a room at perMember gold a head, with the
+// settlement's markup.
+func (m *CampingModule) innPrice(leaderUserID int, pricing standing.Standing, perMember int) (price, members int) {
 	members = m.companyMembers(leaderUserID)
 	if members < 1 {
 		members = 1
 	}
-	return pricing.InnPrice(m.innSettings().PricePerMember * members), members
+	return pricing.InnPrice(perMember * members), members
 }
 
 // innStanding is the company's Phase 21b standing in the room's settlement
@@ -239,8 +311,19 @@ func (m *CampingModule) innCommand(rest string, user *users.UserRecord, room *ro
 	switch {
 	case len(args) == 0 || args[0] == "status":
 		user.SendText(m.innStatus(user, room))
+	case args[0] == "rest" && len(args) > 2:
+		user.SendText(innUsage)
 	case args[0] == "rest":
-		user.SendText(m.innRest(user, room))
+		word := ""
+		if len(args) > 1 {
+			word = args[1]
+		}
+		tier, ok := camping.ParseInnTier(word)
+		if !ok {
+			user.SendText(fmt.Sprintf("There is no \"%s\" room. %s", word, innUsage))
+			break
+		}
+		user.SendText(m.innRestTier(user, room, tier))
 	case args[0] == "gig" && len(args) > 1 && args[1] == "status":
 		user.SendText(m.gigStatus(user, room))
 	case args[0] == "gig":
@@ -273,24 +356,69 @@ func (m *CampingModule) innStatus(user *users.UserRecord, room *rooms.Room) stri
 	if pricing.InnRefused() {
 		return innRefusal(room)
 	}
-	price, members := m.innPrice(user.UserId, pricing)
-	perMember := fmt.Sprintf("%d per member", m.innSettings().PricePerMember)
-	if pricing.InnMarkupPct > 0 {
-		perMember += fmt.Sprintf(", +%d%%", pricing.InnMarkupPct)
+	offered := m.innSettings().innRooms(room)
+	_, members := m.innPrice(user.UserId, pricing, 0)
+	lines := []string{fmt.Sprintf("%s offers your company of %d a room for the night. You have %d gold.", roomTitle(room.RoomId), members, user.Character.Gold)}
+	for _, r := range offered {
+		price, _ := m.innPrice(user.UserId, pricing, r.Price)
+		command := "inn rest"
+		if r.Tier != camping.InnCommon {
+			command += " " + string(r.Tier)
+		}
+		perMember := fmt.Sprintf("%d per member", r.Price)
+		if pricing.InnMarkupPct > 0 {
+			perMember += fmt.Sprintf(", +%d%%", pricing.InnMarkupPct)
+		}
+		lines = append(lines, fmt.Sprintf("  %s: %d gold (%s), Well Rested for %s. Use \"%s\" (%s).",
+			strings.ToUpper(string(r.Tier)[:1])+string(r.Tier)[1:], price, perMember, wellRestedLength(r.WellRest), command, m.innSettings().RestDuration))
 	}
-	text := fmt.Sprintf("%s offers your company of %d a room for the night: %d gold (%s). You have %d gold.\nUse \"inn rest\" to pay and rest (%s).",
-		roomTitle(room.RoomId), members, price, perMember, user.Character.Gold, m.innSettings().RestDuration)
 	if pricing.InnMarkupPct > 0 {
-		text += fmt.Sprintf("\nYour company is %s here, so the room costs %d%% more.", pricing.Tier, pricing.InnMarkupPct)
+		lines = append(lines, fmt.Sprintf("Your company is %s here, so the room costs %d%% more.", pricing.Tier, pricing.InnMarkupPct))
 	}
-	return text
+	return strings.Join(lines, "\n")
+}
+
+// wellRestedLength words a Well Rested length for players ("30 minutes",
+// "2 hours").
+func wellRestedLength(d time.Duration) string {
+	minutes := int(d / time.Minute)
+	if minutes >= 60 && minutes%60 == 0 {
+		if minutes == 60 {
+			return "1 hour"
+		}
+		return fmt.Sprintf("%d hours", minutes/60)
+	}
+	return fmt.Sprintf("%d minutes", minutes)
+}
+
+// innRoomRows is the rooms an inn lets this company, priced for its
+// standing; none when the settlement shuns it.
+func (m *CampingModule) innRoomRows(leaderUserID int, room *rooms.Room) []camping.InnRoomRow {
+	pricing := innStanding(leaderUserID, room)
+	if pricing.InnRefused() {
+		return nil
+	}
+	m.mu.Lock()
+	settings := m.innSettings()
+	m.mu.Unlock()
+	var rows []camping.InnRoomRow
+	for _, r := range settings.innRooms(room) {
+		price, _ := m.innPrice(leaderUserID, pricing, r.Price)
+		rows = append(rows, camping.InnRoomRow{Tier: r.Tier, Price: price, Minutes: int(r.WellRest / time.Minute)})
+	}
+	return rows
 }
 
 // innRest takes the company's gold and starts a durable real-time stay. A
 // stay that starts is the company's choice of a bed over a rough camp
 // (Phase 64), so its companions have their say, outside m.mu.
 func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string {
-	text, started := m.innRestLocked(user, room)
+	return m.innRestTier(user, room, camping.InnCommon)
+}
+
+// innRestTier is innRest for the room tier chosen (Phase 75).
+func (m *CampingModule) innRestTier(user *users.UserRecord, room *rooms.Room, tier camping.InnTier) string {
+	text, started := m.innRestLocked(user, room, tier)
 	if started {
 		if said, err := company.Opinion(user.UserId, opinions.Choice{Kind: opinions.Inn, Subject: room.Title}); err != nil {
 			mudlog.Warn("camping: inn opinion", "leader", user.UserId, "error", err)
@@ -305,7 +433,7 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 	return text
 }
 
-func (m *CampingModule) innRestLocked(user *users.UserRecord, room *rooms.Room) (string, bool) {
+func (m *CampingModule) innRestLocked(user *users.UserRecord, room *rooms.Room, tier camping.InnTier) (string, bool) {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error(), false
 	}
@@ -346,13 +474,25 @@ func (m *CampingModule) innRestLocked(user *users.UserRecord, room *rooms.Room) 
 	if pricing.InnRefused() {
 		return innRefusal(room), false
 	}
-	price, _ := m.innPrice(user.UserId, pricing)
+	var chosen *innOffer
+	for _, r := range settings.innRooms(room) {
+		if r.Tier == tier {
+			chosen = &r
+		}
+	}
+	if chosen == nil {
+		return fmt.Sprintf("%s has no %s room.", roomTitle(room.RoomId), tier), false
+	}
+	price, _ := m.innPrice(user.UserId, pricing, chosen.Price)
 	if user.Character.Gold < price {
-		return fmt.Sprintf("A room for your company costs %d gold, and you have only %d.", price, user.Character.Gold), false
+		return fmt.Sprintf("%s for your company costs %d gold, and you have only %d.", strings.ToUpper(tier.Label()[:1])+tier.Label()[1:], price, user.Character.Gold), false
 	}
 	stay, err := camping.StartInnStay(user.UserId, room.RoomId, price, m.clock().UTC(), settings.RestDuration, settings.FatigueRecovery)
 	if err != nil {
 		return "You can't rest here.", false
+	}
+	if tier != camping.InnCommon {
+		stay.Tier = tier // the common room stays empty, as saved before the tiers
 	}
 	user.Character.Gold -= price
 	m.stays[user.UserId] = stay
@@ -366,6 +506,9 @@ func (m *CampingModule) innRestLocked(user *users.UserRecord, room *rooms.Room) 
 	// The Worth panel refreshes on this event, like every other purchase.
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	m.scheduleStayLocked(stay)
+	if tier != camping.InnCommon {
+		return fmt.Sprintf("You pay %d gold for %s and your company settles in to rest. (%s)", price, tier.Label(), settings.RestDuration), true
+	}
 	return fmt.Sprintf("You pay %d gold and your company settles in to rest. (%s)", price, settings.RestDuration), true
 }
 
