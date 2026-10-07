@@ -418,7 +418,7 @@ def draw_cleric(r):
         cv.put(r.cx, r.ysh + r.px(4), "steel.l")
         cv.put(r.cx - 1, r.ysh + r.px(4) - (1 if k == 1 else 0), "steel.l")
         cv.put(r.cx + 1, r.ysh + r.px(4) - (1 if k == 1 else 0), "steel.l")
-    r.head(hair="leather")
+    r.head(hair="hair")
     if r.battle:  # round shield on the near forearm, rim and boss in brass
         sx, sy = r.tx1, r.ysh + 11
         sh = ellipse(sx, sy, 2.6, 7)
@@ -636,7 +636,7 @@ def draw_shaman(r):
         if v != "up":
             cv.put(x, r.ysh + r.px(4) + 1, "bone.l" if i % 2 else "moss.m")
     r.arms("leather", glove="skin")
-    r.head(hair="charcoal", mask="bone")
+    r.head(hair="hair", mask="bone")
     hx, hy = r.hand_r
     if v == "down":
         hx += 1
@@ -660,7 +660,7 @@ def draw_dollmaster(r):
             cv.put(r.cx, y, "brass.l")
     _belt(r, "leather", r.yhip - r.px(1))
     r.arms("plum", glove="wool")
-    r.head(hair="charcoal")
+    r.head(hair="hair")
     if v == "up":
         return
     hx, hy = r.hand_r
@@ -719,7 +719,7 @@ def draw_beasttamer(r):
     cv.part(rect(r.tx0 - 1, r.ysh, r.tx1 + 1, r.ysh + r.px(2)), "bone", flat="l")  # fur collar
     _belt(r, "leather", r.yhip - r.px(2), "brass.m")
     r.arms("wool", glove="leather")
-    r.head(hair="ochre")
+    r.head(hair="hair")
     if r.battle:
         hx, hy = r.hand_r
         cv.part(line(hx, hy, hx + r.px(6), hy - r.px(4)), "leather", flat="m")  # the lash
@@ -748,7 +748,7 @@ def draw_alchemist(r):
             if i % 2 == 0:
                 cv.put(x, y + 1, ("water.l", "ember.m", "moss.l")[i // 2 % 3])
     r.arms("wool", glove="leather")
-    r.head(hair="leather")
+    r.head(hair="hair")
     cv.part({(r.cx - S.hw // 2 + i, r.top + 1) for i in range(S.hw)}, "brass", flat="m")  # goggle strap
     hx, hy = r.hand_r
     if v == "down":
@@ -807,7 +807,7 @@ def draw_dollmaster(r):
         sx = r.tx0 + 1 if v == "down" else r.tx0
         cv.part(rect(sx, r.yhip, sx + 1, r.yhip + r.px(2)), "bone", flat="m")  # thread spool
     r.arms("plum", glove="bone")
-    r.head(hair="bone")
+    r.head(hair="hair")
     hx, hy = r.hand_r
     if v == "up":
         hx = r.cx + r.px(2)

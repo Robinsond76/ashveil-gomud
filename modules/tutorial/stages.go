@@ -61,6 +61,7 @@ func init() {
 			Goal:        "Look yourself over: status, inventory, experience, and conditions.",
 			Hints: []string{
 				`<ansi fg="command">status</ansi> is your character sheet: your path, vitals, hunger, thirst, fatigue, and company.`,
+				`<ansi fg="command">appearance</ansi> shows how you look and <ansi fg="command">lifestory</ansi> where you came from, both chosen when you made your character. Change your looks free at any inn with <ansi fg="command">appearance edit</ansi>; your story stays written (<ansi fg="command">help appearance</ansi>, <ansi fg="command">help lifestory</ansi>).`,
 				`<ansi fg="command">inventory</ansi> shows your gear and your company's load.`,
 				`Automatic stats grow smoothly each level; you earn a stat point every two levels, each level raises your Attack and Evasion, and health grows only a little. <ansi fg="command">status</ansi> shows the next milestone (planned choices say coming) (<ansi fg="command">help progression</ansi>).`,
 				`<ansi fg="command">experience</ansi> shows your level and progress, and each companion's (<ansi fg="command">help company</ansi> explains how they earn it).`,

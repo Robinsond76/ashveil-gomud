@@ -1,8 +1,10 @@
 """Master palette for the Ashveil sprite sets (docs/designs/2026-10-05-sprite-specification.md).
 
-Sixty-four colors: one outline color, nineteen materials with three shade
+Sixty-seven colors: one outline color, twenty-one materials with three shade
 steps each (dark, mid, light), and a three-step ember ramp.  Every sprite
-uses only these colors.  Colors are addressed by name: "outline" or
+uses only these colors.  The "skin" and "hair" ramps are the two a player's
+chosen skin tone and hair colour repaint on their own figures (Phase 72a);
+nothing else uses "hair", so the client can tell hair from any other brown.  Colors are addressed by name: "outline" or
 "<material>.<d|m|l>".  Light comes from the top-left.
 """
 
@@ -10,6 +12,7 @@ uses only these colors.  Colors are addressed by name: "outline" or
 MATERIALS = {
     # Figures
     "skin": ("8a5a40", "b57d5a", "d4a37c"),
+    "hair": ("2f2118", "4d3727", "715640"),
     "iron": ("2f3338", "55595f", "82868b"),
     "steel": ("5f666e", "959ba2", "cdd2d4"),
     "leather": ("3a2519", "5e3f27", "86603a"),
@@ -47,6 +50,6 @@ def _build():
 
 
 PAL = _build()
-assert len(PAL) <= 64, len(PAL)
+assert len(PAL) <= 67, len(PAL)
 RGB_TO_NAME = {rgb: name for name, rgb in PAL.items()}
 assert len(RGB_TO_NAME) == len(PAL), "palette colors must be unique"

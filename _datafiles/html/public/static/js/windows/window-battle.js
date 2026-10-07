@@ -176,6 +176,20 @@
         return img ? { img, info: manifest.files[path] } : null;
     }
 
+    // tintedArt (Phase 72a) repaints a player's figure in their chosen skin
+    // tone and hair colour (sprite-tint.js); the repainted canvas is made
+    // once per sheet and look. Companions and creatures have no look.
+    const tintCache = {};
+    function tintedArt(a, path, look) {
+        if (!a || !look || !window.SpriteTint) { return a; }
+        const img = window.SpriteTint.canvasFor(a.img, look, (w, h) => {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            return c;
+        }, tintCache, path);
+        return { img, info: a.info };
+    }
+
     // ---------------------------------------------------------------------
     // State
     // ---------------------------------------------------------------------
@@ -375,6 +389,8 @@
             u.klass = String(m.archetype || '').toLowerCase();
             u.sprite = u.klass || 'adventurer';
             u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
+            u.skin = m.skin || '';                               // Phase 72a: the leader's chosen colours
+            u.hair = m.hair || '';
             u.className = m.class_name || '';
             // Phase 39g: an Alchemist's flasks left, named when its figure is tapped.
             u.flasks = (v.flasks_max > 0) ? v.flasks + ' of ' + v.flasks_max + ' flasks' : '';
@@ -437,6 +453,8 @@
                     u.klass = String(m.class || '').toLowerCase();
                     u.sprite = u.klass || 'adventurer';
                     u.promoted = String(m.promoted || '').toLowerCase();
+                    u.skin = m.skin || '';
+                    u.hair = m.hair || '';
                     u.cell = cell;
                     u.band = m.health || '';
                     u.frac = BANDS[m.health] !== undefined ? BANDS[m.health] : 1;
@@ -1241,8 +1259,12 @@
         // (40s5) keeps to its class's sheets once its idle exists, so it never
         // flickers into the base class's poses.
         const key = u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
-        const posed = pose.anim ? art('battle/units/' + key + '/' + pose.anim + '.png') : null;
-        const sheet = posed || art('battle/units/' + key + '/idle.png');
+        const look = window.SpriteTint ? window.SpriteTint.look(u.skin, u.hair) : null;
+        const posedPath = pose.anim ? 'battle/units/' + key + '/' + pose.anim + '.png' : '';
+        const posedArt = posedPath ? art(posedPath) : null;
+        const sheetPath = posedArt ? posedPath : 'battle/units/' + key + '/idle.png';
+        const posed = posedArt ? tintedArt(posedArt, posedPath, look) : null;
+        const sheet = posed || tintedArt(art(sheetPath), sheetPath, look);
         if (sheet) {
             const fw = (sheet.info.frame || [64, 64])[0], fh = (sheet.info.frame || [64, 64])[1];
             const frames = sheet.info.frames || 1;
@@ -1797,7 +1819,7 @@
                 legend: legendOf(Array.from(units.values()).filter(u => u.cell)),
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
-                    id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
+                    id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", skin: u.skin || '', hair: u.hair || '', cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
                     pose: u.cell ? poseOf(u, slotOf(u), Date.now()) : null,

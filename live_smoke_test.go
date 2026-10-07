@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -262,12 +263,58 @@ func (m *mudClient) registerArriving(user, pass, character, archetypeName string
 	m.answer(`Choose the name `+character+`\? \[yes/no\]`, "yes", `Which archetype will you follow`)
 	// By name: the menu numbers shift whenever a lineage is added.
 	m.answer(`Which archetype will you follow`, strings.ToLower(archetypeName), `Become a `+archetypeName+`\?`)
-	m.answer(`Become a `+archetypeName+`\?`, "yes", `skip the tutorial\? \[yes/no\]`)
+	m.answer(`Become a `+archetypeName+`\?`, "yes", `How will others speak of you\?`)
+	m.createLooksAndStory()
 	if skipTutorial {
 		m.answer(`skip the tutorial\? \[yes/no\]`, "yes", arrival)
 	} else {
 		m.answer(`skip the tutorial\? \[yes/no\]`, "no", `Tutorial, stage 1 of 8: Your character`)
 	}
+}
+
+// createLooksAndStory answers the looks and life-story steps (phase 72a)
+// with each list's first option and no line of its own, checks the summary,
+// confirms it, and stops at the tutorial question.
+func (m *mudClient) createLooksAndStory() {
+	m.t.Helper()
+	const (
+		question = `Answer with a number or a name\.`
+		ownLine  = `press Enter for none\.`
+		summary  = `Keep this character as described\?`
+		tutorial = `skip the tutorial\? \[yes/no\]`
+	)
+	sawSummary := false
+	for asked := 0; asked < 40; asked++ {
+		// Peek at whichever comes first without consuming the tutorial
+		// question, which the caller answers.
+		got, ok := m.match(question+`|`+ownLine+`|`+tutorial, 20*time.Second, false)
+		if !ok {
+			m.t.Fatalf("%s: no creation question or tutorial question. Unread output:\n%s", m.name, got)
+		}
+		switch {
+		case strings.HasSuffix(got, "[yes/no]"):
+			if !sawSummary {
+				m.t.Fatalf("%s: creation reached the tutorial without a summary:\n%s", m.name, got)
+			}
+			return
+		case strings.HasSuffix(got, "for none."):
+			m.expect(ownLine, time.Second)
+			m.send("")
+		case regexp.MustCompile(summary).MatchString(got):
+			m.expect(question, time.Second)
+			for _, want := range []string{`You look like this`, `Your story`, `\+1 `} {
+				if !regexp.MustCompile(`(?i)` + want).MatchString(got) {
+					m.t.Errorf("%s: the creation summary lacks /%s/:\n%s", m.name, want, got)
+				}
+			}
+			sawSummary = true
+			m.send("confirm")
+		default:
+			m.expect(question, time.Second)
+			m.send("1")
+		}
+	}
+	m.t.Fatalf("%s: creation asked over 40 questions", m.name)
 }
 
 // smokeServer is a real server process on a private copy of the world.
@@ -480,7 +527,21 @@ func TestLiveSmoke(t *testing.T) {
 		t.Skip("live smoke playtest skipped in -short mode")
 	}
 
-	srv := newSmokeServer(t)
+	// An existing character from before phase 72a: the shipped admin, with
+	// a hashed password so login skips the forced password change.
+	srv := newSmokeServerWith(t, smokeOptions{patch: func(dataDir string) {
+		b, err := os.ReadFile(filepath.Join("_datafiles", "world", "default", "users", "1.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		legacy := strings.Replace(string(b), "password: password\n", "password: "+util.Hash("password")+"\n", 1)
+		if legacy == string(b) {
+			t.Fatal("the shipped admin's password line moved")
+		}
+		if err := os.WriteFile(filepath.Join(dataDir, "users", "1.yaml"), []byte(legacy), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}})
 	t.Cleanup(func() {
 		srv.kill()
 		if t.Failed() {
@@ -656,6 +717,17 @@ func TestLiveSmoke(t *testing.T) {
 		p2.expect(`meditation`, 10*time.Second)
 	})
 
+	step("an existing character is offered looks and a story once", func() {
+		pa := dialMud(t, "legacy", srv.port)
+		pa.login("admin", "password")
+		pa.expect(`Write them now, or later\?`, 40*time.Second)
+		pa.send("later")
+		pa.expect(`You put it off`, 20*time.Second)
+		pa.drain(time.Second)
+		pa.send("quit")
+		pa.expect(`meditation`, 10*time.Second)
+	})
+
 	step("log out, restart the server and come back", func() {
 		p1.send("quit")
 		deadline := time.Now().Add(90 * time.Second)
@@ -686,6 +758,23 @@ func TestLiveSmoke(t *testing.T) {
 		}
 		if bad := "not recognized"; strings.Contains(p1b.text(), bad) {
 			t.Errorf("login after restart printed %q:\n%s", bad, snippetAround(p1b.text(), bad))
+		}
+		out = p1b.do("appearance", `changes your looks for free|haven't described yourself`)
+		if strings.Contains(out, "haven't described") {
+			t.Errorf("the chosen looks were lost across a restart:\n%s", out)
+		}
+		out = p1b.do("lifestory", `It gives you|hasn't been written`)
+		if strings.Contains(out, "hasn't been written") {
+			t.Errorf("the life story was lost across a restart:\n%s", out)
+		}
+
+		// The put-off offer is remembered across the restart.
+		pa := dialMud(t, "legacy-again", srv.port)
+		pa.login("admin", "password")
+		pa.expect(`Welcome to the Mud`, 30*time.Second)
+		pa.drain(6 * time.Second)
+		if strings.Contains(pa.text(), "Write them now, or later") {
+			t.Errorf("an existing character was offered the creation steps twice")
 		}
 	})
 }

@@ -1,0 +1,8 @@
+itemid: 30403
+name: acolyte's grey cord
+namesimple: cord
+description: A knotted grey cord of the kind a quiet order gives its own. A keepsake from your trade (help backgrounds).
+type: object
+subtype: mundane
+value: 1
+weight: 50

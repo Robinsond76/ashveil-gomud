@@ -194,10 +194,10 @@ looks is a follow-up (see Out of scope).
   other players' sprites; `make sprites` stays byte-for-byte reproducible
   and the sprite tests pass.
 - Looks, life stories and pronouns persist across restart and copyover.
-- **Help:** `help appearance`, `help lifestory` and `help backgrounds`
-  (the list of trades and what they give; phase 72 adds what they open),
-  indexed in `keywords.yaml` with aliases (`looks`, `description`,
-  `backstory`, `background`), linked from `help character`; the Departure or first lesson of the tutorial points
+- **Help:** `help appearance` and `help lifestory` (`backgrounds` is an
+  alias of `lifestory`; phase 72 adds what a trade opens), indexed in
+  `keywords.yaml` with aliases (`looks`, `description`, `backstory`,
+  `background`), linked from `help adventure`; the first lesson of the tutorial points
   to `appearance` and `lifestory`; tests render each page through `help`
   and `TestTutorialHelpPointersExist` passes.
 
@@ -224,3 +224,36 @@ looks is a follow-up (see Out of scope).
 Size: one build phase, medium (comparable to camp music). Steps 5 and 6
 are the largest; if the build runs long, sprite recolouring (step 6) can
 split into 72a2 without blocking the rest.
+
+## Build decisions (2026-10-07, full autonomy)
+
+Each is the builder's call with its reason.
+
+1. **Stat bonus is derived, not stored.** The picks hold the stat each
+   stage's +1 went to; `Character.StatMod` adds them on read. Reason: a
+   stored bonus would double-apply on a reload and breaks the stat-point
+   catch-up accounting (training-based bonuses were tried and rejected).
+2. **Caps:** +2 per stat, +3 in all (one per stage). Reason: a start, never a
+   lasting edge; the player picks which of an option's two stats gets it.
+3. **`backgrounds` is an alias of `lifestory`, not a page.** Reason: the
+   trades are placeholder data that the replacement world renames; a page
+   listing them would go stale, and `lifestory` already names each pick.
+4. **Hub link is `help adventure`.** Reason: `help character` is the
+   `character` command's page (re-create or switch characters).
+5. **Tutorial pointer is a hint in the first lesson ("Your character").**
+   Reason: it already covers `status`, `inventory`, and what you chose.
+6. **Hair is its own palette ramp** (the palette grows from 64 to 67
+   colours, the spec's cap is raised to match). Reason: skin and hair need
+   separate recolour targets and no existing ramp was unused.
+7. **Recolour is client-side** (`sprite-tint.js`, cached per look), so the
+   PNGs stay one reproducible set and `make sprites` is byte for byte.
+   Reason: per-look sprite sets would multiply the art by every colour.
+8. **The panel answers with telnet's own input** (option number, `back`,
+   `skip`, a typed line). Reason: the server stays the one source of truth
+   and both clients share one state machine and one set of tests.
+9. **The legacy offer follows phase 56:** a MiscData key
+   (`creation-offered`), no date cutoff, asked once whether written or
+   skipped. `creation` (and `lifestory choose`) ask again on request.
+10. **Placeholder world data:** six homelands, six upbringings, six trades,
+    in `lifestory.yaml`; looks in `looks.yaml`; keepsakes are items
+    30400-30405. All easily renamed; the new world replaces them.

@@ -524,7 +524,7 @@
         var WALK_QUEUE_MAX  = 2;    // steps the sprite may trail the player before it snaps
         var FADE_MS         = 250;  // fade-in after a level (z) or zone change
         var ALLY_SCALE      = 0.75; // allied class sprites at 75% of the player's
-        var identity    = { classid: '', lineage: '' }; // Char.Info
+        var identity    = { classid: '', lineage: '', look: null }; // Char.Info (look: Phase 72a skin and hair colours)
         var companySize = 0;        // members with the leader, 0 when alone or unknown
         var campInfo    = null;     // Company.Camp
         var companions  = [];       // Phase 40c: present companions { key, lineage, classid }, drawn beside you
@@ -567,14 +567,16 @@
         // wanted image is still loading (nothing flashes in a worse sprite)
         // and when every image is missing or failed (the caller then draws
         // the classic marker).
-        function resolveSheet(keys, walking) {
+        // look (Phase 72a) repaints the figure's skin and hair in a player's
+        // chosen colours; companions and creatures keep their art.
+        function resolveSheet(keys, walking, look) {
             for (var i = 0; i < keys.length; i++) {
                 var idle = 'map/units/' + keys[i] + '/idle.png';
                 var walk = 'map/units/' + keys[i] + '/walk.png';
                 var st = Sprites.status(idle);
                 if (st === 'ready') {
-                    if (Sprites.status(walk) === 'ready' && walking) { return { sheet: Sprites.art(walk), walk: true }; }
-                    return { sheet: Sprites.art(idle), walk: false };
+                    if (Sprites.status(walk) === 'ready' && walking) { return { sheet: Sprites.tinted(walk, look), walk: true }; }
+                    return { sheet: Sprites.tinted(idle, look), walk: false };
                 }
                 if (st === 'loading') { return null; }
             }
@@ -751,7 +753,7 @@
         function drawUnit(now) {
             if (!spritesOn() || currentRoomId === null || unit.x === null) { return false; }
             var pose = unitPose(now);
-            var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking);
+            var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking, identity.look);
             if (!res) { return false; }
             var tile = getRoomSize() * zoomScale;
             var mult = spriteMult(tile);
@@ -795,7 +797,7 @@
         // the caller keeps the heart.
         function drawAllySprite(ease, gx, gy, moving, now) {
             if (!ease.classid && !ease.lineage) { return false; }
-            var res = resolveSheet(chainKeys(ease.classid, ease.lineage), moving);
+            var res = resolveSheet(chainKeys(ease.classid, ease.lineage), moving, ease.look);
             if (!res) { return false; }
             var p = gridToCanvas(gx, gy);
             var mult = spriteMult(getRoomSize() * zoomScale) * ALLY_SCALE;
@@ -1894,9 +1896,12 @@
             onRoomUpdate:        onRoomUpdate,
             setupResizeObserver: setupResizeObserver,
             getCurrentRoomId:    function () { return currentRoomId; },
-            setIdentity: function (classid, lineage) {
-                if (identity.classid === classid && identity.lineage === lineage) { return; }
-                identity.classid = classid; identity.lineage = lineage;
+            setIdentity: function (classid, lineage, skin, hair) {
+                var look = (window.SpriteTint && window.SpriteTint.look(skin, hair)) || null;
+                var lookKey = look ? look.skin + '|' + look.hair : '';
+                var oldKey = identity.look ? identity.look.skin + '|' + identity.look.hair : '';
+                if (identity.classid === classid && identity.lineage === lineage && lookKey === oldKey) { return; }
+                identity.classid = classid; identity.lineage = lineage; identity.look = look;
                 render();
             },
             setCompanySize: function (n) { if (n !== companySize) { companySize = n; render(); } },
@@ -1975,6 +1980,7 @@
                     walk: walkInfo, night: nightLevel(),
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
+                    look: identity.look,
                     allies: Object.keys(partyHeartEase).map(function (n) {
                         var e = partyHeartEase[n];
                         return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,
@@ -2019,6 +2025,7 @@
                         aggro:     pos.aggro,
                         lineage:   pos.lineage,
                         classid:   pos.classid,
+                        look:      pos.look || null,
                         startTime: now,
                     };
                     var f = faceOf(pos.x - fromGx, pos.y - fromGy, existing ? { face: existing.face, flip: existing.flip } : null);
@@ -2130,7 +2137,8 @@
             var v = vitals[name];
             if (!v.hascoordinates) { return; }
             partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro,
-                                           lineage: v.lineage || '', classid: v.classid || '' };
+                                           lineage: v.lineage || '', classid: v.classid || '',
+                                           look: (window.SpriteTint && window.SpriteTint.look(v.skin, v.hair)) || null };
         });
         view2d.setPartyPositions(partyMemberPositions);
     }
@@ -2140,7 +2148,7 @@
     function updateIdentity() {
         var c = Client.GMCPStructs.Char;
         var info = c && c.Info;
-        view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '');
+        view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '', info && info.skin, info && info.hair);
     }
 
     // Phase 40d: the planned walk (Walkto) and the game's time of day.

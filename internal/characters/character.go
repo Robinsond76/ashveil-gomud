@@ -133,6 +133,8 @@ type Character struct {
 	KeyRing             map[string]string              `yaml:"keyring,omitempty"`          // key is the lock id, value is the sequence
 	KD                  KDStats                        `yaml:"kd,omitempty"`               // Kill/Death stats
 	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`         // Any random other data that needs to be stored
+	Looks               map[string]string              `yaml:"looks,omitempty"`            // Ashveil 72a: the player's picks from looks.yaml (trait id to option id, plus the free line)
+	LifeStory           map[string]string              `yaml:"lifestory,omitempty"`        // Ashveil 72a: the player's life story picks (stage id to option id, and the stat each +1 went to)
 	ExtraLives          int                            `yaml:"extralives,omitempty"`       // How many lives remain. If enabled, players can perma-die if they die at zero
 	Pet                 pets.Pet                       `yaml:"pet,omitempty"`              // Do they have a pet?
 	Created             time.Time                      `yaml:"created"`                    // When this character was created
@@ -1725,7 +1727,7 @@ func (c *Character) StatMod(statName string) int {
 	if !c.Pet.IsMissing() {
 		petMod = c.Pet.StatMod(statName)
 	}
-	return c.Equipment.StatMod(statName) + c.Buffs.StatMod(statName) + petMod
+	return c.Equipment.StatMod(statName) + c.Buffs.StatMod(statName) + petMod + c.lifeStoryStatMod(statName)
 }
 
 // returns true if something has changed.

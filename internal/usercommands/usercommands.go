@@ -179,8 +179,11 @@ var (
 		`zap`:        {Zap, true, true},   // Admin only
 		`zone`:       {Zone, false, true}, // Admin only
 		// Special command only used upon creating a new account
-		`start`:     {Start, false, false},
-		`zombieact`: {ZombieAct, false, false},
+		`start`:      {Start, false, false},
+		`appearance`: {Appearance, false, false},
+		`lifestory`:  {Lifestory, false, false},
+		`creation`:   {Creation, false, false},
+		`zombieact`:  {ZombieAct, false, false},
 	}
 
 	selfKeywords = []string{

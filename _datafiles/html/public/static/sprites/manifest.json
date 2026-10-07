@@ -9576,15 +9576,15 @@
   "style/palette.gpl": {
    "kind": "palette-gpl",
    "set": "S0",
-   "swatches": 64
+   "swatches": 67
   },
   "style/palette.png": {
    "kind": "palette",
    "set": "S0",
-   "swatches": 64,
+   "swatches": 67,
    "size": [
     8,
-    8
+    9
    ]
   },
   "style/proportions-battle.png": {
