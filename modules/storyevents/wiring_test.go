@@ -468,3 +468,44 @@ func TestAStanceReachesTheRealCompanyByCompanionKey(t *testing.T) {
 	assert.Contains(t, said[0], comp.Name)
 	assert.Equal(t, []int{comp.ID}, witnesses, "matched by key, the leader left out")
 }
+
+// Phase 72: a life story's picks become the leader's member tags, which
+// open choices that are closed to everyone else (and only the leader has
+// them: companions carry no life story).
+func TestALifeStoryOpensBackgroundChoicesInTheRealScenes(t *testing.T) {
+	s := newScene(t)
+	assert.Empty(t, storyevents.TagsFor(s.user.UserId, string(survival.LeaderMemberKey)), "no life story, no tags")
+	s.user.Character.LifeStory = map[string]string{"homeland": "hill-clans", "upbringing": "hunters-get", "trade": "soldier"}
+	assert.ElementsMatch(t, []string{"homeland-hill-clans", "upbringing-hunters-get", "trade-soldier"},
+		storyevents.TagsFor(s.user.UserId, string(survival.LeaderMemberKey)))
+	assert.Empty(t, storyevents.TagsFor(s.user.UserId, "companion:3"), "companions have no life story")
+
+	// The gorge: the hunter's get reads the rope and goes down for nothing.
+	out := s.run("go", "northeast")
+	assert.Contains(t, out, "3. Read the rope and the ring like a hunter's get (Aldous, life story: a hunter's get)")
+	out = s.run("choose", "3")
+	assert.Contains(t, out, "tests the knot")
+	assert.Equal(t, 90014, s.room())
+	assert.Equal(t, "gorge-descent/ledge", s.pendingPage())
+	s.run("choose", "2")
+
+	// The deserter: a soldier is named for the choice.
+	s.run("go", "southwest")
+	s.run("go", "northwest")
+	s.run("choose", "1")
+	assert.Equal(t, "stranger-at-the-fire/tale", s.pendingPage())
+	out = s.run("choose", "4")
+	assert.Contains(t, out, "hands over the sword hilt-first")
+	assert.Equal(t, 1, s.cargo(36))
+}
+
+func TestABackgroundChoiceIsClosedWithoutTheBackground(t *testing.T) {
+	s := newScene(t)
+	s.user.Character.LifeStory = map[string]string{"trade": "scholar"}
+	out := s.run("go", "southeast")
+	assert.Contains(t, out, "Say the old words as you were taught (closed: needs a leader who was an acolyte)")
+	assert.Contains(t, s.run("choose", "5"), "closed to your company")
+	s.user.Character.LifeStory = map[string]string{"trade": "acolyte"}
+	assert.Contains(t, s.run("event", ""), "Say the old words as you were taught (Aldous, life story: an acolyte)")
+	assert.Contains(t, s.run("choose", "5"), "The spring runs a little clearer.")
+}

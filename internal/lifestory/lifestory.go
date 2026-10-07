@@ -16,6 +16,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -353,3 +355,38 @@ func Background(picks Picks) string { return picks[StageTrade] }
 // PicksWithBackground is a test helper for later phases: a picks set whose
 // only content is the background id.
 func PicksWithBackground(id string) Picks { return Picks{StageTrade: id} }
+
+// Tags are the member tags a life story gives story events and town lines
+// (Phase 72): one per stage pick, named by stage and option id, e.g.
+// "trade-soldier", "homeland-hill-clans", "upbringing-farmhand".
+func Tags(picks Picks) []string {
+	var out []string
+	for _, stage := range Stages {
+		if id := picks[stage]; id != `` {
+			out = append(out, stage+`-`+id)
+		}
+	}
+	return out
+}
+
+// TagName is how a life-story tag reads to a player: the option's name,
+// starting lowercase ("a soldier", "the hill clans", "a hunter's get"). ok
+// is false for a tag that is not a known life-story pick.
+func TagName(tag string) (string, bool) {
+	d := Current()
+	if d == nil {
+		return ``, false
+	}
+	tag = strings.ToLower(strings.TrimSpace(tag))
+	for _, stage := range Stages {
+		id, found := strings.CutPrefix(tag, stage+`-`)
+		if !found {
+			continue
+		}
+		if o, ok := d.Option(stage, id); ok && o.Name != `` {
+			r, size := utf8.DecodeRuneInString(o.Name)
+			return string(unicode.ToLower(r)) + o.Name[size:], true
+		}
+	}
+	return ``, false
+}

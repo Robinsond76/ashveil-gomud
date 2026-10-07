@@ -258,3 +258,48 @@ func TestFillUsesFallbacks(t *testing.T) {
 	assert.Equal(t, 0, DaysAgo(10, 5))
 	assert.Equal(t, 3, DaysAgo(0, 3*day+5))
 }
+
+func TestALineForAMembersBackgroundBeatsAPlainOne(t *testing.T) {
+	now := 100 * day
+	e := chronicle.Entry{Seq: 1, At: now, Kind: chronicle.Boss, Subject: "the Hollow King"}
+	cat := catalog(t,
+		Line{ID: "plain", Kind: chronicle.Boss, Text: "plain"},
+		Line{ID: "soldier", Kind: chronicle.Boss, MemberTag: "trade-soldier", Text: "soldier"},
+	)
+	ctx := Context{
+		NPC: gossip(), Now: now, Entries: []chronicle.Entry{e}, Leader: "Mara",
+		MemberTag: func(key, tag string) bool { return key == "leader" && tag == "trade-soldier" },
+	}
+	for i := 0; i < 3; i++ {
+		ctx.Rand = func(n int) int { return i % n }
+		c, ok := cat.Choose(ctx)
+		require.True(t, ok)
+		assert.Equal(t, "soldier", c.Text)
+	}
+	ctx.MemberTag = func(string, string) bool { return false }
+	c, ok := cat.Choose(ctx)
+	require.True(t, ok)
+	assert.Equal(t, "plain", c.Text, "without the background the plain line is told")
+}
+
+func TestABackgroundLineHeardLatelyJoinsThePlainOnes(t *testing.T) {
+	now := 100 * day
+	e := chronicle.Entry{Seq: 1, At: now, Kind: chronicle.Boss, Subject: "the Hollow King"}
+	cat := catalog(t,
+		Line{ID: "plain", Kind: chronicle.Boss, Text: "plain"},
+		Line{ID: "soldier", Kind: chronicle.Boss, MemberTag: "trade-soldier", Text: "soldier"},
+	)
+	ctx := Context{
+		NPC: gossip(), Now: now, Entries: []chronicle.Entry{e}, Leader: "Mara",
+		MemberTag: func(key, tag string) bool { return key == "leader" && tag == "trade-soldier" },
+		LineHeard: func(id string) bool { return id == "soldier" },
+	}
+	seen := map[string]bool{}
+	for i := 0; i < 2; i++ {
+		ctx.Rand = func(n int) int { return i % n }
+		c, ok := cat.Choose(ctx)
+		require.True(t, ok)
+		seen[c.Text] = true
+	}
+	assert.Equal(t, map[string]bool{"plain": true, "soldier": true}, seen, "both lines can be told")
+}

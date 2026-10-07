@@ -31,6 +31,10 @@ for that talker goes unmentioned there.
   - Some lines leave a <ansi fg="yellow-bold">mark</ansi> on the company, a flag that later lines (and some
     scenes, <ansi fg="command">help events</ansi>) can read: a town that has heard you slew its
     monster greets you differently afterwards. <ansi fg="command">townsfolk</ansi> lists the marks.
+  - A talker may know you for your background: a soldier who fells a boss
+    hears a line for soldiers (<ansi fg="command">help lifestory</ansi>). It comes before the plain
+    lines (a deed with a line of its own still gets that one), but once
+    you have heard it lately the plain lines get their turn again.
   - Nobody changes a price for what you did. Merchants buy and sell as ever.
   - Talk is real-time and costs nothing. It gives no gold, experience or power.
 

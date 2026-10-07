@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/lifestory"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 )
 
@@ -381,7 +382,11 @@ func (r Requirement) Describe() string {
 		parts = append(parts, "you")
 	}
 	if r.Tag != "" {
-		parts = append(parts, "someone who is "+r.Tag)
+		if name, ok := lifestory.TagName(r.Tag); ok {
+			parts = append(parts, "life story: "+name)
+		} else {
+			parts = append(parts, "someone who is "+r.Tag)
+		}
 	}
 	if r.Gold > 0 {
 		parts = append(parts, fmt.Sprintf("%d gold", r.Gold))

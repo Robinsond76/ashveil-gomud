@@ -56,6 +56,11 @@ test('a closed choice with no stated need still reads closed', () => {
   assert.equal(noteOf({ open: false }), 'closed');
 });
 
+test('a choice a life story opened says so after who takes it', () => {
+  assert.equal(noteOf({ open: true, who: 'Aldous', because: 'life story: a soldier' }), 'Aldous, life story: a soldier');
+  assert.equal(noteOf({ open: true, who: 'Aldous', because: 'life story: a soldier', risk: 'chancy' }), 'Aldous, life story: a soldier, chancy');
+});
+
 test('an answer names the page it answers, so a double click cannot answer the next page', () => {
   assert.equal(commandFor(viewOf(page), 2), 'choose 2 gorge-descent/start');
   assert.equal(commandFor(viewOf({ ...page, page: 'bad token!' }), 2), 'choose 2', 'a malformed token is not sent');
