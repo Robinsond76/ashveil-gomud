@@ -44,7 +44,7 @@ and who still went without because there was nothing left. The room
 sees your company eat.
 
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help cargo</ansi>,
-<ansi fg="command">help company inventory</ansi>, <ansi fg="command">help company</ansi>.
+<ansi fg="command">help company inventory</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help opinions</ansi> (feeding a companion from your own pack, not the cargo, is a kindness they notice).
 
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
