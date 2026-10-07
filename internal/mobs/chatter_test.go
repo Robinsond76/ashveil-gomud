@@ -152,3 +152,64 @@ func TestChatterLimitsCanBeTurnedOff(t *testing.T) {
 		}
 	}
 }
+
+// Review regression: the hungry guard's quest hint opens with the same emote
+// every time; a veteran in the room must not hide it from a newcomer.
+func TestAVeteranDoesNotSilenceALineANewcomerHasNotHeard(t *testing.T) {
+	useChatterLimits(t, 1, 900)
+	util.SetRoundCount(100)
+	m := &Mob{InstanceId: 9107, MobId: 9107}
+	hint := []string{"emote pats his belly as it grumbles.", "sayto @2 I'm so hungry."}
+
+	if got := queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{1}, hint[0], "sayto @1 I'm so hungry.") }); len(got) != 2 {
+		t.Fatalf("player 1 hears the hint, got %v", got)
+	}
+	util.SetRoundCount(110)
+	if got := queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{1, 2}, hint...) }); len(got) != 2 {
+		t.Fatalf("player 2 still hears it with player 1 present, got %v", got)
+	}
+	util.SetRoundCount(120)
+	if got := queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{1, 2}, hint...) }); len(got) != 0 {
+		t.Fatalf("once both have heard it, it stays unsaid, got %v", got)
+	}
+}
+
+func TestNoChatterAndNoCooldownInAnEmptyRoom(t *testing.T) {
+	useChatterLimits(t, 60, 900)
+	util.SetRoundCount(100)
+	m := &Mob{InstanceId: 9108, MobId: 9108}
+
+	if got := queuedCommands(t, m.InstanceId, func() { idleTurn(m, nil, "say Anyone there?") }); len(got) != 0 {
+		t.Fatalf("nobody to hear it, got %v", got)
+	}
+	util.SetRoundCount(101)
+	if got := queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{1}, "say Anyone there?") }); len(got) != 1 {
+		t.Fatalf("a player walking in hears the mob at once, got %v", got)
+	}
+}
+
+func TestChatterAliasesAreHeldBackToo(t *testing.T) {
+	useChatterLimits(t, 60, 0)
+	util.SetRoundCount(100)
+	m := &Mob{InstanceId: 9109, MobId: 9109}
+	m.MarkChatter()
+	if got := queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{1}, "yell Thief!", ". Psst.", "SAY Hello.") }); len(got) != 0 {
+		t.Fatalf("aliases and any case count as chatter, got %v", got)
+	}
+}
+
+func TestChatterMemoryForgetsPlayersWhoLeft(t *testing.T) {
+	useChatterLimits(t, 1, 900)
+	util.SetRoundCount(100)
+	m := &Mob{InstanceId: 9110, MobId: 9110}
+	queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{7}, "say Farewell.") })
+
+	util.SetRoundCount(1100)
+	queuedCommands(t, m.InstanceId, func() { idleTurn(m, []int{8}, "say Hello.") })
+	chatterMemory.Lock()
+	_, kept := chatterMemory.heard[7]
+	chatterMemory.Unlock()
+	if kept {
+		t.Fatal("a player gone for a whole memory window is forgotten")
+	}
+}

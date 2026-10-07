@@ -16,8 +16,10 @@ import (
 // command list and onIdle scripts used to fire a say or emote every few
 // seconds. While a mob runs its idle turn (BeginIdle/EndIdle around it), each
 // say, sayto, shout or emote it queues goes through one decision for that
-// turn: it may speak if its cooldown has passed and no player in the room
-// heard its first line from this kind of mob within the memory window. A turn
+// turn: it may speak if a player is there to hear it, its cooldown has passed,
+// and the turn's first line is new to at least one player in the room (from
+// this kind of mob, within the memory window). One veteran in the room never
+// silences a line a newcomer has yet to hear, such as a quest hint. A turn
 // that may speak lets every line of that turn through, so a scripted speech
 // is never cut in half; a turn that may not drops them all. Other commands
 // (wander, pathto, lookfortrouble) and anything queued outside an idle turn
@@ -26,11 +28,17 @@ import (
 //
 // The memory is cosmetic and kept in memory only: a restart forgets it.
 
+// chatterVerbs lists the speaking commands and their keyword aliases
+// (keywords.yaml command-aliases), so `yell` or `.` can't slip past.
 var chatterVerbs = map[string]bool{
-	`say`:   true,
-	`sayto`: true,
-	`shout`: true,
-	`emote`: true,
+	`say`:    true,
+	`.`:      true,
+	`sayto`:  true,
+	`shout`:  true,
+	`yell`:   true,
+	`scream`: true,
+	`holler`: true,
+	`emote`:  true,
 }
 
 type idleChatter struct {
@@ -60,7 +68,8 @@ func chatterLimits() chatterLimitValues {
 
 var chatterMemory = struct {
 	sync.Mutex
-	heard map[int]map[string]uint64 // userId -> line key -> round heard
+	heard     map[int]map[string]uint64 // userId -> line key -> round heard
+	lastSweep uint64                    // round the whole map was last pruned
 }{heard: map[int]map[string]uint64{}}
 
 // BeginIdle marks the start of the mob's idle turn; listeners are the players
@@ -111,7 +120,8 @@ func (m *Mob) idleChatterAllowed(cmd string) bool {
 
 	if !m.idle.decided {
 		m.idle.decided = true
-		m.idle.allowed = m.ChatterReady() && !anyoneHeardLocked(m.idle.listeners, key, now, limits.memory)
+		sweepChatterMemoryLocked(now, limits.memory)
+		m.idle.allowed = len(m.idle.listeners) > 0 && m.ChatterReady() && !everyoneHeardLocked(m.idle.listeners, key, now, limits.memory)
 		if m.idle.allowed {
 			m.MarkChatter()
 		}
@@ -134,29 +144,44 @@ func (m *Mob) idleChatterAllowed(cmd string) bool {
 	return true
 }
 
-// anyoneHeardLocked reports whether any listener heard the line within the
-// memory window, forgetting older lines as it goes. chatterMemory must be held.
-func anyoneHeardLocked(listeners []int, key string, now uint64, memory uint64) bool {
-	if memory == 0 {
+// everyoneHeardLocked reports whether every listener heard the line within
+// the memory window, forgetting their older lines as it goes. chatterMemory
+// must be held.
+func everyoneHeardLocked(listeners []int, key string, now uint64, memory uint64) bool {
+	if memory == 0 || len(listeners) == 0 {
 		return false
 	}
-	heard := false
 	for _, userId := range listeners {
 		lines := chatterMemory.heard[userId]
-		for k, round := range lines {
-			if now-round >= memory {
-				delete(lines, k)
-			}
-		}
-		if len(lines) == 0 {
-			delete(chatterMemory.heard, userId)
-			continue
-		}
-		if _, ok := lines[key]; ok {
-			heard = true
+		pruneLinesLocked(userId, lines, now, memory)
+		if _, ok := lines[key]; !ok {
+			return false
 		}
 	}
-	return heard
+	return true
+}
+
+func pruneLinesLocked(userId int, lines map[string]uint64, now uint64, memory uint64) {
+	for k, round := range lines {
+		if now-round >= memory {
+			delete(lines, k)
+		}
+	}
+	if len(lines) == 0 {
+		delete(chatterMemory.heard, userId)
+	}
+}
+
+// sweepChatterMemoryLocked prunes every player once per memory window, so
+// players who left town or logged out don't keep their lines until restart.
+func sweepChatterMemoryLocked(now uint64, memory uint64) {
+	if memory == 0 || now-chatterMemory.lastSweep < memory {
+		return
+	}
+	chatterMemory.lastSweep = now
+	for userId, lines := range chatterMemory.heard {
+		pruneLinesLocked(userId, lines, now, memory)
+	}
 }
 
 // ForgetChatterForTest clears every player's chatter memory.
@@ -164,4 +189,5 @@ func ForgetChatterForTest() {
 	chatterMemory.Lock()
 	defer chatterMemory.Unlock()
 	clear(chatterMemory.heard)
+	chatterMemory.lastSweep = 0
 }
