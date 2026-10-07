@@ -85,3 +85,8 @@ duration), so the at-level fight tuning is untouched and no gold returns from
 a stay; a completed stay waits in `m.stays` until the grant, so the tier read
 at the grant is the stay's own; `innRoomRows` takes `m.mu` only after
 `CampStateOf` releases it.
+
+Also fixed on the way: after merging master (phase 74), the browser check's
+"bestiary: an open entry stays open across a refresh" failed every run on
+master too. The check set an entry open and refreshed before the async
+`toggle` event recorded it; it now waits for that event. Test-only.

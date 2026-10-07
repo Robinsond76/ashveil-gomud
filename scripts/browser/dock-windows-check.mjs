@@ -753,7 +753,8 @@ await page.evaluate(b => window.gmcp('Char.Bestiary', b), bestiaryFix);
 check(await page.evaluate(() => document.querySelectorAll('#bs-window details').length) === 3, 'bestiary: an entry for each kind');
 check(await page.evaluate(() => [...document.querySelectorAll('#bs-window .bs-zone')].map(z => z.textContent).join('|')) === 'Dark Forest|Elsewhere', 'bestiary: grouped by zone, none as Elsewhere');
 check(await page.evaluate(() => window.__xssb === undefined), 'bestiary: text is not run as markup');
-await page.evaluate(() => document.querySelector('#bs-window details').open = true);
+// Wait for the async toggle event, which records the entry as open.
+await page.evaluate(() => new Promise(r => { const d = document.querySelector('#bs-window details'); d.addEventListener('toggle', () => r(), { once: true }); d.open = true; }));
 check(await page.evaluate(() => document.querySelector('#bs-window details .bs-body').textContent.includes('Defences') && !document.querySelector('#bs-window details .bs-body').textContent.includes('Habits')), 'bestiary: only the lines the tier has earned');
 await page.evaluate(b => window.gmcp('Char.Bestiary', b), bestiaryFix);
 check(await page.evaluate(() => document.querySelector('#bs-window details').open), 'bestiary: an open entry stays open across a refresh');
