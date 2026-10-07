@@ -60,8 +60,8 @@ trust or wariness, never into a feud.
   - A friend (a bond of 25 or more) in reach of a friend who is at 40%
     health or less steps in for them, whatever its role: once a battle, or
     twice for kin, and no more than two such steps a battle for the whole
-    company. The log says "steps in front of Tamsin for a friend (bond
-    guard)", and the web client's battle feed says the same.
+    company. The log says "steps in front of Tamsin for a friend. (bond guard,
+    none left)", and the web client's battle feed says the same.
   - A guardian set to guard a rival (<ansi fg="command">help guardian</ansi>) will not: "lets the blow fall
     on Garrick (no guard: they can't stand each other)", said once a
     battle. A guardian with no ward set passes over a rival when it picks

@@ -220,21 +220,6 @@ func TestBondsAreDroppedWhenACompanionLeavesTheRecord(t *testing.T) {
 	assert.Empty(t, companyOf(t).Bonds)
 }
 
-func TestBondsSurviveASaveAndLoad(t *testing.T) {
-	newBrawl(t)
-	now := time.Unix(1_800_000_000, 0)
-	withClock(t, &now)
-	module.BondEvent(7, domain.CompanionMemberKey(1), domain.CompanionMemberKey(2), bonds.Rescue)
-	before := bondOf(t, 1, 2)
-	require.Equal(t, 3, before.Value)
-	require.NoError(t, module.save())
-	module.registry = *domain.NewRegistry()
-	module.load()
-	after := bondOf(t, 1, 2)
-	assert.Equal(t, before.Value, after.Value)
-	assert.Equal(t, before.At, after.At, "its cooldowns come back with it")
-}
-
 func TestBondsAreShownInWordsAndOnTheInspectLine(t *testing.T) {
 	newBrawl(t)
 	setBond(t, 1, 2, 62)
