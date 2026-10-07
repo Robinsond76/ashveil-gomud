@@ -123,6 +123,7 @@ func fillTempo(who caster, c *characters.Character) {
 	if _, allocated := tempoTurns[who]; allocated {
 		return
 	}
+	applyStance(who, c)
 	fights := tempoMembership(who)
 	st := tempoMeters[who]
 	if st == nil || st.char != c ||

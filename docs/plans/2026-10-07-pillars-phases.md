@@ -289,6 +289,8 @@ member; shown in the battle view.
 **Accept.** Each stance measured in a balance cell (a trade, not a free
 win); `help stances`.
 
+*Built:* see [the build decisions](2026-10-07-phase-69-weapon-stances.md).
+
 ## 70 Errands
 
 **Why.** Pillars' stronghold sends idle companions on adventures; Deadfire

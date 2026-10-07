@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	domain "github.com/GoMudEngine/GoMud/internal/strategy"
 	"gopkg.in/yaml.v2"
 )
@@ -38,11 +39,14 @@ type Registry struct {
 	// Orders is each player's battle orders (Phase 61): user id -> member
 	// key -> up to orders.MaxOrders rules, in the order they are read.
 	Orders map[int]map[string][]orders.Order `yaml:"orders,omitempty"`
+	// Stances is each player's weapon stances (Phase 69): user id -> member
+	// key -> the stance chosen (kept even while the member lacks its weapon).
+	Stances map[int]map[string]stance.Stance `yaml:"stances,omitempty"`
 }
 
 // NewRegistry is an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Players: map[int]map[string]domain.Strategy{}, Tactics: map[int]domain.Tactics{}, Orders: map[int]map[string][]orders.Order{}}
+	return &Registry{Players: map[int]map[string]domain.Strategy{}, Tactics: map[int]domain.Tactics{}, Orders: map[int]map[string][]orders.Order{}, Stances: map[int]map[string]stance.Stance{}}
 }
 
 // Clone is a deep copy.
@@ -66,6 +70,14 @@ func (r Registry) Clone() Registry {
 			m[k] = append([]orders.Order(nil), v...)
 		}
 		out.Orders[id] = m
+	}
+	out.Stances = make(map[int]map[string]stance.Stance, len(r.Stances))
+	for id, members := range r.Stances {
+		m := make(map[string]stance.Stance, len(members))
+		for k, v := range members {
+			m[k] = v
+		}
+		out.Stances[id] = m
 	}
 	return out
 }
@@ -143,6 +155,22 @@ func decodeRegistry(data []byte, registry *Registry) error {
 				loaded.Orders[id] = map[string][]orders.Order{}
 			}
 			loaded.Orders[id][key] = clean
+		}
+	}
+	// Phase 69: a stance that isn't one is dropped (logged), the rest kept.
+	for id, members := range wire.Stances {
+		if id <= 0 {
+			continue
+		}
+		for key, st := range members {
+			if strings.TrimSpace(key) == "" || st == stance.None || !st.Valid() {
+				mudlog.Warn("strategy: dropped a stored stance", "user", id, "member", key, "stance", st)
+				continue
+			}
+			if loaded.Stances[id] == nil {
+				loaded.Stances[id] = map[string]stance.Stance{}
+			}
+			loaded.Stances[id][key] = st
 		}
 	}
 	*registry = *loaded
@@ -272,6 +300,9 @@ func init() {
 	orders.SetProvider(m)
 	m.plug.AddUserCommand("orders", m.ordersCommand, true, false)
 	userstate.Register(ordersContributor{m})
+	stance.SetProvider(m)
+	m.plug.AddUserCommand("stance", m.stanceCommand, true, false)
+	userstate.Register(stanceContributor{m})
 	module = m
 }
 
@@ -511,6 +542,16 @@ func (m *StrategyModule) prune(userID int, keep map[string]bool) {
 	if len(m.registry.Orders[userID]) == 0 {
 		delete(m.registry.Orders, userID)
 	}
+	// Phase 69: so do stances.
+	for key := range m.registry.Stances[userID] {
+		if !keep[key] {
+			delete(m.registry.Stances[userID], key)
+			changed = true
+		}
+	}
+	if len(m.registry.Stances[userID]) == 0 {
+		delete(m.registry.Stances, userID)
+	}
 	m.mu.Unlock()
 	if changed {
 		if err := m.save(); err != nil {
@@ -529,7 +570,9 @@ func (m *StrategyModule) onUserPurged(e events.Event) events.ListenerReturn {
 	_, had := m.registry.Players[evt.UserId]
 	_, hadTactics := m.registry.Tactics[evt.UserId]
 	_, hadOrders := m.registry.Orders[evt.UserId]
-	had = had || hadTactics || hadOrders
+	_, hadStances := m.registry.Stances[evt.UserId]
+	had = had || hadTactics || hadOrders || hadStances
+	delete(m.registry.Stances, evt.UserId)
 	delete(m.registry.Players, evt.UserId)
 	delete(m.registry.Tactics, evt.UserId)
 	delete(m.registry.Orders, evt.UserId)

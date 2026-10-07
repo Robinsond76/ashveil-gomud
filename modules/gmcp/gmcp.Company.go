@@ -121,6 +121,8 @@ type companyMember struct {
 	// are read, with the same wording as the `orders` command; omitted with
 	// none.
 	Orders []string `json:"orders,omitempty"`
+	// Stance is its weapon stance (Phase 69), omitted with none.
+	Stance *companyStance `json:"stance,omitempty"`
 	// Music is its camp-music skill in words ("Strings 2 (3 songs to level
 	// 3)"), omitted with none.
 	Music string `json:"music,omitempty"`
@@ -276,6 +278,7 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	if list := orders.For(leaderUserID, string(m.Key)); len(list) > 0 {
 		out.Orders = orders.Lines(list)
 	}
+	out.Stance = stanceOf(leaderUserID, m.Key)
 	out.Music = camping.MusicLabelOf(leaderUserID, string(m.Key))
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).

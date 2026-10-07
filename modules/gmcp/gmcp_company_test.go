@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/orders"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -569,4 +570,32 @@ func TestCompanyPayloadBattleOrders(t *testing.T) {
 	orders.SetProvider(fakeOrders{})
 	f.update(7, s)
 	require.Len(t, *out, 2, "taking the orders off resends the snapshot")
+}
+
+type fakeStances map[string]stance.Stance
+
+func (f fakeStances) StoredStance(_ int, key string) stance.Stance { return f[key] }
+
+// Phase 69: a member's weapon stance rides its entry with the trade in
+// words; a member with none carries no field, and a change resends.
+func TestCompanyPayloadWeaponStance(t *testing.T) {
+	stance.SetProvider(fakeStances{"companion:1": stance.Heavy})
+	t.Cleanup(func() { stance.SetProvider(nil) })
+	s := sampleCompany()
+	got := companyJSON(t, s)
+	st := got["members"].([]any)[0].(map[string]any)["stance"].(map[string]any)
+	assert.Equal(t, "heavy", st["key"])
+	assert.Equal(t, "Heavy blows", st["name"])
+	assert.Equal(t, "blows land 30% harder", st["gain"])
+	assert.Equal(t, "15 points less likely to hit", st["cost"])
+	assert.Contains(t, st["needs"], "two-handed")
+	assert.NotContains(t, st, "ready", "a member not here to check says nothing of its gear")
+	assert.NotContains(t, got["leader"].(map[string]any), "stance")
+	assert.NotContains(t, got["members"].([]any)[1].(map[string]any), "stance")
+
+	f, out := testFeed()
+	f.update(7, s)
+	stance.SetProvider(fakeStances{})
+	f.update(7, s)
+	require.Len(t, *out, 2, "taking the stance off resends the snapshot")
 }

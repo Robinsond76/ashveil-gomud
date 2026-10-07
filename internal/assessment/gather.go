@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -58,7 +59,7 @@ func Gather(user *users.UserRecord, room *rooms.Room, g enemyparty.Group) (Repor
 	own.Formation, own.HasFormation = company.FormationFor(user.UserId)
 	names := map[company.MemberKey]string{}
 	add := func(key company.MemberKey, name string, char *characters.Character, reach bool) {
-		own.Members = append(own.Members, Member{Key: key, Name: name, Char: char, Reach: combat.ResolveReach(char, reach)})
+		own.Members = append(own.Members, Member{Key: key, Name: name, Char: withStance(char, user.UserId, key), Reach: combat.ResolveReach(char, reach)})
 		names[key] = name
 		rep.Counted = append(rep.Counted, name)
 		if word := enemyparty.HealthWord(char.Health, char.HealthMax.Value); word != "unhurt" && word != "scratched" {
@@ -284,4 +285,23 @@ func capitalize(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// withStance is the member as the estimate should read it: before a battle
+// its weapon stance (Phase 69) is only in the store, since the round sets it
+// on the battle state, so a copy carries it. The live character is left
+// alone.
+func withStance(char *characters.Character, leaderUserID int, key company.MemberKey) *characters.Character {
+	st := stance.For(leaderUserID, string(key))
+	if st == stance.None || (char.RT != nil && char.RT.Stance == st) {
+		return char
+	}
+	cp := *char
+	rt := characters.ClassRT{}
+	if char.RT != nil {
+		rt = *char.RT
+	}
+	rt.Stance = st
+	cp.RT = &rt
+	return &cp
 }

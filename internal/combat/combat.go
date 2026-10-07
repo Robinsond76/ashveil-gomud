@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/stormcraft"
@@ -603,6 +604,13 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 			// Hits adds its modifier, so a penalty is passed as a negative
 			// value (the same convention as dualWieldHitPenalty).
 			penalty := -darkPenalty
+			// Phase 69: the weapon stance's accuracy trade. A second weapon
+			// takes it only when it is itself one the stance fits.
+			stanceFx := sourceChar.StanceEffect()
+			if wIdx > 0 {
+				stanceFx = sourceChar.StanceEffectWith(weapon)
+			}
+			penalty += stanceFx.Hit
 			if wIdx > 0 {
 				penalty += dualWieldHitPenalty(dualWieldLevel)
 			}
@@ -758,7 +766,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						critBonus = iaiFx.Int(classes.IaiCrit)
 						attackTargetDamage += (attackTargetDamage*iaiFx.Int(classes.IaiDamage) + 50) / 100
 					}
-					isCrit = backstabCrit || forcedCrit || critsWith(sourceChar, targetChar, critBonus)
+					isCrit = backstabCrit || forcedCrit || critsWith(sourceChar, targetChar, critBonus+stanceFx.Crit)
 					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
 						strike.Crit = true
@@ -775,6 +783,23 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 				}
 
+				// Phase 69: the weapon stance's damage trade, on a landed blow
+				// (crit included), with the stance named in the breakdown.
+				if hit && !stanceFx.IsZero() {
+					if stanceFx.DamagePct != 0 {
+						was := attackTargetDamage
+						attackTargetDamage = stance.Scale(attackTargetDamage, stanceFx.DamagePct)
+						if attackTargetDamage != was {
+							strike.Notes = append(strike.Notes, fmt.Sprintf(`%s changed the blow by %+d`, stanceName(&sourceChar), attackTargetDamage-was))
+						}
+					}
+					if stanceFx.Hit != 0 {
+						strike.Notes = append(strike.Notes, fmt.Sprintf(`%s took %d points off the chance to hit`, stanceName(&sourceChar), -stanceFx.Hit))
+					}
+					if stanceFx.Crit != 0 {
+						strike.Notes = append(strike.Notes, fmt.Sprintf(`%s added %d points to the critical chance`, stanceName(&sourceChar), stanceFx.Crit))
+					}
+				}
 				beforeAdjust := attackTargetDamage
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
 				if hit && attackTargetDamage != beforeAdjust {
