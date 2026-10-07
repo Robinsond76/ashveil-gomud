@@ -179,6 +179,12 @@ don't need to):
 - A 4-frame breathing loop: frames 1–4 rise and settle. Cloaks and
   smoke may move a little.
 - Feet stay on one ground line.
+- **One fixed scale for every figure of a size class.** Never scale a
+  figure so its tallest point fills the cell; a raised staff or spear
+  would shrink its body. For size M the body, from the top of the head
+  (without hats, crests, wings or horns) to the boots, is 400 px in a
+  640 px cell, with the feet at y≈579. Map sheets work the same way: a
+  standing figure is about 224 px.
 
 **Animated icon or overlay**: **1 row × N columns** (N from the phase
 table).
@@ -231,6 +237,11 @@ Don't put several tiles in one image.
   at most one small accent (a glow, a drop, a spark). Composite ideas
   blur at that size: a helm with stars, or a cross with a scroll and a
   hand. Draw the row's named object, not a substitute.
+- **Readable on dark and light.** The game's panels are dark (about
+  `#1c1a1e`). Every icon must read at 16 and 32 px on that dark panel
+  **and** on mid-grey. Keep the main shape mid-to-light in value. A dark
+  main color is allowed only with a light rim, at most 1 art pixel, on
+  its outer edge. Show both backgrounds in the review sheet.
 - Symbols are visual, never letters, numbers or real-world logos.
 
 ## 7. Prompt skeletons
