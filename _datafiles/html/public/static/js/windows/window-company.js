@@ -28,6 +28,9 @@
  *   Errands   - who is away on an errand and when they are due, and a card
  *               to send each free companion (Phase 70); `errands` reads the
  *               same in text.
+ *   Rites     - the companions the company has lost and not yet mourned,
+ *               with Hold and Let pass buttons at a camp or an inn
+ *               (Phase 74); `rites` reads the same in text.
  *
  * Every name and label is set with textContent, never innerHTML. Menus
  * name items by the reference the server sends ("!<id>:<uuid>"), which
@@ -52,6 +55,8 @@
  *                       kind_label, zone, returns_at, remaining, due, waiting}],
  *                       options: [{kind, label, blurb, lengths: [{length,
  *                       label}]}], recent: [string] }
+ *   Company.Rites     - the Rites sub-tab: { here, where, rows: [{id, name,
+ *                       level, cause, close: [name], offered}] }
  *   Company.Bonds     - the Bonds sub-tab: { pairs: [{a, b, a_name, b_name,
  *                       value, tier, phrase, effect, warned}], members: [{id,
  *                       name, feelings: [{id, name, words, tier}]}] }
@@ -82,11 +87,15 @@
             display: flex;
             flex-shrink: 0;
             border-bottom: 1px solid var(--t-border);
+            /* Phase 74: eight tabs outgrow a phone, so the bar scrolls. */
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+        .cmp-tab-bar::-webkit-scrollbar { display: none; }
 
         .cmp-tab-btn {
-            flex: 1;
-            padding: 5px 4px;
+            flex: 1 0 auto;
+            padding: 5px 8px;
             background: var(--t-bg-surface);
             border: none;
             border-right: 1px solid var(--t-border);
@@ -186,6 +195,9 @@
         .cmp-err-card { display: flex; flex-direction: column; gap: 3px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
         .cmp-err-card[data-state="away"] { border-left-color: var(--t-accent); }
         .cmp-err-head { font-weight: bold; }
+        .cmp-rite-card { display: flex; flex-direction: column; gap: 3px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
+        .cmp-rite-card[data-offered="1"] { border-left-color: var(--t-accent); }
+        .cmp-rite-btns { display: flex; flex-wrap: wrap; gap: 6px; }
         .cmp-err-sub { color: var(--t-text-secondary); font-weight: normal; }
         .cmp-err-pick { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
         .cmp-err-pick select { max-width: 100%; }
@@ -510,6 +522,7 @@
         { id: 'company-opinions',  label: 'Opinions' },
         { id: 'company-bonds',     label: 'Bonds' },
         { id: 'company-errands',   label: 'Errands' },
+        { id: 'company-rites',     label: 'Rites' },
     ];
     const SUBTAB_KEY = 'companySubTab';
 
@@ -519,6 +532,7 @@
             const on = b.dataset.panel === id;
             b.classList.toggle('active', on);
             b.setAttribute('aria-selected', on ? 'true' : 'false');
+            if (on && b.scrollIntoView) { b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
         });
         root.querySelectorAll('.cmp-panel').forEach(p => { p.hidden = p.id !== id; });
         if (remember) {
@@ -540,6 +554,13 @@
             btn.addEventListener('click', () => showSubtab(root, t.id, true));
             bar.appendChild(btn);
         });
+        // The bar's scrollbar is hidden, so a mouse wheel scrolls it sideways
+        // when the tabs overflow a narrow dock (Phase 74 review).
+        bar.addEventListener('wheel', e => {
+            if (bar.scrollWidth <= bar.clientWidth || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) { return; }
+            bar.scrollLeft += e.deltaY;
+            e.preventDefault();
+        }, { passive: false });
         root.appendChild(bar);
         SUBTABS.forEach(t => {
             const panel = el('div', 'cmp-panel');
@@ -1033,7 +1054,7 @@
         // Inventory the companions out (names only, so not on vitals). The
         // Chronicle keeps its own payload; it is redrawn here so a window
         // closed and opened again shows it at once.
-        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); updateErrands(); }
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); updateErrands(); updateRites(); }
         updateCamp();
     }
 
@@ -2042,6 +2063,62 @@
         keepFocus(panel, () => buildErrands(panel));
     }
 
+    // --- Rites (Phase 74) ---
+    // riteData is the newest Company.Rites payload.
+    let riteData = null;
+
+    function riteButton(label, cmd, title, id) {
+        const b = el('button', 'cmp-btn', label);
+        b.type = 'button';
+        b.setAttribute('data-focus', 'btn|' + label + '|' + id);
+        b.title = title;
+        b.addEventListener('click', () => send(cmd));
+        return b;
+    }
+
+    function buildRites(panel) {
+        const data = riteData || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Rites) || null;
+        keepScroll(panel);
+        panel.textContent = '';
+        const pad = el('div', 'cmp-pad');
+        panel.appendChild(pad);
+        const rows = data && Array.isArray(data.rows) ? data.rows : [];
+        if (!rows.length) {
+            pad.appendChild(el('div', 'cmp-note', 'No one is waiting to be mourned. When a companion is lost for good, or leaves after long service, you can hold rites for them at your next camp or inn (help rites).'));
+            return;
+        }
+        const here = !!data.here;
+        pad.appendChild(el('div', 'cmp-line', data.where || ''));
+        rows.forEach(r => {
+            const card = el('div', 'cmp-rite-card');
+            card.setAttribute('data-offered', r.offered ? '1' : '0');
+            const head = el('div', 'cmp-err-head', r.name || 'Companion');
+            head.appendChild(el('span', 'cmp-err-sub', ' (level ' + (Number(r.level) || '?') + ', ' + (r.cause || 'gone') + ')'));
+            card.appendChild(head);
+            const close = Array.isArray(r.close) ? r.close : [];
+            if (close.length) {
+                card.appendChild(el('div', 'cmp-note', close.join(', ') + ' trusted' + ' them.'));
+            }
+            if (r.offered) {
+                card.appendChild(el('div', 'cmp-note', 'If you say nothing, this passes at your next camp or inn, and the company will feel it.'));
+            }
+            if (here) {
+                const btns = el('div', 'cmp-rite-btns');
+                btns.appendChild(riteButton('Hold rites', 'rite hold #' + r.id, 'Gather the company to mourn ' + r.name, r.id));
+                btns.appendChild(riteButton('Let pass', 'rite skip #' + r.id, 'Say nothing; the company loses a little loyalty', r.id));
+                card.appendChild(btns);
+            }
+            pad.appendChild(card);
+        });
+        pad.appendChild(el('div', 'cmp-note', 'Holding rites gives the company a line in its chronicle, steadies the companions who trusted the one gone (loyalty up to 3) and draws them together. Letting it pass costs loyalty (up to 5, never below 30). Rites cost no gold and give none (help rites).'));
+    }
+
+    function updateRites() {
+        const panel = document.getElementById('company-rites');
+        if (!panel) { return; }
+        keepFocus(panel, () => buildRites(panel));
+    }
+
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Party'],
@@ -2063,6 +2140,12 @@
                 errandClock = errandData && Number(errandData.now) ? Number(errandData.now) - Math.floor(Date.now() / 1000) : 0;
                 win.open();
                 if (win.isOpen()) { updateErrands(); }
+                return;
+            }
+            if (namespace === 'Company.Rites') {
+                riteData = body && typeof body === 'object' ? body : null;
+                win.open();
+                if (win.isOpen()) { updateRites(); }
                 return;
             }
             if (namespace === 'Company.Bonds') {

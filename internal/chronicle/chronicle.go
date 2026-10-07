@@ -37,6 +37,7 @@ const (
 	Story     Kind = "story"     // a story event ended on a choice
 	Awakened  Kind = "awakened"  // a relic woke a new power (Phase 67)
 	Errand    Kind = "errand"    // a companion came back from an errand (Phase 70)
+	Rites     Kind = "rites"     // the company mourned, or did not, a companion gone for good (Phase 74)
 )
 
 // KindInfo is a kind's player-facing name and filter words.
@@ -63,6 +64,7 @@ var Kinds = []KindInfo{
 	{Story, "Stories", []string{"story", "stories", "events"}},
 	{Awakened, "Awakenings", []string{"awakened", "awakenings", "awakening"}},
 	{Errand, "Errands", []string{"errand", "errands"}},
+	{Rites, "Rites", []string{"rites", "rite", "funerals", "funeral"}},
 }
 
 // KindByWord resolves what a player typed to a kind.
@@ -215,6 +217,16 @@ func Prose(e Entry) string {
 			return fmt.Sprintf("%s came back from %s%s %s.", who, job, e.at(), strings.TrimRight(e.Detail, ".!?"))
 		}
 		return fmt.Sprintf("%s came back from %s%s.", who, job, e.at())
+	case Rites:
+		name := orThing(e.Subject, "one of their own")
+		gone := ""
+		if e.Detail != "" {
+			gone = " (" + strings.TrimRight(e.Detail, ".!?") + ")"
+		}
+		if e.Ref == "rite:skipped" {
+			return fmt.Sprintf("The company let %s go without a word%s.", name, gone)
+		}
+		return fmt.Sprintf("The company held rites for %s%s%s.", name, gone, e.at())
 	}
 	return who + " did something worth remembering."
 }

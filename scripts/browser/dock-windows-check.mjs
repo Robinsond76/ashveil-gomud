@@ -155,7 +155,7 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds","Errands"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds, Errands');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds","Errands","Rites"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds, Errands, Rites');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
@@ -1536,6 +1536,44 @@ await page.setViewportSize({ width: 1280, height: 900 });
   check(await page.locator('#company-errands').getByRole('button', { name: 'Send' }).count() === 0, 'Errands: no Send button away from an inn');
   await page.evaluate(() => window.gmcp('Company.Errands', { rows: [], options: [], recent: [] }));
   check((await errText()).includes('Recruit one first'), 'Errands: an empty company says so');
+}
+
+// Phase 74: the Rites tab.
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const rites = {
+    here: true, where: 'You can hold rites here.',
+    rows: [
+      { id: 4, name: 'Ysolde', level: 8, cause: 'lost for good', close: ['Oswin', 'Tamsin'], offered: true },
+      { id: 5, name: xss, level: 6, cause: 'left the company', close: [], offered: false },
+    ],
+  };
+  const ritText = () => page.evaluate(() => document.getElementById('company-rites').textContent);
+  await page.getByRole('tab', { name: 'Rites', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Rites', c), rites);
+  check(await page.locator('#company-rites .cmp-rite-card').count() === 2, 'Rites: a card for each companion waiting');
+  check((await ritText()).includes('Ysolde (level 8, lost for good)') && (await ritText()).includes('Oswin, Tamsin trusted them.'), 'Rites: who they were and who trusted them');
+  check((await ritText()).includes('this passes at your next camp or inn'), 'Rites: an offered rite says it will pass');
+  check(await page.evaluate(() => window.__xss === undefined && !document.querySelector('#company-rites img')), 'Rites: a name is text, not markup');
+  const sentRite = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  let rcmds = await sentRite(() => page.locator('#company-rites .cmp-rite-card').first().getByRole('button', { name: 'Hold rites' }).click());
+  check(JSON.stringify(rcmds) === JSON.stringify(['rite hold #4']), 'Rites: Hold rites sends the rite by number (' + JSON.stringify(rcmds) + ')');
+  rcmds = await sentRite(() => page.locator('#company-rites .cmp-rite-card').first().getByRole('button', { name: 'Let pass' }).click());
+  check(JSON.stringify(rcmds) === JSON.stringify(['rite skip #4']), 'Rites: Let pass sends the skip');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-rites'); return p.scrollWidth <= p.clientWidth + 1; }), 'Rites fit a phone');
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); return getComputedStyle(b).overflowX === 'auto' && b.scrollWidth > 0; }), 'The sub-tab bar scrolls when eight tabs outgrow a phone');
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); b.scrollLeft = 0; b.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); return b.scrollLeft > 0; }), 'A mouse wheel scrolls the sub-tab bar sideways');
+  await page.evaluate(() => { document.querySelector('.cmp-tab-btn[data-panel="company-rites"]').click(); });
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); const t = document.querySelector('.cmp-tab-btn.active'); const r = t.getBoundingClientRect(), br = b.getBoundingClientRect(); return r.left >= br.left - 1 && r.right <= br.right + 1; }), 'The chosen sub-tab is scrolled into view on a phone');
+  if (outdir) { await page.locator('#company-rites').screenshot({ path: path.join(outdir, '74-rites-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-rites').screenshot({ path: path.join(outdir, '74-rites.png') }); }
+  await page.evaluate(c => window.gmcp('Company.Rites', c), { ...rites, here: false, where: 'Rites are held at a camp or an inn: make camp (camp) or take a room (inn) first. See help rites.' });
+  check(await page.locator('#company-rites').getByRole('button', { name: 'Hold rites' }).count() === 0, 'Rites: no Hold button away from a camp or inn');
+  check((await ritText()).includes('Rites are held at a camp or an inn'), 'Rites: away from a fire it says where to hold them');
+  await page.evaluate(() => window.gmcp('Company.Rites', { here: false, where: '', rows: [] }));
+  check((await ritText()).includes('No one is waiting to be mourned'), 'Rites: an empty list says so');
 }
 
 await browser.close();

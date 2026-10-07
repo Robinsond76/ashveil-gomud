@@ -335,7 +335,7 @@ func (m *CompanyModule) driftTick() {
 			mudlog.Error("company: desertion", "leader", d.leaderUserID, "companion", d.companionID, "error", err)
 			continue
 		}
-		world.Tell(d.leaderUserID, fmt.Sprintf("%s has lost faith in your company and deserts.", label))
+		world.Tell(d.leaderUserID, fmt.Sprintf("%s has lost faith in your company and deserts.", label)+m.riteHint(d.leaderUserID, d.companionID))
 	}
 }
 

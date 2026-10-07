@@ -425,6 +425,10 @@ func (m *CampingModule) innRestTier(user *users.UserRecord, room *rooms.Room, ti
 		} else if len(said) > 0 {
 			text += "\n" + strings.Join(said, "\n")
 		}
+		// Phase 74: the company's dead are mourned by an inn's hearth too.
+		if rites := company.OfferRites(user.UserId); rites != "" {
+			text += "\n\n" + rites
+		}
 	}
 	return text
 }
