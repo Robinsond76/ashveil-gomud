@@ -59,6 +59,7 @@
     const H = 180;
     const SETTING_KEY = 'ashveil-battle-screen';
     const ANIM_KEY = 'ashveil-battle-animations';
+    const TEXT_KEY = 'ashveil-battle-text';  // Phase 82a: 'smaller' (the default) or 'same'
     const OUTCOME_MS = 3000;
     const FOCI = ['none', 'leader', 'casters', 'healers', 'nearest', 'weakest', 'strongest', 'wounded'];
 
@@ -100,19 +101,14 @@
     };
 
     injectStyles(`
+        /* Phase 82a: the screen docks in #battle-pane, above the terminal. */
         #battle-screen {
-            position: fixed;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9000;
-            max-width: calc(100vw - 8px);
+            position: relative;
+            width: 100%;
             box-sizing: border-box;
             padding: 4px 6px 6px;
             background: var(--t-bg-panel);
-            border: 1px solid var(--t-border-accent);
-            border-radius: 6px;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid var(--t-border-accent);
             color: var(--t-text);
             font-size: 0.8em;
             display: none;
@@ -134,6 +130,7 @@
         }
         #battle-screen button[aria-pressed="true"] { border-color: var(--t-border-accent); font-weight: bold; }
         #battle-screen button:disabled { opacity: 0.5; cursor: default; }
+        #battle-screen .bs-head-retreat { display: none; }
         #battle-screen label { color: var(--t-text-secondary); }
         #battle-badge { position: fixed; right: 10px; bottom: 10px; z-index: 9000; display: none; padding: 4px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.7); }
         #battle-badge.show { display: block; }
@@ -231,6 +228,31 @@
     }
     let memorySetting = null;
     function currentSetting() { return memorySetting || setting(); }
+
+    // Phase 82a: while the pane is open the terminal's font steps down a
+    // size (webclient-core.js reads body[data-battle-text]); 'same' keeps it.
+    let memoryText = null;
+    function textSetting() {
+        if (memoryText) { return memoryText; }
+        try { return localStorage.getItem(TEXT_KEY) === 'same' ? 'same' : 'smaller'; } catch (err) { return 'smaller'; }
+    }
+    function saveText(v) {
+        try { localStorage.setItem(TEXT_KEY, v); } catch (err) { /* the choice lasts this page */ }
+        memoryText = v;
+        document.body.dataset.battleText = v;
+        window.dispatchEvent(new Event('resize'));
+    }
+
+    // paneOpen shows or hides the pane and lets the terminal below re-measure.
+    function paneOpen(on) {
+        const pane = document.getElementById('battle-pane');
+        if (pane) { pane.classList.toggle('open', on); }
+        // On a phone the pane lives in the Game view, so a battle brings it up.
+        if (on && window.Mobile && window.Mobile.active() && window.Mobile.view && window.Mobile.view() !== 'game') { window.Mobile.show('game'); }
+        document.body.classList.toggle('battle-open', on);
+        document.body.dataset.battleText = textSetting();
+        requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    }
 
     // battleAnimations: full, reduced or off. The default is reduced when
     // the system asks for reduced motion.
@@ -809,9 +831,17 @@
     }
 
     function isShown() { return !!overlay && overlay.classList.contains('open'); }
+    // paneShown: the pane is open and, on a phone, its Game view is the one up.
+    function paneShown() {
+        const pane = document.getElementById('battle-pane');
+        if (!pane || !pane.classList.contains('open')) { return false; }
+        if (window.Mobile && window.Mobile.active() && window.Mobile.view && window.Mobile.view() !== 'game') { return false; }
+        return true;
+    }
 
     function hide() {
         if (overlay) { overlay.classList.remove('open'); }
+        paneOpen(false);
         paintBadge();
     }
 
@@ -821,6 +851,7 @@
         minimised = false;
         userOpened = true;
         overlay.classList.add('open');
+        paneOpen(true);
         fit();
         paintChrome();
         draw();
@@ -842,7 +873,7 @@
     // DOM
     // ---------------------------------------------------------------------
 
-    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, retreatBtn, autoBox, animSelect, focusBtns = [];
+    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, retreatBtn, autoBox, textBox, animSelect, focusBtns = [];
 
     function build() {
         if (overlay) { return; }
@@ -858,8 +889,15 @@
         min.type = 'button';
         min.title = 'Shrink the picture to a badge; the battle goes on';
         min.addEventListener('click', close);
+        // Phase 82a: on a phone the pane scrolls, so Retreat also sits in the
+        // head, always in reach (mobile.css shows it there).
+        const headRetreat = el('button', 'bs-head-retreat', 'Retreat');
+        headRetreat.type = 'button';
+        headRetreat.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
+        headRetreat.addEventListener('click', () => Client.SendInput('retreat'));
         head.appendChild(titleNode);
         head.appendChild(bannerNode);
+        head.appendChild(headRetreat);
         head.appendChild(min);
         overlay.appendChild(head);
 
@@ -921,18 +959,30 @@
         label.appendChild(autoBox);
         label.appendChild(document.createTextNode(' Open automatically'));
         foot.appendChild(label);
+        // Phase 82a: the terminal's battle lines in a smaller font.
+        const textLabel = el('label');
+        textBox = document.createElement('input');
+        textBox.type = 'checkbox';
+        textBox.checked = textSetting() === 'smaller';
+        textBox.title = 'Battle text: the game text below steps down a size while this screen is open';
+        textBox.addEventListener('change', () => saveText(textBox.checked ? 'smaller' : 'same'));
+        textLabel.appendChild(textBox);
+        textLabel.appendChild(document.createTextNode(' Smaller text'));
+        foot.appendChild(textLabel);
         const help = el('button', null, 'Help');
         help.type = 'button';
         help.title = 'How to read the battle screen (help battlescreen)';
         help.addEventListener('click', () => {
             Client.SendInput('help battlescreen');
-            // Phase 40i: on a phone the help text lands in the Game view behind
-            // this screen, so step aside to it; the badge brings the battle back.
-            if (window.Mobile && window.Mobile.active()) { close(); window.Mobile.show('game'); }
+            // Phase 40i/82a: on a phone the help text lands in the Game view,
+            // where this pane sits above it, so bring that view up.
+            if (window.Mobile && window.Mobile.active()) { window.Mobile.show('game'); }
         });
         foot.appendChild(help);
         overlay.appendChild(foot);
-        document.body.appendChild(overlay);
+        // Phase 82a: into the pane above the terminal (the page and the
+        // harness have one); the body is the fallback.
+        (document.getElementById('battle-pane') || document.body).appendChild(overlay);
 
         badge = el('button', null, '⚔ Battle');
         badge.id = 'battle-badge';
@@ -944,26 +994,19 @@
         window.addEventListener('resize', fit);
     }
 
-    // fit scales the canvas by a whole number to the room there is, down
-    // to the window's width on a phone.
+    // fit scales the canvas by a whole number (Phase 82a): the largest that
+    // fits the column's width and half its height, 1x at the least, so the
+    // pixel art stays crisp and the terminal below keeps its lines. At 1x
+    // the picture is 320 px wide, which fits a 360 px phone.
     function fit() {
         if (!canvas) { return; }
-        const room = Math.min((window.innerWidth - 28) / W, (window.innerHeight - 150) / H);
-        // Phase 40i: on a phone the picture takes the screen's whole width, at
-        // any scale (the pixel art stays crisp); the buttons below need the rest.
-        if (document.body.classList.contains('mobile')) {
-            const w = Math.max(160, Math.min(Math.floor(window.innerWidth - 12), Math.floor((window.innerHeight - 260) * W / H)));
-            canvas.style.width = w + 'px';
-            canvas.style.height = Math.round(w * H / W) + 'px';
-        } else if (room >= 1) {
-            const s = Math.min(4, Math.floor(room));
-            canvas.style.width = (W * s) + 'px';
-            canvas.style.height = (H * s) + 'px';
-        } else {
-            const w = Math.max(160, Math.floor(window.innerWidth - 28));
-            canvas.style.width = w + 'px';
-            canvas.style.height = Math.round(w * H / W) + 'px';
-        }
+        const pane = document.getElementById('battle-pane');
+        const column = pane && pane.parentElement ? pane.parentElement : document.body;
+        const width = (pane && pane.clientWidth ? pane.clientWidth : window.innerWidth) - 14;
+        const height = (column.clientHeight || window.innerHeight) / 2;
+        const s = Math.max(1, Math.min(4, Math.floor(Math.min(width / W, height / H))));
+        canvas.style.width = (W * s) + 'px';
+        canvas.style.height = (H * s) + 'px';
     }
 
     function paintChrome() {
@@ -997,7 +1040,10 @@
             b.disabled = !ready || typeof (battle && battle.focus) !== 'string';
         });
         retreatBtn.disabled = !battle || !!outcomeText;
+        const headRetreat = overlay.querySelector('.bs-head-retreat');
+        if (headRetreat) { headRetreat.disabled = retreatBtn.disabled; }
         autoBox.checked = currentSetting() === 'auto';
+        textBox.checked = textSetting() === 'smaller';
         animSelect.value = motion();
         paintCaption();
     }
@@ -1780,7 +1826,13 @@
         build();
         if (!isShown() && !minimised && (currentSetting() === 'auto' || userOpened)) {
             overlay.classList.add('open');
+            paneOpen(true);
             fit();
+        } else if (isShown() && !paneShown()) {
+            // A new battle while the last one's outcome still shows: the
+            // screen stays, and the pane (and on a phone the Game view)
+            // comes back up for it.
+            paneOpen(true);
         }
         paintChrome();
         draw();
@@ -1816,6 +1868,8 @@
         open,
         close,
         setMotion: saveMotion,
+        setText: saveText,
+        textSetting,
         watch,
         slot,
         // state is what a test reads: the units and where they stand.
@@ -1829,6 +1883,7 @@
                 round: roundNo,
                 lastBlow,
                 motion: motion(),
+                text: textSetting(),
                 pace: feedPace,
                 nerve: battle && battle.nerve ? battle.nerve : '',
                 weather: battle && battle.weather ? battle.weather.kind : '',
