@@ -16,7 +16,9 @@
  *               rest tier, each member's needs; buttons shown only when
  *               they would work.
  *   Chronicle - the company's deeds in prose, newest first (Phase 63), with
- *               a filter by kind; `chronicle` reads the same in text.
+ *               a filter by kind; `chronicle` reads the same in text. Above
+ *               them, what the towns have said of the company (Phase 68;
+ *               `townsfolk` reads the same).
  *   Opinions  - what each companion likes, dislikes and has lately said
  *               about the leader's choices (Phase 64); `opinions` reads the
  *               same in text.
@@ -36,6 +38,8 @@
  *   Company.Camp      - the Camp sub-tab
  *   Company.Chronicle - the Chronicle sub-tab: { total, tally: {kind: n},
  *                       entries: [{seq, at, ago, kind, label, text}] }
+ *   Company.Townsfolk - the Chronicle sub-tab's town memory: { total, told:
+ *                       [{ago, text}], fresh: [{ago, kind, text}], marks: [] }
  *   Company.Opinions  - the Opinions sub-tab: { spared, executed, members:
  *                       [{key, id, name, personality, loyalty, mood, likes,
  *                       dislikes, notes: [{label, verdict, ago, subject}],
@@ -153,6 +157,11 @@
         .cmp-chron-item { display: flex; flex-direction: column; gap: 1px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
         .cmp-chron-meta { color: var(--t-text-secondary); font-size: 0.9em; }
         .cmp-chron-text { color: var(--t-text); }
+        .cmp-town { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        .cmp-town-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+        .cmp-town-item { display: flex; flex-direction: column; gap: 1px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
+        .cmp-town-meta { color: var(--t-text-secondary); font-size: 0.9em; }
+        .cmp-town-text { color: var(--t-text); font-style: italic; }
         .cmp-opn-card { display: flex; flex-direction: column; gap: 2px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
         .cmp-opn-head { font-weight: bold; }
         .cmp-opn-mood { color: var(--t-text-secondary); font-weight: normal; }
@@ -1701,6 +1710,43 @@
     // '' for every deed.
     let chronicle = null;
     let chronicleKind = '';
+    // townsfolk is the newest Company.Townsfolk payload (Phase 68), kept as
+    // the chronicle's is.
+    let townsfolk = null;
+
+    // buildTownsfolk draws what the towns say of the company: what talkers
+    // have told, the deeds they may yet speak of, and the marks left.
+    function buildTownsfolk(pad) {
+        const data = townsfolk || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Townsfolk) || null;
+        const told = data && Array.isArray(data.told) ? data.told : [];
+        const fresh = data && Array.isArray(data.fresh) ? data.fresh : [];
+        const marks = data && Array.isArray(data.marks) ? data.marks : [];
+        const box = el('div', 'cmp-town');
+        box.appendChild(el('div', 'cmp-line', 'What the towns say of you'));
+        if (!told.length && !fresh.length) {
+            box.appendChild(el('div', 'cmp-note', 'Nobody has spoken of the company yet. Town talkers mention its deeds once each, when you pass them idle in a settlement (help townsfolk).'));
+            pad.appendChild(box);
+            return;
+        }
+        const list = el('ul', 'cmp-town-list');
+        told.forEach(t => {
+            const li = el('li', 'cmp-town-item');
+            li.appendChild(el('span', 'cmp-town-meta', (t.ago || '') + ' \u00b7 said'));
+            li.appendChild(el('span', 'cmp-town-text', '\u201c' + (t.text || '') + '\u201d'));
+            list.appendChild(li);
+        });
+        fresh.forEach(f => {
+            const li = el('li', 'cmp-town-item');
+            li.appendChild(el('span', 'cmp-town-meta', (f.ago || '') + ' \u00b7 not yet spoken of'));
+            li.appendChild(el('span', 'cmp-town-text', f.text || ''));
+            list.appendChild(li);
+        });
+        box.appendChild(list);
+        if (marks.length) {
+            box.appendChild(el('div', 'cmp-note', 'Marks the towns carry of you: ' + marks.join(', ') + '.'));
+        }
+        pad.appendChild(box);
+    }
 
     // chronicleKinds are the kinds worth a filter button: those with deeds
     // in the list, in the order they first appear.
@@ -1726,6 +1772,7 @@
         const kinds = chronicleKinds(entries);
         if (!kinds.some(k => k.kind === chronicleKind)) { chronicleKind = ''; }
         const total = data.total || entries.length;
+        buildTownsfolk(pad);
         pad.appendChild(el('div', 'cmp-line', total + ' deed' + (total === 1 ? '' : 's') + ' recorded, newest first.'));
         if (kinds.length > 1) {
             const bar = el('div', 'cmp-chron-filter');
@@ -1857,6 +1904,12 @@
         onGMCP(namespace, body) {
             if (namespace === 'Company.Chronicle') {
                 chronicle = body && typeof body === 'object' ? body : null;
+                win.open();
+                if (win.isOpen()) { updateChronicle(); }
+                return;
+            }
+            if (namespace === 'Company.Townsfolk') {
+                townsfolk = body && typeof body === 'object' ? body : null;
                 win.open();
                 if (win.isOpen()) { updateChronicle(); }
                 return;

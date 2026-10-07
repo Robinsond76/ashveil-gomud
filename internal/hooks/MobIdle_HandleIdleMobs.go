@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/townsfolk"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -53,6 +54,26 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 			if mob.InConversation() {
 				mob.MarkChatter()
 			}
+		}
+	}
+
+	// A town talker with something to say about a listener's company says it
+	// instead of its usual idle turn (Phase 68, internal/townsfolk).
+	if !isCharmed && mobRoom != nil && len(mob.Townsfolk) > 0 && len(listeners) > 0 && mob.ChatterReady() && !mob.InConversation() {
+		if speech, ok := townsfolk.Speak(townsfolk.NPC{MobID: int(mob.MobId), Tags: mob.Townsfolk, Zone: mob.Zone}, listeners); ok {
+			if speech.To != `` {
+				mob.Command(`sayto ` + speech.To + ` ` + speech.Text)
+			} else {
+				mob.Command(`say ` + speech.Text)
+			}
+			if mob.IdleSpoke() {
+				// Only a line let through uses up the deed.
+				speech.Confirm()
+				return events.Continue
+			}
+			// The chatter limits held the line back (the room has heard it);
+			// the deed stays untold and the talker carries on with its usual
+			// idle turn.
 		}
 	}
 

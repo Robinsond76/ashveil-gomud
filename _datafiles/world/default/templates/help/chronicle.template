@@ -43,4 +43,6 @@ Each deed names who was involved, where it happened and how long ago.
     it costs nothing, even in a fight.
   - The chronicle only remembers. It gives no gold, experience or power.
 
+Townsfolk speak of these deeds, once each (<ansi fg="command">help townsfolk</ansi>).
+
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help events</ansi>, <ansi fg="command">help webclient</ansi>.

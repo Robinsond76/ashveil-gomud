@@ -1,0 +1,12 @@
+mobid: 90301
+zone: Test Area
+hostile: false
+townsfolk:
+  - gossip
+activitylevel: 30
+maxwander: 0
+character:
+  name: gossip
+  description: A stout, ruddy townsman leaning on the signboard, ears open and mouth never quite closed. He has opinions about everyone who passes, and tells them all, once.
+  raceid: 1
+  level: 3
