@@ -70,6 +70,41 @@ Ranked by value. Each entry names the decision and its reason.
    (`internal/term`, `internal/markdown`, `internal/users/storage.go`,
    and so on); they were left alone so upstream merges stay clean.
 
+## Web client follow-up (2026-10-07)
+
+Web client proposals 1, 4 and 5 below were carried out in a second pass;
+each decision has its reason.
+
+- **GMCP dispatch (proposal 1), confirmed and fixed.** The loop had no
+  `break`, so a handler on both `Char.Kills` and `Char` ran twice for
+  `Char.Kills`, `'*'` handlers ran once per namespace level, and Online's
+  two `Game` registrations updated twice. `scripts/browser/
+  gmcp-dispatch-check.mjs` fails five checks on the old dispatch and
+  passes on the new one. Decision: one rule, "each registered window is
+  called once per message, for its own namespace or any parent, most
+  specific first, then `'*'`". Reason: Company, Vitals and the map rely on
+  a parent name (`Party`, `Company`) receiving its children, so "first
+  level only" would break them. `handleGMCP` dedupes by registration
+  (`owner`), runs `'*'` once outside the level loop and the header comment
+  now says so. The redundant registrations are gone: the map's
+  `Party.Vitals` (covered by `Party`) and Online's second registration
+  (the window registers with no namespaces; one windowless handler keeps
+  the hidden window current). Decision: KillStats keeps `Char.Kills` and
+  `Char` but returns early for other `Char.*` feeds, since `Char` is how
+  the first full payload arrives and `Char.Vitals` arrives constantly.
+- **Tooltips (proposal 4), partly.** `Client.tooltip(id)` owns creation,
+  show, hide delay and placement (beside an anchor or the pointer); the
+  Character, Gear, Map and Gametime tooltips use it with their own ids and
+  CSS, so nothing looks different. Decision: no `innerHTML` escaping and no
+  merged `.ui-tooltip` class here. Reason: those strings carry intentional
+  markup (item labels, ansi-converted names), so escaping needs a per-caller
+  audit and merging the CSS shifts four themed looks; both stay proposals.
+- **Tab switchers (proposal 5), partly.** Gear, KillStats and Pet use
+  `Client.tabs(root, {button, panel})`. Decision: Character and Company are
+  left as they are (they persist the tab and Company hides panels rather
+  than toggling `.active`), and arrow-key support is not added. Reason:
+  both would change visible behavior; this pass was no-change.
+
 ## Proposals: Go
 
 Ranked by value. Risk is the reviewer's estimate of what could change for
@@ -248,5 +283,7 @@ a player.
 ## Verification
 
 `make generate`, `make validate`, `go test -race -timeout 30m ./...`,
-`make js-lint`, `staticcheck ./...` (no new findings in touched files),
+`make js-lint`, `make js-test`, `scripts/browser/gmcp-dispatch-check.mjs` and
+the dock, map, room, quickmenu, weather, tutorial, battle and relic browser
+checks (second pass), `staticcheck ./...` (no new findings in touched files),
 `deadcode -test ./...` (the six Ashveil entries gone).
