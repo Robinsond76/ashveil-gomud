@@ -1897,7 +1897,7 @@
             setupResizeObserver: setupResizeObserver,
             getCurrentRoomId:    function () { return currentRoomId; },
             setIdentity: function (classid, lineage, skin, hair) {
-                var look = (window.SpriteTint && SpriteTint.look(skin, hair)) || null;
+                var look = (window.SpriteTint && window.SpriteTint.look(skin, hair)) || null;
                 var lookKey = look ? look.skin + '|' + look.hair : '';
                 var oldKey = identity.look ? identity.look.skin + '|' + identity.look.hair : '';
                 if (identity.classid === classid && identity.lineage === lineage && lookKey === oldKey) { return; }
@@ -2138,7 +2138,7 @@
             if (!v.hascoordinates) { return; }
             partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro,
                                            lineage: v.lineage || '', classid: v.classid || '',
-                                           look: (window.SpriteTint && SpriteTint.look(v.skin, v.hair)) || null };
+                                           look: (window.SpriteTint && window.SpriteTint.look(v.skin, v.hair)) || null };
         });
         view2d.setPartyPositions(partyMemberPositions);
     }
