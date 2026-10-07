@@ -134,6 +134,8 @@ type Record struct {
 	Claimed []int `yaml:"claimed,omitempty"`
 	// Service is each member's Phase 24 time with the band (chemistry).
 	Service []Service `yaml:"service,omitempty"`
+	// Bonds is what each pair of companions feels for the other (Phase 65).
+	Bonds []Bond `yaml:"bonds,omitempty"`
 	// Lost are the companions whose rescue allowance ran out (Phase 25b).
 	Lost []LostCompanion `yaml:"lost,omitempty"`
 	// Rosters are the leader's generated recruit candidates, one per
@@ -213,6 +215,7 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	if record.Service != nil {
 		record.Service = append([]Service(nil), record.Service...)
 	}
+	record.Bonds = cloneBonds(record.Bonds)
 	if record.Lost != nil {
 		record.Lost = append([]LostCompanion(nil), record.Lost...)
 	}
@@ -276,6 +279,7 @@ func (r *Registry) Put(record Record) {
 		_ = record.Formation.Place(LeaderMemberKey, 1, 1)
 	}
 	record.Service = pruneService(record.Service, valid)
+	record.Bonds = pruneBonds(record.Bonds, record)
 	r.Companies[record.LeaderUserID] = record
 }
 

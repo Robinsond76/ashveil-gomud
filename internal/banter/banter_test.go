@@ -25,7 +25,7 @@ func TestShippedPoolIsLargeAndConsistent(t *testing.T) {
 	for _, l := range p.Lines() {
 		for _, c := range l.Ctx {
 			switch c {
-			case CtxCamp, CtxRested, CtxWin, CtxClose, CtxFall, CtxFlawless, CtxSong:
+			case CtxCamp, CtxRested, CtxWin, CtxClose, CtxFall, CtxFlawless, CtxSong, CtxFriend, CtxRival:
 			default:
 				t.Errorf("%q: unknown context %q", l.Text, c)
 			}
@@ -462,5 +462,65 @@ func TestVerbsFitTheLine(t *testing.T) {
 	}
 	if got := verbFor("", "x", "Hm."); got != "says" {
 		t.Errorf("no personality: got %q", got)
+	}
+}
+
+// Phase 65: friends and rivals talk about each other, and the exchange
+// says which kind of line it drew.
+func TestAPairOfFriendsOrRivalsTalksAboutEachOther(t *testing.T) {
+	p := mustPool(t)
+	for _, pers := range Personalities {
+		for _, ctx := range []string{CtxFriend, CtxRival} {
+			n := 0
+			for _, l := range p.Lines() {
+				if inContext(l, ctx) && l.matches(Member{Personality: pers}) {
+					n++
+				}
+			}
+			if n < 3 {
+				t.Errorf("%s has %d %s lines, want at least 3", pers, n, ctx)
+			}
+		}
+	}
+	members := []Member{
+		{ID: 1, Name: "Aldric Vane", Archetype: "warrior", Personality: "stoic"},
+		{ID: 2, Name: "Brea Colm", Archetype: "cleric", Personality: "devout"},
+		{ID: 3, Name: "Cato Dray", Archetype: "rogue", Personality: "wry"},
+	}
+	for _, tc := range []struct {
+		bond int
+		ctx  string
+	}{{1, CtxFriend}, {-1, CtxRival}} {
+		rng := rand.New(rand.NewSource(1))
+		seen := 0
+		for i := 0; i < 200; i++ {
+			said := p.Exchange(rng, Request{Contexts: []string{CtxCamp}, Members: members, Bond: func(a, b int) int { return tc.bond }})
+			bondLines := 0
+			for _, s := range said {
+				if s.Ctx == tc.ctx {
+					bondLines++
+					if tc.ctx == CtxFriend && strings.Contains(s.Text, "{") {
+						t.Fatalf("unfilled line %q", s.Text)
+					}
+				}
+			}
+			if bondLines > 0 {
+				seen++
+				if len(said) > 4 || len(said) < 2 {
+					t.Fatalf("a pair talked %d lines", len(said))
+				}
+			}
+		}
+		if seen < 60 || seen > 140 {
+			t.Errorf("%s exchanges drew %d times in 200, want about half", tc.ctx, seen)
+		}
+	}
+	rng := rand.New(rand.NewSource(1))
+	for i := 0; i < 100; i++ {
+		for _, s := range p.Exchange(rng, Request{Contexts: []string{CtxCamp}, Members: members}) {
+			if s.Ctx == CtxFriend || s.Ctx == CtxRival {
+				t.Fatalf("no bond was known, yet %q was drawn", s.Text)
+			}
+		}
 	}
 }

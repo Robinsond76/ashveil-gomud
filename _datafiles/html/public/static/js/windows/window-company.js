@@ -20,6 +20,9 @@
  *   Opinions  - what each companion likes, dislikes and has lately said
  *               about the leader's choices (Phase 64); `opinions` reads the
  *               same in text.
+ *   Bonds     - how each pair of companions feels about the other, and what
+ *               that does in a battle (Phase 65); `bonds` reads the same in
+ *               text.
  *
  * Every name and label is set with textContent, never innerHTML. Menus
  * name items by the reference the server sends ("!<id>:<uuid>"), which
@@ -37,6 +40,9 @@
  *                       [{key, id, name, personality, loyalty, mood, likes,
  *                       dislikes, notes: [{label, verdict, ago, subject}],
  *                       deeds}] }
+ *   Company.Bonds     - the Bonds sub-tab: { pairs: [{a, b, a_name, b_name,
+ *                       value, tier, phrase, effect, warned}], members: [{id,
+ *                       name, feelings: [{id, name, words, tier}]}] }
  *   Party             - full party update (roster + vitals)
  *   Party.Vitals      - lightweight vitals-only update
  *
@@ -152,6 +158,14 @@
         .cmp-opn-mood { color: var(--t-text-secondary); font-weight: normal; }
         .cmp-opn-yes { color: var(--t-text); }
         .cmp-opn-no { color: var(--t-text-secondary); }
+        .cmp-bond-card { display: flex; flex-direction: column; gap: 3px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
+        .cmp-bond-card[data-feel="rival"] { border-left-color: #b5584f; }
+        .cmp-bond-head { font-weight: bold; }
+        .cmp-bond-num { color: var(--t-text-secondary); font-weight: normal; }
+        .cmp-bond-track { position: relative; height: 6px; background: rgba(128, 128, 128, 0.25); border-radius: 3px; }
+        .cmp-bond-mid { position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1px; background: var(--t-text-secondary); }
+        .cmp-bond-fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--t-accent); }
+        .cmp-bond-card[data-feel="rival"] .cmp-bond-fill { background: #b5584f; }
 
         .cmp-recipes summary { cursor: pointer; font-weight: bold; }
         .cmp-recipes ul { margin: 4px 0; padding-left: 18px; }
@@ -471,6 +485,7 @@
         { id: 'company-camp',      label: 'Camp' },
         { id: 'company-chronicle', label: 'Chronicle' },
         { id: 'company-opinions',  label: 'Opinions' },
+        { id: 'company-bonds',     label: 'Bonds' },
     ];
     const SUBTAB_KEY = 'companySubTab';
 
@@ -990,7 +1005,7 @@
         // Inventory the companions out (names only, so not on vitals). The
         // Chronicle keeps its own payload; it is redrawn here so a window
         // closed and opened again shows it at once.
-        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); }
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); }
         updateCamp();
     }
 
@@ -1786,6 +1801,56 @@
         keepFocus(panel, () => buildOpinions(panel));
     }
 
+    // --- Bonds (Phase 65) ---
+    // bondData is the newest Company.Bonds payload, kept as the Opinions'
+    // is.
+    let bondData = null;
+
+    function buildBonds(panel) {
+        const data = bondData || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Bonds) || null;
+        keepScroll(panel);
+        panel.textContent = '';
+        const pad = el('div', 'cmp-pad');
+        panel.appendChild(pad);
+        const pairs = data && Array.isArray(data.pairs) ? data.pairs : [];
+        if (!pairs.length) {
+            pad.appendChild(el('div', 'cmp-note', 'Bonds form between companions. Recruit at least two, camp together and fight side by side, and they will come to trust each other, or not (help bonds).'));
+            return;
+        }
+        pad.appendChild(el('div', 'cmp-line', 'How your companions feel about each other.'));
+        pairs.forEach(p => {
+            const value = Number(p.value) || 0;
+            const card = el('div', 'cmp-bond-card');
+            card.setAttribute('data-feel', value <= -50 ? 'rival' : (value >= 25 ? 'friend' : 'plain'));
+            const head = el('div', 'cmp-bond-head', p.phrase || ((p.a_name || '?') + ' and ' + (p.b_name || '?')));
+            head.appendChild(el('span', 'cmp-bond-num', ' (bond ' + (value > 0 ? '+' : '') + value + ')'));
+            card.appendChild(head);
+            const track = el('div', 'cmp-bond-track');
+            track.appendChild(el('div', 'cmp-bond-mid'));
+            const fill = el('div', 'cmp-bond-fill');
+            const half = Math.min(Math.abs(value), 100) / 2;
+            fill.style.left = (value >= 0 ? 50 : 50 - half) + '%';
+            fill.style.width = half + '%';
+            track.appendChild(fill);
+            card.appendChild(track);
+            if (p.effect) { card.appendChild(el('div', 'cmp-note', p.effect)); }
+            pad.appendChild(card);
+        });
+        const members = data && Array.isArray(data.members) ? data.members : [];
+        members.forEach(m => {
+            const feelings = Array.isArray(m.feelings) ? m.feelings : [];
+            if (!feelings.length) { return; }
+            pad.appendChild(el('div', 'cmp-line', (m.name || 'Companion') + ' ' + feelings.map(f => f.words).join('; ') + '.'));
+        });
+        pad.appendChild(el('div', 'cmp-note', 'Time together raises a bond to 50 at most; stepping in for each other takes it higher. Friends step in for each other once a battle when hurt; rivals will not guard each other.'));
+    }
+
+    function updateBonds() {
+        const panel = document.getElementById('company-bonds');
+        if (!panel) { return; }
+        keepFocus(panel, () => buildBonds(panel));
+    }
+
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Party'],
@@ -1794,6 +1859,12 @@
                 chronicle = body && typeof body === 'object' ? body : null;
                 win.open();
                 if (win.isOpen()) { updateChronicle(); }
+                return;
+            }
+            if (namespace === 'Company.Bonds') {
+                bondData = body && typeof body === 'object' ? body : null;
+                win.open();
+                if (win.isOpen()) { updateBonds(); }
                 return;
             }
             if (namespace === 'Company.Opinions') {

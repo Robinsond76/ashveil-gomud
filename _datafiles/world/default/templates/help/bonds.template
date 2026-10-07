@@ -1,0 +1,85 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">bonds</ansi>
+
+Companions come to feel something for one another. Each pair has a bond,
+a number from -100 to 100, that you can read in words: "trusts Ysolde",
+"can't stand Merek". It rises when they camp together, win beside each
+other, agree about your choices and step in for each other. It falls when
+their temperaments clash or they disagree.
+
+<ansi fg="yellow-bold">Reading them</ansi>
+
+  <ansi fg="command">bonds</ansi>               every pair, strongest feeling first, with what it does
+  <ansi fg="command">bonds [member]</ansi>       the pairs that one companion is in
+  <ansi fg="command">company inspect [member]</ansi>  one line of the same
+
+In the web client the Company window has a Bonds tab with a bar for each
+pair. It fits a phone as it does the desktop. Reading it costs nothing,
+even in a fight. Only companions who are people have bonds; creatures,
+constructs and the fallen have none, and the leader has loyalty instead
+(<ansi fg="command">help alignment</ansi>).
+
+<ansi fg="yellow-bold">The words</ansi>
+
+   75 and up      like kin: steps in twice a battle for the other
+   50 to 74       close: steps in once a battle
+   25 to 49       trusts: steps in once a battle
+  -24 to 24       still getting to know each other
+  -49 to -25      wary of: no effect in battle
+  -84 to -50      can't stand: will not guard the other
+  -85 and down    cannot bear: will not guard, and a warning is given
+
+<ansi fg="yellow-bold">What raises and lowers a bond</ansi>
+
+  A camp rest together     +2 for temperaments that suit (stoic and devout,
+                           cheerful and boastful, wry and grim...), +1
+                           for the rest, -1 for ones that clash (cheerful
+                           and grim, devout and wry, stoic and boastful),
+                           and one less again when their alignments are far
+                           apart. Once every half hour at most.
+  A battle won together    +1 for each pair left standing, unless their
+                           temperaments clash. Once every ten minutes.
+  Banter                   a pair of friends or rivals sometimes talk about
+                           each other (<ansi fg="command">help banter</ansi>): +1 or -1, once every
+                           half hour.
+  Your choices             two companions who both liked or both disliked
+                           something you did (<ansi fg="command">help opinions</ansi>) gain 1; one who
+                           liked it and one who did not lose 1.
+  Stepping in              +3 when one guards the other in a battle. Once an
+                           hour for a pair.
+  A refused guard          -2 when a guardian you set to guard a rival
+                           lets the blow fall. Once an hour for a pair.
+
+Time together alone raises a bond to 50 at most, and lowers one to -50 at
+most. Past 50 takes stepping in for each other, and past -50 takes real
+clashes: a refused guard, or a pair already at odds disagreeing about
+something you did. A company that merely travels together settles into
+trust or wariness, never into a feud.
+
+<ansi fg="yellow-bold">In a battle</ansi>
+
+  - A friend (a bond of 25 or more) in reach of a friend who is at half
+    health or less steps in for them, whatever its role: once a battle, or
+    twice for kin. The log says "steps in front of Tamsin for a friend
+    (bond guard)", and the web client's battle feed says the same.
+  - A guardian set to guard a rival (<ansi fg="command">help guardian</ansi>) will not: "lets the blow fall
+    on Garrick (no guard: they can't stand each other)", said once a
+    battle. A guardian with no ward set passes over a rival when it picks
+    the most hurt ally.
+  - Nothing else changes. No one is stronger for a bond, and no one is
+    weaker for a rivalry except by the guard that is not given.
+
+<ansi fg="yellow-bold">A rivalry at its end</ansi>
+
+When a bond falls to -85 you are told that the two can hardly stand to
+share a company. If it keeps falling to -100, one of them leaves: the one
+with less loyalty (the newer one, if they are even), as if their loyalty
+had run out (<ansi fg="command">help alignment</ansi>). A pair that recovers to -60 or better is
+forgiven the warning. To mend one, set a guardian's ward to someone else
+(a rival's refusal costs the bond each hour), and let them camp, win and
+agree about your choices.
+
+Bonds are saved with the company and kept through logging out. A companion
+who leaves or is dismissed takes their bonds with them. Bonds give no gold,
+experience or power, and they never move the world's clock.
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help opinions</ansi>, <ansi fg="command">help banter</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help webclient</ansi>.

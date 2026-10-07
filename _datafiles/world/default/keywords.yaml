@@ -171,6 +171,7 @@ help:
       - events
       - chronicle
       - opinions
+      - bonds
     communication:
       - emote
       - say
@@ -347,6 +348,7 @@ help-aliases:
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   chronicle: [chronicles, deeds, company chronicle]
   opinions: [opinion, companion opinions, company opinions, loyalty opinions]
+  bonds: [bond, companion bonds, company bonds, friendship, friendships, rivalry, rivalries, rivals, friends]
   events: [event, scene, scenes, story-events, story events, choose, story]
   sigils: [sigil, cast sigil, cast-sigil, sigil chalk, chalk, ward sigil, fire sigil, stillness sigil, mending sigil]
   ambush: [surprise, surprised]

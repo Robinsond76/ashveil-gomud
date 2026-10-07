@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -218,6 +219,8 @@ func init() {
 	m.plug.AddUserCommand("beast", m.beastCommand, false, false)      // Phase 39e: a Beast Tamer's bonded beast
 	m.plug.AddUserCommand("brew", m.brewCommand, false, false)        // Phase 39g: an Alchemist's flasks
 	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed while downed
+	m.plug.AddUserCommand("bonds", m.bondsCommand, true, false)       // Phase 65: read-only too
+	opinions.Observe(m.onOpinionBonds)                                // Phase 65: agreeing over a choice moves a bond
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.
@@ -297,7 +300,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company opinions [member] | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company opinions [member] | company bonds [member] | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -913,6 +916,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.chemistryView(user.UserId))
 	case "opinions", "opinion": // Phase 64
 		user.SendText(m.opinionsView(user.UserId, strings.Join(args[1:], " ")))
+	case "bonds", "bond": // Phase 65
+		user.SendText(m.bondsView(user.UserId, strings.Join(args[1:], " ")))
 	case "specialists", "specialist":
 		// Phase 33f2: who in the company performs each expedition skill.
 		if text := archetypes.SpecialistsView(user.UserId); text != "" {
