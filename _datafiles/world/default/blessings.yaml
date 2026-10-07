@@ -1,0 +1,88 @@
+# Account blessings (Ashveil phase 77).
+#
+# A blessing is a small perk the account's LATER characters start with,
+# unlocked by a milestone in a character's chronicle (phase 63). The
+# character that earns a blessing does not get it; the next one made does.
+# They never add combat power beyond a starting item, and the recruit
+# discount is capped at 10% in total.
+#
+# Fields:
+#   id      lowercase key saved on the account and on each character given it
+#   name    what `blessings` shows
+#   text    one line of flavour
+#   deed    a chronicle kind: joined boss relic spared promoted story
+#           awakened errand rites (see `help chronicle`)
+#   count   how many of that deed the character has recorded, ever
+#   iron    true: only an Iron (Hardcore) character's deeds count
+#   perk    item + qty (1-3): a starting item for the pack
+#           discount: percent off a recruit's price (1-10)
+#
+# Starting items are camp supplies the markets never buy back, so a blessing
+# is never a way to make gold. Names and lines are placeholders; the new
+# world renames them. The ids, deeds and perk shapes are the contract.
+
+blessings:
+  - id: road-tested
+    name: "Road-tested"
+    text: "You have killed a lair's master. The next road starts with a flask of broth."
+    deed: boss
+    count: 1
+    perk: { item: 30040, qty: 2 }
+
+  - id: old-hand
+    name: "Old hand"
+    text: "Five masters of the dark have fallen to you. You know how to sleep warm."
+    deed: boss
+    count: 5
+    perk: { item: 30041, qty: 2 }
+
+  - id: company-keeper
+    name: "Company keeper"
+    text: "You have taken on five companions. Word of you gets around, and so does a better price."
+    deed: joined
+    count: 5
+    perk: { discount: 5 }
+
+  - id: captains-name
+    name: "A captain's name"
+    text: "Fifteen faces have joined you over the years. A name that good takes the edge off a price."
+    deed: joined
+    count: 15
+    perk: { discount: 5 }
+
+  - id: soft-hand
+    name: "Soft hand"
+    text: "You have spared three beaten foes. Someone remembers it and leaves a salve at your door."
+    deed: spared
+    count: 3
+    perk: { item: 30042, qty: 2 }
+
+  - id: treasure-eye
+    name: "Treasure eye"
+    text: "You have dug a relic out of the dark. A scrap of old chalk comes with the knowing."
+    deed: relic
+    count: 1
+    perk: { item: 30060, qty: 3 }
+
+  - id: well-told
+    name: "Well told"
+    text: "You have seen five strange scenes through to their end. Your next road begins with a story and a warm drink."
+    deed: story
+    count: 5
+    perk: { item: 30041, qty: 1 }
+
+  - id: iron-tested
+    name: "Iron-tested"
+    text: "An Iron character of yours killed three lair masters. Iron remembers."
+    deed: boss
+    count: 3
+    iron: true
+    perk: { item: 30040, qty: 3 }
+
+  - id: iron-oath
+    name: "Iron oath"
+    text: "An Iron character of yours earned a class. The oath was kept, and your name is worth a little more."
+    deed: promoted
+    count: 1
+    iron: true
+    perk: { discount: 5 }

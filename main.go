@@ -16,6 +16,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/appearance"
 	"github.com/GoMudEngine/GoMud/internal/audio"
+	"github.com/GoMudEngine/GoMud/internal/blessings"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
@@ -1780,6 +1781,10 @@ func loadAllDataFiles(isReload bool) {
 	}
 	if err := lifestory.Load(); err != nil {
 		mudlog.Error("LoadDataFiles", "lifestory", err)
+	}
+	// Ashveil 77: account blessings.
+	if err := blessings.Load(); err != nil {
+		mudlog.Error("LoadDataFiles", "blessings", err)
 	}
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.
 }

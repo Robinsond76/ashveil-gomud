@@ -44,4 +44,8 @@ They never make you stronger in a fight, but the road notices them:
 Characters made before life stories existed are asked once, when they next
 log in. Skip it and <ansi fg="command">creation</ansi> or <ansi fg="command">lifestory choose</ansi> asks again whenever you like.
 
+The last question of creation, after the story, is the Iron option
+(<ansi fg="command">help hardcore</ansi>); a new character also starts with the account's blessings
+(<ansi fg="command">help blessings</ansi>).
+
 See also: <ansi fg="command">help appearance</ansi>, <ansi fg="command">help stats</ansi>.

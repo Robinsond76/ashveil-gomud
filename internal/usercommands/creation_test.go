@@ -100,6 +100,13 @@ func (c *creationUser) pending() string {
 
 // answer types a response to the open question and re-runs the command the
 // way the world does (a prompt re-invokes its command).
+// standard answers the Iron question (Phase 77) with the standard option.
+func (c *creationUser) standard() {
+	c.t.Helper()
+	require.Equal(c.t, ironTitle, c.pending(), "the Iron question follows creation")
+	c.answer("start", "", "standard")
+}
+
 func (c *creationUser) answer(command, rest, response string) {
 	c.t.Helper()
 	p := c.u.GetPrompt()
@@ -182,7 +189,10 @@ func TestStartAsksLooksThenLifeStoryThenTutorial(t *testing.T) {
 	assert.NotEmpty(t, sumView.Backstory)
 
 	cu.answer("start", "", "confirm")
-	assert.Equal(t, tutorialQuestion, cu.pending(), "the tutorial question follows the summary")
+	assert.Equal(t, ironTitle, cu.pending(), "the Iron question follows the summary")
+	assert.True(t, c.HasLooks(), "the steps committed before the Iron question")
+	cu.standard()
+	assert.Equal(t, tutorialQuestion, cu.pending(), "the tutorial question follows the Iron question")
 	assert.True(t, c.HasLooks())
 	assert.True(t, c.HasLifeStory())
 	assert.True(t, c.CreationOffered())
@@ -360,6 +370,7 @@ func TestStartSkipsLooksAndStoryWithoutData(t *testing.T) {
 	tutorial.SetProvider(nil)
 	cu := newCreationUser(t, 7210, 1)
 	cu.start()
+	cu.standard()
 	assert.Equal(t, tutorialQuestion, cu.pending(), "a world without looks.yaml goes straight on")
 }
 
@@ -369,6 +380,7 @@ func TestStartDoesNotAskAgainAfterConfirm(t *testing.T) {
 	cu.start()
 	cu.runTo("start", "", `Keep this character as described?`, nil)
 	cu.answer("start", "", "confirm")
+	cu.standard()
 	require.Equal(t, tutorialQuestion, cu.pending())
 	// answering the tutorial question re-runs start; creation must not return
 	cu.u.GetPrompt().GetNextQuestion().Answer("no")

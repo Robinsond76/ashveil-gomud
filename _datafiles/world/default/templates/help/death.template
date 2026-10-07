@@ -13,6 +13,9 @@ you are rescued, captured, left for dead or robbed, with no level lost
 earning that level back doesn't give its training points again. You may also
 drop some of your gear, which you'll need to go back for.
 
+A character who took the Iron option (<ansi fg="command">help hardcore</ansi>) always takes this
+church route, and loses <ansi fg="yellow">two levels</ansi> instead of one.
+
 Then you wake at the church of the last city you visited, with the living
 companions who were with you when you fell beside you. One who was
 elsewhere is separated and finds its way back to you

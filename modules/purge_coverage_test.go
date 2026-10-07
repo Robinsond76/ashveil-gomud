@@ -82,6 +82,7 @@ var transientOrAccountOnly = map[string]string{
 	"gathering": "a running gathering action; room resources are world state",
 	"walkto":    "a running route",
 	"testarea":  "holds the trips themselves",
+	"blessings": "account blessings outlive the character (a deleted character keeps them); the test area never earns them for real",
 }
 
 // TestEveryModuleWithUserStateIsSnapshotted: the admin test area (modules/

@@ -333,10 +333,17 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 			c.SetMiscData(domain.LastLossKey, nil)
 			mudlog.Info("death: defeat scenario", "user", userID, "op", op, "scenario", scenario.ID)
 		} else {
-			from, to := c.LoseLevel()
+			// Ashveil 77: an Iron character's defeat costs two levels.
+			lost := 1
+			if c.IsIron() {
+				lost = characters.IronLevelsLost
+			}
+			from, to := c.LoseLevels(lost)
 			c.SetMiscData(domain.LastLossKey, domain.LastLossValue(from, to))
 			mudlog.Info("death: level taken", "user", userID, "op", op, "from", from, "to", to)
-			if from > to {
+			if from-to > 1 {
+				user.SendText(fmt.Sprintf(`The Iron takes its due: you lose %d levels (now level <ansi fg="yellow">%d</ansi>).`, from-to, to))
+			} else if from > to {
 				user.SendText(fmt.Sprintf(`You lose a level (now level <ansi fg="yellow">%d</ansi>).`, to))
 			} else {
 				user.SendText("You lose what you had learned toward level 2.")

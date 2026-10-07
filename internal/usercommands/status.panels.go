@@ -69,6 +69,10 @@ func buildStatusPanel(user *users.UserRecord) string {
 		Add(`<ansi fg="yellow">Race:   </ansi>`, `<ansi fg="yellow">Rce:</ansi>`, fmt.Sprintf(`%s (%s)`, c.Race(), c.RaceSize()))
 	if ashveil {
 		addAshveilIdentity(layout.Panel("info"), summary)
+		// Ashveil Phase 77: the Iron badge.
+		if c.IsIron() {
+			addRow(layout.Panel("info"), `Mode:   `, `Mod:`, `<ansi fg="yellow-bold">Iron</ansi> <ansi fg="black-bold">(help hardcore)</ansi>`)
+		}
 	}
 	layout.Panel("info").
 		Add(`<ansi fg="yellow">Level:  </ansi>`, `<ansi fg="yellow">Lvl:</ansi>`, fmt.Sprintf(`%d`, c.Level)).
