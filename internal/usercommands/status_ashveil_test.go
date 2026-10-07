@@ -285,3 +285,17 @@ func TestStatusHelpMentionsClasses(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "each companion's class and level")
 }
+
+// Phase 77: an Iron character's status sheet carries the badge; a standard
+// one does not.
+func TestStatusShowsTheIronBadge(t *testing.T) {
+	useWorld(t, "default")
+	useSummary(t, sampleSummary())
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Wren"
+	assert.NotRegexp(t, `(Mode|Mod): `, statusText(t, user, ""))
+	user.Character.SetIron(true)
+	text := statusText(t, user, "")
+	assert.Regexp(t, `(Mode|Mod): +Iron`, text)
+	assert.Contains(t, text, "help hardcore")
+}

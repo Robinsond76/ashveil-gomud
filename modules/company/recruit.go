@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/blessings"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -218,12 +219,12 @@ func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
 		case c.Tutorial:
 			lines = append(lines, "    Price: free, once only")
 		default:
-			lines = append(lines, fmt.Sprintf("    Price: %d gold", c.Price))
+			lines = append(lines, fmt.Sprintf("    Price: %d gold", m.recruitPrice(leaderUserID, c.Price)))
 		}
 	}
 	// Phase 32a2: the viewer's own generated candidates, after the regulars.
 	for _, c := range roster.Candidates {
-		lines = append(lines, m.generatedListing(c)...)
+		lines = append(lines, m.generatedListing(m.discounted(leaderUserID, c))...)
 	}
 	lines = append(lines, fmt.Sprintf("Your company: %d/%d companions.", len(record.Companions), m.maxCompanions()))
 	return strings.Join(lines, "\n")
@@ -273,7 +274,7 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	roster, _ := m.rosterFor(user.UserId, rec)
 	regular, g := resolveCandidate(rec, roster, selector)
 	if g != nil {
-		return m.hireGenerated(user, roomID, roster, *g)
+		return m.hireGenerated(user, roomID, roster, m.discounted(user.UserId, *g))
 	}
 	if regular == nil {
 		return fmt.Sprintf(`No one called "%s" is hiring here. Type "company recruit" to see who is.`, selector), nil
@@ -293,7 +294,7 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if refusal := m.recruitRefusal(user.UserId, c.MobTemplateID, name); refusal != "" {
 		return refusal, nil
 	}
-	price := c.cost()
+	price := m.recruitPrice(user.UserId, c.cost())
 	if user.Character.Gold < price {
 		return fmt.Sprintf("%s asks %d gold, and you have %d.", name, price, user.Character.Gold), nil
 	}
@@ -307,6 +308,25 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 		text = fmt.Sprintf("You pay %d gold. %s", price, text)
 	}
 	return text + m.placementNotice(user.UserId, companion.ID), nil
+}
+
+// recruitPrice is a recruit's price after the buyer's account blessings
+// (Phase 77; a free recruit stays free).
+func (m *CompanyModule) recruitPrice(userID, price int) int {
+	if price <= 0 {
+		return price
+	}
+	if user := users.GetByUserId(userID); user != nil && user.Character != nil {
+		return blessings.RecruitPrice(user.Character, price)
+	}
+	return price
+}
+
+// discounted is a roster candidate with the buyer's discount in its price,
+// for showing and charging. The saved roster keeps the full price.
+func (m *CompanyModule) discounted(userID int, c domain.Candidate) domain.Candidate {
+	c.Price = m.recruitPrice(userID, c.Price)
+	return c
 }
 
 func nativeSaveUser(user *users.UserRecord) error { return users.SaveUserAtomic(*user) }
@@ -376,7 +396,7 @@ func (m *CompanyModule) RecruiterLines(viewerUserID, roomID int) []string {
 		name := templateName(c.MobTemplateID, c.ID)
 		entries = append(entries, noticeEntry{
 			Name:    name,
-			Price:   c.cost(),
+			Price:   m.recruitPrice(viewerUserID, c.cost()),
 			Free:    c.Tutorial,
 			Refused: m.recruitRefusal(viewerUserID, c.MobTemplateID, name) != "",
 		})
@@ -386,7 +406,7 @@ func (m *CompanyModule) RecruiterLines(viewerUserID, roomID int) []string {
 	for _, c := range roster.Candidates {
 		entries = append(entries, noticeEntry{
 			Name:    c.Name,
-			Price:   c.Price,
+			Price:   m.recruitPrice(viewerUserID, c.Price),
 			Refused: m.alignmentRefusal(viewerUserID, c.Alignment, c.Name) != "",
 		})
 	}
@@ -411,7 +431,7 @@ func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string)
 	roster, _ := m.rosterFor(viewerUserID, rec)
 	regular, g := resolveCandidate(rec, roster, selector)
 	if g != nil {
-		return lookGenerated(rec.Name, *g), true
+		return lookGenerated(rec.Name, m.discounted(viewerUserID, *g)), true
 	}
 	if regular == nil {
 		return "", false

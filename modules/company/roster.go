@@ -336,13 +336,13 @@ func (m *CompanyModule) inspectAt(leaderUserID, roomID int, selector string) str
 	}
 	roster, _ := m.rosterFor(leaderUserID, rec)
 	if c, ok := findGenerated(roster, selector, false); ok {
-		return m.inspectGenerated(leaderUserID, c)
+		return m.inspectGenerated(leaderUserID, m.discounted(leaderUserID, c))
 	}
 	// The same resolution "company recruit" uses, so inspect and recruit
 	// always mean the same person.
 	if !m.summonableName(selector) {
 		if _, c := resolveCandidate(rec, roster, selector); c != nil {
-			return m.inspectGenerated(leaderUserID, *c)
+			return m.inspectGenerated(leaderUserID, m.discounted(leaderUserID, *c))
 		}
 	}
 	return m.inspect(leaderUserID, selector)

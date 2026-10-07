@@ -214,6 +214,7 @@ func TestTutorialReplayThroughPluginsLoad(t *testing.T) {
 	_, _, err := users.LoginUser(aria, conn)
 	require.NoError(t, err)
 	void := &rooms.Room{RoomId: -1, Title: "The Void"}
+	aria.Character.MarkIronOffered() // these tests are about the tutorial, not the Iron question (Phase 77)
 	_, err = usercommands.Start("", aria, void, 0)
 	require.NoError(t, err)
 	q := aria.GetPrompt().GetNextQuestion()

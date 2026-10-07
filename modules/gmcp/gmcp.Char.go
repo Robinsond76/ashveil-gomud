@@ -536,6 +536,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			Skin:           skin,
 			Hair:           hair,
 			Race:           user.Character.Race(),
+			Hardcore:       user.Character.IsIron(),
 			Alignment:      user.Character.AlignmentName(),
 			Level:          user.Character.Level,
 			Role:           user.Role,
@@ -1017,6 +1018,7 @@ type GMCPCharModule_Payload_Info struct {
 	Skin           string `json:"skin,omitempty"`
 	Hair           string `json:"hair,omitempty"`
 	Race           string `json:"race,omitempty"`
+	Hardcore       bool   `json:"hardcore,omitempty"` // Phase 77: the Iron option
 	Alignment      string `json:"alignment,omitempty"`
 	Level          int    `json:"level,omitempty"`
 	Role           string `json:"role"`

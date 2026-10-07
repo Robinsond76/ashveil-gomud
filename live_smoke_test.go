@@ -274,7 +274,8 @@ func (m *mudClient) registerArriving(user, pass, character, archetypeName string
 
 // createLooksAndStory answers the looks and life-story steps (phase 72a)
 // with each list's first option and no line of its own, checks the summary,
-// confirms it, and stops at the tutorial question.
+// confirms it, takes the standard (not Iron) option, and stops at the
+// tutorial question.
 func (m *mudClient) createLooksAndStory() {
 	m.t.Helper()
 	const (
@@ -300,7 +301,9 @@ func (m *mudClient) createLooksAndStory() {
 		case strings.HasSuffix(got, "for none."):
 			m.expect(ownLine, time.Second)
 			m.send("")
-		case regexp.MustCompile(summary).MatchString(got):
+		// The question after the summary (phase 77's Iron option) echoes
+		// the summary's answer line, so only the first match is the summary.
+		case !sawSummary && regexp.MustCompile(summary).MatchString(got):
 			m.expect(question, time.Second)
 			for _, want := range []string{`You look like this`, `Your story`, `\+1 `} {
 				if !regexp.MustCompile(`(?i)` + want).MatchString(got) {

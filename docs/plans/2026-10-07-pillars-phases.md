@@ -401,3 +401,7 @@ combat power beyond starting gear.
 
 **Accept.** Hardcore death through the real defeat path; a blessing
 granted to a second character; help pages.
+
+### Phase 77 build decisions (2026-10-07, full autonomy)
+
+The owner removed permanent death for now ("remove the permadeath idea"), so Hardcore ("Iron") is a harder defeat chosen at creation: two levels lost and never a rescue, foes unchanged. Blessings are data earned from chronicle counts, saved per account, given once to later characters. All decisions, numbers and follow-ups: [phase 77 decisions](2026-10-07-phase-77-hardcore-blessings.md).

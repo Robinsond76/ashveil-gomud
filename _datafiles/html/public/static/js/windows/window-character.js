@@ -133,6 +133,21 @@
 
         #cw-char-name .cw-id-promo { color: var(--t-accent); }
 
+        #cw-char-name .cw-id-iron {
+            color: var(--t-accent);
+            font-weight: bold;
+            cursor: help;
+        }
+
+        /* Phase 77: blessings (small perks for later characters), last on
+           the Overview so experience and gold stay near the top */
+        #cw-blessings { order: 1; display: flex; flex-direction: column; gap: 3px; margin-top: 6px; min-width: 0; }
+        #cw-blessings:empty { display: none; }
+        #cw-blessings .cw-bl-head { color: var(--t-text-secondary); font-weight: bold; margin-top: 4px; }
+        #cw-blessings .cw-bl-row { color: var(--t-text); overflow-wrap: anywhere; }
+        #cw-blessings .cw-bl-row.todo { color: var(--t-text-muted); }
+        #cw-blessings .cw-bl-name { color: var(--t-accent); }
+
         #cw-char-name .cw-char-race {
             cursor: help;
             text-decoration: underline dotted;
@@ -653,6 +668,7 @@
                 '<div id="cw-char-name">\u2014</div>' +
                 '<div id="cw-id-row"><span id="cw-char-level">Level \u2014</span><span id="cw-char-alignment"></span></div>' +
                 buildStatsGrid() +
+                '<div id="cw-blessings"></div>' +
             '</div>' +
 
             '<div class="cw-tab-panel" id="cw-quests">' +
@@ -769,6 +785,10 @@
             }
         }
         if (promo) { node('div', 'cw-id-promo', promo, nameEl); }
+        if (info.hardcore) {
+            const iron = node('div', 'cw-id-iron', 'Iron character', nameEl);
+            iron.title = 'A defeat costs two levels and never ends in a rescue. Type help hardcore for details.';
+        }
 
         if (!nameEl.textContent) {
             nameEl.textContent = '\u2014';
@@ -1029,10 +1049,47 @@
         if (!Object.keys(affects).length) { capabilityText(panel, 'No active effects'); }
     }
 
+    // Phase 77: the account's blessings, from Char.Blessings: what this
+    // character carries, what waits for the next one, and what is left to
+    // earn. All text is set with textContent.
+    // blessingsData is the newest Char.Blessings payload, kept here as well
+    // as in GMCPStructs because a later full Char snapshot replaces the
+    // namespace's children there.
+    let blessingsData = null;
+
+    function updateBlessings() {
+        const host = document.getElementById('cw-blessings');
+        if (!host) { return; }
+        host.textContent = '';
+        const data = blessingsData || (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Blessings);
+        if (!data) { return; }
+        const section = (title, rows, line, todo) => {
+            if (!Array.isArray(rows) || !rows.length) { return; }
+            node('div', 'cw-bl-head', title, host);
+            rows.forEach(r => {
+                const row = node('div', 'cw-bl-row' + (todo ? ' todo' : ''), '', host);
+                node('span', 'cw-bl-name', String(r.name || ''), row);
+                row.appendChild(document.createTextNode(': ' + line(r)));
+            });
+        };
+        section('Blessings carried', data.carried, r => String(r.perk || ''), false);
+        section('Earned, waiting for your next character', data.waiting, r => String(r.perk || ''), false);
+        section('Blessings still to earn', data.next, r => {
+            let t = String(r.condition || '');
+            if (r.iron && !data.iron) { t += ' (Iron characters only)'; }
+            else if (r.need > 1) { t += ' (' + (r.have || 0) + ' of ' + r.need + ')'; }
+            return t;
+        }, true);
+        if (data.discount) {
+            node('div', 'cw-bl-row', 'Your blessings take ' + data.discount + '% off every recruit.', host);
+        }
+    }
+
     function update() {
         win.open();
         if (!win.isOpen()) { return; }
         updateOverview();
+        updateBlessings();
         updateStats();
         updateQuests();
         updateSkills();
@@ -1055,6 +1112,9 @@
                 return;
             }
             if (namespace.startsWith('Company.') && namespace !== 'Company.Conditions') { return; }
+            if (namespace === 'Char.Blessings') {
+                blessingsData = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Blessings) || null;
+            }
             update();
         },
     });

@@ -35,6 +35,9 @@ Gold in the bank is never touched by a capture or a robbery. Characters of
 level 5 and below are never captured or robbed, so a new company loses no
 goods to a defeat.
 
+A character who took the Iron option (<ansi fg="command">help hardcore</ansi>) is never rescued,
+captured or robbed: every defeat is the church and its cost.
+
 When nothing fits (a world with no scenarios, or a defeat the table does
 not cover) you wake at the last city's church a level down, as
 <ansi fg="command">help death</ansi> describes. Companions who die in the fight can still be
