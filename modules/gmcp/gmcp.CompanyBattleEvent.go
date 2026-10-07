@@ -72,6 +72,11 @@ type battleEvent struct {
 	Status    string   `json:"status,omitempty"`
 	Rule      string   `json:"rule,omitempty"`
 	Defenses  []string `json:"defenses,omitempty"`
+	// Explain is the round's strikes in plain lines (Phase 62), the
+	// engine's own numbers: what the hit needed and rolled, the defence it
+	// met, armor, named modifiers. Only for the player's own company's
+	// rounds against a foe they can make out.
+	Explain []string `json:"explain,omitempty"`
 	// fight-start: who is in the fight (enemies only when seen).
 	Company []string `json:"company,omitempty"`
 	Enemies []string `json:"enemies,omitempty"`
@@ -179,6 +184,9 @@ func buildBattleEvent(v battleViewer, e combatstream.Event, fi combatstream.Figh
 		Rule:     e.Rule,
 		Defenses: e.Defenses,
 	}
+	if e.Kind == combatstream.Attack && v.allyLeader == 0 && !v.masked(e.Source) && !v.masked(e.Target) && (e.Source.LeaderUserId == v.userId || e.Target.LeaderUserId == v.userId || e.Source.UserId == v.userId || e.Target.UserId == v.userId) {
+		be.Explain = combatstream.Breakdown(e.Strikes)
+	}
 	if e.SpellId != "" {
 		if sp := spells.GetSpell(e.SpellId); sp != nil {
 			be.SpellName = sp.Name
@@ -251,7 +259,7 @@ func isAllyRef(id string) bool { return strings.HasPrefix(id, "a:") || strings.H
 // company's fight is theirs, not ours) and the status a blow left on them.
 func scrubAlly(be battleEvent) battleEvent {
 	if isAllyRef(be.Tgt) {
-		be.Damage, be.Amount, be.HeldBack, be.Status = 0, 0, 0, ""
+		be.Damage, be.Amount, be.HeldBack, be.Status, be.Explain = 0, 0, 0, "", nil
 	}
 	return be
 }

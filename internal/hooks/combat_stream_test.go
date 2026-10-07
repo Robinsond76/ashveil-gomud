@@ -108,3 +108,37 @@ func TestTurnsToward(t *testing.T) {
 	assert.Equal(t, `The <ansi fg="mobname">bandit captain</ansi> turns toward <ansi fg="username">bob</ansi>.`,
 		turnsToward(mobTag("bandit captain"), userTag("bob")))
 }
+
+// Phase 62: an attack round's strikes ride its event, and the fight leader's
+// roll log keeps them for `why` until the next fight begins.
+func TestAttackStrikesRideTheEventAndTheRollLog(t *testing.T) {
+	stream := combatstream.New()
+	t.Cleanup(combatstream.UseForTest(stream))
+	log := combatstream.DefaultRollLog()
+	leader := combatstream.Ref{UserId: 7, Name: "Aria", LeaderUserId: 7, MemberKey: "leader"}
+	foe := combatstream.Ref{MobInstanceId: 21, Name: "bandit captain"}
+	t.Cleanup(func() { log.Clear(7) })
+	log.Clear(7)
+
+	stream.Open(5, 100, "p", leader, nil, []combatstream.Ref{foe})
+	strikes := []combatstream.Strike{{Chance: 55, Base: 55, Roll: 10, Hit: true, Raw: 7, Armor: 3, Reduced: 2, Damage: 5}}
+	result := combat.AttackResult{Hit: true, DamageToTarget: 5, Strikes: strikes}
+	emitAttack(leader, foe, 100, &characters.Character{}, result)
+	emitAttack(foe, leader, 100, &characters.Character{}, combat.AttackResult{Strikes: []combatstream.Strike{{Chance: 40, Base: 40, Roll: 90}}})
+	emitAttack(foe, leader, 100, &characters.Character{}, combat.AttackResult{}) // no strikes recorded: nothing to explain
+
+	rolls := log.Recent(7, 0)
+	require.Len(t, rolls, 2, "only rounds with strikes are kept")
+	assert.False(t, rolls[0].Ours, "the foe's round, newest first")
+	assert.True(t, rolls[1].Ours)
+	assert.Equal(t, strikes, rolls[1].Strikes, "the event carries the engine's strikes unchanged")
+	assert.Equal(t, 5, rolls[1].Damage)
+
+	// A new fight for the same leader starts the log afresh.
+	log.Clear(7)
+	assert.Empty(t, log.Recent(7, 0))
+}
+
+func TestSigilNoteNamesWhatHeldOverTheBattle(t *testing.T) {
+	assert.Equal(t, "", sigilNote(999999), "no battle, no sigil")
+}

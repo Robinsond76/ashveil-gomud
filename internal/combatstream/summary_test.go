@@ -101,6 +101,8 @@ func TestRender(t *testing.T) {
 		"Highest hit    Garrick Vane 9 on bandit captain (critical)",
 		"Effects        dazed 2 · slowed 1",
 		"Kills          Garrick Vane 1",
+		"Damage taken   Tamsin Reed 6 · You 2",
+		"Never landed   Tamsin Reed 1 missed",
 		"Enemies        bandit captain slain · bandit slinger fled",
 		"Company        You 12/14 · Garrick Vane 15/15 · Tamsin Reed fallen",
 	}, lines)
@@ -245,4 +247,33 @@ func TestSummaryShowsSpoilsOnlyWhenThereAreSome(t *testing.T) {
 		}
 	}
 	assert.Less(t, spoils, enemies)
+}
+
+// Phase 62: the summary says who took the most, who never landed a blow
+// and why, and which abilities the company used, from the strikes' own
+// parts.
+func TestSummaryExplainsTheFight(t *testing.T) {
+	s := New()
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
+	s.Emit(Event{Kind: Attack, Source: captain, Target: tamsin, Outcome: OutcomeHit, Damage: 9, Strikes: []Strike{{Hit: true, Damage: 9}}})
+	s.Emit(Event{Kind: StatusTick, Target: aria, Damage: 2})
+	// Tamsin swings four times: two miss, one is parried, one is soaked.
+	s.Emit(Event{Kind: Attack, Source: tamsin, Target: captain, Outcome: OutcomeMiss, Strikes: []Strike{{Roll: 80, Chance: 50}, {Roll: 70, Chance: 50}}})
+	s.Emit(Event{Kind: Attack, Source: tamsin, Target: captain, Outcome: OutcomeMiss, Defenses: []string{"parried"}, Strikes: []Strike{{Hit: true, Defense: "parried"}}})
+	s.Emit(Event{Kind: Attack, Source: tamsin, Target: captain, Outcome: OutcomeHit, Strikes: []Strike{{Hit: true, Raw: 3, Armor: 5}}})
+	// Aria lands one.
+	s.Emit(Event{Kind: Attack, Source: aria, Target: captain, Outcome: OutcomeHit, Damage: 4, Strikes: []Strike{{Hit: true, Damage: 4}}})
+	s.Emit(Event{Kind: Ability, Source: aria, Target: captain, Status: "Opening Strike"})
+	s.Emit(Event{Kind: Ability, Source: aria, Target: captain, Status: "Opening Strike"})
+	sum, _ := s.EndFight(id, 4, OutcomeVictory, Final{})
+	assert.Equal(t, []Amount{{Who: tamsin, Value: 9}, {Who: aria, Value: 2}}, sum.Taken)
+	require.Len(t, sum.NeverLanded, 1)
+	assert.Equal(t, Swings{Who: tamsin, Thrown: 4, Missed: 2, Turned: 1, Absorbed: 1}, sum.NeverLanded[0])
+	assert.Equal(t, []Count{{Name: "Opening Strike", Count: 2}}, sum.Moves)
+	sum.Sigil = "fire sigil: fire spells 25% stronger"
+	lines := Render(*sum, 7)
+	assert.Contains(t, lines, "Never landed   Tamsin Reed 2 missed, 1 turned aside, 1 stopped by armor")
+	assert.Contains(t, lines, "Moves          Opening Strike 2")
+	assert.Contains(t, lines, "Sigil          fire sigil: fire spells 25% stronger")
+	assert.Contains(t, lines, "Damage taken   Tamsin Reed 9 · You 2")
 }

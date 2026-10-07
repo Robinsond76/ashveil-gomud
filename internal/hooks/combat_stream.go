@@ -97,6 +97,7 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		Target:     target,
 		Outcome:    outcome,
 		Defenses:   r.Defenses,
+		Strikes:    r.Strikes,
 		Damage:     r.DamageToTarget,
 		Crit:       r.Hit && r.Crit,
 		Quality:    blowQuality(r),
@@ -142,7 +143,31 @@ func blowQuality(r combat.AttackResult) string {
 
 func emitAttack(source, target combatstream.Ref, roomId int, attacker *characters.Character, r combat.AttackResult) {
 	for _, e := range attackEvents(source, target, roomId, attacker, r) {
-		emitCombat(e)
+		if stamped, ok := emitCombat(e); ok {
+			recordRoll(stamped)
+		}
+	}
+}
+
+// recordRoll keeps an attack round's strikes in its fight leader's roll
+// log (Phase 62), for `why` to explain.
+func recordRoll(e combatstream.Event) {
+	if e.Kind != combatstream.Attack || e.FightID == 0 {
+		return
+	}
+	fi, ok := combatstream.Default().Fight(e.FightID)
+	if !ok || fi.LeaderUserId <= 0 {
+		return
+	}
+	ours := false
+	for _, r := range fi.Company {
+		if r.Key() == e.Source.Key() {
+			ours = true
+			break
+		}
+	}
+	if roll, ok := combatstream.RollFor(e, ours); ok {
+		combatstream.DefaultRollLog().Add(fi.LeaderUserId, roll)
 	}
 }
 
@@ -362,6 +387,7 @@ func (fs fightSides) end(outcome string) {
 		return
 	}
 	sum.Spoils = loot.TakeSpoils(fs.leader.UserId) // Phase 37: read once, shown or not
+	sum.Sigil = sigilNote(fs.info.LeaderUserId)
 	if on := fs.leader.GetConfigOption(BattleSummarySetting); on != nil {
 		if enabled, isBool := on.(bool); isBool && !enabled {
 			return
@@ -370,4 +396,15 @@ func (fs fightSides) end(outcome string) {
 	for _, line := range combatstream.Render(*sum, fs.leader.UserId) {
 		fs.leader.SendText(line)
 	}
+}
+
+// sigilNote names the sigil the leader's battle began under, for the
+// summary (Phase 62): "fire sigil: fire spells 25% stronger ...". Empty when
+// the battle had none.
+func sigilNote(leaderUserId int) string {
+	kind := battle.SigilOf(leaderUserId)
+	if kind.Name() == "" {
+		return ""
+	}
+	return kind.Name() + " held: " + kind.Effect()
 }

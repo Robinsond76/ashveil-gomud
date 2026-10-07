@@ -23,7 +23,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace", "battlescreen"} {
+	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "battlelog", "resurrect", "narration", "combatpace", "battlescreen"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -36,7 +36,7 @@ func TestCombatHelpTopics(t *testing.T) {
 		"battle": "combat", "fighting": "combat",
 		"reach": "formation", "interception": "formation",
 		"target": "targeting", "whetstone": "sharpen", "darkness": "light",
-		"battlesummary": "battle-summary", "resurrection": "resurrect",
+		"battlesummary": "battle-summary", "why": "battlelog", "battle-log": "battlelog", "explain": "battlelog", "rolls": "battlelog", "resurrection": "resurrect",
 		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
 		"battle-screen": "battlescreen", "battle-map": "battlescreen",
 		"pace": "combatpace", "pacing": "combatpace", "combat-pace": "combatpace",

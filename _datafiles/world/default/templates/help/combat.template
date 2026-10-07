@@ -141,12 +141,15 @@ back (<ansi fg="command">help mana</ansi>, <ansi fg="command">help draughts</ans
 When your company's fight ends, you see a summary. It shows the damage each
 side did, who did the most, the highest hit, each side's blocks, parries,
 and dodges, kills, how each enemy ended,
-and your company's health.
+and your company's health, and why it went as it did: who took the most
+damage and who never landed a blow. <ansi fg="command">why</ansi> explains any single blow
+(<ansi fg="command">help battlelog</ansi>).
 
 <ansi fg="yellow-bold">Commands</ansi>
 
   <ansi fg="command">attack [group]</ansi>    start a fight with a group
   <ansi fg="command">scout [group]</ansi>     see how a group stands, and your chances
+  <ansi fg="command">why</ansi>               explain how the latest blows landed or missed
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots

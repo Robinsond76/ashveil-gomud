@@ -89,3 +89,5 @@
 - Phase 57: `Char.Skills` entries also carry `title` (the skill's display name) and
   `description` (what it does), additive. The web client's Character > Skills renders
   both; it no longer renders `Char.Jobs`, which stays for other clients.
+
+- Phase 62: `Company.Battle.Event` attacks carry `explain` (plain lines from `combatstream.Breakdown`: what the hit rolled against, the defence met, armor, named modifiers) for the leader's own company's rounds, in either direction, against a foe they can make out; never for an allied watcher's view (`scrubAlly` drops it) or a masked ("?") foe. Enemy health stays out; enemy armor and the chances in the player's own rolls are shown.

@@ -853,10 +853,34 @@ await page.setViewportSize({ width: 1280, height: 900 });
 await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
 if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle.png') }); }
 
+// Phase 62: the company's explained rounds, under the battle, kept after it.
+await page.evaluate(() => Client.dispatchBattleEvents({ fight: 7, round: 40, fight_round: 3, events: [
+  { seq: 1, kind: 'attack', src: 'leader', tgt: 'm:412', outcome: 'hit', damage: 5, explain: ['To hit: 60 in 100, rolled 12 (it landed).', 'Damage: 6 before armor, armor 2 took 1, 5 got through.'] },
+  { seq: 2, kind: 'attack', src: 'm:412', tgt: 'leader', outcome: 'miss', explain: ['To hit: 38 in 100, rolled 80 (it missed).'] },
+  { seq: 3, kind: 'attack', src: 'leader', tgt: 'm:412', outcome: 'hit', damage: 4 },
+] }));
+check(await page.locator('#combat-window .cbt-rounds').count() === 1, 'Combat: a Last rounds list appears under the battle');
+check(await page.locator('#combat-window .cbt-rounds li').count() === 2, 'Combat: only the explained rounds are listed (the unexplained one is not)');
+check((await page.locator('#combat-window .cbt-rounds li').first().textContent()).includes('missed'), 'Combat: newest first');
+await page.locator('#combat-window .cbt-rounds > summary').click();
+await page.locator('#combat-window .cbt-rounds li summary').nth(1).click();
+check((await cbt()).includes('Damage: 6 before armor, armor 2 took 1, 5 got through.'), 'Combat: a round opens into the engine\'s breakdown');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+check(await page.locator('#combat-window .cbt-rounds[open]').count() === 1 && await page.locator('#combat-window .cbt-rounds li details[open]').count() === 1, 'Combat: open rounds stay open across a rebuild');
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle-rounds.png') }); }
+await page.setViewportSize({ width: 360, height: 800 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = '280px'; });
+await page.waitForTimeout(50);
+check(await page.evaluate(() => { const p = document.getElementById('combat-window'); return p.scrollWidth - p.clientWidth <= 0; }), 'Combat: the explained rounds do not overflow at 280px');
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle-rounds-narrow.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
+
 // The end: back to Setup.
 await page.evaluate(() => window.gmcp('Company.Battle', {}));
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1 && await page.getByRole('heading', { name: /^Battle/ }).count() === 0, '{} returns to Setup');
 check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'The battle is over.', 'the live region: the battle is over');
+check(await page.locator('#combat-window .cbt-rounds li').count() === 2, 'Combat: the explained rounds stay in Setup after the battle');
 
 // Alone: the player is "You", with their lines.
 await page.evaluate(() => window.gmcp('Company', {}));

@@ -33,6 +33,15 @@
  *   - A company member's click opens Setup's menu. The Combat tab shows a
  *     marker while a battle runs and another tab is showing.
  *
+ * Phase 62, battle lines that explain themselves:
+ *
+ *   - Under either view, "Last rounds" lists the latest fight's weapon
+ *     rounds of the company's own (newest first, kept after the fight ends,
+ *     12 at most), each a one-line heading that opens into the engine's own
+ *     roll in plain lines (battle-rounds.js; Company.Battle.Event's
+ *     `explain`): what the hit needed and rolled, the defence it met, armor
+ *     and named modifiers. `why` says the same in the log.
+ *
  * Phase 30c, company tactics:
  *
  *   - The Battle view's focus buttons (none and the seven focus rules), the
@@ -224,6 +233,12 @@
         .cbt-focus .cbt-btn { padding: 2px 6px; }
         .cbt-focus .cbt-btn[aria-pressed="true"] { background: var(--t-accent-dim); color: var(--t-text-white); font-weight: bold; }
         .cbt-focus .cbt-btn:disabled { opacity: 0.55; cursor: default; }
+        .cbt-rounds { margin-top: 6px; }
+        .cbt-rounds > summary { cursor: pointer; color: var(--t-text-secondary); }
+        .cbt-rounds ul { list-style: none; margin: 4px 0 0; padding: 0; }
+        .cbt-rounds li { margin: 0 0 2px; overflow-wrap: anywhere; }
+        .cbt-rounds li summary { cursor: pointer; }
+        .cbt-rounds .cbt-why { margin: 2px 0 4px 1em; color: var(--t-text-secondary); font-size: 0.9em; }
         .cbt-setup > summary { cursor: pointer; color: var(--t-text-secondary); }
         .cbt-setup[open] > summary { margin-bottom: 4px; }
     `);
@@ -244,6 +259,41 @@
         root.appendChild(body);
         document.body.appendChild(root);
         return root;
+    }
+
+    // Phase 62: the explained rounds of the latest fight, kept after it ends.
+    const rounds = window.BattleRounds ? window.BattleRounds.create(12) : null;
+    let roundsOpen = false;
+    const roundsOpenIds = new Set();
+
+    // rememberRounds reads which rounds are open before a rebuild drops them.
+    function rememberRounds(root) {
+        const d = root.querySelector('details.cbt-rounds');
+        if (!d) { return; }
+        roundsOpen = d.open;
+        roundsOpenIds.clear();
+        d.querySelectorAll('li details[open]').forEach(n => roundsOpenIds.add(Number(n.getAttribute('data-round'))));
+    }
+
+    function renderRounds(root) {
+        const list = rounds ? rounds.list() : [];
+        if (!list.length) { return; }
+        const d = el('details', 'cbt-rounds');
+        d.open = roundsOpen;
+        d.appendChild(el('summary', null, 'Last rounds: why each blow went as it did (' + list.length + ')'));
+        const ul = el('ul');
+        list.forEach(r => {
+            const li = el('li');
+            const inner = el('details');
+            inner.open = roundsOpenIds.has(r.id);
+            inner.setAttribute('data-round', r.id);
+            inner.appendChild(el('summary', null, (r.round ? 'Round ' + r.round + ': ' : '') + r.head));
+            r.lines.forEach(line => inner.appendChild(el('div', 'cbt-why', line)));
+            li.appendChild(inner);
+            ul.appendChild(li);
+        });
+        d.appendChild(ul);
+        root.appendChild(d);
     }
 
     const win = new VirtualWindow('Combat', {
@@ -762,6 +812,7 @@
         if (!lines.length) { list.appendChild(el('li', null, 'No one is striking anyone this moment.')); }
         root.appendChild(list);
 
+        renderRounds(root);
         const setup = el('details', 'cbt-setup');
         setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
         renderSetup(setup, data, true);
@@ -883,6 +934,7 @@
         const setupOpen = !!root.querySelector('details.cbt-setup[open]');
 
         keepScroll(root);
+        rememberRounds(root);
 
         root.textContent = '';
         if (battle) {
@@ -893,6 +945,7 @@
             pinned = null;
             if (arenaObserver) { arenaObserver.disconnect(); arenaObserver = null; }
             renderSetup(root, data);
+            renderRounds(root);
         }
 
         const esc = v => (window.CSS && CSS.escape ? CSS.escape(v) : v);
@@ -902,6 +955,19 @@
     }
 
     window.addEventListener('resize', () => requestAnimationFrame(drawLines));
+
+    // Phase 62: names are read as each round arrives, while the battle that
+    // names them is still the current one.
+    Client.onBattleEvents(msg => {
+        if (!rounds) { return; }
+        const battle = currentBattle();
+        const data = CompanyData.read();
+        const name = id => {
+            if (id === 'me') { return 'you'; }
+            return battle ? nameOf(id, battle, data) : '';
+        };
+        if (rounds.add(msg, name)) { update(); }
+    });
 
     VirtualWindows.register({
         window:       win,
