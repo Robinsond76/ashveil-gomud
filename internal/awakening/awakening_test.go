@@ -48,7 +48,9 @@ func (fakeCompany) FormationFor(int) (company.Formation, bool) { return company.
 func (fakeCompany) InstanceFor(leader, id int) (int, bool) {
 	return instance, leader == leaderUID && id == companion
 }
-func (fakeCompany) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) { return 0, "", false }
+func (fakeCompany) LeaderAndKeyForInstance(id int) (int, company.MemberKey, bool) {
+	return leaderUID, company.CompanionMemberKey(companion), id == instance
+}
 func (fakeCompany) CompanyMembers(int) ([]company.MemberView, bool) {
 	return []company.MemberView{{ID: companion, Name: "Tobin"}}, true
 }
@@ -185,6 +187,40 @@ func TestReachingAZoneWakesAPlaceAwakening(t *testing.T) {
 	assert.True(t, blade.Awakened(2))
 	assert.Equal(t, 3, w.leader.Character.ClassEffects().Int(classes.Attack))
 	assert.Equal(t, 4, blade.AwakenedMask())
+}
+
+// A companion follows a moment after its leader, so it is credited by its
+// own arrival, while the leader is in the zone (review fix: the leader's step
+// never saw it, and its relic's place awakening could not wake).
+func TestACompanionIsCreditedByItsOwnZoneCrossing(t *testing.T) {
+	w := newWorld(t)
+	blade := wield(w.leader.Character, bladeID)
+	mates := wield(&w.mate.Character, bladeID)
+	zone := "Deep Keep"
+	prev := leaderZone
+	leaderZone = func(int) string { return zone }
+	t.Cleanup(func() { leaderZone = prev })
+
+	w.mate.Character.RoomId = 2 // still a step behind
+	Reached(leaderUID, "Deep Keep")
+	assert.True(t, blade.Awakened(2), "the leader is credited by their own step")
+	assert.Zero(t, mates.AwakeningProgress(2), "the companion has not arrived yet")
+
+	zone = "Elsewhere"
+	CompanionReached(instance, "Deep Keep")
+	assert.Zero(t, mates.AwakeningProgress(2), "a companion wandering in without its leader earns nothing")
+	zone = "Deep Keep"
+	w.mate.Character.Health = 0
+	CompanionReached(instance, "Deep Keep")
+	assert.Zero(t, mates.AwakeningProgress(2), "nor a fallen one")
+	w.mate.Character.Health = 10
+	CompanionReached(404, "Deep Keep")
+	assert.Zero(t, mates.AwakeningProgress(2), "nor a mob that is not the company's")
+
+	CompanionReached(instance, "Deep Keep")
+	assert.True(t, mates.Awakened(2), "it arrives with the leader in the zone")
+	assert.Contains(t, strings.Join(w.said, "\n"), "Tobin's Test Edge awakens: Deep Hold")
+	assert.Equal(t, 1, blade.AwakeningProgress(2), "the leader is not credited again")
 }
 
 func TestAnAwakeningNeedsALeaderInTheWorld(t *testing.T) {

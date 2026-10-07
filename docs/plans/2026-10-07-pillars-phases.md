@@ -305,6 +305,10 @@ line that needs one; `help backgrounds` lists what each background opens.
 
 ## 73 Faith creeds
 
+**Follow-up from 67.** Add the relic awakening kind "carried while devout"
+(left out of phase 67 because devotion needs creeds): one more
+`AwakeningSpec.Matches` case and a source that advances it.
+
 **Why.** Pillars' priests and paladins draw strength from acting by their
 creed.
 

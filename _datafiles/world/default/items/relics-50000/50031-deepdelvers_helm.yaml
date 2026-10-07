@@ -26,5 +26,5 @@ relic:
       kind: lair
       mob: 25
       target: "the abyssal creeper"
-      effects: {healthpct: 3}
+      effects: {healthpct: 2}
   lore: 'The ones who went into the Mirror Caves wore armor made to be argued with by the dark.'

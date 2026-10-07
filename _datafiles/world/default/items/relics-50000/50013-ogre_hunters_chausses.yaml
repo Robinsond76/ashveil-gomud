@@ -23,8 +23,8 @@ relic:
       effects: {evasion: 4}
     - name: "Hunter's Stance"
       kind: slay
-      races: ["ogre"]
+      races: ["ogre", "goblin"]
       count: 15
-      target: "ogres"
+      target: "ogres and goblins"
       effects: {block: 3}
   lore: 'Those who hunt the forest ogre learn to wear what it cannot easily crush.'

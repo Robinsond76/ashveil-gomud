@@ -19,9 +19,9 @@ relic:
   awakenings:
     - name: "Weaver's Bane"
       kind: slay
-      races: ["giant spider"]
+      races: ["giant spider", "insect"]
       count: 30
-      target: "giant spiders"
+      target: "spiders and other crawling things"
       effects: {spellpct: 5}
     - name: "Queen's End"
       kind: lair

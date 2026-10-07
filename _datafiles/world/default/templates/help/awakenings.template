@@ -7,12 +7,15 @@ give; a woken one shows what it gives.
 
 <ansi fg="yellow-bold">The three kinds of deed</ansi>
 
-  slay    slay a number of foes of a kind: ogres, undead, giant spiders. The
-          number is on the item, such as Ogrebane's Giant-Slayer: 15 ogres.
+  slay    slay a number of foes of a kind: ogres and goblins, undead,
+          spiders. The number is on the item, such as Ogrebane's
+          Giant-Slayer: 15 ogres and goblins.
   lair    defeat the master of a lair. It counts once, the same boss kill the
           <ansi fg="command">chronicle</ansi> writes down (<ansi fg="command">help chronicle</ansi>).
-  place   cross into a zone. It counts once, on the step that takes the
-          company in; walking out and back adds nothing.
+  place   cross into a zone. It counts once, on the step that takes each
+          wearer in (a companion's own step counts while you are in the
+          zone too); walking out and back adds nothing, and nor does
+          logging in there.
 
 <ansi fg="yellow-bold">What counts</ansi>
 
@@ -29,8 +32,9 @@ give; a woken one shows what it gives.
 A woken power is a small, ordinary gear effect (more Attack, a few points of
 armor, a bonus on every blow, and so on), the same kind a relic's signature
 is. Each one adds at most a third of what that effect may ever reach, and a
-relic's signature and awakenings together never pass the cap, so an awakened
-relic is a little stronger, never a runaway one. A one-shot signature, such as
+relic's signature and awakenings together (or a full set's bonuses and all
+its pieces' awakenings) never pass the cap, so an awakened relic is a little
+stronger, never a runaway one. A one-shot signature, such as
 a second chance, cannot be awakened.
 
 It works the moment it wakes, for whoever wears the relic, and goes when the

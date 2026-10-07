@@ -18,9 +18,9 @@ relic:
   awakenings:
     - name: "Hunter's Habit"
       kind: slay
-      races: ["ogre"]
+      races: ["ogre", "goblin"]
       count: 15
-      target: "ogres"
+      target: "ogres and goblins"
       effects: {armor: 2}
     - name: "Hunter's Pride"
       kind: lair

@@ -57,9 +57,9 @@ func TestAwakeningsHelp(t *testing.T) {
 	require.NotNil(t, ogrebane)
 	giant := ogrebane.Relic.Awakenings[0]
 	assert.Equal(t, "Giant-Slayer", giant.Name)
-	assert.Contains(t, flat, "Ogrebane's Giant-Slayer: 15 ogres")
+	assert.Contains(t, flat, "Ogrebane's Giant-Slayer: 15 ogres and goblins")
 	assert.Equal(t, 15, giant.Need())
-	assert.Equal(t, "ogres", giant.Target)
+	assert.Equal(t, "ogres and goblins", giant.Target)
 	assert.Contains(t, flat, "Ogrebane woke Giant-Slayer: +1 damage on every landed blow")
 	assert.Equal(t, map[string]int{"damage": 1}, giant.Effects)
 	assert.Contains(t, flat, "at most a third of what that effect may ever reach")

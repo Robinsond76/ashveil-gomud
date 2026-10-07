@@ -18,7 +18,10 @@ function check(ok, what) {
 }
 
 const reaper = { id: '!50001:a', name: 'Ashen Reaper', label: 'Ashen Reaper', rarity: 'legendary', type: 'weapon', subtype: 'slashing', details: [],
-  relic: ['Reaping (while worn): blows deal 20% more to a foe at or below half health; blows deal 20% more to undead and demons.'],
+  relic: ['Reaping (while worn): blows deal 20% more to a foe at or below half health; blows deal 20% more to undead and demons.',
+    // Phase 67: awakenings, one woken and one asleep.
+    'Awakened, Bone-Breaker: blows deal 5% more to a foe at or below half health.',
+    'Sleeping, Lich-Bane (0 of 1): defeat the lich while it is worn, and it wakes with +3 Attack.'],
   relic_lore: 'The lich carried it out of a dead kingdom. It is said to reap best what is already falling.' };
 const helm = { id: '!50011:b', name: "Ogre-hunter's Helm", label: "Ogre-hunter's Helm", rarity: 'set', type: 'head', subtype: 'wearable', details: [],
   relic: ["Piece of the Ogre-hunter's Kit set (3 pieces).", '  2 worn: +3% damage reduction on top of worn armor.', '  3 worn: +4 Attack; blows deal 15% more to a foe at or below half health.'],
@@ -51,7 +54,16 @@ for (const [size, viewport] of [['desk', { width: 1280, height: 900 }], ['phone'
     check(tt.shown && tt.text.includes(item.relic[0]) && tt.text.includes(item.relic_lore), size + ': ' + slot + ' tooltip shows the relic text and lore');
     check(tt.colour === (item.rarity === 'set' ? 'rgb(0, 175, 175)' : 'rgb(255, 135, 0)'), size + ': ' + slot + ' name in its rarity colour (' + tt.colour + ')');
     check(tt.left >= 0 && tt.right <= tt.vw, size + ': ' + slot + ' tooltip fits the screen (' + Math.round(tt.left) + '-' + Math.round(tt.right) + ' of ' + tt.vw + ')');
-    if (outdir) { await page.screenshot({ path: path.join(outdir, '36d-tooltip-' + slot + '-' + size + '.png') }); }
+    if (slot === 'weapon') {
+      const lines = await page.evaluate(() => {
+        const t = document.getElementById('gw-item-tooltip');
+        const awake = t.querySelector('.gw-tt-awake'), sleep = t.querySelector('.gw-tt-sleep');
+        return { awake: awake && getComputedStyle(awake).color, sleep: sleep && getComputedStyle(sleep).color, sig: getComputedStyle(t.querySelector('.gw-tt-relic div')).color };
+      });
+      check(lines.awake === 'rgb(255, 215, 95)', size + ': a woken awakening is gold (' + lines.awake + ')');
+      check(lines.sleep && lines.sleep !== lines.awake && lines.sleep !== lines.sig, size + ': a sleeping awakening is dim (' + lines.sleep + ')');
+    }
+    if (outdir) { await page.screenshot({ path: path.join(outdir, '67-tooltip-' + slot + '-' + size + '.png') }); }
   }
   // The Company window's gear row carries the relic words in its tooltip.
   await page.evaluate(([reaper]) => {

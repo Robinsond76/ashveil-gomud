@@ -265,3 +265,110 @@ func TestShippedRelicsAllCarryRealAwakenings(t *testing.T) {
 	}
 	assert.GreaterOrEqual(t, relics, 16)
 }
+
+// Review fix: a slay awakening asks for 15 to 30 kills, so each must name a
+// race that ordinary foes have, ones that spawn in the world, not only the
+// lair's master (the ogre and giant-spider races were bosses alone, which
+// asked for 15 to 30 boss kills).
+func TestShippedSlayAwakeningsNameFoesThatSpawn(t *testing.T) {
+	raceNames := map[int]string{}
+	raceFiles, err := filepath.Glob(filepath.Join(dataRoot(), "races", "*.yaml"))
+	require.NoError(t, err)
+	for _, f := range raceFiles {
+		data, err := os.ReadFile(f)
+		require.NoError(t, err)
+		var r struct {
+			ID   int    `yaml:"raceid"`
+			Name string `yaml:"name"`
+		}
+		require.NoError(t, yamlv2.Unmarshal(data, &r))
+		raceNames[r.ID] = strings.ToLower(r.Name)
+	}
+	mobRace := map[int]string{}
+	require.NoError(t, filepath.Walk(filepath.Join(dataRoot(), "mobs"), func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".yaml") {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		require.NoError(t, err)
+		var m struct {
+			MobId     int  `yaml:"mobid"`
+			Boss      bool `yaml:"boss"`
+			Character struct {
+				RaceId int `yaml:"raceid"`
+			} `yaml:"character"`
+		}
+		require.NoError(t, yamlv2.Unmarshal(data, &m))
+		if !m.Boss {
+			mobRace[m.MobId] = raceNames[m.Character.RaceId]
+		}
+		return nil
+	}))
+	spawning := map[string]int{} // race -> ordinary foes spawned in rooms
+	roomFiles, err := filepath.Glob(filepath.Join(dataRoot(), "rooms", "*", "*.yaml"))
+	require.NoError(t, err)
+	for _, f := range roomFiles {
+		data, err := os.ReadFile(f)
+		require.NoError(t, err)
+		var r struct {
+			Zone      string `yaml:"zone"`
+			SpawnInfo []struct {
+				MobId int `yaml:"mobid"`
+			} `yaml:"spawninfo"`
+		}
+		require.NoError(t, yamlv2.Unmarshal(data, &r))
+		if r.Zone == "Training" {
+			continue
+		}
+		for _, s := range r.SpawnInfo {
+			if race, ok := mobRace[s.MobId]; ok {
+				spawning[race]++
+			}
+		}
+	}
+	for _, spec := range shippedSpecs(t) {
+		if spec.Relic == nil {
+			continue
+		}
+		for _, a := range spec.Relic.Awakenings {
+			if a.Kind != AwakenSlay {
+				continue
+			}
+			found := 0
+			for _, race := range a.Races {
+				found += spawning[race]
+			}
+			assert.Positive(t, found, "%s: %s asks for %d %s, but no ordinary foe of %v spawns", spec.Name, a.Name, a.Need(), a.Target, a.Races)
+		}
+	}
+}
+
+// Review fix: a set piece has no signature, so its awakenings were held to
+// the cap on their own; worn as a full set, the set's bonuses and every
+// piece's awakenings together must stay within each effect's cap too.
+func TestAFullAwakenedSetStaysWithinTheCaps(t *testing.T) {
+	specs := shippedSpecs(t)
+	for id, set := range shippedSets(t) {
+		total := map[string]int{}
+		for _, bonus := range set.Bonuses {
+			for k, v := range bonus.Effects {
+				total[k] += v
+			}
+		}
+		for _, spec := range specs {
+			if spec.Relic == nil || spec.Relic.Set != id {
+				continue
+			}
+			for _, a := range spec.Relic.Awakenings {
+				for k, v := range a.Effects {
+					total[k] += v
+				}
+			}
+		}
+		for k, v := range total {
+			e, ok := classes.GearEffectFor(k)
+			require.True(t, ok, k)
+			assert.LessOrEqual(t, v, e.Max, "the %s set, fully worn and awakened, gives %s %d, over its cap of %d", set.Name, k, v, e.Max)
+		}
+	}
+}

@@ -6,8 +6,8 @@
 //   - lair: the chronicle's Boss deed, which this package watches through
 //     chronicle.OnRecord, so a lair master's fall counts once, from the record
 //     the chronicle keeps;
-//   - place: Reached, called by a room-change listener when the leader enters
-//     a zone.
+//   - place: Reached and CompanionReached, called by a room-change listener
+//     when the leader, or a companion with the leader, crosses into a zone.
 //
 // Progress counts only for relics worn by a living member of the leader's
 // company who stands in the leader's room, and it is saved on the item.
@@ -25,6 +25,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -87,10 +88,50 @@ func Slain(leaderUserID int, race string) {
 	advance(leaderUserID, items.AwakenSlay, race)
 }
 
-// Reached advances every worn relic's place awakenings that name the zone
-// the leader's company just entered.
+// Reached advances the place awakenings that name the zone the leader just
+// entered, on the relics the leader wears. Each member is credited by its own
+// crossing: companions follow a step behind, so theirs come through
+// CompanionReached when they arrive.
 func Reached(leaderUserID int, zone string) {
-	advance(leaderUserID, items.AwakenPlace, zone)
+	advanceFor(leaderUserID, items.AwakenPlace, zone, func(b Bearer) bool {
+		return b.Key == string(company.LeaderMemberKey)
+	})
+}
+
+// CompanionReached advances the place awakenings on the relics a companion
+// wears when it crosses into zone while its leader is in that zone too (a
+// companion that wanders off alone earns nothing). It is credited by its own
+// arrival, which comes a moment after the leader's.
+func CompanionReached(instanceID int, zone string) {
+	leader, b, ok := companionOf(instanceID)
+	if !ok || b.Char.Health < 1 || b.Char.CombatWithdrawn || leaderZone(leader) != zone {
+		return
+	}
+	advanceBearers(leader, items.AwakenPlace, zone, []Bearer{b})
+}
+
+// companionOf finds the leader of a live company mob and the mob as a
+// bearer.
+var companionOf = func(instanceID int) (int, Bearer, bool) {
+	m := mobs.GetInstance(instanceID)
+	if m == nil {
+		return 0, Bearer{}, false
+	}
+	leader, key, ok := company.LeaderAndKeyForInstance(instanceID)
+	if !ok || leader < 1 {
+		return 0, Bearer{}, false
+	}
+	return leader, Bearer{&m.Character, string(key)}, true
+}
+
+// leaderZone is the zone the leader stands in.
+var leaderZone = func(leaderUserID int) string {
+	if u := users.GetByUserId(leaderUserID); u != nil && u.Character != nil {
+		if r := rooms.LoadRoom(u.Character.RoomId); r != nil {
+			return r.Zone
+		}
+	}
+	return ""
 }
 
 // onDeed turns the chronicle's boss deeds into lair progress.
@@ -110,6 +151,23 @@ func onDeed(leaderUserID int, e chronicle.Entry) {
 
 // advance gives one step of a deed to every worn relic awakening it matches.
 func advance(leaderUserID int, kind, subject string) {
+	advanceFor(leaderUserID, kind, subject, nil)
+}
+
+// advanceFor is advance for the members who pass only (all when nil).
+func advanceFor(leaderUserID int, kind, subject string, only func(Bearer) bool) {
+	var bearers []Bearer
+	for _, b := range members(leaderUserID) {
+		if only == nil || only(b) {
+			bearers = append(bearers, b)
+		}
+	}
+	advanceBearers(leaderUserID, kind, subject, bearers)
+}
+
+// advanceBearers gives one step of a deed to each matching awakening on the
+// relics these bearers wear.
+func advanceBearers(leaderUserID int, kind, subject string, bearers []Bearer) {
 	changed := false
 	defer func() {
 		if changed {
@@ -117,7 +175,7 @@ func advance(leaderUserID int, kind, subject string) {
 			events.AddToQueue(events.CompanyAssetsChanged{UserId: leaderUserID})
 		}
 	}()
-	for _, b := range members(leaderUserID) {
+	for _, b := range bearers {
 		for _, slot := range characters.AllSlots() {
 			if slot == items.Pack {
 				continue
