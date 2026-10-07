@@ -148,20 +148,75 @@ resell for profit (looted rare goods may).
 
 ## Tasks
 
-- [ ] Music skill model: family, level, practice, persisted on players and
+- [x] Music skill model: family, level, practice, persisted on players and
       companions; teacher NPC and `learn` flow.
-- [ ] Instrument items for each family and tier; crude recipes in crafting,
+- [x] Instrument items for each family and tier; crude recipes in crafting,
       fine via recipe pages; masterworks in lair loot tables; no-profit
       resale for the first three tiers.
-- [ ] Camp song: `camp music`, strength, effects, ensemble upgrade, raid
+- [x] Camp song: `camp music`, strength, effects, ensemble upgrade, raid
       and weather costs, practice, room lines.
-- [ ] Inn gigs: notice board window, `inn gig`, pay, both limits.
-- [ ] Banter `onSong` hook and lines.
-- [ ] GMCP payloads and the Camp tab, Company panel and inn views.
-- [ ] Help and tutorial: the pages and hint above.
-- [ ] Tests: each family effect, ensemble threshold and tent non-stacking,
+- [x] Inn gigs: notice board window, `inn gig`, pay, both limits.
+- [x] Banter `onSong` hook and lines.
+- [x] GMCP payloads and the Camp tab, Company panel and inn views.
+- [x] Help and tutorial: the pages and hint above.
+- [x] Tests: each family effect, ensemble threshold and tent non-stacking,
       raid scaling in the single roll, spoiled rest, practice levels,
       persistence across restart, resale caps, gig window and limits,
       help renders, `TestTutorialHelpPointersExist`.
-- [ ] Short tuning run: full ensemble against the large tent; gig pay
+- [x] Short tuning run: full ensemble against the large tent; gig pay
       against an hour's hunting at two bands. Timeboxed.
+
+## Build decisions (2026-10-07, full autonomy)
+
+Each is the builder's call, with a one-line reason.
+
+- Skills live in the camping registry by leader and member key, not on
+  characters: companions are not characters between sessions, and it keeps
+  one persisted store (with purge and the test-area snapshot).
+- Instruments are company-wide: one carried instrument of a family serves,
+  the best tier is played. Reason: no per-member inventory bookkeeping.
+- Winds' Fatigue is added at recovery time, so a spoiled rest gets none.
+- Practice counts at the grant, once per rest (and once per paid gig), so a
+  spoiled rest is no practice and a restart cannot double-count.
+- Voice shortens each ailment's remaining battles by ceil(left x pct), at
+  least one, so small percentages still matter.
+- Drumbeat (buffs 9401-9405) ends with the first `BattleEnded` or expires
+  with the rest buff.
+- Masterworks are sold, never salvaged: instruments have no salvage line.
+- Gig pay = (zone band top + 2) x summed family strengths x 3 / 2 (review;
+  the build had / 2), x1.25 for an
+  ensemble, x1.5 for a full one; zones with no band pay as band 5 (Dunmar).
+- Crafting happens at the leader's camp, from packs and cargo.
+- A gig that never finishes spends neither the evening nor the cooldown; the
+  pay is credited once on the game loop and saved as settled first.
+- Teacher is the room tag `music-teacher` (Alderbrook green); the shop is
+  Dunmar's market, supply only. Fine recipe pages lie in three fen and down
+  rooms (the stock world is temporary).
+- Masterwork lairs: Wren's rainfiddle (boss 85), hollow king's horn (lich
+  14), ent-heart drum (ent 34), 25% each per company kill.
+
+## Tuning note
+
+Build (analytic, timeboxed): a full ensemble of fine instruments (strengths
+7, 7, 7, 5) at band 15 earned 331 gold a gig, about a third of an hour's
+hunting there.
+
+Review (2026-10-07, analytic, timeboxed; `TestGigPayTuning` pins it):
+
+- **Gig pay** raised x3 to meet the spec's "a top gig is worth about an
+  hour's hunting". Hunting income was taken as encounter caches
+  (`loot.CacheGold`, about 5 gold a level each) at roughly 15 fights an
+  hour. A top gig (masterworks at Music 4: 8, 8, 8, 5) now pays 456 at band
+  5, 1,108 at band 15 and 2,088 at band 30, 14 to 18 caches; fine
+  instruments at band 15 pay 994. A beginner pair at band 5 pays 42. At
+  most one gig per 3 real hours, so musicians add about a third to a
+  company's hourly coin at best: worth playing, not a farm.
+- **Buffs** kept. A full ensemble is a little better than the pavilion
+  (Well Rested, plus at most +50% rest length, +10 Fatigue, +5 speed for one
+  battle, ailments 50% shorter) and needs three or four trained members and
+  instruments; nothing in it changes how a higher zone's fights go beyond
+  one battle's speed.
+- **Raid chance** kept: +10% a family, +20% for drums, so +30% to +50% for
+  an ensemble (the build note's +70% was wrong: the cap is +50%), against
+  the pavilion's +50%. Old Kings Road's 15% raid chance becomes at most
+  22.5%.

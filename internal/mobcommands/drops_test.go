@@ -369,3 +369,34 @@ type scripted struct {
 }
 
 func (s *scripted) Intn(n int) int { v := s.vals[s.i%len(s.vals)]; s.i++; return v % n }
+
+// Camp music: a boss with a masterwork instrument drops it through the real
+// kill path; the same template as an ordinary foe does not.
+func TestBossKillDropsItsMasterworkInstrument(t *testing.T) {
+	const instrumentID = 990410
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: instrumentID, Name: "test rainfiddle", Type: items.Object, Instrument: "strings", InstrumentTier: 4, InstrumentMob: relicBossMob, InstrumentChance: 100})
+	t.Cleanup(func() { items.RemoveTestItemSpec(instrumentID) })
+	find := func(w *dropWorld) bool {
+		for _, c := range w.room.Corpses {
+			for _, it := range c.Items {
+				if it.ItemId == instrumentID {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	w := newDropWorld(t, 1, encounters.Band{Low: 5, High: 7})
+	boss := w.foe(relicBossMob, func(m *mobs.Mob) { m.Boss, m.EncounterBoss, m.Character.Level = true, true, 7 })
+	t.Cleanup(func() { mobs.RemoveTestInstance(boss.InstanceId) })
+	_, err := Suicide("", boss, w.room)
+	require.NoError(t, err)
+	assert.True(t, find(w), "the boss dropped its masterwork")
+
+	w2 := newDropWorld(t, 1, encounters.Band{Low: 5, High: 7})
+	foe := w2.foe(relicBossMob, nil)
+	t.Cleanup(func() { mobs.RemoveTestInstance(foe.InstanceId) })
+	_, err = Suicide("", foe, w2.room)
+	require.NoError(t, err)
+	assert.False(t, find(w2), "an ordinary foe drops none")
+}

@@ -1,0 +1,10 @@
+itemid: 3207
+name: 'frame drum'
+namesimple: 'frame drum'
+description: 'A wide frame drum with a calfskin head, beaten with a bone beater. Heavy to haul, but it keeps the beat. A company that carries one can play drums at camp (help instruments).'
+type: object
+subtype: mundane
+instrument: drums
+instrumenttier: 2
+value: 45
+weight: 3500

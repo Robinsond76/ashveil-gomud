@@ -1,6 +1,9 @@
 package camping
 
-import "github.com/GoMudEngine/GoMud/internal/userstate"
+import (
+	"github.com/GoMudEngine/GoMud/internal/modtimer"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
+)
 
 // stateContributor lets the admin test area snapshot a leader's camp, inn
 // stay, owed grants and poison plan. The test area refuses to start during
@@ -13,14 +16,16 @@ func (stateContributor) Name() string { return "camping" }
 func (c stateContributor) maps() userstate.Maps {
 	m := c.m
 	return userstate.Maps{m.camps, m.recoveryApplied, m.stays, m.innRecoveryApplied, m.wellRestedPending,
-		m.restedPending, m.owed, m.autoSharpen, m.poisonPlans, m.campRewards, m.lastRewards, m.restedDuties, m.restedTents, m.tentChoices}
+		m.restedPending, m.owed, m.autoSharpen, m.poisonPlans, m.campRewards, m.lastRewards, m.restedDuties, m.restedTents, m.tentChoices,
+		m.musicSkills, m.musicOff, m.restedSongs, m.gigLogs}
 }
 
 func (c stateContributor) ready() bool {
 	m := c.m
 	return m.camps != nil && m.recoveryApplied != nil && m.stays != nil && m.innRecoveryApplied != nil &&
 		m.wellRestedPending != nil && m.restedPending != nil && m.owed != nil && m.autoSharpen != nil &&
-		m.poisonPlans != nil && m.campRewards != nil && m.lastRewards != nil && m.restedDuties != nil && m.restedTents != nil && m.tentChoices != nil
+		m.poisonPlans != nil && m.campRewards != nil && m.lastRewards != nil && m.restedDuties != nil && m.restedTents != nil && m.tentChoices != nil &&
+		m.musicSkills != nil && m.musicOff != nil && m.restedSongs != nil && m.gigLogs != nil
 }
 
 func (c stateContributor) Capture(userID int) ([]byte, error) {
@@ -42,8 +47,10 @@ func (c stateContributor) Restore(userID, _ int, data []byte) error {
 	defer m.refreshLitRoomsLocked()
 	m.stopTimerLocked(userID)
 	m.stopInnTimerLocked(userID)
+	modtimer.Stop(m.gigTimers, userID)
 	delete(m.timerGeneration, userID)
 	delete(m.innTimerGeneration, userID)
+	delete(m.gigGeneration, userID)
 	delete(m.raiders, userID)
 	if err := c.maps().Apply(userID, data); err != nil {
 		return err

@@ -47,7 +47,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook [ingredient]... | cook [ingredient]... | recipes | camp duties [member] [duty] | camp tent [kind] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply|remedy] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook [ingredient]... | cook [ingredient]... | recipes | camp duties [member] [duty] | camp tent [kind] | camp music [on|off] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply|remedy] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -89,6 +89,13 @@ type Registry struct {
 	// tent`. Like AutoSharpen it outlives the camp, so a company carrying
 	// two tents need not choose again at every camp.
 	TentChoices map[int]camping.TentKind `yaml:"tent_choices,omitempty"`
+	// Camp music: each member's Music skill by leader, then member key; the
+	// leaders who silenced their camp song; the song a pending Rested grant
+	// is for (saved with it, like RestedTents); and each leader's gig log.
+	MusicSkills map[int]map[string]camping.MusicSkill `yaml:"music_skills,omitempty"`
+	MusicOff    map[int]bool                          `yaml:"music_off,omitempty"`
+	RestedSongs map[int]camping.Song                  `yaml:"rested_songs,omitempty"`
+	Gigs        map[int]camping.GigLog                `yaml:"gigs,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -108,6 +115,10 @@ func NewRegistry() *Registry {
 		RestedDuties:       map[int]map[string]string{},
 		RestedTents:        map[int]camping.TentKind{},
 		TentChoices:        map[int]camping.TentKind{},
+		MusicSkills:        map[int]map[string]camping.MusicSkill{},
+		MusicOff:           map[int]bool{},
+		RestedSongs:        map[int]camping.Song{},
+		Gigs:               map[int]camping.GigLog{},
 	}
 }
 
@@ -148,6 +159,23 @@ func (r Registry) Clone() Registry {
 		RestedDuties:       make(map[int]map[string]string, len(r.RestedDuties)),
 		RestedTents:        make(map[int]camping.TentKind, len(r.RestedTents)),
 		TentChoices:        make(map[int]camping.TentKind, len(r.TentChoices)),
+		MusicSkills:        make(map[int]map[string]camping.MusicSkill, len(r.MusicSkills)),
+		MusicOff:           cloneBools(r.MusicOff),
+		RestedSongs:        make(map[int]camping.Song, len(r.RestedSongs)),
+		Gigs:               make(map[int]camping.GigLog, len(r.Gigs)),
+	}
+	for leaderUserID, skills := range r.MusicSkills {
+		inner := make(map[string]camping.MusicSkill, len(skills))
+		for key, skill := range skills {
+			inner[key] = skill
+		}
+		out.MusicSkills[leaderUserID] = inner
+	}
+	for leaderUserID, song := range r.RestedSongs {
+		out.RestedSongs[leaderUserID] = song // replaced whole, never edited
+	}
+	for leaderUserID, log := range r.Gigs {
+		out.Gigs[leaderUserID] = log // replaced whole, never edited
 	}
 	for leaderUserID, kind := range r.TentChoices {
 		out.TentChoices[leaderUserID] = kind
@@ -258,6 +286,35 @@ func decodeRegistry(data []byte, registry *Registry) error {
 		if _, known := camping.ParseTent(string(kind)); leaderUserID > 0 && known {
 			loaded.TentChoices[leaderUserID] = kind
 		}
+	}
+	for leaderUserID, skills := range wire.MusicSkills {
+		for key, skill := range skills {
+			if leaderUserID > 0 && key != "" && skill.Valid() {
+				if loaded.MusicSkills[leaderUserID] == nil {
+					loaded.MusicSkills[leaderUserID] = map[string]camping.MusicSkill{}
+				}
+				loaded.MusicSkills[leaderUserID][key] = skill
+			}
+		}
+	}
+	for leaderUserID, off := range wire.MusicOff {
+		if leaderUserID > 0 && off {
+			loaded.MusicOff[leaderUserID] = true
+		}
+	}
+	for leaderUserID, song := range wire.RestedSongs {
+		if leaderUserID > 0 && !song.Empty() {
+			loaded.RestedSongs[leaderUserID] = song
+		}
+	}
+	for leaderUserID, log := range wire.Gigs {
+		if leaderUserID <= 0 {
+			continue
+		}
+		if log.Current != nil && !log.Current.Valid() {
+			log.Current = nil
+		}
+		loaded.Gigs[leaderUserID] = log
 	}
 	for leaderUserID, kind := range wire.RestedTents {
 		if leaderUserID > 0 && kind != "" {
@@ -426,6 +483,23 @@ type CampingModule struct {
 	// tentChoices (52 review) is each leader's chosen tent
 	// (Registry.TentChoices).
 	tentChoices map[int]camping.TentKind
+	// Camp music (Registry.MusicSkills and the rest): the members' skills,
+	// the silenced camps, the song a pending Rested grant is for, the gig
+	// logs, and the gig timers.
+	musicSkills   map[int]map[string]camping.MusicSkill
+	musicOff      map[int]bool
+	restedSongs   map[int]camping.Song
+	gigLogs       map[int]camping.GigLog
+	gigTimers     map[int]Timer
+	gigGeneration map[int]uint64
+	// worldClock is the world's hour (0-23) and day number; nil reads the
+	// game clock. It only reads: nothing here advances world time.
+	worldClock func() (hour int, day uint64)
+	// zoneBand is a zone's level band high; 0 when it has none.
+	zoneBand func(zone string) int
+	// onSong is the camp-fire banter hook for a song (beside onDuties): a
+	// rest began with a song played. Nil uses the company's banter.
+	onSong      func(leaderUserID int, song camping.Song)
 	lastRewards map[int]time.Time
 	// raiders, and the seams that find, check, and send off raid groups.
 	raiders       map[int]raiders
@@ -499,7 +573,9 @@ func init() {
 	m.plug.AddUserCommand("recipes", m.recipesCommand, false, false) // Phase 56
 	m.plug.AddUserCommand("sharpen", m.sharpenCommand, false, false)
 	m.plug.AddUserCommand("coat", m.coatCommand, false, false)
+	m.plug.AddUserCommand("music", m.musicCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
+	events.RegisterListener(events.BattleEnded{}, m.onBattleEndedMusic)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	userstate.Register(stateContributor{m})
@@ -513,6 +589,7 @@ func init() {
 	// the camping data never loads; load files the configured ones.
 	d := defaultInnSettings()
 	companyview.RegisterBuffGroup(companyview.GroupRest, d.RestedBuffId, d.WellRestedBuffId)
+	companyview.RegisterBuffGroup(companyview.GroupRest, camping.DrumBuffIDs...)
 	camping.SetViewProvider(m)
 	camping.SetMovementProvider(m)
 	camping.SetAbandonProvider(m)
@@ -616,6 +693,10 @@ func (m *CampingModule) saveLocked() error {
 		RestedDuties:       m.restedDuties,
 		RestedTents:        m.restedTents,
 		TentChoices:        m.tentChoices,
+		MusicSkills:        m.musicSkills,
+		MusicOff:           m.musicOff,
+		RestedSongs:        m.restedSongs,
+		Gigs:               m.gigLogs,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -683,6 +764,18 @@ func (m *CampingModule) load() {
 	if loaded.RestedDuties != nil {
 		m.restedDuties = loaded.RestedDuties
 	}
+	if loaded.MusicSkills != nil {
+		m.musicSkills = loaded.MusicSkills
+	}
+	if loaded.MusicOff != nil {
+		m.musicOff = loaded.MusicOff
+	}
+	if loaded.RestedSongs != nil {
+		m.restedSongs = loaded.RestedSongs
+	}
+	if loaded.Gigs != nil {
+		m.gigLogs = loaded.Gigs
+	}
 	if m.plug != nil {
 		m.campCfg = parseCampSettings(m.plug.Config.Get)
 		m.campCfgLoaded = true
@@ -693,6 +786,7 @@ func (m *CampingModule) load() {
 	m.loadErr = nil
 	m.recoverLocked()
 	m.recoverStaysLocked()
+	m.recoverGigsLocked()
 }
 
 // roomTag returns the configured eligibility tag, defaulting when unset or
@@ -925,6 +1019,9 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	// Phase 43a: so are the queued broth and incense.
 	funded := m.fundPrepared(user, room)
 	funded.present = m.presentKeys(user)
+	// Camp music: the company's song is planned from its skills and packs
+	// before m.mu, and locked on the rest.
+	funded.song = m.planSong(user, room, gear.Tent)
 	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId), funded)
 	if started && gear.Bells {
 		spend := m.spendItem
@@ -936,6 +1033,9 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	if started {
 		m.settlePrepared(user.UserId, funded)
 		m.announceDuties(user.UserId)
+		if song := m.startSongText(user, room, funded.song); song != "" {
+			text += "\n" + song
+		}
 		// Phase 49: the company talks as it settles in.
 		if said := company.CampBanter(user.UserId, banter.CtxCamp); len(said) > 0 {
 			text += "\n\n" + banter.Format(said)
@@ -957,6 +1057,9 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	}
 	if stay, ok := m.stays[user.UserId]; ok && stay.Resting() {
 		return "You are already resting at the inn.", false
+	}
+	if blocked, why := m.gigBlockLocked(user.UserId); blocked {
+		return why, false
 	}
 	// A finished rest's recovery must be in before another rest begins.
 	if camp.Rest != nil && camp.Rest.State == camping.Completed && !m.recoveryApplied[user.UserId] {
@@ -1002,6 +1105,14 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	raidPct, thiefPct := 100, 100
 	if gear.Tent {
 		raidPct, thiefPct = tentSpec.RaidPct, tentSpec.ThiefPct
+	}
+	// Camp music: a song carries, scaled in the same roll (the song is
+	// locked on the rest, so a restart never re-rolls it).
+	if !funded.song.Empty() {
+		song := funded.song
+		rest.Song = &song
+		raidPct = raidPct * song.RaidPct() / 100
+		thiefPct = thiefPct * song.RaidPct() / 100
 	}
 	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC, raidPct)
 	// Phase 40a4: so is whether thieves come; bells and trip lines never
@@ -1113,7 +1224,9 @@ func (m *CampingModule) abandon(leaderUserID int, inn bool) error {
 	_, hasCamp := m.camps[leaderUserID]
 	_, hasStay := m.stays[leaderUserID]
 	hasStay = hasStay && inn
-	if !hasCamp && !hasStay {
+	gigLog, hadGigLog := m.gigLogs[leaderUserID]
+	hasGig := inn && hadGigLog && gigLog.Current != nil && !gigLog.Current.Settled
+	if !hasCamp && !hasStay && !hasGig {
 		return nil
 	}
 	if hasCamp {
@@ -1137,7 +1250,15 @@ func (m *CampingModule) abandon(leaderUserID int, inn bool) error {
 		delete(m.stays, leaderUserID)
 		delete(m.innRecoveryApplied, leaderUserID)
 	}
+	if hasGig { // camp music: a gig the leader died in pays nothing
+		unplayed := gigLog
+		unplayed.Current = nil
+		m.gigLogs[leaderUserID] = unplayed
+	}
 	if err := m.saveLocked(); err != nil {
+		if hasGig {
+			m.gigLogs[leaderUserID] = gigLog
+		}
 		if hasCamp {
 			m.camps[leaderUserID] = camp
 		}
@@ -1155,6 +1276,7 @@ func (m *CampingModule) abandon(leaderUserID int, inn bool) error {
 	m.stopTimerLocked(leaderUserID)
 	if inn {
 		m.stopInnTimerLocked(leaderUserID)
+		modtimer.Stop(m.gigTimers, leaderUserID)
 	}
 	return nil
 }
@@ -1220,6 +1342,9 @@ func (m *CampingModule) MovementBlocked(leaderUserID int) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
+	if blocked, why := m.gigBlockLocked(leaderUserID); blocked {
+		return true, why
+	}
 	if stay, ok := m.stays[leaderUserID]; ok && stay.Resting() {
 		return true, fmt.Sprintf("You are resting at the inn (%s remaining). Wait for your company to recover.", stay.RemainingAt(m.clock().UTC()).Round(time.Second))
 	}
@@ -1280,13 +1405,19 @@ func (m *CampingModule) syncLocked(leaderUserID int) error {
 func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.Camp, announce bool) error {
 	operationID := restOperationID(camp)
 	var err error
+	// Camp music: the winds restore more Fatigue, but a raid that spoiled
+	// the rest took the song's gifts with it.
+	amount := camp.Rest.RecoveryAmount()
+	if camp.Rest.Song != nil && !camp.Rest.Broken {
+		amount += camp.Rest.Song.FatigueBonus()
+	}
 	if capped, ok := m.survival.(cappedSurvival); ok && len(fatigueCeilings(camp.Rest.Duties)) > 0 {
 		// Phase 51: a watcher stayed up, so ends no better than Ready.
-		_, err = capped.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, camp.Rest.RecoveryAmount(), bedrollBonuses(camp.Rest), fatigueCeilings(camp.Rest.Duties))
+		_, err = capped.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, amount, bedrollBonuses(camp.Rest), fatigueCeilings(camp.Rest.Duties))
 	} else if bonus, ok := m.survival.(bonusSurvival); ok && len(camp.Rest.Bedrolls) > 0 {
-		_, err = bonus.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, camp.Rest.RecoveryAmount(), bedrollBonuses(camp.Rest))
+		_, err = bonus.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, amount, bedrollBonuses(camp.Rest))
 	} else {
-		_, err = m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camp.Rest.RecoveryAmount())
+		_, err = m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, amount)
 	}
 	if err != nil {
 		return err
@@ -1312,6 +1443,13 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 		m.restedTents[leaderUserID] = camp.Rest.Tent
 	} else {
 		delete(m.restedTents, leaderUserID)
+	}
+	// Camp music: and the song it played, which sets the buff's length and
+	// the drums and voice effects.
+	if camp.Rest.Song != nil && !camp.Rest.Song.Empty() {
+		m.restedSongs[leaderUserID] = *camp.Rest.Song
+	} else {
+		delete(m.restedSongs, leaderUserID)
 	}
 	// 51 review: the rest's duties go with the pending grant.
 	if len(camp.Rest.Duties) > 0 {
@@ -1530,6 +1668,8 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.cook(user, room, args[1:])) // Phase 33f3; 56: with ingredients, a new combination
 	case "tent":
 		user.SendText(m.tentCommand(user, room, args[1:])) // Phase 52
+	case "music", "song":
+		user.SendText(m.musicArgs(user, room, args[1:])) // camp music
 	case "duties", "duty":
 		user.SendText(m.dutiesCommand(user, room, args[1:])) // Phase 51
 	case "supplies":
@@ -1680,6 +1820,21 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		if user := m.userByID(leaderUserID); user != nil && user.Character != nil && user.Character.RoomId == camp.RoomID {
 			s.Duties = m.dutyRows(user, camp)
 			s.DutiesLocked = camp.Rest != nil && camp.Rest.State == camping.Resting
+		}
+	}
+	// Camp music: the Music block at the camp, a teacher or an inn, and the
+	// inn's gig board.
+	if room := rooms.LoadRoom(roomID); room != nil {
+		atCamp := s.HasCamp && s.Here
+		isInn := has(m.innSettings().RoomTag)
+		if atCamp || isInn || room.HasTag(musicTeacherTag) {
+			s.Music = m.musicState(leaderUserID, room)
+		}
+		if isInn {
+			if user := m.userByID(leaderUserID); user != nil && user.Character != nil {
+				notice, _ := m.gigNotice(user, room)
+				s.Gig = &notice
+			}
 		}
 	}
 	// 40a4 review: the Camp tab warns when thieves work the camp's road

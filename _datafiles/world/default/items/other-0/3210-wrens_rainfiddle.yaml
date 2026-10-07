@@ -1,0 +1,12 @@
+itemid: 3210
+name: "Wren's rainfiddle"
+namesimple: 'rainfiddle'
+description: "A fiddle with strings of waxed silk and a varnish no damp can lift. Rain and snow never dull its voice. It was Wren's, and Wren is long gone. A masterwork: it can be sold (help instruments)."
+type: object
+subtype: mundane
+instrument: strings
+instrumenttier: 4
+value: 600
+weight: 1800
+instrumentmob: 85
+instrumentchance: 25

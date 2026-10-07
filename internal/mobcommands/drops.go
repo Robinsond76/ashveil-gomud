@@ -69,7 +69,8 @@ func lastOfGroup(mob *mobs.Mob, room *rooms.Room) bool {
 func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]personalDrop {
 	profile, ok := dropProfile(room)
 	relics := mob.Boss && len(loot.RelicsOf(int(mob.MobId))) > 0
-	if (!ok && !relics) || len(contributors) == 0 {
+	masterworks := mob.Boss && len(loot.InstrumentDropsOf(int(mob.MobId))) > 0 // camp music
+	if (!ok && !relics && !masterworks) || len(contributors) == 0 {
 		return nil
 	}
 	kind := loot.Ordinary
@@ -93,6 +94,9 @@ func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]pers
 		}
 		if relics {
 			add(relicDrop(mob, uid, label, src))
+		}
+		if masterworks {
+			add(loot.InstrumentRoll(int(mob.MobId), src), nil)
 		}
 		if !ok {
 			// A boss outside any drop profile drops only its relic.

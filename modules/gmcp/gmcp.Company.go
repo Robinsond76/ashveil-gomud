@@ -116,6 +116,9 @@ type companyMember struct {
 	// for the leader, and Skills when it has none.
 	Skills         map[string]int `json:"skills,omitempty"`
 	TrainingPoints *int           `json:"training_points,omitempty"`
+	// Music is its camp-music skill in words ("Strings 2 (3 songs to level
+	// 3)"), omitted with none.
+	Music string `json:"music,omitempty"`
 }
 
 type companyLoad struct {
@@ -263,6 +266,7 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 			out.Skills = m.Skills
 		}
 	}
+	out.Music = camping.MusicLabelOf(leaderUserID, string(m.Key))
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).
 	if m.Status != company.MemberDead {

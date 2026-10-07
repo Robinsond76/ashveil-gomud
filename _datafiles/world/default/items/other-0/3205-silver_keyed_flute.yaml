@@ -1,0 +1,10 @@
+itemid: 3205
+name: 'silver-keyed flute'
+namesimple: 'silver flute'
+description: "A slim wooden flute with keys of silver. It speaks clean and high. A fine instrument for a company's winds at camp (help instruments)."
+type: object
+subtype: mundane
+instrument: winds
+instrumenttier: 3
+value: 140
+weight: 500

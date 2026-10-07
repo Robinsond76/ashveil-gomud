@@ -165,6 +165,9 @@ help:
       - campsupplies
       - campduties
       - banter
+      - music
+      - instruments
+      - gigs
     communication:
       - emote
       - say
@@ -503,6 +506,9 @@ help-aliases:
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
   banter:           [camp-talk, chatter, companion-talk, comrades]
+  music:            [song, songs, bard, bards, musician, musicians, camp song, camp-song, camp music, camp-music, ensemble, drumbeat, strings, winds, drums, voice, music learn, music craft]
+  instruments:      [instrument, lute, lyre, fiddle, flute, pipes, horn, kettle drum, hide drum, masterwork, masterworks]
+  gigs:             [gig, busk, busking, inn gig, inn-gig, tips, performance]
   tempo:            [actions, turns]
   stat-edge:        [stat-edges, hit-chance, to-hit, crit-chance, critical-chance]
   burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]

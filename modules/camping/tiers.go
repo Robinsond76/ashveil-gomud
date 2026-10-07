@@ -145,6 +145,7 @@ func (m *CampingModule) onNewRound(e events.Event) events.ListenerReturn {
 	m.clearRaiders()     // Phase 33f3
 	m.grantCampRewards() // Phase 33f3
 	m.resolveCampTheft() // Phase 40a4
+	m.settleGigs()       // camp music: inn gigs
 	return events.Continue
 }
 
@@ -183,17 +184,17 @@ func (m *CampingModule) grantPendingTiers() {
 		// tent's is Well Rested, a camouflaged tent's is shorter. Only the
 		// buff changes; wounds, vitals and the rest's other rewards follow
 		// the camp rest (tier).
-		buffTier, duration := tier, settings.tierDuration(tier)
-		if tier == camping.TierRested {
-			if tent, ok := m.pendingTent(leaderUserID); ok {
-				if tent.WellRested {
-					buffTier = camping.TierWellRested
-					duration = settings.tierDuration(buffTier)
-				} else {
-					duration = duration * time.Duration(max(tent.RestedPct, 1)) / 100
-				}
-			}
+		// Camp music: the song's ensemble upgrades the sleepers' buff as the
+		// large tent does (not stacking), and its strings stretch it.
+		var tentPtr *camping.Tent
+		if tent, ok := m.pendingTent(leaderUserID); ok && tier == camping.TierRested {
+			tentPtr = &tent
 		}
+		var songPtr *camping.Song
+		if song, ok := m.pendingSong(leaderUserID); ok && tier == camping.TierRested {
+			songPtr = &song
+		}
+		buffTier, duration := restBuffFor(settings, tier, tentPtr, songPtr)
 		rounds := camping.RoundsFor(duration, m.roundLength())
 		// Phase 51: a camp rest's Rested buff skips the members on a duty.
 		var onDuty map[string]bool
@@ -229,8 +230,16 @@ func (m *CampingModule) grantPendingTiers() {
 		if !saved {
 			continue
 		}
-		// Phase 55: a company that slept in the cold wakes with a chill.
 		if campRest {
+			// Camp music: the drums, the voice, and practice. Review: before
+			// the chill below, so the voice fades the ailments carried into
+			// the rest and never cures the chill caught by sleeping cold.
+			if songPtr != nil {
+				for _, line := range m.onSongGranted(user, live, *songPtr, rounds) {
+					user.SendText(line)
+				}
+			}
+			// Phase 55: a company that slept in the cold wakes with a chill.
 			for _, c := range survival.CatchChillIfFrozen(leaderUserID) {
 				user.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
 			}
@@ -467,9 +476,11 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 	delete(m.restedPending, leaderUserID)
 	duties, hadDuties := m.restedDuties[leaderUserID]
 	tentKind, hadTent := m.restedTents[leaderUserID]
+	song, hadSong := m.restedSongs[leaderUserID]
 	if restedPending {
 		delete(m.restedDuties, leaderUserID)
 		delete(m.restedTents, leaderUserID)
+		delete(m.restedSongs, leaderUserID)
 	}
 	if wellPending && hadStay && !stay.Resting() {
 		delete(m.stays, leaderUserID)
@@ -498,6 +509,9 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		}
 		if hadTent {
 			m.restedTents[leaderUserID] = tentKind
+		}
+		if hadSong {
+			m.restedSongs[leaderUserID] = song
 		}
 		if hadStay {
 			m.stays[leaderUserID] = stay

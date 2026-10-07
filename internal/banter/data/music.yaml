@@ -1,0 +1,32 @@
+# Camp music: lines said as the company plays by the fire (context song).
+# Some companions ask for a tune, some grumble at the noise.
+
+# --- stoic ---
+- {text: "The music is fine. Keep it low.", ctx: [song], pers: [stoic]}
+- {text: "I can sleep through a drum. I cannot sleep through a bad fiddle.", ctx: [song], pers: [stoic]}
+- {text: "Play on. I am listening.", ctx: [song], pers: [stoic]}
+
+# --- cheerful ---
+- {text: "Oh, play the one about the miller's daughter!", ctx: [song], pers: [cheerful]}
+- {text: "A tune by the fire. That is what the road is for.", ctx: [song], pers: [cheerful]}
+- {text: "I will sing the chorus. Somebody give me the words.", ctx: [song], pers: [cheerful]}
+
+# --- grim ---
+- {text: "Must you? The whole forest can hear that.", ctx: [song], pers: [grim]}
+- {text: "Every note is an invitation to whatever is out there.", ctx: [song], pers: [grim]}
+- {text: "Fine. But if we are robbed, I will say I told you.", ctx: [song], pers: [grim]}
+
+# --- boastful ---
+- {text: "You should have heard me play in Dunmar. They wept. Real tears.", ctx: [song], pers: [boastful]}
+- {text: "Pass me that. I will show you how it is done.", ctx: [song], pers: [boastful]}
+- {text: "Good. Not as good as me, but good.", ctx: [song], pers: [boastful]}
+
+# --- wry ---
+- {text: "Ah, the sound of an ambush being invited. Lovely.", ctx: [song], pers: [wry]}
+- {text: "Whoever tuned that did it with confidence, if not skill.", ctx: [song], pers: [wry]}
+- {text: "I would pay to hear it quieter. I will settle for it ending.", ctx: [song], pers: [wry]}
+
+# --- devout ---
+- {text: "A song is a kind of prayer. Play it well.", ctx: [song], pers: [devout]}
+- {text: "The old hymns would sit well on those strings.", ctx: [song], pers: [devout]}
+- {text: "Let it carry up with the smoke.", ctx: [song], pers: [devout]}

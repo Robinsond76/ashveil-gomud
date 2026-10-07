@@ -1,0 +1,13 @@
+# Camp music: a drum song's lift, for the first battle after the rest
+# (help music). It is removed when that battle ends, and otherwise lasts as
+# long as the rest buff it was granted with (modules/camping overrides the
+# count; 225 rounds is fifteen minutes at 4-second rounds). Five sizes, picked
+# by the drum strength.
+buffid: 9404
+name: Drumbeat
+description: "The camp's drums are still in your blood: your speed is 4 higher in your next battle."
+secret: false
+triggerrate: 1 round
+triggercount: 225
+statmods:
+  speed: 4

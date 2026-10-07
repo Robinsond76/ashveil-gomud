@@ -1,0 +1,12 @@
+itemid: 3211
+name: "hollow king's horn"
+namesimple: "king's horn"
+description: 'A curved horn of old yellow bone, its mouthpiece worn smooth. It plays low and quiet and draws no ear from the dark. A masterwork: it can be sold (help instruments).'
+type: object
+subtype: mundane
+instrument: winds
+instrumenttier: 4
+value: 600
+weight: 900
+instrumentmob: 14
+instrumentchance: 25

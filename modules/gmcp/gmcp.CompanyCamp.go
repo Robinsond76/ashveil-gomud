@@ -52,6 +52,42 @@ type campPayload struct {
 	DutiesLocked bool      `json:"duties_locked"`
 	// Phase 56: the dishes the leader has learned, one line each.
 	Recipes []string `json:"recipes"`
+	// Camp music: who plays what and what the next song gives (omitted away
+	// from a camp, teacher and inn), and the inn's gig board (inns only).
+	Music *musicPayload `json:"music,omitempty"`
+	Gig   *gigPayload   `json:"gig,omitempty"`
+}
+
+// musicPayload is the Camp tab's Music block.
+type musicPayload struct {
+	Off     bool       `json:"off"`
+	Covered string     `json:"covered"`
+	Effects []string   `json:"effects"`
+	Cost    string     `json:"cost,omitempty"`
+	Players []musicRow `json:"players"`
+	Teacher bool       `json:"teacher"`
+	// TeachPrice is the teacher's fee for level 1 of a family.
+	TeachPrice int `json:"teach_price,omitempty"`
+}
+
+// musicRow is one member's Music.
+type musicRow struct {
+	Key        string `json:"key"`
+	Name       string `json:"name"`
+	Family     string `json:"family,omitempty"`
+	Level      int    `json:"level,omitempty"`
+	Label      string `json:"label,omitempty"`
+	Instrument string `json:"instrument,omitempty"`
+}
+
+// gigPayload is an inn's gig board for the company.
+type gigPayload struct {
+	Window   string `json:"window"`
+	Open     bool   `json:"open"`
+	Ready    bool   `json:"ready"`
+	Reason   string `json:"reason,omitempty"`
+	Families int    `json:"families"`
+	Pay      int    `json:"pay"`
 }
 
 // dutyRow is one member's rest duty for the Camp tab's picker. Command is
@@ -110,6 +146,21 @@ func campPayloadOf(s camping.CampState) campPayload {
 	if recipes == nil {
 		recipes = []string{}
 	}
+	var music *musicPayload
+	if s.Music.Known {
+		effects := s.Music.Effects
+		if effects == nil {
+			effects = []string{}
+		}
+		music = &musicPayload{Off: s.Music.Off, Covered: s.Music.Covered, Effects: effects, Cost: s.Music.Cost, Teacher: s.Music.Teacher, TeachPrice: s.Music.TeachPrice, Players: []musicRow{}}
+		for _, r := range s.Music.Players {
+			music.Players = append(music.Players, musicRow{Key: r.Key, Name: r.Name, Family: r.Family, Level: r.Level, Label: r.Label, Instrument: r.Instrument})
+		}
+	}
+	var gig *gigPayload
+	if s.Gig != nil {
+		gig = &gigPayload{Window: s.Gig.Window, Open: s.Gig.Open, Ready: s.Gig.Ready, Reason: s.Gig.Reason, Families: s.Gig.Families, Pay: s.Gig.Pay}
+	}
 	tents := make([]tentRow, 0, len(s.Tents))
 	for _, t := range s.Tents {
 		tents = append(tents, tentRow{Kind: string(t.Kind), Name: t.Name, Effect: t.Effect, Pitched: t.Pitched, Command: "camp tent " + camping.TentOf(t.Kind).Short})
@@ -119,7 +170,7 @@ func campPayloadOf(s camping.CampState) campPayload {
 		spec := camping.TentOf(s.TentKind)
 		tentKind, tentName = string(spec.Kind), spec.Name
 	}
-	return campPayload{Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	return campPayload{Music: music, Gig: gig, Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 
