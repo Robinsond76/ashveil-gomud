@@ -422,6 +422,8 @@ func TestBossKillAndRelicAreWrittenInTheChronicle(t *testing.T) {
 		bossDeed := log.Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Boss}})[0]
 		assert.Equal(t, "drop foe", bossDeed.Subject)
 		assert.Equal(t, "mob:"+strconv.Itoa(relicBossMob), bossDeed.Ref)
+		assert.Equal(t, w.room.Zone, bossDeed.Zone, "the deed names the zone, so a bounty can name its lair")
+		assert.NotEmpty(t, bossDeed.Zone)
 		relic := log.Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Relic}})
 		require.Len(t, relic, 1, "and its own relic roll")
 		assert.Equal(t, "drop foe", relic[0].Detail, "the relic names the boss it came from")

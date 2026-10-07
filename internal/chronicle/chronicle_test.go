@@ -210,3 +210,23 @@ func TestRitesProse(t *testing.T) {
 		assert.Equal(t, Rites, k)
 	}
 }
+
+func TestGroupAndBountyDeedsReadAndFilterByZone(t *testing.T) {
+	assert.Equal(t, "The company broke Road Brigands at the green.", Prose(Entry{Kind: Group, Subject: "Road Brigands", Place: "the green"}))
+	assert.Equal(t, "The company claimed the bounty on the Hollow King at the board: 160 gold.", Prose(Entry{Kind: Bounty, Subject: "the Hollow King", Place: "the board", Detail: "160 gold"}))
+	for _, w := range []string{"group", "bands", "packs"} {
+		k, ok := KindByWord(w)
+		assert.True(t, ok)
+		assert.Equal(t, Group, k)
+	}
+	if k, ok := KindByWord("bounties"); assert.True(t, ok) {
+		assert.Equal(t, Bounty, k)
+	}
+
+	var l Log
+	l.Add(Entry{Kind: Boss, Ref: "mob:1", Zone: "Dark Forest"})
+	l.Add(Entry{Kind: Boss, Ref: "mob:1", Zone: "Catacombs"})
+	l.Add(Entry{Kind: Boss, Ref: "mob:1", Zone: "Dark Forest"})
+	assert.Len(t, l.Query(Filter{Ref: "mob:1", Zone: "Dark Forest"}), 2, "a boss slain in another zone is not this zone's lair")
+	assert.Len(t, l.Query(Filter{Ref: "mob:1", Zone: "Dark Forest", AfterSeq: 1}), 1, "only deeds numbered after a point count")
+}

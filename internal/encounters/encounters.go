@@ -47,10 +47,25 @@ type Member struct {
 // the first member is the boss (count 1) and the rest are its escorts.
 type Composition struct {
 	ID      string   `yaml:"id"`
+	Name    string   `yaml:"name,omitempty"` // what a bounty board calls the group (Phase 76); the id, spaced, when empty
 	Weight  int      `yaml:"weight"`
 	Text    string   `yaml:"text,omitempty"` // the line that opens the encounter
 	Boss    bool     `yaml:"boss,omitempty"`
 	Members []Member `yaml:"members"`
+}
+
+// Title is the composition's name for players: Name, else its id with the
+// dashes read as spaces and each word capitalised ("road-brigands" is "Road
+// Brigands").
+func (c Composition) Title() string {
+	if n := strings.TrimSpace(c.Name); n != "" {
+		return n
+	}
+	words := strings.FieldsFunc(c.ID, func(r rune) bool { return r == '-' || r == '_' || r == ' ' })
+	for i, w := range words {
+		words[i] = strings.ToUpper(w[:1]) + w[1:]
+	}
+	return strings.Join(words, " ")
 }
 
 // Size is how many foes the composition spawns.
