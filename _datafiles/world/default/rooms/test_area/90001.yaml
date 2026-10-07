@@ -2,7 +2,7 @@ roomid: 90001
 zone: Test Area
 title: Test Area Hub
 description: >-
-  An admin-only test area, apart from the world. A painted signboard lists the rooms: the combat yard (north), the camp (east), the armory (west), the stable (south), the weather deck (up), the dark cellar (down), and three story scenes: a gorge edge (northeast), a stranger's fire (northwest) and a burned shrine (southeast). Type testarea help for the commands, and testarea return to go back to where you were; nothing that happens here is kept. Lantern posts keep every room lit through the night; only the cellar is dark.
+  An admin-only test area, apart from the world. A painted signboard lists the rooms: the combat yard (north), the camp (east), the armory (west), the stable (south), the weather deck (up), the dark cellar (down), three story scenes: a gorge edge (northeast), a stranger's fire (northwest) and a burned shrine (southeast), and the gossip corner (southwest), where the townsfolk talk of your deeds. Type testarea help for the commands, and testarea return to go back to where you were; nothing that happens here is kept. Lantern posts keep every room lit through the night; only the cellar is dark.
 biome: city
 tags:
   - lit
@@ -25,6 +25,8 @@ exits:
     roomid: 90012
   southeast:
     roomid: 90013
+  southwest:
+    roomid: 90015
 mapx: 0
 mapy: 0
 mapz: 0

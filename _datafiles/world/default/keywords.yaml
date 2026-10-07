@@ -171,6 +171,7 @@ help:
       - gigs
       - events
       - chronicle
+      - townsfolk
       - opinions
     communication:
       - emote
@@ -347,6 +348,7 @@ help-aliases:
   progression: [stat-steps, stat steps, leveling]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   chronicle: [chronicles, deeds, company chronicle]
+  townsfolk: [renown, town memory, talk of the town, townsfolk talk]
   opinions: [opinion, companion opinions, company opinions, loyalty opinions]
   events: [event, scene, scenes, story-events, story events, choose, story]
   sigils: [sigil, cast sigil, cast-sigil, sigil chalk, chalk, ward sigil, fire sigil, stillness sigil, mending sigil]

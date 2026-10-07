@@ -213,4 +213,5 @@ window has an Opinions tab (<ansi fg="command">help opinions</ansi>).
 Your company keeps a record of its deeds: who joined, left or fell, the
 bosses it killed, the relics it found, mercy and executions, promotions,
 defeats and how scenes on the road ended. <ansi fg="command">chronicle</ansi> reads it, and the web
-client's Company window has a Chronicle tab (<ansi fg="command">help chronicle</ansi>).
+client's Company window has a Chronicle tab (<ansi fg="command">help chronicle</ansi>). Town
+talkers mention those deeds, once each (<ansi fg="command">help townsfolk</ansi>).

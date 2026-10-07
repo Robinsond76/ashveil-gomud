@@ -83,6 +83,10 @@ func (m *Mob) EndIdle() {
 	m.idle = nil
 }
 
+// IdleSpoke reports whether a say, sayto, shout or emote the mob queued in
+// this idle turn was let through (false outside an idle turn).
+func (m *Mob) IdleSpoke() bool { return m.idle != nil && m.idle.decided && m.idle.allowed }
+
 // ChatterReady reports whether the mob's idle chatter cooldown has passed.
 // Conversations between mobs start only when it has.
 func (m *Mob) ChatterReady() bool {

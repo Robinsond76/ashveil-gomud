@@ -250,6 +250,8 @@ replacement world brings its own.
 **Accept.** A deed produces a line once per player; no line repeats within
 its window; `help townsfolk` (or folded into an existing page).
 
+Built: [phase 68 plan and decisions](2026-10-07-phase-68-towns-that-remember.md).
+
 ## 69 Weapon stances
 
 **Why.** Deadfire's weapon modals trade one strength for another. Another

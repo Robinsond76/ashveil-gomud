@@ -46,8 +46,9 @@ button in them just types a command for you.
               move or swap them, and each member), Inventory (everyone's
               gear, your horses, and the cargo), Camp, Chronicle (the
               company's deeds in sentences, newest first, with a filter by
-              kind; help chronicle), and Opinions (what each companion
-              likes, dislikes and has lately said; help opinions).
+              kind, and what the towns say of you; help chronicle and
+              help townsfolk), and Opinions (what each companion likes,
+              dislikes and has lately said; help opinions).
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
               Battle view during a battle. A battle also opens as a
