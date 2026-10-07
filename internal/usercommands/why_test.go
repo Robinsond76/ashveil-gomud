@@ -33,7 +33,7 @@ func TestWhyExplainsTheLatestRounds(t *testing.T) {
 	aria := combatstream.Ref{UserId: user.UserId, Name: "Aria"}
 	foe := combatstream.Ref{MobInstanceId: 21, Name: "the cutthroat captain"}
 	log.Add(user.UserId, combatstream.Roll{Round: 1, Source: aria, Target: foe, Outcome: combatstream.OutcomeHit, Damage: 5, Ours: true,
-		Strikes: []combatstream.Strike{{Chance: 60, Base: 60, Roll: 11, Hit: true, Raw: 6, Armor: 2, Reduced: 1, Damage: 5}}})
+		Strikes: []combatstream.Strike{{Chance: 60, Base: 60, Roll: 11, Hit: true, Raw: 6, Armor: 2, ArmorTook: 1, Reduced: 1, Damage: 5}}})
 	log.Add(user.UserId, combatstream.Roll{Round: 2, Source: foe, Target: aria, Outcome: combatstream.OutcomeMiss,
 		Strikes: []combatstream.Strike{{Chance: 38, Base: 38, Roll: 80}}})
 

@@ -904,6 +904,7 @@ await page.evaluate(() => Client.dispatchBattleEvents({ fight: 7, round: 40, fig
   { seq: 2, kind: 'attack', src: 'm:412', tgt: 'leader', outcome: 'miss', explain: ['To hit: 38 in 100, rolled 80 (it missed).'] },
   { seq: 3, kind: 'attack', src: 'leader', tgt: 'm:412', outcome: 'hit', damage: 4 },
 ] }));
+await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))); // one redraw a frame
 check(await page.locator('#combat-window .cbt-rounds').count() === 1, 'Combat: a Last rounds list appears under the battle');
 check(await page.locator('#combat-window .cbt-rounds li').count() === 2, 'Combat: only the explained rounds are listed (the unexplained one is not)');
 check((await page.locator('#combat-window .cbt-rounds li').first().textContent()).includes('missed'), 'Combat: newest first');

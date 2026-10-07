@@ -70,6 +70,7 @@ func TestStrikeDamageMatchesTheRound(t *testing.T) {
 		require.True(t, st.Hit)
 		assert.Empty(t, st.Defense)
 		assert.Equal(t, st.Raw-st.Reduced, st.Damage, "armor took exactly what it says it took")
+		assert.Equal(t, st.Reduced, st.ArmorTook, "with no ward or aura, armor took it all")
 		total += st.Damage
 		reduced += st.Reduced
 	}

@@ -241,7 +241,8 @@ func activeDefense(defender, attacker characters.Character, melee bool) string {
 }
 
 // activeDefenseRoll is activeDefense that also reports the chance in 100
-// the defense was rolled at (Phase 62), 0 when none was rolled.
+// the defense was rolled at (Phase 62), 0 when none was rolled (a Perfect
+// Parry turns the blow without one).
 func activeDefenseRoll(defender, attacker characters.Character, melee bool) (string, int) {
 	if defender.HasBuffFlag(status.FlagNoDodge) {
 		return DefenseNone, 0
@@ -250,7 +251,7 @@ func activeDefenseRoll(defender, attacker characters.Character, melee bool) (str
 	// of a battle aside.
 	if _, ok := parryModifier(defender.Equipment.Weapon); melee && ok && defender.RT != nil && !defender.RT.PerfectUsed && defender.ClassEffects().Has(classes.PerfectParry) {
 		defender.RT.PerfectUsed = true
-		return DefenseParried, 100
+		return DefenseParried, 0 // no roll: a Perfect Parry is certain
 	}
 	if defender.HasShield() {
 		block := blockChance(&defender, &attacker)
@@ -693,6 +694,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					if defense == DefenseBlocked && iaiFx.Has(classes.NoBlockCrit) {
 						if backstabCrit || critsWith(sourceChar, targetChar, 0) {
 							defense, forcedCrit = DefenseNone, true
+							strike.ThroughShield = true
 						}
 					}
 					if defense != DefenseNone {
@@ -752,7 +754,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 					critBonus := 0
 					if strikeIai {
-						strike.Notes = append(strike.Notes, `Iaijutsu, the battle's first draw, struck harder and surer`)
+						strike.Notes = append(strike.Notes, `Iaijutsu, the battle's first draw, struck harder and was likelier to crit`)
 						critBonus = iaiFx.Int(classes.IaiCrit)
 						attackTargetDamage += (attackTargetDamage*iaiFx.Int(classes.IaiDamage) + 50) / 100
 					}
@@ -775,22 +777,35 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				beforeAdjust := attackTargetDamage
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
+				if hit && attackTargetDamage != beforeAdjust {
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`Class effects changed the blow by %+d`, attackTargetDamage-beforeAdjust))
+				}
+				beforeAdjust = attackTargetDamage
 				attackTargetDamage = leadrootDamage(&sourceChar, attackTargetDamage)
+				if hit && attackTargetDamage != beforeAdjust {
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`Leadroot poison weakened the blow by %d`, beforeAdjust-attackTargetDamage))
+				}
+				beforeAdjust = attackTargetDamage
 				attackTargetDamage = fareDamage(&sourceChar, &targetChar, attackTargetDamage)
 				if hit && attackTargetDamage != beforeAdjust {
-					strike.Notes = append(strike.Notes, fmt.Sprintf(`Class, weather or fare effects changed the blow by %+d`, attackTargetDamage-beforeAdjust))
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`Hunger, thirst or a meal changed the blow by %+d`, attackTargetDamage-beforeAdjust))
 				}
 				strike.Raw = attackTargetDamage
 				defense := targetChar.GetDefense()
 				// Phase 39h: a Piercing Bolt ignores part of the armor.
 				if p := sourceChar.RT; p != nil && p.BlowPierce > 0 && hit {
 					defense -= defense * min(p.BlowPierce, 100) / 100
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`A piercing bolt ignored %d%% of the armor`, min(p.BlowPierce, 100)))
 				}
 				if strikeIai && hit {
-					defense -= defense * min(iaiFx.Int(classes.IaiPierce), 100) / 100
+					if pierce := min(iaiFx.Int(classes.IaiPierce), 100); pierce > 0 {
+						defense -= defense * pierce / 100
+						strike.Notes = append(strike.Notes, fmt.Sprintf(`Iaijutsu ignored %d%% of the armor`, pierce))
+					}
 				}
 				strike.Armor = defense
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, defense)
+				strike.ArmorTook = attackTargetReduction
 				// Phase 38b review: an aura's "less damage" is a true percent
 				// off the blow (on the armor roll it averaged half that).
 				if r := targetChar.Aura.Resolve; r > 0 && attackTargetDamage > 0 {
@@ -989,9 +1004,14 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 							attackTargetDamage := util.RollDice(pDCount, pDSides) + pDBonus
 
-							attackTargetDamage, _ = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+							petRaw, petArmor := attackTargetDamage, targetChar.GetDefense()
+							var petArmorTook int
+							attackTargetDamage, petArmorTook = applyDefenseReduction(attackTargetDamage, petArmor)
 
 							attackResult.DamageToTarget += attackTargetDamage
+							// Phase 62 review: the pet's blow is part of the round's damage.
+							attackResult.Strikes = append(attackResult.Strikes, combatstream.Strike{Pet: petNameOr(sourceChar.Pet.Name), Hit: true, Roll: -1,
+								Raw: petRaw, Armor: petArmor, ArmorTook: petArmorTook, Reduced: petArmorTook, Damage: attackTargetDamage})
 
 							targetDisplayName := fmt.Sprintf(`<ansi fg="%sname">%s</ansi>`, string(targetType), targetChar.Name)
 							petDisplayName := sourceChar.Pet.DisplayName()
@@ -1050,4 +1070,12 @@ func fogPenalty(c *characters.Character) int {
 		return stormcraft.FogHit
 	}
 	return 0
+}
+
+// petNameOr names a pet for its strike's breakdown (Phase 62 review).
+func petNameOr(name string) string {
+	if name == `` {
+		return `pet`
+	}
+	return name
 }

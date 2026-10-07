@@ -20,6 +20,8 @@ test('headings say who, whom and what happened', () => {
     assert.equal(BattleRounds.heading(attack({ defenses: ['dodged'], outcome: 'miss', damage: 0 }), nameOf), 'Aria → bandit: turned aside (dodged)');
     assert.equal(BattleRounds.heading(attack({ damage: 0 }), nameOf), 'Aria → bandit: hit, no damage');
     assert.equal(BattleRounds.heading(attack({ src: 'x' }), nameOf), 'someone → bandit: hit for 5');
+    // Review: a round where one strike was dodged and another landed hit.
+    assert.equal(BattleRounds.heading(attack({ defenses: ['dodged'], damage: 5 }), nameOf), 'Aria → bandit: hit for 5');
 });
 
 test('keeps only explained attacks, newest first, and stops at the cap', () => {

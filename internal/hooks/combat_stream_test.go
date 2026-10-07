@@ -3,11 +3,14 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -141,4 +144,45 @@ func TestAttackStrikesRideTheEventAndTheRollLog(t *testing.T) {
 
 func TestSigilNoteNamesWhatHeldOverTheBattle(t *testing.T) {
 	assert.Equal(t, "", sigilNote(999999), "no battle, no sigil")
+}
+
+// Review: `why` never explains a round against a foe the leader can't make
+// out (its armor and chances would give it away), and only keeps rounds of
+// the leader's own company.
+func TestRollLogSkipsUnseenFoesAndOthersRounds(t *testing.T) {
+	stream := combatstream.New()
+	t.Cleanup(combatstream.UseForTest(stream))
+	log := combatstream.DefaultRollLog()
+	const leaderId, hiddenBuff = 8, 99621
+	t.Cleanup(func() { log.Clear(leaderId) })
+	log.Clear(leaderId)
+
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: hiddenBuff, Name: "test hiding", Flags: []string{"hidden"}, RoundInterval: 1, TriggerCount: 100})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(hiddenBuff) })
+	lurker := &mobs.Mob{InstanceId: 8621}
+	lurker.Character.Health = 10
+	lurker.Character.Buffs = buffs.New()
+	lurker.Character.Buffs.AddBuff(hiddenBuff, true)
+	mobs.SetTestInstance(lurker)
+	t.Cleanup(func() { mobs.RemoveTestInstance(lurker.InstanceId) })
+	require.True(t, lurker.Character.HasBuffFlag("hidden"))
+
+	leaderUser := &users.UserRecord{UserId: leaderId, Character: &characters.Character{Name: "Aria"}}
+	users.SetTestUser(leaderUser)
+	t.Cleanup(func() { users.RemoveTestUser(leaderId) })
+
+	leader := combatstream.Ref{UserId: leaderId, Name: "Aria", LeaderUserId: leaderId, MemberKey: "leader"}
+	seen := combatstream.Ref{MobInstanceId: 8622, Name: "bandit"}
+	hidden := combatstream.Ref{MobInstanceId: lurker.InstanceId, Name: "lurker"}
+	stream.Open(5, 0, "p", leader, nil, []combatstream.Ref{seen, hidden})
+	strikes := []combatstream.Strike{{Chance: 50, Base: 50, Roll: 80}}
+	emitAttack(hidden, leader, 0, &characters.Character{}, combat.AttackResult{Strikes: strikes})
+	emitAttack(leader, hidden, 0, &characters.Character{}, combat.AttackResult{Strikes: strikes})
+	emitAttack(seen, hidden, 0, &characters.Character{}, combat.AttackResult{Strikes: strikes}) // not the company's round
+	emitAttack(seen, leader, 0, &characters.Character{}, combat.AttackResult{Strikes: strikes})
+
+	rolls := log.Recent(leaderId, 0)
+	require.Len(t, rolls, 1, "only the seen foe's blow at the company is kept")
+	assert.Equal(t, "bandit", rolls[0].Source.Name)
 }

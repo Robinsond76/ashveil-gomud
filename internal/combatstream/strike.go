@@ -26,24 +26,31 @@ type Strike struct {
 	// Auto names why a strike needed no roll: "perfect shot", or
 	// "harmless" for a body with no natural weapon.
 	Auto string
+	// Pet names the attacker's pet when the strike was the pet's bite or
+	// claw (its own roll is not kept, only what it did).
+	Pet string
 
 	// Defense is what stopped a strike that hit (Blocked, Parried or
 	// Dodged, "" for none) and DefenseChance the chance it was rolled at.
+	// ThroughShield is a block a Marksman's critical shot went through.
 	Defense       string
 	DefenseChance int
+	ThroughShield bool
 
 	// Quality is "glancing", "solid" or "telling" for a landed blow.
 	Quality string
 	// Rolled is the weapon's dice and bonuses, Raw the damage once the
 	// quality, crit and named modifiers had acted, Armor the armor rating
-	// the blow met, Reduced what armor and other shields took off in all
-	// and Damage what got through.
-	Rolled  int
-	Raw     int
-	Armor   int
-	Reduced int
-	Damage  int
-	Crit    bool
+	// the blow met, ArmorTook what the armor alone took (its roll takes up
+	// to Armor percent of the blow), Reduced what armor and wards, auras
+	// and shields took off in all, and Damage what got through.
+	Rolled    int
+	Raw       int
+	Armor     int
+	ArmorTook int
+	Reduced   int
+	Damage    int
+	Crit      bool
 
 	// Notes name the modifiers that acted, in plain words ("backstab",
 	// "sharpened edge +2").
@@ -54,6 +61,13 @@ type Strike struct {
 // stopped or shaped it, and what it did.
 func (s Strike) Explain() []string {
 	var out []string
+	if s.Pet != "" {
+		line := fmt.Sprintf("The %s joined in: %d before armor", s.Pet, s.Raw)
+		if s.Armor > 0 {
+			line += fmt.Sprintf(", armor %d took %d", s.Armor, s.ArmorTook)
+		}
+		return []string{fmt.Sprintf("%s, %d got through.", line, s.Damage)}
+	}
 	switch {
 	case s.Auto != "":
 		out = append(out, "No roll needed ("+s.Auto+").")
@@ -71,10 +85,16 @@ func (s Strike) Explain() []string {
 		return out
 	}
 	if s.Defense != "" {
+		if s.DefenseChance == 0 {
+			return append(out, fmt.Sprintf("Then it was %s outright by a Perfect Parry, no roll needed; no damage.", s.Defense))
+		}
 		line := fmt.Sprintf("Then it was %s, a %d in 100 chance", s.Defense, s.DefenseChance)
 		return append(out, line+"; no damage.")
 	}
-	if s.Defense == "" && s.DefenseChance > 0 {
+	switch {
+	case s.ThroughShield:
+		out = append(out, fmt.Sprintf("Defence: %d in 100 to block it, and it was blocked, but a critical shot goes through a shield.", s.DefenseChance))
+	case s.DefenseChance > 0:
 		out = append(out, fmt.Sprintf("Defence: %d in 100 to turn it aside, and it was not.", s.DefenseChance))
 	}
 	if s.Quality != "" && s.Quality != "solid" {
@@ -86,10 +106,7 @@ func (s Strike) Explain() []string {
 	if s.Raw > 0 || s.Damage > 0 {
 		line := fmt.Sprintf("Damage: %d before armor", s.Raw)
 		if s.Armor > 0 {
-			line += fmt.Sprintf(", armor %d", s.Armor)
-		}
-		if s.Reduced > 0 {
-			line += fmt.Sprintf(" took %d", s.Reduced)
+			line += fmt.Sprintf(", armor %d took %d", s.Armor, s.ArmorTook)
 		}
 		out = append(out, fmt.Sprintf("%s, %d got through.", line, s.Damage))
 	}
@@ -108,37 +125,18 @@ func landedWord(hit bool) string {
 
 // chanceParts says what moved the chance off its base.
 func (s Strike) chanceParts() string {
-	parts := []string{fmt.Sprintf("skill and speed gave %d", s.Base)}
+	parts := []string{fmt.Sprintf("Skill and speed gave %d", s.Base)}
 	if s.Modifier != 0 {
 		parts = append(parts, fmt.Sprintf("%+d from darkness or a second weapon", s.Modifier))
 	}
 	if s.Bonus != 0 {
 		parts = append(parts, fmt.Sprintf("%+d from company chemistry", s.Bonus))
 	}
+	if sum := s.Base + s.Modifier + s.Bonus; sum != s.Chance {
+		parts = append(parts, fmt.Sprintf("held to %d by the limits on any chance to hit", s.Chance))
+	}
 	if len(parts) == 1 {
 		return ""
 	}
 	return strings.Join(parts, ", ")
-}
-
-// Headline is a strike round's one-line cause for a log, "missed, 38 in
-// 100" or "dodged, 31 in 100", for the line's tooltip or a compact log.
-func Headline(strikes []Strike) string {
-	if len(strikes) == 0 {
-		return ""
-	}
-	parts := make([]string, 0, len(strikes))
-	for _, s := range strikes {
-		switch {
-		case s.Auto != "":
-			parts = append(parts, s.Auto)
-		case !s.Hit:
-			parts = append(parts, fmt.Sprintf("missed, %d in 100", s.Chance))
-		case s.Defense != "":
-			parts = append(parts, fmt.Sprintf("%s, %d in 100", s.Defense, s.DefenseChance))
-		default:
-			parts = append(parts, fmt.Sprintf("%d damage after armor %d", s.Damage, s.Armor))
-		}
-	}
-	return strings.Join(parts, "; ")
 }

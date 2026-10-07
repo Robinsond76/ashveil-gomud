@@ -36,7 +36,7 @@ band of ruffians</ansi>, or <ansi fg="yellow">The fight with a band of ruffians 
   who the foe hit hardest.
 - <ansi fg="yellow">Never landed</ansi> (when any member swung and landed nothing) says what became
   of that member's blows: <ansi fg="yellow">missed</ansi>, <ansi fg="yellow">turned aside</ansi> (blocked, parried or dodged), or
-  <ansi fg="yellow">stopped by armor</ansi>. It tells you who never reached their target, and why.
+  <ansi fg="yellow">stopped by armor or a ward</ansi>. It tells you who never reached their target, and why.
 - <ansi fg="yellow">Moves</ansi> (when any were used) counts the class abilities your company used.
 - <ansi fg="yellow">Sigil</ansi> (when you fought on one) names the sigil that held over the battle
   and what it does (<ansi fg="command">help sigils</ansi>).

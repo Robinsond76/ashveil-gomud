@@ -272,7 +272,7 @@ func TestSummaryExplainsTheFight(t *testing.T) {
 	assert.Equal(t, []Count{{Name: "Opening Strike", Count: 2}}, sum.Moves)
 	sum.Sigil = "fire sigil: fire spells 25% stronger"
 	lines := Render(*sum, 7)
-	assert.Contains(t, lines, "Never landed   Tamsin Reed 2 missed, 1 turned aside, 1 stopped by armor")
+	assert.Contains(t, lines, "Never landed   Tamsin Reed 2 missed, 1 turned aside, 1 stopped by armor or a ward")
 	assert.Contains(t, lines, "Moves          Opening Strike 2")
 	assert.Contains(t, lines, "Sigil          fire sigil: fire spells 25% stronger")
 	assert.Contains(t, lines, "Damage taken   Tamsin Reed 9 · You 2")

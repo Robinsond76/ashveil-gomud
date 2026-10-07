@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -159,16 +160,36 @@ func recordRoll(e combatstream.Event) {
 	if !ok || fi.LeaderUserId <= 0 {
 		return
 	}
-	ours := false
+	ours, theirs := false, false
 	for _, r := range fi.Company {
-		if r.Key() == e.Source.Key() {
-			ours = true
-			break
-		}
+		ours = ours || r.Key() == e.Source.Key()
+		theirs = theirs || r.Key() == e.Target.Key()
+	}
+	// Review: only the company's own rounds, and never against a foe the
+	// leader can't make out: its armor and chances would give it away
+	// (the web feed's rule too).
+	if !ours && !theirs {
+		return
+	}
+	if leader := users.GetByUserId(fi.LeaderUserId); leader != nil && (unseenBy(leader, e.RoomId, e.Source) || unseenBy(leader, e.RoomId, e.Target)) {
+		return
 	}
 	if roll, ok := combatstream.RollFor(e, ours); ok {
 		combatstream.DefaultRollLog().Add(fi.LeaderUserId, roll)
 	}
+}
+
+// unseenBy reports whether a fighter is an enemy the player can't make out:
+// any foe in a room too dark for them, or a hidden one.
+func unseenBy(user *users.UserRecord, roomId int, r combatstream.Ref) bool {
+	if r.MobInstanceId <= 0 || r.LeaderUserId > 0 || user.Character == nil {
+		return false
+	}
+	if room := rooms.LoadRoom(roomId); room != nil && room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
+		return true
+	}
+	m := mobs.GetInstance(r.MobInstanceId)
+	return m != nil && m.Character.HasBuffFlag("hidden")
 }
 
 func emitTargetChange(source, previous, next combatstream.Ref, roomId int) {

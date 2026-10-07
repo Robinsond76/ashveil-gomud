@@ -1035,15 +1035,28 @@
 
     // Phase 62: names are read as each round arrives, while the battle that
     // names them is still the current one.
+    // Names seen while the battle was live are kept, so the last blows,
+    // paced behind the narration past the battle's end, keep theirs; a new
+    // fight starts them afresh (Phase 62 review).
+    const roundNames = new Map();
+    let roundNamesFight = null;
+    let roundsPending = false;
     Client.onBattleEvents(msg => {
         if (!rounds) { return; }
+        if (msg && msg.fight !== roundNamesFight) { roundNames.clear(); roundNamesFight = msg.fight; }
         const battle = currentBattle();
         const data = CompanyData.read();
         const name = id => {
             if (id === 'me') { return 'you'; }
-            return battle ? nameOf(id, battle, data) : '';
+            const n = battle ? nameOf(id, battle, data) : '';
+            if (n) { roundNames.set(id, n); return n; }
+            return roundNames.get(id) || '';
         };
-        if (rounds.add(msg, name)) { update(); }
+        // One redraw a frame, however many rounds arrive in it.
+        if (rounds.add(msg, name) && !roundsPending) {
+            roundsPending = true;
+            requestAnimationFrame(() => { roundsPending = false; update(); });
+        }
     });
 
     VirtualWindows.register({

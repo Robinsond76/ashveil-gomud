@@ -271,6 +271,9 @@ func (t *tally) noteSwings(e Event) {
 		return
 	}
 	for _, st := range e.Strikes {
+		if st.Pet != "" {
+			continue // a pet's bite is not the member's own swing
+		}
 		sw.Thrown++
 		switch {
 		case !st.Hit:
@@ -529,7 +532,7 @@ func (sw Swings) why() string {
 		parts = append(parts, fmt.Sprintf("%d turned aside", sw.Turned))
 	}
 	if sw.Absorbed > 0 {
-		parts = append(parts, fmt.Sprintf("%d stopped by armor", sw.Absorbed))
+		parts = append(parts, fmt.Sprintf("%d stopped by armor or a ward", sw.Absorbed))
 	}
 	return strings.Join(parts, ", ")
 }

@@ -351,7 +351,7 @@ func TestBattleEventsCarryTheStrikeBreakdown(t *testing.T) {
 	r := newEventRig(t)
 	r.user.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
 	id := r.stream.Open(10, 100, "party-a", rigLeader, []combatstream.Ref{rigCompanion}, []combatstream.Ref{rigEnemy(88)})
-	hit := []combatstream.Strike{{Chance: 60, Base: 60, Roll: 11, Hit: true, Raw: 6, Armor: 2, Reduced: 1, Damage: 5}}
+	hit := []combatstream.Strike{{Chance: 60, Base: 60, Roll: 11, Hit: true, Raw: 6, Armor: 2, ArmorTook: 1, Reduced: 1, Damage: 5}}
 	miss := []combatstream.Strike{{Chance: 38, Base: 38, Roll: 80}}
 	events.WithCause(10, func() {
 		r.stream.Emit(combatstream.Event{Round: 10, Kind: combatstream.Attack, FightID: id, Source: rigLeader, Target: rigEnemy(88), Outcome: combatstream.OutcomeHit, Damage: 5, Strikes: hit})

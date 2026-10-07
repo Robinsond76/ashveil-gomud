@@ -22,9 +22,9 @@
     var DEFAULT_CAP = 12;
 
     function result(ev) {
+        if (ev.damage > 0) { return (ev.crit ? 'critical hit for ' : 'hit for ') + ev.damage; }
         if (ev.defenses && ev.defenses.length) { return 'turned aside (' + ev.defenses.join(', ') + ')'; }
         if (ev.outcome === 'miss') { return 'missed'; }
-        if (ev.damage > 0) { return (ev.crit ? 'critical hit for ' : 'hit for ') + ev.damage; }
         return 'hit, no damage';
     }
 
