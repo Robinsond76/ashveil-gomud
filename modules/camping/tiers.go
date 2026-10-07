@@ -114,8 +114,15 @@ func (m *CampingModule) heldTier(c *characters.Character, s innSettings) camping
 // applyTier gives one member a tier for rounds, removing any lower tier
 // and never downgrading a higher one. It reports whether it granted.
 func (m *CampingModule) applyTier(c *characters.Character, tier camping.Tier, rounds int, s innSettings) bool {
-	grant, _ := camping.Decide(m.heldTier(c, s), tier)
+	held := m.heldTier(c, s)
+	grant, _ := camping.Decide(held, tier)
 	if !grant {
+		return false
+	}
+	// Phase 75: a cheaper room's shorter buff never cuts short a longer one
+	// still running (a suite's two hours, then a common room's thirty
+	// minutes).
+	if held == tier && m.buffRoundsLeft(c, s.tierBuff(tier)) > rounds {
 		return false
 	}
 	// Remove every lower tier held, not only the best one: a script or
@@ -166,6 +173,14 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 	}
 	settings := m.innSettings()
+	// Phase 75: the room an owed stay was bought in sets its Well Rested's
+	// length.
+	stayTiers := map[int]camping.InnTier{}
+	for leaderUserID := range pending {
+		if stay, ok := m.stays[leaderUserID]; ok {
+			stayTiers[leaderUserID] = stay.Tier.Normalize()
+		}
+	}
 	m.mu.Unlock()
 	leaders := make([]int, 0, len(pending))
 	for leaderUserID := range pending {
@@ -195,6 +210,11 @@ func (m *CampingModule) grantPendingTiers() {
 			songPtr = &song
 		}
 		buffTier, duration := restBuffFor(settings, tier, tentPtr, songPtr)
+		innTier := camping.InnCommon
+		if tier == camping.TierWellRested {
+			innTier = stayTiers[leaderUserID].Normalize()
+			duration = settings.wellRestedFor(innTier)
+		}
 		rounds := camping.RoundsFor(duration, m.roundLength())
 		// Phase 51: a camp rest's Rested buff skips the members on a duty.
 		var onDuty map[string]bool
@@ -244,8 +264,14 @@ func (m *CampingModule) grantPendingTiers() {
 				user.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
 			}
 		}
-		if granted && buffTier == camping.TierWellRested {
+		if granted && buffTier == camping.TierWellRested && innTier != camping.InnCommon {
+			user.SendText(fmt.Sprintf("Your company feels well rested after a night in %s: Well Rested for %s.", innTier.Label(), wellRestedLength(duration)))
+		} else if granted && buffTier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
+		} else if tier == camping.TierWellRested && m.heldTier(user.Character, settings) == camping.TierWellRested {
+			// Phase 75 review: a cheaper room after a dearer one grants
+			// nothing new, so say why rather than stay silent.
+			user.SendText("Your company is still Well Rested from an earlier, longer stay.")
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}

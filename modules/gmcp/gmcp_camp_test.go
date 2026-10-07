@@ -106,3 +106,23 @@ func TestCompanyCampPayloadCarriesTheTents(t *testing.T) {
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, "canvas", got.TentKind, "an old camp's tent is canvas")
 }
+
+// TestCompanyCampPayloadCarriesTheInnRooms (Phase 75): each room an inn
+// lets, with its price and the command that buys it.
+func TestCompanyCampPayloadCarriesTheInnRooms(t *testing.T) {
+	state := camping.CampState{Inn: true, InnRooms: []camping.InnRoomRow{
+		{Tier: camping.InnCommon, Price: 10, Minutes: 30},
+		{Tier: camping.InnSuite, Price: 80, Minutes: 120},
+	}}
+	extra := campExtra(func(int, int, []string) (camping.CampState, bool) { return state, true }, nil)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(extra.build(users.NewUserRecord(7, 1)), &got))
+	assert.Equal(t, []any{
+		map[string]any{"tier": "common", "name": "Common", "price": 10.0, "minutes": 30.0, "command": "inn rest"},
+		map[string]any{"tier": "suite", "name": "Suite", "price": 80.0, "minutes": 120.0, "command": "inn rest suite"},
+	}, got["inn_rooms"])
+	state = camping.CampState{}
+	got = nil
+	require.NoError(t, json.Unmarshal(extra.build(users.NewUserRecord(7, 1)), &got))
+	assert.NotContains(t, got, "inn_rooms", "nothing away from an inn")
+}

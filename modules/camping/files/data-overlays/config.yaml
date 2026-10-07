@@ -31,6 +31,17 @@ WellRestedBuffId: 1030
 RestedBuffId: 1033
 RestedDuration: 15m
 WellRestedDuration: 30m
+# Phase 75 inn rooms. Every inn lets the common room above. A room that is
+# also tagged InnPrivateRoomTag lets private rooms, and one tagged
+# InnSuiteRoomTag a suite (`inn rest private`, `inn rest suite`). Prices
+# are per company member and take the settlement's standing markup; the
+# Well Rested a room leaves is the same buff, lasting the length given.
+InnPrivateRoomTag: inn-private
+InnSuiteRoomTag: inn-suite
+InnPrivatePricePerMember: 15
+InnSuitePricePerMember: 40
+InnPrivateWellRestedDuration: 60m
+InnSuiteWellRestedDuration: 120m
 # Phase 23b whetstones. `sharpen` (or `camp sharpen`), at any time but
 # never mid-fight, spends one use of the leader's whetstone (item
 # WhetstoneItemId, 10 uses) per company member whose dull blades it

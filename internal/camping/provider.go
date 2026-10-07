@@ -233,6 +233,17 @@ type CampState struct {
 	// only in a room with an inn.
 	Music MusicState
 	Gig   *GigNotice
+	// InnRooms (Phase 75) are the rooms this inn lets, cheapest first;
+	// empty away from an inn or where the settlement refuses the company.
+	InnRooms []InnRoomRow
+}
+
+// InnRoomRow is one room an inn offers, for the Camp tab.
+type InnRoomRow struct {
+	Tier InnTier
+	// Price is the whole company's price today, markup included; Minutes
+	// the Well Rested it leaves.
+	Price, Minutes int
 }
 
 // MusicState is a company's Music at the camp, for the Camp tab.

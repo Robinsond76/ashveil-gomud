@@ -7,6 +7,7 @@ description: A long low alehouse built for cattle drovers, with a hearth big eno
 biome: city
 tags:
 - inn
+- inn-private
 - indoor
 exits:
   east:

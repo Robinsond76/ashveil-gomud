@@ -15,7 +15,12 @@ mapsymbol: I
 maplegend: Inn
 tags:
 - inn
+<<<<<<< HEAD
 - bounty-board
+=======
+- inn-private
+- inn-suite
+>>>>>>> origin/master
 exits:
   north:
     roomid: 57
