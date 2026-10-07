@@ -9,7 +9,7 @@
  *
  * Responds to GMCP namespace:
  *   Event - { active, id, page, title, picture, text, result: [line],
- *             choices: [{n, label, open, who, needs, risk}] }
+ *             choices: [{n, label, open, who, because, needs, risk}] }
  *   active false closes the screen; with `result` lines it first shows how
  *   the scene ended, with a Continue button.
  *
@@ -26,14 +26,16 @@
 
 (function() {
 
-    // noteOf is the small grey note after a choice: who takes it and how
-    // risky it is, or what a closed choice needs.
+    // noteOf is the small grey note after a choice: who takes it, what
+    // opened it (a life story) and how risky it is, or what a closed choice
+    // needs.
     function noteOf(choice) {
         if (!choice.open) {
             return choice.needs ? 'closed: needs ' + choice.needs : 'closed';
         }
         const parts = [];
         if (choice.who) { parts.push(choice.who); }
+        if (choice.because) { parts.push(choice.because); }
         if (choice.risk) { parts.push(choice.risk); }
         return parts.join(', ');
     }

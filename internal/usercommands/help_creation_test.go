@@ -23,7 +23,7 @@ func TestCreationHelp(t *testing.T) {
 			aliases:  []string{"looks", "description", "describe", "mirror"},
 		},
 		"lifestory": {
-			contains: []string{"Help for lifestory", "lifestory choose", "+2", "at most +3 in all", "keepsake", "background"},
+			contains: []string{"Help for lifestory", "lifestory choose", "+2", "at most +3 in all", "keepsake", "background", "closed: needs a leader who was a soldier", "life story: a soldier", "help events", "help townsfolk"},
 			aliases:  []string{"backstory", "background", "backgrounds", "homeland", "upbringing", "trade"},
 		},
 	}

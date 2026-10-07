@@ -39,3 +39,13 @@
   time: day
   tags: [gossip]
   text: "Market's quiet today."
+- id: boss-after-soldier
+  kind: boss
+  member_tag: trade-soldier
+  tags: [gossip]
+  text: "A soldier, {who}, and it shows. Put down {subject} like it was drill."
+- id: relic-after-hill-clans
+  kind: relic
+  member_tag: homeland-hill-clans
+  tags: [gossip]
+  text: "Hill-bred, are you, {who}? Thought so, by the way you carry {subject}. Keep it close."

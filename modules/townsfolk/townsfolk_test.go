@@ -711,3 +711,49 @@ func TestANewDeedRefreshesTheView(t *testing.T) {
 	assert.Equal(t, "Company.Townsfolk", last.namespace)
 	require.Len(t, last.payload.(panel).Fresh, 1)
 }
+
+// A shipped town line for a background (Phase 72) is told to a leader who
+// has it, through the module's real choosing and the shipped lines.
+func TestAShippedLineSpeaksToTheLeadersBackground(t *testing.T) {
+	r := newRig(t)
+	r.m.readFiles = readLineFiles
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
+	r.w.tags["7|leader|trade-soldier"] = true
+	sp, ok := r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Contains(t, sp.Text, "A soldier, Mara, and it shows")
+
+	r2 := newRig(t)
+	r2.m.readFiles = readLineFiles
+	r2.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
+	sp, ok = r2.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Contains(t, sp.Text, "put down", "no background, the plain line")
+	assert.NotContains(t, sp.Text, "soldier")
+}
+
+// Phase 72 review: a background line beats a plain one only while the
+// listener has not heard it lately, so a soldier is not told the same drill
+// line of every boss.
+func TestABackgroundLineIsNotSaidOfEveryDeed(t *testing.T) {
+	r := newRig(t)
+	r.m.readFiles = func() map[string][]byte {
+		return map[string][]byte{"t.yaml": []byte(testLines + `
+- id: boss-soldier
+  kind: boss
+  member_tag: trade-soldier
+  tags: [gossip]
+  text: "Like drill, {who}."
+`)}
+	}
+	r.w.tags["7|leader|trade-soldier"] = true
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King"})
+	sp, ok := r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "Like drill, Mara.", sp.Text, "first, the line for the background")
+
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Bone Ogre"})
+	sp, ok = r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "Mara put down the Bone Ogre.", sp.Text, "heard lately, it joins the plain lines")
+}

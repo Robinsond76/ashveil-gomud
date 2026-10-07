@@ -24,10 +24,22 @@ A small start, never a lasting edge:
 The tale is read back in your own pronouns. Other players see only the
 three names, never the numbers.
 
-<ansi fg="yellow-bold">Backgrounds</ansi>
+<ansi fg="yellow-bold">What it opens</ansi>
 
-Your trade is your background. Later parts of the game, such as events and
-towns, may notice it. <ansi fg="command">lifestory</ansi> shows yours.
+Your trade is your background, and your homeland and upbringing count too.
+They never make you stronger in a fight, but the road notices them:
+
+  - A scene (<ansi fg="command">help events</ansi>) may offer a choice only someone with your
+    background can make: a soldier talks to a deserter as one of his own,
+    an acolyte knows the old words. A choice you cannot make shows as
+    <ansi fg="black-bold">(closed: needs a leader who was a soldier)</ansi>; one you can shows your
+    name and what opened it: <ansi fg="black-bold">(Mara, life story: a soldier)</ansi>.
+  - Townsfolk who have heard of your deeds (<ansi fg="command">help townsfolk</ansi>) may
+    mention it: a soldier who fells a beast hears about the drill.
+  - Only you carry a life story. Companions do not, so a background
+    choice is always yours to make, as the leader.
+
+<ansi fg="command">lifestory</ansi> shows yours.
 
 Characters made before life stories existed are asked once, when they next
 log in. Skip it and <ansi fg="command">creation</ansi> or <ansi fg="command">lifestory choose</ansi> asks again whenever you like.

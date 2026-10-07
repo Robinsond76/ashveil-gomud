@@ -206,3 +206,27 @@ func TestValidateRejectsMalformedData(t *testing.T) {
 	d.Stage(StageTrade).Options[1].ID = d.Stage(StageTrade).Options[0].ID
 	assert.Error(t, d.Validate(), "a repeated id")
 }
+
+func TestTagsNameEachStagePick(t *testing.T) {
+	picks := Picks{StageHomeland: "hill-clans", StageUpbringing: "farmhand", StageTrade: "soldier", "trade-stat": "strength"}
+	assert.Equal(t, []string{"homeland-hill-clans", "upbringing-farmhand", "trade-soldier"}, Tags(picks))
+	assert.Equal(t, []string{"trade-soldier"}, Tags(PicksWithBackground("soldier")))
+	assert.Empty(t, Tags(nil), "no life story, no tags")
+}
+
+func TestTagNameReadsAPickAsThePlayerSeesIt(t *testing.T) {
+	shipped(t)
+	for tag, want := range map[string]string{
+		"trade-soldier":          "a soldier",
+		"homeland-hill-clans":    "the hill clans",
+		"Upbringing-Hunters-Get": "a hunter's get",
+	} {
+		got, ok := TagName(tag)
+		assert.True(t, ok, tag)
+		assert.Equal(t, want, got, tag)
+	}
+	for _, tag := range []string{"trade-dancer", "soldier", "", "trade-"} {
+		_, ok := TagName(tag)
+		assert.False(t, ok, tag)
+	}
+}

@@ -34,7 +34,9 @@ const (
 	// maxHeard is how many told deeds a player's memory keeps: the chronicle
 	// keeps 300, so an older deed is gone before its memory is.
 	maxHeard = chronicle.MaxEntries
-	// maxTold is how many recent tellings the views show.
+	// maxTold is how many recent tellings the views show. It is also how
+	// far back "heard lately" looks: a background line the listener heard
+	// within this many tellings no longer beats plain lines.
 	maxTold = 12
 	// queryLimit is how many of the newest deeds a choice reads.
 	queryLimit = 80
@@ -61,6 +63,16 @@ type UserState struct {
 func (s UserState) heard(seq int) bool {
 	for _, h := range s.Heard {
 		if h == seq {
+			return true
+		}
+	}
+	return false
+}
+
+// toldLine reports whether a line is among the player's recent tellings.
+func (s UserState) toldLine(id string) bool {
+	for _, t := range s.Told {
+		if t.Line == id {
 			return true
 		}
 	}
@@ -288,6 +300,7 @@ func (m *Module) Speak(npc townsfolk.NPC, listeners []int) (townsfolk.Speech, bo
 			Leader:    name,
 			Entries:   chronicle.Query(uid, chronicle.Filter{Since: since, Limit: queryLimit}),
 			Heard:     st.heard,
+			LineHeard: st.toldLine,
 			Flag:      func(f string) bool { return m.w.Flag(uid, f) },
 			MemberTag: func(key, tag string) bool { return m.w.MemberTag(uid, key, tag) },
 			Weather:   m.w.Weather(npc.Zone),
