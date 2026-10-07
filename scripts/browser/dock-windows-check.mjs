@@ -1372,6 +1372,33 @@ await page.setViewportSize({ width: 1280, height: 900 });
   check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: a reopened window shows the deeds at once');
 }
 
+// --- Phase 68: what the towns say, above the Chronicle ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  const chronicle68 = { total: 1, tally: { boss: 1 }, entries: [{ seq: 1, at: 1, ago: '1 hour ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King' }] };
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), chronicle68);
+  const town = () => page.evaluate(() => document.getElementById('company-chronicle').textContent);
+  await page.evaluate(() => window.gmcp('Company.Townsfolk', { total: 0, told: [], fresh: [], marks: [] }));
+  check((await town()).includes('Nobody has spoken of the company yet'), 'Townsfolk: an empty memory says so');
+  await page.evaluate(x => window.gmcp('Company.Townsfolk', {
+    total: 1,
+    told: [{ ago: '2 minutes ago', text: 'Word is Wren put down the Hollow King. ' + x }],
+    fresh: [{ ago: '1 hour ago', kind: 'relic', text: 'Wren found the Ember Crown' }],
+    marks: ['boss-slayers'],
+  }), xss);
+  check((await town()).includes('What the towns say of you') && (await town()).includes('Word is Wren put down the Hollow King.'), 'Townsfolk: what a talker said');
+  check((await town()).includes('not yet spoken of') && (await town()).includes('Wren found the Ember Crown'), 'Townsfolk: deeds the towns may yet speak of');
+  check((await town()).includes('Marks the towns carry of you: boss-slayers.'), 'Townsfolk: the marks left');
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 1, 'Townsfolk: the chronicle rows are unchanged');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-chronicle img')), 'Townsfolk: server text is text, never markup');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-chronicle'); return p.scrollWidth <= p.clientWidth + 1; }), 'Townsfolk fits a phone');
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '68-townsfolk-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '68-townsfolk.png') }); }
+}
+
 // --- Phase 64: the Opinions sub-tab ---
 {
   await page.getByRole('tab', { name: 'Company' }).first().click();

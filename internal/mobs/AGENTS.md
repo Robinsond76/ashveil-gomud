@@ -41,3 +41,7 @@ Phase 30f templates may opt into `leap` and `sweep`; both replace normal enemy m
 ## Ashveil: idle chatter limits
 
 Says, saytos, shouts and emotes a mob queues during its idle turn (`BeginIdle`/`EndIdle`, set by `internal/hooks` `HandleIdleMobs`) pass `idleChatterAllowed` (`chatter.go`): one decision per turn from the cooldown (`GamePlay.MobChatterCooldownRounds`) and each listener's memory of the line (`GamePlay.MobChatterMemoryRounds`). Commands queued outside an idle turn are never held back, so don't wrap replies, combat or conversation steps in an idle turn.
+
+## Ashveil Phase 68: townsfolk
+
+`townsfolk: [tags]` on a mob template makes it a talker (`Mob.Townsfolk`). Only `internal/hooks` `HandleIdleMobs` reads it, to ask `internal/townsfolk` what the NPC says about a listener's deeds; the line goes through the same idle-chatter limits as any say. The slice is shared by every instance of the template; never write to it.

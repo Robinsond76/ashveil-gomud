@@ -33,6 +33,7 @@ a band. Every part has its own page:
   <ansi fg="command">help mount</ansi>         a pack animal to carry more
   <ansi fg="command">help events</ansi>        scenes on the road, with choices
   <ansi fg="command">help chronicle</ansi>     the record of your company's deeds
+  <ansi fg="command">help townsfolk</ansi>     towns that remember those deeds
   <ansi fg="command">help opinions</ansi>      what your companions think of your choices
   <ansi fg="command">help bonds</ansi>         how your companions feel about each other
 

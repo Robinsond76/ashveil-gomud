@@ -171,6 +171,7 @@ help:
       - gigs
       - events
       - chronicle
+      - townsfolk
       - opinions
       - bonds
     communication:
@@ -349,6 +350,7 @@ help-aliases:
   progression: [stat-steps, stat steps, leveling]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   chronicle: [chronicles, deeds, company chronicle]
+  townsfolk: [renown, town memory, talk of the town, townsfolk talk]
   opinions: [opinion, companion opinions, company opinions, loyalty opinions]
   bonds: [bond, companion bonds, company bonds, friendship, friendships, rivalry, rivalries, rivals, friends]
   events: [event, scene, scenes, story-events, story events, choose, story]

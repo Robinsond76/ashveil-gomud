@@ -1,0 +1,41 @@
+# Test content only (the world is temporary, Phase 68): a few lines for the
+# test talker so every kind of line can be seen. The replacement world brings
+# its own in <DataFiles>/townsfolk/*.yaml.
+- id: boss-slain
+  kind: boss
+  tags: [gossip]
+  text: "Word is {who} put down {subject}. Folk sleep easier for it."
+  sets: boss-slayers
+- id: relic-found
+  kind: relic
+  tags: [gossip]
+  text: "They say {who} came out of the dark with {subject}. Mind who sees it."
+- id: spared-mercy
+  kind: spared
+  tags: [gossip]
+  text: "I heard {who} let {subject} walk. Soft, or wise. Time will say."
+- id: executed-hard
+  kind: executed
+  tags: [gossip]
+  text: "{who} had {subject} put to the sword, they say. A hard road, that."
+- id: fell-pity
+  kind: fell
+  tags: [gossip]
+  text: "A shame about {who}. The road takes its toll."
+- id: relic-after-boss
+  kind: relic
+  flag: boss-slayers
+  tags: [gossip]
+  text: "Slayers of dragons and wardens, and now {subject} besides. The town will want to meet you, {who}."
+- id: rain-talk
+  weather: [rain, storm]
+  tags: [gossip]
+  text: "Wet again. The roads will be mud by morning."
+- id: night-talk
+  time: night
+  tags: [gossip]
+  text: "Late to be out. Keep to the lamplight."
+- id: day-talk
+  time: day
+  tags: [gossip]
+  text: "Market's quiet today."

@@ -1,6 +1,7 @@
 package testarea
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -229,5 +230,36 @@ func TestHelpPages(t *testing.T) {
 	for _, want := range []string{"testarea return", "testarea fight", "testarea class", "testarea level", "testarea companion add", "testarea kit", "testarea weather", "closed set of rooms"} {
 		assert.Contains(t, fromCommand, want)
 		assert.Contains(t, fromHelp, want)
+	}
+}
+
+// TestEachHubExitLeadsBack: a room the hub reaches by a compass exit leads
+// back by the opposite one (the 68 review found Gossip Corner's way back
+// pointing southwest, away from the hub).
+func TestEachHubExitLeadsBack(t *testing.T) {
+	opposite := map[string]string{
+		"north": "south", "south": "north", "east": "west", "west": "east",
+		"northeast": "southwest", "southwest": "northeast", "northwest": "southeast", "southeast": "northwest",
+		"up": "down", "down": "up",
+	}
+	type exits map[string]struct {
+		RoomID int `yaml:"roomid"`
+	}
+	read := func(id int) exits {
+		data, err := os.ReadFile(filepath.Join(shippedWorld(), "rooms", "test_area", fmt.Sprintf("%d.yaml", id)))
+		require.NoError(t, err)
+		var r struct {
+			Exits exits `yaml:"exits"`
+		}
+		require.NoError(t, yaml.Unmarshal(data, &r))
+		return r.Exits
+	}
+	for dir, e := range read(HubRoom) {
+		back, ok := opposite[dir]
+		if !ok {
+			continue
+		}
+		got, ok := read(e.RoomID)[back]
+		assert.True(t, ok && got.RoomID == HubRoom, "room %d (the hub's %s) leads back %s", e.RoomID, dir, back)
 	}
 }

@@ -3,6 +3,7 @@ package usercommands
 import (
 	"github.com/GoMudEngine/GoMud/internal/stance"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/bonds"
@@ -648,6 +649,44 @@ func TestOpinionsHelp(t *testing.T) {
 		text, err := GetHelpContents(hub)
 		require.NoError(t, err, hub)
 		assert.Contains(t, text, "opinions", "%s mentions opinions", hub)
+	}
+}
+
+// Phase 68: help townsfolk renders, answers to its aliases, is indexed on
+// the road, states what the code enforces, and is linked from the pages
+// about deeds.
+func TestTownsfolkHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "townsfolk", "help index lists townsfolk under the road")
+
+	want, err := GetHelpContents("townsfolk")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{"Help for", "townsfolk", "renown", "Chronicle tab", "once per player", "Nobody changes a price", "90 days", "mark"} {
+		assert.Contains(t, plain, phrase)
+	}
+	assert.NotContains(t, plain, "{{")
+	for _, m := range regexp.MustCompile(`help ([a-z-]+)`).FindAllStringSubmatch(plain, -1) {
+		_, err := GetHelpContents(m[1])
+		assert.NoError(t, err, "help townsfolk points at help %s", m[1])
+	}
+	for _, alias := range []string{"renown", "town memory", "talk of the town", "townsfolk talk"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help townsfolk", alias)
+	}
+	for _, hub := range []string{"adventure", "chronicle", "company", "webclient"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "help townsfolk", "%s links to help townsfolk", hub)
 	}
 }
 

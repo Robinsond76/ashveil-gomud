@@ -92,6 +92,7 @@ type Mob struct {
 	TargetingNoise  int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
 	WindUps         map[string]int       `yaml:"windups,omitempty"`        // Ashveil (Phase 30d2): wind-up ability id -> percent of its turns it starts one (enemies only)
 	Sprite          string               `yaml:"sprite,omitempty"`         // Ashveil (Phase 40f): its battle-screen sprite key (e.g. wolf-timber); blank falls back by race
+	Townsfolk       []string             `yaml:"townsfolk,omitempty"`      // Ashveil (Phase 68): tags that make it a talker who mentions a company's deeds (internal/townsfolk)
 	Role            string               `yaml:"role,omitempty"`           // Ashveil (Phase 33i2): its role as an enemy: fighter (default), healer, caster, guardian
 	Coordination    int                  `yaml:"coordination,omitempty"`   // Ashveil (Phase 33i2): sets its group's coordination tier (1-4) outright; 0 is by level
 	WoundsRule      string               `yaml:"wounds,omitempty"`         // Ashveil (Phase 33i2): "none" takes no wounds as an enemy; else light wounds
