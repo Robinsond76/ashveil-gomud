@@ -350,19 +350,18 @@ func HPPercent(level int, b Band) int {
 	return min(100, OrdinaryHPPercent+gap*(100-OrdinaryHPPercent)/UnderBandGap)
 }
 
-// SpreadPercent is the share of an ordinary foe's softness (100 less its HP
-// share) that becomes aim noise: the percent of its re-aims that take a
-// random foe instead of its rule's pick. Without it every foe goes for the
-// weakest member, so the company's leader or wizard falls in a few fights
-// while the rest stand untouched.
-const SpreadPercent = 100
-
-// Spread is the aim noise an ordinary foe with hpPercent of its HP gets.
+// Spread is the aim noise an ordinary foe with hpPercent of its HP gets:
+// the percent of its re-aims that take a random member it can reach instead
+// of its rule's pick. A fully softened foe (OrdinaryHPPercent) aims at random
+// every time, and the noise fades with the softness to none at full HP.
+// Without it every foe goes for the weakest member, so one member (the
+// leader, or a wizard left in the front row) takes nearly every blow and the
+// company rests after a handful of fights while the rest stand untouched.
 func Spread(hpPercent int) int {
 	if hpPercent <= 0 || hpPercent >= 100 {
 		return 0
 	}
-	return (100 - hpPercent) * SpreadPercent / 100
+	return min(100, (100-hpPercent)*100/(100-OrdinaryHPPercent))
 }
 
 // Soften sets the HP share of an ordinary group's foes against a company

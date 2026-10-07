@@ -33,7 +33,7 @@ func TestEncountersHelp(t *testing.T) {
 	page, err := GetHelpContents("encounters")
 	require.NoError(t, err)
 	text := tagPattern.ReplaceAllString(page, "")
-	for _, want := range []string{"Help for", "two entries", "30 real seconds", "15 in 100", "one group in\n  six", "twice the health", "half an hour", "Lv 5-7", "dangerous", "two or three escorts", "your company alone", "cache", "its own roll"} {
+	for _, want := range []string{"Help for", "two entries", "30 real seconds", "15 in 100", "one group in\n  six", "twice the health", "half an hour", "Lv 5-7", "dangerous", "two or three escorts", "your company alone", "cache", "its own roll", "two-fifths of the health", "fifteen or more", "five under"} {
 		assert.Contains(t, text, want)
 	}
 	for _, alias := range []string{"encounter", "random-encounters", "danger", "boss", "cache", "spoils", "personal loot", "grace"} {

@@ -206,7 +206,8 @@ func TestOrdinaryFoesSoftenForACompanyAtOrAboveTheBandAndFadeUnderIt(t *testing.
 	assert.Equal(t, 100, HPPercent(band.Low-UnderBandGap, band), "full HP at the gap")
 	assert.Equal(t, 100, HPPercent(1, Band{Low: 20, High: 22}), "never past full")
 	assert.Equal(t, 0, Spread(100), "full-HP foes do not spread")
-	assert.Equal(t, 100-OrdinaryHPPercent, Spread(OrdinaryHPPercent)*100/SpreadPercent)
+	assert.Equal(t, 100, Spread(OrdinaryHPPercent), "a fully softened foe aims at random")
+	assert.Equal(t, 50, Spread(70), "halfway to full HP, half its re-aims are random")
 }
 
 func TestSoftenLeavesABossAndItsEscortsAlone(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
@@ -103,6 +104,7 @@ func measureAtLevelFight(t *testing.T, band encounters.Band, level, size int, ma
 	f := newBalanceFightWithOptions(t, level, companyDefault, enemyDefault, balanceFightOptions{
 		EnemyCount: count, EnemyLevels: enemies, Classes: classes,
 		OrdinaryHPPercent: encounters.HPPercent(level, band),
+		PlayerClass:       "warrior",
 		Setup: func(b *brawl) {
 			dressLeader(b.aria.Character)
 			for id := 1; id <= 4; id++ {
@@ -111,6 +113,7 @@ func measureAtLevelFight(t *testing.T, band encounters.Band, level, size int, ma
 					require.NoError(t, err, companionNames[id])
 				}
 			}
+			placeAtLevelFormation(t, keep, magic)
 		},
 	})
 	members := []*characters.Character{f.aria.Character}
@@ -229,8 +232,13 @@ func TestBalanceAtLevel(t *testing.T) {
 				}
 				var rounds, lengths, strict []int
 				var lost, won float64
+				var slotHP, slotMana [5]float64
 				for _, c := range ordinary {
 					rounds = append(rounds, c.Rounds)
+					for i := range slotHP {
+						slotHP[i] += c.Health[i] / float64(len(ordinary))
+						slotMana[i] += c.Mana[i] / float64(len(ordinary))
+					}
 					for _, h := range c.Health {
 						lost += h / float64(size)
 					}
@@ -245,6 +253,8 @@ func TestBalanceAtLevel(t *testing.T) {
 				n := float64(len(ordinary))
 				t.Logf("ATLEVEL | %d-%d | %s | %d members | wins %.0f%% | rounds %d | HP lost %.1f%% | fights before rest p25/median/p75 %s | weakest member kept above %d%%: %s |",
 					low, high, name, size, 100*won/n, median(rounds), 100*lost/n, quartiles(lengths), restHealthFloor, quartiles(strict))
+				t.Logf("ATLEVEL | %d-%d | %s | %d members | health lost a fight by slot (leader, tamsin, oswin, garrick, ysolde) %.0f/%.0f/%.0f/%.0f/%.0f%% | mana %.0f/%.0f/%.0f/%.0f/%.0f%% |",
+					low, high, name, size, 100*slotHP[0], 100*slotHP[1], 100*slotHP[2], 100*slotHP[3], 100*slotHP[4], 100*slotMana[0], 100*slotMana[1], 100*slotMana[2], 100*slotMana[3], 100*slotMana[4])
 				target := atLevelTargets[size]
 				lo, hi := target.martialLo, target.martialHi
 				if magic {
@@ -260,4 +270,33 @@ func TestBalanceAtLevel(t *testing.T) {
 			}
 		}
 	}
+}
+
+// placeAtLevelFormation stands the company as a player would: fighters in
+// the front row, the healer, the ranger and a wizard behind them.
+func placeAtLevelFormation(t *testing.T, keep map[int]bool, magic bool) {
+	rec, ok := module.registry.Get(7)
+	require.True(t, ok)
+	front := []domain.MemberKey{domain.LeaderMemberKey}
+	var back []domain.MemberKey
+	for _, id := range []int{1, 3, 2, 4} {
+		if !keep[id] {
+			continue
+		}
+		if id == 1 || id == 3 && !magic {
+			front = append(front, domain.CompanionMemberKey(id))
+		} else {
+			back = append(back, domain.CompanionMemberKey(id))
+		}
+	}
+	var f domain.Formation
+	cols := []int{1, 0, 2}
+	for i, k := range front {
+		f[0][cols[i]] = k
+	}
+	for i, k := range back {
+		f[1][cols[i]] = k
+	}
+	rec.Formation = f
+	module.registry.Put(rec)
 }

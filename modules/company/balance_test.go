@@ -332,6 +332,9 @@ type balanceFightOptions struct {
 	// Setup runs once the company and the foes stand ready, just before the
 	// attack (Phase 69: gear and stances).
 	Setup func(b *brawl)
+	// PlayerClass gives the leader a class; empty leaves the mirror's
+	// classless leader.
+	PlayerClass string
 }
 
 func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, enemyLevels ...int) *balanceFight {
@@ -349,7 +352,9 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 	}
 	b.withArchetypesFor("", classes)
 	// 30g4: configured classes supply HP on both sides of the even mirror.
-	archetypes.SetProvider(balanceHPProvider(t))
+	hp := balanceHPProvider(t)
+	hp.player = opts.PlayerClass
+	archetypes.SetProvider(hp)
 	for id := 1; id <= 4; id++ {
 		b.companion(id).Character.HPArchetype, _ = module.CompanionArchetype(7, id)
 	}
