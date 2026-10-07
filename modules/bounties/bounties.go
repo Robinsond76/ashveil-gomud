@@ -97,7 +97,22 @@ func init() {
 	// A new deed may be proof: refresh the progress the tab shows.
 	chronicle.OnRecord(func(uid int, _ chronicle.Entry) { m.push(uid) })
 	userstate.Register(stateContributor{m})
+	bounty.SetHunting(m.hunting)
 	module = m
+}
+
+// hunting reports whether the company holds a bounty, not yet lapsed, on
+// the target with this chronicle reference in this zone.
+func (m *Module) hunting(userID int, ref, zone string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := m.clock().Unix()
+	for _, h := range m.state[userID].Held {
+		if h.Target.Ref == ref && h.Target.Zone == zone && now < h.Due {
+			return true
+		}
+	}
+	return false
 }
 
 func newModule() *Module {

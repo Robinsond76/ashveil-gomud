@@ -31,7 +31,7 @@ with a button to filter by kind. It fits a phone as it does the desktop.
   stories      a scene on the road ended, and how (<ansi fg="command">help events</ansi>)
   awakenings   a relic woke a new power while it was worn (<ansi fg="command">help awakenings</ansi>)
   errands      a companion came home from an errand (<ansi fg="command">help errands</ansi>)
-  bands        a named band of foes was broken, every foe down (<ansi fg="command">help bounties</ansi>)
+  bands        a band you held a bounty on was broken, every foe down (<ansi fg="command">help bounties</ansi>)
   bounties     a bounty was claimed at a board (<ansi fg="command">help bounties</ansi>)
   rites        the company held rites for a companion gone for good, or let it pass (<ansi fg="command">help rites</ansi>)
 

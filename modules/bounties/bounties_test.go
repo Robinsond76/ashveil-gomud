@@ -494,3 +494,18 @@ func TestTheCommandOnTheShippedBoardPaysGoldToTheCharacter(t *testing.T) {
 	got = heard(t, func() { _, _ = m.command("claim", u, nil, events.CmdSecretly) })
 	assert.Contains(t, got, "claimed at a board")
 }
+
+// Review: the encounters module writes a group deed only while a live
+// bounty names that group in that zone, so ordinary fights do not crowd
+// the chronicle.
+func TestHuntingIsOnlyAHeldLiveBountyOnThatGroupAndZone(t *testing.T) {
+	r := newRig(t)
+	n, po := r.posting(t, bounty.Group)
+	assert.False(t, r.m.hunting(leader, po.Target.Ref, po.Target.Zone), "nothing held")
+	r.say(t, "take "+itoa(n))
+	assert.True(t, r.m.hunting(leader, po.Target.Ref, po.Target.Zone))
+	assert.False(t, r.m.hunting(leader, po.Target.Ref, "Elsewhere"), "another zone's group of that name")
+	assert.False(t, r.m.hunting(leader+1, po.Target.Ref, po.Target.Zone), "another company")
+	r.now = r.now.Add(bounty.TermSeconds * time.Second)
+	assert.False(t, r.m.hunting(leader, po.Target.Ref, po.Target.Zone), "a lapsed bounty")
+}

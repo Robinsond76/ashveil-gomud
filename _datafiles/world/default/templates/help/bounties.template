@@ -23,7 +23,9 @@ you hold works anywhere.
 
   Lair      slay the master of a lair in a named zone. It pays for one kill.
   Band      break three groups of a named kind in a named zone. A group is
-            broken when every foe in it is down.
+            broken when every foe in it is down. While you hold the bounty,
+            each one broken is written in your chronicle; other fights are
+            not, so the chronicle keeps the deeds that matter.
 
 Each posting names the zone's level band, and says how that band rates for
 your company (<ansi fg="command">help encounters</ansi>). A bounty never changes a foe: the lair master and the

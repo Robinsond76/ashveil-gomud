@@ -25,6 +25,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/bounty"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
@@ -507,7 +508,9 @@ func (m *EncountersModule) noteBossFallenLocked(r *record, now time.Time) {
 }
 
 // noteGroupBrokenLocked writes a won ordinary group into its leader's
-// chronicle (Phase 76: bounty boards read it). A boss's fall is already a
+// chronicle while the leader holds a bounty on it (Phase 76: the board reads
+// it; every random fight would crowd the chronicle's 300 deeds and the
+// towns' newest 80 out of the deeds that matter). A boss's fall is already a
 // Boss deed from the mob's death, a story event's group has no table, and a
 // group cleared away (Remove) still has foes standing and never gets here.
 func (m *EncountersModule) noteGroupBrokenLocked(r *record) {
@@ -525,6 +528,9 @@ func (m *EncountersModule) noteGroupBrokenLocked(r *record) {
 	for _, table := range zone.Tables {
 		for _, c := range table {
 			if c.ID == r.comp && !c.Boss {
+				if !bounty.Hunting(r.Owner, "group:"+c.ID, room.Zone) {
+					return
+				}
 				chronicle.Record(r.Owner, chronicle.Entry{Kind: chronicle.Group, Subject: c.Title(), Ref: "group:" + c.ID, Place: room.Title, Zone: room.Zone})
 				return
 			}

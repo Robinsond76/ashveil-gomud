@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/bounty"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -743,8 +744,32 @@ func TestAWonGroupIsWrittenIntoTheChronicleOnce(t *testing.T) {
 	mem := chronicle.NewMemory()
 	chronicle.SetProvider(mem)
 	t.Cleanup(func() { chronicle.SetProvider(nil) })
+	hunting := false
+	bounty.SetHunting(func(uid int, ref, zone string) bool {
+		return hunting && uid == userID && ref == "group:wolves" && zone == zoneName
+	})
+	t.Cleanup(func() { bounty.SetHunting(nil) })
+	killAll := func() {
+		for _, r := range w.m.active {
+			for _, id := range r.Foes {
+				mobs.GetInstance(id).Character.Health = 0
+			}
+		}
+	}
+
+	// Won without a bounty on it: an ordinary fight is not a deed, so random
+	// fights never crowd the chronicle.
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	killAll()
+	w.m.settleLocked(false)
+	assert.Empty(t, w.m.active)
+	assert.Empty(t, chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}}), "no bounty held, no group deed")
+	hunting = true
 
 	// Fled: a survivor is cleared away, nothing is written.
+	w.m.graces[userID] = encounters.Grace{}
+	w.user.Character.RoomId = startRm
 	w.walk(t, "north")
 	require.Len(t, w.m.active, 1)
 	w.user.Character.RoomId = startRm

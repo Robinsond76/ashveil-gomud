@@ -271,3 +271,18 @@ func (s *State) Settle(i int, now int64) Held {
 	s.Done[h.PostID] = now + DoneKeepWindow*TermSeconds
 	return h
 }
+
+// hunting answers whether a company holds a live bounty on a target. The
+// bounties module sets it; nil (no module) is never hunting.
+var hunting func(userID int, ref, zone string) bool
+
+// SetHunting installs the held-bounty check (modules/bounties).
+func SetHunting(fn func(userID int, ref, zone string) bool) { hunting = fn }
+
+// Hunting reports whether the company holds a live bounty on the target
+// with this chronicle reference in this zone. The encounters module writes a
+// group deed only then, so ordinary fights do not crowd the chronicle out of
+// the boss deeds, rites and choices towns and relics read.
+func Hunting(userID int, ref, zone string) bool {
+	return hunting != nil && hunting(userID, ref, zone)
+}
