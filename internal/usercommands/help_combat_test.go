@@ -545,3 +545,40 @@ func TestEventsHelp(t *testing.T) {
 		assert.Contains(t, text, "help events", "%s links to help events", hub)
 	}
 }
+
+// Phase 63: help chronicle renders, answers to its aliases, is indexed on
+// the road, and is linked from the pages about the company, the web client
+// and scenes.
+func TestChronicleHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "chronicle", "help index lists chronicle under the road")
+
+	want, err := GetHelpContents("chronicle")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{"Help for", "chronicle boss", "chronicle all", "Chronicle tab", "newest 300 deeds", "executions", "promotions"} {
+		assert.Contains(t, plain, phrase)
+	}
+	for _, alias := range []string{"chronicles", "deeds", "company chronicle"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help chronicle", alias)
+	}
+	// GoMud's own history command keeps its page (review: an alias took it).
+	history, err := GetHelpContents("history")
+	require.NoError(t, err)
+	assert.NotEqual(t, want, history, "help history is the history command's page")
+	for _, hub := range []string{"adventure", "company", "events", "webclient"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "chronicle", "%s mentions the chronicle", hub)
+	}
+}

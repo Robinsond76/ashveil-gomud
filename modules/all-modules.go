@@ -8,6 +8,7 @@ package modules
 import (
 	_ "github.com/GoMudEngine/GoMud/modules/archetype"
 	_ "github.com/GoMudEngine/GoMud/modules/camping"
+	_ "github.com/GoMudEngine/GoMud/modules/chronicle"
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"
 	_ "github.com/GoMudEngine/GoMud/modules/company"
 	_ "github.com/GoMudEngine/GoMud/modules/death"

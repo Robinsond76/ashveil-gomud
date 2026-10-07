@@ -32,6 +32,7 @@ a band. Every part has its own page:
   <ansi fg="command">help cargo</ansi>         your company's load
   <ansi fg="command">help mount</ansi>         a pack animal to carry more
   <ansi fg="command">help events</ansi>        scenes on the road, with choices
+  <ansi fg="command">help chronicle</ansi>     the record of your company's deeds
 
 <ansi fg="yellow-bold">Rest</ansi>
   <ansi fg="command">help camp</ansi>          making camp and resting in the wild

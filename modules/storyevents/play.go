@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/storyevents"
 )
@@ -79,6 +80,12 @@ func (m *Module) choose(userID, n int, page string) {
 		return
 	}
 
+	if next == "" {
+		// Phase 63: a scene's end is a deed, with the answer that ended it
+		// and whoever took it. Written before the outcomes run, so a move
+		// outcome does not file it under the room the company was sent to.
+		chronicle.Record(userID, chronicle.Entry{Kind: chronicle.Story, Members: []string{actor.Name}, Keys: []string{actor.Key}, Subject: ev.Title, Detail: c.Label, Ref: "event:" + ev.ID})
+	}
 	var lines []string
 	if text != "" {
 		lines = append(lines, storyevents.Fill(text, actor.Name))
