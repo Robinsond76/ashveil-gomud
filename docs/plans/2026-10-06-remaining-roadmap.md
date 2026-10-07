@@ -56,8 +56,8 @@ cost merge order, not a dependency.
 | 40g | Battle animation and effects | 40f, 40s4 | After 40f |
 | 40h | Promoted and neutral class art in the client | 40b, 40g, 40s5 | Later |
 | 40i | Touch layout and installable web app | 40d, 40f | Later |
-| **41** | **World building, levels 1–15, tile-ready** (new number) | 40d, 37b | Later |
-| **42** | **Zones 15–30+, elite content, tier 4–6 placement** (new) | 41, 38c, 36d | Later |
+| **41** | **World building, levels 1–15, tile-ready** (new number) | 40d, 37b | Built as the test-only world ([plan](2026-10-07-phase-41-42-test-world.md)) |
+| **42** | **Zones 15–30+, elite content, tier 4–6 placement** (new) | 41, 38c, 36d | Built with 41 (same plan) |
 | **43a** | **Camp consumables** (designed 2026-10-01, now scheduled) | 40a2 | After 40a2 |
 | **43b** | **Weapon poisons** (designed 2026-10-01, now scheduled) | 43a | After 43a |
 | **50** | **Condition carries into battle; meal buffs** ([Outward phases](2026-10-06-outward-survival-phases.md)) | 47 | After 47 |

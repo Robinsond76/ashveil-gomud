@@ -1,0 +1,18 @@
+roomid: 3513
+zone: Thornreach Wood
+title: Mossy Ride
+description: Roots as thick as a man's waist cross the track. Fresh claw marks score a nearby
+  oak.
+biome: forest
+exits:
+  west:
+    roomid: 3512
+  east:
+    roomid: 3606
+resources:
+- forage
+- shelter
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

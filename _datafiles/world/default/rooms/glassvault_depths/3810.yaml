@@ -1,0 +1,22 @@
+roomid: 3810
+zone: Glassvault Depths
+title: Glittering Chamber
+description: Glassy crystals jut from the walls and throw back every light. A whisper that is
+  not your own voice echoes back.
+biome: cave
+exits:
+  east:
+    roomid: 3811
+  west:
+    roomid: 3809
+  south:
+    roomid: 3817
+  north:
+    roomid: 3804
+resources:
+- water
+- shelter
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

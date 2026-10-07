@@ -1,0 +1,22 @@
+roomid: 3515
+zone: Thornreach Wood
+title: Thorny Walk
+description: Roots as thick as a man's waist cross the track. A bird calls once and does not call
+  again.
+biome: land
+exits:
+  east:
+    roomid: 3516
+  west:
+    roomid: 3514
+  south:
+    roomid: 3521
+  north:
+    roomid: 3507
+resources:
+- water
+- herbs
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

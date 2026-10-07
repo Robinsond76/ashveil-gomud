@@ -1,0 +1,22 @@
+roomid: 3911
+zone: Stormcrown Heights
+title: Rimed Drift
+description: Ice crusts the rock and the path is a thread of footprints. Something huge has left
+  a trail in the snow.
+biome: snow
+exits:
+  east:
+    roomid: 3912
+  west:
+    roomid: 3910
+  south:
+    roomid: 3919
+resources:
+- shelter
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: heights

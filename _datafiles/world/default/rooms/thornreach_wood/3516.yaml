@@ -1,0 +1,25 @@
+roomid: 3516
+zone: Thornreach Wood
+title: Woodcutters' Clearing
+description: A clearing the woodcutters left behind, with stacked logs and a cold fire pit. It
+  is as safe as anywhere in the wood.
+biome: forest
+tags:
+- camping
+exits:
+  east:
+    roomid: 3517
+  west:
+    roomid: 3515
+  south:
+    roomid: 3522
+  north:
+    roomid: 3508
+resources:
+- firewood
+- shelter
+- forage
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

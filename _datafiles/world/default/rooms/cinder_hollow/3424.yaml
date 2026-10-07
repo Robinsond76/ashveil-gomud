@@ -1,0 +1,15 @@
+roomid: 3424
+zone: Cinder Hollow
+title: Blackened Clearing
+description: A smouldering stump pops and spits sparks.
+biome: land
+exits:
+  north:
+    roomid: 3419
+resources:
+- herbs
+- game
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

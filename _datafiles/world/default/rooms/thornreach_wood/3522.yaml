@@ -1,0 +1,22 @@
+roomid: 3522
+zone: Thornreach Wood
+title: Darkling Walk
+description: Moss muffles every sound and the air smells of loam.
+biome: forest
+exits:
+  east:
+    roomid: 3523
+  west:
+    roomid: 3521
+  north:
+    roomid: 3516
+resources:
+- shelter
+- game
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: wood

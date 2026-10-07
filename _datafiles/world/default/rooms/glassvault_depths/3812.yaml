@@ -1,0 +1,17 @@
+roomid: 3812
+zone: Glassvault Depths
+title: Cold Cavern
+description: Glassy crystals jut from the walls and throw back every light. Cave moths drift around
+  a glowing fungus.
+biome: cave
+exits:
+  west:
+    roomid: 3811
+  east:
+    roomid: 3905
+resources:
+- shelter
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

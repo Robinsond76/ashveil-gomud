@@ -1,0 +1,25 @@
+roomid: 3416
+zone: Cinder Hollow
+title: Charcoal Burners' Camp
+description: The old charcoal burners' camp, a ring of turf huts and a cold kiln. Bandits have
+  not found it yet, so a company can camp in peace.
+biome: land
+tags:
+- camping
+exits:
+  east:
+    roomid: 3417
+  west:
+    roomid: 3415
+  south:
+    roomid: 3422
+  north:
+    roomid: 3408
+resources:
+- firewood
+- shelter
+- forage
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

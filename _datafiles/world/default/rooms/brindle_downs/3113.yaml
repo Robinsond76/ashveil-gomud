@@ -1,0 +1,17 @@
+roomid: 3113
+zone: Brindle Downs
+title: Stony Common
+description: Wind combs the long grass flat and the sky feels very large. A cairn of white stones
+  marks the way.
+biome: land
+exits:
+  west:
+    roomid: 3112
+  east:
+    roomid: 3206
+resources:
+- game
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

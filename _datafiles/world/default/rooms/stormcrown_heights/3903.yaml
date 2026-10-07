@@ -1,0 +1,18 @@
+roomid: 3903
+zone: Stormcrown Heights
+title: Rimed Peak
+description: Snow streams off the ridge in long banners and the wind never stops. Old climbers'
+  ropes hang frozen from a crag.
+biome: snow
+exits:
+  west:
+    roomid: 3902
+  south:
+    roomid: 3908
+resources:
+- shelter
+- water
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

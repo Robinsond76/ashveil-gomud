@@ -1,0 +1,17 @@
+roomid: 3225
+zone: Marrowmere Fen
+title: Sodden Reedbed
+description: Marsh lights flicker over the far reeds.
+biome: land
+exits:
+  west:
+    roomid: 3224
+  north:
+    roomid: 3220
+resources:
+- forage
+- firewood
+mapx: 6
+mapy: 3
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,21 @@
+roomid: 3707
+zone: Ashen Barrows
+title: Forgotten Ossuary
+description: Cracked flagstones cover the floor and the dust has been disturbed. Scraps of burial
+  cloth hang from a niche.
+biome: dungeon
+exits:
+  east:
+    roomid: 3708
+  west:
+    roomid: 3706
+  south:
+    roomid: 3715
+  north:
+    roomid: 3701
+resources:
+- water
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

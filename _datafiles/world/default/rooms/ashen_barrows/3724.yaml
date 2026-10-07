@@ -1,0 +1,16 @@
+roomid: 3724
+zone: Ashen Barrows
+title: Forgotten Passage
+description: Scraps of burial cloth hang from a niche.
+biome: dungeon
+exits:
+  west:
+    roomid: 3723
+  north:
+    roomid: 3719
+resources:
+- firewood
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

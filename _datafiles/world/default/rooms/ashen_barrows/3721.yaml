@@ -1,0 +1,20 @@
+roomid: 3721
+zone: Ashen Barrows
+title: Cold Barrow
+description: A cold draught carries a smell of old earth and incense.
+biome: dungeon
+exits:
+  east:
+    roomid: 3722
+  north:
+    roomid: 3715
+resources:
+- water
+- firewood
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: crypt

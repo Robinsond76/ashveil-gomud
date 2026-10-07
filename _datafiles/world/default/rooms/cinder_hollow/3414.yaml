@@ -1,0 +1,18 @@
+roomid: 3414
+zone: Cinder Hollow
+title: Smouldering Burn
+description: Cinders crunch underfoot and the air smells of old smoke. Crows pick at something
+  in the cinders.
+biome: land
+exits:
+  east:
+    roomid: 3415
+  north:
+    roomid: 3406
+resources:
+- firewood
+- forage
+mapx: 0
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,18 @@
+roomid: 3705
+zone: Ashen Barrows
+title: Bone-strewn Ossuary
+description: Burial niches line the walls, most of them open and empty. A skull grins from a heap
+  of bones.
+biome: dungeon
+exits:
+  west:
+    roomid: 3704
+  south:
+    roomid: 3712
+resources:
+- water
+- firewood
+mapx: 6
+mapy: 0
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,19 @@
+roomid: 3411
+zone: Cinder Hollow
+title: Soot-dark Stack
+description: Charcoal burners abandoned the stacks here and bandits took their place. A cart wheel
+  lies half-burnt in a ditch.
+biome: land
+exits:
+  east:
+    roomid: 3412
+  west:
+    roomid: 3410
+  south:
+    roomid: 3419
+resources:
+- forage
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

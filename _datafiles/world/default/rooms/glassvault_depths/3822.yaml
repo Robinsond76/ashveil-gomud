@@ -1,0 +1,16 @@
+roomid: 3822
+zone: Glassvault Depths
+title: Cold Grotto
+description: The cave narrows into a gallery of smooth, glossy stone.
+biome: cave
+exits:
+  west:
+    roomid: 3821
+  north:
+    roomid: 3817
+resources:
+- shelter
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

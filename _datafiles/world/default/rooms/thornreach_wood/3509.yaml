@@ -1,0 +1,21 @@
+roomid: 3509
+zone: Thornreach Wood
+title: Bramble Glade
+description: Thorn and bramble close in on both sides of the narrow ride. A ring of toadstools
+  grows in the leaf mould.
+biome: forest
+exits:
+  east:
+    roomid: 3510
+  west:
+    roomid: 3508
+  south:
+    roomid: 3517
+  north:
+    roomid: 3503
+resources:
+- game
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

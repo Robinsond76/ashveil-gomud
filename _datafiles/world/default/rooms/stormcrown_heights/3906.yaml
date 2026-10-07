@@ -1,0 +1,22 @@
+roomid: 3906
+zone: Stormcrown Heights
+title: Rimed Crag
+description: The cold bites through cloaks and breath freezes in the beard. A distant roar rolls
+  down the mountain.
+biome: snow
+exits:
+  east:
+    roomid: 3907
+  west:
+    roomid: 3905
+  south:
+    roomid: 3914
+  north:
+    roomid: 3901
+resources:
+- shelter
+- water
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

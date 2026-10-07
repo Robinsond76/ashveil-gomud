@@ -1,0 +1,18 @@
+roomid: 3313
+zone: Greywatch Pass
+title: Rocky Tarn Edge
+description: A thin stream trickles over the stones beside the path. Broken arrow shafts litter
+  the ground.
+biome: mountains
+exits:
+  west:
+    roomid: 3312
+  east:
+    roomid: 3406
+resources:
+- firewood
+- water
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

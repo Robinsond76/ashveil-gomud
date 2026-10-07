@@ -1,0 +1,21 @@
+roomid: 3610
+zone: Hollowweb Deep
+title: Webbed Hollow
+description: The air is still and cold, and the trees are wrapped in silk. A web shivers on its
+  own.
+biome: forest
+exits:
+  east:
+    roomid: 3611
+  west:
+    roomid: 3609
+  south:
+    roomid: 3618
+  north:
+    roomid: 3604
+resources:
+- game
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

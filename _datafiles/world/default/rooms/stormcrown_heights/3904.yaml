@@ -1,0 +1,16 @@
+roomid: 3904
+zone: Stormcrown Heights
+title: Wind-scoured Edge
+description: The cold bites through cloaks and breath freezes in the beard. Something huge has
+  left a trail in the snow.
+biome: snow
+exits:
+  south:
+    roomid: 3910
+resources:
+- water
+- shelter
+mapx: 5
+mapy: 0
+mapz: 0
+hascoordinates: true

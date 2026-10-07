@@ -1,0 +1,16 @@
+roomid: 3421
+zone: Cinder Hollow
+title: Cinder Slope
+description: Charcoal burners abandoned the stacks here and bandits took their place.
+biome: land
+exits:
+  east:
+    roomid: 3422
+  north:
+    roomid: 3415
+resources:
+- game
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true

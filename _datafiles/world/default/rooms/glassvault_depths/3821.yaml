@@ -1,0 +1,21 @@
+roomid: 3821
+zone: Glassvault Depths
+title: The Mirror Pool
+description: A still black pool fills the cavern, and its surface shows no reflection. A cold, robed shape is bound beneath the water.
+biome: cave
+exits:
+  east:
+    roomid: 3822
+  north:
+    roomid: 3816
+resources:
+- shelter
+maplegend: Pond
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 40

@@ -1,0 +1,21 @@
+roomid: 3806
+zone: Glassvault Depths
+title: Dripping Grotto
+description: Your light is repeated a hundred times in faceted walls. A whisper that is not your
+  own voice echoes back.
+biome: cave
+exits:
+  east:
+    roomid: 3807
+  west:
+    roomid: 3805
+  south:
+    roomid: 3813
+  north:
+    roomid: 3801
+resources:
+- shelter
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

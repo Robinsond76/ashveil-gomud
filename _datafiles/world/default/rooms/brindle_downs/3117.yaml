@@ -1,0 +1,22 @@
+roomid: 3117
+zone: Brindle Downs
+title: Windy Tump
+description: A drystone wall runs along the slope, patched with turf. A cairn of white stones
+  marks the way.
+biome: forest
+exits:
+  east:
+    roomid: 3118
+  west:
+    roomid: 3116
+  south:
+    roomid: 3122
+  north:
+    roomid: 3110
+resources:
+- forage
+- firewood
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true

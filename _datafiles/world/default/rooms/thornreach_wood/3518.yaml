@@ -1,0 +1,25 @@
+roomid: 3518
+zone: Thornreach Wood
+title: Hushed Hollow
+description: Moss muffles every sound and the air smells of loam. Something has rubbed bark off
+  the nearest trunk, very high up.
+biome: forest
+exits:
+  east:
+    roomid: 3519
+  west:
+    roomid: 3517
+  south:
+    roomid: 3524
+  north:
+    roomid: 3510
+resources:
+- shelter
+- forage
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: wood

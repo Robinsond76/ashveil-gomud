@@ -1,0 +1,18 @@
+roomid: 3901
+zone: Stormcrown Heights
+title: Storm-struck Edge
+description: Ice crusts the rock and the path is a thread of footprints. A shattered banner lies
+  under the ice.
+biome: snow
+exits:
+  east:
+    roomid: 3902
+  south:
+    roomid: 3906
+resources:
+- game
+- water
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

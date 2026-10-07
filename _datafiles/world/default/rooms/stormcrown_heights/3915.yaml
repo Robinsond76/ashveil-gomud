@@ -1,0 +1,21 @@
+roomid: 3915
+zone: Stormcrown Heights
+title: Storm-struck Crown Path
+description: Snow streams off the ridge in long banners and the wind never stops. A distant roar
+  rolls down the mountain.
+biome: snow
+exits:
+  east:
+    roomid: 3916
+  west:
+    roomid: 3914
+  south:
+    roomid: 3922
+  north:
+    roomid: 3907
+resources:
+- game
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

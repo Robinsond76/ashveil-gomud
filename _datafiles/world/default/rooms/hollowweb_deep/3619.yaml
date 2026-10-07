@@ -1,0 +1,20 @@
+roomid: 3619
+zone: Hollowweb Deep
+title: Gloomy Burrow
+description: Webs hang in thick grey curtains between the trunks.
+biome: forest
+exits:
+  east:
+    roomid: 3620
+  west:
+    roomid: 3618
+  south:
+    roomid: 3624
+  north:
+    roomid: 3611
+resources:
+- forage
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true

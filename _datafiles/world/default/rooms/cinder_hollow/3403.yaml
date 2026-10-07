@@ -1,0 +1,20 @@
+roomid: 3403
+zone: Cinder Hollow
+title: Scorched Hollow Floor
+description: Cinders crunch underfoot and the air smells of old smoke. Fresh bootprints cross
+  the ash.
+biome: forest
+exits:
+  east:
+    roomid: 3404
+  west:
+    roomid: 3402
+  south:
+    roomid: 3409
+resources:
+- game
+- forage
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

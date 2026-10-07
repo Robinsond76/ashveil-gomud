@@ -1,0 +1,26 @@
+roomid: 3609
+zone: Hollowweb Deep
+title: The Lantern Hollow
+description: A fortified cottage deep in the wood with every window shuttered and a fire in every
+  room. The innkeeper burns webs off the walls each morning.
+biome: city
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3610
+  west:
+    roomid: 3608
+  south:
+    roomid: 3617
+  north:
+    roomid: 3603
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

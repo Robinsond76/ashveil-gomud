@@ -1,0 +1,17 @@
+roomid: 3704
+zone: Ashen Barrows
+title: Silent Vault
+description: Burial niches line the walls, most of them open and empty. Bone dust crunches underfoot.
+biome: cave
+exits:
+  east:
+    roomid: 3705
+  south:
+    roomid: 3711
+resources:
+- water
+- firewood
+mapx: 5
+mapy: 0
+mapz: 0
+hascoordinates: true

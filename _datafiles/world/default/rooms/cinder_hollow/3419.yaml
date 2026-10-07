@@ -1,0 +1,21 @@
+roomid: 3419
+zone: Cinder Hollow
+title: Ashen Track
+description: Ash drifts across the ground in grey drifts and the trees are black stumps.
+biome: land
+exits:
+  east:
+    roomid: 3420
+  west:
+    roomid: 3418
+  south:
+    roomid: 3424
+  north:
+    roomid: 3411
+resources:
+- herbs
+- game
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true

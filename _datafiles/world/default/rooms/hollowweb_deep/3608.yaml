@@ -1,0 +1,22 @@
+roomid: 3608
+zone: Hollowweb Deep
+title: Dim Burrow
+description: Webs hang in thick grey curtains between the trunks. Something drops from the branches
+  and skitters away.
+biome: forest
+exits:
+  east:
+    roomid: 3609
+  west:
+    roomid: 3607
+  south:
+    roomid: 3616
+  north:
+    roomid: 3602
+resources:
+- herbs
+- forage
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true

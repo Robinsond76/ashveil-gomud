@@ -1,0 +1,16 @@
+roomid: 3805
+zone: Glassvault Depths
+title: Glittering Cavern
+description: Your light is repeated a hundred times in faceted walls. A crack in the crystal widens.
+biome: cave
+exits:
+  east:
+    roomid: 3806
+  west:
+    roomid: 3713
+resources:
+- water
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

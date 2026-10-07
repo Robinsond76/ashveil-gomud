@@ -1,0 +1,23 @@
+roomid: 3217
+zone: Marrowmere Fen
+title: Sodden Hummock
+description: Frogs fall silent as you pass and the reeds close behind. Something large slides
+  into the water out of sight.
+biome: shore
+exits:
+  east:
+    roomid: 3218
+  west:
+    roomid: 3216
+  north:
+    roomid: 3209
+resources:
+- fishing
+- herbs
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: fen

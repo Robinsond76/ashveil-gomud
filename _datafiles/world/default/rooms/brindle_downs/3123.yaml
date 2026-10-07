@@ -1,0 +1,14 @@
+roomid: 3123
+zone: Brindle Downs
+title: Heathery Hollow
+description: Larks climb out of the grass and the track is rutted by drovers.
+biome: land
+exits:
+  north:
+    roomid: 3119
+resources:
+- forage
+mapx: 6
+mapy: 3
+mapz: 0
+hascoordinates: true

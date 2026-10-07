@@ -1,0 +1,18 @@
+roomid: 3701
+zone: Ashen Barrows
+title: Bone-strewn Passage
+description: A cold draught carries a smell of old earth and incense. A brazier of green fire
+  burns without fuel.
+biome: dungeon
+exits:
+  east:
+    roomid: 3702
+  south:
+    roomid: 3707
+resources:
+- shelter
+- water
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

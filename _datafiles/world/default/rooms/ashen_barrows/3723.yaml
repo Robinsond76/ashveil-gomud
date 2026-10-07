@@ -1,0 +1,21 @@
+roomid: 3723
+zone: Ashen Barrows
+title: The Warden's Court
+description: Rows of stone thrones face a dais of black glass. Rusted shields and broken coffin lids lie in heaps. The air is bitterly cold.
+biome: dungeon
+exits:
+  east:
+    roomid: 3724
+  north:
+    roomid: 3718
+resources:
+- shelter
+maplegend: Throneroom
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 40

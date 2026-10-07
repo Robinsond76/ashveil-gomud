@@ -1,0 +1,23 @@
+roomid: 3802
+zone: Glassvault Depths
+title: Mirrored Passage
+description: The cave narrows into a gallery of smooth, glossy stone. Something skitters across
+  the ceiling far above.
+biome: cave
+exits:
+  east:
+    roomid: 3803
+  west:
+    roomid: 3801
+  south:
+    roomid: 3807
+resources:
+- water
+- shelter
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: vault

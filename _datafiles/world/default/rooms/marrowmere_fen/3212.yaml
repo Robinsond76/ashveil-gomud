@@ -1,0 +1,22 @@
+roomid: 3212
+zone: Marrowmere Fen
+title: Brackish Hummock
+description: Black water stands between tussocks of reed and sedge. Marsh lights flicker over
+  the far reeds.
+biome: land
+exits:
+  east:
+    roomid: 3213
+  west:
+    roomid: 3211
+  south:
+    roomid: 3220
+  north:
+    roomid: 3205
+resources:
+- firewood
+- herbs
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true

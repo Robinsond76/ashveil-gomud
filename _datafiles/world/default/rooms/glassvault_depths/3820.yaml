@@ -1,0 +1,17 @@
+roomid: 3820
+zone: Glassvault Depths
+title: Hollow Chamber
+description: Water drips from the roof into pools that never freeze.
+biome: cave
+exits:
+  west:
+    roomid: 3819
+  north:
+    roomid: 3814
+resources:
+- water
+- shelter
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true

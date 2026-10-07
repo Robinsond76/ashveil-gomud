@@ -1,0 +1,24 @@
+roomid: 3719
+zone: Ashen Barrows
+title: Crumbling Gallery
+description: Stone arches hold up a ceiling of dry roots and old dust.
+biome: dungeon
+exits:
+  east:
+    roomid: 3720
+  west:
+    roomid: 3718
+  south:
+    roomid: 3724
+  north:
+    roomid: 3711
+resources:
+- water
+- firewood
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: crypt

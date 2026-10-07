@@ -1,0 +1,24 @@
+roomid: 3617
+zone: Hollowweb Deep
+title: Cocoon-hung Tunnel
+description: Silk sticks to your sleeves, and every step leaves a thread. A web shivers on its
+  own.
+biome: forest
+exits:
+  east:
+    roomid: 3618
+  west:
+    roomid: 3616
+  south:
+    roomid: 3623
+  north:
+    roomid: 3609
+resources:
+- game
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: web

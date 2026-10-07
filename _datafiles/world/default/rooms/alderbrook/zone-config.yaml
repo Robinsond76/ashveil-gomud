@@ -2,3 +2,47 @@ name: Alderbrook
 roomid: 2101
 defaultbiome: land
 tileready: true
+
+# Phase 41: the hamlet's fringe is the gentlest band in the world, so a
+# company that has just left the tutorial road meets small groups here.
+encounters:
+  band:
+    low: 2
+    high: 4
+  entrychance: 12
+  tables:
+    fringe:
+      - id: field-rats
+        weight: 35
+        text: Rats boil out of the hedgerow and swarm toward your company.
+        members:
+          - mobid: 1
+            count: 3
+      - id: big-rat-nest
+        weight: 20
+        text: A big rat and its young scurry out from a woodpile.
+        members:
+          - mobid: 12
+            count: 1
+          - mobid: 1
+            count: 2
+      - id: stray-dogs
+        weight: 20
+        text: Half-starved junkyard dogs bark and charge down the lane.
+        members:
+          - mobid: 31
+            count: 3
+      - id: road-brigands
+        weight: 15
+        text: Road brigands step out of the hedge with their blades drawn.
+        members:
+          - mobid: 86
+            count: 2
+      - id: poacher-trio
+        weight: 10
+        text: A trio of poachers, a bonesetter among them, hails the company from the field edge.
+        members:
+          - mobid: 87
+            count: 2
+          - mobid: 88
+            count: 1

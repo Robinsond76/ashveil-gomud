@@ -1,0 +1,22 @@
+roomid: 3209
+zone: Marrowmere Fen
+title: Black-water Fen Track
+description: Boardwalk planks have sunk a hand's width into the peat. Something large slides into
+  the water out of sight.
+biome: shore
+exits:
+  east:
+    roomid: 3210
+  west:
+    roomid: 3208
+  south:
+    roomid: 3217
+  north:
+    roomid: 3203
+resources:
+- water
+- herbs
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

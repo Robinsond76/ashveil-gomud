@@ -1,0 +1,16 @@
+roomid: 3301
+zone: Greywatch Pass
+title: Windswept Saddle
+description: A thin stream trickles over the stones beside the path. Wolf tracks cross the path.
+biome: mountains
+exits:
+  east:
+    roomid: 3302
+  south:
+    roomid: 3307
+resources:
+- water
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

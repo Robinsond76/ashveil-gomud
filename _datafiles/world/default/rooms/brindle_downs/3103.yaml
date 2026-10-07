@@ -1,0 +1,23 @@
+roomid: 3103
+zone: Brindle Downs
+title: Open Rise
+description: Larks climb out of the grass and the track is rutted by drovers. Bleached sheep bones
+  lie by the track.
+biome: land
+exits:
+  east:
+    roomid: 3104
+  west:
+    roomid: 3102
+  south:
+    roomid: 3109
+resources:
+- herbs
+- firewood
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: downs

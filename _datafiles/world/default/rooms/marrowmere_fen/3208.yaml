@@ -1,0 +1,25 @@
+roomid: 3208
+zone: Marrowmere Fen
+title: Black-water Staithe
+description: Boardwalk planks have sunk a hand's width into the peat. A rotted punt lies half-sunk
+  in the mud.
+biome: shore
+exits:
+  east:
+    roomid: 3209
+  west:
+    roomid: 3207
+  south:
+    roomid: 3216
+  north:
+    roomid: 3202
+resources:
+- forage
+- herbs
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: fen

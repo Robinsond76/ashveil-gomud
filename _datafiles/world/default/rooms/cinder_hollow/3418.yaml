@@ -1,0 +1,23 @@
+roomid: 3418
+zone: Cinder Hollow
+title: Smouldering Ridge
+description: Ash drifts across the ground in grey drifts and the trees are black stumps. Fresh
+  bootprints cross the ash.
+biome: land
+exits:
+  east:
+    roomid: 3419
+  west:
+    roomid: 3417
+  north:
+    roomid: 3410
+resources:
+- firewood
+- herbs
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: hollow

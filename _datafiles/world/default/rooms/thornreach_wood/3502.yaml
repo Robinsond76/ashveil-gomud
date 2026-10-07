@@ -1,0 +1,23 @@
+roomid: 3502
+zone: Thornreach Wood
+title: Ancient Thicket
+description: Thorn and bramble close in on both sides of the narrow ride. A bird calls once and
+  does not call again.
+biome: forest
+exits:
+  east:
+    roomid: 3503
+  west:
+    roomid: 3501
+  south:
+    roomid: 3508
+resources:
+- game
+- herbs
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: wood

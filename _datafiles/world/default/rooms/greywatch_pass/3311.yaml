@@ -1,0 +1,24 @@
+roomid: 3311
+zone: Greywatch Pass
+title: Windswept Gully
+description: Loose scree shifts underfoot at every step. Broken arrow shafts litter the ground.
+biome: mountains
+exits:
+  east:
+    roomid: 3312
+  west:
+    roomid: 3310
+  south:
+    roomid: 3318
+  north:
+    roomid: 3305
+resources:
+- water
+- game
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: pass

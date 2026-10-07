@@ -1,0 +1,19 @@
+roomid: 3104
+zone: Brindle Downs
+title: Long Common
+description: Larks climb out of the grass and the track is rutted by drovers. A gorse thicket
+  hides the next rise.
+biome: land
+exits:
+  east:
+    roomid: 3105
+  west:
+    roomid: 3103
+  south:
+    roomid: 3110
+resources:
+- firewood
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true
