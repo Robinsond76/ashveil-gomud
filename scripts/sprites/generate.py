@@ -21,6 +21,7 @@ import figures  # noqa: E402
 import icons  # noqa: E402
 import scenes  # noqa: E402
 import backgrounds  # noqa: E402
+import companions  # noqa: E402
 import landmarks  # noqa: E402
 import promoted  # noqa: E402
 import roster  # noqa: E402
@@ -132,6 +133,15 @@ def write_s1(w):
                  frame_ms=500, **base)
         w.canvas(f"map/units/{cls}/walk.png", sheet(figures.map_walk(cls)), frames=4,
                  frame_ms=120, **base)
+    # Creature recruits: the hound is drawn on its own quadruped rig, the golem on the humanoid rig.
+    base = dict(kind="map-unit", set="S1", frame=[32, 32], rows=DIRECTIONS,
+                anchor="bottom-center", feet_baseline=30)
+    w.canvas("map/units/hound/idle.png", sheet(companions.hound_idle()), frames=2, frame_ms=500, **base)
+    w.canvas("map/units/hound/walk.png", sheet(companions.hound_walk()), frames=4, frame_ms=120, **base)
+    w.canvas("map/units/stone-golem/idle.png", sheet(figures.map_idle("stone-golem")), frames=2,
+             frame_ms=500, **base)
+    w.canvas("map/units/stone-golem/walk.png", sheet(figures.map_walk("stone-golem")), frames=4,
+             frame_ms=120, **base)
     # App icons (phase 40i consumes them).
     A = "app/"
     scale = lambda cv, n: cv.to_image().resize((cv.w * n, cv.h * n), Image.NEAREST)

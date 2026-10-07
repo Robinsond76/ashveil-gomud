@@ -72,6 +72,9 @@ CLASSES = {
     # Phase 39e: handlers in hide and fur, a whip coiled at the belt.
     "beasttamer": dict(trousers="leather", boots="leather", torso="wool", sleeve="wool",
                        hair="ochre", wide=1),
+    # Phase 38e: a stone golem recruit, a hulking carved figure with a glowing rune.
+    "stone-golem": dict(trousers="stone", boots="stone", torso="stone", sleeve="stone",
+                        skin="stone", wide=3),
 }
 
 
@@ -820,7 +823,46 @@ def draw_dollmaster(r):
         cv.put(hx + dx, end, "ember.m" if dx == 0 else "bone.l")
 
 
+def draw_golem(r):
+    """Grey stone limbs and a blocky head, moss in the cracks and a rune glowing on the chest."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    # thick stone legs: widen the rig's thin ones into pillars
+    lo = r.fy - S.boot + 1
+    if v == "side":
+        cv.part(rect(r.cx - 2, r.yhip, r.cx + 2, lo - 1), "stone")
+        cv.part(rect(r.cx - 2, lo, r.cx + 3, r.fy), "stone", flat="d")
+    else:
+        for a, b in ((r.cx - 5, r.cx - 1), (r.cx + 1, r.cx + 5)):
+            cv.part(rect(a, r.yhip, b, lo - 1), "stone")
+            cv.part(rect(a, lo, b, r.fy), "stone", flat="d")
+    r.torso("stone")
+    cv.part(rect(r.tx0 - 1, r.ysh, r.tx0 + r.px(2), r.ysh + r.px(3)), "stone", flat="l")  # heavy shoulders
+    cv.part(rect(r.tx1 - r.px(2), r.ysh, r.tx1 + 1, r.ysh + r.px(3)), "stone", flat="l")
+    if v != "up":
+        cv.part(rect(r.tx0 + 1, r.yhip - r.px(2), r.tx1 - 1, r.yhip - 1), "slate", flat="m")  # a slab belt
+        cx = r.cx if v == "down" else r.tx1 - 1
+        for dx, dy in ((0, 0), (0, 1), (-1, 1), (1, 1), (0, 2)) if k == 1 else \
+                ((0, 0), (0, 1), (0, 2), (-1, 1), (1, 1), (0, 3), (-1, 3), (1, 3)):
+            cv.put(cx + dx, r.ysh + r.px(3) + dy, "ember.m")
+    cv.put(r.tx0 + 1, r.ysh + r.px(5), "moss.m")
+    cv.put(r.tx1 - 1, r.yhip - r.px(4), "moss.m")
+    r.arms("stone", glove="stone")
+    r.head(helm="stone")
+    if v != "up":
+        x0 = r.cx - S.hw // 2
+        eye_y = r.top + round(S.hh * 0.5)
+        if v == "side":
+            cv.put(x0 + S.hw - 2, eye_y, "ember.m")
+        else:
+            ex = max(1, round(1.6 * k))
+            cv.put(r.cx - ex, eye_y, "ember.m")
+            cv.put(r.cx + ex - 1, eye_y, "ember.m")
+    cv.put(r.cx - 1, r.top, "moss.m")
+
+
 DRAWERS = {
+    "stone-golem": draw_golem,
     "alchemist": draw_alchemist,
     "arbalist": draw_arbalist,
     "dollmaster": draw_dollmaster,

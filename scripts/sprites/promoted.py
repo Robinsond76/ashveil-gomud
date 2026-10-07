@@ -484,6 +484,28 @@ def fur_back():
     return f
 
 
+def goggles(ramp="brass", lens="water.l"):
+    """Brewer's goggles pushed up on the brow: a strap, two lenses."""
+    def f(r, t):
+        if r.view == "up":
+            return
+        x0, y0, hw, hh, eye_y = head_box(r)
+        yy = y0 + max(1, round(1.2 * r.k))
+        if r.view == "side":
+            xs = (x0 + hw - 4, x0 + hw - 2) if r.k > 1 else (x0 + hw - 3,)
+        else:
+            ex = max(1, round(1.6 * r.k))
+            xs = (r.cx - ex - 1, r.cx + ex)
+        for x in range(x0, x0 + hw):
+            if r.cv.get(x, yy) not in (None, "outline"):
+                r.cv.put(x, yy, f"{ramp}.m")
+        for x in xs:
+            r.cv.put(x, yy - 1, lens)
+            if r.k > 1:
+                r.cv.put(x + 1, yy - 1, lens)
+    return f
+
+
 # -- the classes --------------------------------------------------------------------------
 #
 # base: the lineage figure.  mat: whole-ramp swaps.  acc: accessories in painting order.
@@ -621,10 +643,110 @@ CLASS_ART = {
     "wyvern-rider": dict(base="gryphon-rider", mat={"ochre": "forest", "leather": "charcoal"},
                          acc=[cape("charcoal", "ember", 8), horns("bone", 3), spikes("steel.l"),
                               eyes("ember.m", True), blood_drip()]),
+
+    # 39i neutral elites, the 39i2 elites (Alchemist, Arbalist, Beast Tamer, Gryphon Rider) and the Sorcerer line.
+    "sorcerer": dict(base="wizard", mat={"slate": "oxblood"},
+                     acc=[hem_band("brass", 5), rune_glow(), eyes("ember.m")]),
+    "high-sorcerer": dict(base="wizard", mat={"slate": "oxblood", "bone": "brass"},
+                          acc=[cape("oxblood", "ember", 10), hem_band("brass", 5), pauldron("brass"),
+                               circlet("brass"), glow_stone("ember"), rune_glow(), eyes("ember.m", True)]),
+    "reaper": dict(base="halberdier", mat={"leather": "charcoal", "ochre": "oxblood"},
+                   acc=[cape("charcoal", "oxblood", 9), hood_cowl("charcoal"), eyes("ember.m", True)]),
+    "linebreaker": dict(base="halberdier", mat={"leather": "iron", "ochre": "steel", "iron": "steel"},
+                        acc=[cape("slate", "steel", 8), pauldron("steel"), collar("steel", 3), horns("steel", 3)]),
+    "tempest-lancer": dict(base="halberdier", mat={"leather": "bone", "ochre": "water", "iron": "steel"},
+                           acc=[cape("water", "brass", 10), winged_helm("bone"), pauldron("brass"), halo("water")]),
+    "sword-saint": dict(base="samurai", mat={"oxblood": "bone", "charcoal": "slate"},
+                        acc=[cape("bone", "brass", 9), strap("bone", "brass.l"), hem_band("brass"), halo("bone")]),
+    "shogun": dict(base="samurai", mat={"oxblood": "charcoal", "iron": "steel"},
+                   acc=[cape("oxblood", "brass", 10), pauldron("brass"), collar("brass", 2),
+                        horns("brass", 4), plume("oxblood", 4)]),
+    "kenshi": dict(base="samurai", mat={"oxblood": "iron", "iron": "leather"},
+                   acc=[cape("charcoal", "oxblood", 9), pointed_hat("ochre", "wood", 5, False),
+                        strap("leather"), eyes("ember.m", True)]),
+    "tempest-lord": dict(base="shaman", mat={"ochre": "water", "wool": "bone"},
+                         acc=[cape("water", "bone", 9), plume("water", 6), pauldron("steel"), staff_light("water")]),
+    "veil-mother": dict(base="shaman", mat={"ochre": "ashmoss", "leather": "heather"},
+                        acc=[cape("heather", "bone", 10), hood_cowl("ashmoss"), circlet("bone"),
+                             halo("bone"), staff_light("bone")]),
+    "mountain-speaker": dict(base="shaman", mat={"ochre": "stone", "wool": "ochre"},
+                             acc=[cape("stone", "ochre", 9), pauldron("stone"), horns("bone", 4),
+                                  beard("bone"), staff_light("moss")]),
+    "grand-puppeteer": dict(base="dollmaster", mat={"plum": "heather"},
+                            acc=[cape("heather", "brass", 9), collar("brass", 2), plume("heather", 5),
+                                 circlet("brass")]),
+    "golem-lord": dict(base="dollmaster", mat={"plum": "stone", "charcoal": "iron"},
+                       acc=[cape("stone", "brass", 9), pauldron("stone"), hem_band("brass", 5), circlet("brass")]),
+    "string-sovereign": dict(base="dollmaster", mat={"plum": "oxblood", "bone": "wool"},
+                             acc=[cape("charcoal", "ember", 10), pointed_hat("charcoal", "oxblood", 6, False),
+                                  circlet("brass"), eyes("ember.m", True)]),
+    "apothecary": dict(base="alchemist", mat={"wool": "moss"},
+                       acc=[sprig("moss", 2), herb_bundle(), satchel("leather")]),
+    "panacean": dict(base="alchemist", mat={"wool": "bone", "leather": "moss"},
+                     acc=[cape("bone", "moss", 9), circlet("brass"), halo("brass"), herb_bundle()]),
+    "bombardier": dict(base="alchemist", mat={"wool": "ochre", "leather": "charcoal"},
+                       acc=[goggles("brass"), strap("charcoal", "ember.m"), pauldron("iron"), rune_glow()]),
+    "grenadier": dict(base="alchemist", mat={"wool": "oxblood", "leather": "charcoal"},
+                      acc=[cape("charcoal", "ember", 8), goggles("brass", "ember.l"), strap("charcoal", "ember.m"),
+                           pauldron("steel"), rune_glow()]),
+    "mutagenist": dict(base="alchemist", mat={"wool": "moss", "leather": "plum"},
+                       acc=[hood_cowl("moss"), skin_tint("moss"), eyes("ember.m"), blood_drip()]),
+    "transmuter": dict(base="alchemist", mat={"wool": "plum", "leather": "brass"},
+                       acc=[cape("plum", "brass", 9), hood_cowl("plum"), skin_tint("moss"), circlet("brass"),
+                            rune_glow(), eyes("ember.m", True)]),
+    "siegebreaker": dict(base="arbalist", mat={"slate": "iron", "leather": "charcoal"},
+                         acc=[spikes("steel.l"), pauldron("steel"), collar("steel", 2)]),
+    "siege-master": dict(base="arbalist", mat={"slate": "iron", "leather": "charcoal"},
+                         acc=[cape("charcoal", "brass", 9), pauldron("steel"), collar("steel", 2),
+                              plume("oxblood", 4), spikes("steel.l")]),
+    "sharpshooter": dict(base="arbalist", mat={"slate": "forest"},
+                         acc=[strap("leather", "brass.l"), goggles("steel", "bone.l"), satchel("leather")]),
+    "deadeye": dict(base="arbalist", mat={"slate": "forest", "leather": "charcoal"},
+                    acc=[cape("forest", "bone", 9), hood_cowl("forest"), goggles("brass", "ember.l"),
+                         strap("charcoal", "brass.l")]),
+    "warden-of-the-wall": dict(base="arbalist", mat={"slate": "stone"},
+                               acc=[cape("slate", "brass", 8), pauldron("steel"), plume("oxblood", 3)]),
+    "bastion": dict(base="arbalist", mat={"slate": "stone", "leather": "iron"},
+                    acc=[cape("stone", "brass", 9), pauldron("steel"), collar("steel", 3), plume("brass", 5),
+                         spikes("steel.l")]),
+    "houndmaster": dict(base="beasttamer", mat={"wool": "leather", "leather": "charcoal"},
+                        acc=[fur_collar("wool"), strap("leather", "brass.l"), satchel("wool", "bone.l")]),
+    "packlord": dict(base="beasttamer", mat={"wool": "leather", "leather": "charcoal"},
+                     acc=[cape("charcoal", "bone", 9), fur_back(), fur_collar("wool"), pauldron("leather"),
+                          strap("leather", "brass.l")]),
+    "bearward": dict(base="beasttamer", mat={"wool": "wood", "leather": "charcoal"},
+                     acc=[fur_back(), fur_collar("ochre"), pauldron("leather")]),
+    "beastlord": dict(base="beasttamer", mat={"wool": "wood", "leather": "charcoal"},
+                      acc=[cape("wood", "ochre", 10), fur_back(), fur_collar("ochre"), horns("bone", 3),
+                           pauldron("brass")]),
+    "dragon-tamer": dict(base="beasttamer", mat={"wool": "forest", "leather": "charcoal"},
+                         acc=[horns("bone", 2), spikes("iron.l"), eyes("ember.m")]),
+    "dragon-lord": dict(base="beasttamer", mat={"wool": "forest", "leather": "oxblood"},
+                        acc=[cape("forest", "ember", 10), horns("bone", 4), spikes("brass.l"),
+                             pauldron("brass"), eyes("ember.m", True)]),
+    "gryphon-lord": dict(base="gryphon-rider", mat={"ochre": "steel", "leather": "iron"},
+                         acc=[cape("bone", "brass", 10), pauldron("brass"), collar("steel", 3),
+                              winged_helm("bone"), plume("brass", 6), halo("brass")]),
+    "falcon-marshal": dict(base="gryphon-rider", mat={"ochre": "bone", "leather": "moss"},
+                           acc=[cape("moss", "bone", 9), feather_cap("bone", "moss"), strap("leather", "brass.l"),
+                                pauldron("leather"), fur_collar("wool")]),
+    "wyvern-lord": dict(base="gryphon-rider", mat={"ochre": "forest", "leather": "charcoal"},
+                        acc=[cape("charcoal", "ember", 10), horns("bone", 4), spikes("steel.l"), pauldron("iron"),
+                             eyes("ember.m", True), blood_drip()]),
 }
 
 CLASS_IDS = list(CLASS_ART)
-LINEAGE = {"warlord": "warrior", "sweeper": "halberdier", "vanguard": "halberdier", "valkyrie": "halberdier",
+LINEAGE = {"sorcerer": "wizard", "high-sorcerer": "wizard", "reaper": "halberdier", "linebreaker": "halberdier",
+           "tempest-lancer": "halberdier", "sword-saint": "samurai", "shogun": "samurai", "kenshi": "samurai",
+           "tempest-lord": "shaman", "veil-mother": "shaman", "mountain-speaker": "shaman",
+           "grand-puppeteer": "dollmaster", "golem-lord": "dollmaster", "string-sovereign": "dollmaster",
+           "apothecary": "alchemist", "panacean": "alchemist", "bombardier": "alchemist", "grenadier": "alchemist",
+           "mutagenist": "alchemist", "transmuter": "alchemist", "siegebreaker": "arbalist", "siege-master": "arbalist",
+           "sharpshooter": "arbalist", "deadeye": "arbalist", "warden-of-the-wall": "arbalist", "bastion": "arbalist",
+           "houndmaster": "beasttamer", "packlord": "beasttamer", "bearward": "beasttamer", "beastlord": "beasttamer",
+           "dragon-tamer": "beasttamer", "dragon-lord": "beasttamer", "gryphon-lord": "gryphon-rider",
+           "falcon-marshal": "gryphon-rider", "wyvern-lord": "gryphon-rider",
+           "warlord": "warrior", "sweeper": "halberdier", "vanguard": "halberdier", "valkyrie": "halberdier",
            "kensai": "samurai", "hatamoto": "samurai", "ronin": "samurai", "stormcaller": "shaman",
            "mistweaver": "shaman", "earthspeaker": "shaman", "puppeteer": "dollmaster", "golemancer": "dollmaster",
            "marionettist": "dollmaster", "knight": "warrior", "paladin": "warrior", "mercenary": "warrior", "blackguard": "warrior",

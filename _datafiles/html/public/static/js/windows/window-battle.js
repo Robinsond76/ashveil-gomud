@@ -79,7 +79,7 @@
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
     // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
-    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'unknown-large', drake: 'unknown-beast' };
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'war-bear', drake: 'drake-hatchling' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
