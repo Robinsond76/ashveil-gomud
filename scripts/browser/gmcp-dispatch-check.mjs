@@ -3,12 +3,13 @@
 // handlers fire once per message. Uses the dock windows harness.
 //
 //   NODE_PATH=$(npm root -g) node scripts/browser/gmcp-dispatch-check.mjs
+//   BROWSER=firefox ... runs it in Firefox (needs Playwright's Firefox build).
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+const playwright = require('playwright');
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 let failures = 0;
@@ -16,7 +17,9 @@ function check(ok, what) {
   if (ok) { console.log('ok   ' + what); } else { failures++; console.log('FAIL ' + what); }
 }
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined });
+const engine = process.env.BROWSER === 'firefox' ? 'firefox' : 'chromium';
+const browser = await playwright[engine].launch(engine === 'chromium'
+  ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined } : {});
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
 await page.goto('file://' + path.join(here, 'dock-windows-harness.html'));
