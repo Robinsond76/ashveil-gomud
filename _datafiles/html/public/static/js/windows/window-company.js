@@ -1449,8 +1449,14 @@
             const list = el('ul');
             music.effects.forEach(e => list.appendChild(el('li', 'cmp-line', e)));
             block.appendChild(list);
+            if (music.cost) {
+                block.appendChild(el('div', 'cmp-note', music.cost));
+            }
         } else {
             block.appendChild(el('div', 'cmp-note', 'Nobody can play yet: learn a family from a music teacher and carry its instrument (help music).'));
+        }
+        if (music.teacher) {
+            block.appendChild(el('div', 'cmp-line', 'A music teacher is here: music learn [family] [member] costs ' + music.teach_price + ' gold (strings, winds, drums or voice).'));
         }
         const row = el('div', 'cmp-actions');
         row.appendChild(button(music.off ? 'Song on' : 'Song off', music.off ? 'camp music on' : 'camp music off',

@@ -482,6 +482,9 @@ func (m *CampingModule) musicStatus(user *users.UserRecord, room *rooms.Room) st
 		for _, l := range song.Effects() {
 			lines = append(lines, "  "+l)
 		}
+		if cost := song.CostLine(); cost != "" {
+			lines = append(lines, cost)
+		}
 		if room != nil && m.roomWet(room) {
 			lines = append(lines, "  (Rain or snow halves strings and winds at camp unless a tent is pitched.)")
 		}
@@ -757,8 +760,10 @@ func (m *CampingModule) musicState(leaderUserID int, room *rooms.Room) camping.M
 	state.Covered = song.Covered()
 	if !state.Off {
 		state.Effects = song.Effects()
+		state.Cost = song.CostLine()
 	}
 	state.Teacher = room != nil && room.HasTag(musicTeacherTag)
+	state.TeachPrice = camping.MusicTeachPrice
 	return state
 }
 

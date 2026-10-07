@@ -485,6 +485,8 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
       { key: 'companion:5', name: 'Mira' },
     ],
     effects: ['Strings (strength 4): Rested and Well Rested last 20% longer', 'Voice (strength 2): ailments fade 10% faster'],
+    cost: 'The song carries: raiders and thieves are 20% more likely to come.',
+    teacher: true, teach_price: 25,
   };
   const gig = { window: '19:00 to 21:00', ready: true, families: 2, pay: 38 };
   const campWith = (m, g) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true, music: m, gig: g });
@@ -492,6 +494,8 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   const text = await page.evaluate(() => document.getElementById('company-camp').textContent);
   check(text.includes('Wren (you): Strings 2, on the travelling lute') && text.includes('Brother Oswin: Voice 1, sings') && text.includes('Mira: no music yet') && text.includes('Families covered: 2 of 4'), 'the Music row lists each member and the families covered (music)');
   check(text.includes('Rested and Well Rested last 20% longer'), 'the Music row shows the next song\'s effects (music)');
+  check(text.includes('raiders and thieves are 20% more likely'), 'the Music row shows the song\'s raid cost (music review)');
+  check(text.includes('A music teacher is here: music learn [family] [member] costs 25 gold'), 'the Music row names the teacher and fee (music review)');
   let got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Song off' }).click(); });
   check(JSON.stringify(got) === '["camp music off"]', 'Song off sends camp music off (music)');
   got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Play a gig' }).click(); });

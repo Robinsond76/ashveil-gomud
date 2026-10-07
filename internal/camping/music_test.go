@@ -130,6 +130,17 @@ func TestHushedAndMuffledMasterworksCutTheRaidCost(t *testing.T) {
 	assert.Equal(t, 110, PlanSong([]Player{muffled}, false).RaidPct())
 }
 
+// Review: the song's raid cost is spelled out beside its effects, and a
+// song that adds none (a hushed horn alone) says nothing.
+func TestCostLineNamesTheAddedRaidChance(t *testing.T) {
+	drums := PlanSong([]Player{player("a", FamilyDrums, 1, InstrumentCrude)}, false)
+	assert.Equal(t, "The song carries: raiders and thieves are 20% more likely to come.", drums.CostLine())
+	hushed := player("a", FamilyWinds, 1, InstrumentMasterwork)
+	hushed.Quirk = QuirkHushed
+	assert.Empty(t, PlanSong([]Player{hushed}, false).CostLine())
+	assert.Empty(t, Song{}.CostLine())
+}
+
 func TestFadedBattles(t *testing.T) {
 	assert.Equal(t, 0, FadedBattles(0, 40))
 	assert.Equal(t, 3, FadedBattles(3, 0))

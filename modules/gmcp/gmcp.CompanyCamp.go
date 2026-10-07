@@ -63,8 +63,11 @@ type musicPayload struct {
 	Off     bool       `json:"off"`
 	Covered string     `json:"covered"`
 	Effects []string   `json:"effects"`
+	Cost    string     `json:"cost,omitempty"`
 	Players []musicRow `json:"players"`
 	Teacher bool       `json:"teacher"`
+	// TeachPrice is the teacher's fee for level 1 of a family.
+	TeachPrice int `json:"teach_price,omitempty"`
 }
 
 // musicRow is one member's Music.
@@ -149,7 +152,7 @@ func campPayloadOf(s camping.CampState) campPayload {
 		if effects == nil {
 			effects = []string{}
 		}
-		music = &musicPayload{Off: s.Music.Off, Covered: s.Music.Covered, Effects: effects, Teacher: s.Music.Teacher, Players: []musicRow{}}
+		music = &musicPayload{Off: s.Music.Off, Covered: s.Music.Covered, Effects: effects, Cost: s.Music.Cost, Teacher: s.Music.Teacher, TeachPrice: s.Music.TeachPrice, Players: []musicRow{}}
 		for _, r := range s.Music.Players {
 			music.Players = append(music.Players, musicRow{Key: r.Key, Name: r.Name, Family: r.Family, Level: r.Level, Label: r.Label, Instrument: r.Instrument})
 		}

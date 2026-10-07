@@ -247,8 +247,11 @@ type MusicState struct {
 	// the next camp song would give.
 	Covered string
 	Effects []string
-	// Teacher is true in a room with a music teacher.
-	Teacher bool
+	// Cost is the song's added raid and thief chance in words ("" for none).
+	Cost string
+	// Teacher is true in a room with a music teacher; TeachPrice is its fee.
+	Teacher    bool
+	TeachPrice int
 }
 
 // MusicRow is one member's Music for the Camp tab.

@@ -444,6 +444,15 @@ func (s Song) RaidPct() int {
 	return min(pct, maxSongRaidPct)
 }
 
+// CostLine says what the song costs in raiders and thieves ("" when it
+// adds nothing), so a player weighs the buffs against the risk.
+func (s Song) CostLine() string {
+	if s.Empty() || s.RaidPct() <= 100 {
+		return ""
+	}
+	return fmt.Sprintf("The song carries: raiders and thieves are %d%% more likely to come.", s.RaidPct()-100)
+}
+
 // Effects is one line per family played, naming what its strength gives.
 func (s Song) Effects() []string {
 	var out []string
