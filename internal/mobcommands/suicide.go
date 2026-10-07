@@ -2,11 +2,11 @@ package mobcommands
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/beasts"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -205,7 +205,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			before := user.Character.KD.GetMobKills(int(mob.MobId))
 			user.Character.KD.AddMobKill(int(mob.MobId))
 			// Phase 66: a kind learned a tier further is said at once.
-			if tier := bestiary.TierFor(before+1, mob.Boss); tier > bestiary.TierFor(before, mob.Boss) {
+			// By the template's boss flag, as the entry is built: an
+			// encounter's boss shares its template's thresholds.
+			if tier := bestiary.TierOf(int(mob.MobId), before+1); tier > bestiary.TierOf(int(mob.MobId), before) {
 				user.SendText(bestiary.LearnedLine(mob.Character.Name, tier))
 			}
 			if mob.IsElite {

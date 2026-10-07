@@ -107,7 +107,8 @@ func TestBestiaryCommandAndConsiderLine(t *testing.T) {
 	assert.Contains(t, list, "lore")
 
 	entry := out("forest ogre")
-	assert.Contains(t, entry, "forest ogre, level 22, Dark Forest")
+	assert.Contains(t, entry, "forest ogre, Dark Forest")
+	assert.NotContains(t, entry, "level 22", "the template's level can disagree with the foe met")
 	assert.Contains(t, entry, "Known: habits (3 kills); everything is known.")
 	assert.Contains(t, entry, "Habits and weaknesses")
 	assert.Contains(t, entry, "Heavy force breaks it")
@@ -151,4 +152,63 @@ func TestBestiaryHelpRenders(t *testing.T) {
 		require.NoError(t, err, hub)
 		assert.Contains(t, tagPattern.ReplaceAllString(page, ""), "bestiary", "help %s points at the bestiary", hub)
 	}
+}
+
+// Phase 66 review: generated lines claim only what the engine does.
+func TestBestiaryLinesMatchTheEngine(t *testing.T) {
+	bestiaryWorld(t)
+	ogre := mobs.GetMobSpec(85)
+	require.NotNil(t, ogre)
+	def, _ := bestiary.Build(ogre, 3)
+	text := strings.Join(def.Defences, "\n")
+	if strings.Contains(text, "Armor") {
+		// The armor roll is 0 to armor-1 percent: "up to", not "about".
+		assert.Contains(t, text, "about half that on average")
+		assert.NotContains(t, text, "of each blow")
+	}
+	assert.NotContains(t, strings.Join(def.Lore, "\n"), "level", "no template level in the lore")
+
+	// A fighter with a spell book but no cast among its combat commands
+	// (the wench keeps a cure for idle use) knows spells but does not
+	// "cast spells" in a fight.
+	wench := mobs.GetMobSpec(7)
+	require.NotNil(t, wench)
+	require.NotEmpty(t, wench.Character.SpellBook)
+	hab, ok := bestiary.Build(wench, 6)
+	require.True(t, ok)
+	assert.Contains(t, strings.Join(hab.Habits, "\n"), "Knows: ")
+	assert.NotContains(t, hab.Notes, "casts spells")
+}
+
+// Phase 66 review: same-named kinds from different zones are separate
+// entries and are all shown; a zone named in full lists that zone.
+func TestBestiaryShowsSameNamedKindsAndFullZoneNames(t *testing.T) {
+	bestiaryWorld(t)
+	user := users.NewUserRecord(7, 71)
+	user.Character.Name = "Aria"
+	out := func(arg string) string {
+		return tagPattern.ReplaceAllString(heard(t, func() {
+			_, err := Bestiary(arg, user, nil, 0)
+			require.NoError(t, err)
+		}), "")
+	}
+	// A twin of the forest ogre's name in another zone.
+	a := mobs.GetMobSpec(85)
+	require.NotNil(t, a)
+	twin := *a
+	twin.MobId = 98765
+	twin.Zone = "Ogre"
+	mobs.SetTestSpec(&twin)
+	t.Cleanup(func() { mobs.RemoveTestSpec(twin.MobId) })
+	b := &twin
+	user.Character.KD.Kills = map[int]int{int(a.MobId): 1, int(b.MobId): 4}
+	got := out(a.Character.Name)
+	assert.Contains(t, got, a.Zone)
+	assert.Contains(t, got, b.Zone)
+	assert.Equal(t, 2, strings.Count(got, "Known: "), "both entries are shown")
+
+	// "ogre" is in the name too, but a zone named in full wins.
+	full := out("ogre")
+	assert.Contains(t, full, "Your bestiary: ")
+	assert.NotContains(t, full, "Known: ", "the zone list, not an entry")
 }

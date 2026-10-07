@@ -22,11 +22,11 @@ Spec: [Pillars phases](2026-10-07-pillars-phases.md) §66. A leader's bestiary s
 | Habits include spells known, role (healer, caster, guardian), wind-ups with what breaks them, the target rule it re-aims by, attack training and the gear it carries. | These are the facts the engine already acts on, so the text claims only real effects. "Carries" names what the template wears and holds (the drop pool phase 71 will name), not drop chances. |
 | The bestiary says nothing of a kind never beaten: the list, search, `consider`, battle notes and the GMCP feed all read known entries only. `consider` names a visible foe's kind as "new to you" without any fact about it. | The coordinator's rule: never reveal anything about foes the player can't see. Hidden foes are left out as `consider` already leaves them out. |
 | Habit notes appear in battle only from the habits tier. | Lore and defences are for reading between fights; a caption has room for "heals its allies", not paragraphs. |
-| The dock tab is on by default. | A bestiary nobody finds is not a feature, and it only costs one tab (Kills, which is off by default, stays a settings option). The GMCP refresh is sent only to clients that asked for it, so a client that never opens the tab pays nothing. |
+| The dock tab is on by default. | A bestiary nobody finds is not a feature, and it only costs one tab (Kills, which is off by default, stays a settings option). The GMCP refresh goes only to clients that asked for it; the web client asks when its windows are built at load (as every docked window does), so in practice every web client gets one small payload when a battle ends. Review accepted that cost. |
 | No `orders` change; the page and the habit lines name the rule to set (`orders [who] add foe healer then break`). | Phase 61's conditions already cover healers, casters, chanters and bosses; the link is the text. |
 
 ## Not done
 
 - Per-creature drop chances, and which creature drops which trophy: left to phase 71.
 - Spell and ability names for foes that use class-style abilities beyond a spell book and wind-ups (the template has none).
-- Live smoke (`make smoke`) not run for this phase.
+- Live smoke run in review (passed).

@@ -205,7 +205,9 @@ func loreLines(spec *mobs.Mob) []string {
 	if spec.Zone != "" {
 		where = ", found in " + spec.Zone
 	}
-	out := []string{fmt.Sprintf("%s %s of level %d%s.", article(kind), kind, c.Level, where)}
+	// No level: room and encounter spawns set their own, so the template's
+	// could disagree with the foe met (consider gives the real one).
+	out := []string{fmt.Sprintf("%s %s%s.", article(kind), kind, where)}
 	if spec.Boss {
 		out = append(out, "A boss among its kind: tougher than the rest. A boss gives up its secrets in fewer kills.")
 	}
@@ -238,7 +240,8 @@ func defenceLines(spec *mobs.Mob) []string {
 	c := &spec.Character
 	var out []string
 	if armor := c.GetDefense(); armor > 0 {
-		out = append(out, fmt.Sprintf("Armor turns aside about %d%% of each blow.", armor))
+		// The engine rolls 0 to armor-1 percent off each blow.
+		out = append(out, fmt.Sprintf("Armor turns aside up to %d%% of a blow, about half that on average.", armor))
 	} else {
 		out = append(out, "Wears no armor worth the name: blows land in full.")
 	}
@@ -308,7 +311,7 @@ func habitLines(spec *mobs.Mob) (lines, notes []string) {
 	sort.Strings(names)
 	if len(names) > 0 {
 		lines = append(lines, "Knows: "+strings.Join(names, ", ")+".")
-		if spec.EnemyRole() != "caster" && spec.EnemyRole() != "healer" {
+		if role := spec.EnemyRole(); role != "caster" && role != "healer" && castsInCombat(spec) {
 			notes = append(notes, "casts spells")
 		}
 	}
@@ -329,7 +332,11 @@ func habitLines(spec *mobs.Mob) (lines, notes []string) {
 		case chance < 25:
 			how = "rarely"
 		}
-		line := fmt.Sprintf("Winds up %s %s, in plain view; it lands the turn after for %dx damage", ab.Name, how, ab.Multiplier)
+		when := "the turn after"
+		if ab.Rounds > 1 {
+			when = fmt.Sprintf("%d turns later", ab.Rounds)
+		}
+		line := fmt.Sprintf("Winds up %s %s, in plain view; it lands %s for %dx damage", ab.Name, how, when, ab.Multiplier)
 		if ab.KnockDown {
 			line += " and knocks its target down"
 		}
@@ -339,8 +346,9 @@ func habitLines(spec *mobs.Mob) (lines, notes []string) {
 	if rule, noise, ok := spec.Personality(); ok {
 		if w, known := targetWords[rule]; known {
 			line := "It " + w
+			// No figure: a group's tier raises the noise in battle.
 			if noise > 0 {
-				line += ", though about " + fmt.Sprint(noise) + " in 100 of its choices are at random"
+				line += ", though some of its choices are at random"
 			}
 			lines = append(lines, line+".")
 		}
@@ -357,6 +365,28 @@ func habitLines(spec *mobs.Mob) (lines, notes []string) {
 		lines = append(lines, "Carries: "+strings.Join(spoils, ", ")+".")
 	}
 	return lines, notes
+}
+
+// castsInCombat is whether the template casts in a fight: a spell book
+// alone (a healer's cure kept for idle use) is not enough.
+func castsInCombat(spec *mobs.Mob) bool {
+	for _, cmd := range spec.CombatCommands {
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(cmd)), "cast") {
+			return true
+		}
+	}
+	return false
+}
+
+// TierOf is the tier the given kills of a template earn, by the
+// template's own boss flag (an encounter's boss is the same kind rolled
+// stronger, like an elite, and shares the template's entry).
+func TierOf(mobID, kills int) Tier {
+	spec := mobs.GetMobSpec(mobs.MobId(mobID))
+	if spec == nil || spec.Practice {
+		return Unknown
+	}
+	return TierFor(kills, spec.Boss)
 }
 
 // spoilNames are the items the template wears and carries (what it can

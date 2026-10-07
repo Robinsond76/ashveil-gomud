@@ -26,8 +26,24 @@ func Bestiary(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		user.SendText(BestiaryList(entries, ``))
 		return true, nil
 	}
+	// A zone named in full is that zone's list ("bestiary frost lake"),
+	// even when a creature's name also contains the words.
+	for _, e := range entries {
+		if e.Zone != `` && strings.EqualFold(e.Zone, arg) {
+			user.SendText(BestiaryList(entries, arg))
+			return true, nil
+		}
+	}
 	if e, ok := bestiary.Find(entries, arg); ok {
-		user.SendText(BestiaryEntry(e))
+		// Same-named kinds from different zones are separate entries:
+		// show each, so none is hidden behind the better-known one.
+		var texts []string
+		for _, o := range entries {
+			if strings.EqualFold(o.Name, e.Name) {
+				texts = append(texts, BestiaryEntry(o))
+			}
+		}
+		user.SendText(strings.Join(texts, "\n\n"))
 		return true, nil
 	}
 	if text := BestiaryList(entries, arg); text != `` {
@@ -58,7 +74,7 @@ func BestiaryList(entries []bestiary.Entry, zone string) string {
 			}
 			lines = append(lines, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, name))
 		}
-		lines = append(lines, fmt.Sprintf(`  <ansi fg="mobname">%-24s</ansi> level %-3d %2d %-5s %s`, e.Name, e.Level, e.Kills, kills(e.Kills), e.Tier.Name()))
+		lines = append(lines, fmt.Sprintf(`  <ansi fg="mobname">%-24s</ansi> %3d %-5s %s`, e.Name, e.Kills, kills(e.Kills), e.Tier.Name()))
 	}
 	if count == 0 {
 		return ``
@@ -77,7 +93,7 @@ func kills(n int) string {
 // BestiaryEntry is one entry in words.
 func BestiaryEntry(e bestiary.Entry) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, `<ansi fg="yellow-bold">%s</ansi>, level %d`, e.Name, e.Level)
+	fmt.Fprintf(&b, `<ansi fg="yellow-bold">%s</ansi>`, e.Name)
 	if e.Zone != `` {
 		fmt.Fprintf(&b, `, %s`, e.Zone)
 	}

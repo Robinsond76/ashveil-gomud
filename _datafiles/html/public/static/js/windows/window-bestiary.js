@@ -94,7 +94,7 @@
         d.addEventListener('toggle', () => { if (d.open) { opened.add(e.id); } else { opened.delete(e.id); } });
         const s = document.createElement('summary');
         s.appendChild(node('span', 'bs-name', e.name + (e.boss ? ' (boss)' : '')));
-        s.appendChild(node('span', 'bs-meta', 'L' + e.level + ' · ' + e.kills + (e.kills === 1 ? ' kill' : ' kills')));
+        s.appendChild(node('span', 'bs-meta', e.kills + (e.kills === 1 ? ' kill' : ' kills')));
         s.appendChild(node('span', 'bs-tier', e.tier_name));
         d.appendChild(s);
         const body = node('div', 'bs-body');
