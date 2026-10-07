@@ -27,6 +27,12 @@ func Tempo(c *characters.Character) float64 {
 	if slow := c.ClassEffects().Int(classes.Slow); slow > 0 {
 		rate *= float64(100-min(slow, 90)) / 100
 	}
+	// Phase 69: a weapon stance trades turns (a bow's quick draw, a shield
+	// wall's slower swing) for something else. It scales the settled rate, so
+	// a fast fighter still gains from it, and never sinks below a floor.
+	if pct := c.StanceEffect().TempoPct; pct != 0 {
+		rate = math.Max(0.25, rate*float64(100+pct)/100)
+	}
 	return rate
 }
 

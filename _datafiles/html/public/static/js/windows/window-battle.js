@@ -392,6 +392,8 @@
             u.skin = m.skin || '';                               // Phase 72a: the leader's chosen colours
             u.hair = m.hair || '';
             u.className = m.class_name || '';
+            // Phase 69: the weapon stance it fights in, named when its figure is tapped.
+            u.stance = (m.stance && m.stance.ready !== false) ? m.stance.name : '';
             // Phase 39g: an Alchemist's flasks left, named when its figure is tapped.
             u.flasks = (v.flasks_max > 0) ? v.flasks + ' of ' + v.flasks_max + ' flasks' : '';
             u.cell = cell;
@@ -1012,6 +1014,7 @@
         let text = u.label;
         if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'company' && u.flasks && !u.fallen) { text += ', ' + u.flasks; }
+        if (u.side === 'company' && u.stance && !u.fallen) { text += ', ' + u.stance + ' stance'; }
         if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
         if (isShrunk(u) && u.side === 'ally') { text += ' (tap to watch)'; }
         if (u.side !== 'company' && u.band) { text += ', ' + u.band; }

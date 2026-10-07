@@ -29,7 +29,7 @@ devout; <ansi fg="command">help banter</ansi>) likes some of these and dislikes 
                                   pack, not the company's cargo (<ansi fg="command">help company meal</ansi>)
   selling relics                  you sold a relic for coin, by <ansi fg="command">sell</ansi> or <ansi fg="command">sell junk</ansi>
                                   (<ansi fg="command">help relics</ansi>)
-  kindness, greed, courage,       the stance of a choice in a scene on the road
+  kindness, greed, courage,       the spirit of a choice in a scene on the road
   prudence, reverence, cunning    (<ansi fg="command">help events</ansi>)
 
 A temperament has a view on seven or eight of these and none on the rest.

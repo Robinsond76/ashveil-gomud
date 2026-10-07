@@ -325,6 +325,9 @@ type balanceFightOptions struct {
 	// Sigil is the sigil the leader laid in the room before the fight
 	// (Phase 54); empty for none.
 	Sigil sigils.Kind
+	// Setup runs once the company and the foes stand ready, just before the
+	// attack (Phase 69: gear and stances).
+	Setup func(b *brawl)
 }
 
 func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, enemyLevels ...int) *balanceFight {
@@ -503,6 +506,9 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 	if opts.Sigil != sigils.None {
 		b.aria.Character.Sigil = sigils.Lay(opts.Sigil, b.road.RoomId, time.Now())
 		t.Cleanup(func() { b.aria.Character.Sigil = sigils.Laid{} })
+	}
+	if opts.Setup != nil {
+		opts.Setup(b)
 	}
 	b.cmd("attack", fmt.Sprintf("#%d", opening))
 	// Spread starts with one distinct opponent per fighter. Strategies keep

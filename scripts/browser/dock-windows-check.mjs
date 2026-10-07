@@ -684,6 +684,27 @@ await page.keyboard.press('Escape');
 await page.mouse.click(5, 5);
 await page.evaluate(c => window.gmcp('Company', c), company);
 
+// --- Phase 69: weapon stances under each member's orders ---
+check(await page.getByRole('button', { name: 'Stance: none' }).count() === 4, 'stance: a button for each member who has not fallen');
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].stance = { key: 'heavy', name: 'Heavy blows', gain: 'blows land 30% harder', cost: '15 points less likely to hit', needs: 'a two-handed weapon (not a staff or a bow)', ready: true };
+  g.members[1].stance = { key: 'quick', name: 'Quick draw', gain: '25% more turns each round', cost: 'arrows land 15% lighter', needs: 'a bow', ready: false };
+  window.gmcp('Company', g);
+}, company);
+check((await page.locator('#combat-window .cbt-stance[data-key="companion:1"] .cbt-stance-line').textContent()) === 'Stance: Heavy blows (ready)', 'stance: named, with whether the gear fits');
+check((await page.locator('#combat-window .cbt-stance[data-key="companion:2"] .cbt-stance-line').textContent()) === 'Stance: Quick draw (idle: needs a bow)', 'stance: an idle one says what it needs');
+check((await page.locator('#combat-window .cbt-stance[data-key="companion:1"] .cbt-stance-line').getAttribute('title')) === 'Heavy blows: blows land 30% harder, but 15 points less likely to hit.', 'stance: the trade is in the tooltip');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: Heavy blows' }).click(); await page.getByText('Shield wall (shield)').click(); });
+check(JSON.stringify(got) === '["stance #1 wall"]', 'stance: pick one from the menu');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: Heavy blows' }).click(); await page.getByText('No stance').click(); });
+check(JSON.stringify(got) === '["stance #1 off"]', 'stance: take it off');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: none' }).first().click(); await page.getByText('Keen edge (dagger)').click(); });
+check(JSON.stringify(got) === '["stance me keen"]', 'stance: yourself is "me"');
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => window.gmcp('Company', c), company);
+
 // --- Task 12: the Comm and Who tabs ---
 await page.getByRole('tab', { name: 'Combat' }).click();
 await page.evaluate(() => { window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Hello' }); window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Again' }); });
@@ -872,6 +893,10 @@ check((await page.evaluate(() => document.getElementById('combat-live').textCont
 await page.evaluate(c => { const x = JSON.parse(JSON.stringify(c)); x.members[1].orders = ['When a foe is chanting, turn on the chanter to break its chant.']; window.gmcp('Company', x); }, company);
 check(await page.locator('#combat-window .cbt-orders-btn').count() === 0, 'orders: no edit button during a battle');
 check((await cbt()).includes('turn on the chanter to break its chant'), 'orders: still listed during a battle');
+// Phase 69: a stance in force is listed in a battle, with no button.
+await page.evaluate(c => { const x = JSON.parse(JSON.stringify(c)); x.members[1].stance = { key: 'wall', name: 'Shield wall', gain: 'g', cost: 'c', needs: 'a shield', ready: true }; window.gmcp('Company', x); }, company);
+check(await page.locator('#combat-window .cbt-stance-btn').count() === 0, 'stance: no change button during a battle');
+check((await cbt()).includes('Stance: Shield wall (ready)'), 'stance: still listed during a battle');
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(b => window.gmcp('Company.Battle', b), next);
 

@@ -414,7 +414,7 @@ func blockChanceForEdge(shieldArmor int, edge float64) int {
 // Attack, plus the Strength edge, with its shield's armor.
 func blockChance(def, atk *characters.Character) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Strength.ValueAdj, atk.Stats.Strength.ValueAdj))
-	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block
+	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block + def.StanceEffect().Block // Phase 69: shield wall
 	return max(0, min(100, chance))
 }
 
@@ -629,7 +629,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 	}
 
 	// hitChance already enforces [ToHitMin, ToHitMax].
-	hitPct := float64(hitChance(&atkChar, &defChar)) / 100.0
+	stanceFx := atkChar.StanceEffect() // Phase 69: a weapon stance's trade
+	hitPct := float64(clampToHit(hitChance(&atkChar, &defChar)+stanceFx.Hit)) / 100.0
 
 	dwLevel := atkChar.GetSkillLevel(`dual-wield`)
 	dwPenalty := 0.0
@@ -645,7 +646,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 		defChar.Stats.Smarts.ValueAdj,
 		false,
 		false,
-	)) / 100.0
+	)+stanceFx.Crit) / 100.0
+	critPct = math.Min(critPct, 1)
 
 	// A hit that lands is still negated by the one active defense it
 	// meets, as activeDefense rolls it (block for a shield-bearer, else
@@ -697,6 +699,7 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 		// Phase 35d: a landed blow is glancing, solid or telling.
 		rawDmg := (avgDmg*expectedQualityFactor(hitEdge(&atkChar, &defChar)) + critBonus) * effHit
+		rawDmg *= float64(100+stanceFx.DamagePct) / 100
 		netDmg := rawDmg * (1.0 - defenseFraction)
 
 		for atkIdx := 0; atkIdx < attacks; atkIdx++ {

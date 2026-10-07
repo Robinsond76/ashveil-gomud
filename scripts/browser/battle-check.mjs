@@ -30,7 +30,7 @@ const company = {
   leader: member('leader', 0, 'Wren', 'Ranger', { row: 0, col: 1 }, 'fighter'),
   members: [
     member('companion:1', 1, 'Oswin', 'Cleric', { row: 1, col: 0 }, 'healer'),
-    { ...member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'), class: 'knight', class_name: 'Knight' },
+    { ...member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'), class: 'knight', class_name: 'Knight', stance: { key: 'wall', name: 'Shield wall', ready: true } },
     member('companion:3', 3, 'Ysolde', 'Wizard', { row: 2, col: 2 }, 'caster'),
     member('companion:4', 4, 'Tamsin', 'Rogue', null, 'fighter'),
   ],
@@ -94,6 +94,7 @@ check(unitOf(s, 'companion:2').promoted === 'knight' && unitOf(s, 'leader').prom
   await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
   const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
   check(cap.startsWith('Brant, Knight'), 'hovering a promoted member names its class: ' + cap);
+  check(cap.includes(', Shield wall stance'), 'hovering a member names the weapon stance it fights in (69): ' + cap);
   await page.mouse.move(0, 0);
 }
 check(unitOf(s, 'leader').cell.row === 0 && unitOf(s, 'leader').cell.col === 1, 'the leader stands in their cell');
