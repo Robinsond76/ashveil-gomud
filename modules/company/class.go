@@ -531,6 +531,8 @@ func (m *CompanyModule) classGate(user *users.UserRecord, s classSubject) string
 	switch {
 	case c.Dead():
 		return fmt.Sprintf("%s has fallen and must be raised first.", name)
+	case c.OnErrand():
+		return fmt.Sprintf("%s is away on an errand and must return first.", name)
 	case c.Separated():
 		return fmt.Sprintf("%s is separated from the company and must rejoin first.", name)
 	}

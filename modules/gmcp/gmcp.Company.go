@@ -212,6 +212,8 @@ func statusName(s company.MemberStatus) string {
 		return "fled"
 	case company.MemberSeparated:
 		return "separated"
+	case company.MemberErrand:
+		return "errand"
 	}
 	return "present"
 }
@@ -372,7 +374,7 @@ func newCompanyFeed() *companyFeed {
 		accepting: nativeAccepting,
 		gearOpen:  map[int]gearWatch{},
 	}
-	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle), opinionsExtra(), bondsExtra()}
+	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle), opinionsExtra(), bondsExtra(), errandsExtra()}
 	return f
 }
 

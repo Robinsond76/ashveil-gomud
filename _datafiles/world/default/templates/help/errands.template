@@ -1,0 +1,81 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">errands</ansi>
+
+A companion you can spare need not idle. From an inn you can send one away
+on an errand: an escort, a hunt or a scouting job. They are gone for half
+an hour, two hours or eight, in real time, and come home with something
+to show for it. They are away from your company
+meanwhile, so send only those you can spare.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">errands</ansi>                                   who is away and when they are due, who is free to send, and the latest news
+  <ansi fg="command">errand send [member] [job] [length]</ansi>       send a companion away: [job] is escort, hunt or scout, [length] is short, medium or long (short if you leave it out)
+  <ansi fg="command">errand recall [member]</ansi>                    call a companion home early, with nothing to show for it
+
+In the web client the Company window has an Errands tab, with a card for
+each companion: pick a job and a length and press Send, or Call back. It
+fits a phone. You name a companion as you do everywhere else: by name, or by
+number as <ansi fg="command">#2</ansi>.
+
+<ansi fg="yellow-bold">Who can go, and from where</ansi>
+
+  - From a room that is an inn, the same rooms where you can rent a bed
+    (<ansi fg="command">help inn</ansi>), and not in a fight, on a journey or at a camp rest.
+  - The companion must be with you, alive, and not fighting. They leave
+    your formation as they go and take the same cell again when they come
+    home, if it is still free (<ansi fg="command">help formation</ansi>).
+  - Creatures and constructs have no errands to run, and a fallen or
+    fled companion is not free.
+
+<ansi fg="yellow-bold">The jobs</ansi>
+
+  escort   walks a caravan down the road: steady pay, and safe for one who matches the zone
+  hunt     clears game and vermin off the road: better spoils, and a wound's risk
+  scout    reads the country: mostly rumours of lairs, little coin, some risk
+
+<ansi fg="yellow-bold">The lengths</ansi>
+
+  short    half an hour    pay as listed
+  medium   two hours       two and a half times the pay
+  long     eight hours     six times the pay (so a long errand never pays better by the hour; it is for the gap between your sessions)
+
+An errand runs in real time and carries on while you are away from the
+game, so a long one can be sent before you log out. It never moves the
+world's clock. A companion who is due home waits until you are online
+and not in a fight, a journey or a camp rest, and then rejoins you at once.
+
+<ansi fg="yellow-bold">What they bring back</ansi>
+
+Each errand comes to one thing, decided for good the moment it is sent, so
+logging out, a restart or a copyover cannot change it:
+
+  Gold      modest pay: 3 gold for each level in the middle of the zone's level
+            band and 1 for each of the companion's own levels, then the job's
+            share (an escort 100%, a hunt 140%, a scout 60%) and the length's.
+            A level 8 companion in a 7-9 zone earns about 32 gold for a short escort.
+  A find    a small gathered good, counted at its full worth as part of the
+            pay, with the rest of the pay in gold. Merchants pay less than
+            that worth, so a find is never a way to make money out of goods.
+  A rumour  word of a lair in the zone whose master your company has not
+            slain, so you know where to look. Scouts hear most.
+  A wound   a lasting wound, a fifth of the companion's health held back,
+            that heals as any wound does (<ansi fg="command">help wounds</ansi>). A hunt risks 15% and a
+            scout 8%; an escort, none. Every level a companion stands
+            under the zone's band adds 8% (to at most 60%); a companion above
+            the band risks half as much.
+
+The pay follows the zone you send from, so an errand from a deeper zone pays
+more. A zone that names no band pays by the companion's own level. They
+earn no experience, and nothing here lowers or raises their loyalty.
+
+<ansi fg="yellow-bold">What it does to your company</ansi>
+
+An away companion is gone from everywhere: not in battles, not in camp,
+not in your load or carry capacity, not eating or sleeping, not talking or
+forming bonds, and it cannot be placed in the formation. Its gear goes with
+it and comes back with it. If you dismiss one while it is away, the errand
+ends with nothing paid and its gear returns to your cargo as with any
+dismissal. Errands are saved with the company, and each return goes in
+the chronicle (<ansi fg="command">chronicle errands</ansi>).
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help wounds</ansi>, <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help separation</ansi>, <ansi fg="command">help webclient</ansi>.

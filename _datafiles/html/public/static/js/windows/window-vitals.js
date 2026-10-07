@@ -371,6 +371,10 @@
             row.classList.add('is-away');
             row.appendChild(CompanyData.el('span', 'vitals-member-note', 'separated; finding the way back'));
             spoken.push('separated; finding the way back');
+        } else if (m.status === 'errand') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'away on an errand'));
+            spoken.push('away on an errand');
         } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
             row.classList.add('is-away');
             row.appendChild(CompanyData.el('span', 'vitals-member-note', 'not with you'));

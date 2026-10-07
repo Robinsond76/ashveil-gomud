@@ -216,3 +216,15 @@ SeparationRounds: 15
 BanterCampStartPercent: 100
 BanterRestedPercent: 50
 BanterBattlePercent: 33
+
+# Phase 70: errands. A companion sitting out the formation can be sent from
+# an inn (a room tagged `inn`) on an escort, hunt or scouting job. An errand
+# that brings back an item picks it from this list of small gathered goods,
+# and only one whose value is no more than the gold the same errand would
+# have paid, so an item is never worth more than its gold. Never list
+# anything bought, crafted or rare here: errands must not be a profit loop.
+ErrandItemIds:
+  - 30007 # mushroom
+  - 30009 # glacial mint
+  - 30016 # spotted mushroom
+  - 30018 # wild thyme

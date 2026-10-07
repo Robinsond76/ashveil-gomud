@@ -235,6 +235,8 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	// Phase 33h3: separate strays, then count the separated home.
 	m.sweepStrays()
 	m.tickSeparations()
+	// Phase 70: bring home the errands that are due.
+	m.tickErrands()
 	_, every := m.alignmentConfig()
 	if m.registry.DriftIn <= 0 || m.registry.DriftIn > every {
 		m.registry.DriftIn = every
@@ -269,6 +271,9 @@ func (m *CompanyModule) driftTick() {
 		var members []domain.MemberAlignment
 		for _, c := range record.Companions {
 			if c.Dead() || c.MoraleDesert || bound(c) { // Phase 38e: a construct is bound, not loyal: it neither drifts nor sways
+				continue
+			}
+			if c.OnErrand() { // Phase 70 review: away on an errand, it neither drifts nor deserts
 				continue
 			}
 			loyalty := domain.MaxLoyalty

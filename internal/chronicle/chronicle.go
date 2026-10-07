@@ -36,6 +36,7 @@ const (
 	Promoted  Kind = "promoted"  // a member took an advanced or elite class
 	Story     Kind = "story"     // a story event ended on a choice
 	Awakened  Kind = "awakened"  // a relic woke a new power (Phase 67)
+	Errand    Kind = "errand"    // a companion came back from an errand (Phase 70)
 )
 
 // KindInfo is a kind's player-facing name and filter words.
@@ -61,6 +62,7 @@ var Kinds = []KindInfo{
 	{Promoted, "Promotions", []string{"promoted", "promotions", "promotion"}},
 	{Story, "Stories", []string{"story", "stories", "events"}},
 	{Awakened, "Awakenings", []string{"awakened", "awakenings", "awakening"}},
+	{Errand, "Errands", []string{"errand", "errands"}},
 }
 
 // KindByWord resolves what a player typed to a kind.
@@ -207,6 +209,12 @@ func Prose(e Entry) string {
 			return fmt.Sprintf("%s's %s awoke to %s%s.", who, relic, strings.TrimRight(e.Detail, ".!?"), e.at())
 		}
 		return fmt.Sprintf("%s's %s awoke%s.", who, relic, e.at())
+	case Errand:
+		job := orThing(e.Subject, "an errand")
+		if e.Detail != "" {
+			return fmt.Sprintf("%s came back from %s%s %s.", who, job, e.at(), strings.TrimRight(e.Detail, ".!?"))
+		}
+		return fmt.Sprintf("%s came back from %s%s.", who, job, e.at())
 	}
 	return who + " did something worth remembering."
 }
