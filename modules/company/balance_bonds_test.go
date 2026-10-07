@@ -12,7 +12,9 @@ import (
 // and asserts nothing. The company fights the even mirror with every pair
 // bonded alike: none (the baseline), friends (+40: one bond step each for a
 // friend at half health), kin (+90: two) and rivals (-60: no guard for
-// each other). ASHVEIL_BALANCE_FIGHTS sets the fights per cell,
+// each other), and one pair alone: friend-pair (+40 between the healer and
+// a fighter) and rival-pair (-60 between the front warrior and the healer
+// it guards by default). ASHVEIL_BALANCE_FIGHTS sets the fights per cell,
 // ASHVEIL_BALANCE_ONLY limits the cells by label, ASHVEIL_BALANCE_FOES the
 // enemy count (3 by default: a fair zone).
 func TestPhase65BondsInTheMirror(t *testing.T) {
@@ -32,7 +34,7 @@ func TestPhase65BondsInTheMirror(t *testing.T) {
 		for _, cell := range []struct {
 			name  string
 			value int
-		}{{"none", 0}, {"friends", 40}, {"kin", 90}, {"rivals", -60}} {
+		}{{"none", 0}, {"friends", 40}, {"kin", 90}, {"rivals", -60}, {"friend-pair", 40}, {"rival-pair", -60}} {
 			label := fmt.Sprintf("bonds/L%d/%s/%dfoes", level, cell.name, foes)
 			if only != "" && !strings.Contains(label, only) {
 				continue
@@ -44,10 +46,17 @@ func TestPhase65BondsInTheMirror(t *testing.T) {
 					f := newBalanceFightWithOptions(t, level, companyDefault, enemyDefault, balanceFightOptions{
 						EnemyCount: foes, Coordination: 1, LegacyMirror: true,
 					})
-					if cell.value != 0 {
-						for a := 1; a <= 3; a++ {
-							for b := a + 1; b <= 4; b++ {
-								setBond(t, a, b, cell.value)
+					switch cell.name {
+					case "friend-pair":
+						setBond(t, 2, 3, cell.value) // the healer and a fighter
+					case "rival-pair":
+						setBond(t, 1, 2, cell.value) // the front warrior and the healer it guards by default
+					default:
+						if cell.value != 0 {
+							for a := 1; a <= 3; a++ {
+								for b := a + 1; b <= 4; b++ {
+									setBond(t, a, b, cell.value)
+								}
 							}
 						}
 					}

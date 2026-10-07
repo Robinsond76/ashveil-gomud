@@ -645,7 +645,7 @@ func TestBondsHelp(t *testing.T) {
 	plain := tagPattern.ReplaceAllString(want, "")
 	for _, phrase := range []string{
 		"Help for", "bonds [member]", "Bonds tab", "like kin", "can't stand", "will not guard the other",
-		"bond guard", "lets the blow fall", "-85", "-100", "-60", "50 at most", "never into a feud",
+		"bond guard", "lets the blow fall", "-85", "-100", "-60", "50 at most", "never into a feud", "at 40%", "two such steps a battle",
 	} {
 		assert.Contains(t, plain, phrase)
 	}
@@ -658,7 +658,8 @@ func TestBondsHelp(t *testing.T) {
 	assert.Equal(t, -85, bonds.WarnAt)
 	assert.Equal(t, -100, bonds.LeaveAt)
 	assert.Equal(t, -60, bonds.MendAt)
-	assert.Equal(t, 50, bonds.GuardBelowPct)
+	assert.Equal(t, 40, bonds.GuardBelowPct)
+	assert.Equal(t, 2, bonds.CompanyGuards)
 	assert.Equal(t, 3, bonds.RescueGain)
 	assert.Equal(t, 2, bonds.RefusalLoss)
 	assert.Equal(t, 1, bonds.Guards(bonds.FriendAt))

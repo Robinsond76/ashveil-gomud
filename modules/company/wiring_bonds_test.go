@@ -134,3 +134,29 @@ func TestAnOrdinaryGuardForTheLeaderMovesNoBond(t *testing.T) {
 	record, _ := module.registry.Get(7)
 	assert.Empty(t, record.Bonds, "bonds are between companions")
 }
+
+func TestACompanyMakesTwoBondStepsABattleAtMost(t *testing.T) {
+	b := guardBrawl(t)
+	// Tamsin and Oswin are kin of Garrick; each could step in twice, but the
+	// company only makes two bond steps in a battle.
+	setBond(t, 1, 3, 90)
+	setBond(t, 2, 3, 90)
+	got := b.listen()
+	steps := 0
+	for round := 0; round < 3; round++ {
+		b.toughen()
+		b.companion(3).Character.Health = 300
+		b.strike(3, false)
+		b.fight()
+		steps = len(guardEvents(*got, combatstream.GuardUsed))
+	}
+	assert.Equal(t, 2, steps, "three rounds of blows on a hurt friend, two steps in all")
+}
+
+func TestAFriendSteppingInNeedsTheWardAtFortyPercentOrLess(t *testing.T) {
+	b := guardBrawl(t)
+	setBond(t, 1, 3, 40)
+	b.companion(3).Character.Health = 450 // 45%
+	b.strike(3, false)
+	assert.NotContains(t, b.fight(), "bond guard")
+}

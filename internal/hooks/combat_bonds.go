@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/bonds"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -18,8 +19,8 @@ import (
 // friend who is hurt, a guardian won't step in for a rival it was set to
 // guard, and a guardian with no ward set passes over a rival. All of it is
 // automatic, says so in the log, and is small: a friend has one step in a
-// battle (two for kin), only for a friend at half health or less, and the
-// pair's bond moves only with the real rescue or refusal.
+// battle (two for kin), only for a friend at 40% health or less, at most two
+// a battle for the whole company, and the pair's bond moves only with the real rescue or refusal.
 
 // bondLine is the room's line for a friend's step ("Tamsin Reed steps in
 // front of Aria for a friend. (bond guard, 1 left)"). Names are tagged or
@@ -60,9 +61,9 @@ func tellBond(leader *users.UserRecord, fightID uint64, kind combatstream.Kind, 
 }
 
 // bondFriendGuard finds a friend of the struck member who steps in: in
-// reach, standing, with a bond step left, when the struck member is at half
-// health or less. It spends the step, says so, and reports the rescue to
-// the bond. ok is false when no one does.
+// reach, standing, with a bond step left, when the struck member is at 40%
+// health or less and the company has a bond step left. It spends the step,
+// says so, and reports the rescue to the bond. ok is false when no one does.
 func bondFriendGuard(leader *users.UserRecord, f company.Formation, fightID uint64, members []guardMember, ward guardMember, struck company.MemberKey, struckAlready map[company.MemberKey]bool) (guardMember, bool) {
 	if max := ward.char.HealthMax.Value; max < 1 || ward.char.Health*100 > max*bonds.GuardBelowPct {
 		return guardMember{}, false
@@ -76,6 +77,9 @@ func bondFriendGuard(leader *users.UserRecord, f company.Formation, fightID uint
 		rt := g.char.RTState()
 		if allowed < 1 || rt.BondGuards >= allowed {
 			continue
+		}
+		if !battle.SpendBondGuard(leader.UserId, bonds.CompanyGuards) {
+			return guardMember{}, false // the company has made its steps
 		}
 		rt.BondGuards++
 		left := allowed - rt.BondGuards

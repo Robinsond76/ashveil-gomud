@@ -1385,7 +1385,7 @@ await page.setViewportSize({ width: 1280, height: 900 });
   const bnd = {
     pairs: [
       { a: 1, b: 3, a_name: 'Oswin', b_name: 'Tamsin', value: 62, tier: 2, phrase: 'Oswin and Tamsin are close',
-        effect: 'Each steps in once a battle for the other when hurt (at 50% health or less).', warned: false },
+        effect: 'Each steps in once a battle for the other when hurt (at 40% health or less).', warned: false },
       { a: 2, b: 3, a_name: xss, b_name: 'Tamsin', value: -88, tier: -3, phrase: xss + ' and Tamsin cannot bear each other',
         effect: "Won't guard each other. One of them will leave if this goes on.", warned: true },
       { a: 1, b: 2, a_name: 'Oswin', b_name: xss, value: 4, tier: 0, phrase: 'Oswin and ' + xss + ' are still getting to know each other', effect: '', warned: false },

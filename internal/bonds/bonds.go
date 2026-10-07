@@ -196,8 +196,13 @@ func Guards(v int) int {
 }
 
 // GuardBelowPct is the share of its health, in percent, at or under which
-// a friend's ward is worth stepping in for.
-const GuardBelowPct = 50
+// a friend's ward is worth stepping in for, and CompanyGuards is the most
+// bond steps a company makes in one battle, all together (a company of
+// friends is not a company of guardians).
+const (
+	GuardBelowPct = 40
+	CompanyGuards = 2
+)
 
 // pair is an unordered pair of personalities.
 type pair struct{ a, b string }
