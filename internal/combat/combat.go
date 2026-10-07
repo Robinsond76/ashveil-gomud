@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
@@ -235,34 +236,43 @@ func applyWounds(target *characters.Character, r AttackResult) {
 // is lowered by the defender's burden (Phase 30g3) before the two are
 // compared; parry and block are not.
 func activeDefense(defender, attacker characters.Character, melee bool) string {
+	defense, _ := activeDefenseRoll(defender, attacker, melee)
+	return defense
+}
+
+// activeDefenseRoll is activeDefense that also reports the chance in 100
+// the defense was rolled at (Phase 62), 0 when none was rolled (a Perfect
+// Parry turns the blow without one).
+func activeDefenseRoll(defender, attacker characters.Character, melee bool) (string, int) {
 	if defender.HasBuffFlag(status.FlagNoDodge) {
-		return DefenseNone
+		return DefenseNone, 0
 	}
 	// Phase 38c2: a Swordmaster's Perfect Parry turns the first melee blow
 	// of a battle aside.
 	if _, ok := parryModifier(defender.Equipment.Weapon); melee && ok && defender.RT != nil && !defender.RT.PerfectUsed && defender.ClassEffects().Has(classes.PerfectParry) {
 		defender.RT.PerfectUsed = true
-		return DefenseParried
+		return DefenseParried, 0 // no roll: a Perfect Parry is certain
 	}
 	if defender.HasShield() {
-		if rollDefense(`Blocks`, blockChance(&defender, &attacker)) {
-			return DefenseBlocked
+		block := blockChance(&defender, &attacker)
+		if rollDefense(`Blocks`, block) {
+			return DefenseBlocked, block
 		}
-		return DefenseNone
+		return DefenseNone, block
 	}
 	dodge := effectiveDodge(&defender, &attacker)
 	if mod, ok := parryModifier(defender.Equipment.Weapon); melee && ok {
 		if parry := parryChance(&defender, &attacker, mod); parry >= dodge {
 			if rollDefense(`Parries`, parry) {
-				return DefenseParried
+				return DefenseParried, parry
 			}
-			return DefenseNone
+			return DefenseNone, parry
 		}
 	}
 	if rollDefense(`Dodges`, dodge) {
-		return DefenseDodged
+		return DefenseDodged, dodge
 	}
-	return DefenseNone
+	return DefenseNone, dodge
 }
 
 // defenseLines are a defended strike's lines (Phase 30g2) in the 29c
@@ -657,15 +667,19 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						sourceChar.RT.IaiSpent = true
 					}
 				}
-				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
+				hit, byChemistry, hitRollValue, hitChanceUsed := hitRollDetail(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
+				// Phase 62: this strike's roll and its parts, as resolved.
+				strike := combatstream.Strike{Chance: hitChanceUsed, Base: hitChanceForEdge(hitEdge(&sourceChar, &targetChar)), Modifier: penalty, Bonus: chemistryBonus, Roll: hitRollValue}
 				// Phase 38c2: a Marksman's Perfect Shot can't miss or be avoided.
 				perfectShot := !harmless && sourceChar.RT != nil && sourceChar.RT.ShotNow
 				if perfectShot {
 					sourceChar.RT.ShotNow, sourceChar.RT.ShotUsed = false, true
 					hit, byChemistry = true, false
+					strike.Auto, strike.Roll, strike.Chance = `perfect shot`, -1, 0
 				}
 				if harmless {
 					hit, byChemistry = false, false
+					strike.Auto, strike.Roll, strike.Chance = `harmless`, -1, 0
 				}
 				forcedCrit := false
 				if hit {
@@ -673,17 +687,20 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					// defended strike does nothing and can't crit.
 					defense := DefenseNone
 					if !perfectShot {
-						defense = activeDefense(targetChar, sourceChar, weaponSubType != items.Shooting)
+						defense, strike.DefenseChance = activeDefenseRoll(targetChar, sourceChar, weaponSubType != items.Shooting)
 					}
 					// Phase 38c2: a Marksman's critical hits can't be blocked, so
 					// a blow that would crit goes through the shield.
 					if defense == DefenseBlocked && iaiFx.Has(classes.NoBlockCrit) {
 						if backstabCrit || critsWith(sourceChar, targetChar, 0) {
 							defense, forcedCrit = DefenseNone, true
+							strike.ThroughShield = true
 						}
 					}
 					if defense != DefenseNone {
 						attackResult.Defenses = append(attackResult.Defenses, defense)
+						strike.Hit, strike.Defense = true, defense
+						attackResult.Strikes = append(attackResult.Strikes, strike)
 						sendDefenseLines(&attackResult, defense, &sourceChar, &targetChar, sourceType, targetType)
 						continue
 					}
@@ -695,6 +712,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 					attackResult.Hit = true
 					attackTargetDamage = util.RollDice(dCount, dSides) + dBonus
+					strike.Hit, strike.Rolled = true, attackTargetDamage
 					// Phase 35d: a blow that lands is glancing, solid or
 					// telling, by a roll the combined edge shifts. A wind-up's
 					// telegraphed blow is always solid.
@@ -706,15 +724,18 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackTargetDamage = max(1, int(math.Round(float64(attackTargetDamage)*qFactor)))
 					}
 					attackResult.Qualities = append(attackResult.Qualities, hitQuality)
+					strike.Quality = hitQuality
 					// Phase 30d2: a wind-up's blow multiplies what it rolled.
 					if power != nil && power.Multiplier > 1 {
 						attackTargetDamage *= power.Multiplier
+						strike.Notes = append(strike.Notes, fmt.Sprintf(`The wind-up multiplied the blow by %d`, power.Multiplier))
 					}
 
 					// Phase 23b: a sharpened weapon adds its edge to each
 					// successful strike until its strikes are spent.
 					if slot := weaponSlots[wIdx]; slot != `` && weapon.SharpStrikes-attackResult.EdgeSpent[slot] > 0 && weapon.SharpBonus > 0 {
 						edgeBonus = weapon.SharpBonus
+						strike.Notes = append(strike.Notes, fmt.Sprintf(`Sharpened edge added %d`, edgeBonus))
 						attackTargetDamage += edgeBonus
 						if attackResult.EdgeSpent == nil {
 							attackResult.EdgeSpent = map[items.ItemType]int{}
@@ -726,16 +747,21 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					// fresh per-attack roll so crits don't cascade.
 					if backstabCrit {
 						attackTargetDamage += strikeBonus
+						if strikeBonus > 0 {
+							strike.Notes = append(strike.Notes, fmt.Sprintf(`The readied strike added %d`, strikeBonus))
+						}
 						strikeBonus = 0
 					}
 					critBonus := 0
 					if strikeIai {
+						strike.Notes = append(strike.Notes, `Iaijutsu, the battle's first draw, struck harder and was likelier to crit`)
 						critBonus = iaiFx.Int(classes.IaiCrit)
 						attackTargetDamage += (attackTargetDamage*iaiFx.Int(classes.IaiDamage) + 50) / 100
 					}
 					isCrit = backstabCrit || forcedCrit || critsWith(sourceChar, targetChar, critBonus)
 					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
+						strike.Crit = true
 						attackResult.Crit = true // record that at least one crit occurred this round
 						// Phase 30a review: added, so a later crit never drops an
 						// earlier strike's status.
@@ -749,32 +775,54 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 				}
 
+				beforeAdjust := attackTargetDamage
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
+				if hit && attackTargetDamage != beforeAdjust {
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`Class effects changed the blow by %+d`, attackTargetDamage-beforeAdjust))
+				}
+				beforeAdjust = attackTargetDamage
 				attackTargetDamage = leadrootDamage(&sourceChar, attackTargetDamage)
+				if hit && attackTargetDamage != beforeAdjust {
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`Leadroot poison weakened the blow by %d`, beforeAdjust-attackTargetDamage))
+				}
+				beforeAdjust = attackTargetDamage
 				attackTargetDamage = fareDamage(&sourceChar, &targetChar, attackTargetDamage)
+				if hit && attackTargetDamage != beforeAdjust {
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`Hunger, thirst or a meal changed the blow by %+d`, attackTargetDamage-beforeAdjust))
+				}
+				strike.Raw = attackTargetDamage
 				defense := targetChar.GetDefense()
 				// Phase 39h: a Piercing Bolt ignores part of the armor.
 				if p := sourceChar.RT; p != nil && p.BlowPierce > 0 && hit {
 					defense -= defense * min(p.BlowPierce, 100) / 100
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`A piercing bolt ignored %d%% of the armor`, min(p.BlowPierce, 100)))
 				}
 				if strikeIai && hit {
-					defense -= defense * min(iaiFx.Int(classes.IaiPierce), 100) / 100
+					if pierce := min(iaiFx.Int(classes.IaiPierce), 100); pierce > 0 {
+						defense -= defense * pierce / 100
+						strike.Notes = append(strike.Notes, fmt.Sprintf(`Iaijutsu ignored %d%% of the armor`, pierce))
+					}
 				}
+				strike.Armor = defense
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, defense)
+				strike.ArmorTook = attackTargetReduction
 				// Phase 38b review: an aura's "less damage" is a true percent
 				// off the blow (on the armor roll it averaged half that).
 				if r := targetChar.Aura.Resolve; r > 0 && attackTargetDamage > 0 {
 					cut := (attackTargetDamage*r + 50) / 100
 					attackTargetDamage -= cut
 					attackTargetReduction += cut
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`An aura of resolve took %d`, cut))
 				}
 				// Phase 38b: a Divine Shield turns the first blow of a battle
 				// aside, and a ward takes its share of one.
 				warded := targetChar.RT != nil && targetChar.RT.Ward > 0
 				if attackTargetDamage > 0 && targetChar.ShieldBlow() {
+					strike.Notes = append(strike.Notes, `A divine shield turned the blow aside`)
 					attackTargetReduction += attackTargetDamage
 					attackTargetDamage = 0
 				} else if left, absorbed := targetChar.AbsorbWard(attackTargetDamage); absorbed > 0 {
+					strike.Notes = append(strike.Notes, fmt.Sprintf(`A ward took %d`, absorbed))
 					attackTargetDamage = left
 					attackTargetReduction += absorbed
 					// Phase 38c3: a ward that breaks, or reflects.
@@ -789,6 +837,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					attackTargetReduction += attackTargetDamage - capped
 					attackTargetDamage = capped
 					attackResult.Ward.Saved = saved
+					strike.Notes = append(strike.Notes, `A ward kept the blow from felling its target`)
 				}
 				// Phase 38c2: a Nightblade's Coup de Grace fells a foe near death
 				// (a boss takes double damage instead).
@@ -796,6 +845,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				if attackTargetDamage > 0 {
 					if fell := coupDamage(&sourceChar, &targetChar, attackTargetDamage, targetChar.Health-attackResult.DamageToTarget, len(targetMob) > 0 && targetMob[0] != nil && targetMob[0].Boss); fell != attackTargetDamage {
 						attackTargetDamage, coup = fell, true
+						strike.Notes = append(strike.Notes, `Coup de grace`)
 					}
 				}
 				if attackTargetDamage < 1 && len(attackResult.Qualities) > 0 {
@@ -921,6 +971,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				attackResult.DamageToTarget += attackTargetDamage
 				attackResult.DamageToTargetReduction += attackTargetReduction
+				strike.Reduced, strike.Damage = attackTargetReduction, attackTargetDamage
+				if hit {
+					// Phase 35d: a blow armor absorbed whole has no quality to report.
+					strike.Quality = hitQuality
+				}
+				attackResult.Strikes = append(attackResult.Strikes, strike)
 			}
 
 		}
@@ -948,9 +1004,14 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 							attackTargetDamage := util.RollDice(pDCount, pDSides) + pDBonus
 
-							attackTargetDamage, _ = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+							petRaw, petArmor := attackTargetDamage, targetChar.GetDefense()
+							var petArmorTook int
+							attackTargetDamage, petArmorTook = applyDefenseReduction(attackTargetDamage, petArmor)
 
 							attackResult.DamageToTarget += attackTargetDamage
+							// Phase 62 review: the pet's blow is part of the round's damage.
+							attackResult.Strikes = append(attackResult.Strikes, combatstream.Strike{Pet: petNameOr(sourceChar.Pet.Name), Hit: true, Roll: -1,
+								Raw: petRaw, Armor: petArmor, ArmorTook: petArmorTook, Reduced: petArmorTook, Damage: attackTargetDamage})
 
 							targetDisplayName := fmt.Sprintf(`<ansi fg="%sname">%s</ansi>`, string(targetType), targetChar.Name)
 							petDisplayName := sourceChar.Pet.DisplayName()
@@ -1009,4 +1070,12 @@ func fogPenalty(c *characters.Character) int {
 		return stormcraft.FogHit
 	}
 	return 0
+}
+
+// petNameOr names a pet for its strike's breakdown (Phase 62 review).
+func petNameOr(name string) string {
+	if name == `` {
+		return `pet`
+	}
+	return name
 }

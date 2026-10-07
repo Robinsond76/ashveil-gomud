@@ -265,14 +265,21 @@ func clampToHit(toHit int) int {
 // only the bonus made: the roll fell between the chance without it and the
 // chance with it. It rolls once, as Hits always has.
 func hitRoll(edge float64, hitModifier, bonus int) (hit, byBonus bool) {
+	hit, byBonus, _, _ = hitRollDetail(edge, hitModifier, bonus)
+	return hit, byBonus
+}
+
+// hitRollDetail is hitRoll that also reports the roll and the chance it was
+// made against (Phase 62: the explained battle line).
+func hitRollDetail(edge float64, hitModifier, bonus int) (hit, byBonus bool, roll, toHit int) {
 	base := hitChanceForEdge(edge) + hitModifier
 	without := clampToHit(base)
-	toHit := clampToHit(base + bonus)
+	toHit = clampToHit(base + bonus)
 
-	roll := util.Rand(100)
+	roll = util.Rand(100)
 	util.LogRoll(`Hits`, roll, toHit)
 	hit = roll < toHit
-	return hit, hit && roll >= without
+	return hit, hit && roll >= without, roll, toHit
 }
 
 // combatAttackCount resolves one complete weapon turn. Frequency is owned

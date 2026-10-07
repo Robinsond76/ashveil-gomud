@@ -635,6 +635,8 @@ func TestLiveSmoke(t *testing.T) {
 		}
 		p1.expect(`Head east for the next lesson: Alignment`, 20*time.Second)
 		p1.drain(time.Second)
+		// Phase 62: `why` explains the fight's latest blows from the engine's roll.
+		p1.do("why", `Round \d+: .*\n.*(To hit: \d+ in 100, rolled \d+|No roll needed)`)
 
 		p1.doAfterBattle("east", `Tutorial, stage 7 of 8: Alignment`)
 		p1.do("company alignment", `Company alignment`)

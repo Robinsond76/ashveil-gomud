@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
@@ -41,6 +42,9 @@ type AttackResult struct {
 	// Qualities is the quality (QualityGlancing, QualitySolid or
 	// QualityTelling) of each strike that landed, in order (Phase 35d).
 	Qualities []string
+	// Strikes is each strike's roll with its parts (Phase 62), in order,
+	// recorded as the round resolved so a breakdown matches it exactly.
+	Strikes []combatstream.Strike
 	// Ward is what the target's ward did in the round's strikes (Phase
 	// 38c3).
 	Ward characters.WardEvent

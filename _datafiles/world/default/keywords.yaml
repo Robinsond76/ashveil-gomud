@@ -203,6 +203,7 @@ help:
       - assessment
       - attack
       - battle-summary
+      - battlelog
       - break
       - burden
       - cast
@@ -510,6 +511,7 @@ help-aliases:
   sharpen:          [whetstone, whetstones, edge]
   poisons:          [poison, coat, coating, coatings, weapon-poison, weapon-poisons, bitterleaf, leechbane, leadroot, mirethorn, vial, vials]
   battle-summary:   [battlesummary, summary]
+  battlelog:        [why, battle-log, explain, explained, rolls, roll-log]
   combatpace:       [pace, pacing, combat-pace]
   banter:           [camp-talk, chatter, companion-talk, comrades]
   music:            [song, songs, bard, bards, musician, musicians, camp song, camp-song, camp music, camp-music, ensemble, drumbeat, strings, winds, drums, voice, music learn, music craft]

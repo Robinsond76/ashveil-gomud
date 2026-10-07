@@ -95,6 +95,8 @@ button in them just types a command for you.
   While you fight, the Combat tab shows the battle; when it ends, it goes
   back to Setup. If you're looking at another tab when a battle begins,
   a marker on the Combat tab tells you; it never switches tabs for you.
+  Under the battle, and after it, a "Last rounds" list keeps the company's
+  latest blows: open one to see why it landed or missed (<ansi fg="command">help battlelog</ansi>).
 
   The enemy group stands above, your company below (or just "You" when
   you fight alone), each front row nearest the middle, the way <ansi fg="command">scout</ansi>

@@ -164,6 +164,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	// Phase 37: a summary lists only this fight's spoils, never a death's
 	// spoils noted outside any fight.
 	loot.TakeSpoils(sd.user.UserId)
+	combatstream.DefaultRollLog().Clear(sd.user.UserId) // Phase 62: `why` explains the latest fight
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
 	if len(p.Members) > 0 {
 		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {

@@ -72,12 +72,28 @@ type Summary struct {
 	Effects          []Count
 	Kills            []Amount // company members, most first
 
+	// Phase 62: why the fight went as it did.
+	Taken       []Amount // damage each company member took, most first
+	NeverLanded []Swings // company members who swung and never landed a blow
+	Moves       []Count  // class abilities the company used
+	Sigil       string   // the sigil in force over the battle, set by the caller
+
 	// Spoils is what the leader's company took (Phase 37), set by the
 	// caller when the fight ends: item names and gold, as they fell.
 	Spoils []string
 
 	Enemies []EnemyEnding
 	Company []MemberHealth
+}
+
+// Swings is what became of a member's strikes: how many were thrown, and
+// why they did nothing.
+type Swings struct {
+	Who      Ref
+	Thrown   int
+	Missed   int // the roll fell short
+	Turned   int // a block, parry or dodge stopped it
+	Absorbed int // it landed and armor or a ward took it all
 }
 
 // DefenseCounts is how many strikes a side blocked, parried, and dodged.
@@ -128,10 +144,15 @@ type tally struct {
 	effectOrder                []string
 	kills                      map[string]int
 	refs                       map[string]Ref
+	taken                      map[string]int
+	swings                     map[string]*Swings
+	swingOrder                 []string
+	moves                      map[string]int
+	moveOrder                  []string
 }
 
 func newTally() tally {
-	return tally{damage: map[string]int{}, guards: map[string]int{}, effects: map[string]int{}, kills: map[string]int{}, refs: map[string]Ref{}}
+	return tally{damage: map[string]int{}, guards: map[string]int{}, effects: map[string]int{}, kills: map[string]int{}, refs: map[string]Ref{}, taken: map[string]int{}, swings: map[string]*Swings{}, moves: map[string]int{}}
 }
 
 func (t *tally) add(f *fight, e Event) {
@@ -153,8 +174,15 @@ func (t *tally) add(f *fight, e Event) {
 				t.enemyDefenses.add(d)
 			}
 		}
+		if e.Kind == Attack && sourceCompany && targetEnemy {
+			t.noteSwings(e)
+		}
 		if e.Damage <= 0 {
 			return
+		}
+		if targetCompany {
+			t.taken[e.Target.Key()] += e.Damage
+			t.refs[e.Target.Key()] = e.Target
 		}
 		switch {
 		case sourceCompany:
@@ -182,6 +210,15 @@ func (t *tally) add(f *fight, e Event) {
 			t.companyDamage += e.Damage
 		case targetCompany:
 			t.enemyDamage += e.Damage
+			t.taken[e.Target.Key()] += e.Damage
+			t.refs[e.Target.Key()] = e.Target
+		}
+	case Ability:
+		if sourceCompany && e.Status != "" {
+			if _, ok := t.moves[e.Status]; !ok {
+				t.moveOrder = append(t.moveOrder, e.Status)
+			}
+			t.moves[e.Status]++
 		}
 	case StatusApplied:
 		if e.Status == "" {
@@ -210,6 +247,47 @@ func (t *tally) add(f *fight, e Event) {
 		}
 	}
 }
+
+// noteSwings counts a company member's attack round's strikes by what
+// became of them. A round with no recorded strikes counts as one.
+func (t *tally) noteSwings(e Event) {
+	k := e.Source.Key()
+	sw := t.swings[k]
+	if sw == nil {
+		sw = &Swings{Who: e.Source}
+		t.swings[k] = sw
+		t.swingOrder = append(t.swingOrder, k)
+	}
+	if len(e.Strikes) == 0 {
+		sw.Thrown++
+		switch {
+		case e.Outcome == OutcomeMiss:
+			sw.Missed++
+		case len(e.Defenses) > 0:
+			sw.Turned++
+		case e.Damage <= 0:
+			sw.Absorbed++
+		}
+		return
+	}
+	for _, st := range e.Strikes {
+		if st.Pet != "" {
+			continue // a pet's bite is not the member's own swing
+		}
+		sw.Thrown++
+		switch {
+		case !st.Hit:
+			sw.Missed++
+		case st.Defense != "":
+			sw.Turned++
+		case st.Damage <= 0:
+			sw.Absorbed++
+		}
+	}
+}
+
+// landed is how many of a member's strikes got damage through.
+func (sw Swings) landed() int { return sw.Thrown - sw.Missed - sw.Turned - sw.Absorbed }
 
 // amounts turns a key->value map into Amounts, most first, ties by name.
 func (t *tally) amounts(m map[string]int) []Amount {
@@ -250,6 +328,15 @@ func (f *fight) summary(round uint64, outcome string, final Final) *Summary {
 		InterruptsTaken:  t.interruptsTaken,
 		Guards:           t.amounts(t.guards),
 		Kills:            t.amounts(t.kills),
+		Taken:            t.amounts(t.taken),
+	}
+	for _, k := range t.swingOrder {
+		if sw := t.swings[k]; sw.Thrown > 0 && sw.landed() == 0 {
+			s.NeverLanded = append(s.NeverLanded, *sw)
+		}
+	}
+	for _, name := range t.moveOrder {
+		s.Moves = append(s.Moves, Count{Name: name, Count: t.moves[name]})
 	}
 	for _, m := range final.Company {
 		if f.down[m.Ref.Key()] == OutcomeSlain {
@@ -390,6 +477,27 @@ func Render(s Summary, viewerUserId int) []string {
 	if len(s.Kills) > 0 {
 		out = append(out, line("Kills", joinAmounts(s.Kills)))
 	}
+	// Phase 62: why the fight went as it did.
+	if len(s.Taken) > 0 {
+		out = append(out, line("Damage taken", joinAmounts(s.Taken)))
+	}
+	if len(s.NeverLanded) > 0 {
+		parts := make([]string, 0, len(s.NeverLanded))
+		for _, sw := range s.NeverLanded {
+			parts = append(parts, name(sw.Who)+" "+sw.why())
+		}
+		out = append(out, line("Never landed", strings.Join(parts, " · ")))
+	}
+	if len(s.Moves) > 0 {
+		parts := make([]string, 0, len(s.Moves))
+		for _, c := range s.Moves {
+			parts = append(parts, fmt.Sprintf("%s %d", c.Name, c.Count))
+		}
+		out = append(out, line("Moves", strings.Join(parts, " · ")))
+	}
+	if s.Sigil != "" {
+		out = append(out, line("Sigil", s.Sigil))
+	}
 	if len(s.Spoils) > 0 {
 		out = append(out, line("Spoils", strings.Join(s.Spoils, " · ")))
 	}
@@ -411,4 +519,20 @@ func Render(s Summary, viewerUserId int) []string {
 	}
 	out = append(out, line("Company", strings.Join(members, " · ")))
 	return out
+}
+
+// why says what became of the strikes that did nothing, "3 missed, 1
+// dodged or parried".
+func (sw Swings) why() string {
+	var parts []string
+	if sw.Missed > 0 {
+		parts = append(parts, fmt.Sprintf("%d missed", sw.Missed))
+	}
+	if sw.Turned > 0 {
+		parts = append(parts, fmt.Sprintf("%d turned aside", sw.Turned))
+	}
+	if sw.Absorbed > 0 {
+		parts = append(parts, fmt.Sprintf("%d stopped by armor or a ward", sw.Absorbed))
+	}
+	return strings.Join(parts, ", ")
 }

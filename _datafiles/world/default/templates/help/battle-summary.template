@@ -8,6 +8,9 @@ When your company's fight ends, you get a short summary of it:
   <ansi fg="command">Highest hit    Garrick Vane 11 on bandit captain (critical)</ansi>
   <ansi fg="command">Defenses       Company 4 blocked, 1 parried · Enemies 3 dodged</ansi>
   <ansi fg="command">Kills          Garrick Vane 2 · You 1 · Ysolde 2</ansi>
+  <ansi fg="command">Damage taken   Tamsin Reed 21 · You 9</ansi>
+  <ansi fg="command">Never landed   Ysolde 3 missed, 1 turned aside</ansi>
+  <ansi fg="command">Moves          Opening Strike 1</ansi>
   <ansi fg="command">Enemies        bandit captain slain · bandit slinger fled</ansi>
   <ansi fg="command">Company        You 12/14 · Garrick Vane 6/15 · Tamsin Reed fallen</ansi>
 
@@ -29,6 +32,14 @@ band of ruffians</ansi>, or <ansi fg="yellow">The fight with a band of ruffians 
   foe's chant withstood (<ansi fg="yellow">failed</ansi>, shown when any did), and the chants
   of yours the enemy broke (<ansi fg="yellow">taken</ansi>) (<ansi fg="command">help interrupts</ansi>). A wind-up
   lost to a stun that no blow of yours dealt is not counted.
+- <ansi fg="yellow">Damage taken</ansi> (when any was) is what each of your company took, most first:
+  who the foe hit hardest.
+- <ansi fg="yellow">Never landed</ansi> (when any member swung and landed nothing) says what became
+  of that member's blows: <ansi fg="yellow">missed</ansi>, <ansi fg="yellow">turned aside</ansi> (blocked, parried or dodged), or
+  <ansi fg="yellow">stopped by armor or a ward</ansi>. It tells you who never reached their target, and why.
+- <ansi fg="yellow">Moves</ansi> (when any were used) counts the class abilities your company used.
+- <ansi fg="yellow">Sigil</ansi> (when you fought on one) names the sigil that held over the battle
+  and what it does (<ansi fg="command">help sigils</ansi>).
 - <ansi fg="yellow">Spoils</ansi> (when your company took any) lists the gear and gold your
   company's own drop rolls gave (<ansi fg="command">help encounters</ansi>, <ansi fg="command">help loot</ansi>).
 - An enemy ends <ansi fg="yellow">slain</ansi>, <ansi fg="yellow">fled</ansi>, <ansi fg="yellow">left</ansi> (walked away), <ansi fg="yellow">beaten</ansi> (a
@@ -48,4 +59,6 @@ cutthroat stays second even after the first falls. A new battle, including
 one rebuilt after restart or copyover, starts its labels afresh
 (<ansi fg="command">help narration</ansi>).
 
-See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>.
+To see why a single blow landed or missed, use <ansi fg="command">why</ansi> (<ansi fg="command">help battlelog</ansi>).
+
+See also: <ansi fg="command">help battlelog</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>.
