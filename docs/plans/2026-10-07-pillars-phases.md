@@ -100,6 +100,18 @@ refused in battle.
 **Accept.** Each condition and action fires in a real round; presets
 loaded; `help orders`; Company panel editor at desktop and phone width.
 
+### Phase 61 build decisions (2026-10-07, full autonomy)
+
+Where the scope left the menus open, the build picked these defaults.
+
+- **Conditions (six):** `ally [n]` (the most hurt ally who is not the member, below n% health; n a multiple of 5 from 10 to 90), `self [n]`, `chanting`, `boss`, `first` (the battle's first round), `foe [kind]` with kinds `caster` and `healer`. *Why:* each reads a fact the combat round already has (`strategy.Foe` flags, battle round, ally health), so no new state; kinds follow the existing foe flags, and race kinds (beast, undead) wait for the replacement world's races.
+- **Actions (five):** `heal` (the ally or self the condition named; the heavy heal below 40%), `break` (turn on the foe the condition named; for a chanter, break its chant: a fighter strikes if it reaches it, a caster or one out of reach casts an attack spell), `guard` (the member guards the named ally this round, through the real guardian path and its guard counts), `strongest` (cast the heaviest attack spell it can pay for, ignoring its mana reserve), `hold` (no attack spell this round; heals go on). *Why:* these are the Deadfire rules that change the outcome and that the engine can already carry out. Legal pairs are one rule in `orders.Order.Validate` (heal needs ally/self, guard needs ally, break needs chanting/boss/foe).
+- **Left out: "fall back a row" and "use my strongest ability" for fighters.** Formation is durable state: moving a member mid-battle would either persist or need a battle-only column in every reach gate. Class abilities fire through `abilityPass` with their own cooldowns and gates; forcing one is a larger change. `strongest` covers casters; a fighter's ability still fires by its own rule. Both can follow as a later phase if players want them.
+- **Reading:** each round, in `strategyPass`, before the role and target rule. The first order whose condition holds and whose action the member can carry out (a heal needs a known, paid-for heal spell; a break needs a foe in reach or a spell) fires and takes the turn; `guard` and `hold` modify the turn instead (the member then goes on by its role). An order that keeps holding (guard, hold) is noted when it starts, not every round. A member chanting, stunned, surprised or stood down reads no orders, as it casts nothing.
+- **Log:** a text line to the player and the room ("Brother Oswin tends you, as ordered.") and an `order-fired` combat event (member, subject, action) that the web battle log narrates in the same words. Not shared with allied companies' watchers.
+- **Storage and rules:** up to 3 per member, stored with strategies in `modules/strategy` (own map, rolled back on a failed save, pruned with the member, dropped on purge, own test-area snapshot entry). Set with `orders [who] add|remove|up|preset|clear`; refused in a battle; reading is always allowed. `strategy [who] default` leaves orders alone. Presets by archetype are only loaded on request (`orders [who] preset`), never automatic, so existing companies fight exactly as before and no balance changed.
+- **Web client:** the Combat tab's Setup lists each member's orders under their row, with an Orders button (add from 14 offered pairs, remove, move up, class preset, clear); in a battle the list shows without the button.
+
 ## 62 Battle lines that explain themselves
 
 **Why.** When a player can't steer a fight, understanding why it went wrong

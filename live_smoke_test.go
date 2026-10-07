@@ -614,6 +614,8 @@ func TestLiveSmoke(t *testing.T) {
 		p1.do("east", `Tutorial, stage 6 of 8: Combat`)
 		p1.do("set combatpace off", `Combat pace`)
 		p1.do("formation move me 3 2", `Placed Torvald`)
+		// Phase 61: a battle order, set before the fight.
+		p1.do("orders oswin add ally 50 then heal", `Order 1 for Brother Oswin`)
 		scout := p1.do("scout squad", `Assessment:`)
 		if !strings.Contains(scout, "straw archer") {
 			t.Errorf("scout squad did not show the archer:\n%s", scout)
@@ -752,6 +754,7 @@ func TestLiveSmoke(t *testing.T) {
 		if !strings.Contains(out, "Tamsin Reed(#1)") {
 			t.Errorf("the formation was lost across a restart:\n%s", out)
 		}
+		p1b.do("orders oswin", `1\. When an ally is below 50% health, heal that ally first\.`) // Phase 61: orders persist
 		out = p1b.do("status", `More: company status`)
 		if !strings.Contains(out, "Torvald") {
 			t.Errorf("status after restart: %s", out)

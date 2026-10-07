@@ -43,6 +43,9 @@ Once the battle starts:
   more (<ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>);
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
+- each member reads its battle orders first ("when an ally is below half
+  health, heal them"), and the log says "as ordered" when one fires
+  (<ansi fg="command">help orders</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
   always does, but a one-round heal such as Minor Heal only breaks to heavy
   force), on either side, and
@@ -152,6 +155,7 @@ damage and who never landed a blow. <ansi fg="command">why</ansi> explains any s
   <ansi fg="command">why</ansi>               explain how the latest blows landed or missed
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
+  <ansi fg="command">orders</ansi>            "when this, do that" rules for each member
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
   <ansi fg="command">help guardian</ansi>     guardians and their guards
   <ansi fg="command">help battlescreen</ansi> the web client's battle picture

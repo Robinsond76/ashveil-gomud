@@ -60,6 +60,10 @@ const (
 	// OutcomeFailed; a strike readied (Opening Strike, Aimed Shot) has
 	// none, its blow being the round's Attack.
 	Ability Kind = "ability"
+	// OrderFired is a battle order (Phase 61) carried out: Source is the
+	// member who held it, Target the ally or foe its condition named, Status
+	// its action ("heal", "break", "guard", "strongest" or "hold").
+	OrderFired Kind = "order-fired"
 )
 
 // Outcomes.

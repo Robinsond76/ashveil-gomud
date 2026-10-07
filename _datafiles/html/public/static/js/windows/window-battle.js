@@ -501,6 +501,22 @@
         return u ? (u.id === 'leader' ? (u.label || 'You') : u.label) : '';
     }
 
+    // orderLine says a battle order carried out: member a, subject t, as the
+    // text lines say it ("You tend Oswin", "Oswin tends you").
+    function orderLine(status, a, t) {
+        const ORDERED = ', as ordered';
+        if (!a) { return ''; }
+        const you = a === 'You';
+        const v = (mine, theirs) => you ? mine : theirs;
+        const them = t === 'You' ? 'you' : t;
+        if (status === 'heal') { return t ? a + (a === t ? v(' look to your own wounds', ' looks to a wound of their own') : v(' tend ', ' tends ') + them) + ORDERED : ''; }
+        if (status === 'break') { return t ? a + v(' turn on ', ' turns on ') + them + ORDERED : ''; }
+        if (status === 'guard') { return t ? a + v(' move to guard ', ' moves to guard ') + them + ORDERED : ''; }
+        if (status === 'strongest') { return a + v(' put everything into your next spell', ' puts everything into the next spell') + ORDERED; }
+        if (status === 'hold') { return a + v(' hold back your mana', ' holds back mana') + ORDERED; }
+        return '';
+    }
+
     function narrate(e) {
         const a = nameOf(e.src), t = nameOf(e.tgt);
         const dmg = e.damage ? ' (' + e.damage + ')' : '';
@@ -529,6 +545,8 @@
         case 'yield': return a ? a + ' yields' : '';
         case 'flee': return a ? a + ' flees' : '';
         case 'guard-used': return a && t ? a + ' guards ' + t : '';
+        // Phase 61: a battle order carried out, said as the text lines say it.
+        case 'order-fired': return orderLine(e.status, a, t);
         // An ability names itself (a Sentinel's Overwatch, a Nightblade's Death Mark...).
         case 'ability': return a && e.status ? a + ': ' + e.status + (t && e.outcome !== 'failed' ? ' on ' + t : (e.outcome === 'failed' ? ' (failed)' : '')) : '';
         default: return '';

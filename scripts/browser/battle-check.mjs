@@ -255,6 +255,11 @@ await events({ fight: 2, round: 1, events: [{ seq: 35, kind: 'spell-hit', src: '
 await until(() => window.BattleScreen.state().lastBlow === 'Ysolde\'s Magic Missile strikes the first wolf (7)', 'the last-blow line names the spell');
 await events({ fight: 2, round: 1, events: [{ seq: 36, kind: 'spell-hit', src: '?', tgt: 'companion:3', spell: 'mm', spell_name: 'Magic Missile', damage: 2 }] });
 await until(() => window.BattleScreen.state().lastBlow === 'A spell strikes Ysolde (2)', 'an unseen caster\'s spell goes unnamed');
+// Phase 61: a battle order carried out reads "as ordered" in the log.
+await events({ fight: 2, round: 1, events: [{ seq: 37, kind: 'order-fired', src: 'companion:3', tgt: 'leader', status: 'heal' }] });
+await until(() => window.BattleScreen.state().lastBlow === 'Ysolde tends Wren, as ordered', 'an order carried out is said "as ordered"');
+await events({ fight: 2, round: 1, events: [{ seq: 38, kind: 'order-fired', src: 'companion:2', tgt: 'm:1', status: 'break' }] });
+await until(() => /turns on the first wolf, as ordered$/.test(window.BattleScreen.state().lastBlow), 'a break order names the foe it turns on');
 // A death plays out: the unit stands until its fall has played, then lies down.
 await events({ fight: 2, round: 2, events: [{ seq: 33, kind: 'death', tgt: 'm:3' }] });
 check(!unitOf(await state(), 'm:3').fallen, 'a death does not lay the unit down until its animation has played');

@@ -270,6 +270,11 @@
                 }
                 break;
             }
+            case 'order-fired': {
+                // Phase 61: a battle order carried out: a brief highlight on the member.
+                steps.push(act(src, '', { fx: [{ kind: 'highlight', at: 0 }] }));
+                break;
+            }
             case 'yield': {
                 steps.push(act(src, 'yield', { ops: [op('yielded', src, { value: true })], hold: 'yield' }));
                 break;

@@ -355,3 +355,21 @@ func TestAlchemistDefaultsToHealer(t *testing.T) {
 		t.Error("an Alchemist is a healer by default")
 	}
 }
+
+// Phase 61 review: a hold order keeps every attack spell back, Lightning
+// included (which the mana reserve does not), but not a summon.
+func TestDecideHoldKeepsAttackSpellsButNotASummon(t *testing.T) {
+	list := []Spell{{ID: "lightning", Use: UseStorm, Cost: 12}, {ID: "mm", Use: UseAttack, Cost: 6}, {ID: "callhost", Use: UseSummon, Cost: 10}}
+	s := Situation{Role: Caster, Mana: 40, MaxMana: 40, Knows: known("lightning", "mm"), Spells: list, Foes: 1, Summoned: true, Hold: true}
+	if a := Decide(s); a.Kind != Swing {
+		t.Errorf("hold: %+v", a)
+	}
+	s.Hold = false
+	if a := Decide(s); a.Kind != Storm {
+		t.Errorf("no hold: %+v", a)
+	}
+	s.Hold, s.Summoned, s.Foes, s.Knows = true, false, 3, known("lightning", "callhost")
+	if a := Decide(s); a.Kind != Summon {
+		t.Errorf("hold with a summon to call: %+v", a)
+	}
+}

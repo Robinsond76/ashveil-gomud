@@ -79,7 +79,9 @@ button in them just types a command for you.
   move, Enter chooses, and Escape closes it.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
-  or where they stand (<ansi fg="command">formation</ansi>). A guardian's menu picks whom it
+  or where they stand (<ansi fg="command">formation</ansi>). Under each row are the member's
+  battle orders, with an Orders button to add, remove or reorder them
+  (<ansi fg="command">help orders</ansi>), between battles. A guardian's menu picks whom it
   guards ("Guard: ..."), and its row says so, marked "(out of reach)" when
   it stands too far from its ward (<ansi fg="command">help guardian</ansi>); click Company tactics to set the
   focus or healing threshold (<ansi fg="command">company tactics</ansi>; the row appears once you
