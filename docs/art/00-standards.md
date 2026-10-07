@@ -209,6 +209,10 @@ Don't put several tiles in one image.
   run as texture edge to edge, so they connect from any side.
 - **Variants** share the base color and light. They differ only in where
   the details sit, and none of them stands out.
+- **No wallpaper.** A biome repeats over whole regions, so no detail large
+  enough to recognize (a boulder, a rug, a web, a grate) may sit in the
+  same place on more than one variant. Prefer many small, scattered
+  details to one big centerpiece.
 - **Animated frames** are the base tile plus the moving element. Frames
   1–4 loop and differ only where things move: waves, bubbles, snow,
   drifting sand.
@@ -279,7 +283,8 @@ Go through every file:
 - [ ] The right number of rows and columns, in the order the phase lists.
 - [ ] No text, matte, checkerboard, ground, border or stray specks.
 - [ ] Terrain: a 3×3 grid of each tile, and a mixed row of biomes, show no
-      frame or seam. Put both in the review sheet.
+      frame or seam. A 6×6 patch cycling the variants, at 96 px per tile,
+      shows no visible tile grid. Put all three in the review sheet.
 - [ ] Shrunk to the logical size, it still reads. Shown next to the A0
       anchors, it looks like the same game.
 - [ ] Every frame is the same design and scale. Feet are level, and the
