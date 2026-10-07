@@ -325,6 +325,8 @@
         /* Phase 67: a relic's awakenings, woken and asleep. */
         .gw-tt-relic .gw-tt-awake { color: #ffd75f; }
         .gw-tt-relic .gw-tt-sleep { color: var(--t-text-secondary); }
+        /* Phase 71: a trophy enchant, on a relic or a plain item. */
+        .gw-tt-relic .gw-tt-ench { color: #d787ff; }
 
         .gw-tt-relic .gw-tt-relic-lore {
             color: var(--t-text-secondary);
@@ -463,7 +465,8 @@
             html += '<hr class="gw-tt-divider"><div class="gw-tt-relic">' +
                 item.relic.map(function (line) {
                     const cls = line.indexOf('Awakened, ') === 0 ? ' class="gw-tt-awake"'
-                        : line.indexOf('Sleeping, ') === 0 ? ' class="gw-tt-sleep"' : '';
+                        : line.indexOf('Sleeping, ') === 0 ? ' class="gw-tt-sleep"'
+                        : line.indexOf('Enchanted with ') === 0 ? ' class="gw-tt-ench"' : '';
                     return '<div' + cls + '>' + esc(line) + '</div>';
                 }).join('');
             if (item.relic_lore) {

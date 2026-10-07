@@ -23,15 +23,16 @@ var (
 
 	// -short suffix should also be defined in case shorthand symbols are preferred
 	adjectiveStyles = map[string]adjectiveStyle{
-		`charmed`:  {`♥friend`, `♥`, `pink`},     // Are they charmed/friendly?
-		`downed`:   {`☠downed`, `☠`, `red`},      // Are they downed?
-		`elite`:    {`elite`, `◆`, `elite`},      // Are they an elite mob?
-		`hidden`:   {`hidden`, `?`, `gray`},      // Are they hiding?
-		`lit`:      {`☀️Lit`, `☀️`, `lit`},       // Does light come from this character?
-		`sleeping`: {`asleep`, `zZz`, `gray`},    // Are they hiding?
-		`zombie`:   {`zOmBie`, `z`, `zombie`},    // Have they disconnected and/or zombie status?
-		`poisoned`: {`☠poisoned`, `☠`, `purple`}, // Have they disconnected and/or zombie status?
-		`shop`:     {`shop`, `$`, `gold`},        // Do they sell stuff?
+		`charmed`:   {`♥friend`, `♥`, `pink`},     // Are they charmed/friendly?
+		`downed`:    {`☠downed`, `☠`, `red`},      // Are they downed?
+		`elite`:     {`elite`, `◆`, `elite`},      // Are they an elite mob?
+		`hidden`:    {`hidden`, `?`, `gray`},      // Are they hiding?
+		`lit`:       {`☀️Lit`, `☀️`, `lit`},       // Does light come from this character?
+		`sleeping`:  {`asleep`, `zZz`, `gray`},    // Are they hiding?
+		`zombie`:    {`zOmBie`, `z`, `zombie`},    // Have they disconnected and/or zombie status?
+		`poisoned`:  {`☠poisoned`, `☠`, `purple`}, // Have they disconnected and/or zombie status?
+		`shop`:      {`shop`, `$`, `gold`},        // Do they sell stuff?
+		`enchanter`: {`enchanter`, `✦`, `purple`}, // Phase 71: do they work trophies into gear?
 	}
 
 	adjectiveSwaps = map[string]string{}

@@ -142,3 +142,28 @@ func TestGMCPRelicLinesCarryAwakeningProgress(t *testing.T) {
 	assert.Equal(t, got, worn[0].Relic, "a companion's relic shows its own progress")
 	assert.Len(t, cargoItem(encumbrance.CargoStack{ItemId: 989411, Count: 1}).Relic, 3, "a stack in cargo shows what it wakes")
 }
+
+// Phase 71: a trophy enchant on an ordinary (non-relic) piece rides the same
+// relic lines to the web client, in the gear tooltip and the Company
+// window's rows, and a plain piece carries none.
+func TestGMCPEnchantedPlainPieceCarriesItsEnchantLine(t *testing.T) {
+	testItemSpecs(t,
+		items.ItemSpec{ItemId: 989421, Name: "plain blade", NameSimple: "blade", Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Tier: 1,
+			Damage: items.Damage{Attacks: 1, DiceCount: 1, SideCount: 6}, Value: 50, Weight: 1000},
+		items.ItemSpec{ItemId: 989422, Name: "brute's heart", NameSimple: "heart", Type: items.Commodity, Value: 12,
+			Trophy: &items.TrophySpec{Part: items.TrophyHeart, Races: []string{"ogre"}, Chance: 20, Effects: map[string]int{classes.Damage: 1}}},
+	)
+	itm := items.New(989421)
+	assert.Empty(t, newInventory_Item(itm).Relic)
+	require.NoError(t, itm.EnchantWithTrophy(989422))
+	got := newInventory_Item(itm).Relic
+	require.Len(t, got, 1)
+	assert.Equal(t, "Enchanted with brute's heart (while worn): +1 damage on every landed blow.", got[0])
+
+	var eq characters.Worn
+	eq.Weapon = itm
+	member := company.InventoryMemberOf("ysolde", "Ysolde", company.MemberState{Equipment: eq})
+	worn := inventoryMemberOf(member).Worn
+	require.NotEmpty(t, worn)
+	assert.Equal(t, got, worn[0].Relic)
+}

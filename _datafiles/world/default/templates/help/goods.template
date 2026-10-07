@@ -31,4 +31,7 @@ more (<ansi fg="command">help loot</ansi>). Smiths break gear down into material
 (<ansi fg="command">help salvage</ansi>), and <ansi fg="command">sell junk</ansi> clears what you have marked
 (<ansi fg="command">help mark</ansi>).
 
+Hunted creatures also drop small trophies (hearts, hides, ash) that an
+enchanter works into gear; they are not trade goods (<ansi fg="command">help enchanting</ansi>).
+
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help pack</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help market</ansi>, <ansi fg="command">help equipmenttiers</ansi>.

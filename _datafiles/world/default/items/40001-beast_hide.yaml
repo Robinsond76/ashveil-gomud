@@ -1,0 +1,12 @@
+itemid: 40001
+name: beast hide
+namesimple: hide
+description: 'A tough, salted hide cut from a hunted animal. An enchanter can work it into armor or a weapon grip.'
+type: commodity
+weight: 150
+value: 12
+trophy:
+  part: hide
+  races: ["canine", "beast", "rodent", "lagomorph", "reptile", "reptilian"]
+  chance: 20
+  effects: {armor: 2}

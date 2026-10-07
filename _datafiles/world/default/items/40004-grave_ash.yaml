@@ -1,0 +1,12 @@
+itemid: 40004
+name: grave ash
+namesimple: ash
+description: 'A pinch of grey ash gathered where the dead would not stay down. An enchanter can work it into gear.'
+type: commodity
+weight: 150
+value: 12
+trophy:
+  part: ash
+  races: ["undead", "ghostly spirit", "demon"]
+  chance: 25
+  effects: {spellpct: 6}

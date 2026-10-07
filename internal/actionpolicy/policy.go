@@ -43,7 +43,7 @@ func AimedAtMob(u *users.UserRecord) bool {
 
 func Management(command string) bool {
 	switch command {
-	case "equip", "remove", "gearup", "eat", "drink", "use", "give", "get", "drop", "put", "alchemy", "loot":
+	case "equip", "remove", "gearup", "eat", "drink", "use", "give", "get", "drop", "put", "alchemy", "loot", "imbue":
 		return true
 	}
 	return false

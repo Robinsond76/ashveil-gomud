@@ -1,0 +1,12 @@
+itemid: 40003
+name: chitin plate
+namesimple: hide
+description: 'A curved plate of chitin from something with too many legs. Light and strong; an enchanter can work it into gear.'
+type: commodity
+weight: 150
+value: 12
+trophy:
+  part: hide
+  races: ["giant spider", "insect"]
+  chance: 25
+  effects: {evasion: 4}

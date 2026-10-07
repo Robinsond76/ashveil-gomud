@@ -1148,6 +1148,8 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		d.Relic = itm.RelicLines()
 		d.RelicLore = itmSpec.Relic.Lore
 		d.Rarity = string(itmSpec.Relic.Rarity())
+	} else if lines := itm.TrophyLines(); len(lines) > 0 {
+		d.Relic = lines // Phase 71: an enchanted plain item
 	}
 
 	if !itm.Uncursed && itmSpec.Cursed {

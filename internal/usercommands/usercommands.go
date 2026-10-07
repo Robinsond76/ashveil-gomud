@@ -103,6 +103,7 @@ var (
 		`keyring`:     {KeyRing, true, false},
 		`killstats`:   {Killstats, true, false},
 		`history`:     {History, true, false},
+		`imbue`:       {Imbue, false, false}, // Ashveil Phase 71
 		`inspect`:     {Inspect, false, false},
 		`inventory`:   {Inventory, true, false},
 		`item`:        {Item, true, true}, // Admin only

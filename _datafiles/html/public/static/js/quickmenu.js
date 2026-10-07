@@ -208,6 +208,10 @@
         var details = room.details || [];
         var services = [];
         shops.forEach(function(c) { services.push({ label: 'Shop: ' + c.name, cmd: 'list ' + c.id }); });
+        // Phase 71: an enchanter works a hunted trophy into gear (help enchanting).
+        if (npcs.some(function(c) { return has(c.adjectives, 'enchanter'); })) {
+            services.push({ label: 'Enchant gear', hint: 'trophy into a weapon or armor', cmd: 'imbue' });
+        }
         if (has(details, 'trainer')) { services.push({ label: 'Train', cmd: 'train' }); }
         if (has(details, 'bank')) { services.push({ label: 'Bank', cmd: 'bank' }); }
         campEntries(state.camp || {}).filter(function(e) { return e.cmd === 'inn'; }).forEach(function(e) { services.push(e); });

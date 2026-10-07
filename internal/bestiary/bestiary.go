@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -364,7 +365,37 @@ func habitLines(spec *mobs.Mob) (lines, notes []string) {
 	if spoils := spoilNames(spec); len(spoils) > 0 {
 		lines = append(lines, "Carries: "+strings.Join(spoils, ", ")+".")
 	}
+	if line := trophyLine(spec); line != "" {
+		lines = append(lines, line)
+	}
 	return lines, notes
+}
+
+// trophyLine names the trophies a kind of creature may drop (Phase 71): by
+// race, with the chance an ordinary kill gives one. A boss always gives one.
+func trophyLine(spec *mobs.Mob) string {
+	if spec.Character.Zone == "Training" {
+		return ""
+	}
+	kind := loot.Ordinary
+	if spec.Boss {
+		kind = loot.BossRoll
+	}
+	var names []string
+	for _, t := range loot.Trophies(spec.Character.Race()) {
+		if spec.Boss {
+			names = append(names, t.Name)
+			continue
+		}
+		names = append(names, fmt.Sprintf("%s (about %d in 100 kills)", t.Name, loot.TrophyChance(t, kind)))
+	}
+	if len(names) == 0 {
+		return ""
+	}
+	if spec.Boss {
+		return "Hunted for a trophy it always yields, one of: " + strings.Join(names, ", ") + " (help enchanting)."
+	}
+	return "Hunted for trophies: " + strings.Join(names, ", ") + " (help enchanting)."
 }
 
 // castsInCombat is whether the template casts in a fight: a spell book
