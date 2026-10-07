@@ -19,7 +19,8 @@ func TestErrandsHelp(t *testing.T) {
 	assert.Contains(t, text, "errand send [member] [job] [length]")
 	assert.Contains(t, text, "errand recall [member]")
 	assert.Contains(t, text, "escort")
-	assert.Contains(t, text, "Never more")
+	assert.Contains(t, text, "never a way to make money out of goods")
+	assert.Contains(t, text, "leave\n    your formation as they go")
 	assert.NotContains(t, text, "[member]]")
 	for _, alias := range []string{"errand", "company errands", "idle companions"} {
 		got, err := GetHelpContents(alias)

@@ -217,8 +217,8 @@ a Bonds tab (<ansi fg="command">help bonds</ansi>).
 
 <ansi fg="yellow-bold">Errands</ansi>
 
-A companion sitting out the formation can be sent away from an inn on an
-errand of half an hour to eight hours, and comes home with modest gold, a
+A companion you can spare can be sent away from an inn on an errand of
+half an hour to eight hours, and comes home with modest gold, a
 small find, word of a lair, or a wound. <ansi fg="command">errands</ansi> shows who is away, and the
 Company window has an Errands tab (<ansi fg="command">help errands</ansi>).
 

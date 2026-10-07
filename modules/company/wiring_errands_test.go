@@ -136,10 +136,12 @@ func TestErrandsAreRefusedAwayFromAnInnOrInAFight(t *testing.T) {
 	b.aria.Character.Aggro = nil
 	assert.Nil(t, errandOf(t, module, 2))
 
-	// a companion standing in the formation is not free
-	b.cmd("formation", "move #2 1 1")
-	assert.Contains(t, b.cmd("errand", "send #2 escort"), "formation")
-	assert.Nil(t, errandOf(t, module, 2))
+	// a companion standing in the formation can go, and leaves it
+	b.cmd("formation", "move #2 3 3")
+	r, _ := module.registry.Get(7)
+	require.Equal(t, domain.CompanionMemberKey(2), r.Formation.At(2, 2))
+	assert.Contains(t, b.cmd("errand", "send #2 escort"), "sets out escorting")
+	assert.Contains(t, b.cmd("formation", ""), "away on an errand")
 }
 
 func TestRecallAndDismissWhileAway(t *testing.T) {

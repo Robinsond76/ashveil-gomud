@@ -1957,7 +1957,7 @@
         panel.appendChild(pad);
         const rows = data && Array.isArray(data.rows) ? data.rows : [];
         if (!rows.length) {
-            pad.appendChild(el('div', 'cmp-note', 'Companions who sit out the formation can be sent on errands from an inn. Recruit one first (help errands).'));
+            pad.appendChild(el('div', 'cmp-note', 'Companions you can spare can be sent on errands from an inn. Recruit one first (help errands).'));
             return;
         }
         const options = Array.isArray(data.options) ? data.options : [];
@@ -2013,7 +2013,7 @@
             pad.appendChild(el('div', 'cmp-line', 'Lately:'));
             recent.forEach(t => pad.appendChild(el('div', 'cmp-note', t)));
         }
-        pad.appendChild(el('div', 'cmp-note', 'An errand runs in real time, so it carries on while you are away and ends when its time is up: the companion comes home with modest gold, a small find, word of a lair or a wound. Only those out of the formation can go (help errands).'));
+        pad.appendChild(el('div', 'cmp-note', 'An errand runs in real time, so it carries on while you are away and ends when its time is up: the companion comes home with modest gold, a small find, word of a lair or a wound. A companion who goes leaves the formation and takes its place again on return (help errands).'));
         if (anyAway && !errandTimer) {
             errandTimer = setInterval(updateErrands, 30000);
         } else if (!anyAway && errandTimer) {

@@ -273,6 +273,9 @@ func (m *CompanyModule) driftTick() {
 			if c.Dead() || c.MoraleDesert || bound(c) { // Phase 38e: a construct is bound, not loyal: it neither drifts nor sways
 				continue
 			}
+			if c.OnErrand() { // Phase 70 review: away on an errand, it neither drifts nor deserts
+				continue
+			}
 			loyalty := domain.MaxLoyalty
 			if c.Disposition != nil {
 				loyalty = c.Disposition.Loyalty

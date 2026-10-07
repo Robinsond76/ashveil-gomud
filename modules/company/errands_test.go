@@ -139,7 +139,6 @@ func TestErrandRefusals(t *testing.T) {
 		mutate func()
 		want   string
 	}{
-		"in the formation": {1, func() {}, "stands in your formation"},
 		"away already": {2, func() {
 			r, _ := module.registry.Get(7)
 			r.Companions[1].Errand = &errands.Errand{Kind: errands.Scout, Length: errands.Short, ReturnsAt: 1_000_000 + 600}
@@ -166,6 +165,46 @@ func TestErrandRefusals(t *testing.T) {
 	r, _ := module.registry.Get(7)
 	c, _ := findCompanion(r, 4)
 	assert.Contains(t, module.errandRefusal(7, r, c), "isn't here with you")
+}
+
+// Phase 70 review: an unplaced companion still fights, so the formation is
+// no gate. A placed companion goes, leaves its cell, and takes it again on
+// return when the cell is still free.
+func TestAPlacedCompanionLeavesItsCellAndTakesItBack(t *testing.T) {
+	module, _, world, now := errandModule(t)
+	key := domain.CompanionMemberKey(1)
+	r, _ := module.registry.Get(7)
+	c, _ := findCompanion(r, 1)
+	require.Empty(t, module.errandRefusal(7, r, c), "standing in the formation is no bar")
+
+	send(t, module, world, 1, errands.Escort, errands.Short)
+	r, _ = module.registry.Get(7)
+	_, _, placed := r.Formation.Find(key)
+	assert.False(t, placed, "it leaves the formation as it goes")
+	saved := module.store.(*fakeStore).saved.Companies[7]
+	_, _, placed = saved.Formation.Find(key)
+	assert.False(t, placed, "saved out of the formation")
+	assert.Contains(t, module.renderFormation(7), "away on an errand")
+
+	*now = now.Add(31 * time.Minute)
+	module.tickErrands()
+	require.Nil(t, errandOf(t, module, 1))
+	r, _ = module.registry.Get(7)
+	row, col, placed := r.Formation.Find(key)
+	assert.True(t, placed)
+	assert.Equal(t, [2]int{1, 1}, [2]int{row, col}, "back in the cell it left")
+
+	// a cell taken meanwhile stays with its new holder; a recall, likewise
+	send(t, module, world, 1, errands.Escort, errands.Long)
+	require.NoError(t, module.registry.PlaceMember(7, domain.CompanionMemberKey(2), 1, 1))
+	r, _ = module.registry.Get(7)
+	c, _ = findCompanion(r, 1)
+	_, err := module.recallErrand(7, c)
+	require.NoError(t, err)
+	r, _ = module.registry.Get(7)
+	assert.Equal(t, domain.CompanionMemberKey(2), r.Formation.At(1, 1))
+	_, _, placed = r.Formation.Find(key)
+	assert.False(t, placed)
 }
 
 func TestAwayCompanionIsAbsentEverywhere(t *testing.T) {
@@ -318,6 +357,9 @@ func TestItemOutcomeNeverWorthMoreThanTheGold(t *testing.T) {
 			require.NotNil(t, r.item)
 			assert.LessOrEqual(t, world.values[r.item.ItemId], budget, "an item is never worth more than the gold it replaces")
 			assert.NotEqual(t, 99999, r.item.ItemId)
+			// Phase 70 review: the rest of the pay comes in coin
+			assert.Equal(t, budget, world.values[r.item.ItemId]+r.gold, "the find and its coin make up the pay")
+			assert.Contains(t, r.what, "gold")
 		case errands.Gold:
 			assert.Equal(t, budget, r.gold)
 		default:
@@ -473,7 +515,7 @@ func TestErrandSendCommandParses(t *testing.T) {
 	text, _ = module.errandSend(user, []string{"#9", "hunt"})
 	assert.Contains(t, text, "no companion like that")
 	text, _ = module.errandSend(user, []string{"#1", "hunt"})
-	assert.Contains(t, text, "formation")
+	assert.Contains(t, text, "sets out hunting", "standing in the formation is no bar")
 
 	world.place.Town = false
 	text, _ = module.errandSend(user, []string{"#4", "hunt"})
@@ -486,8 +528,9 @@ func TestErrandSendCommandParses(t *testing.T) {
 }
 
 func TestErrandPanelAndView(t *testing.T) {
-	module, _, world, _ := errandModule(t)
+	module, runtime, world, _ := errandModule(t)
 	send(t, module, world, 2, errands.Scout, errands.Medium)
+	runtime.fighting = map[int]bool{101: true}
 
 	panel, ok := module.ErrandPanel(7)
 	require.True(t, ok)
@@ -508,4 +551,17 @@ func TestErrandPanelAndView(t *testing.T) {
 	panel, _ = module.ErrandPanel(7)
 	assert.False(t, panel.Here)
 	assert.NotContains(t, module.errandsView(7), "errand send [member]")
+}
+
+// Phase 70 review: the panel does not offer Send while the leader is in a
+// fight, journey or rest.
+func TestErrandPanelNotHereWhileBusy(t *testing.T) {
+	module, _, world, _ := errandModule(t)
+	users.SetTestUser(users.NewUserRecord(7, 1))
+	t.Cleanup(func() { users.RemoveTestUser(7) })
+	world.busy = "Not in the middle of a battle."
+	panel, ok := module.ErrandPanel(7)
+	require.True(t, ok)
+	assert.False(t, panel.Here)
+	assert.Equal(t, world.busy, panel.Where)
 }

@@ -231,9 +231,6 @@ func (m *CompanyModule) errandRefusal(leaderUserID int, record domain.Record, c 
 	case creatures.Is(c.Archetype):
 		return fmt.Sprintf("%s is a creature; it has no errands to run.", name)
 	}
-	if _, _, placed := record.Formation.Find(domain.CompanionMemberKey(c.ID)); placed {
-		return fmt.Sprintf("%s stands in your formation. Errands are for those sitting out: take them out with formation clear #%d first.", name, c.ID)
-	}
 	instanceID, tracked := m.instance(leaderUserID, c.ID)
 	if !tracked || !m.runtime.IsLive(instanceID) || !m.runtime.IsAttached(leaderUserID, instanceID) || !m.runtime.WithLeader(leaderUserID, instanceID) {
 		return fmt.Sprintf("%s isn't here with you.", name)
@@ -267,12 +264,7 @@ func (m *CompanyModule) startErrand(leaderUserID int, c domain.Companion, kind e
 	}
 	level := companionLevelNumber(fresh)
 	errand := errands.New(kind, length, place.Zone, m.now().Unix(), level, place.BandLow, place.BandHigh, hpMax, m.errandSeed())
-	for i := range record.Companions {
-		if record.Companions[i].ID == c.ID {
-			e := errand
-			record.Companions[i].Errand = &e
-		}
-	}
+	record.SendAway(c.ID, errand)
 	m.registry.Put(record)
 	if err := m.save(); err != nil {
 		m.registry.Put(before)
@@ -307,11 +299,7 @@ func (m *CompanyModule) recallErrand(leaderUserID int, c domain.Companion) (stri
 	}
 	before, _ := m.registry.Get(leaderUserID)
 	record, _ := m.registry.Get(leaderUserID)
-	for i := range record.Companions {
-		if record.Companions[i].ID == c.ID {
-			record.Companions[i].Errand = nil
-		}
-	}
+	record.BringBack(c.ID)
 	m.registry.Put(record)
 	if err := m.save(); err != nil {
 		m.registry.Put(before)
@@ -385,9 +373,11 @@ func (m *CompanyModule) finishErrands(leaderUserID, roomID int, now int64) error
 		}
 		r := m.resolveErrand(leaderUserID, world, pool, c)
 		if r.outcome.Kind == errands.Wound {
-			record.Companions[i].State = withWound(c, r.errand, r.outcome)
+			if state := withWound(c, r.errand, r.outcome); state != nil {
+				record.Companions[i].State = state
+			}
 		}
-		record.Companions[i].Errand = nil
+		record.BringBack(c.ID)
 		done = append(done, r)
 	}
 	if len(done) == 0 {
@@ -428,9 +418,11 @@ func (m *CompanyModule) resolveErrand(leaderUserID int, world errandWorld, pool 
 	r := returnedErrand{c: c, errand: e, outcome: outcome}
 	if outcome.Kind == errands.Item {
 		var fits []int
+		values := map[int]int{}
 		for _, id := range pool {
 			if value, ok := world.ItemValue(id); ok && value <= outcome.Gold {
 				fits = append(fits, id)
+				values[id] = value
 			}
 		}
 		if len(fits) == 0 {
@@ -440,7 +432,11 @@ func (m *CompanyModule) resolveErrand(leaderUserID int, world errandWorld, pool 
 			if itm.ItemId < 1 {
 				r.outcome.Kind = errands.Gold
 			} else {
+				// Phase 70 review: the find is part of the pay at its full
+				// worth and the rest comes in coin, so a hunt's finds don't
+				// pay less than an escort's gold.
 				r.item = &itm
+				r.gold = outcome.Gold - values[itm.ItemId]
 			}
 		}
 	}
@@ -452,6 +448,10 @@ func (m *CompanyModule) resolveErrand(leaderUserID int, world errandWorld, pool 
 	case errands.Item:
 		r.what = "with " + r.item.DisplayName()
 		r.told = fmt.Sprintf(`with <ansi fg="itemname">%s</ansi>`, r.item.DisplayName())
+		if r.gold > 0 {
+			r.what += fmt.Sprintf(" and %d gold", r.gold)
+			r.told += fmt.Sprintf(` and <ansi fg="gold">%d gold</ansi>`, r.gold)
+		}
 	case errands.Rumour:
 		name, said := rumourOf(lairs, outcome.Roll, lairSlain(leaderUserID))
 		r.what = "with word of a lair: " + name + " " + said
@@ -503,10 +503,12 @@ func errandWound(e errands.Errand, o errands.Outcome) wounds.Wound {
 
 // withWound is the companion's saved state with the errand's wound added.
 func withWound(c domain.Companion, e errands.Errand, o errands.Outcome) *domain.MemberState {
-	var state domain.MemberState
-	if c.State != nil {
-		state = c.State.Clone()
+	if c.State == nil {
+		// Phase 70 review: an empty state would spawn it bare; the send
+		// always takes a snapshot, so this only guards a broken record.
+		return nil
 	}
+	state := c.State.Clone()
 	state.Wounds = append(state.Wounds, errandWound(e, o))
 	return &state
 }
@@ -529,6 +531,12 @@ func (m *CompanyModule) ErrandPanel(leaderUserID int) (domain.ErrandPanel, bool)
 	default:
 		panel.Here = true
 		panel.Where = "You can send companions from here."
+		// Phase 70 review: not while a fight, journey or rest holds the leader.
+		if user := users.GetByUserId(leaderUserID); user != nil {
+			if busy := m.errandWorld().Busy(user); busy != "" {
+				panel.Here, panel.Where = false, busy
+			}
+		}
 	}
 	if inWorld {
 		panel.Zone = place.Zone

@@ -19,7 +19,7 @@ import (
 type Kind string
 
 const (
-	Escort Kind = "escort" // walking a caravan: steady pay, no danger
+	Escort Kind = "escort" // walking a caravan: steady pay, safe for one who matches the zone
 	Hunt   Kind = "hunt"   // clearing the road: better spoils, a wound's risk
 	Scout  Kind = "scout"  // reading the country: rumours first, little coin
 )
@@ -34,7 +34,7 @@ type KindInfo struct {
 
 // Kinds lists the jobs in the order the views show them.
 var Kinds = []KindInfo{
-	{Escort, "an escort job", "escorting", "walks a caravan down the road: steady pay, and no danger"},
+	{Escort, "an escort job", "escorting", "walks a caravan down the road: steady pay, and safe for one who matches the zone"},
 	{Hunt, "a hunt", "hunting", "clears game and vermin off the road: better spoils, and a wound's risk"},
 	{Scout, "a scouting job", "scouting", "reads the country: mostly rumours of lairs, little coin, some risk"},
 }
@@ -128,6 +128,11 @@ type Errand struct {
 	MaxHealth int `yaml:"max_health,omitempty"`
 	// Seed fixes every roll of the outcome.
 	Seed int64 `yaml:"seed"`
+	// Placed, Row and Col are the formation cell the companion left; it
+	// takes that cell again on its return when the cell is still free.
+	Placed bool `yaml:"placed,omitempty"`
+	Row    int  `yaml:"row,omitempty"`
+	Col    int  `yaml:"col,omitempty"`
 }
 
 // Due reports whether the errand is over at now.
@@ -167,9 +172,9 @@ const (
 )
 
 // Outcome is what an errand came to. Gold is the pay the errand earned:
-// paid as it is for a Gold outcome, and the most an Item may be worth to a
-// merchant (the module picks the item), so an item is never a way to turn an
-// errand into more coin than its gold. Roll picks among the module's
+// paid as it is for a Gold outcome; for an Item, the module pays part of it
+// as a find, valued at the item's full worth, and the rest in coin, so an
+// item is never a way to turn an errand into more than its gold. Roll picks among the module's
 // options (which item, which lair) and is stable for the errand.
 type Outcome struct {
 	Kind     OutcomeKind
@@ -184,7 +189,7 @@ const WoundPct = 20
 // Pay is what the errand earns before its outcome is rolled: 3 gold per
 // level of the band's middle and 1 per level of the companion, a kind's
 // share, and a length's share. A level-8 companion in a 7-9 band earns 32
-// for a short escort, 45 on a hunt, 19 scouting.
+// for a short escort, 44 on a hunt, 19 scouting.
 func Pay(e Errand) int {
 	mid := (e.BandLow + e.BandHigh) / 2
 	base := 3*mid + e.Level

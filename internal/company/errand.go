@@ -106,3 +106,34 @@ func ErrandOptions() []ErrandOption {
 	}
 	return out
 }
+
+// SendAway puts the companion on its errand and takes it out of the
+// formation, remembering the cell it held (as a death does).
+func (r *Record) SendAway(companionID int, e errands.Errand) bool {
+	i := r.companionIndex(companionID)
+	if i < 0 {
+		return false
+	}
+	key := CompanionMemberKey(companionID)
+	e.Row, e.Col, e.Placed = r.Formation.Find(key)
+	if !e.Placed {
+		e.Row, e.Col = 0, 0
+	}
+	r.Formation.Clear(key)
+	r.Companions[i].Errand = &e
+	return true
+}
+
+// BringBack ends the companion's errand. It takes the cell it left when
+// that cell is still free.
+func (r *Record) BringBack(companionID int) {
+	i := r.companionIndex(companionID)
+	if i < 0 || r.Companions[i].Errand == nil {
+		return
+	}
+	e := r.Companions[i].Errand
+	r.Companions[i].Errand = nil
+	if e.Placed && r.Formation.At(e.Row, e.Col) == "" {
+		_ = r.Formation.Place(CompanionMemberKey(companionID), e.Row, e.Col)
+	}
+}
