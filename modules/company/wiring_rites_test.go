@@ -43,8 +43,24 @@ func TestRitesThroughTheRealRoundTickAndCommands(t *testing.T) {
 	assert.Len(t, record.Rites, 1)
 
 	// A camp's start announces the rites through the provider seam camping
-	// calls; at the fire the command holds them.
+	// calls.
 	assert.Contains(t, domain.OfferRites(7), "has not yet mourned")
+
+	// Review fix: an inn stay is a minute long, so standing in an inn is
+	// enough (paying for another stay would let the rite pass). The real
+	// check accepts the leader's room once it is an inn.
+	room := b.road
+	require.Equal(t, room.RoomId, b.aria.Character.RoomId)
+	tags := room.Tags
+	room.Tags = append(append([]string(nil), tags...), "inn")
+	t.Cleanup(func() { room.Tags = tags })
+	assert.Empty(t, module.riteBusy(b.aria), "an inn room is a place for rites")
+	panel, ok := domain.RitesOf(7)
+	require.True(t, ok)
+	assert.True(t, panel.Here, "the Rites tab offers the buttons in an inn")
+	room.Tags = tags
+	assert.NotEmpty(t, module.riteBusy(b.aria))
+
 	module.riteSeam = func(*users.UserRecord) string { return "" }
 	before := companion(t, module, 3).Disposition.Loyalty
 	out := b.cmd("rite", "hold")

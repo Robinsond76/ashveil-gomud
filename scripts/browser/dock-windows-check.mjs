@@ -1542,6 +1542,7 @@ await page.setViewportSize({ width: 1280, height: 900 });
   await page.setViewportSize({ width: 360, height: 800 });
   check(await page.evaluate(() => { const p = document.getElementById('company-rites'); return p.scrollWidth <= p.clientWidth + 1; }), 'Rites fit a phone');
   check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); return getComputedStyle(b).overflowX === 'auto' && b.scrollWidth > 0; }), 'The sub-tab bar scrolls when eight tabs outgrow a phone');
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); b.scrollLeft = 0; b.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); return b.scrollLeft > 0; }), 'A mouse wheel scrolls the sub-tab bar sideways');
   await page.evaluate(() => { document.querySelector('.cmp-tab-btn[data-panel="company-rites"]').click(); });
   check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); const t = document.querySelector('.cmp-tab-btn.active'); const r = t.getBoundingClientRect(), br = b.getBoundingClientRect(); return r.left >= br.left - 1 && r.right <= br.right + 1; }), 'The chosen sub-tab is scrolled into view on a phone');
   if (outdir) { await page.locator('#company-rites').screenshot({ path: path.join(outdir, '74-rites-phone.png') }); }

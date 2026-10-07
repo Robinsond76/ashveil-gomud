@@ -176,7 +176,7 @@ func TestACampOffersThenLetsAnUnansweredRitePassAtTheNext(t *testing.T) {
 
 	// The next camp finds it unanswered: it passes, at its cost.
 	text = module.OfferRites(7)
-	assert.Contains(t, text, "go without a word")
+	assert.Contains(t, text, "No rites were ever held for #1, and now the moment has passed", "the leader is told the cost came from silence")
 	assert.Equal(t, 55, loyalty(t, module, 2))
 	record, _ = module.registry.Get(7)
 	assert.Empty(t, record.Rites)

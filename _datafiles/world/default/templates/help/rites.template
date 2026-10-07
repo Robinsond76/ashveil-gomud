@@ -3,7 +3,7 @@
 A loss should cost something besides gold. When a companion is lost for
 good, or walks away after long service, the company wants to mourn them.
 The next time you make camp or take a room at an inn, you are told who is
-waiting, and you can hold rites for them at the fire or let the loss pass
+waiting, and you can hold rites for them there or let the loss pass
 in silence.
 
 <ansi fg="yellow-bold">Commands</ansi>
@@ -13,9 +13,10 @@ in silence.
   <ansi fg="command">rite skip [member]</ansi>         let it pass without a word, at a camp or an inn
 
 [member] is a name, or the number shown by <ansi fg="command">rites</ansi> as <ansi fg="command">#4</ansi>; <ansi fg="command">all</ansi> names everyone waiting, and with
-only one waiting you can leave it out. In the web client the Company window
-has a Rites tab with a Hold rites and a Let pass button on each card; it
-fits a phone.
+only one waiting you can leave it out. At an inn you need only stand in it,
+paid stay or not; at a camp, any camp you have pitched. In the web client
+the Company window has a Rites tab with a Hold rites and a Let pass button
+on each card; it fits a phone.
 
 <ansi fg="yellow-bold">When there is something to mourn</ansi>
 

@@ -34,7 +34,9 @@ var (
 const ritesUsage = "Usage: rites | rite hold [member] | rite skip [member] (a number #N or a name; `all` for every one). See help rites."
 
 // riteBusy is why rites cannot be held now, or "". Rites are held at a camp
-// or an inn stay, never in a fight. Tests replace it.
+// or an inn (a stay, or simply standing in one: an inn stay is a minute
+// long, and paying for another would let the rite pass), never in a fight.
+// Tests replace it.
 func (m *CompanyModule) riteBusy(user *users.UserRecord) string {
 	if m.riteSeam != nil {
 		return m.riteSeam(user)
@@ -42,10 +44,15 @@ func (m *CompanyModule) riteBusy(user *users.UserRecord) string {
 	if _, busy := battle.Current(user.UserId); busy {
 		return "Not in the middle of a battle."
 	}
-	if _, here := camping.LeaderRest(user.UserId); !here {
-		return "Rites are held at a camp or an inn: make camp (camp) or take a room (inn) first. See help rites."
+	if _, here := camping.LeaderRest(user.UserId); here {
+		return ""
 	}
-	return ""
+	if user.Character != nil {
+		if room := rooms.LoadRoom(user.Character.RoomId); room != nil && room.HasTag(errandRoomTag) {
+			return ""
+		}
+	}
+	return "Rites are held at a camp or an inn: make camp (camp) or go to an inn first. See help rites."
 }
 
 // mournerSets splits the living company into those who trusted the
@@ -166,10 +173,15 @@ func riteDeed(rite domain.Rite, held bool) chronicle.Entry {
 }
 
 // riteIntro is the leader's own line for a held or skipped rite.
-func riteIntro(rite domain.Rite, held bool) string {
+// An unanswered rite that passes at the next camp or inn says so, so the
+// leader knows the cost came from their silence.
+func riteIntro(rite domain.Rite, held, unanswered bool) string {
 	what := rites.Verb(rites.Cause(rite.Cause))
-	if held {
-		return fmt.Sprintf("You gather the company at the fire and hold rites for %s, who %s. Names are said; no one speaks long.", rite.Name, what)
+	switch {
+	case held:
+		return fmt.Sprintf("You gather the company and hold rites for %s, who %s. Names are said; no one speaks long.", rite.Name, what)
+	case unanswered:
+		return fmt.Sprintf("No rites were ever held for %s, and now the moment has passed. The company notices.", rite.Name)
 	}
 	return fmt.Sprintf("You let %s go without a word. The company notices.", rite.Name)
 }
@@ -177,10 +189,10 @@ func riteIntro(rite domain.Rite, held bool) string {
 // settleSaved applies the given rites as held or skipped in one save with a
 // rollback, then records their deeds and, for a held rite, draws the close
 // companions together. It returns the text to show.
-func (m *CompanyModule) settleSaved(leaderUserID int, record domain.Record, chosen []domain.Rite, held bool) (string, error) {
+func (m *CompanyModule) settleSaved(leaderUserID int, record domain.Record, chosen []domain.Rite, held, unanswered bool) (string, error) {
 	var lines []string
 	for _, rite := range chosen {
-		lines = append(lines, riteIntro(rite, held))
+		lines = append(lines, riteIntro(rite, held, unanswered))
 		lines = append(lines, m.settleRite(&record, rite, held)...)
 	}
 	before := m.registry.Clone()
@@ -214,7 +226,7 @@ func (m *CompanyModule) drawTogether(leaderUserID int, rite domain.Rite) {
 }
 
 // OfferRites implements company.RitesProvider: a camp or an inn stay has
-// begun. Rites a earlier stay announced and the leader never answered pass
+// begun. Rites an earlier stay announced and the leader never answered pass
 // (with their cost), and the rest are announced. It returns text for the
 // stay's opening, "" when no rite waits.
 func (m *CompanyModule) OfferRites(leaderUserID int) string {
@@ -235,7 +247,7 @@ func (m *CompanyModule) OfferRites(leaderUserID int) string {
 	var text []string
 	if len(passed) > 0 {
 		// The earlier unanswered rites pass first, in one save.
-		said, err := m.settleSaved(leaderUserID, record, passed, false)
+		said, err := m.settleSaved(leaderUserID, record, passed, false, true)
 		if err != nil {
 			mudlog.Warn("company: rites passed", "leader", leaderUserID, "error", err)
 			return ""
@@ -255,7 +267,7 @@ func (m *CompanyModule) OfferRites(leaderUserID int) string {
 			mudlog.Warn("company: rites offered", "leader", leaderUserID, "error", err)
 			return strings.Join(text, "\n")
 		}
-		text = append(text, "The company has not yet mourned:\n"+strings.Join(fresh, "\n")+"\nHold the rites at this fire (rite hold) or let them pass (rite skip). If they pass unspoken at the next camp, the company will feel it. See help rites.")
+		text = append(text, "The company has not yet mourned:\n"+strings.Join(fresh, "\n")+"\nHold the rites here (rite hold) or let them pass (rite skip). Left unspoken until your next camp or inn stay, they pass, and the company will feel it. See help rites.")
 	}
 	return strings.Join(text, "\n")
 }
@@ -360,7 +372,7 @@ func (m *CompanyModule) ritesAct(user *users.UserRecord, selector string, held b
 	if busy := m.riteBusy(user); busy != "" {
 		return busy
 	}
-	text, err := m.settleSaved(user.UserId, record, chosen, held)
+	text, err := m.settleSaved(user.UserId, record, chosen, held, false)
 	if err != nil {
 		mudlog.Warn("company: rite", "leader", user.UserId, "error", err)
 		return "The rite could not be kept: " + err.Error()

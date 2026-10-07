@@ -554,6 +554,13 @@
             btn.addEventListener('click', () => showSubtab(root, t.id, true));
             bar.appendChild(btn);
         });
+        // The bar's scrollbar is hidden, so a mouse wheel scrolls it sideways
+        // when the tabs overflow a narrow dock (Phase 74 review).
+        bar.addEventListener('wheel', e => {
+            if (bar.scrollWidth <= bar.clientWidth || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) { return; }
+            bar.scrollLeft += e.deltaY;
+            e.preventDefault();
+        }, { passive: false });
         root.appendChild(bar);
         SUBTABS.forEach(t => {
             const panel = el('div', 'cmp-panel');
@@ -2083,7 +2090,7 @@
             }
             if (here) {
                 const btns = el('div', 'cmp-rite-btns');
-                btns.appendChild(riteButton('Hold rites', 'rite hold #' + r.id, 'Gather the company at the fire for ' + r.name, r.id));
+                btns.appendChild(riteButton('Hold rites', 'rite hold #' + r.id, 'Gather the company to mourn ' + r.name, r.id));
                 btns.appendChild(riteButton('Let pass', 'rite skip #' + r.id, 'Say nothing; the company loses a little loyalty', r.id));
                 card.appendChild(btns);
             }
