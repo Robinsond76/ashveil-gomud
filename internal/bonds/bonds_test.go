@@ -2,9 +2,11 @@ package bonds
 
 import (
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApplyStopsTimeTogetherAtFiftyAndWaryAndRescueAtAHundred(t *testing.T) {
@@ -187,4 +189,14 @@ func TestSourcesAreKnownAndHaveCooldowns(t *testing.T) {
 	if Known("nonsense") || CooldownOf("nonsense") != 0 {
 		t.Error("an unknown source is not known")
 	}
+}
+
+// Phase 74: a held rite is a bonds source with its own cooldown that rises
+// only to "close", like time together.
+func TestRiteIsABoundedSource(t *testing.T) {
+	assert.True(t, Known(Rite))
+	assert.Contains(t, Sources, Rite)
+	assert.Equal(t, time.Hour, CooldownOf(Rite))
+	assert.Equal(t, 21, Apply(19, 2, Rite))
+	assert.Equal(t, CloseAt, Apply(CloseAt-1, 2, Rite), "no higher than close")
 }

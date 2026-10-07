@@ -9,7 +9,8 @@ A church (in a city) or a village shaman can raise them, if the keeper is
 there. Coming back costs the companion one level (never below 1), and
 they wake with no wounds, at half their health and half their mana
 (<ansi fg="command">help readiness</ansi>). If time
-runs out, the companion is lost for good.
+runs out, the companion is lost for good, and the company will want to
+mourn them at your next camp or inn (<ansi fg="command">help rites</ansi>).
 
 <ansi fg="yellow">Usage:</ansi>
 

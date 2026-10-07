@@ -52,6 +52,7 @@ const (
 	Opinion Source = "opinion" // agreeing or clashing over the leader's choice
 	Rescue  Source = "rescue"  // one stepped in for the other in a battle
 	Refusal Source = "refusal" // a rival let the other take the blow
+	Rite    Source = "rite"    // the company held rites for one of their own (Phase 74)
 )
 
 // Rule is one source's worth: Cooldown is the real time before it may move
@@ -67,10 +68,11 @@ var rules = map[Source]Rule{
 	Opinion: {10 * time.Minute},
 	Rescue:  {time.Hour},
 	Refusal: {time.Hour},
+	Rite:    {time.Hour},
 }
 
 // Sources is every source, in the order the help lists them.
-var Sources = []Source{Camp, Battle, Talk, Opinion, Rescue, Refusal}
+var Sources = []Source{Camp, Battle, Talk, Opinion, Rescue, Refusal, Rite}
 
 // CooldownOf is a source's cooldown; zero for an unknown source.
 func CooldownOf(s Source) time.Duration { return rules[s].Cooldown }

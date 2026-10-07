@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rites"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
@@ -283,12 +284,16 @@ func (m *CompanyModule) expire(leaderUserID, companionID int) error {
 	if c.State != nil {
 		lost.Level = c.State.Level
 	}
+	// Phase 74: the company will want to mourn them; queued here so the
+	// expiry's save writes both.
+	rite := m.queueRite(leaderUserID, c, rites.Lost)
 	if err := m.dropCompanion(leaderUserID, record, c, &lost); err != nil {
+		m.unqueueRite(leaderUserID, rite)
 		return err
 	}
 	mudlog.Info("company: companion lost", "leader", leaderUserID, "companion", companionID, "op", lost.OpID)
 	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Lost, Members: []string{lost.Name}, Keys: []string{string(domain.CompanionMemberKey(c.ID))}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
-	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="red">%s is lost to you.</ansi> Their name is carved among your fallen.`, lost.Name))
+	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="red">%s is lost to you.</ansi> Their name is carved among your fallen.`, lost.Name)+m.riteHint(leaderUserID, companionID))
 	return nil
 }
 

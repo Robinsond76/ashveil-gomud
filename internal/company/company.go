@@ -143,6 +143,9 @@ type Record struct {
 	Bonds []Bond `yaml:"bonds,omitempty"`
 	// Lost are the companions whose rescue allowance ran out (Phase 25b).
 	Lost []LostCompanion `yaml:"lost,omitempty"`
+	// Rites are the losses the company has not yet mourned or let pass
+	// (Phase 74).
+	Rites []Rite `yaml:"rites,omitempty"`
 	// Rosters are the leader's generated recruit candidates, one per
 	// recruiter room (Phase 32a2).
 	Rosters []Roster `yaml:"rosters,omitempty"`
@@ -221,6 +224,7 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		record.Service = append([]Service(nil), record.Service...)
 	}
 	record.Bonds = cloneBonds(record.Bonds)
+	record.Rites = cloneRites(record.Rites)
 	if record.Lost != nil {
 		record.Lost = append([]LostCompanion(nil), record.Lost...)
 	}

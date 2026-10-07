@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/rites"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -106,6 +107,8 @@ type wireRecord struct {
 	Claimed         []int                  `yaml:"claimed,omitempty"`
 	Service         []domain.Service       `yaml:"service,omitempty"`
 	Lost            []domain.LostCompanion `yaml:"lost,omitempty"`
+	Bonds           []domain.Bond          `yaml:"bonds,omitempty"`
+	Rites           []domain.Rite          `yaml:"rites,omitempty"`
 	Rosters         []domain.Roster        `yaml:"rosters,omitempty"`
 	AppliedOps      []string               `yaml:"applied_ops,omitempty"`
 }
@@ -125,7 +128,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderPackGranted: wr.LeaderPackGranted, FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
+		record := domain.Record{LeaderPackGranted: wr.LeaderPackGranted, FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Bonds: wr.Bonds, Rites: wr.Rites, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -199,7 +202,9 @@ type CompanyModule struct {
 	// Phase 70: errandSeam is nil for the running game's; errandRng is the
 	// game-loop source of an errand's seed.
 	errandSeam errandWorld
-	errandRng  *rand.Rand
+	// Phase 74: riteSeam replaces the camp-or-inn check for unit tests.
+	riteSeam  func(user *users.UserRecord) string
+	errandRng *rand.Rand
 }
 
 // module is the registered instance, for wiring tests.
@@ -227,6 +232,8 @@ func init() {
 	m.plug.AddUserCommand("bonds", m.bondsCommand, true, false)       // Phase 65: read-only too
 	m.plug.AddUserCommand("errand", m.errandCommand, false, false)    // Phase 70: send a benched companion away
 	m.plug.AddUserCommand("errands", m.errandCommand, false, false)
+	m.plug.AddUserCommand("rites", m.ritesCommand, true, false) // Phase 74: reading is allowed while downed
+	m.plug.AddUserCommand("rite", m.ritesCommand, false, false)
 	opinions.Observe(m.onOpinionBonds) // Phase 65: agreeing over a choice moves a bond
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
@@ -706,7 +713,11 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 // Phase 21a desertion): survival state, the record, and the live mob. A
 // failed save restores record, the pre-removal record, and survival state.
 func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, companion domain.Companion) error {
+	// Phase 74: after long service, the company will want to mourn them; the
+	// occasion is queued here so the departure's save writes both.
+	rite := m.queueRite(leaderUserID, companion, rites.Left)
 	if err := m.dropCompanion(leaderUserID, record, companion, nil); err != nil {
+		m.unqueueRite(leaderUserID, rite)
 		return err
 	}
 	// Phase 63: every caller is a desertion (loyalty ran out); dismissal
