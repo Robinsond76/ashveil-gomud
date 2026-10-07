@@ -1,0 +1,10 @@
+itemid: 3200
+name: 'gut-strung lyre'
+namesimple: 'lyre'
+description: 'A small lyre strung with dried gut and framed from elk antler. It is crude, and plays no better than the one who plucks it. A company that carries one can play strings at camp (help instruments).'
+type: object
+subtype: mundane
+instrument: strings
+instrumenttier: 1
+value: 6
+weight: 1200

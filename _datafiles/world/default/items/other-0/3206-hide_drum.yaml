@@ -1,0 +1,10 @@
+itemid: 3206
+name: 'hide drum'
+namesimple: 'hide drum'
+description: 'A drum of wolf hide stretched across an antler frame. It is crude, loud and heavy. A company that carries one can play drums at camp (help instruments).'
+type: object
+subtype: mundane
+instrument: drums
+instrumenttier: 1
+value: 6
+weight: 3000

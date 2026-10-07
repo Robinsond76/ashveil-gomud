@@ -228,6 +228,75 @@ type CampState struct {
 	// Recipes (Phase 56) are the dishes the leader has learned, one line
 	// each ("Hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)").
 	Recipes []string
+	// Music (camp music) is the Music block of the Camp tab: who plays
+	// what and what the next song gives. Gig is the inn's gig board, set
+	// only in a room with an inn.
+	Music MusicState
+	Gig   *GigNotice
+}
+
+// MusicState is a company's Music at the camp, for the Camp tab.
+type MusicState struct {
+	// Known is false when the leader is offline and nothing can be read.
+	Known bool
+	// Off is the leader's switch: the camp song is silenced.
+	Off bool
+	// Players is each member at the camp, with their skill if any.
+	Players []MusicRow
+	// Covered is the families that play ("3 of 4") and Effects the lines
+	// the next camp song would give.
+	Covered string
+	Effects []string
+	// Cost is the song's added raid and thief chance in words ("" for none).
+	Cost string
+	// Teacher is true in a room with a music teacher; TeachPrice is its fee.
+	Teacher    bool
+	TeachPrice int
+}
+
+// MusicRow is one member's Music for the Camp tab.
+type MusicRow struct {
+	Key, Name string
+	// Family and Level are empty and 0 for a member with no music; Label
+	// is the skill in words ("Strings 2 (3 songs to level 3)"); Instrument
+	// is the instrument they would play.
+	Family     string
+	Level      int
+	Label      string
+	Instrument string
+}
+
+// GigNotice is an inn's gig board for a company.
+type GigNotice struct {
+	// Window is the evening window ("19:00 to 21:00"); Open whether the
+	// world clock is inside it now.
+	Window string
+	Open   bool
+	// Ready is whether the company can start a gig now; Reason why not.
+	Ready  bool
+	Reason string
+	// Families is how many families the company fields; Pay what a gig
+	// would earn now.
+	Families int
+	Pay      int
+}
+
+// MusicProvider is optionally implemented by the registered movement
+// provider: a member's Music for the Company panel, "" with none.
+type MusicProvider interface {
+	MusicLabelOf(leaderUserID int, memberKey string) string
+}
+
+// MusicLabelOf reports a member's Music in words. "" without a provider or
+// any music.
+func MusicLabelOf(leaderUserID int, memberKey string) string {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	if mp, ok := p.(MusicProvider); ok {
+		return mp.MusicLabelOf(leaderUserID, memberKey)
+	}
+	return ""
 }
 
 // DutyRow is one member's rest duty for the Camp tab's picker.

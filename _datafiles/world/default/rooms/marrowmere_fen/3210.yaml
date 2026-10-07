@@ -23,3 +23,6 @@ mapx: 4
 mapy: 1
 mapz: 0
 hascoordinates: true
+spawninfo:
+- itemid: 3222
+  respawnrate: 1 real hour

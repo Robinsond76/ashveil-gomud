@@ -1,0 +1,10 @@
+itemid: 3222
+name: "recipe page for the tuned kettle drum"
+namesimple: page
+description: A creased page in a musician's hand, with measurements, glue times and a drawing of the finished drum. Use it to learn to make it (music craft).
+type: readable
+subtype: usable
+uses: 1
+value: 40
+weight: 5
+recipe: 3208

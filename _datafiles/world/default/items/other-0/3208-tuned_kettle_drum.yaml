@@ -1,0 +1,10 @@
+itemid: 3208
+name: 'tuned kettle drum'
+namesimple: 'kettle drum'
+description: "A copper kettle drum with a taut, tuned head. It is the heaviest thing a company carries for pleasure, and the best sounding. A fine instrument for a company's drums at camp (help instruments)."
+type: object
+subtype: mundane
+instrument: drums
+instrumenttier: 3
+value: 160
+weight: 4000

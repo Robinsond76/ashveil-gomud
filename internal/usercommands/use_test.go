@@ -3,6 +3,7 @@ package usercommands
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -242,4 +243,32 @@ func TestUseALoomNeedsNoRecipeBook(t *testing.T) {
 	c := room.Containers["tattertail loom"]
 	require.Len(t, c.Items, 1, out)
 	assert.Equal(t, useTestStew, c.Items[0].ItemId)
+}
+
+// Review (camp music): reading a fine instrument's page writes its
+// pattern, apart from the recipe book, so an older character keeps every
+// dish and still has to find the page.
+func TestUsingAnInstrumentPageLearnsThePattern(t *testing.T) {
+	const fiddle, page = 9130, 9131
+	for _, spec := range []items.ItemSpec{
+		{ItemId: fiddle, Name: "inlaid fiddle", NameSimple: "fiddle", Type: items.Object, Instrument: "strings", InstrumentTier: 3},
+		{ItemId: page, Name: "recipe page for the inlaid fiddle", NameSimple: "page", Type: items.Object, Subtype: items.Usable, Uses: 1, Recipe: fiddle},
+	} {
+		spec := spec
+		items.SetTestItemSpec(&spec)
+		t.Cleanup(func() { items.RemoveTestItemSpec(spec.ItemId) })
+	}
+	freshEvents(t)
+	user := users.NewUserRecord(7, 1)
+	user.Character.Created = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	delete(user.Character.MiscData, cookbook.BookKey)
+	require.True(t, cookbook.Legacy(user.Character))
+	require.False(t, cookbook.KnowsPattern(user.Character, fiddle))
+	require.True(t, user.Character.StoreItem(items.New(page)))
+
+	handled, err := Use("page", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, cookbook.KnowsPattern(user.Character, fiddle))
+	assert.True(t, cookbook.Legacy(user.Character), "the old recipe book is untouched")
 }

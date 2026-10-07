@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -195,6 +196,9 @@ func (m *CampingModule) recipesLines(user *users.UserRecord) []string {
 		inCamp[r.Output] = true
 	}
 	for _, id := range cookbook.Learned(user.Character) {
+		if _, instrument := camping.InstrumentOf(id); instrument {
+			continue // music craft lists the instruments a member can make
+		}
 		if !inCamp[id] {
 			lines = append(lines, itemName(id)+" (at a hearth)")
 		}

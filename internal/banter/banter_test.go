@@ -25,7 +25,7 @@ func TestShippedPoolIsLargeAndConsistent(t *testing.T) {
 	for _, l := range p.Lines() {
 		for _, c := range l.Ctx {
 			switch c {
-			case CtxCamp, CtxRested, CtxWin, CtxClose, CtxFall, CtxFlawless:
+			case CtxCamp, CtxRested, CtxWin, CtxClose, CtxFall, CtxFlawless, CtxSong:
 			default:
 				t.Errorf("%q: unknown context %q", l.Text, c)
 			}

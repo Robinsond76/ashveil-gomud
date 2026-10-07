@@ -1,0 +1,10 @@
+itemid: 3203
+name: 'bone flute'
+namesimple: 'bone flute'
+description: "A thin flute cut from a boar's tusk, with five holes burned through. It is crude and shrill, but it carries a tune. A company that carries one can play winds at camp (help instruments)."
+type: object
+subtype: mundane
+instrument: winds
+instrumenttier: 1
+value: 5
+weight: 300

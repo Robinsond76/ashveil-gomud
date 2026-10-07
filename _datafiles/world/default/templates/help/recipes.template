@@ -66,5 +66,8 @@ A recipe page teaches one dish when you <ansi fg="command">use</ansi> it, and cr
 Merchants never buy a page back, nor a cooked meal. You still need the
 Cooking level to make the dish.
 
-See also: <ansi fg="command">help cooking</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp duties</ansi>, <ansi fg="command">help use</ansi>,
+Instrument pages work the same way: a fine instrument's page teaches its
+recipe, and <ansi fg="command">music craft</ansi> makes it at camp (<ansi fg="command">help instruments</ansi>).
+
+See also: <ansi fg="command">help instruments</ansi>, <ansi fg="command">help cooking</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp duties</ansi>, <ansi fg="command">help use</ansi>,
 <ansi fg="command">help skills</ansi>.

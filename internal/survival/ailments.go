@@ -220,6 +220,25 @@ func (r *Registry) CureAilment(leaderUserID int, key MemberKey, kind string) (cu
 	return true, r.PutNeeds(leaderUserID, key, needs)
 }
 
+// FadeAilment shortens an ailment a member has to battles left (camp
+// music's voice). It never lengthens one: faded is true only when the
+// ailment was longer.
+func (r *Registry) FadeAilment(leaderUserID int, key MemberKey, kind string, battles int) (faded bool, err error) {
+	spec, ok := AilmentFor(kind)
+	if !ok || battles < 1 {
+		return false, nil
+	}
+	needs, found := r.NeedsFor(leaderUserID, key)
+	if !found {
+		return false, ErrUnknownMember
+	}
+	if battlesOf(needs, spec.Kind) <= battles {
+		return false, nil
+	}
+	setBattles(&needs, spec.Kind, battles)
+	return true, r.PutNeeds(leaderUserID, key, needs)
+}
+
 // spendAilmentBattle counts one battle off every ailment in n.
 func spendAilmentBattle(n *Needs) {
 	for _, a := range ailments {
@@ -271,6 +290,22 @@ func CureAilment(leaderUserID int, key MemberKey, kind string) (bool, error) {
 		return false, nil
 	}
 	return s.CureAilment(leaderUserID, key, kind)
+}
+
+// AilmentFader is implemented by modules/survival alongside AilmentService:
+// it shortens an ailment (camp music's voice).
+type AilmentFader interface {
+	FadeAilment(leaderUserID int, key MemberKey, kind string, battles int) (bool, error)
+}
+
+// FadeAilment shortens a member's ailment to battles left through the
+// registered module; with none loaded it does nothing.
+func FadeAilment(leaderUserID int, key MemberKey, kind string, battles int) (bool, error) {
+	f, ok := currentAilmentService().(AilmentFader)
+	if !ok {
+		return false, nil
+	}
+	return f.FadeAilment(leaderUserID, key, kind, battles)
 }
 
 // Caught is a member that just caught an ailment.

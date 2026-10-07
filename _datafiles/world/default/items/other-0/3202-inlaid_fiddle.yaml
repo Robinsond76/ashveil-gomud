@@ -1,0 +1,10 @@
+itemid: 3202
+name: 'inlaid fiddle'
+namesimple: 'fiddle'
+description: "A well-made fiddle, its neck inlaid with pale wood, its voice warm and clear. A fine instrument for a company's strings at camp (help instruments)."
+type: object
+subtype: mundane
+instrument: strings
+instrumenttier: 3
+value: 150
+weight: 1800

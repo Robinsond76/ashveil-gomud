@@ -75,3 +75,22 @@ func TestSurvivalStatusShowsAnAilment(t *testing.T) {
 	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 100, Thirst: 100, Fatigue: 100, Chill: 2}))
 	assert.Contains(t, m.status(7), "In battle: Chill: -10% damage (2 battles)")
 }
+
+// Review (camp music): the voice's fade shortens an ailment durably, never
+// lengthens one, and refuses an unknown kind.
+func TestFadeAilmentShortensAndSaves(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 100, Thirst: 100, Fatigue: 100, Chill: 4}))
+	faded, err := m.FadeAilment(7, domain.LeaderMemberKey, domain.AilmentChill, 2)
+	require.NoError(t, err)
+	assert.True(t, faded)
+	assert.Equal(t, 2, m.registry.MustNeedsFor(7, domain.LeaderMemberKey).Chill)
+	assert.Equal(t, m.registry, m.store.(*fakeStore).saved)
+
+	faded, err = m.FadeAilment(7, domain.LeaderMemberKey, domain.AilmentChill, 3)
+	require.NoError(t, err)
+	assert.False(t, faded, "never longer")
+	assert.Equal(t, 2, m.registry.MustNeedsFor(7, domain.LeaderMemberKey).Chill)
+	faded, _ = m.FadeAilment(7, domain.LeaderMemberKey, "nonsense", 1)
+	assert.False(t, faded)
+}

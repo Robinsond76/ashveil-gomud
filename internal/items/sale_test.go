@@ -108,3 +108,36 @@ func TestCookedMealsAreNeverBoughtBack(t *testing.T) {
 	stew := New(stewID)
 	assert.True(t, stew.IsSpecialForSale(), "a cooked meal is never bought")
 }
+
+// Camp music: a bought or crafted instrument is never bought back; a
+// looted masterwork may be sold.
+func TestOnlyMasterworkInstrumentsAreBoughtBack(t *testing.T) {
+	for tier, want := range map[int]bool{1: true, 2: true, 3: true, 4: false} {
+		id := 990200 + tier
+		SetTestItemSpec(&ItemSpec{ItemId: id, Name: "test instrument", Type: Object, Value: 100, Instrument: "strings", InstrumentTier: tier})
+		t.Cleanup(func() { RemoveTestItemSpec(id) })
+		assert.Equal(t, want, (&Item{ItemId: id}).IsSpecialForSale(), "tier %d", tier)
+	}
+}
+
+// The shipped instruments agree with their tiers, and masterworks name a
+// boss and a chance while the rest drop from nobody.
+func TestShippedInstrumentsAreConsistent(t *testing.T) {
+	seen := 0
+	for id, spec := range shippedSpecs(t) {
+		if spec.Instrument == "" {
+			assert.Zero(t, spec.InstrumentTier, "item %d", id)
+			continue
+		}
+		seen++
+		assert.GreaterOrEqual(t, spec.InstrumentTier, 1, "item %d", id)
+		assert.LessOrEqual(t, spec.InstrumentTier, MasterworkInstrumentTier, "item %d", id)
+		if spec.InstrumentTier == MasterworkInstrumentTier {
+			assert.Positive(t, spec.InstrumentMob, "masterwork %d names its boss", id)
+			assert.Positive(t, spec.InstrumentChance, "masterwork %d has a chance", id)
+		} else {
+			assert.Zero(t, spec.InstrumentMob, "item %d is never looted", id)
+		}
+	}
+	assert.Equal(t, 12, seen, "nine bought or crafted and three masterworks")
+}

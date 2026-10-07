@@ -10,6 +10,9 @@ the world clock, and weather never spoils it.
   Shows the price of a room here (or your stay in progress, if you're
   already resting).
 
+  <ansi fg="command">inn gig</ansi> | <ansi fg="command">inn gig status</ansi>
+  Plays for pay in the evening (<ansi fg="command">help gigs</ansi>).
+
   <ansi fg="command">inn rest</ansi>
   Pays for the room and starts the stay, about a minute of real time.
   While resting you can't use ordinary exits, but you can still talk and
@@ -40,8 +43,12 @@ the world clock, and weather never spoils it.
   the Waymark Inn's physician offers to close whatever wounds <ansi fg="command">heal wounds</ansi>
   leaves, for gold.
 
+An inn also pays musicians: in the evening your company can take the floor
+for coin, but not while a stay is under way (<ansi fg="command">help gigs</ansi>). An inn stay is quiet:
+no camp song plays and no raiders come, so music costs nothing here.
+
 Only one room is bought per stay, for your whole company; there's
 nothing to strike or break afterward.
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help conditions</ansi>,
+See also: <ansi fg="command">help gigs</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help conditions</ansi>,
 <ansi fg="command">help travel</ansi>.

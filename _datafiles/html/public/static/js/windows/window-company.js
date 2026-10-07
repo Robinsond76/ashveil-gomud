@@ -826,6 +826,13 @@
             card.appendChild(el('div', 'company-warmth need-warn', v.warmth));
             spoken.push(v.warmth);
         }
+        // Camp music: the member's family and level, and practice to the next.
+        if (m.status !== 'dead' && m.music) {
+            const music = el('div', 'company-chemistry company-music', 'Music: ' + m.music);
+            music.title = 'Plays at camp for the rest\'s buffs (help music)';
+            card.appendChild(music);
+            spoken.push('music ' + m.music);
+        }
         if (m.chemistry) {
             card.appendChild(el('div', 'company-chemistry', 'Persistent bonus — Chemistry: ' + m.chemistry));
             spoken.push('chemistry ' + m.chemistry);
@@ -1421,6 +1428,65 @@
         return block;
     }
 
+    // musicBlock is the Camp tab's Music row (camp music): each member's
+    // family and level, the families covered, the effect of the next song,
+    // and the on/off switch.
+    function musicBlock(camp) {
+        const music = camp.music;
+        const block = el('section', 'cmp-block cmp-music');
+        block.setAttribute('aria-label', 'Camp music');
+        block.appendChild(el('h4', null, 'Music'));
+        (music.players || []).forEach(p => {
+            const text = p.label
+                ? p.label + (p.family === 'voice' ? ', sings' : (p.instrument ? ', on the ' + p.instrument : ', no instrument carried'))
+                : 'no music yet';
+            block.appendChild(el('div', 'cmp-line', (p.key === 'leader' ? p.name + ' (you)' : p.name) + ': ' + text));
+        });
+        if (music.off) {
+            block.appendChild(el('div', 'cmp-line', 'The camp song is off.'));
+        } else if (music.effects && music.effects.length) {
+            block.appendChild(el('div', 'cmp-line', 'Families covered: ' + music.covered + '. The next rest\'s song:'));
+            const list = el('ul');
+            music.effects.forEach(e => list.appendChild(el('li', 'cmp-line', e)));
+            block.appendChild(list);
+            if (music.cost) {
+                block.appendChild(el('div', 'cmp-note', music.cost));
+            }
+        } else {
+            block.appendChild(el('div', 'cmp-note', 'Nobody can play yet: learn a family from a music teacher and carry its instrument (help music).'));
+        }
+        if (music.teacher) {
+            block.appendChild(el('div', 'cmp-line', 'A music teacher is here: music learn [family] [member] costs ' + music.teach_price + ' gold (strings, winds, drums or voice).'));
+        }
+        const row = el('div', 'cmp-actions');
+        row.appendChild(button(music.off ? 'Song on' : 'Song off', music.off ? 'camp music on' : 'camp music off',
+            music.off ? 'Play at camp again (camp music on)' : 'Rest in silence (camp music off)'));
+        block.appendChild(row);
+        return block;
+    }
+
+    // gigBlock is the inn's gig notice: the window, the company's
+    // eligibility and the button to play (inn gig).
+    function gigBlock(camp) {
+        const gig = camp.gig;
+        const block = el('section', 'cmp-block cmp-gig');
+        block.setAttribute('aria-label', 'Inn gig');
+        block.appendChild(el('h4', null, 'Gig notice'));
+        block.appendChild(el('div', 'cmp-line', 'Musicians wanted here, ' + gig.window + ' each evening.'));
+        if (gig.ready) {
+            block.appendChild(el('div', 'cmp-line', 'Your company can play now: ' + gig.families + ' families, about ' + gig.pay + ' gold.'));
+            const row = el('div', 'cmp-actions');
+            row.appendChild(button('Play a gig', 'inn gig', 'Play for the room until the song ends (inn gig)'));
+            block.appendChild(row);
+        } else {
+            block.appendChild(el('div', 'cmp-line', gig.reason || 'Your company cannot play now.'));
+            if (gig.families >= 2) {
+                block.appendChild(el('div', 'cmp-note', 'It would earn about ' + gig.pay + ' gold (help gigs).'));
+            }
+        }
+        return block;
+    }
+
     // recipesOpen remembers whether the Camp tab's recipe book is unfolded.
     let recipesOpen = false;
 
@@ -1538,6 +1604,15 @@
 
         if (camp.has_camp && camp.here && Array.isArray(camp.tents) && camp.tents.length > 1) {
             pad.appendChild(tentsBlock(camp));
+        }
+
+        // Camp music: who plays and what the song gives, and an inn's gig
+        // notice.
+        if (camp.music && (camp.has_camp && camp.here || camp.inn || camp.music.teacher)) {
+            pad.appendChild(musicBlock(camp));
+        }
+        if (camp.gig) {
+            pad.appendChild(gigBlock(camp));
         }
 
         const members = data.members.filter(m => m && m.status !== 'dead');

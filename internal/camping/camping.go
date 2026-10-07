@@ -72,6 +72,9 @@ type RestSession struct {
 	Duties map[string]string `yaml:"duties,omitempty"`
 	// Tent (Phase 52) is the tent pitched when the rest began, locked then.
 	Tent TentKind `yaml:"tent,omitempty"`
+	// Song (camp music) is the song the company played as the rest began,
+	// locked then: its strengths and who played. Nil when nobody played.
+	Song *Song `yaml:"song,omitempty"`
 }
 
 // Theft is thieves planned at rest start (Phase 40a4): they work unseen

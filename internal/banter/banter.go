@@ -39,6 +39,7 @@ const (
 	CtxClose    = "close"    // a won battle that was a close call
 	CtxFall     = "fall"     // a won battle in which someone fell
 	CtxFlawless = "flawless" // a won battle nobody was hurt much in
+	CtxSong     = "song"     // the company plays at camp (camp music)
 )
 
 // Personalities are the temperaments a companion is rolled with.
