@@ -643,3 +643,93 @@ func TestBackgroundHelperForOtherPhases(t *testing.T) {
 	c.LifeStory = lifestory.PicksWithBackground("noble")
 	assert.Equal(t, "noble", c.Background())
 }
+
+// Review regression: the web panel answers the login offer with an option
+// number, and its skip button sends "skip"; all must be understood.
+func TestCreationOfferTakesNumbersAndSkip(t *testing.T) {
+	for _, tc := range []struct {
+		answer string
+		later  bool
+	}{{"1", false}, {"2", true}, {"skip", true}, {"now", false}, {"later", true}} {
+		t.Run(tc.answer, func(t *testing.T) {
+			creationWorld(t)
+			cu := newCreationUser(t, 7220, 1)
+			c := cu.u.Character
+			c.RoomId = 72002
+			room := &rooms.Room{RoomId: 72002}
+			_, err := Creation("", cu.u, room, 0)
+			require.NoError(t, err)
+			events.ProcessEvents()
+			view, _ := creation.Get(7220)
+			require.Len(t, view.Options, 2, "the panel gets now and later as buttons")
+
+			cu.u.GetPrompt().GetNextQuestion().Answer(tc.answer)
+			_, err = Creation("", cu.u, room, 0)
+			require.NoError(t, err)
+			events.ProcessEvents()
+			if tc.later {
+				assert.True(t, c.CreationOffered())
+				assert.Nil(t, cu.u.GetPrompt())
+			} else {
+				assert.Equal(t, "How will others speak of you?", cu.pending())
+			}
+		})
+	}
+}
+
+// Review regression: appearance edit and lifestory choose can be left
+// with cancel (or skip), changing nothing.
+func TestAppearanceEditAndLifestoryChooseCanBeCancelled(t *testing.T) {
+	creationWorld(t)
+	cu := newCreationUser(t, 7221, 1)
+	c := cu.u.Character
+	c.RoomId = 72002
+	room := innRoom()
+
+	_, err := Appearance("edit", cu.u, room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, cu.text(), "cancel")
+	view, _ := creation.Get(7221)
+	assert.True(t, view.CanSkip, "the panel offers a way out")
+	cu.u.GetPrompt().GetNextQuestion().Answer("1")
+	_, err = Appearance("edit", cu.u, room, 0)
+	require.NoError(t, err)
+	cu.u.GetPrompt().GetNextQuestion().Answer("cancel")
+	cu.sent = nil
+	_, err = Appearance("edit", cu.u, room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Nil(t, cu.u.GetPrompt())
+	assert.False(t, c.HasLooks())
+	assert.False(t, c.CreationOffered(), "cancelling an edit is not the login offer")
+	assert.Contains(t, cu.text(), "as they were")
+	_, active := creation.Get(7221)
+	assert.False(t, active)
+
+	plain := &rooms.Room{RoomId: 72002}
+	_, err = Lifestory("choose", cu.u, plain, 0)
+	require.NoError(t, err)
+	cu.u.GetPrompt().GetNextQuestion().Answer("skip")
+	_, err = Lifestory("choose", cu.u, plain, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Nil(t, cu.u.GetPrompt())
+	assert.False(t, c.HasLifeStory())
+	assert.Empty(t, c.Items)
+}
+
+// Review regression: a prompt that replaces the creation prompt (a mercy
+// question mid-battle, say) closes the web panel.
+func TestAnotherPromptClosesTheCreationPanel(t *testing.T) {
+	creationWorld(t)
+	cu := newCreationUser(t, 7222, 1)
+	cu.u.Character.RoomId = 72002
+	_, err := Lifestory("choose", cu.u, &rooms.Room{RoomId: 72002}, 0)
+	require.NoError(t, err)
+	_, active := creation.Get(7222)
+	require.True(t, active)
+	cu.u.StartPrompt("mercy", "")
+	_, active = creation.Get(7222)
+	assert.False(t, active)
+}

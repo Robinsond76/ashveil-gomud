@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -369,7 +370,7 @@ func (d *Data) Check(l Looks, race string) error {
 			return err
 		}
 	}
-	if len(l[KeyLine]) > d.Line() {
+	if utf8.RuneCountInString(l[KeyLine]) > d.Line() {
 		return fmt.Errorf("appearance: the free line is over %d characters", d.Line())
 	}
 	return nil

@@ -111,9 +111,16 @@
         const ctx = cv.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(img, 0, 0);
-        const px = ctx.getImageData(0, 0, w, h);
-        apply(px.data, lk);
-        ctx.putImageData(px, 0, 0);
+        try {
+            const px = ctx.getImageData(0, 0, w, h);
+            apply(px.data, lk);
+            ctx.putImageData(px, 0, 0);
+        } catch (e) {
+            // A sprite served from another origin (a CDN) cannot be read
+            // back; draw it in its stock colours rather than fail the frame.
+            cache[k] = img;
+            return img;
+        }
         cache[k] = cv;
         return cv;
     }

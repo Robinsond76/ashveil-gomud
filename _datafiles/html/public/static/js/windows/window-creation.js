@@ -90,6 +90,7 @@
             list-style: none;
         }
         #creation-panel .creation-options.wide { grid-template-columns: 1fr; }
+        #creation-panel .creation-options button { width: 100%; height: 100%; }
 
         #creation-panel button {
             font: inherit;
@@ -368,16 +369,19 @@
 
         const foot = el('div', 'creation-foot');
         if (d.canback) {
-            const back = el('button', null, 'Back: redo this step');
+            const back = el('button', null, 'Back: start this part over');
             back.type = 'button';
             back.addEventListener('click', function() { send('back'); });
             foot.appendChild(back);
         }
         foot.appendChild(el('span', 'creation-spacer'));
         if (d.canskip) {
-            const skip = el('button', null, 'Skip for now');
+            // An existing character puts the steps off; appearance edit and
+            // lifestory choose are cancelled with nothing changed.
+            const legacy = d.mode === 'legacy';
+            const skip = el('button', null, legacy ? 'Skip for now' : 'Cancel');
             skip.type = 'button';
-            skip.addEventListener('click', function() { send('skip'); });
+            skip.addEventListener('click', function() { send(legacy ? 'skip' : 'cancel'); });
             foot.appendChild(skip);
         }
         const typeInstead = el('button', null, 'Type instead');

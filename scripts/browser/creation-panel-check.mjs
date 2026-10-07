@@ -105,7 +105,7 @@ await page.evaluate(s => window.gmcp('Char.Creation', { ...s, key: 'hair', numbe
 check(await open(), 'a new question brings the panel back');
 
 // A text step, with a backstory.
-await page.evaluate(s => window.gmcp('Char.Creation', { ...s, kind: 'text', key: 'line', options: [], title: 'A line of your own?', backstory: 'You grew up on the river.', canskip: true }), step);
+await page.evaluate(s => window.gmcp('Char.Creation', { ...s, kind: 'text', key: 'line', options: [], title: 'A line of your own?', backstory: 'You grew up on the river.', canskip: true, mode: 'legacy' }), step);
 await page.locator('.creation-line input').fill('hello there');
 await page.getByRole('button', { name: 'Use this line' }).click();
 check((await page.evaluate(() => window.sent)).pop() === 'hello there', 'a typed line is sent as typed');
@@ -114,6 +114,9 @@ check((await page.evaluate(() => window.sent)).pop() === 'none', 'No line sends 
 check(await page.locator('.creation-backstory').textContent() === 'You grew up on the river.', 'the backstory shows');
 await page.getByRole('button', { name: 'Skip for now' }).click();
 check((await page.evaluate(() => window.sent)).pop() === 'skip', 'Skip sends skip');
+await page.evaluate(s => window.gmcp('Char.Creation', { ...s, canskip: true, mode: 'edit' }), step);
+await page.getByRole('button', { name: 'Cancel' }).click();
+check((await page.evaluate(() => window.sent)).pop() === 'cancel', 'appearance edit offers Cancel, which sends cancel');
 
 // Narrow layout.
 await page.setViewportSize({ width: 360, height: 700 });

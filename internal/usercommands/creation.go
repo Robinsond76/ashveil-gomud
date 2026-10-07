@@ -178,10 +178,26 @@ func (r *creationRun) questionCount() int {
 }
 
 func (r *creationRun) skip() creationOutcome {
+	if r.mode != creationModeLegacy {
+		// appearance edit and lifestory choose: leave with nothing changed.
+		r.user.SendText(`You leave things as they were.`)
+		r.finish()
+		return creationSkipped
+	}
 	r.user.Character.MarkCreationOffered()
 	r.user.SendText(`You put it off. Type <ansi fg="command">appearance edit</ansi> at an inn to describe yourself, or <ansi fg="command">lifestory choose</ansi> to write your story.`)
 	r.finish()
 	return creationSkipped
+}
+
+// leaving reports an answer that puts the steps off (an existing
+// character's skip) or cancels appearance edit or lifestory choose. A new
+// character must finish them.
+func (r *creationRun) leaving(response string) bool {
+	if r.mode == creationModeNew {
+		return false
+	}
+	return strings.EqualFold(response, `skip`) || strings.EqualFold(response, `cancel`)
 }
 
 func (r *creationRun) finish() {
@@ -196,18 +212,34 @@ func (r *creationRun) finish() {
 // opener is the first question an existing character is asked.
 func (r *creationRun) opener() (creationOutcome, bool) {
 	const title = `Your character has no looks or life story yet. Write them now, or later?`
-	q := r.p.Ask(title, []string{`now`, `later`}, `now`)
+	opts := []creation.Option{{ID: `now`, Name: `now`}, {ID: `later`, Name: `later`}}
+	// No prompt options: the web panel answers with the option's number, as
+	// it does for every other question, and matchCreationOption reads it.
+	show := func() {
+		v := r.view(creation.View{Step: `looks`, Key: `opener`, Kind: creation.KindConfirm, Title: title, Options: opts})
+		r.user.SendText(r.menuText(v))
+	}
+	q := r.p.Ask(title, []string{}, `now`)
 	if !q.Done {
-		r.view(creation.View{Step: `looks`, Key: `opener`, Kind: creation.KindConfirm, Title: title,
-			Options: []creation.Option{{ID: `now`, Name: `now`}, {ID: `later`, Name: `later`}}})
 		r.user.SendText(``)
 		r.user.SendText(`  Ashveil now lets you describe your character and choose a life story. You can do it now, or put it off and use <ansi fg="command">appearance edit</ansi> at an inn later.`)
+		show()
 		return creationWaiting, true
 	}
-	answer := q.Response
+	answer := strings.TrimSpace(q.Response)
 	r.p.Forget(title)
+	if r.leaving(answer) {
+		answer = `later`
+	}
+	o, ok := matchCreationOption(opts, answer)
+	if !ok {
+		r.user.SendText(`That isn't one of the options.`)
+		r.p.Ask(title, []string{}, `now`)
+		show()
+		return creationWaiting, true
+	}
 	r.st.Opened = true
-	if answer == `later` {
+	if o.ID == `later` {
 		return r.skip(), false
 	}
 	return creationWaiting, false
@@ -215,7 +247,7 @@ func (r *creationRun) opener() (creationOutcome, bool) {
 
 // ---------------------------------------------------------------- asking
 
-func (r *creationRun) view(v creation.View) {
+func (r *creationRun) view(v creation.View) creation.View {
 	v.Mode = string(r.mode)
 	v.Total = r.total
 	v.Picks = r.picksView()
@@ -231,8 +263,9 @@ func (r *creationRun) view(v creation.View) {
 		_, sp := r.pronouns()
 		v.Backstory = r.story.Backstory(r.st.Story, r.user.Character.Name, sp)
 	}
-	v.CanSkip = r.mode == creationModeLegacy
+	v.CanSkip = r.mode != creationModeNew
 	creation.Publish(r.user.UserId, v)
+	return v
 }
 
 func (r *creationRun) picksView() map[string]string {
@@ -302,13 +335,21 @@ func (r *creationRun) menuText(v creation.View) string {
 	}
 	hints := []string{`Answer with a number or a name.`}
 	if v.CanBack {
-		hints = append(hints, `<ansi fg="command">back</ansi> redoes this step.`)
+		hints = append(hints, `<ansi fg="command">back</ansi> starts this part over.`)
 	}
 	if v.CanSkip {
-		hints = append(hints, `<ansi fg="command">skip</ansi> puts it all off.`)
+		hints = append(hints, r.leaveHint())
 	}
 	b.WriteString("  " + strings.Join(hints, ` `) + "\n")
 	return b.String()
+}
+
+// leaveHint names the answer that leaves the steps in this mode.
+func (r *creationRun) leaveHint() string {
+	if r.mode == creationModeLegacy {
+		return `<ansi fg="command">skip</ansi> puts it all off.`
+	}
+	return `<ansi fg="command">cancel</ansi> leaves things as they were.`
 }
 
 // choose asks one numbered question. It reports pending while waiting, and
@@ -316,9 +357,8 @@ func (r *creationRun) menuText(v creation.View) string {
 // for the caller to act on.
 func (r *creationRun) choose(step, key, title string, number int, opts []creation.Option, canBack bool) (string, askStatus) {
 	show := func() {
-		v := creation.View{Step: step, Key: key, Kind: creation.KindChoice, Title: title,
-			Number: number, Options: opts, CanBack: canBack}
-		r.view(v)
+		v := r.view(creation.View{Step: step, Key: key, Kind: creation.KindChoice, Title: title,
+			Number: number, Options: opts, CanBack: canBack})
 		r.user.SendText(r.menuText(v))
 	}
 	q := r.p.Ask(title, []string{})
@@ -328,15 +368,11 @@ func (r *creationRun) choose(step, key, title string, number int, opts []creatio
 	}
 	response := strings.TrimSpace(q.Response)
 	r.p.Forget(title)
-	switch strings.ToLower(response) {
-	case `back`:
-		if canBack {
-			return ``, askBack
-		}
-	case `skip`:
-		if r.mode == creationModeLegacy {
-			return ``, askSkip
-		}
+	if strings.EqualFold(response, `back`) && canBack {
+		return ``, askBack
+	}
+	if r.leaving(response) {
+		return ``, askSkip
 	}
 	if o, ok := matchCreationOption(opts, response); ok {
 		return o.ID, askPicked
@@ -428,19 +464,21 @@ func (r *creationRun) lineQuestion(number int) askStatus {
 	if !q.Done {
 		r.view(creation.View{Step: `looks`, Key: appearance.KeyLine, Kind: creation.KindText, Title: title, Number: number, CanBack: true})
 		r.user.SendText(``)
-		r.user.SendText(`  <ansi fg="black-bold">(` + fmt.Sprint(number) + ` of ` + fmt.Sprint(r.total) + `)</ansi> This line follows the description others read when they look at you. <ansi fg="command">back</ansi> redoes this step.`)
+		hint := ` <ansi fg="command">back</ansi> starts your looks over.`
+		if r.mode != creationModeNew {
+			hint += ` ` + r.leaveHint()
+		}
+		r.user.SendText(`  <ansi fg="black-bold">(` + fmt.Sprint(number) + ` of ` + fmt.Sprint(r.total) + `)</ansi> This line follows the description others read when they look at you.` + hint)
 		return askPending
 	}
 	response := strings.TrimSpace(q.Response)
 	r.p.Forget(title)
-	switch strings.ToLower(response) {
-	case `back`:
+	if strings.EqualFold(response, `back`) {
 		r.st.Looks = appearance.Looks{}
 		return askBack
-	case `skip`:
-		if r.mode == creationModeLegacy {
-			return askSkip
-		}
+	}
+	if r.leaving(response) {
+		return askSkip
 	}
 	if strings.EqualFold(response, `none`) {
 		r.st.Looks[appearance.KeyLine] = ``
@@ -547,23 +585,21 @@ func (r *creationRun) summaryStep() askStatus {
 	}
 	q := r.p.Ask(title, []string{})
 	if !q.Done {
-		v := creation.View{Step: `summary`, Key: `summary`, Kind: creation.KindConfirm, Title: title, Options: opts}
-		r.view(v)
+		v := r.view(creation.View{Step: `summary`, Key: `summary`, Kind: creation.KindConfirm, Title: title, Options: opts})
 		r.user.SendText(r.summaryText())
 		r.user.SendText(r.menuText(v))
 		return askPending
 	}
 	response := strings.TrimSpace(q.Response)
 	r.p.Forget(title)
-	if strings.EqualFold(response, `skip`) && r.mode == creationModeLegacy {
+	if r.leaving(response) {
 		return askSkip
 	}
 	o, ok := matchCreationOption(opts, response)
 	if !ok {
 		r.user.SendText(`That isn't one of the options.`)
 		r.p.Ask(title, []string{})
-		v := creation.View{Step: `summary`, Key: `summary`, Kind: creation.KindConfirm, Title: title, Options: opts}
-		r.view(v)
+		v := r.view(creation.View{Step: `summary`, Key: `summary`, Kind: creation.KindConfirm, Title: title, Options: opts})
 		r.user.SendText(r.menuText(v))
 		return askPending
 	}

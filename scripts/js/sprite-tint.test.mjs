@@ -99,3 +99,17 @@ test('canvasFor repaints once per image and look and caches the result', () => {
   assert.notEqual(c, a);
   assert.equal(made, 2);
 });
+
+test('canvasFor falls back to the stock image when the canvas cannot be read', () => {
+  // A cross-origin sprite taints the canvas and getImageData throws.
+  const make = () => ({
+    getContext: () => ({
+      drawImage() {}, putImageData() {},
+      getImageData: () => { throw new Error('SecurityError'); },
+      set imageSmoothingEnabled(v) {},
+    }),
+  });
+  const img = { width: 1, height: 1 };
+  const cache = {};
+  assert.equal(T.canvasFor(img, T.look('#52311d', ''), make, cache, 'cdn'), img);
+});

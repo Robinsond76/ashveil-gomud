@@ -244,3 +244,16 @@ func TestValidateRejectsMalformedData(t *testing.T) {
 	d.Trait(TraitMark).Options = d.Trait(TraitMark).Options[1:]
 	assert.Error(t, d.Validate(), "the mark trait needs none")
 }
+
+// Review regression: a free line CleanLine accepts (counted in characters)
+// must pass Check too; accented letters take two bytes each.
+func TestCheckCountsTheFreeLineInCharacters(t *testing.T) {
+	d := shipped(t)
+	line, err := CleanLine(strings.Repeat("é", d.Line()), d.Line(), nil)
+	require.NoError(t, err)
+	l := baseline(d)
+	l[KeyLine] = line
+	assert.NoError(t, d.Check(l, "human"))
+	l[KeyLine] = line + "é"
+	assert.Error(t, d.Check(l, "human"))
+}

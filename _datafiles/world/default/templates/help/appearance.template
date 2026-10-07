@@ -18,15 +18,16 @@ numbers and never help or hurt you in a fight.
 In the web client the questions open as a panel of buttons, with your
 figure drawn in the skin and hair you chose. Type the same number or word
 at the game line if you prefer; "Type instead" tucks the panel away.
-<ansi fg="command">back</ansi> redoes the last answer.
+<ansi fg="command">back</ansi> starts your looks over, and <ansi fg="command">cancel</ansi> leaves <ansi fg="command">appearance edit</ansi>
+with nothing changed.
 
 <ansi fg="yellow-bold">Changing them</ansi>
 
 At any inn, <ansi fg="command">appearance edit</ansi> lets you choose again. It is free, as often as
 you like. Your life story stays as it was (<ansi fg="command">help lifestory</ansi>).
 
-Your pronouns are part of your looks. They are what the game uses when it
-speaks of you in battle.
+Your pronouns are part of your looks. Your description and your life
+story are written with them.
 
 Characters made before looks existed are asked once, when they next log
 in. You may skip it, and ask later with <ansi fg="command">creation</ansi>.
