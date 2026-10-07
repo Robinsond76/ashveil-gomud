@@ -187,6 +187,13 @@ tiers (75), bounty boards (76), and Hardcore with account blessings (77).
 Scope, dependencies and acceptance are in the
 [phase plan](2026-10-07-pillars-phases.md). Build order: 60–63 first.
 
+**72a Looks and life story at creation** (added 2026-10-07 from the owner's
+Bannerlord idea): looks picked as bands and written as a description, a
+three-stage life story whose trade is phase 72's background, small stat
+effects, a web creation panel, skin and hair colour on sprites.
+[Spec](2026-10-07-phase-72a-character-creation.md). No unbuilt
+dependencies; phase 72 now depends on it.
+
 ## Folded into existing phases
 
 - **36c** also ships the 36a deferrals: merchants buy rolled gear (priced
