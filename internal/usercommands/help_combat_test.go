@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"path/filepath"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "battlelog", "resurrect", "narration", "combatpace", "battlescreen", "orders"} {
+	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "battlelog", "resurrect", "narration", "combatpace", "battlescreen", "orders", "stances"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -42,6 +43,7 @@ func TestCombatHelpTopics(t *testing.T) {
 		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
 		"battle-screen": "battlescreen", "battle-map": "battlescreen",
 		"order": "orders", "battle-orders": "orders", "when-do": "orders",
+		"stance": "stances", "weapon-stance": "stances", "shield-wall": "stances", "heavy-blows": "stances",
 		"pace": "combatpace", "pacing": "combatpace", "combat-pace": "combatpace",
 	}
 	for alias, topic := range aliases {
@@ -513,6 +515,30 @@ func TestOrdersHelp(t *testing.T) {
 		hub, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, hub, "help orders", "help %s links to help orders", topic)
+	}
+}
+
+// Phase 69: help stances renders, names every stance and its trade, and the
+// hub pages point to it.
+func TestStancesHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	text, err := GetHelpContents("stances")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, d := range stance.Defs {
+		assert.Contains(t, plain, d.Name, "help stances names %s", d.Key)
+		assert.Contains(t, plain, "stance [who] [name]")
+	}
+	for _, want := range []string{"Help for", "one stance", "30% harder", "15 points less likely to hit", "12 points more likely to block",
+		"30% fewer turns", "25% more turns", "15% lighter", "10 points more likely to land a critical", "10% shallower",
+		"stance [who] off", "idle: needs a bow", "Stance button"} {
+		assert.Contains(t, plain, want, "help stances mentions %s", want)
+	}
+	for _, topic := range []string{"combat", "strategy", "orders", "webclient"} {
+		hub, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, hub, "help stances", "help %s links to help stances", topic)
 	}
 }
 

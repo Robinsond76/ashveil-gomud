@@ -46,6 +46,9 @@ Once the battle starts:
 - each member reads its battle orders first ("when an ally is below half
   health, heal them"), and the log says "as ordered" when one fires
   (<ansi fg="command">help orders</ansi>);
+- each member may fight in a weapon stance (heavy blows, shield wall, quick
+  draw, keen edge) that trades one strength for another, set beforehand
+  (<ansi fg="command">help stances</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
   always does, but a one-round heal such as Minor Heal only breaks to heavy
   force), on either side, and
@@ -157,6 +160,7 @@ damage and who never landed a blow. <ansi fg="command">why</ansi> explains any s
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">orders</ansi>            "when this, do that" rules for each member
+  <ansi fg="command">stance</ansi>            a weapon stance for each member: one strength for another
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
   <ansi fg="command">help guardian</ansi>     guardians and their guards
   <ansi fg="command">help battlescreen</ansi> the web client's battle picture

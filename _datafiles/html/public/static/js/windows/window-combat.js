@@ -78,6 +78,14 @@
  *     up <n>, preset and clear. Orders are set between battles: in a battle
  *     they are listed, with no button.
  *
+ * Phase 69, weapon stances:
+ *
+ *   - Under each member's orders, their weapon stance (Company's
+ *     members[].stance: name, whether the member holds what it needs, and
+ *     the trade in the tooltip) and a "Stance" button whose menu sends
+ *     stance <who> <key> or off. Stances are set between battles: in a
+ *     battle a set stance is listed, with no button.
+ *
  * Every name is set with textContent, never innerHTML.
  *
  * Responds to GMCP namespaces:
@@ -171,6 +179,8 @@
         .cbt-orders { margin: 1px 0 3px 10px; font-size: 0.92em; color: var(--t-text-secondary); display: flex; flex-direction: column; gap: 2px; }
         .cbt-orders ol { margin: 0; padding-left: 1.4em; }
         .cbt-orders .cbt-btn { align-self: flex-start; }
+        .cbt-stance { margin: 1px 0 3px 10px; font-size: 0.92em; color: var(--t-text-secondary); display: flex; flex-direction: column; gap: 2px; }
+        .cbt-stance .cbt-btn { align-self: flex-start; }
 
         .cbt-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 
@@ -429,6 +439,54 @@
         return box;
     }
 
+    // STANCES are the weapon stances the menu offers, as `stance <who> <key>`
+    // reads them: key, name, the family it is for.
+    const STANCES = [
+        ['heavy', 'Heavy blows', 'great weapon'],
+        ['wall', 'Shield wall', 'shield'],
+        ['quick', 'Quick draw', 'bow'],
+        ['keen', 'Keen edge', 'dagger'],
+    ];
+
+    // stanceMenu is a member's stance menu: pick one, or none.
+    function stanceMenu(m) {
+        const w = who(m);
+        const cur = m.stance && m.stance.key;
+        const items = [];
+        STANCES.filter(st => st[0] !== cur).forEach(st => {
+            items.push({ label: st[1] + ' (' + st[2] + ')', cmd: 'stance ' + w + ' ' + st[0] });
+        });
+        if (cur) { items.push({ label: 'No stance', cmd: 'stance ' + w + ' off' }); }
+        return items;
+    }
+
+    // stanceBlock is the weapon stance under a member's row (Phase 69): what
+    // it is, whether the member holds what it needs, and the button that
+    // changes it between battles.
+    function stanceBlock(m, inBattle) {
+        const st = m.stance;
+        if (m.status === 'dead' || (inBattle && !st)) { return null; }
+        const box = el('div', 'cbt-stance');
+        box.setAttribute('data-key', m.key);
+        if (st) {
+            let text = 'Stance: ' + st.name;
+            if (st.ready === true) { text += ' (ready)'; }
+            if (st.ready === false) { text += ' (idle: needs ' + st.needs + ')'; }
+            const line = el('div', 'cbt-stance-line', text);
+            line.title = st.name + ': ' + st.gain + ', but ' + st.cost + '.';
+            box.appendChild(line);
+        }
+        if (!inBattle) {
+            const b = el('button', 'cbt-btn cbt-stance-btn', st ? 'Stance: ' + st.name : 'Stance: none');
+            b.type = 'button';
+            b.setAttribute('aria-haspopup', 'menu');
+            b.title = 'Weapon stance for ' + m.name + ': trade one strength for another (help stances)';
+            b.addEventListener('click', e => uiMenu(e, stanceMenu(m)));
+            box.appendChild(b);
+        }
+        return box;
+    }
+
     function howText(m, members) {
         const s = m.strategy;
         if (!s) { return ''; }
@@ -544,6 +602,8 @@
             li.appendChild(b);
             const orders = ordersBlock(m, inBattle);
             if (orders) { li.appendChild(orders); }
+            const stance = stanceBlock(m, inBattle);
+            if (stance) { li.appendChild(stance); }
             list.appendChild(li);
         });
         root.appendChild(list);
