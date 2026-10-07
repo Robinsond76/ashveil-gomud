@@ -230,16 +230,18 @@ func (m *CampingModule) grantPendingTiers() {
 		if !saved {
 			continue
 		}
-		// Phase 55: a company that slept in the cold wakes with a chill.
 		if campRest {
-			for _, c := range survival.CatchChillIfFrozen(leaderUserID) {
-				user.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
-			}
-			// Camp music: the drums, the voice, and practice.
+			// Camp music: the drums, the voice, and practice. Review: before
+			// the chill below, so the voice fades the ailments carried into
+			// the rest and never cures the chill caught by sleeping cold.
 			if songPtr != nil {
 				for _, line := range m.onSongGranted(user, live, *songPtr, rounds) {
 					user.SendText(line)
 				}
+			}
+			// Phase 55: a company that slept in the cold wakes with a chill.
+			for _, c := range survival.CatchChillIfFrozen(leaderUserID) {
+				user.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
 			}
 		}
 		if granted && buffTier == camping.TierWellRested {

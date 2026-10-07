@@ -261,6 +261,9 @@ func (m *CampingModule) grantDrums(user *users.UserRecord, live map[int]*charact
 		if c == nil || c.Health < 1 {
 			return
 		}
+		// Review: the five sizes are separate buffs, so a second rest before
+		// a battle replaces the first one's lift rather than stacking on it.
+		m.endDrums(c)
 		if err := m.addBuff(c, id, rounds); err != nil {
 			mudlog.Warn("camping: grant drumbeat", "buff", id, "error", err)
 			return
@@ -616,7 +619,9 @@ func (r instrumentRecipe) knownTo(c *characters.Character) bool {
 	if r.tier() <= camping.InstrumentCrude {
 		return true
 	}
-	return cookbook.Knows(c, cookbook.Recipe{Output: r.Output, Inputs: r.Inputs, MinLevel: cookbook.BasicLevel + 1})
+	// Review: not cookbook.Knows, whose Legacy rule would hand older
+	// characters every fine instrument without its page.
+	return cookbook.KnowsPattern(c, r.Output)
 }
 
 func recipeNeeds(inputs []int) string {

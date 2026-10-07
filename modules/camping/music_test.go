@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -526,4 +527,62 @@ func TestGigNoticeForTheWebClient(t *testing.T) {
 	assert.True(t, notice.Ready)
 	assert.Equal(t, 2, notice.Families)
 	assert.Equal(t, camping.GigPay(10, song), notice.Pay)
+}
+
+// --- review regressions ---
+
+// Review: the five Drumbeat sizes are separate buffs, so a second rest
+// before any battle must replace the first lift, never stack on it.
+func TestASecondRestReplacesTheDrumbeat(t *testing.T) {
+	e, user := heroEnv(t)
+	teach(e.module, 7, leaderKey, camping.FamilyDrums, 0)
+	carry(e.module, fineDrumID) // 1 + 3 = 4: +2 speed
+	e.restThrough(t, user, nil)
+	require.True(t, e.ledger.held[user.Character][9402])
+	carry(e.module, frameDrumID) // 1 + 2 = 3: +1 speed
+	e.restThrough(t, user, nil)
+	assert.True(t, e.ledger.held[user.Character][9401], "the new rest's lift")
+	assert.False(t, e.ledger.held[user.Character][9402], "the old lift is gone, not stacked")
+}
+
+// Review: an older character (Legacy, who keeps every dish) still needs a
+// fine instrument's page; the page teaches it without ending the book.
+func TestFineInstrumentNeedsItsPageEvenForAnOlderCharacter(t *testing.T) {
+	musicItemSpecs(t)
+	for _, spec := range []*items.ItemSpec{
+		{ItemId: luteID, Name: "travelling lute", Type: items.Object, Weight: 1500},
+		{ItemId: ashwoodPlankItemID, Name: "ashwood plank", Type: items.Object, Weight: 500},
+	} {
+		items.SetTestItemSpec(spec)
+		id := spec.ItemId
+		t.Cleanup(func() { items.RemoveTestItemSpec(id) })
+	}
+	e, user := heroEnv(t)
+	user.Character.Created = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	delete(user.Character.MiscData, cookbook.BookKey)
+	require.True(t, cookbook.Legacy(user.Character))
+	room := eligibleRoom()
+	e.module.establish(user, room)
+	have := map[int]int{luteID: 1, ashwoodPlankItemID: 2}
+	e.module.itemCount = func(_, id int) int { return have[id] }
+	e.module.spendItem = func(_, id int) bool { have[id]--; return true }
+	assert.Contains(t, e.module.musicArgs(user, room, []string{"craft", "fiddle"}), "recipe page")
+
+	assert.True(t, cookbook.LearnPattern(user.Character, fineFiddleID))
+	assert.True(t, cookbook.Legacy(user.Character), "learning a pattern keeps the old recipe book")
+	assert.Contains(t, e.module.musicArgs(user, room, []string{"craft", "fiddle"}), "You make a")
+	assert.Equal(t, map[int]int{luteID: 0, ashwoodPlankItemID: 0}, have, "the lute and planks went into it")
+}
+
+// Review: a leader who dies mid-gig is never paid for it, and neither the
+// evening nor the three-hour limit is spent.
+func TestDeathMidGigPaysNothingAndSpendsNoLimit(t *testing.T) {
+	g := newGigEnv(t)
+	g.user.Character.Gold = 0
+	require.Contains(t, g.module.innGig(g.user, innRoom()), "takes the floor")
+	require.NoError(t, g.module.AbandonForDeath(7))
+	g.finish()
+	g.module.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.Zero(t, g.user.Character.Gold, "no pay for a gig cut short")
+	assert.Contains(t, g.module.innGig(g.user, innRoom()), "takes the floor", "the evening and cooldown are unspent")
 }

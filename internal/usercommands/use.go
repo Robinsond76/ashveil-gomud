@@ -115,7 +115,11 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			if dish.Instrument != "" { // camp music: a fine instrument's page
 				verb, where = "make", `Make it with <ansi fg="command">music craft</ansi> (<ansi fg="command">help instruments</ansi>).`
 			}
-			if cookbook.Learn(user.Character, itemSpec.Recipe) {
+			learn := cookbook.Learn
+			if dish.Instrument != "" {
+				learn = cookbook.LearnPattern
+			}
+			if learn(user.Character, itemSpec.Recipe) {
 				user.SendText(fmt.Sprintf(`You study the <ansi fg="itemname">%s</ansi> and learn to %s <ansi fg="itemname">%s</ansi>. %s`, matchItem.DisplayName(), verb, dish.Name, where))
 			} else {
 				user.SendText(fmt.Sprintf(`You already know how to %s <ansi fg="itemname">%s</ansi>; the page crumbles in your hands.`, verb, dish.Name))

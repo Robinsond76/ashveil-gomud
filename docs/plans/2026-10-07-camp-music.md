@@ -183,7 +183,8 @@ Each is the builder's call, with a one-line reason.
 - Drumbeat (buffs 9401-9405) ends with the first `BattleEnded` or expires
   with the rest buff.
 - Masterworks are sold, never salvaged: instruments have no salvage line.
-- Gig pay = (zone band top + 2) x summed family strengths / 2, x1.25 for an
+- Gig pay = (zone band top + 2) x summed family strengths x 3 / 2 (review;
+  the build had / 2), x1.25 for an
   ensemble, x1.5 for a full one; zones with no band pay as band 5 (Dunmar).
 - Crafting happens at the leader's camp, from packs and cargo.
 - A gig that never finishes spends neither the evening nor the cooldown; the
@@ -196,9 +197,26 @@ Each is the builder's call, with a one-line reason.
 
 ## Tuning note
 
-Analytic, not simulated (timeboxed). A full ensemble (levels 4, fine
-instruments: strengths 7, 7, 7, 5) in a band-15 zone earns (17 x 26 / 2) x 1.5
-= 331 gold a gig, at most one per 3 hours, so it stays below an hour's
-hunting at that band and never beats it per hour. The ensemble gives Well
-Rested without the 20 kg pavilion but costs +50% to +70% raid chance, against
-the pavilion's +50%, and needs 3 trained members and 3 instruments.
+Build (analytic, timeboxed): a full ensemble of fine instruments (strengths
+7, 7, 7, 5) at band 15 earned 331 gold a gig, about a third of an hour's
+hunting there.
+
+Review (2026-10-07, analytic, timeboxed; `TestGigPayTuning` pins it):
+
+- **Gig pay** raised x3 to meet the spec's "a top gig is worth about an
+  hour's hunting". Hunting income was taken as encounter caches
+  (`loot.CacheGold`, about 5 gold a level each) at roughly 15 fights an
+  hour. A top gig (masterworks at Music 4: 8, 8, 8, 5) now pays 456 at band
+  5, 1,108 at band 15 and 2,088 at band 30, 14 to 18 caches; fine
+  instruments at band 15 pay 994. A beginner pair at band 5 pays 42. At
+  most one gig per 3 real hours, so musicians add about a third to a
+  company's hourly coin at best: worth playing, not a farm.
+- **Buffs** kept. A full ensemble is a little better than the pavilion
+  (Well Rested, plus at most +50% rest length, +10 Fatigue, +5 speed for one
+  battle, ailments 50% shorter) and needs three or four trained members and
+  instruments; nothing in it changes how a higher zone's fights go beyond
+  one battle's speed.
+- **Raid chance** kept: +10% a family, +20% for drums, so +30% to +50% for
+  an ensemble (the build note's +70% was wrong: the cap is +50%), against
+  the pavilion's +50%. Old Kings Road's 15% raid chance becomes at most
+  22.5%.

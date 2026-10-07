@@ -59,10 +59,14 @@ func (r Recipe) Basic() bool { return r.MinLevel <= BasicLevel }
 // tokens are the book's entries: a dish is its item ID, a remedy is
 // "r:<ailment kind>".
 func tokens(c *characters.Character) []string {
+	return keyTokens(c, BookKey)
+}
+
+func keyTokens(c *characters.Character, key string) []string {
 	if c == nil {
 		return nil
 	}
-	raw, _ := c.GetMiscData(BookKey).(string)
+	raw, _ := c.GetMiscData(key).(string)
 	var out []string
 	for _, part := range strings.Split(raw, ",") {
 		if part = strings.TrimSpace(part); part != "" {
@@ -116,6 +120,34 @@ func Learn(c *characters.Character, output int) bool {
 		return false
 	}
 	return addToken(c, strconv.Itoa(output))
+}
+
+// PatternKey is the MiscData key holding the instrument patterns learned
+// from recipe pages (camp music). It is apart from the recipe book so that
+// learning one never ends a Legacy character's book, and Legacy never
+// grants a pattern: a fine instrument always needs its page.
+const PatternKey = "patternbook"
+
+// KnowsPattern reports whether the character has learned the pattern for
+// the instrument item output from its page.
+func KnowsPattern(c *characters.Character, output int) bool {
+	for _, t := range keyTokens(c, PatternKey) {
+		if t == strconv.Itoa(output) {
+			return true
+		}
+	}
+	return false
+}
+
+// LearnPattern writes an instrument pattern; false when already known.
+func LearnPattern(c *characters.Character, output int) bool {
+	if c == nil || output < 1 || KnowsPattern(c, output) {
+		return false
+	}
+	have := append(keyTokens(c, PatternKey), strconv.Itoa(output))
+	sort.Strings(have)
+	c.SetMiscData(PatternKey, strings.Join(have, ","))
+	return true
 }
 
 // KnowsRemedy reports whether the character can make the remedy for an

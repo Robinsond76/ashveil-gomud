@@ -210,7 +210,7 @@ func (m *CompanyModule) CampBanter(leaderUserID int, context string) []banter.Sa
 		percent = m.banterPercent("BanterCampStartPercent", defaultBanterCampStartPercent)
 	case banter.CtxRested:
 		percent = m.banterPercent("BanterRestedPercent", defaultBanterRestedPercent)
-	case banter.CtxSong: // camp music: always comment when a song plays
+	case banter.CtxSong: // camp music: a comment on the song, at its own chance
 		percent = m.banterPercent("BanterSongPercent", defaultBanterSongPercent)
 	default:
 		return nil

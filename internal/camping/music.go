@@ -543,7 +543,7 @@ func GigWindowText() string {
 
 // GigPay is the gold a gig earns: the zone band's top level plus two, times
 // the families' summed strength, times one and a half; a three-strong ensemble earns a
-// quarter more and a full one half again. A weak pair of players earns
+// quarter more and a full one half more. A weak pair of players earns
 // pennies; a full ensemble in a high zone earns about an hour's hunting.
 func GigPay(bandHigh int, song Song) int {
 	if bandHigh < 1 {
