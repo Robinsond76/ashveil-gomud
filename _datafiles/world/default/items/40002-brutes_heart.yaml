@@ -1,0 +1,12 @@
+itemid: 40002
+name: brute's heart
+namesimple: heart
+description: 'A heavy, dark heart taken from a brute that took a lot of killing. An enchanter can work it into a weapon or armor.'
+type: commodity
+weight: 150
+value: 12
+trophy:
+  part: heart
+  races: ["ogre", "troll", "goblin"]
+  chance: 20
+  effects: {damage: 1}

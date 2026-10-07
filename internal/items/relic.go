@@ -243,6 +243,13 @@ func GearEffects(worn []Item) (map[string]int, []ActiveSet) {
 			fx[k] += v
 		}
 	}
+	// Phase 71: trophy enchants on any worn item add to the wearer's effects.
+	for k, v := range TrophyGear(worn) {
+		if fx == nil {
+			fx = map[string]int{}
+		}
+		fx[k] += v
+	}
 	var active []ActiveSet
 	ids := make([]string, 0, len(counts))
 	for id := range counts {
@@ -273,13 +280,18 @@ func GearEffects(worn []Item) (map[string]int, []ActiveSet) {
 
 // RelicLines says what a relic does, in plain text: a Legendary's signature
 // and effects, or a set piece's set and each bonus, then each awakening with
-// its progress (Phase 67). Empty for no relic.
+// its progress (Phase 67), then any trophy enchant (Phase 71). Empty for an
+// item with neither.
 func (i *Item) RelicLines() []string {
 	spec := i.GetSpec()
 	if spec.Relic == nil {
-		return nil
+		return i.TrophyLines() // Phase 71: an enchanted plain item says so
 	}
-	r := spec.Relic
+	return append(i.relicOnlyLines(), i.TrophyLines()...)
+}
+
+func (i *Item) relicOnlyLines() []string {
+	r := i.GetSpec().Relic
 	if !r.IsSet() {
 		return append([]string{fmt.Sprintf("%s (while worn): %s.", r.Signature, strings.Join(classes.DescribeGearEffects(r.Effects), "; "))}, i.AwakeningLines()...)
 	}
@@ -301,7 +313,7 @@ func (i *Item) RelicDescription() string {
 	if spec.Relic == nil {
 		return ""
 	}
-	lines := i.RelicLines()
+	lines := i.relicOnlyLines()
 	colour := RarityLegendary.Colour()
 	if spec.Relic.IsSet() {
 		colour = RaritySet.Colour()
@@ -312,6 +324,7 @@ func (i *Item) RelicDescription() string {
 	if spec.Relic.Lore != "" {
 		lines = append(lines, spec.Relic.Lore)
 	}
+	lines = append(lines, i.TrophyLines()...)
 	return strings.Join(lines, "\n")
 }
 

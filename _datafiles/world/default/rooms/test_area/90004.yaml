@@ -9,6 +9,11 @@ tags:
 exits:
   east:
     roomid: 90001
+spawninfo:
+  - mobid: 90310
+    message: An ash-fingered artisan sets up a workbench in the corner.
+    levelmod: 0
+    respawnrate: 5 real minutes
 mapx: -1
 mapy: 0
 mapz: 0

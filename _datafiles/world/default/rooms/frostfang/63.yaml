@@ -20,6 +20,10 @@ spawninfo:
   message: The armorer enters from a back room.
   levelmod: 40
   respawnrate: 2 real minutes
+- mobid: 90311
+  message: An ash-fingered enchanter sets up a workbench in the corner.
+  levelmod: 0
+  respawnrate: 5 real minutes
 mapx: 2
 mapy: -1
 mapz: 0

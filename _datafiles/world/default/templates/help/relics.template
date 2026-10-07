@@ -38,6 +38,11 @@ ogres, defeating a lair's master or reaching a zone, that wake a further small
 power once they are done while it is worn. <ansi fg="command">look</ansi> at a relic to see each one with
 its progress. See <ansi fg="command">help awakenings</ansi>.
 
+<ansi fg="yellow-bold">Enchants</ansi>
+
+A relic may also take a trophy from an enchanter, within the same caps. See
+<ansi fg="command">help enchanting</ansi>.
+
 <ansi fg="yellow-bold">Where they come from</ansi>
 
 Every relic belongs to one boss, and a Scribe of rank 4 can read which. Each

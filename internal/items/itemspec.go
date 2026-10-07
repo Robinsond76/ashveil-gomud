@@ -256,6 +256,7 @@ type ItemSpec struct {
 	Goods            string            `yaml:"goods,omitempty"`            // Phase 36b: trade goods category (trophy, salvage, material, valuable, provision, curio)
 	WornBy           []string          `yaml:"wornby,omitempty"`           // Phase 38e: creature species (archetype ids) this gear is cut for; only they wear it, and they wear nothing else
 	Relic            *RelicSpec        `yaml:"relic,omitempty"`            // Phase 36d: an authored Legendary or Set piece: its signature or set, item level and boss
+	Trophy           *TrophySpec       `yaml:"trophy,omitempty"`           // Phase 71: a creature part an enchanter works into gear
 }
 
 // Trade goods categories (Phase 36b). Goods are sold, not worn: they make
@@ -663,6 +664,12 @@ func (i *ItemSpec) Validate() error {
 	if i.Relic != nil {
 		if err := i.Relic.validate(i); err != nil {
 			return fmt.Errorf("relic: %w", err)
+		}
+	}
+
+	if i.Trophy != nil {
+		if err := i.Trophy.validate(i); err != nil {
+			return fmt.Errorf("trophy: %w", err)
 		}
 	}
 

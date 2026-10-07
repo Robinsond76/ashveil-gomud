@@ -515,6 +515,17 @@ func (m *Mob) IsSmith() bool {
 	return false
 }
 
+// IsEnchanter (Phase 71) is a mob that works creature trophies into gear
+// (help enchanting): one whose character carries the `enchanter` adjective.
+func (m *Mob) IsEnchanter() bool {
+	for _, adj := range m.Character.Adjectives {
+		if adj == `enchanter` {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *Mob) SetTempData(key string, value any) {
 
 	if m.tempDataStore == nil {
