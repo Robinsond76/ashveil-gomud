@@ -101,6 +101,14 @@ verified in Chromium at 1280px and 390px; `dock-windows-check.mjs` passes.
 
 **Phase 47 review (Opus review thread):** accepted as built, with one help fix. Checked: (1) `Trailing` only widens `CompanionCarry` in shared-cargo mode, to a companion whose room has an exit into the leader's room; meals, morale, training, inventory availability and stray separation still use `WithLeader`, so the 32f presence rules hold, and a companion parked next door is separated as a stray after `strayRounds` as before. The `packs_test` change asserts the new intent (one move behind keeps capacity) and still asserts that a farther companion drops it. (6) The limp doll fires only when its Master is down and the doll still stands; the `Death`/incapacitated event lays it down on the battle screen, the Combat tab drops it with its next `Company.Battle` (live dolls only), and a battle that simply ended dismisses dolls without the line. UI at desktop and 360/390 px: legend, Needs table and search sheet read well. Fixed: `help mobile` and `help walkto` did not mention "Find a visited room..."; both now do. Rejected: drawing `ui/status` icons (agreed with the builder). Gates after merging master: generate, validate, js-lint, js-test, all nine browser checks, `go test -race ./...`.
 
+**Phases 60–77 added to the roadmap (2026-10-07, owner request):** eighteen
+phases drawn from a review of Pillars of Eternity and Deadfire, all of which
+the owner liked. Story events, battle orders, explained battle lines and a
+company chronicle come first; the chronicle feeds opinions, relic awakenings,
+town memory, errands, creeds, bounties and blessings. A deep story dungeon is
+recorded for the replacement world, not as a phase. Scope, dependencies and
+build order are in the [phase plan](plans/2026-10-07-pillars-phases.md).
+
 **Phases 50–56 added to the roadmap (2026-10-06, owner request):** seven
 survival phases drawn from a review of Outward: condition into battle and meal
 buffs (50), rest duties (51), tents (52), defeat scenarios (53), sigils (54),
@@ -1706,6 +1714,7 @@ their dependencies and those decisions is the
 | 55 | Ailments and remedies (Chill, Gut-ache, Fever) | [Outward phases](plans/2026-10-06-outward-survival-phases.md) | 50 |
 | 56 | Recipe discovery and a recipe book | [Outward phases](plans/2026-10-06-outward-survival-phases.md) | 50 |
 | 57 | Character panel tidy-up (Skills, Jobs, Gear, Overview, hover highlight) built, PR open | — | — |
+| 60–77 | Lessons from Pillars of Eternity: story events, battle orders, explained battle lines, company chronicle, companion opinions and bonds, bestiary, relic awakenings, towns that remember, weapon stances, errands, trophy enchanting, backgrounds, creeds, rites, inn tiers, bounties, Hardcore and blessings | [Pillars phases](plans/2026-10-07-pillars-phases.md) | See plan; 60–63 first |
 
 World building (zones for levels 1–15) now waits until the visual client
 milestone below is in place (owner, 2026-10-05). A small showcase area for

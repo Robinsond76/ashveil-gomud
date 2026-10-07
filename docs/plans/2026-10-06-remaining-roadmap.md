@@ -175,6 +175,18 @@ overlap check against 47, 49 and companion equipment, and each phase's
 acceptance are in the [phase plan](2026-10-06-outward-survival-phases.md).
 Build order: 50 and 54 first, then 51 and 53, then 52, 55 and 56.
 
+### 60–77 Lessons from Pillars of Eternity
+
+Added 2026-10-07 at the owner's request after a research thread on Pillars
+of Eternity and Deadfire. Story events (60), battle orders (61), battle
+lines that explain themselves (62), a company chronicle (63), companion
+opinions and bonds (64, 65), a bestiary (66), relic awakenings (67), towns
+that remember (68), weapon stances (69), errands (70), trophy enchanting
+(71), backgrounds (72), faith creeds (73), rites for the dead (74), inn room
+tiers (75), bounty boards (76), and Hardcore with account blessings (77).
+Scope, dependencies and acceptance are in the
+[phase plan](2026-10-07-pillars-phases.md). Build order: 60–63 first.
+
 ## Folded into existing phases
 
 - **36c** also ships the 36a deferrals: merchants buy rolled gear (priced
