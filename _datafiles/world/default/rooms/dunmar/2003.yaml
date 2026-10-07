@@ -13,6 +13,8 @@ description: A low timbered common room crouches just inside the west gate, its
 biome: city
 tags:
   - inn
+  - inn-private
+  - inn-suite
   - indoor
 containers:
   hearth:

@@ -15,6 +15,8 @@ mapsymbol: I
 maplegend: Inn
 tags:
 - inn
+- inn-private
+- inn-suite
 exits:
   north:
     roomid: 57

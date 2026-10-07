@@ -1686,6 +1686,20 @@
         if (camp.inn) { actions.appendChild(button('Inn', 'inn', 'This inn\'s price and your stay (inn)')); }
         pad.appendChild(actions);
 
+        // Phase 75: the inn's rooms, cheapest first, each with its price for
+        // the whole company and the Well Rested it leaves.
+        if (camp.inn && Array.isArray(camp.inn_rooms) && camp.inn_rooms.length && !camp.resting) {
+            const rooms = el('div', 'cmp-actions');
+            rooms.setAttribute('role', 'group');
+            rooms.setAttribute('aria-label', 'Inn rooms');
+            camp.inn_rooms.forEach(r => {
+                const length = r.minutes >= 60 && r.minutes % 60 === 0 ? (r.minutes / 60) + ' h' : r.minutes + ' min';
+                rooms.appendChild(button(r.name + ' room, ' + r.price + ' gold', r.command,
+                    'Pay ' + r.price + ' gold for the company: Well Rested for ' + length + ' (' + r.command + ')'));
+            });
+            pad.appendChild(rooms);
+        }
+
         // Phase 51: who does what during the next rest, under the camp's
         // own buttons (51 review: above them it pushed Rest off a phone).
         if (camp.has_camp && camp.here && Array.isArray(camp.duties) && camp.duties.length) {
