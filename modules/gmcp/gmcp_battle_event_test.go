@@ -344,3 +344,43 @@ func TestBattleEventsNameTheLeaderByTheirCellKey(t *testing.T) {
 	assert.Equal(t, "u:8", v.refID(combatstream.Ref{UserId: 8, LeaderUserId: 8, MemberKey: "leader"}))
 	assert.Equal(t, "m:9", v.refID(combatstream.Ref{MobInstanceId: 9, LeaderUserId: 8, MemberKey: "companion:1"}))
 }
+
+// Phase 62: the company's own rounds, in either direction, carry the
+// engine's breakdown in plain lines; a watcher's view of an ally does not.
+func TestBattleEventsCarryTheStrikeBreakdown(t *testing.T) {
+	r := newEventRig(t)
+	r.user.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
+	id := r.stream.Open(10, 100, "party-a", rigLeader, []combatstream.Ref{rigCompanion}, []combatstream.Ref{rigEnemy(88)})
+	hit := []combatstream.Strike{{Chance: 60, Base: 60, Roll: 11, Hit: true, Raw: 6, Armor: 2, ArmorTook: 1, Reduced: 1, Damage: 5}}
+	miss := []combatstream.Strike{{Chance: 38, Base: 38, Roll: 80}}
+	events.WithCause(10, func() {
+		r.stream.Emit(combatstream.Event{Round: 10, Kind: combatstream.Attack, FightID: id, Source: rigLeader, Target: rigEnemy(88), Outcome: combatstream.OutcomeHit, Damage: 5, Strikes: hit})
+		r.stream.Emit(combatstream.Event{Round: 10, Kind: combatstream.Attack, FightID: id, Source: rigEnemy(88), Target: rigCompanion, Outcome: combatstream.OutcomeMiss, Strikes: miss})
+		r.stream.Emit(combatstream.Event{Round: 10, Kind: combatstream.Heal, FightID: id, Source: rigCompanion, Target: rigLeader, Amount: 3})
+	})
+	events.ProcessEvents()
+
+	var got []battleEvent
+	for _, p := range r.payloads() {
+		got = append(got, p.Events...)
+	}
+	var explained []battleEvent
+	for _, e := range got {
+		if e.Kind == "attack" {
+			explained = append(explained, e)
+		} else {
+			assert.Empty(t, e.Explain, e.Kind+" has nothing to explain")
+		}
+	}
+	require.Len(t, explained, 2)
+	assert.Equal(t, combatstream.Breakdown(hit), explained[0].Explain)
+	assert.Contains(t, explained[0].Explain[0], "To hit: 60 in 100, rolled 12 (it landed).")
+	assert.Contains(t, explained[0].Explain[1], "armor 2 took 1, 5 got through")
+	assert.Equal(t, combatstream.Breakdown(miss), explained[1].Explain, "a foe's round on the company is explained too")
+}
+
+func TestScrubAllyDropsTheBreakdown(t *testing.T) {
+	be := scrubAlly(battleEvent{Kind: "attack", Tgt: "a:9:companion:1", Damage: 4, Explain: []string{"To hit: 50 in 100"}})
+	assert.Empty(t, be.Explain)
+	assert.Zero(t, be.Damage)
+}

@@ -190,6 +190,45 @@ func TestCombatEventStreamThroughTheRealRound(t *testing.T) {
 	assert.Equal(t, round, util.GetRoundCount())
 }
 
+// TestStrikesExplainTheRealRound (Phase 62): every blow between the sides
+// carries the strikes the engine rolled, their damage adds up to the
+// event's, `why` reads them back after the fight, and the summary says why
+// it went as it did.
+func TestStrikesExplainTheRealRound(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	s := b.sides()
+	b.aimAt("bandit captain")
+	seen := b.fightItOut(200)
+
+	attacks := 0
+	for _, e := range *got {
+		if e.Kind != combatstream.Attack || !s.across(e) {
+			continue
+		}
+		attacks++
+		require.NotEmpty(t, e.Strikes, "a weapon round records its strikes")
+		damage := 0
+		for _, st := range e.Strikes {
+			damage += st.Damage
+			if st.Roll >= 0 {
+				assert.Equal(t, st.Roll < st.Chance, st.Hit, "the roll decides the hit: %d against %d", st.Roll, st.Chance)
+			}
+		}
+		assert.Equal(t, e.Damage, damage, "the strikes' damage is the round's")
+	}
+	require.Positive(t, attacks)
+
+	rolls := combatstream.DefaultRollLog().Recent(7, 0)
+	require.NotEmpty(t, rolls, "the leader's roll log kept the fight's rounds")
+	assert.LessOrEqual(t, len(rolls), combatstream.RollLogCap)
+	why := b.cmd("why", "")
+	assert.Contains(t, why, "The last ")
+	assert.Contains(t, why, "To hit: ")
+
+	assert.Contains(t, seen, "Damage taken   ", "the summary says who took the most")
+}
+
 // TestBattleSummaryCanBeTurnedOff: `set battlesummary` turns the summary
 // off; the fight is still reported on the stream.
 func TestBattleSummaryCanBeTurnedOff(t *testing.T) {

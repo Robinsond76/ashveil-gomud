@@ -73,4 +73,7 @@ A new battle starts its labels afresh. After a server restart or copyover,
 newly rebuilt battles also start afresh; the old ordering and summary are
 not retained.
 
+The brackets say what a blow did, not why. <ansi fg="command">why</ansi> explains the roll behind a blow
+(<ansi fg="command">help battlelog</ansi>).
+
 See also <ansi fg="command">help combat</ansi>, <ansi fg="command">help damage</ansi>, and <ansi fg="command">help cast</ansi>.
