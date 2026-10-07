@@ -8,16 +8,16 @@ poisons the rest.
 
   30 Death Mark        its first target each battle is marked, left
                        exposed for 2 rounds (an opening for Opening
-                       Strike), and takes 40% more damage from it;
+                       Strike), and takes 60% more damage from it;
                        when that foe falls, the mark passes to the
                        most hurt foe in reach, exposed again
-  35 Envenom           its blows poison the target a quarter of the
+  35 Envenom           its blows poison the target a third of the
                        time
   40 Keener finish     Finisher works on a foe at or below 60% health
   45 Shadowstep        once every 3 rounds it may strike the marked foe
                        in the middle row as if it had extended reach;
                        guardians can still intercept
-  50 Hunting the mark  +15% critical chance against the marked foe
+  50 Hunting the mark  +25% critical chance against the marked foe
   55 Killing Spree     when it fells the marked foe, its action meter
                        gains 50, once a round
   60 Coup de Grace     a blow that lands on a foe below 20% health
