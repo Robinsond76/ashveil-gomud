@@ -524,6 +524,10 @@ func (m *CampingModule) grantCampRewards() {
 		for _, line := range lines {
 			leader.SendText(line)
 		}
+		// Phase 60: a finished rest may open a story event at the camp.
+		if leader.Character.RoomId == reward.RoomID {
+			camping.RestEnded(leaderUserID, reward.RoomID)
+		}
 	}
 }
 

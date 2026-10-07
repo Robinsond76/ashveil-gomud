@@ -715,3 +715,21 @@ func TestBossCooldownFollowsTheKillerIntoANewParty(t *testing.T) {
 	}
 	assert.Empty(t, w.m.active, "the new leader cannot wake the lair while the killer rides along")
 }
+
+// TestAStoryEventStartsANamedGroupThatIsTrackedLikeARandomOne (Phase 60).
+func TestAStoryEventStartsANamedGroupThatIsTrackedLikeARandomOne(t *testing.T) {
+	w := setup(t)
+	foes := []encounters.Foe{{MobID: 96101, Level: 8}, {MobID: 96101, Level: 9}}
+	require.NoError(t, w.m.StartGroup(userID, woodRm, foes))
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		assert.Equal(t, userID, r.Owner)
+		assert.Equal(t, 2, r.standing())
+		for _, id := range r.Foes {
+			assert.Equal(t, userID, mobs.GetInstance(id).EncounterOwner)
+		}
+	}
+	assert.Error(t, w.m.StartGroup(userID, woodRm, foes), "one leader holds one group")
+	assert.Error(t, w.m.StartGroup(userID+1, woodRm, foes[:1]), "an encounter needs two foes")
+	assert.Len(t, w.m.active, 1)
+}

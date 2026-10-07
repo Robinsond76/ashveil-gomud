@@ -26,6 +26,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/storyevents"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/walkto"
 )
@@ -296,6 +297,9 @@ func (m *WalktoModule) cannotWalk(user *users.UserRecord) string {
 		return msg
 	}
 	if blocked, msg := camping.MovementBlocked(user.UserId); blocked {
+		return msg
+	}
+	if blocked, msg := storyevents.MovementBlocked(user.UserId); blocked {
 		return msg
 	}
 	return ""

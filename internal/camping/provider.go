@@ -336,3 +336,27 @@ type TentChoice struct {
 	Effect  string
 	Pitched bool
 }
+
+// RestEndListener hears a camp rest that finished with its rewards given
+// (Phase 60: a camp trigger for story events). It runs on the game loop,
+// outside the camping module's lock.
+type RestEndListener func(leaderUserID, roomID int)
+
+var restEndListeners []RestEndListener
+
+// AddRestEndListener registers a listener for finished camp rests.
+func AddRestEndListener(fn RestEndListener) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	restEndListeners = append(restEndListeners, fn)
+}
+
+// RestEnded reports a finished camp rest to the listeners.
+func RestEnded(leaderUserID, roomID int) {
+	providerMu.RLock()
+	fns := append([]RestEndListener(nil), restEndListeners...)
+	providerMu.RUnlock()
+	for _, fn := range fns {
+		fn(leaderUserID, roomID)
+	}
+}

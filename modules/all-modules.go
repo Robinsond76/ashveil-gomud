@@ -22,6 +22,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/market"
 	_ "github.com/GoMudEngine/GoMud/modules/mount"
 	_ "github.com/GoMudEngine/GoMud/modules/standing"
+	_ "github.com/GoMudEngine/GoMud/modules/storyevents"
 	_ "github.com/GoMudEngine/GoMud/modules/strategy"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
 	_ "github.com/GoMudEngine/GoMud/modules/testarea"

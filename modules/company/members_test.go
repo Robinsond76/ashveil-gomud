@@ -22,9 +22,9 @@ func TestCompanyMembersStates(t *testing.T) {
 	members, ok := module.CompanyMembers(7)
 	require.True(t, ok)
 	require.Len(t, members, 3)
-	assert.Equal(t, domain.MemberView{ID: 1, Name: "#1", Status: domain.MemberDead, Level: 5, Alignment: 10, RescueSeconds: 3600, TrainingPoints: earnedTrainingPoints(5)}, members[0])
-	assert.Equal(t, domain.MemberView{ID: 2, Name: "#2", Status: domain.MemberPresent, Level: 2, Alignment: 10, HP: 17, HPMax: 30, HPLimit: 30, Placed: true, Row: 1, Col: 2, TrainingPoints: earnedTrainingPoints(2)}, members[1])
-	assert.Equal(t, domain.MemberView{ID: 3, Name: "#3", Status: domain.MemberAwaiting, Level: 4, Archetype: "ranger", TrainingPoints: earnedTrainingPoints(4)}, members[2])
+	assert.Equal(t, domain.MemberView{ID: 1, Name: "#1", Status: domain.MemberDead, Level: 5, Alignment: 10, Personality: "cheerful", RescueSeconds: 3600, TrainingPoints: earnedTrainingPoints(5)}, members[0])
+	assert.Equal(t, domain.MemberView{ID: 2, Name: "#2", Status: domain.MemberPresent, Level: 2, Alignment: 10, Personality: "grim", HP: 17, HPMax: 30, HPLimit: 30, Placed: true, Row: 1, Col: 2, TrainingPoints: earnedTrainingPoints(2)}, members[1])
+	assert.Equal(t, domain.MemberView{ID: 3, Name: "#3", Status: domain.MemberAwaiting, Level: 4, Archetype: "ranger", Personality: "boastful", TrainingPoints: earnedTrainingPoints(4)}, members[2])
 
 	none, ok := module.CompanyMembers(8)
 	assert.True(t, ok)

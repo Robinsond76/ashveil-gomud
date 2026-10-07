@@ -166,6 +166,7 @@ help:
       - music
       - instruments
       - gigs
+      - events
     communication:
       - emote
       - say
@@ -337,6 +338,7 @@ help-aliases:
   storage: [store, unstore]
   progression: [stat-steps, stat steps, leveling]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
+  events: [event, scene, scenes, story-events, story events, choose, story]
   sigils: [sigil, cast sigil, cast-sigil, sigil chalk, chalk, ward sigil, fire sigil, stillness sigil, mending sigil]
   ambush: [surprise, surprised]
   equipment: [company-equipment, company equip, company remove, company compare]

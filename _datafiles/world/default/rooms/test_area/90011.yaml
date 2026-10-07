@@ -1,0 +1,15 @@
+roomid: 90011
+zone: Test Area
+title: Gorge Edge
+description: >-
+  The road ends at air. Wind comes up the gorge with a smell of wet stone and old rot, and a bridge's iron ring is all that is left of the bridge. A frayed rope hangs from the ring, down into the dark, and on a ledge far below something pale lies on the rock. Walking here opens the gorge scene (help events).
+biome: cliffs
+tags:
+  - lit
+exits:
+  southwest:
+    roomid: 90001
+mapx: 1
+mapy: -1
+mapz: 0
+hascoordinates: true
