@@ -218,3 +218,45 @@ func TestShippedInnsOfferTheirRooms(t *testing.T) {
 		return nil
 	}))
 }
+
+// Review: a suite stay that finishes across a restart (or copyover) still
+// leaves the suite's length, read from the saved stay at the grant.
+func TestSuiteStayKeepsItsLengthAcrossARestart(t *testing.T) {
+	e := newInnEnv(t)
+	user := campUser(t, 7, 2003)
+	user.Character.Name = "Hero"
+	user.Character.Gold = 100
+	require.Contains(t, e.module.innRestTier(user, suiteInnRoom(), camping.InnSuite), "You pay")
+
+	child := newTestModule(e.store, &fakeScheduler{}, &fakeSurvival{}, func() time.Time { return baseTime().Add(time.Hour) })
+	child.companySize = e.module.companySize
+	child.companionsOf = e.module.companionsOf
+	ledger := installLedger(child, &[]buffCall{})
+	child.load()
+	require.NoError(t, child.loadErr)
+	require.Equal(t, camping.InnSuite, child.stays[7].Tier)
+	require.True(t, child.wellRestedPending[7])
+
+	child.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.Equal(t, 120*60/4, ledger.rounds[buffCall{"Hero", 1030}], "the suite's two hours")
+	assert.Equal(t, 120*60/4, ledger.rounds[buffCall{"Bran", 1030}])
+}
+
+// Review: a common room after a suite keeps the suite's hours and says so.
+func TestShorterRoomSaysTheLongerRestStillRuns(t *testing.T) {
+	e := newInnEnv(t)
+	user := campUser(t, 7, 2003)
+	user.Character.Name = "Hero"
+	user.Character.Gold = 100
+	e.module.buffRounds = func(*characters.Character, int) int { return 1800 }
+	e.ledger.hold(user.Character, 1030)
+	e.ledger.hold(e.companion, 1030)
+	messages := captureMessages(t)
+	require.Contains(t, e.module.innRestTier(user, suiteInnRoom(), camping.InnCommon), "You pay")
+	*e.now = baseTime().Add(60 * time.Second)
+	e.scheduler.fireLatest()
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	events.ProcessEvents()
+	assert.Empty(t, *e.buffs, "nothing shorter replaces the suite's buff")
+	assert.Contains(t, strings.Join(*messages, "\n"), "still Well Rested from an earlier, longer stay")
+}

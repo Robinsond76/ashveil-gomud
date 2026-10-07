@@ -64,3 +64,24 @@ Plan: [pillars phases, 75](2026-10-07-pillars-phases.md#75-inn-room-tiers).
 - World: `TestShippedInnsOfferTheirRooms`.
 - Web: `TestCompanyCampPayloadCarriesTheInnRooms`; buttons in
   `window-company.js`.
+
+## Review (2026-10-07)
+
+Accepted:
+
+- **No word when a cheaper room keeps a longer rest.** A common room after a
+  suite granted nothing and said nothing, so the player paid without learning
+  why. The grant now says the company is still Well Rested from an earlier,
+  longer stay (`TestShorterRoomSaysTheLongerRestStillRuns`).
+- **Restart coverage.** Added `TestSuiteStayKeepsItsLengthAcrossARestart`: a
+  suite stay finished across a reload still grants two hours.
+- **Camp tab browser check.** `scripts/browser/dock-windows-check.mjs` now
+  checks the room buttons, their command, the hidden state while resting, and
+  the phone fit (360 px). Screens: `75-camp-inn-rooms.png`,
+  `75-camp-inn-rooms-phone.png` in the project's `screens/`.
+
+Checked and kept: the buff strength is unchanged in every room (only
+duration), so the at-level fight tuning is untouched and no gold returns from
+a stay; a completed stay waits in `m.stays` until the grant, so the tier read
+at the grant is the stay's own; `innRoomRows` takes `m.mu` only after
+`CampStateOf` releases it.

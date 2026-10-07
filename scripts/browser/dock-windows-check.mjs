@@ -509,6 +509,27 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   check(off.includes('The camp song is off.') && off.includes('played for pay not long ago') && !off.includes('Play a gig'), 'an off song and a refused gig read plainly (music)');
   check(await page.locator('#company-camp').getByRole('button', { name: 'Song on' }).count() === 1, 'Song on appears when the song is off (music)');
 }
+// Phase 75: a button per inn room, hidden while the company rests.
+{
+  const innRooms = [
+    { tier: 'common', name: 'Common', price: 25, minutes: 30, command: 'inn rest' },
+    { tier: 'private', name: 'Private', price: 75, minutes: 60, command: 'inn rest private' },
+    { tier: 'suite', name: 'Suite', price: 200, minutes: 120, command: 'inn rest suite' },
+  ];
+  const campI = (resting) => ({ has_camp: false, here: false, room: '', fire_lit: false, resting, rest_percent: 0, rest_seconds: resting ? 30 : 0, can_camp: false, inn: true, inn_rooms: innRooms });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campI(false));
+  const names = await page.locator('#company-camp [aria-label="Inn rooms"] .cmp-btn').allTextContents();
+  check(JSON.stringify(names) === '["Common room, 25 gold","Private room, 75 gold","Suite room, 200 gold"]', 'a button per inn room with its price (75)');
+  const got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Suite room, 200 gold' }).click(); });
+  check(JSON.stringify(got) === '["inn rest suite"]', 'the suite button sends inn rest suite (75)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '75-camp-inn-rooms.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the inn room buttons fit a phone (75)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '75-camp-inn-rooms-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campI(true));
+  check(await page.locator('#company-camp [aria-label="Inn rooms"]').count() === 0, 'no room buttons while resting (75)');
+}
 // Phase 56: the recipe book, folded under the camp's buttons.
 {
   const recipes = ['seared game meat: 1 raw game meat (cooking 1)', 'grilled fish: 1 raw fish (cooking 1)', "hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)", 'thyme tea (remedy for chill): 2 wild thyme'];

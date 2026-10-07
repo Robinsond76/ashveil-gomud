@@ -268,6 +268,10 @@ func (m *CampingModule) grantPendingTiers() {
 			user.SendText(fmt.Sprintf("Your company feels well rested after a night in %s: Well Rested for %s.", innTier.Label(), wellRestedLength(duration)))
 		} else if granted && buffTier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
+		} else if tier == camping.TierWellRested && m.heldTier(user.Character, settings) == camping.TierWellRested {
+			// Phase 75 review: a cheaper room after a dearer one grants
+			// nothing new, so say why rather than stay silent.
+			user.SendText("Your company is still Well Rested from an earlier, longer stay.")
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}
