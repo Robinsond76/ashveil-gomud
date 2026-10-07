@@ -1,0 +1,80 @@
+name: Stormcrown Heights
+roomid: 3905
+defaultbiome: snow
+tileready: true
+encounters:
+  band:
+    low: 29
+    high: 33
+  entrychance: 15
+  tables:
+    heights:
+    - id: crown-wolves
+      weight: 25
+      text: Snow wolves run along the ridge and cut off the path.
+      members:
+      - mobid: 55
+        count: 3
+    - id: crown-ruffians
+      weight: 20
+      text: Ruffians in furs shout and charge, led by a bruiser.
+      members:
+      - mobid: 29
+        count: 1
+      - mobid: 28
+        count: 2
+    - id: crown-enforcers
+      weight: 20
+      text: Enforcers hold the narrow path with their shields.
+      members:
+      - mobid: 91
+        count: 1
+      - mobid: 29
+        count: 2
+    - id: crown-horde
+      weight: 10
+      text: A huge pack of snow wolves rises from the drifts.
+      members:
+      - mobid: 55
+        count: 4
+    - id: crown-hexers
+      weight: 15
+      text: Goblin hexers chant against the storm.
+      members:
+      - mobid: 70
+        count: 2
+      - mobid: 33
+        count: 1
+    - id: crown-surgeon
+      weight: 12
+      text: Ruffians push through the snow with their bonesetter.
+      members:
+      - mobid: 28
+        count: 1
+      - mobid: 29
+        count: 1
+      - mobid: 90
+        count: 1
+    lair:
+    - id: summit-ogre
+      weight: 50
+      text: The throne shakes, and a huge ogre storms down the steps.
+      members:
+      - mobid: 85
+        count: 1
+      - mobid: 55
+        count: 2
+      - mobid: 29
+        count: 1
+      boss: true
+    - id: summit-ent
+      weight: 50
+      text: The mountain cracks and an ent in a coat of ice strides out.
+      members:
+      - mobid: 34
+        count: 1
+      - mobid: 55
+        count: 2
+      - mobid: 36
+        count: 1
+      boss: true

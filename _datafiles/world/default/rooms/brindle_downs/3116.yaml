@@ -1,0 +1,22 @@
+roomid: 3116
+zone: Brindle Downs
+title: Open Common
+description: A drystone wall runs along the slope, patched with turf. Old hoofprints are pressed
+  deep into the mud.
+biome: land
+exits:
+  east:
+    roomid: 3117
+  west:
+    roomid: 3115
+  south:
+    roomid: 3121
+  north:
+    roomid: 3109
+resources:
+- herbs
+- forage
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true

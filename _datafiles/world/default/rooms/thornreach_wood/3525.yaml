@@ -1,0 +1,16 @@
+roomid: 3525
+zone: Thornreach Wood
+title: Mossy Glade
+description: A ring of toadstools grows in the leaf mould.
+biome: forest
+exits:
+  west:
+    roomid: 3524
+  north:
+    roomid: 3519
+resources:
+- game
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

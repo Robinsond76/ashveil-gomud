@@ -1,0 +1,20 @@
+roomid: 3310
+zone: Greywatch Pass
+title: Grey Shelf
+description: Cold wind funnels through the gap and snatches at cloaks. Wolf tracks cross the path.
+biome: mountains
+exits:
+  east:
+    roomid: 3311
+  west:
+    roomid: 3309
+  south:
+    roomid: 3317
+  north:
+    roomid: 3304
+resources:
+- firewood
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

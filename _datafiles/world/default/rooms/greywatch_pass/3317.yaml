@@ -1,0 +1,22 @@
+roomid: 3317
+zone: Greywatch Pass
+title: Echoing Col
+description: A thin stream trickles over the stones beside the path. A raven watches from a ledge
+  above.
+biome: mountains
+exits:
+  east:
+    roomid: 3318
+  west:
+    roomid: 3316
+  south:
+    roomid: 3323
+  north:
+    roomid: 3310
+resources:
+- firewood
+- game
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true

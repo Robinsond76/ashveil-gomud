@@ -1,0 +1,17 @@
+roomid: 3423
+zone: Cinder Hollow
+title: Blackened Hollow Floor
+description: Fresh bootprints cross the ash.
+biome: land
+exits:
+  west:
+    roomid: 3422
+  north:
+    roomid: 3417
+resources:
+- firewood
+- herbs
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,24 @@
+roomid: 3110
+zone: Brindle Downs
+title: Tussocky Common
+description: Short turf rolls away in every direction, cropped by sheep. A gorse thicket hides
+  the next rise.
+biome: land
+exits:
+  east:
+    roomid: 3111
+  west:
+    roomid: 3109
+  south:
+    roomid: 3117
+  north:
+    roomid: 3104
+resources:
+- firewood
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: downs

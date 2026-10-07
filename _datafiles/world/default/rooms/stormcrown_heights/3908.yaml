@@ -1,0 +1,22 @@
+roomid: 3908
+zone: Stormcrown Heights
+title: High Drift
+description: Cloud boils below and lightning flickers along the ridge. A shattered banner lies
+  under the ice.
+biome: snow
+exits:
+  east:
+    roomid: 3909
+  west:
+    roomid: 3907
+  south:
+    roomid: 3916
+  north:
+    roomid: 3903
+resources:
+- shelter
+- water
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

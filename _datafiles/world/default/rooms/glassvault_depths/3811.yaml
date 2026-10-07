@@ -1,0 +1,23 @@
+roomid: 3811
+zone: Glassvault Depths
+title: Crystal Shaft
+description: Your light is repeated a hundred times in faceted walls. Something skitters across
+  the ceiling far above.
+biome: cave
+exits:
+  east:
+    roomid: 3812
+  west:
+    roomid: 3810
+  south:
+    roomid: 3818
+resources:
+- water
+- shelter
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: vault

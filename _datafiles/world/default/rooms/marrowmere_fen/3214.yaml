@@ -1,0 +1,17 @@
+roomid: 3214
+zone: Marrowmere Fen
+title: Brackish Staithe
+description: Boardwalk planks have sunk a hand's width into the peat. Marsh lights flicker over
+  the far reeds.
+biome: shore
+exits:
+  east:
+    roomid: 3215
+  north:
+    roomid: 3206
+resources:
+- water
+mapx: 0
+mapy: 2
+mapz: 0
+hascoordinates: true

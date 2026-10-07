@@ -1,0 +1,24 @@
+roomid: 3807
+zone: Glassvault Depths
+title: Echoing Cavern
+description: Water drips from the roof into pools that never freeze. A whisper that is not your
+  own voice echoes back.
+biome: cave
+exits:
+  east:
+    roomid: 3808
+  west:
+    roomid: 3806
+  south:
+    roomid: 3814
+  north:
+    roomid: 3802
+resources:
+- water
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: vault

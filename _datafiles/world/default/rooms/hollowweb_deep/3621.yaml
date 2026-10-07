@@ -1,0 +1,16 @@
+roomid: 3621
+zone: Hollowweb Deep
+title: Webbed Tunnel
+description: Silk sticks to your sleeves, and every step leaves a thread.
+biome: forest
+exits:
+  east:
+    roomid: 3622
+  north:
+    roomid: 3615
+resources:
+- forage
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true

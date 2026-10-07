@@ -1,0 +1,19 @@
+roomid: 3511
+zone: Thornreach Wood
+title: Hushed Coppice
+description: Roots as thick as a man's waist cross the track. A ring of toadstools grows in the
+  leaf mould.
+biome: forest
+exits:
+  east:
+    roomid: 3512
+  west:
+    roomid: 3510
+  south:
+    roomid: 3519
+resources:
+- firewood
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

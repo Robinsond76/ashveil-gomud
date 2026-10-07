@@ -1,0 +1,22 @@
+roomid: 3409
+zone: Cinder Hollow
+title: Blackened Ridge
+description: Ash drifts across the ground in grey drifts and the trees are black stumps. A smouldering
+  stump pops and spits sparks.
+biome: land
+exits:
+  east:
+    roomid: 3410
+  west:
+    roomid: 3408
+  south:
+    roomid: 3417
+  north:
+    roomid: 3403
+resources:
+- firewood
+- forage
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

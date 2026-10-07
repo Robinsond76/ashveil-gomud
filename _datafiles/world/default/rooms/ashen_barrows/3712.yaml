@@ -1,0 +1,25 @@
+roomid: 3712
+zone: Ashen Barrows
+title: Empty Niche
+description: A cold draught carries a smell of old earth and incense. Scraps of burial cloth hang
+  from a niche.
+biome: dungeon
+exits:
+  east:
+    roomid: 3713
+  west:
+    roomid: 3711
+  south:
+    roomid: 3720
+  north:
+    roomid: 3705
+resources:
+- firewood
+- shelter
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: crypt

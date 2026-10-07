@@ -1,0 +1,22 @@
+roomid: 3611
+zone: Hollowweb Deep
+title: Hushed Run
+description: Silk sticks to your sleeves, and every step leaves a thread. Dozens of tiny eyes
+  glint among the webs.
+biome: forest
+exits:
+  east:
+    roomid: 3612
+  west:
+    roomid: 3610
+  south:
+    roomid: 3619
+resources:
+- game
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: web

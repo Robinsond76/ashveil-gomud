@@ -1,0 +1,59 @@
+name: Ashen Barrows
+roomid: 3706
+defaultbiome: dungeon
+tileready: true
+encounters:
+  band:
+    low: 21
+    high: 24
+  entrychance: 15
+  tables:
+    crypt:
+    - id: barrow-skeletons
+      weight: 30
+      text: Dry bones clatter and a patrol of skeletons shambles forward.
+      members:
+      - mobid: 15
+        count: 3
+    - id: barrow-warden
+      weight: 20
+      text: A bone warden steps from a niche, skeletons behind it.
+      members:
+      - mobid: 92
+        count: 1
+      - mobid: 15
+        count: 2
+    - id: barrow-horde
+      weight: 12
+      text: A crowd of skeletons pulls itself out of the walls.
+      members:
+      - mobid: 15
+        count: 4
+    - id: barrow-acolytes
+      weight: 20
+      text: Dark acolytes in tattered robes chant at the passage mouth.
+      members:
+      - mobid: 18
+        count: 2
+      - mobid: 15
+        count: 1
+    - id: barrow-dirge
+      weight: 18
+      text: A grave chanter's dirge rises, and skeletons answer it.
+      members:
+      - mobid: 93
+        count: 1
+      - mobid: 15
+        count: 2
+    lair:
+    - id: lich-court
+      weight: 100
+      text: The air turns bitter cold. A lich stands, flanked by its honour guard.
+      members:
+      - mobid: 14
+        count: 1
+      - mobid: 92
+        count: 1
+      - mobid: 15
+        count: 2
+      boss: true

@@ -1,0 +1,17 @@
+roomid: 3818
+zone: Glassvault Depths
+title: Echoing Gallery
+description: The cave narrows into a gallery of smooth, glossy stone. A crack in the crystal widens.
+biome: dungeon
+exits:
+  west:
+    roomid: 3817
+  north:
+    roomid: 3811
+resources:
+- water
+- shelter
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

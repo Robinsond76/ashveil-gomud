@@ -1,0 +1,19 @@
+roomid: 3815
+zone: Glassvault Depths
+title: Mirrored Gallery
+description: Glassy crystals jut from the walls and throw back every light. Something skitters
+  across the ceiling far above.
+biome: cave
+exits:
+  east:
+    roomid: 3816
+  west:
+    roomid: 3814
+  north:
+    roomid: 3808
+resources:
+- shelter
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,22 @@
+roomid: 3407
+zone: Cinder Hollow
+title: Smouldering Hearth Rise
+description: Cinders crunch underfoot and the air smells of old smoke. A cart wheel lies half-burnt
+  in a ditch.
+biome: land
+exits:
+  east:
+    roomid: 3408
+  west:
+    roomid: 3406
+  south:
+    roomid: 3415
+  north:
+    roomid: 3401
+resources:
+- forage
+- game
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

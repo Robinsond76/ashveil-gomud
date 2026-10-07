@@ -1,0 +1,25 @@
+roomid: 3316
+zone: Greywatch Pass
+title: Narrow Col
+description: A thin stream trickles over the stones beside the path. Old watch-fire ash lies in
+  a stone ring.
+biome: mountains
+exits:
+  east:
+    roomid: 3317
+  west:
+    roomid: 3315
+  south:
+    roomid: 3322
+  north:
+    roomid: 3309
+resources:
+- firewood
+- herbs
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: pass

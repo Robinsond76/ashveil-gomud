@@ -1,0 +1,22 @@
+roomid: 3218
+zone: Marrowmere Fen
+title: Sodden Backwater
+description: Mist lies low over the fen and every footstep squelches. Something large slides into
+  the water out of sight.
+biome: shore
+exits:
+  east:
+    roomid: 3219
+  west:
+    roomid: 3217
+  south:
+    roomid: 3223
+  north:
+    roomid: 3210
+resources:
+- forage
+- herbs
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true

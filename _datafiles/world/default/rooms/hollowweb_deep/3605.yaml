@@ -1,0 +1,16 @@
+roomid: 3605
+zone: Hollowweb Deep
+title: Hushed Burrow
+description: Silk sticks to your sleeves, and every step leaves a thread. Something drops from
+  the branches and skitters away.
+biome: forest
+exits:
+  south:
+    roomid: 3612
+resources:
+- herbs
+- firewood
+mapx: 6
+mapy: 0
+mapz: 0
+hascoordinates: true

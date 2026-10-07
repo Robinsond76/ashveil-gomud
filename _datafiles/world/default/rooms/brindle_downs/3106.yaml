@@ -1,0 +1,17 @@
+roomid: 3106
+zone: Brindle Downs
+title: Broad Drove Road
+description: Larks climb out of the grass and the track is rutted by drovers. A cairn of white
+  stones marks the way.
+biome: land
+exits:
+  east:
+    roomid: 3107
+  west:
+    roomid: 2125
+resources:
+- forage
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

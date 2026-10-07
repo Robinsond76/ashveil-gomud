@@ -1,0 +1,19 @@
+roomid: 3224
+zone: Marrowmere Fen
+title: Drowned Causeway
+description: Something large slides into the water out of sight.
+biome: shore
+exits:
+  east:
+    roomid: 3225
+  west:
+    roomid: 3223
+  north:
+    roomid: 3219
+resources:
+- forage
+- herbs
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

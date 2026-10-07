@@ -1,0 +1,16 @@
+roomid: 3401
+zone: Cinder Hollow
+title: Smouldering Slope
+description: Scorched earth steams faintly even after rain. Crows pick at something in the cinders.
+biome: land
+exits:
+  east:
+    roomid: 3402
+  south:
+    roomid: 3407
+resources:
+- firewood
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

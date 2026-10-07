@@ -1,0 +1,18 @@
+roomid: 3213
+zone: Marrowmere Fen
+title: Reedy Reedbed
+description: Mist lies low over the fen and every footstep squelches. A rotted punt lies half-sunk
+  in the mud.
+biome: shore
+exits:
+  west:
+    roomid: 3212
+  east:
+    roomid: 3306
+resources:
+- forage
+- fishing
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

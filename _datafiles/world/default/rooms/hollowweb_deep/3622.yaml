@@ -1,0 +1,24 @@
+roomid: 3622
+zone: Hollowweb Deep
+title: The Spinner's Den
+description: A vast web fills this hollow from floor to roof, strung with cocoons the size of
+  men. Something large hangs motionless in its centre.
+biome: forest
+exits:
+  east:
+    roomid: 3623
+  west:
+    roomid: 3621
+  north:
+    roomid: 3616
+resources:
+- shelter
+maplegend: Cave
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 40

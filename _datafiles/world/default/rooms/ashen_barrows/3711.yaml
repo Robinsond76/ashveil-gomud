@@ -1,0 +1,21 @@
+roomid: 3711
+zone: Ashen Barrows
+title: Cold Cellar
+description: Stone arches hold up a ceiling of dry roots and old dust. Scraps of burial cloth
+  hang from a niche.
+biome: dungeon
+exits:
+  east:
+    roomid: 3712
+  west:
+    roomid: 3710
+  south:
+    roomid: 3719
+  north:
+    roomid: 3704
+resources:
+- shelter
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

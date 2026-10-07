@@ -1,0 +1,17 @@
+roomid: 3319
+zone: Greywatch Pass
+title: Rocky Col
+description: Grey rock climbs on either side and the path clings to the slope.
+biome: mountains
+exits:
+  west:
+    roomid: 3318
+  north:
+    roomid: 3312
+resources:
+- water
+- firewood
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

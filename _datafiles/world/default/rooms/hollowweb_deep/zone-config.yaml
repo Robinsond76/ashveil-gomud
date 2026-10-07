@@ -1,0 +1,65 @@
+name: Hollowweb Deep
+roomid: 3606
+defaultbiome: forest
+tileready: true
+encounters:
+  band:
+    low: 18
+    high: 20
+  entrychance: 15
+  tables:
+    web:
+    - id: web-spiders
+      weight: 30
+      text: Large spiders drop out of the silk and close in.
+      members:
+      - mobid: 19
+        count: 3
+    - id: web-warriors
+      weight: 25
+      text: Spider warriors rush down their webs, a hatchling behind.
+      members:
+      - mobid: 36
+        count: 2
+      - mobid: 35
+        count: 1
+    - id: web-brood
+      weight: 15
+      text: A brood of hatchlings and a large spider pour from a cocoon.
+      members:
+      - mobid: 35
+        count: 2
+      - mobid: 19
+        count: 1
+    - id: web-swarm
+      weight: 8
+      text: A seething swarm of spiders drops from the canopy.
+      members:
+      - mobid: 19
+        count: 4
+    - id: web-imps
+      weight: 12
+      text: Webbed imps cackle and cast silk at you.
+      members:
+      - mobid: 33
+        count: 3
+    - id: web-goblin-pair
+      weight: 10
+      text: Goblin hexers tied in silk ward you away.
+      members:
+      - mobid: 70
+        count: 2
+      - mobid: 19
+        count: 1
+    lair:
+    - id: queen-and-brood
+      weight: 100
+      text: Silk ropes quiver and the spider queen drops from her web, her brood behind her.
+      members:
+      - mobid: 37
+        count: 1
+      - mobid: 36
+        count: 2
+      - mobid: 35
+        count: 1
+      boss: true

@@ -1,0 +1,19 @@
+roomid: 3119
+zone: Brindle Downs
+title: Open Ridge
+description: Short turf rolls away in every direction, cropped by sheep.
+biome: land
+exits:
+  west:
+    roomid: 3118
+  south:
+    roomid: 3123
+  north:
+    roomid: 3112
+resources:
+- herbs
+- firewood
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

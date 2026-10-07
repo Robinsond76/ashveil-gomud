@@ -1,0 +1,16 @@
+roomid: 3205
+zone: Marrowmere Fen
+title: Reedy Dyke
+description: Boardwalk planks have sunk a hand's width into the peat. A heron stands motionless
+  on one leg.
+biome: shore
+exits:
+  south:
+    roomid: 3212
+resources:
+- fishing
+- water
+mapx: 6
+mapy: 0
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,18 @@
+roomid: 3713
+zone: Ashen Barrows
+title: Vaulted Niche
+description: Burial niches line the walls, most of them open and empty. A brazier of green fire
+  burns without fuel.
+biome: dungeon
+exits:
+  west:
+    roomid: 3712
+  east:
+    roomid: 3805
+resources:
+- shelter
+- firewood
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

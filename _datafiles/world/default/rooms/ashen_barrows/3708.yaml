@@ -1,0 +1,24 @@
+roomid: 3708
+zone: Ashen Barrows
+title: Cold Ossuary
+description: A cold draught carries a smell of old earth and incense. Bone dust crunches underfoot.
+biome: dungeon
+exits:
+  east:
+    roomid: 3709
+  west:
+    roomid: 3707
+  south:
+    roomid: 3716
+  north:
+    roomid: 3702
+resources:
+- firewood
+- water
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: crypt

@@ -1,0 +1,21 @@
+roomid: 3315
+zone: Greywatch Pass
+title: Rocky Ledge
+description: Loose scree shifts underfoot at every step. A raven watches from a ledge above.
+biome: mountains
+exits:
+  east:
+    roomid: 3316
+  west:
+    roomid: 3314
+  south:
+    roomid: 3321
+  north:
+    roomid: 3308
+resources:
+- firewood
+- water
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

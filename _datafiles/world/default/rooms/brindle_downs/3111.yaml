@@ -1,0 +1,22 @@
+roomid: 3111
+zone: Brindle Downs
+title: Sheep-cropped Down
+description: Short turf rolls away in every direction, cropped by sheep. Bleached sheep bones
+  lie by the track.
+biome: land
+exits:
+  east:
+    roomid: 3112
+  west:
+    roomid: 3110
+  south:
+    roomid: 3118
+  north:
+    roomid: 3105
+resources:
+- game
+- herbs
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

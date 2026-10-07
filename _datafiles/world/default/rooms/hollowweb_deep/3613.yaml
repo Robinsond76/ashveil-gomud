@@ -1,0 +1,16 @@
+roomid: 3613
+zone: Hollowweb Deep
+title: Dim Nest
+description: Webs hang in thick grey curtains between the trunks. A web shivers on its own.
+biome: forest
+exits:
+  west:
+    roomid: 3612
+  east:
+    roomid: 3706
+resources:
+- herbs
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

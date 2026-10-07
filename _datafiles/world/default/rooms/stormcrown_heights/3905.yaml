@@ -1,0 +1,20 @@
+roomid: 3905
+zone: Stormcrown Heights
+title: High Crag
+description: The cold bites through cloaks and breath freezes in the beard. Old climbers' ropes
+  hang frozen from a crag.
+biome: snow
+exits:
+  east:
+    roomid: 3906
+  south:
+    roomid: 3913
+  west:
+    roomid: 3812
+resources:
+- shelter
+- water
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

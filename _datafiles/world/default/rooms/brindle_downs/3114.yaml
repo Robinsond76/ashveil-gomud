@@ -1,0 +1,17 @@
+roomid: 3114
+zone: Brindle Downs
+title: Sheep-cropped Common
+description: Larks climb out of the grass and the track is rutted by drovers. Old hoofprints are
+  pressed deep into the mud.
+biome: land
+exits:
+  east:
+    roomid: 3115
+  north:
+    roomid: 3107
+resources:
+- herbs
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

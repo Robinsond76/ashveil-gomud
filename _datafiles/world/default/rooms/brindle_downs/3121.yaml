@@ -1,0 +1,22 @@
+roomid: 3121
+zone: Brindle Downs
+title: Drover's Leanto
+description: A turf-roofed lean-to leans against a boundary stone. Someone left a few scraps of
+  a hunter's notes under a flat rock.
+items:
+- itemid: 30063
+biome: land
+exits:
+  east:
+    roomid: 3122
+  west:
+    roomid: 3120
+  north:
+    roomid: 3116
+resources:
+- shelter
+maplegend: Obelisk
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true

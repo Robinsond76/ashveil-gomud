@@ -1,0 +1,20 @@
+roomid: 3706
+zone: Ashen Barrows
+title: Crumbling Barrow
+description: Cracked flagstones cover the floor and the dust has been disturbed. A skull grins
+  from a heap of bones.
+biome: dungeon
+exits:
+  east:
+    roomid: 3707
+  south:
+    roomid: 3714
+  west:
+    roomid: 3613
+resources:
+- water
+- firewood
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

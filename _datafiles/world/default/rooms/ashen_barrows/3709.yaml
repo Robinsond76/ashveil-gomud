@@ -1,0 +1,22 @@
+roomid: 3709
+zone: Ashen Barrows
+title: Silent Niche
+description: A cold draught carries a smell of old earth and incense. A skull grins from a heap
+  of bones.
+biome: dungeon
+exits:
+  east:
+    roomid: 3710
+  west:
+    roomid: 3708
+  south:
+    roomid: 3717
+  north:
+    roomid: 3703
+resources:
+- water
+- shelter
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

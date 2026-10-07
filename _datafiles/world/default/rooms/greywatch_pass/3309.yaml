@@ -1,0 +1,26 @@
+roomid: 3309
+zone: Greywatch Pass
+title: Greywatch Lodge
+description: An old garrison lodge on the pass, kept by the last of the watchers. A fire, a hot
+  stew and a bed cost little, and the beds are warm.
+biome: city
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3310
+  west:
+    roomid: 3308
+  south:
+    roomid: 3316
+  north:
+    roomid: 3303
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

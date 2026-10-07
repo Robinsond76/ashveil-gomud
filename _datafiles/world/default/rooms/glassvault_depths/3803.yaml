@@ -1,0 +1,17 @@
+roomid: 3803
+zone: Glassvault Depths
+title: Mirrored Grotto
+description: Your light is repeated a hundred times in faceted walls. Cave moths drift around
+  a glowing fungus.
+biome: cave
+exits:
+  west:
+    roomid: 3802
+  south:
+    roomid: 3808
+resources:
+- water
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

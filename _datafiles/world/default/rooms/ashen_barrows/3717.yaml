@@ -1,0 +1,22 @@
+roomid: 3717
+zone: Ashen Barrows
+title: Sexton's Alcove
+description: A dry alcove the sexton cleared and warded with salt lines. A company can rest here,
+  mostly undisturbed.
+biome: dungeon
+tags:
+- camping
+exits:
+  east:
+    roomid: 3718
+  west:
+    roomid: 3716
+  north:
+    roomid: 3709
+resources:
+- firewood
+- shelter
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true

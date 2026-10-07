@@ -1,0 +1,21 @@
+roomid: 3616
+zone: Hollowweb Deep
+title: Silken Run
+description: Webs hang in thick grey curtains between the trunks. Dozens of tiny eyes glint among
+  the webs.
+biome: forest
+exits:
+  east:
+    roomid: 3617
+  west:
+    roomid: 3615
+  south:
+    roomid: 3622
+  north:
+    roomid: 3608
+resources:
+- firewood
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

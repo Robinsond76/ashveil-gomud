@@ -1,0 +1,24 @@
+roomid: 3710
+zone: Ashen Barrows
+title: The Watchman's Rest
+description: A guard post built at the barrows' mouth, lit by a hundred candles. The sexton keeps
+  a bed and a hot meal for any company that comes back out.
+biome: house
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3711
+  west:
+    roomid: 3709
+  south:
+    roomid: 3718
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

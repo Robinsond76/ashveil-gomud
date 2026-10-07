@@ -141,6 +141,7 @@ help:
       - standing
       - patch
     road:
+      - regions
       - travel
       - walkto
       - survival
@@ -339,6 +340,7 @@ help-aliases:
   companion-gear: [companion gear, companion-equipment, companion equipment, buff companions, company gear, disband gear]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]
+  regions: [region, zones, zone, world, levels, level guide, level-guide, where to go, where-to-go, level bands, bands]
   encounters: [encounter, random-encounter, random-encounters, random encounter, random encounters, danger, dangerous, dangerous rooms, bosses, boss, escorts, cache, caches, spoils, personal loot, personal-loot, grace, breathing room]
   rarity: [rare, epic, unidentified, level requirement, level-requirement, uncommon]
   relics: [relic, legendary, legendaries, signature, signatures, sets, set bonus, set bonuses, set-bonus, set items, set pieces, bad luck, bad-luck]

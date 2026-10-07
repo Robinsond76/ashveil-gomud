@@ -1,0 +1,18 @@
+roomid: 3714
+zone: Ashen Barrows
+title: Forgotten Gallery
+description: Cracked flagstones cover the floor and the dust has been disturbed. A brazier of
+  green fire burns without fuel.
+biome: dungeon
+exits:
+  east:
+    roomid: 3715
+  north:
+    roomid: 3706
+resources:
+- firewood
+- water
+mapx: 0
+mapy: 2
+mapz: 0
+hascoordinates: true

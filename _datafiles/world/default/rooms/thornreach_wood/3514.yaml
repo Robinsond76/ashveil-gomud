@@ -1,0 +1,17 @@
+roomid: 3514
+zone: Thornreach Wood
+title: Thorny Hollow
+description: Moss muffles every sound and the air smells of loam. A ring of toadstools grows in
+  the leaf mould.
+biome: forest
+exits:
+  east:
+    roomid: 3515
+  north:
+    roomid: 3506
+resources:
+- firewood
+mapx: 0
+mapy: 2
+mapz: 0
+hascoordinates: true

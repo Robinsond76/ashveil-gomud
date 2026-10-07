@@ -1,0 +1,14 @@
+roomid: 3925
+zone: Stormcrown Heights
+title: High Ridge
+description: Old climbers' ropes hang frozen from a crag.
+biome: snow
+exits:
+  north:
+    roomid: 3919
+resources:
+- shelter
+mapx: 6
+mapy: 3
+mapz: 0
+hascoordinates: true

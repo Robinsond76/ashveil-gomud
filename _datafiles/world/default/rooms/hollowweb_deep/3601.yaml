@@ -1,0 +1,17 @@
+roomid: 3601
+zone: Hollowweb Deep
+title: Sticky Nest
+description: Webs hang in thick grey curtains between the trunks. A shrivelled husk hangs in a
+  cocoon.
+biome: forest
+exits:
+  east:
+    roomid: 3602
+  south:
+    roomid: 3607
+resources:
+- firewood
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true
