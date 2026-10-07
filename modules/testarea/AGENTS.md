@@ -1,6 +1,6 @@
 # Test Area Module Guide
 
-`testarea` is an admin-only command that teleports into a closed set of test rooms (zones Test Area and Test Area Road, rooms 90001-90010, `_datafiles/world/default/rooms/test_area*/`) and back. It exists to try combat, camping, classes, gear, horses and weather quickly. It is never player-facing; there is no tutorial pointer.
+`testarea` is an admin-only command that teleports into a closed set of test rooms (zones Test Area and Test Area Road, rooms 90001-90014, `_datafiles/world/default/rooms/test_area*/`) and back. It exists to try combat, camping, classes, gear, horses and weather quickly. It is never player-facing; there is no tutorial pointer.
 
 - **A trip is a `Session`** (`session.go`): the whole user record as the user file would hold it, plus every module's per-user state from `internal/userstate`. It is saved to the plugin store the moment the trip starts, so a disconnect or restart still lets the admin return. `testarea return` restores the record (keeping the live password, role and permissions) with `users.UpdateOnlineUser`, then `userstate.RestoreAll`, which clears whatever a contributor holds that the snapshot did not.
 - **Every module that keeps state by user id registers a `userstate.Contributor`** (a `userstate.go` beside its purge handler; `userstate.Maps` does the work for `map[int]T` registries). `modules/purge_coverage_test.go` fails a module that handles `events.UserPurged{}` without one, unless it is listed there with a reason. A new per-user store must be added, or the trip leaks it.

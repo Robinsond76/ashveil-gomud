@@ -512,17 +512,25 @@ func (m *CampingModule) grantCampRewards() {
 				lines = append(lines, text)
 			}
 		}
+		settled := false
 		m.mu.Lock()
 		if current, ok := m.campRewards[leaderUserID]; ok && current == reward {
 			delete(m.campRewards, leaderUserID)
+			settled = true
 			if err := m.saveLocked(); err != nil {
 				m.campRewards[leaderUserID] = reward
+				settled = false
 				mudlog.Error("camping: camp rewards save", "leader", leaderUserID, "error", err)
 			}
 		}
 		m.mu.Unlock()
 		for _, line := range lines {
 			leader.SendText(line)
+		}
+		// Phase 60: a finished rest may open a story event at the camp, once:
+		// a reward still owed after a failed save is settled again later.
+		if settled && leader.Character.RoomId == reward.RoomID {
+			camping.RestEnded(leaderUserID, reward.RoomID)
 		}
 	}
 }

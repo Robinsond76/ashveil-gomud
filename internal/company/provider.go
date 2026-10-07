@@ -477,6 +477,9 @@ type MemberView struct {
 	// promotion gate reads (Phase 38c1).
 	Class     string
 	Alignment int
+	// Personality is its temperament (Phase 49), as story events read it
+	// (Phase 60).
+	Personality string
 	// ExpInto and ExpTNL are the experience into the level and the span to
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int

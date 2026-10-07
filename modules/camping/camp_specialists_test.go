@@ -3,6 +3,7 @@ package camping
 import (
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -663,4 +664,51 @@ func TestTutorialCampsAreNeverRaided(t *testing.T) {
 	_, road := cfg.Raids["Old Kings Road"]
 	assert.True(t, road)
 	assert.Equal(t, 15*time.Minute, cfg.RewardCooldown)
+}
+
+// restEnds is what the story events' camp trigger heard (Phase 60).
+var (
+	restEndsOnce sync.Once
+	restEnds     [][2]int
+)
+
+// TestAFinishedRestTellsTheCampListeners (Phase 60): a rest that pays its
+// rewards at the camp reaches the story events' camp trigger once; one the
+// leader walked away from does not.
+func TestAFinishedRestTellsTheCampListeners(t *testing.T) {
+	restEndsOnce.Do(func() {
+		camping.AddRestEndListener(func(leader, room int) { restEnds = append(restEnds, [2]int{leader, room}) })
+	})
+	restEnds = nil
+	w, _ := rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.m.onNewRound(events.NewRound{})
+	assert.Equal(t, [][2]int{{7, 100}}, restEnds)
+	w.m.onNewRound(events.NewRound{})
+	assert.Len(t, restEnds, 1, "heard once")
+
+	restEnds = nil
+	w, _ = rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.user.Character.RoomId = 555
+	w.m.onNewRound(events.NewRound{})
+	assert.Empty(t, restEnds, "walking away forfeits the camp scene too")
+
+	// A reward whose settling could not be saved stays owed and is paid on
+	// a later round; the camp scene is told only then, once.
+	restEnds = nil
+	w, _ = rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.store.saveErr = errors.New("disk full")
+	w.m.onNewRound(events.NewRound{})
+	assert.Empty(t, restEnds, "not while the reward is still owed")
+	w.store.saveErr = nil
+	w.m.onNewRound(events.NewRound{})
+	assert.Equal(t, [][2]int{{7, 100}}, restEnds)
 }

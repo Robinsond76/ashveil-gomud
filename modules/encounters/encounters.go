@@ -132,6 +132,7 @@ func init() {
 	walking.AddStepListener(m.onStep)
 	walking.AddArrivalListener(m.onArrival)
 	encounters.SetAttemptProvider(m)
+	encounters.SetStartProvider(m)
 	encounters.LairQuiet = m.LairQuiet
 }
 
@@ -326,6 +327,25 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	}
 	room.SendText(text)
 	return true
+}
+
+// StartGroup implements encounters.StartProvider (Phase 60): a story event
+// sets a named group on the leader. The group is tracked like a random one,
+// so it is cleaned up when abandoned and a battle's end starts the grace.
+func (m *EncountersModule) StartGroup(userID, roomID int, foes []encounters.Foe) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, r := range m.active {
+		if r.Owner == userID {
+			return errors.New("encounters: the company already faces a group")
+		}
+	}
+	enc, err := m.spawn(roomID, userID, foes)
+	if err != nil {
+		return err
+	}
+	m.active[enc.ID] = &record{Encounter: enc, comp: "event"}
+	return nil
 }
 
 // engagedLocked reports whether a foe in the room is already set on the user.
