@@ -386,6 +386,7 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	church := m.loadRoom(dest)
 	var scenarioLines []string
 	if defeated {
+		recordDefeat(userID, scenario, m.loadRoom(fell))
 		scenarioLines = m.applyScenario(user, scenario, church)
 	}
 	op := pendingOp(c)

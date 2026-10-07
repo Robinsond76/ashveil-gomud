@@ -15,6 +15,8 @@
  *   Camp      - the camp seen from here, the fire, a rest's progress, the
  *               rest tier, each member's needs; buttons shown only when
  *               they would work.
+ *   Chronicle - the company's deeds in prose, newest first (Phase 63), with
+ *               a filter by kind; `chronicle` reads the same in text.
  *
  * Every name and label is set with textContent, never innerHTML. Menus
  * name items by the reference the server sends ("!<id>:<uuid>"), which
@@ -26,6 +28,8 @@
  *                       time); applied over the roster, never replacing it
  *   Company.Inventory - the Inventory sub-tab
  *   Company.Camp      - the Camp sub-tab
+ *   Company.Chronicle - the Chronicle sub-tab: { total, tally: {kind: n},
+ *                       entries: [{seq, at, ago, kind, label, text}] }
  *   Party             - full party update (roster + vitals)
  *   Party.Vitals      - lightweight vitals-only update
  *
@@ -130,6 +134,12 @@
             justify-content: space-between;
             gap: 6px;
         }
+
+        .cmp-chron-filter { display: flex; flex-wrap: wrap; gap: 4px; }
+        .cmp-chron-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+        .cmp-chron-item { display: flex; flex-direction: column; gap: 1px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
+        .cmp-chron-meta { color: var(--t-text-secondary); font-size: 0.9em; }
+        .cmp-chron-text { color: var(--t-text); }
 
         .cmp-recipes summary { cursor: pointer; font-weight: bold; }
         .cmp-recipes ul { margin: 4px 0; padding-left: 18px; }
@@ -447,6 +457,7 @@
         { id: 'party-panel',       label: 'Status' },
         { id: 'company-inventory', label: 'Inventory' },
         { id: 'company-camp',      label: 'Camp' },
+        { id: 'company-chronicle', label: 'Chronicle' },
     ];
     const SUBTAB_KEY = 'companySubTab';
 
@@ -963,8 +974,10 @@
             if (again) { again.focus(); }
         }
         // The other sub-tabs read the snapshot too: Camp its needs, and
-        // Inventory the companions out (names only, so not on vitals).
-        if (namespace !== 'Company.Vitals') { updateInventory(); }
+        // Inventory the companions out (names only, so not on vitals). The
+        // Chronicle keeps its own payload; it is redrawn here so a window
+        // closed and opened again shows it at once.
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); }
         updateCamp();
     }
 
@@ -1653,10 +1666,82 @@
         }
     }
 
+    // --- Chronicle (Phase 63) ---
+    // chronicle is the newest Company.Chronicle payload, kept here as well
+    // as in GMCPStructs because a later full Company snapshot replaces the
+    // namespace's children there. chronicleKind is the filter: a kind, or
+    // '' for every deed.
+    let chronicle = null;
+    let chronicleKind = '';
+
+    // chronicleKinds are the kinds worth a filter button: those with deeds
+    // in the list, in the order they first appear.
+    function chronicleKinds(entries) {
+        const seen = [];
+        entries.forEach(e => {
+            if (e.kind && !seen.some(k => k.kind === e.kind)) { seen.push({ kind: e.kind, label: e.label || e.kind }); }
+        });
+        return seen;
+    }
+
+    function buildChronicle(panel) {
+        const data = chronicle || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Chronicle) || null;
+        keepScroll(panel);
+        panel.textContent = '';
+        const pad = el('div', 'cmp-pad');
+        panel.appendChild(pad);
+        const entries = data && Array.isArray(data.entries) ? data.entries : [];
+        if (!entries.length) {
+            pad.appendChild(el('div', 'cmp-note', 'Nothing is written yet. The company\'s deeds are recorded here as they happen: recruits, the fallen, bosses slain, relics found (help chronicle).'));
+            return;
+        }
+        const kinds = chronicleKinds(entries);
+        if (!kinds.some(k => k.kind === chronicleKind)) { chronicleKind = ''; }
+        const total = data.total || entries.length;
+        pad.appendChild(el('div', 'cmp-line', total + ' deed' + (total === 1 ? '' : 's') + ' recorded, newest first.'));
+        if (kinds.length > 1) {
+            const bar = el('div', 'cmp-chron-filter');
+            bar.setAttribute('role', 'group');
+            bar.setAttribute('aria-label', 'Filter the chronicle');
+            [{ kind: '', label: 'All' }].concat(kinds).forEach(k => {
+                const b = el('button', 'cmp-btn', k.label);
+                b.type = 'button';
+                b.setAttribute('data-focus', 'chron|' + k.kind);
+                b.setAttribute('aria-pressed', chronicleKind === k.kind ? 'true' : 'false');
+                b.addEventListener('click', () => { chronicleKind = k.kind; updateChronicle(); });
+                bar.appendChild(b);
+            });
+            pad.appendChild(bar);
+        }
+        const list = el('ul', 'cmp-chron-list');
+        entries.filter(e => !chronicleKind || e.kind === chronicleKind).forEach(e => {
+            const li = el('li', 'cmp-chron-item');
+            li.appendChild(el('span', 'cmp-chron-meta', (e.ago || '') + (e.label ? ' \u00b7 ' + e.label : '')));
+            li.appendChild(el('span', 'cmp-chron-text', e.text || ''));
+            list.appendChild(li);
+        });
+        pad.appendChild(list);
+        if (total > entries.length) {
+            pad.appendChild(el('div', 'cmp-note', 'The newest ' + entries.length + ' are shown; type chronicle all to read every deed kept.'));
+        }
+    }
+
+    function updateChronicle() {
+        const panel = document.getElementById('company-chronicle');
+        if (!panel) { return; }
+        keepFocus(panel, () => buildChronicle(panel));
+    }
+
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Party'],
-        onGMCP(namespace) {
+        onGMCP(namespace, body) {
+            if (namespace === 'Company.Chronicle') {
+                chronicle = body && typeof body === 'object' ? body : null;
+                win.open();
+                if (win.isOpen()) { updateChronicle(); }
+                return;
+            }
             if (namespace === 'Company.Inventory') {
                 win.open();
                 if (win.isOpen()) { updateInventory(); }

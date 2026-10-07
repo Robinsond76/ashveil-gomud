@@ -44,7 +44,9 @@ button in them just types a command for you.
               Pet when you have one.
   <ansi fg="yellow">Company</ansi>     Status (formation, where you click a member and then a cell to
               move or swap them, and each member), Inventory (everyone's
-              gear, your horses, and the cargo), and Camp.
+              gear, your horses, and the cargo), Camp, and Chronicle (the
+              company's deeds in sentences, newest first, with a filter by
+              kind; help chronicle).
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
               Battle view during a battle. A battle also opens as a
