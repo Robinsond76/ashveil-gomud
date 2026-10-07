@@ -11,11 +11,9 @@ package encumbrance
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -24,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -66,21 +65,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("encumbrance")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "encumbrance", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("encumbrance", registry)
+	return modstore.Save(s.plug, "encumbrance", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping only entries keyed by an
@@ -167,13 +156,7 @@ func init() {
 }
 
 func (m *EncumbranceModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("encumbrance: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("encumbrance: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("encumbrance", m.loadErr, m.store != nil)
 }
 
 func (m *EncumbranceModule) save() error {

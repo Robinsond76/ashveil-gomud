@@ -8,11 +8,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/livecompanions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
-	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -211,25 +211,14 @@ func companyMembers(user *users.UserRecord, roomIDs ...int) []member {
 		Perception:    user.Character.Stats.Perception.ValueAdj,
 		user:          user,
 	}}
-	for _, ref := range survival.CurrentRoster(user.UserId) {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok {
-			continue
-		}
-		instanceID, ok := company.InstanceFor(user.UserId, companionID)
-		if !ok {
-			continue
-		}
-		mob := mobs.GetInstance(instanceID)
-		if mob == nil || !inRooms(mob.Character.RoomId) || mob.Character.IsDisabled() {
-			continue // a downed companion can't sense, disarm, or conjure
-		}
-		archetype, _ := company.CompanionArchetype(user.UserId, companionID)
+	// A downed companion can't sense, disarm, or conjure.
+	for _, c := range livecompanions.Able(user.UserId, inRooms) {
+		archetype, _ := company.CompanionArchetype(user.UserId, c.CompanionID)
 		out = append(out, member{
-			UtilityMember: archetypes.UtilityMember{CompanionID: companionID},
-			Name:          mob.Character.Name,
-			Perception:    mob.Character.Stats.Perception.ValueAdj,
-			mob:           mob,
+			UtilityMember: archetypes.UtilityMember{CompanionID: c.CompanionID},
+			Name:          c.Mob.Character.Name,
+			Perception:    c.Mob.Character.Stats.Perception.ValueAdj,
+			mob:           c.Mob,
 			archetype:     archetype,
 		})
 	}

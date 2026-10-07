@@ -27,7 +27,6 @@ import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"math/rand/v2"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -35,6 +34,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/market"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -107,21 +107,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("market")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "market", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("market", registry)
+	return modstore.Save(s.plug, "market", registry)
 }
 
 // ErrCorruptStore reports stored ledger data that is present but unusable.
@@ -322,13 +312,7 @@ func zoneExists(zone string) bool {
 }
 
 func (m *MarketModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("market: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("market: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("market", m.loadErr, m.store != nil)
 }
 
 func (m *MarketModule) save() error {

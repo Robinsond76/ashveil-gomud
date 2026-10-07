@@ -30,14 +30,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/livecompanions"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/walking"
@@ -217,20 +216,8 @@ func newModule() *GatheringModule {
 // standing in the leader's room.
 func presentMembers(u *users.UserRecord) []*characters.Character {
 	out := []*characters.Character{u.Character}
-	for _, ref := range survival.CurrentRoster(u.UserId) {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok {
-			continue
-		}
-		instanceID, ok := company.InstanceFor(u.UserId, companionID)
-		if !ok {
-			continue
-		}
-		mob := mobs.GetInstance(instanceID)
-		if mob == nil || mob.Character.RoomId != u.Character.RoomId || mob.Character.IsDisabled() {
-			continue
-		}
-		out = append(out, &mob.Character)
+	for _, c := range livecompanions.Able(u.UserId, func(roomID int) bool { return roomID == u.Character.RoomId }) {
+		out = append(out, &c.Mob.Character)
 	}
 	return out
 }

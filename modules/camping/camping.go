@@ -17,10 +17,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
+	"github.com/GoMudEngine/GoMud/internal/modtimer"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
-	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -34,6 +34,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -181,21 +182,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("camping")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "camping", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("camping", registry)
+	return modstore.Save(s.plug, "camping", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping only entries keyed by an
@@ -301,29 +292,13 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	return nil
 }
 
-// Timer is a cancellable scheduled callback.
-type Timer interface {
-	Stop() bool
-}
-
-// Scheduler schedules a one-shot callback after a delay. Tests inject a
-// deterministic implementation.
-type Scheduler interface {
-	AfterFunc(d time.Duration, f func()) Timer
-}
-
-type realScheduler struct{}
-
-func (realScheduler) AfterFunc(d time.Duration, f func()) Timer {
-	if d < 0 {
-		d = 0
-	}
-	return realTimer{timer: time.AfterFunc(d, f)}
-}
-
-type realTimer struct{ timer *time.Timer }
-
-func (r realTimer) Stop() bool { return r.timer.Stop() }
+// Timer and Scheduler are the shared one-shot timer seam; tests inject a
+// deterministic Scheduler.
+type (
+	Timer         = modtimer.Timer
+	Scheduler     = modtimer.Scheduler
+	realScheduler = modtimer.Direct
+)
 
 // Survival is the Phase 4/7 company rest-recovery seam needed by camping.
 // bonusSurvival is the optional bedroll-aware recovery of a Survival seam.
@@ -611,13 +586,7 @@ func (m *CampingModule) refreshLitRoomsLocked() {
 }
 
 func (m *CampingModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("camping: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("camping: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("camping", m.loadErr, m.store != nil)
 }
 
 // save acquires the module lock and persists the current registry.
@@ -1388,35 +1357,22 @@ func (m *CampingModule) scheduleLocked(camp camping.Camp) {
 		return
 	}
 	remaining := m.remainingLocked(camp)
-	if m.timerGeneration == nil {
-		m.timerGeneration = map[int]uint64{}
-	}
-	m.timerGeneration[leaderUserID]++
-	generation := m.timerGeneration[leaderUserID]
-	m.stopTimerLocked(leaderUserID)
-	m.timers[leaderUserID] = m.scheduler.AfterFunc(remaining, func() {
+	m.timerGeneration = modtimer.Arm(m.timers, m.timerGeneration, leaderUserID, m.scheduler, remaining, func(generation uint64) {
 		m.onTimer(leaderUserID, generation)
 	})
 }
 
 func (m *CampingModule) stopTimerLocked(leaderUserID int) {
-	if timer, ok := m.timers[leaderUserID]; ok {
-		timer.Stop()
-		delete(m.timers, leaderUserID)
-	}
+	modtimer.Stop(m.timers, leaderUserID)
 }
 
 func (m *CampingModule) onTimer(leaderUserID int, generation uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
-	if m.timerGeneration[leaderUserID] != generation {
+	if !modtimer.Claim(m.timers, m.timerGeneration, leaderUserID, generation) {
 		return
 	}
-	if _, ok := m.timers[leaderUserID]; !ok {
-		return
-	}
-	delete(m.timers, leaderUserID)
 	camp, ok := m.camps[leaderUserID]
 	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
 		return
