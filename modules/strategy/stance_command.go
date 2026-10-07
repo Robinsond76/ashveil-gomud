@@ -37,6 +37,13 @@ func (m *StrategyModule) runStance(user *users.UserRecord, args []string) string
 	}
 	mb, found := resolve(members, args[0])
 	if !found {
+		// `stance heavy` (or `stance off`) with no one named is the
+		// player's own.
+		if _, isStance := stance.Parse(strings.Join(args, " ")); (isStance || isStanceOff(strings.Join(args, " "))) && len(members) > 0 {
+			mb, found, args = members[0], true, append([]string{"me"}, args...)
+		}
+	}
+	if !found {
 		return fmt.Sprintf(`No one in your company answers to "%s". Type <ansi fg="command">stance</ansi> to see them.`, args[0])
 	}
 	if len(args) == 1 {
@@ -46,8 +53,8 @@ func (m *StrategyModule) runStance(user *users.UserRecord, args []string) string
 		return usercommands.BattleUnderWay
 	}
 	word := strings.Join(args[1:], " ")
-	switch word {
-	case "off", "none", "clear", "reset", "default":
+	switch {
+	case isStanceOff(word):
 		if m.StoredStance(user.UserId, mb.key) == stance.None {
 			return fmt.Sprintf("%s %s in no stance.", mb.name, verb(mb, "are", "is"))
 		}
@@ -179,4 +186,13 @@ func (m *StrategyModule) putStance(userID int, key string, st stance.Stance) {
 		m.registry.Stances[userID] = map[string]stance.Stance{}
 	}
 	m.registry.Stances[userID][key] = st
+}
+
+// isStanceOff reports whether the word takes a stance off.
+func isStanceOff(word string) bool {
+	switch word {
+	case "off", "none", "clear", "reset", "default":
+		return true
+	}
+	return false
 }

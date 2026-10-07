@@ -25,12 +25,16 @@ func applyStance(who caster, c *characters.Character) {
 		}
 		leader, key = id, k
 	}
+	if c.RT != nil && c.RT.StanceRead {
+		return // read once a battle: set between battles only
+	}
 	chosen := stance.For(leader, string(key))
 	if chosen == stance.None && (c.RT == nil || c.RT.Stance == stance.None) {
 		return
 	}
 	was := c.RTState().Stance
 	c.RTState().Stance = chosen
+	c.RT.StanceRead = true
 	// Said once, as the battle's first round reads it, and only when the
 	// stance can work: the log names what the member is doing.
 	if chosen != was && stance.Fits(chosen, c.StanceGear()) {
@@ -40,7 +44,7 @@ func applyStance(who caster, c *characters.Character) {
 			name, verb = "You", "take"
 		}
 		if u := users.GetByUserId(leader); u != nil {
-			u.SendText(fmt.Sprintf(`%s %s the <ansi fg="command">%s</ansi> stance: %s, but %s.`, name, verb, d.Name, d.Gain, d.Cost))
+			u.SendText(fmt.Sprintf(`%s %s the <ansi fg="yellow">%s</ansi> stance: %s, but %s.`, name, verb, d.Name, d.Gain, d.Cost))
 		}
 	}
 }

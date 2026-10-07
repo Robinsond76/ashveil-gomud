@@ -10,8 +10,12 @@ import (
 // StanceGear is what the character holds, as a weapon stance reads it
 // (Phase 69).
 func (c *Character) StanceGear() stance.Gear {
+	return c.stanceGearWith(c.Equipment.Weapon)
+}
+
+func (c *Character) stanceGearWith(w items.Item) stance.Gear {
 	g := stance.Gear{}
-	if w := c.Equipment.Weapon; w.ItemId > 0 {
+	if w.ItemId > 0 {
 		spec := w.GetSpec()
 		g.TwoHanded = spec.Hands == items.TwoHanded
 		g.Shooting = spec.Subtype == items.Shooting
@@ -41,4 +45,14 @@ func (c *Character) StanceEffect() stance.Effect {
 		return stance.Effect{}
 	}
 	return stance.EffectFor(c.RT.Stance, c.StanceGear())
+}
+
+// StanceEffectWith is what the character's stance does for blows struck
+// with weapon, as if it were in the main hand: a dual-wielder's second
+// weapon takes the stance only when the stance fits it.
+func (c *Character) StanceEffectWith(weapon items.Item) stance.Effect {
+	if c.RT == nil || c.RT.Stance == stance.None {
+		return stance.Effect{}
+	}
+	return stance.EffectFor(c.RT.Stance, c.stanceGearWith(weapon))
 }

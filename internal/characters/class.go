@@ -203,7 +203,10 @@ type ClassAura struct {
 type ClassRT struct {
 	// Stance is the weapon stance (Phase 69) the member fights this battle
 	// in, set each round from the store; its effect needs the right gear.
-	Stance        stance.Stance
+	Stance stance.Stance
+	// StanceRead is set once the battle has read the stance from the store,
+	// so nothing written there mid-battle changes it.
+	StanceRead    bool
 	Ward, WardCap int // blows a ward absorbs, and the most it takes from each
 	// Phase 50: the battle condition the member began this battle in, from
 	// its needs and meal buff: percent on the damage it deals, and percent

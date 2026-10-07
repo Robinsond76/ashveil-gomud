@@ -1,7 +1,6 @@
 package usercommands
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/stance"
 	"path/filepath"
 	"regexp"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

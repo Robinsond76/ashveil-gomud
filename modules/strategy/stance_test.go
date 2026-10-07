@@ -165,3 +165,13 @@ func TestStrategyDefaultLeavesStanceAlone(t *testing.T) {
 	run(m, u, "dain default")
 	assert.Equal(t, stance.Heavy, m.StoredStance(u.UserId, "companion:1"))
 }
+
+// Phase 69 review: `stance heavy` with no one named is the player's own.
+func TestStanceWithNoOneNamedIsYours(t *testing.T) {
+	m, _, u, _ := testModule(t)
+	withGear(m)
+	assert.Contains(t, runStance(m, u, "wall"), "You are now in the Shield wall stance")
+	assert.Equal(t, stance.Wall, m.StoredStance(u.UserId, "leader"))
+	assert.Contains(t, runStance(m, u, "off"), "You are out of any stance")
+	assert.Contains(t, runStance(m, u, "nobody"), "No one in your company", "a name that is not a stance still asks who")
+}

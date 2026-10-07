@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +35,12 @@ var stanceCells = []stanceCell{
 
 // stanceFight is one 5v5 fight with the cell's gear, in the stance or not.
 func stanceFight(t *testing.T, cell stanceCell, inStance bool) balanceResult {
-	f := newBalanceFightWithOptions(t, cell.level, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: 5, Coordination: 1, LegacyMirror: true,
+	return newStanceFight(t, cell, inStance).run()
+}
+
+// newStanceFight is the cell's fight, begun but not yet fought.
+func newStanceFight(t *testing.T, cell stanceCell, inStance bool) *balanceFight {
+	return newBalanceFightWithOptions(t, cell.level, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: 5, Coordination: 1, LegacyMirror: true,
 		Setup: func(b *brawl) {
 			for id, kit := range cell.members {
 				c := &b.companion(id).Character
@@ -48,13 +54,14 @@ func stanceFight(t *testing.T, cell stanceCell, inStance bool) balanceResult {
 				}
 			}
 		}})
-	return f.run()
 }
 
 // A fight with a stance set runs through the real round in the ordinary suite.
 func TestBalanceHarnessRunsAStanceFight(t *testing.T) {
-	res := stanceFight(t, stanceCells[0], true)
-	assert.Positive(t, res.Rounds)
+	f := newStanceFight(t, stanceCells[0], true)
+	f.step()
+	assert.Equal(t, stance.Heavy, f.companion(1).Character.Stance(), "the stance reached the fighter")
+	assert.Positive(t, f.run().Rounds)
 }
 
 func TestBalanceStances(t *testing.T) {

@@ -8,6 +8,10 @@ import (
 // stanceName is the character's weapon stance (Phase 69) as the battle
 // breakdown names it.
 func stanceName(c *characters.Character) string {
-	d, _ := stance.Lookup(c.Stance())
+	st := stance.None
+	if c.RT != nil {
+		st = c.RT.Stance
+	}
+	d, _ := stance.Lookup(st)
 	return d.Name + ` stance`
 }

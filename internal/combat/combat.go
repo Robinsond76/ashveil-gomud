@@ -604,8 +604,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 			// Hits adds its modifier, so a penalty is passed as a negative
 			// value (the same convention as dualWieldHitPenalty).
 			penalty := -darkPenalty
-			// Phase 69: the weapon stance's accuracy trade.
+			// Phase 69: the weapon stance's accuracy trade. A second weapon
+			// takes it only when it is itself one the stance fits.
 			stanceFx := sourceChar.StanceEffect()
+			if wIdx > 0 {
+				stanceFx = sourceChar.StanceEffectWith(weapon)
+			}
 			penalty += stanceFx.Hit
 			if wIdx > 0 {
 				penalty += dualWieldHitPenalty(dualWieldLevel)

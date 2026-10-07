@@ -17,12 +17,11 @@ import (
 // expected-damage figure the company's assessment reads.
 
 const (
-	stanceGlaive  = 10151 // militia glaive: two-handed, slashing
-	stanceBow     = 10172 // longbow
-	stanceDagger  = 10004 // dagger
-	stanceSword   = 10001 // a one-handed sword (not a great weapon)
-	stanceTower   = 20048 // tower shield
-	stanceBuckler = 20046
+	stanceGlaive = 10151 // militia glaive: two-handed, slashing
+	stanceBow    = 10172 // longbow
+	stanceDagger = 10004 // dagger
+	stanceSword  = 10001 // a one-handed sword (not a great weapon)
+	stanceTower  = 20048 // tower shield
 )
 
 func stanceSetup(t *testing.T) {
@@ -117,7 +116,7 @@ func TestHeavyBlowsTradeAccuracyForDamage(t *testing.T) {
 	baseDmg, baseHit, _ := stanceRun(stanceFighter(stanceGlaive, 0, stance.None), target, n)
 	heavyDmg, heavyHit, _ := stanceRun(stanceFighter(stanceGlaive, 0, stance.Heavy), target, n)
 	assert.InDelta(t, baseHit-0.15, heavyHit, 0.03, "15 points less likely to hit")
-	// A landed blow is a quarter harder, so the mean per hit rises by about that.
+	// A landed blow is 30% harder, so the mean per hit rises by about that.
 	assert.InDelta(t, 1.30, (heavyDmg/heavyHit)/(baseDmg/baseHit), 0.08, "blows land 30% harder")
 	assert.Less(t, heavyDmg/baseDmg, 1.12, "a sidegrade, not a flat gain")
 }
@@ -236,4 +235,19 @@ func TestStancesAreSidegrades(t *testing.T) {
 	assert.Greater(t, taken, 0.55, "but not into a wall nothing passes")
 	assert.Less(t, dealt/taken, 1.1, "the exchange is not a free win")
 	assert.Greater(t, dealt/taken, 0.85)
+}
+
+// Phase 69 review: a dual-wielder's second weapon takes the stance only when
+// the stance fits it, not because the main hand does.
+func TestASecondWeaponTakesTheStanceOnlyWhenItFits(t *testing.T) {
+	stanceSetup(t)
+	daggerMain := stanceFighter(stanceDagger, 0, stance.Keen)
+	assert.False(t, daggerMain.StanceEffect().IsZero())
+	assert.True(t, daggerMain.StanceEffectWith(items.New(stanceSword)).IsZero(), "a sword in the offhand is not keen")
+	assert.False(t, daggerMain.StanceEffectWith(items.New(stanceDagger)).IsZero(), "a second dagger is")
+
+	swordMain := stanceFighter(stanceSword, 0, stance.Keen)
+	assert.True(t, swordMain.StanceEffect().IsZero())
+	assert.False(t, swordMain.StanceEffectWith(items.New(stanceDagger)).IsZero(), "an offhand dagger is keen")
+	assert.Equal(t, "Keen edge stance", stanceName(swordMain), "named even when only the offhand fits")
 }
