@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -543,4 +544,29 @@ func TestCompanyVitalsFlasks(t *testing.T) {
 	f.update(7, s)
 	require.Len(t, *out, 2)
 	assert.Equal(t, "Company.Vitals", (*out)[1].module)
+}
+
+type fakeOrders map[string][]orders.Order
+
+func (f fakeOrders) StoredOrders(_ int, key string) []orders.Order { return f[key] }
+
+// Phase 61: a member's battle orders ride its entry in words, and a change
+// resends the snapshot; a member with none carries no field.
+func TestCompanyPayloadBattleOrders(t *testing.T) {
+	orders.SetProvider(fakeOrders{"companion:1": {{When: orders.AllyHurt, Pct: 50, Do: orders.Heal}, {When: orders.Chanting, Do: orders.Break}}})
+	t.Cleanup(func() { orders.SetProvider(nil) })
+	s := sampleCompany()
+	got := companyJSON(t, s)
+	assert.Equal(t, []any{
+		"When an ally is below 50% health, heal that ally first.",
+		"When a foe is chanting, turn on the chanter to break its chant.",
+	}, got["members"].([]any)[0].(map[string]any)["orders"])
+	assert.NotContains(t, got["leader"].(map[string]any), "orders")
+	assert.NotContains(t, got["members"].([]any)[1].(map[string]any), "orders")
+
+	f, out := testFeed()
+	f.update(7, s)
+	orders.SetProvider(fakeOrders{})
+	f.update(7, s)
+	require.Len(t, *out, 2, "taking the orders off resends the snapshot")
 }

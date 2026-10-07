@@ -30,6 +30,11 @@ func guardBrawl(t *testing.T, strategies ...string) *brawl {
 	// start with Tamsin as a plain fighter unless a test sets her up.
 	setUp := false
 	for _, s := range strategies {
+		// Phase 61: an "orders ..." entry sets battle orders before the fight.
+		if rest, ok := strings.CutPrefix(s, "orders "); ok {
+			b.cmd("orders", rest)
+			continue
+		}
 		b.cmd("strategy", s)
 		setUp = setUp || strings.HasPrefix(s, "tamsin")
 	}

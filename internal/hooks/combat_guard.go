@@ -139,6 +139,11 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		if angel || doll || bear {
 			s.Role, s.Ward = strategy.Guardian, ""
 		}
+		// Phase 61: a guard order makes the member a guardian for its ward
+		// this round, whatever its strategy.
+		if w, ok := orderedWard(leader.UserId, g.key); ok && !angel && !doll && !bear {
+			s.Role, s.Ward = strategy.Guardian, string(w)
+		}
 		if s.Role == strategy.Guardian && !angel && !doll && !bear {
 			battle.CaptureGuards(leader.UserId, string(g.key), g.char.Level) // Phase 35b
 		}

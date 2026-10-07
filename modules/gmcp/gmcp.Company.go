@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -116,6 +117,10 @@ type companyMember struct {
 	// for the leader, and Skills when it has none.
 	Skills         map[string]int `json:"skills,omitempty"`
 	TrainingPoints *int           `json:"training_points,omitempty"`
+	// Orders are its battle orders (Phase 61) in words, in the order they
+	// are read, with the same wording as the `orders` command; omitted with
+	// none.
+	Orders []string `json:"orders,omitempty"`
 	// Music is its camp-music skill in words ("Strings 2 (3 songs to level
 	// 3)"), omitted with none.
 	Music string `json:"music,omitempty"`
@@ -265,6 +270,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 		if len(m.Skills) > 0 {
 			out.Skills = m.Skills
 		}
+	}
+	if list := orders.For(leaderUserID, string(m.Key)); len(list) > 0 {
+		out.Orders = orders.Lines(list)
 	}
 	out.Music = camping.MusicLabelOf(leaderUserID, string(m.Key))
 	// Chemistry is shown only for a member standing with a band; alone or

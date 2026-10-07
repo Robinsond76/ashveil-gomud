@@ -127,6 +127,8 @@ test('guard, abilities, yield, flee, death, mercy and the end of the fight', () 
   assert.equal(stepFor(tackle, 'm:1').anim, 'prone');
   assert.equal(stepFor(first([{ seq: 2, kind: 'ability', src: 'leader', tgt: 'm:1', status: 'Tackle', outcome: 'failed' }]), 'm:1'), undefined);
   assert.equal(first([{ seq: 3, kind: 'ability', src: 'leader', tgt: 'm:1', status: 'Opening Strike' }])[0].fx[0].kind, 'highlight');
+  // Phase 61: a battle order carried out gives its member a brief highlight.
+  assert.equal(first([{ seq: 7, kind: 'order-fired', src: 'companion:1', tgt: 'leader', status: 'heal' }])[0].fx[0].kind, 'highlight');
   assert.equal(first([{ seq: 4, kind: 'yield', src: 'm:2' }])[0].ops[0].op, 'yielded');
   const flee = first([{ seq: 5, kind: 'flee', src: 'm:2' }])[0];
   assert.equal(flee.exit, true);

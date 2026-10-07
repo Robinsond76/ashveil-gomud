@@ -23,7 +23,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace", "battlescreen"} {
+	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace", "battlescreen", "orders"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -39,6 +39,7 @@ func TestCombatHelpTopics(t *testing.T) {
 		"battlesummary": "battle-summary", "resurrection": "resurrect",
 		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
 		"battle-screen": "battlescreen", "battle-map": "battlescreen",
+		"order": "orders", "battle-orders": "orders", "when-do": "orders",
 		"pace": "combatpace", "pacing": "combatpace", "combat-pace": "combatpace",
 	}
 	for alias, topic := range aliases {
@@ -492,6 +493,25 @@ func TestRogueRangerEliteHelp(t *testing.T) {
 		assert.Contains(t, plain, name)
 	}
 	assert.NotContains(t, plain, "Pathfinder, Swordmaster, Nightblade,\nSentinel", "no longer listed as still to come")
+}
+
+// Phase 61: help orders renders, names every condition and action the
+// orders package offers, and the hub pages point to it.
+func TestOrdersHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	text, err := GetHelpContents("orders")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Help for", "up to 3 orders", "as ordered", "ally [n]", "self [n]", "chanting", "boss", "first", "foe [kind]",
+		"heal", "break", "guard", "strongest", "hold", "orders [who] add [condition] then [action]", "orders [who] preset", "orders [who] clear"} {
+		assert.Contains(t, plain, want, "help orders mentions %s", want)
+	}
+	for _, topic := range []string{"combat", "strategy"} {
+		hub, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, hub, "help orders", "help %s links to help orders", topic)
+	}
 }
 
 // Phase 60: help events renders, answers to its aliases, and is linked
