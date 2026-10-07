@@ -90,8 +90,9 @@ type Pronouns struct {
 }
 
 var (
-	mu     sync.RWMutex
-	loaded *Data
+	mu        sync.RWMutex
+	loaded    *Data
+	suspended bool
 )
 
 var (
@@ -138,12 +139,28 @@ func SetData(d *Data) {
 	mu.Unlock()
 }
 
+// Suspend makes the world look as if it had no looks data until the
+// returned function runs, for tests of flows that run without the steps.
+func Suspend() func() {
+	mu.Lock()
+	suspended = true
+	mu.Unlock()
+	return func() {
+		mu.Lock()
+		suspended = false
+		mu.Unlock()
+	}
+}
+
 // Current is the loaded data, or nil when the world has no looks.yaml. It
 // loads the file on first use.
 func Current() *Data {
 	mu.RLock()
-	d := loaded
+	d, off := loaded, suspended
 	mu.RUnlock()
+	if off {
+		return nil
+	}
 	if d != nil {
 		return d
 	}
