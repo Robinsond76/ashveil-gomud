@@ -155,7 +155,7 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds","Errands","Rites"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds, Errands, Rites');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds","Errands","Rites","Bounties"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds, Errands, Rites, Bounties');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
@@ -1541,7 +1541,7 @@ await page.setViewportSize({ width: 1280, height: 900 });
   check(JSON.stringify(rcmds) === JSON.stringify(['rite skip #4']), 'Rites: Let pass sends the skip');
   await page.setViewportSize({ width: 360, height: 800 });
   check(await page.evaluate(() => { const p = document.getElementById('company-rites'); return p.scrollWidth <= p.clientWidth + 1; }), 'Rites fit a phone');
-  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); return getComputedStyle(b).overflowX === 'auto' && b.scrollWidth > 0; }), 'The sub-tab bar scrolls when eight tabs outgrow a phone');
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); return getComputedStyle(b).overflowX === 'auto' && b.scrollWidth > 0; }), 'The sub-tab bar scrolls when nine tabs outgrow a phone');
   check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); b.scrollLeft = 0; b.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); return b.scrollLeft > 0; }), 'A mouse wheel scrolls the sub-tab bar sideways');
   await page.evaluate(() => { document.querySelector('.cmp-tab-btn[data-panel="company-rites"]').click(); });
   check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); const t = document.querySelector('.cmp-tab-btn.active'); const r = t.getBoundingClientRect(), br = b.getBoundingClientRect(); return r.left >= br.left - 1 && r.right <= br.right + 1; }), 'The chosen sub-tab is scrolled into view on a phone');
@@ -1553,6 +1553,51 @@ await page.setViewportSize({ width: 1280, height: 900 });
   check((await ritText()).includes('Rites are held at a camp or an inn'), 'Rites: away from a fire it says where to hold them');
   await page.evaluate(() => window.gmcp('Company.Rites', { here: false, where: '', rows: [] }));
   check((await ritText()).includes('No one is waiting to be mourned'), 'Rites: an empty list says so');
+}
+
+// Phase 76: the Bounties tab.
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const bounties = {
+    now: 1800000000, at_board: true, board: 'Alderbrook Green', band: '2-4', rotates: 5400, max: 3,
+    postings: [
+      { n: 1, kind: 'boss', name: 'Old Grue', zone: 'Dark Forest', band: '5-7', rating: 'fair', count: 1, reward: 120, taken: false, done: false },
+      { n: 2, kind: 'group', name: xss, zone: 'Alderbrook', band: '2-4', rating: 'easy', count: 3, reward: 54, taken: true, done: false },
+      { n: 3, kind: 'group', name: 'Stray Dogs', zone: 'Alderbrook', band: '2-4', rating: 'easy', count: 3, reward: 54, taken: false, done: true },
+    ],
+    held: [
+      { n: 1, kind: 'group', name: xss, zone: 'Alderbrook', have: 3, count: 3, reward: 54, left: 7200, ready: true },
+      { n: 2, kind: 'boss', name: 'Old Grue', zone: 'Dark Forest', have: 0, count: 1, reward: 120, left: 3600, ready: false },
+    ],
+  };
+  const bntText = () => page.evaluate(() => document.getElementById('company-bounties').textContent);
+  await page.getByRole('tab', { name: 'Bounties', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Bounties', c), bounties);
+  check(await page.locator('#company-bounties .cmp-rite-card').count() === 5, 'Bounties: a card for each held bounty and posting');
+  check((await bntText()).includes('Held bounties (2 of 3)') && (await bntText()).includes('The board at Alderbrook Green (level 2-4)'), 'Bounties: the held count and the board');
+  check((await bntText()).includes('Old Grue') && (await bntText()).includes('Slay the master of the lair in Dark Forest') && (await bntText()).includes('fair for you'), 'Bounties: the target, zone and rating');
+  check((await bntText()).includes('Proof found: ready to claim.') && (await bntText()).includes('0 of 1 done'), 'Bounties: progress and readiness');
+  check(await page.evaluate(() => window.__xss === undefined && !document.querySelector('#company-bounties img')), 'Bounties: a name is text, not markup');
+  const sentB = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  let bcmds = await sentB(() => page.locator('#company-bounties .cmp-rite-card').nth(0).getByRole('button', { name: 'Claim' }).click());
+  check(JSON.stringify(bcmds) === JSON.stringify(['bounty claim 1']), 'Bounties: Claim sends the claim (' + JSON.stringify(bcmds) + ')');
+  check(await page.locator('#company-bounties .cmp-rite-card').nth(1).getByRole('button', { name: 'Claim' }).isDisabled(), 'Bounties: Claim is off until proof is found');
+  bcmds = await sentB(() => page.locator('#company-bounties .cmp-rite-card').nth(1).getByRole('button', { name: 'Drop' }).click());
+  check(JSON.stringify(bcmds) === JSON.stringify(['bounty drop 2']), 'Bounties: Drop sends the drop');
+  bcmds = await sentB(() => page.locator('#company-bounties .cmp-rite-card').nth(2).getByRole('button', { name: 'Take', exact: true }).click());
+  check(JSON.stringify(bcmds) === JSON.stringify(['bounty take 1']), 'Bounties: Take sends the posting number');
+  check(await page.locator('#company-bounties').getByRole('button', { name: 'Taken' }).isDisabled() && await page.locator('#company-bounties').getByRole('button', { name: 'Settled' }).isDisabled(), 'Bounties: a taken or settled posting cannot be taken');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-bounties'); return p.scrollWidth <= p.clientWidth + 1; }), 'Bounties fit a phone');
+  if (outdir) { await page.locator('#company-bounties').screenshot({ path: path.join(outdir, '76-bounties-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-bounties').screenshot({ path: path.join(outdir, '76-bounties.png') }); }
+  await page.evaluate(c => window.gmcp('Company.Bounties', c), { ...bounties, held: [...bounties.held, { n: 3, kind: 'group', name: 'Wolves', zone: 'Brindle Downs', have: 1, count: 3, reward: 90, left: 100, ready: false }] });
+  check(await page.locator('#company-bounties').getByRole('button', { name: 'Take', exact: true }).count() === 1 && await page.locator('#company-bounties').getByRole('button', { name: 'Take', exact: true }).isDisabled(), 'Bounties: a full hand cannot take another');
+  await page.evaluate(c => window.gmcp('Company.Bounties', c), { ...bounties, at_board: false, postings: [] });
+  check((await bntText()).includes('No bounty board here') && await page.locator('#company-bounties').getByRole('button', { name: 'Claim' }).count() === 0, 'Bounties: away from a board nothing can be taken or claimed');
+  await page.evaluate(() => window.gmcp('Company.Bounties', { at_board: false, postings: [], held: [], max: 3 }));
+  check((await bntText()).includes('Your company holds none'), 'Bounties: an empty list says so');
 }
 
 await browser.close();

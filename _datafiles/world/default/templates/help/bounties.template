@@ -1,0 +1,57 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">bounties</ansi>
+
+A bounty board in a town lists marks wanted in the lands around it: the
+master of a lair, or a band of foes that keeps to the roads. Take a bounty,
+go and kill the mark, and come back to any board to be paid in gold. The
+proof is your company's chronicle (<ansi fg="command">help chronicle</ansi>), so a kill counts only if the
+chronicle shows it.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">bounty</ansi>                       the board you stand at, and the bounties you hold
+  <ansi fg="command">bounty take [number]</ansi>         take a posting from the board
+  <ansi fg="command">bounty claim [number]</ansi>        collect the gold for finished bounties (all of them, or one)
+  <ansi fg="command">bounty drop [number]</ansi>         give up a bounty you hold
+  <ansi fg="command">bounties</ansi>                     the same as <ansi fg="command">bounty</ansi>
+
+The numbers are the ones on the board, or in your list of held bounties.
+Taking and claiming happen at a board, in a room that has one (the Company
+window's Bounties tab shows it as well, and it fits a phone). Reading what
+you hold works anywhere.
+
+<ansi fg="yellow-bold">The postings</ansi>
+
+  Lair      slay the master of a lair in a named zone. It pays for one kill.
+  Band      break three groups of a named kind in a named zone. A group is
+            broken when every foe in it is down.
+
+Each posting names the zone's level band, and says how that band rates for
+your company (<ansi fg="command">help encounters</ansi>). A bounty never changes a foe: the lair master and the
+bands are exactly the ones the zone already has, at the zone's own level,
+whoever takes the bounty. If you want a harder bounty, take one in a zone
+above your level; if you want an easy one, take one near your level.
+
+<ansi fg="yellow-bold">The board</ansi>
+
+  - Each board posts up to five bounties from the zones near it, mostly bands,
+    with a lair or two. A new list is posted every six hours, in real time;
+    the board tells you how long is left. The same board always shows the
+    same list within a window, through a restart or a copyover.
+  - You can hold three bounties at once, and only one on a given mark. A held
+    bounty lasts a day, whether you are logged in or not, then lapses.
+  - Only what happens after you take a bounty counts. A kill from before does
+    not, and neither does the same kill for a second bounty. A lair master
+    must be slain, and a band broken, in the zone the bounty names.
+  - A bounty you have claimed cannot be taken again from the same list.
+
+<ansi fg="yellow-bold">The pay</ansi>
+
+Gold only, by the zone's level band and no more: 20 gold for each level in the
+middle of the band for a lair master, and 6 gold per level for each band
+broken (three bands). A level 8 zone (7-9) pays 160 for a lair and 144 for the
+three bands. It is paid from your company's leader and comes with a line in
+your chronicle (<ansi fg="command">chronicle bounties</ansi>). A bounty is a way to be paid for what you
+would fight anyway: it adds no experience, loot or power, and a lair that
+stays quiet after you beat it (<ansi fg="command">help encounters</ansi>) stays quiet for the bounty too.
+
+See also: <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help encounters</ansi>, <ansi fg="command">help regions</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help webclient</ansi>.

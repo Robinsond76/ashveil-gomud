@@ -38,6 +38,8 @@ const (
 	Awakened  Kind = "awakened"  // a relic woke a new power (Phase 67)
 	Errand    Kind = "errand"    // a companion came back from an errand (Phase 70)
 	Rites     Kind = "rites"     // the company mourned, or did not, a companion gone for good (Phase 74)
+	Group     Kind = "group"     // a named group of foes was broken (Phase 76)
+	Bounty    Kind = "bounty"    // a bounty was claimed at a board (Phase 76)
 )
 
 // KindInfo is a kind's player-facing name and filter words.
@@ -65,6 +67,8 @@ var Kinds = []KindInfo{
 	{Awakened, "Awakenings", []string{"awakened", "awakenings", "awakening"}},
 	{Errand, "Errands", []string{"errand", "errands"}},
 	{Rites, "Rites", []string{"rites", "rite", "funerals", "funeral"}},
+	{Group, "Groups", []string{"group", "groups", "bands", "packs"}},
+	{Bounty, "Bounties", []string{"bounty", "bounties"}},
 }
 
 // KindByWord resolves what a player typed to a kind.
@@ -106,6 +110,9 @@ type Entry struct {
 	Detail  string   `yaml:"detail,omitempty" json:"detail,omitempty"`
 	Place   string   `yaml:"place,omitempty" json:"place,omitempty"`
 	Ref     string   `yaml:"ref,omitempty" json:"ref,omitempty"`
+	// Zone is the zone the deed happened in, set on boss and group deeds so
+	// a bounty can name a zone's lair (Phase 76). Empty on older deeds.
+	Zone string `yaml:"zone,omitempty" json:"zone,omitempty"`
 }
 
 // Who is the members named in a sentence: "Mara", "Mara and Tobin",
@@ -217,6 +224,13 @@ func Prose(e Entry) string {
 			return fmt.Sprintf("%s came back from %s%s %s.", who, job, e.at(), strings.TrimRight(e.Detail, ".!?"))
 		}
 		return fmt.Sprintf("%s came back from %s%s.", who, job, e.at())
+	case Group:
+		return fmt.Sprintf("%s broke %s%s.", who, orThing(e.Subject, "a band of foes"), e.at())
+	case Bounty:
+		if e.Detail != "" {
+			return fmt.Sprintf("%s claimed the bounty on %s%s: %s.", who, orThing(e.Subject, "a mark"), e.at(), strings.TrimRight(e.Detail, ".!?"))
+		}
+		return fmt.Sprintf("%s claimed the bounty on %s%s.", who, orThing(e.Subject, "a mark"), e.at())
 	case Rites:
 		name := orThing(e.Subject, "one of their own")
 		gone := ""
@@ -283,7 +297,11 @@ type Filter struct {
 	Member string // a deed naming this member (case-insensitive)
 	Key    string // a deed naming the member with this company key
 	Since  int64  // at or after this Unix time
-	Limit  int    // at most this many, newest first; 0 is no limit
+	Zone   string // a deed done in this zone (Phase 76)
+	// AfterSeq keeps only deeds numbered above it, so a bounty counts what
+	// happened after it was taken even within one second (Phase 76).
+	AfterSeq int
+	Limit    int // at most this many, newest first; 0 is no limit
 }
 
 // Matches reports whether e passes the filter (Limit aside).
@@ -303,6 +321,12 @@ func (f Filter) Matches(e Entry) bool {
 		return false
 	}
 	if f.Since > 0 && e.At < f.Since {
+		return false
+	}
+	if f.Zone != "" && f.Zone != e.Zone {
+		return false
+	}
+	if f.AfterSeq > 0 && e.Seq <= f.AfterSeq {
 		return false
 	}
 	if f.Key != "" {
