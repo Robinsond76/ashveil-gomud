@@ -132,10 +132,14 @@ type fakeWorld struct {
 	company storyevents.Company
 	rooms   map[int]fakeRoom
 	busy    bool
-	sent    []string
-	pushed  []payload
-	calls   []call
-	level   int
+	// resting holds a scene back unless the caller is the camp trigger.
+	resting bool
+	// loyaltyStuck: no companion's loyalty can move (none, or all at a bound).
+	loyaltyStuck bool
+	sent         []string
+	pushed       []payload
+	calls        []call
+	level        int
 }
 
 type fakeRoom struct {
@@ -181,8 +185,8 @@ func (f *fakeWorld) Zone(id int) (string, []string, bool) {
 	r, ok := f.rooms[id]
 	return r.zone, r.tags, ok
 }
-func (f *fakeWorld) Busy(int, int, bool) bool { return f.busy }
-func (f *fakeWorld) FoeLevel(int, int) int    { return f.level }
+func (f *fakeWorld) Busy(_, _ int, camp bool) bool { return f.busy || (f.resting && !camp) }
+func (f *fakeWorld) FoeLevel(int, int) int         { return f.level }
 func (f *fakeWorld) rec(kind, format string, args ...any) string {
 	f.calls = append(f.calls, call{kind, fmt.Sprintf(format, args...)})
 	return ""
@@ -204,11 +208,16 @@ func (f *fakeWorld) TakeItems(_ int, item, n int) string {
 }
 func (f *fakeWorld) Gold(_ int, n int) string { return f.rec("gold", "%d", n) }
 func (f *fakeWorld) Loyalty(_ int, op string, who []storyevents.Facts, n int) string {
+	if f.loyaltyStuck {
+		f.calls = append(f.calls, call{"loyalty", "unchanged"})
+		return ""
+	}
 	names := []string{}
 	for _, m := range who {
 		names = append(names, m.Name)
 	}
-	return f.rec("loyalty", "%s %d %s", strings.Join(names, ","), n, op)
+	f.rec("loyalty", "%s %d %s", strings.Join(names, ","), n, op)
+	return strings.Join(names, ", ") + " thinks less of you."
 }
 func (f *fakeWorld) Battle(_ int, room int, foes []storyevents.Foe) string {
 	return f.rec("battle", "room %d %v", room, foes)
@@ -312,7 +321,7 @@ func (r *rig) pending() *Pending {
 	return r.m.state[r.w.user.UserId].Pending
 }
 
-func (r *rig) choose(n int) { r.m.choose(r.w.user.UserId, n) }
+func (r *rig) choose(n int) { r.m.choose(r.w.user.UserId, n, "") }
 
 func TestARoomTriggerOpensTheFirstPageWithItsChoices(t *testing.T) {
 	r := newRig(t)
@@ -566,7 +575,7 @@ func TestChooseRefusesBadAnswers(t *testing.T) {
 	assert.Contains(t, r.w.last(), "Choose a number from 1 to 3")
 	r.w.busy = true
 	r.choose(3)
-	assert.Contains(t, r.w.last(), "middle of a fight")
+	assert.Contains(t, r.w.last(), "finish the fight")
 	assert.NotNil(t, r.pending())
 }
 
@@ -640,4 +649,106 @@ func TestPurgeAndTestAreaSnapshotsCoverTheState(t *testing.T) {
 	_, held := r.m.state[7]
 	r.m.mu.Unlock()
 	assert.False(t, held)
+}
+
+// TestNoAnswerDuringARest: a page that waits while the company starts a
+// rest cannot be answered (an answer may move it or start a fight) until
+// the rest ends.
+func TestNoAnswerDuringARest(t *testing.T) {
+	r := newRig(t)
+	require.True(t, r.enter(10))
+	r.w.resting = true
+	r.choose(2)
+	assert.Contains(t, r.w.last(), "finish the fight or the rest")
+	assert.Equal(t, "start", r.pending().Page)
+	assert.Empty(t, r.w.calls)
+	r.w.resting = false
+	r.choose(2)
+	assert.Equal(t, "ledge", r.pending().Page)
+}
+
+// TestLeavingAfterAnAnswerCountsTheSceneDone: once an answer has paid out,
+// leaving the room by any road (a death, a teleport) ends the scene for
+// good, so its rewards cannot be taken again.
+func TestLeavingAfterAnAnswerCountsTheSceneDone(t *testing.T) {
+	r := newRig(t)
+	require.True(t, r.enter(10))
+	r.choose(2) // down to the ledge, room 11
+	r.w.user.Character.RoomId = 11
+	require.Equal(t, "ledge", r.pending().Page)
+	r.w.user.Character.RoomId = 99 // carried off
+	_, _, ok := r.m.waiting(7)
+	assert.False(t, ok)
+	assert.Nil(t, r.pending())
+	r.m.mu.Lock()
+	_, done := r.m.state[7].Done["cliff"]
+	r.m.mu.Unlock()
+	assert.True(t, done, "a scene left after an answer is done")
+	assert.False(t, r.enter(10), "and does not open again")
+	assert.Equal(t, 1, len(r.store.saved.Companies[7].Done), "and that is saved")
+}
+
+// TestAnAnswerForATurnedPageIsIgnored: the web client sends the page token
+// with its answer; a second click meant for the page before is dropped
+// instead of answering the next page.
+func TestAnAnswerForATurnedPageIsIgnored(t *testing.T) {
+	r := newRig(t)
+	require.True(t, r.enter(10))
+	p := r.w.pushed[len(r.w.pushed)-1]
+	assert.Equal(t, "cliff/start", p.Page)
+	r.m.choose(7, 2, p.Page)
+	r.w.user.Character.RoomId = 11
+	require.Equal(t, "ledge", r.pending().Page)
+	calls := len(r.w.calls)
+	r.m.choose(7, 2, p.Page) // the double click
+	assert.Equal(t, "ledge", r.pending().Page, "the next page is not answered")
+	assert.Equal(t, calls, len(r.w.calls))
+	r.m.choose(7, 2, "cliff/ledge")
+	assert.Nil(t, r.pending(), "the right token answers")
+}
+
+// TestCompanyFlagsSeam: later phases (68) read and set a company's flags
+// through internal/storyevents, saved, and requirements see them.
+func TestCompanyFlagsSeam(t *testing.T) {
+	r := newRig(t)
+	assert.Empty(t, r.m.CompanyFlags(7))
+	require.NoError(t, r.m.SetCompanyFlag(7, "searched"))
+	assert.Equal(t, []string{"searched"}, r.m.CompanyFlags(7))
+	assert.Equal(t, []string{"searched"}, r.store.saved.Companies[7].Flags, "saved at once")
+	// The road-camp visitor needs the flag.
+	r.w.user.Character.RoomId = 30
+	r.m.campRestEnded(7, 30)
+	assert.NotNil(t, r.pending(), "a flag set from outside opens a gated scene")
+
+	r.store.fail = errors.New("disk full")
+	assert.Error(t, r.m.SetCompanyFlag(7, "other"))
+	assert.Equal(t, []string{"searched"}, r.m.CompanyFlags(7), "a failed save rolls back")
+
+	storyevents.SetFlagProvider(r.m)
+	defer storyevents.SetFlagProvider(module)
+	r.store.fail = nil
+	assert.True(t, storyevents.HasCompanyFlag(7, "searched"))
+	assert.Error(t, storyevents.SetCompanyFlag(7, "Not A Flag"))
+	require.NoError(t, storyevents.SetCompanyFlag(7, "fed-the-deserter"))
+	assert.True(t, storyevents.HasCompanyFlag(7, "fed-the-deserter"))
+}
+
+// TestALoyaltyLineOnlyWhenLoyaltyMoved: a scene's own line for a loyalty
+// outcome is not shown when nobody's loyalty changed.
+func TestALoyaltyLineOnlyWhenLoyaltyMoved(t *testing.T) {
+	src := strings.Replace(fixture, "              amount: -3\n", "              amount: -3\n              line: \"{who} frowns.\"\n", 1)
+	r := newRig(t, src)
+	r.w.loyaltyStuck = true
+	require.True(t, r.enter(10))
+	r.choose(2)
+	r.w.user.Character.RoomId = 11
+	r.choose(1)
+	assert.NotContains(t, strings.Join(r.w.sent, "\n"), "frowns")
+
+	r = newRig(t, src)
+	require.True(t, r.enter(10))
+	r.choose(2)
+	r.w.user.Character.RoomId = 11
+	r.choose(1)
+	assert.Contains(t, strings.Join(r.w.sent, "\n"), "frowns")
 }

@@ -18,27 +18,35 @@ var outcomeOrder = map[string]int{
 	storyevents.OutcomeBattle: 9,
 }
 
-// choose answers the waiting page with the n-th choice (1-based).
-func (m *Module) choose(userID, n int) {
+// choose answers the waiting page with the n-th choice (1-based). page,
+// when set, is the page token the answer was given on (the web client sends
+// it); an answer meant for a page that has already turned is refused, so a
+// double click never answers the next page too.
+func (m *Module) choose(userID, n int, page string) {
 	ev, p, ok := m.waiting(userID)
 	if !ok {
 		m.w.Send(userID, "No scene is waiting on your company.")
+		return
+	}
+	if page != "" && page != pageToken(ev.ID, p.Page) {
 		return
 	}
 	user := m.w.User(userID)
 	if user == nil || user.Character == nil {
 		return
 	}
-	if m.w.Busy(userID, p.Room, true) {
-		m.w.Send(userID, "Not in the middle of a fight.")
+	// camp = false: an answer can move the company or start a fight, so
+	// none is taken during a rest either.
+	if m.w.Busy(userID, p.Room, false) {
+		m.w.Send(userID, "Not now: finish the fight or the rest first.")
 		return
 	}
-	page := ev.Pages[p.Page]
-	if n < 1 || n > len(page.Choices) {
-		m.w.Send(userID, fmt.Sprintf("Choose a number from 1 to %d.", len(page.Choices)))
+	pg := ev.Pages[p.Page]
+	if n < 1 || n > len(pg.Choices) {
+		m.w.Send(userID, fmt.Sprintf("Choose a number from 1 to %d.", len(pg.Choices)))
 		return
 	}
-	c := page.Choices[n-1]
+	c := pg.Choices[n-1]
 	members := m.w.Members(userID)
 	m.mu.Lock()
 	flags := m.state[userID].flagSet()
@@ -179,7 +187,10 @@ func (m *Module) apply(userID int, eventID string, op, index int, room *int, act
 		say(m.w.Gold(userID, o.Amount), actor)
 	case storyevents.OutcomeLoyalty:
 		who := m.targets(o, actor, members)
-		say(m.w.Loyalty(userID, opID, who, o.Amount), actor)
+		// A custom line only when someone's loyalty actually moved.
+		if line := m.w.Loyalty(userID, opID, who, o.Amount); line != "" {
+			say(line, actor)
+		}
 	case storyevents.OutcomeFlag:
 		say("", actor)
 	case storyevents.OutcomeMove:

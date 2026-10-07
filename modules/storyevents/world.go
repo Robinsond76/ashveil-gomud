@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -69,6 +73,13 @@ func (liveWorld) Lookups() storyevents.Lookups {
 		Room:    func(id int) bool { return rooms.LoadRoom(id) != nil },
 		Skill:   skills.SkillExists,
 		Ailment: func(kind string) bool { _, ok := survival.AilmentFor(kind); return ok },
+		Class: func(id string) bool {
+			if _, ok := classes.Get(id); ok {
+				return true
+			}
+			return slices.Contains(classes.Lineages(), id) || archetypes.Exists(id)
+		},
+		Personality: func(name string) bool { return slices.Contains(banter.Personalities, name) },
 	}
 }
 
@@ -301,21 +312,25 @@ func (liveWorld) Gold(userID, amount int) string {
 
 func (liveWorld) Loyalty(userID int, op string, members []storyevents.Facts, delta int) string {
 	var ids []int
-	var names []string
 	for _, f := range members {
 		if id, ok := survival.CompanionIDFromMemberKey(keyOf(f)); ok && !f.Leader {
 			ids = append(ids, id)
-			names = append(names, f.Name)
 		}
 	}
 	if len(ids) == 0 {
 		return ""
 	}
-	if _, err := company.AdjustLoyaltyOnce(userID, op, ids, delta); err != nil {
+	changed, err := company.AdjustLoyaltyOnce(userID, op, ids, delta)
+	if err != nil {
 		mudlog.Warn("storyevents: loyalty", "user", userID, "error", err)
 		return ""
 	}
-	who := strings.Join(names, ", ")
+	// Only those whose loyalty moved (one at the bound, or without a
+	// disposition, is left out of the line).
+	if len(changed) == 0 {
+		return ""
+	}
+	who := strings.Join(changed, ", ")
 	if delta > 0 {
 		return fmt.Sprintf("%s thinks better of you.", who)
 	}

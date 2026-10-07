@@ -8,13 +8,15 @@
  * `event` in the input shows it again.
  *
  * Responds to GMCP namespace:
- *   Event - { active, id, title, picture, text, result: [line],
+ *   Event - { active, id, page, title, picture, text, result: [line],
  *             choices: [{n, label, open, who, needs, risk}] }
  *   active false closes the screen; with `result` lines it first shows how
  *   the scene ended, with a Continue button.
  *
- * Every server string is set with textContent. A choice sends `choose <n>`;
- * the number keys 1 to 6 do the same while the screen is open. A picture is
+ * Every server string is set with textContent. A choice sends
+ * `choose <n> <page>`, the page token naming the page it answers, so a
+ * double click never answers the next page too; the number keys 1 to 6 do
+ * the same while the screen is open (closing it stops them). A picture is
  * `static/images/events/<picture>.png`; a missing file is simply not shown.
  */
 
@@ -47,6 +49,7 @@
         }
         return {
             title: payload.title || '',
+            page: /^[a-z0-9-]+\/[a-z0-9-]+$/.test(payload.page || '') ? payload.page : '',
             picture: /^[a-z0-9-]+$/.test(payload.picture || '') ? payload.picture : '',
             result: result,
             paragraphs: String(payload.text || '').split(/\n\s*\n/).map(function(p) { return p.trim(); }).filter(Boolean),
@@ -65,8 +68,13 @@
         return hit.length ? hit[0] : null;
     }
 
+    // commandFor is what answering choice n of a view sends.
+    function commandFor(view, n) {
+        return view && view.page ? 'choose ' + n + ' ' + view.page : 'choose ' + n;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { viewOf: viewOf, noteOf: noteOf, choiceForKey: choiceForKey };
+        module.exports = { viewOf: viewOf, noteOf: noteOf, choiceForKey: choiceForKey, commandFor: commandFor };
     }
     if (typeof document === 'undefined') { return; }
 
@@ -99,7 +107,15 @@
         document.head.appendChild(s);
     }
 
-    function send(n) { Client.SendInput('choose ' + n); }
+    function send(n) { Client.SendInput(commandFor(current, n)); }
+
+    // onScreen reports whether the scene is still drawn: the player may
+    // have closed the modal (Esc, the cross, the backdrop) or another
+    // screen may have taken it over.
+    function onScreen() {
+        const root = document.getElementById('story-event');
+        return !!root && root.getClientRects().length > 0;
+    }
 
     function draw(view) {
         style();
@@ -157,6 +173,10 @@
     if (!keyHandler) {
         keyHandler = function(ev) {
             if (!current || ev.ctrlKey || ev.metaKey || ev.altKey) { return; }
+            if (!onScreen()) {
+                current = null;
+                return;
+            }
             const tag = ev.target && ev.target.tagName;
             if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
             const hit = choiceForKey(current, ev.key);

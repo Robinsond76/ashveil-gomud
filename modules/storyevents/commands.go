@@ -24,11 +24,22 @@ func (m *Module) chooseCommand(rest string, user *users.UserRecord, _ *rooms.Roo
 		user.SendText("No scene is waiting on your company.")
 		return true, nil
 	}
-	n, err := strconv.Atoi(rest)
+	// The web client adds the page token after the number.
+	fields := strings.Fields(rest)
+	page := ""
+	if len(fields) == 2 {
+		page = fields[1]
+	}
+	n, err := 0, error(nil)
+	if len(fields) == 0 || len(fields) > 2 {
+		err = strconv.ErrSyntax
+	} else {
+		n, err = strconv.Atoi(fields[0])
+	}
 	if err != nil {
 		user.SendText("Usage: choose <number>. <ansi fg=\"command\">event</ansi> shows the choices again.")
 		return true, nil
 	}
-	m.choose(user.UserId, n)
+	m.choose(user.UserId, n, page)
 	return true, nil
 }

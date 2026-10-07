@@ -283,12 +283,13 @@ func TestAFailedClimbWoundsTheLeader(t *testing.T) {
 	s.run("go", "northeast")
 	s.rolls = []int{0} // under the risk: the ring tears out
 	out := s.run("choose", "2")
-	assert.Contains(t, out, "The ring tears out of the stone")
+	assert.Contains(t, out, "The rope slips through your hands")
 	assert.Contains(t, out, "Aldous is left with")
 	require.Len(t, s.user.Character.Wounds, 1)
 	assert.Greater(t, s.user.Character.Wounds[0].Points, 0)
-	assert.Equal(t, "", s.pendingPage())
-	assert.Equal(t, 90011, s.room(), "a failed climb ends the scene where it began")
+	// The fall lands where the text says: on the ledge, scene still open.
+	assert.Equal(t, "gorge-descent/ledge", s.pendingPage())
+	assert.Equal(t, 90014, s.room(), "a failed climb still reaches the ledge")
 }
 
 // TestAClimberCompanionTakesTheChoiceAndPaysForTheFall: a rogue companion
@@ -390,7 +391,7 @@ func leaderNeeds(t *testing.T, s *scene) survival.Needs {
 }
 
 // TestTheShrineCooldownAilmentAndGold: a risky choice's failure gives a
-// real ailment; a success pays gold; the cooldown holds the scene back.
+// real ailment; the shrine comes once, so walking in again opens nothing.
 func TestTheShrineCooldownAilmentAndGold(t *testing.T) {
 	s := newScene(t)
 	out := s.run("go", "southeast")
@@ -405,7 +406,7 @@ func TestTheShrineCooldownAilmentAndGold(t *testing.T) {
 	assert.Contains(t, out, "Aldous comes down with a gut-ache.")
 	assert.True(t, survival.HasAilment(leaderNeeds(t, s)))
 
-	// The cooldown is saved: walking in again at once does nothing.
+	// It is done for good: walking in again does nothing.
 	s.run("go", "northwest")
 	s.run("go", "southeast")
 	assert.Equal(t, "", s.pendingPage())

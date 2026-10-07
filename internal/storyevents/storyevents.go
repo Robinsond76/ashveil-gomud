@@ -203,7 +203,7 @@ type Requirement struct {
 // CompanyRequirement is the part of a requirement the company meets as a
 // whole.
 type CompanyRequirement struct {
-	Item    int    `yaml:"item,omitempty"` // carried in the packs or cargo
+	Item    int    `yaml:"item,omitempty"` // in the company's shared cargo
 	Gold    int    `yaml:"gold,omitempty"`
 	Flag    string `yaml:"flag,omitempty"`
 	NotFlag string `yaml:"not_flag,omitempty"`
@@ -407,6 +407,9 @@ type Lookups struct {
 	Room    func(id int) bool
 	Skill   func(id string) bool
 	Ailment func(kind string) bool
+	// Class accepts an archetype or class id; Personality a temperament.
+	Class       func(id string) bool
+	Personality func(name string) bool
 }
 
 func (l Lookups) item(id int) bool { return l.Item == nil || l.Item(id) }
@@ -496,6 +499,17 @@ func (e Event) validatePage(id string, p Page, l Lookups) []string {
 		if c.Require.Free() && !spendsOrGambles(c) {
 			free = true
 		}
+		for _, cls := range c.Require.Classes {
+			if l.Class != nil && !l.Class(strings.ToLower(cls)) {
+				bad("choice %d: unknown class %q", n, cls)
+			}
+		}
+		if pers := c.Require.Personality; pers != "" && l.Personality != nil && !l.Personality(strings.ToLower(pers)) {
+			bad("choice %d: unknown personality %q", n, pers)
+		}
+		if e.CooldownMinutes > 0 && (gains(c.Do) || gains(c.Fail)) {
+			bad("choice %d: an event that returns cannot give gold, items or loyalty", n)
+		}
 		if c.Require.Skill != "" && l.Skill != nil && !l.Skill(strings.ToLower(c.Require.Skill)) {
 			bad("choice %d: unknown skill %q", n, c.Require.Skill)
 		}
@@ -546,6 +560,22 @@ func (e Event) validatePage(id string, p Page, l Lookups) []string {
 		bad("needs a choice anyone can always take (no requirement, no cost, no risk)")
 	}
 	return errs
+}
+
+// gains reports whether outcomes give the company something it could farm
+// from an event that returns: gold, items or loyalty.
+func gains(list []Outcome) bool {
+	for _, o := range list {
+		switch o.Kind {
+		case OutcomeItem:
+			return true
+		case OutcomeGold, OutcomeLoyalty:
+			if o.Amount > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func hasBattle(list []Outcome) bool {

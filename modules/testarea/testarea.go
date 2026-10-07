@@ -73,7 +73,7 @@ var roomList = []struct {
 	{90011, "gorge", "story event: a gorge and a rope (help events)"},
 	{90012, "stranger", "story event: a wounded stranger at a fire"},
 	{90013, "shrine", "story event: a burned shrine"},
-	{90014, "ledge", "where the gorge scene leads; no exit"},
+	{90014, "ledge", "where the gorge scene leads; up climbs back"},
 }
 
 // Module is the test area's state.

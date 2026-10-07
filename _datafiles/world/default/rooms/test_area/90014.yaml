@@ -2,10 +2,13 @@ roomid: 90014
 zone: Test Area
 title: Gorge Ledge
 description: >-
-  A shelf of wet rock a spear's length wide, with the gorge's far wall close enough to touch. A dead man lies against the stone with his pack still on, long past stinking. The rope you came down hangs a few steps along. This room has no exit: the scene brings you here and carries you back up.
+  A shelf of wet rock a spear's length wide, with the gorge's far wall close enough to touch. A dead man lies against the stone with his pack still on, long past stinking. The rope you came down hangs a few steps along, and you can climb it back up.
 biome: cliffs
 tags:
   - lit
+exits:
+  up:
+    roomid: 90011
 mapx: 1
 mapy: -1
 mapz: -1

@@ -7,10 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const { viewOf, noteOf, choiceForKey } = require(path.join(here, '../../_datafiles/html/public/static/js/windows/window-event.js'));
+const { viewOf, noteOf, choiceForKey, commandFor } = require(path.join(here, '../../_datafiles/html/public/static/js/windows/window-event.js'));
 
 const page = {
-  active: true, id: 'gorge-descent', title: 'The Gorge', picture: 'gorge',
+  active: true, id: 'gorge-descent', page: 'gorge-descent/start', title: 'The Gorge', picture: 'gorge',
   text: 'The road ends at air.\n\nA rope hangs from the ring.',
   result: ['The rope holds.'],
   choices: [
@@ -54,4 +54,10 @@ test('number keys answer open choices only', () => {
 
 test('a closed choice with no stated need still reads closed', () => {
   assert.equal(noteOf({ open: false }), 'closed');
+});
+
+test('an answer names the page it answers, so a double click cannot answer the next page', () => {
+  assert.equal(commandFor(viewOf(page), 2), 'choose 2 gorge-descent/start');
+  assert.equal(commandFor(viewOf({ ...page, page: 'bad token!' }), 2), 'choose 2', 'a malformed token is not sent');
+  assert.equal(commandFor(null, 1), 'choose 1');
 });

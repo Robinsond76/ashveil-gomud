@@ -180,6 +180,7 @@ func init() {
 	walking.AddArrivalListener(func(userID, _, roomID int) { m.entered(userID, roomID, true) })
 	camping.AddRestEndListener(m.campRestEnded)
 	storyevents.SetMovementProvider(m)
+	storyevents.SetFlagProvider(m)
 	module = m
 }
 
@@ -260,10 +261,13 @@ func readEventFiles() map[string][]byte {
 // once.
 func (m *Module) events() storyevents.Catalog {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	if m.catalog != nil {
+		defer m.mu.Unlock()
 		return *m.catalog
 	}
+	m.mu.Unlock()
+	// Built outside the lock: validation reaches into the world (rooms,
+	// items, mobs), and mu stays a leaf lock.
 	files := m.readFiles()
 	names := make([]string, 0, len(files))
 	for n := range files {
@@ -274,17 +278,28 @@ func (m *Module) events() storyevents.Catalog {
 	for _, n := range names {
 		list, err := storyevents.Parse(files[n])
 		if err != nil {
-			m.warnOnceLocked("file:"+n, "storyevents: events file skipped", "file", n, "error", err)
+			m.warnOnce("file:"+n, "storyevents: events file skipped", "file", n, "error", err)
 			continue
 		}
 		all = append(all, list...)
 	}
 	cat, problems := storyevents.NewCatalog(all, m.w.Lookups())
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.catalog != nil {
+		return *m.catalog
+	}
 	for _, p := range problems {
 		m.warnOnceLocked("event:"+p, "storyevents: event disabled", "reason", p)
 	}
 	m.catalog = &cat
 	return cat
+}
+
+func (m *Module) warnOnce(key, msg string, args ...any) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.warnOnceLocked(key, msg, args...)
 }
 
 func (m *Module) warnOnceLocked(key, msg string, args ...any) {
@@ -316,27 +331,41 @@ func (m *Module) waiting(userID int) (storyevents.Event, Pending, bool) {
 	}
 	p := *st.Pending
 	ev, found := m.events().Get(p.Event)
-	user := m.w.User(userID)
-	if !found || user == nil || user.Character == nil || user.Character.RoomId != p.Room {
-		m.drop(userID, p)
+	if !found {
+		m.drop(userID, p, false)
 		return storyevents.Event{}, Pending{}, false
 	}
 	if _, ok := ev.Pages[p.Page]; !ok {
-		m.drop(userID, p)
+		m.drop(userID, p, false)
+		return storyevents.Event{}, Pending{}, false
+	}
+	user := m.w.User(userID)
+	if user == nil || user.Character == nil || user.Character.RoomId != p.Room {
+		// Past the first page an answer has already paid out, so the
+		// scene counts as done: leaving mid-scene must not reopen it.
+		m.drop(userID, p, p.Page != ev.StartPage())
 		return storyevents.Event{}, Pending{}, false
 	}
 	return ev, p, true
 }
 
-// drop forgets a page that can no longer be answered.
-func (m *Module) drop(userID int, p Pending) {
+// drop forgets a page that can no longer be answered; done marks the event
+// finished, as a scene left after an answer was.
+func (m *Module) drop(userID int, p Pending, done bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	st, ok := m.state[userID]
-	if !ok || st.Pending == nil || *st.Pending != p {
+	cur, ok := m.state[userID]
+	if !ok || cur.Pending == nil || *cur.Pending != p {
 		return
 	}
+	st := cur.clone()
 	st.Pending = nil
+	if done {
+		if st.Done == nil {
+			st.Done = map[string]int64{}
+		}
+		st.Done[p.Event] = m.clock().Unix()
+	}
 	m.state[userID] = st
 	if err := m.saveLocked(); err != nil {
 		mudlog.Warn("storyevents: save after dropping a page", "user", userID, "error", err)
@@ -369,4 +398,35 @@ func (m *Module) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	}
 	m.reshow(evt.UserId, "")
 	return events.Continue
+}
+
+// CompanyFlags implements storyevents.FlagProvider: the company's flags,
+// sorted.
+func (m *Module) CompanyFlags(leaderUserID int) []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]string(nil), m.state[leaderUserID].Flags...)
+}
+
+// SetCompanyFlag implements storyevents.FlagProvider: the flag is saved at
+// once and rolled back if the save fails.
+func (m *Module) SetCompanyFlag(leaderUserID int, flag string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur, had := m.state[leaderUserID]
+	st := cur.clone()
+	st.addFlag(flag)
+	if len(st.Flags) == len(cur.Flags) {
+		return nil
+	}
+	m.state[leaderUserID] = st
+	if err := m.saveLocked(); err != nil {
+		if had {
+			m.state[leaderUserID] = cur
+		} else {
+			delete(m.state, leaderUserID)
+		}
+		return err
+	}
+	return nil
 }

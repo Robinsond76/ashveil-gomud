@@ -5,7 +5,7 @@ Short scripted scenes with choices (spec: [Pillars phases](2026-10-07-pillars-ph
 ## Shape
 
 - **Rules** in `internal/storyevents` (types, YAML parse, validation, `Best`, risk, catalog, trigger lookup, movement seam, tag-source seam). **Module** in `modules/storyevents` (saved state, triggers, `event` and `choose` commands, effects on the world, GMCP `Event`). Data: `modules/storyevents/events/*.yaml` (embedded) plus an optional `<DataFiles>/events/*.yaml` in the world (disk wins by file name).
-- Triggers: `room` (an exact room), `tag` (any room with the tag; a lair door is a tagged room), `arrival` (a journey ends in a room or zone), `camp` (a camp rest finishes). Each has `chance`, a level range, once-per-company or a cooldown, and required or forbidden flags.
+- Triggers: `room` (an exact room), `tag` (any room with the tag; a lair door is a tagged room), `arrival` (a journey ends in a zone), `camp` (a camp rest finishes). Each has `chance`, a level range, once-per-company or a cooldown, and required or forbidden flags.
 - Outcomes: `wound`, `ailment`, `need`, `item`, `lose_item`, `gold`, `loyalty`, `battle`, `move`, `flag`; targets `actor`, `leader`, `all`, `random`.
 - Web: a modal (`window-event.js`) with number keys and a Continue button on ended scenes. Telnet: `event` rereads the page, `choose N` answers.
 
@@ -24,12 +24,15 @@ Short scripted scenes with choices (spec: [Pillars phases](2026-10-07-pillars-ph
 | Gold is capped at ±500, items at 10, wound at 50%, need at 60, loyalty at 25, risk at 95%, six choices, battle 2-5 foes. | Keeps data from breaking the economy; validation drops events that exceed them. |
 | Every page needs a free choice; the page graph is acyclic and fully reachable; risks need fail text or fail outcomes; a battle ends the event. | A scene can never trap a company or loop; one outcome path stays simple. |
 | Picture keys match `^[a-z0-9][a-z0-9-]{0,47}$`, drawn from `static/images/events/<key>.png`. | Art can follow without code changes. |
-| Tag sources (`storyevents.RegisterTagSource`) and company flags are the hooks. | Phase 72 backgrounds add tags per member; phase 68 reads and sets flags. |
+| Tag sources (`storyevents.RegisterTagSource`) and company flags (`storyevents.CompanyFlags`, `HasCompanyFlag`, `SetCompanyFlag`) are the hooks. | Phase 72 backgrounds add tags per member; phase 68 reads and sets flags. |
+| (Review) A scene left after an answer (death, teleport, being moved) counts as done; one left on its first page is dropped and can open again. | An answer may already have paid out; reopening would let rewards be taken again. |
+| (Review) An event with a cooldown may cost the company but never give gold, items or loyalty (validation). | A returning scene must not be a farm. |
+| (Review) No answer while the company rests; the web client sends `choose N <event>/<page>` and an answer for a turned page is ignored. | An answer can move the company or start a fight; a double click must not answer the next page. |
 | Broken events are skipped with one warning each, not fatal. | A bad data file must never stop the server. |
 
 ## Acceptance
 
-- Three test scenes in the Test Area (rooms 90011-90014, reached from the hub 90001): a climb (`gorge-descent`: skill-gated rope, a fall wound, a move to the ledge), a stranger (`stranger-at-the-fire`: share food, a healer, robbery that starts a fight), a shrine (`burned-shrine`: devout and alignment gates, an ailment on failure, a 30-minute cooldown).
+- Three test scenes in the Test Area (rooms 90011-90014, reached from the hub 90001): a climb (`gorge-descent`: skill-gated rope, a fall wound, a move to the ledge), a stranger (`stranger-at-the-fire`: share food, a healer, robbery that starts a fight), a shrine (`burned-shrine`: devout and alignment gates, an ailment on failure; once per company, since a returning scene may not give gold or loyalty).
 - Each outcome kind is tested through the real trigger in `modules/storyevents/wiring_test.go` (a real `go` step through the loaded world); `storyevents_test.go` covers trigger rules, holds, restart, stale pages, save-before-apply, bad answers, purge and userstate.
 - Help: `help events` (aliases `event`, `scene`, `choose`, …), linked from `adventure`, `travel` and `camp`; Departure tutorial hint; `TestEventsHelp` and `TestTutorialHelpPointersExist`.
 

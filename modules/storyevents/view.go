@@ -11,8 +11,10 @@ import (
 // is false when no page is waiting (Result then carries the last outcome,
 // once, so the modal can show how the scene ended).
 type payload struct {
-	Active  bool         `json:"active"`
-	ID      string       `json:"id,omitempty"`
+	Active bool   `json:"active"`
+	ID     string `json:"id,omitempty"`
+	// Page is the page token the web client sends back with its answer.
+	Page    string       `json:"page,omitempty"`
 	Title   string       `json:"title,omitempty"`
 	Picture string       `json:"picture,omitempty"`
 	Text    string       `json:"text,omitempty"`
@@ -32,6 +34,9 @@ type choiceView struct {
 	// thing.
 	Risk string `json:"risk,omitempty"`
 }
+
+// pageToken names one page of one event, for answers from the web client.
+func pageToken(eventID, pageID string) string { return eventID + "/" + pageID }
 
 // riskWord puts a failure chance in words; numbers stay out of the page.
 func riskWord(pct int) string {
@@ -94,7 +99,7 @@ func (m *Module) pageView(userID int, ev storyevents.Event, pageID string, resul
 		picture = ev.Picture
 	}
 	return payload{
-		Active: true, ID: ev.ID, Title: ev.Title, Picture: picture, Text: page.Text,
+		Active: true, ID: ev.ID, Page: pageToken(ev.ID, pageID), Title: ev.Title, Picture: picture, Text: page.Text,
 		Result: result, Choices: m.choiceViews(page, members, co),
 	}
 }

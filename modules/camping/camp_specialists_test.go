@@ -697,4 +697,18 @@ func TestAFinishedRestTellsTheCampListeners(t *testing.T) {
 	w.user.Character.RoomId = 555
 	w.m.onNewRound(events.NewRound{})
 	assert.Empty(t, restEnds, "walking away forfeits the camp scene too")
+
+	// A reward whose settling could not be saved stays owed and is paid on
+	// a later round; the camp scene is told only then, once.
+	restEnds = nil
+	w, _ = rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.store.saveErr = errors.New("disk full")
+	w.m.onNewRound(events.NewRound{})
+	assert.Empty(t, restEnds, "not while the reward is still owed")
+	w.store.saveErr = nil
+	w.m.onNewRound(events.NewRound{})
+	assert.Equal(t, [][2]int{{7, 100}}, restEnds)
 }

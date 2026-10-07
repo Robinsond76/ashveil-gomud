@@ -38,11 +38,14 @@
             - kind: move
               room: 90014
           next: ledge
-          fail_text: The ring tears out of the stone and the rope goes with you. You land on your side, on the ledge, and lie there.
+          fail_text: The rope slips through your hands the last stretch. You land on your side, on the ledge, and lie there while the rope swings above you.
           fail:
             - kind: wound
               who: leader
               pct: 25
+            - kind: move
+              room: 90014
+          fail_next: ledge
         - label: Turn back from the edge
           text: A bridge that fell is not worth a company that follows it.
     ledge:
@@ -146,7 +149,6 @@
 - id: burned-shrine
   title: The Burned Shrine
   picture: shrine
-  cooldown_minutes: 30
   triggers:
     - kind: room
       room: 90013

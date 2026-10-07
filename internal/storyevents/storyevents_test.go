@@ -109,6 +109,37 @@ func TestValidationChecksIDsAgainstTheWorld(t *testing.T) {
 	assert.Contains(t, got, "item 999 does not exist")
 	assert.Contains(t, got, "move room 888 does not exist")
 	assert.Contains(t, got, `unknown skill "nonsense"`)
+
+	e = goodEvent()
+	e.Pages["start"].Choices[0].Require = Requirement{Classes: []string{"rogue", "rouge"}, Personality: "devoot"}
+	got = strings.Join(e.Validate(Lookups{
+		Class:       func(id string) bool { return id == "rogue" },
+		Personality: func(p string) bool { return p == "devout" },
+	}), "\n")
+	assert.Contains(t, got, `unknown class "rouge"`)
+	assert.NotContains(t, got, `unknown class "rogue"`)
+	assert.Contains(t, got, `unknown personality "devoot"`)
+}
+
+// TestAnEventThatReturnsCannotBeFarmed: an event with a cooldown may cost
+// the company but never give it gold, items or loyalty.
+func TestAnEventThatReturnsCannotBeFarmed(t *testing.T) {
+	for _, o := range []Outcome{
+		{Kind: OutcomeGold, Amount: 5},
+		{Kind: OutcomeItem, Item: 1, Count: 1},
+		{Kind: OutcomeLoyalty, Amount: 2},
+	} {
+		e := goodEvent()
+		e.CooldownMinutes = 30
+		e.Pages["start"].Choices[1].Do = []Outcome{o}
+		assert.Contains(t, problems(e), "cannot give gold, items or loyalty", o.Kind)
+		e.CooldownMinutes = 0
+		assert.Empty(t, problems(e), "a once-only event may give %s", o.Kind)
+	}
+	e := goodEvent()
+	e.CooldownMinutes = 30
+	e.Pages["start"].Choices[1].Do = []Outcome{{Kind: OutcomeGold, Amount: -5}, {Kind: OutcomeLoyalty, Amount: -2}}
+	assert.Empty(t, problems(e), "costs are fine on an event that returns")
 }
 
 func TestParseRejectsUnknownFields(t *testing.T) {

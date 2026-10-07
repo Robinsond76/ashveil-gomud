@@ -1,6 +1,10 @@
 package storyevents
 
-import "sync"
+import (
+	"errors"
+	"fmt"
+	"sync"
+)
 
 // MovementProvider is implemented by modules/storyevents. While a page is
 // waiting for the company's answer, ordinary movement refuses with the
@@ -57,4 +61,56 @@ func TagsFor(leaderUserID int, memberKey string) []string {
 		out = append(out, fn(leaderUserID, memberKey)...)
 	}
 	return out
+}
+
+// FlagProvider is implemented by modules/storyevents: a company's flags,
+// the marks scenes leave (Phase 68 towns that remember reads and sets them).
+type FlagProvider interface {
+	CompanyFlags(leaderUserID int) []string
+	SetCompanyFlag(leaderUserID int, flag string) error
+}
+
+var flagProvider FlagProvider
+
+// SetFlagProvider registers the flag provider; nil clears it.
+func SetFlagProvider(p FlagProvider) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	flagProvider = p
+}
+
+// CompanyFlags lists a company's flags, sorted; nil without a provider.
+func CompanyFlags(leaderUserID int) []string {
+	providerMu.RLock()
+	p := flagProvider
+	providerMu.RUnlock()
+	if p == nil {
+		return nil
+	}
+	return p.CompanyFlags(leaderUserID)
+}
+
+// HasCompanyFlag reports whether a company carries a flag.
+func HasCompanyFlag(leaderUserID int, flag string) bool {
+	for _, f := range CompanyFlags(leaderUserID) {
+		if f == flag {
+			return true
+		}
+	}
+	return false
+}
+
+// SetCompanyFlag gives a company a flag, saved. A flag must be lowercase
+// words joined by dashes.
+func SetCompanyFlag(leaderUserID int, flag string) error {
+	if !idPattern.MatchString(flag) {
+		return fmt.Errorf("storyevents: flag %q must be lowercase words joined by dashes", flag)
+	}
+	providerMu.RLock()
+	p := flagProvider
+	providerMu.RUnlock()
+	if p == nil {
+		return errors.New("storyevents: no flag provider")
+	}
+	return p.SetCompanyFlag(leaderUserID, flag)
 }
