@@ -1,12 +1,14 @@
 package company
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/bonds"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -53,21 +55,22 @@ func TestACampRestDrawsSuitedCompanionsCloserAndClashingOnesApart(t *testing.T) 
 	_ = b
 }
 
-func TestTimeTogetherNeverLiftsABondPastFiftyOrDropsOnePastMinusFifty(t *testing.T) {
+func TestTimeTogetherNeverLiftsABondPastFiftyOrDropsOnePastWary(t *testing.T) {
 	newBrawl(t)
 	now := time.Unix(1_800_000_000, 0)
 	withClock(t, &now)
 	banterPercents(t, 0, 0, 0)
 	opine(t, map[int]opinionSetup{1: {"stoic", 0, 50}, 2: {"devout", 0, 50}, 3: {"cheerful", 0, 50}, 4: {"grim", 0, 50}})
 	setBond(t, 1, 2, 49)
-	setBond(t, 3, 4, -49)
+	setBond(t, 3, 4, -24)
 	domain.CampBanter(7, banter.CtxRested)
 	assert.Equal(t, 50, bondOf(t, 1, 2).Value)
-	assert.Equal(t, -50, bondOf(t, 3, 4).Value)
+	assert.Equal(t, -25, bondOf(t, 3, 4).Value)
 	now = now.Add(time.Hour)
 	domain.CampBanter(7, banter.CtxRested)
 	assert.Equal(t, 50, bondOf(t, 1, 2).Value, "camps stop at close")
-	assert.Equal(t, -50, bondOf(t, 3, 4).Value, "and at can't stand")
+	assert.Equal(t, -25, bondOf(t, 3, 4).Value, "and at wary: camping alone never makes rivals (Phase 65 review)")
+	assert.False(t, bonds.IsRival(bondOf(t, 3, 4).Value))
 }
 
 func TestAWonBattleSideBySideIsOnePointUnlessTheyRub(t *testing.T) {
@@ -121,8 +124,8 @@ func TestAgreeingOverAChoiceDrawsCompanionsTogetherAndSplittingPullsThemApart(t 
 	assert.Equal(t, -1, bondOf(t, 2, 3).Value)
 	assert.Equal(t, 0, bondOf(t, 1, 4).Value, "Ysolde saw nothing")
 
-	// A pair already at "can't stand" can be pushed past -50 by a clash,
-	// but never by time together.
+	// Splitting over a choice is a real clash: it takes a pair past wary,
+	// which time together never does (Phase 65 review).
 	setBond(t, 1, 3, -50)
 	now = now.Add(3 * time.Hour) // past the opinions' own cooldown too
 	_, err = module.Opinion(7, opinions.Choice{Kind: opinions.Rough, Op: "camp-2", Witnesses: []int{1, 3}})
@@ -228,7 +231,7 @@ func TestBondsAreShownInWordsAndOnTheInspectLine(t *testing.T) {
 	assert.Contains(t, view, "Tamsin Reed and Brother Oswin are close. (bond +62)")
 	assert.Contains(t, view, "Each steps in once a battle for the other when hurt")
 	assert.Contains(t, view, "Tamsin Reed and Garrick Vane can't stand each other. (bond -60)")
-	assert.Contains(t, view, "Won't guard each other.")
+	assert.Contains(t, view, "Won't guard each other: set a guardian's ward to someone else")
 	assert.Contains(t, view, "are still getting to know each other", "a pair with no bond yet says so")
 	filtered := module.bondsView(7, "oswin")
 	assert.Contains(t, filtered, "Oswin")
@@ -281,11 +284,94 @@ func TestFriendsAndRivalsTalkAboutEachOtherAndItMovesTheirBond(t *testing.T) {
 	assert.Greater(t, bondOf(t, 1, 2).Value, 60-1, "a friend line warms the pair")
 
 	// A rival line sours them, once a half hour.
-	setBond(t, 1, 2, -30)
+	setBond(t, 1, 2, -20)
 	module.bondsFromTalk(7, []banter.Said{{Member: 1, Ctx: banter.CtxRival}, {Member: 2, Ctx: banter.CtxRival}})
-	assert.Equal(t, -31, bondOf(t, 1, 2).Value)
+	assert.Equal(t, -21, bondOf(t, 1, 2).Value)
 	module.bondsFromTalk(7, []banter.Said{{Member: 2, Ctx: banter.CtxRival}, {Member: 1, Ctx: banter.CtxRival}})
-	assert.Equal(t, -31, bondOf(t, 1, 2).Value, "the same half hour")
+	assert.Equal(t, -21, bondOf(t, 1, 2).Value, "the same half hour")
 	module.bondsFromTalk(7, []banter.Said{{Member: 1, Ctx: banter.CtxCamp}, {Member: 2, Ctx: banter.CtxCamp}})
-	assert.Equal(t, -31, bondOf(t, 1, 2).Value, "ordinary talk moves nothing")
+	assert.Equal(t, -21, bondOf(t, 1, 2).Value, "ordinary talk moves nothing")
+}
+
+// Phase 65 review: a rivalry that reaches its end in the middle of a fight
+// marks the leaver, but no one leaves until the fight is over; the next
+// round's retry sends them away.
+func TestARivalryEndingMidFightWaitsForTheFightToEnd(t *testing.T) {
+	b := newBrawl(t)
+	now := time.Unix(1_800_000_000, 0)
+	withClock(t, &now)
+	opine(t, map[int]opinionSetup{1: {"stoic", 0, 60}, 3: {"stoic", 0, 20}})
+	setBond(t, 1, 3, -86)
+	record := companyOf(t)
+	bond, _ := record.BondOf(1, 3)
+	bond.Warned = true
+	record.SetBond(bond)
+	module.registry.Put(record)
+
+	b.aria.Character.Aggro = &characters.Aggro{}
+	k1, k3 := domain.CompanionMemberKey(1), domain.CompanionMemberKey(3)
+	for i := 0; i < 7; i++ { // -88 ... -100
+		now = now.Add(61 * time.Minute)
+		module.BondEvent(7, k1, k3, bonds.Refusal)
+	}
+	leaver, there := findCompanion(companyOf(t), 3)
+	require.True(t, there, "no one leaves in the middle of a fight")
+	assert.True(t, leaver.MoraleDesert, "but the leaver is marked, and saved")
+
+	b.aria.Character.Aggro = nil
+	module.retryReturns()
+	_, there = findCompanion(companyOf(t), 3)
+	assert.False(t, there, "the fight over, they go")
+	_, there = findCompanion(companyOf(t), 1)
+	assert.True(t, there)
+}
+
+// Phase 65 review: a bond change whose save fails leaves nothing behind: no
+// value, no cooldown stamp, so the same event counts once the save works.
+func TestAFailedBondSaveLeavesTheRegistryAsItWas(t *testing.T) {
+	m := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 3, MobTemplateID: 58}},
+			Bonds: []domain.Bond{{A: 1, B: 3, Value: -10}}},
+	}}, &fakeRuntime{})
+	now := time.Unix(1_800_000_000, 0)
+	m.clock = func() time.Time { return now }
+	store := m.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+	k1, k3 := domain.CompanionMemberKey(1), domain.CompanionMemberKey(3)
+	m.BondEvent(7, k1, k3, bonds.Refusal)
+	record, _ := m.registry.Get(7)
+	bond, _ := record.BondOf(1, 3)
+	assert.Equal(t, -10, bond.Value)
+	assert.Empty(t, bond.At, "no cooldown stamp that was never saved")
+
+	store.saveErr = nil
+	m.BondEvent(7, k1, k3, bonds.Refusal)
+	record, _ = m.registry.Get(7)
+	bond, _ = record.BondOf(1, 3)
+	assert.Equal(t, -12, bond.Value, "the refusal counts once the save works")
+}
+
+// Phase 65 review: a warned pair already at the bottom does not lose anyone
+// to time together (a clashing camp that cannot move the bond); only a real
+// clash sends one away.
+func TestAWarnedPairAtTheBottomLeavesOnlyOnARealClash(t *testing.T) {
+	newBrawl(t)
+	now := time.Unix(1_800_000_000, 0)
+	withClock(t, &now)
+	banterPercents(t, 0, 0, 0)
+	opine(t, map[int]opinionSetup{1: {"cheerful", 0, 60}, 2: {"stoic", 0, 50}, 3: {"stoic", 0, 50}, 4: {"grim", 0, 20}})
+	setBond(t, 1, 4, -100)
+	record := companyOf(t)
+	bond, _ := record.BondOf(1, 4)
+	bond.Warned = true
+	record.SetBond(bond)
+	module.registry.Put(record)
+
+	domain.CampBanter(7, banter.CtxRested) // cheerful and grim clash: -1, held at -100
+	_, there := findCompanion(companyOf(t), 4)
+	require.True(t, there, "a camp is not a clash")
+
+	module.BondEvent(7, domain.CompanionMemberKey(1), domain.CompanionMemberKey(4), bonds.Refusal)
+	_, there = findCompanion(companyOf(t), 4)
+	assert.False(t, there, "a refused guard is")
 }

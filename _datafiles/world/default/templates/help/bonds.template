@@ -33,37 +33,40 @@ constructs and the fallen have none, and the leader has loyalty instead
   A camp rest together     +2 for temperaments that suit (stoic and devout,
                            cheerful and boastful, wry and grim...), +1
                            for the rest, -1 for ones that clash (cheerful
-                           and grim, devout and wry, stoic and boastful),
+                           and grim, devout and wry, stoic and boastful,
+                           devout and boastful),
                            and one less again when their alignments are far
                            apart. Once every half hour at most.
   A battle won together    +1 for each pair left standing, unless their
-                           temperaments clash. Once every ten minutes.
+                           temperaments clash or their alignments are far
+                           apart. Once every ten minutes.
   Banter                   a pair of friends or rivals sometimes talk about
                            each other (<ansi fg="command">help banter</ansi>): +1 or -1, once every
                            half hour.
   Your choices             two companions who both liked or both disliked
                            something you did (<ansi fg="command">help opinions</ansi>) gain 1; one who
-                           liked it and one who did not lose 1.
+                           liked it and one who did not lose 1. Once every
+                           ten minutes for a pair.
   Stepping in              +3 when one guards the other in a battle. Once an
                            hour for a pair.
   A refused guard          -2 when a guardian you set to guard a rival
                            lets the blow fall. Once an hour for a pair.
 
-Time together alone raises a bond to 50 at most, and lowers one to -50 at
-most. Past 50 takes stepping in for each other, and past -50 takes real
-clashes: a refused guard, or a pair already at odds disagreeing about
-something you did. A company that merely travels together settles into
-trust or wariness, never into a feud.
+Time together (camps, battles, banter) raises a bond to 50 at most, and
+lowers one to -25 at most. Past 50 takes stepping in for each other, and
+past -25 takes real clashes: two companions splitting over something you
+did, or a refused guard. A company that merely travels together settles
+into trust or wariness, never into a feud.
 
 <ansi fg="yellow-bold">In a battle</ansi>
 
   - A friend (a bond of 25 or more) in reach of a friend who is at 40%
     health or less steps in for them, whatever its role: once a battle, or
-    twice for kin, and no more than two such steps a battle for the whole
-    company. The log says "steps in front of Tamsin for a friend. (bond guard,
+    twice when the one hurt is kin, counting every friend it steps in for,
+    and no more than two such steps a battle for the whole company. The log says "steps in front of Tamsin for a friend. (bond guard,
     none left)", and the web client's battle feed says the same.
   - A guardian set to guard a rival (<ansi fg="command">help guardian</ansi>) will not: "lets the blow fall
-    on Garrick (no guard: they can't stand each other)", said once a
+    on Garrick. (no guard: they can't stand each other)", said once a
     battle. A guardian with no ward set passes over a rival when it picks
     the most hurt ally.
   - Nothing else changes. No one is stronger for a bond, and no one is

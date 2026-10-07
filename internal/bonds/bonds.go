@@ -6,10 +6,11 @@
 // reads it through internal/company and never imports the module.
 //
 // A bond is one number from -100 to 100 per pair of companions. Time
-// together (camps, battles) and shared opinions move it only so far, to
-// +50 or -50: a deeper friendship needs one saving the other, and a rivalry
-// past -50 only deepens by real clashes, so a company that merely travels
-// together settles into trust or wariness and never into a feud.
+// together (camps, battles, banter) moves it only so far, up to +50 or down
+// to -25: a deeper friendship needs one saving the other, and a rivalry
+// needs real clashes (splitting over the leader's choices, a refused
+// guard), so a company that merely travels together settles into trust or
+// wariness and never into a feud.
 package bonds
 
 import (
@@ -85,20 +86,19 @@ const (
 )
 
 // Apply is value after delta from source s. Rising sources stop at +50
-// (Rescue at +100); falling ones stop at -50, except Refusal, and an
-// Opinion clash between a pair already at "can't stand", which reach -100.
-// A value already past a limit is not pulled back by a push the other way.
+// (Rescue at +100). Time together (Camp, Battle, Talk) falls no lower than
+// -25, "wary of"; the real clashes, an Opinion split and a Refusal, reach
+// -100 (Phase 65 review: a clashing pair that only camped together reached
+// "can't stand" and a guardian then refused its ward with no act of the
+// leader's behind it). A value already past a limit is not pulled back by
+// a push the other way.
 func Apply(value, delta int, s Source) int {
-	hi, lo := CloseAt, -CloseAt
+	hi, lo := CloseAt, WaryAt
 	switch s {
 	case Rescue:
 		hi = Max
-	case Refusal:
+	case Refusal, Opinion:
 		lo = Min
-	case Opinion:
-		if value <= RivalAt {
-			lo = Min
-		}
 	}
 	next := value + delta
 	switch {

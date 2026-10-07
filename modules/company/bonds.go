@@ -104,11 +104,10 @@ func (m *CompanyModule) applyBonds(leaderUserID int, changes []bondChange) error
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
-	before, ok := m.registry.Get(leaderUserID)
+	record, ok := m.registry.Get(leaderUserID)
 	if !ok || len(changes) == 0 {
 		return nil
 	}
-	record := before
 	now := m.now().Unix()
 	var lines []string
 	var leavers []int
@@ -140,6 +139,11 @@ func (m *CompanyModule) applyBonds(leaderUserID int, changes []bondChange) error
 			lines = append(lines, fmt.Sprintf("%s and %s %s. (bond %+d)", nameA, nameB, bonds.Together(bond.Value), bond.Value))
 		}
 		warn, leave, mended := bonds.Warning(bond.Value, bond.Warned)
+		if leave && !changed && ch.source != bonds.Opinion && ch.source != bonds.Refusal {
+			// Phase 65 review: a warned pair held at the bottom leaves on a
+			// real clash, never on a camp or a battle that could not move it.
+			leave = false
+		}
 		switch {
 		case warn:
 			bond.Warned = true
@@ -174,9 +178,12 @@ func (m *CompanyModule) applyBonds(leaderUserID int, changes []bondChange) error
 	if !touched {
 		return nil
 	}
+	// A failed save leaves the registry exactly as it was: no cooldown,
+	// warning or leaving that was never saved (Phase 65 review).
+	before := m.registry.Clone()
 	m.registry.Put(record)
 	if err := m.save(); err != nil {
-		m.registry.Put(before)
+		m.registry = before
 		return err
 	}
 	for _, line := range lines {
@@ -352,9 +359,9 @@ func bondEffect(value int, warned bool) string {
 	case value >= bonds.FriendAt:
 		return fmt.Sprintf("Each steps in once a battle for the other when hurt (at %d%% health or less).", bonds.GuardBelowPct)
 	case value <= bonds.RivalAt && warned:
-		return "Won't guard each other. One of them will leave if this goes on."
+		return "Won't guard each other: set a guardian's ward to someone else (help guardian). One of them will leave if this goes on."
 	case value <= bonds.RivalAt:
-		return "Won't guard each other."
+		return "Won't guard each other: set a guardian's ward to someone else (help guardian)."
 	}
 	return ""
 }
@@ -442,7 +449,7 @@ func (m *CompanyModule) bondsView(leaderUserID int, selector string) string {
 			lines = append(lines, "  "+p.Effect)
 		}
 	}
-	lines = append(lines, "Time together raises a bond to 50 at most; stepping in for each other takes it higher. A rivalry only deepens past -50 through real clashes (help bonds).")
+	lines = append(lines, "Time together raises a bond to 50 at most and lowers it to -25 at most; stepping in for each other takes it higher, and only real clashes (splitting over your choices, a refused guard) make rivals (help bonds).")
 	return strings.Join(lines, "\n")
 }
 

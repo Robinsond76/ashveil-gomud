@@ -7,7 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 )
 
-func TestApplyStopsTimeTogetherAtFiftyAndRescueAtAHundred(t *testing.T) {
+func TestApplyStopsTimeTogetherAtFiftyAndWaryAndRescueAtAHundred(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
 		value, delta int
@@ -16,17 +16,18 @@ func TestApplyStopsTimeTogetherAtFiftyAndRescueAtAHundred(t *testing.T) {
 	}{
 		{"camp rises", 10, 2, Camp, 12},
 		{"camp stops at close", 49, 2, Camp, 50},
-		{"a clash at camp can still lower a high bond", 70, -1, Camp, 69}, // a fall is a fall, only the limit is -50
+		{"a clash at camp can still lower a high bond", 70, -1, Camp, 69}, // a fall is a fall, only the limit is -25
 		{"camp does not lift one already past it", 70, 2, Camp, 70},
-		{"camp falls to wary", -24, -2, Camp, -26},
-		{"camp stops at can't stand", -49, -2, Camp, -50},
+		{"camp falls to wary", -23, -2, Camp, -25},
+		{"camp stops at wary", -24, -2, Camp, -25},
+		{"camp never makes rivals", -25, -2, Camp, -25},
 		{"battle stops at close", 50, 1, Battle, 50},
 		{"talk stops at the limits", -50, -1, Talk, -50},
 		{"rescue goes beyond close", 50, 3, Rescue, 53},
 		{"rescue caps at the top", 99, 3, Rescue, 100},
 		{"refusal goes below the camp floor", -50, -2, Refusal, -52},
 		{"refusal floors at the bottom", -99, -2, Refusal, -100},
-		{"an opinion clash stops at -50 for a pair that is not yet rivals", -10, -45, Opinion, -50},
+		{"an opinion clash is a real clash: it goes past wary", -25, -1, Opinion, -26},
 		{"an opinion clash goes on for rivals", -50, -1, Opinion, -51},
 		{"an opinion agreement stops at 50", 50, 1, Opinion, 50},
 		{"a rival's rescue mends it", -60, 3, Rescue, -57},

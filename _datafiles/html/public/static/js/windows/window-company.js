@@ -1842,7 +1842,7 @@
             if (!feelings.length) { return; }
             pad.appendChild(el('div', 'cmp-line', (m.name || 'Companion') + ' ' + feelings.map(f => f.words).join('; ') + '.'));
         });
-        pad.appendChild(el('div', 'cmp-note', 'Time together raises a bond to 50 at most; stepping in for each other takes it higher. Friends step in for each other once a battle when hurt; rivals will not guard each other.'));
+        pad.appendChild(el('div', 'cmp-note', 'Time together raises a bond to 50 at most and lowers it to wary at most; stepping in for each other takes it higher, and only splitting over your choices or a refused guard makes rivals. Friends step in once a battle for a friend at 40% health or less (kin twice); rivals will not guard each other.'));
     }
 
     function updateBonds() {
