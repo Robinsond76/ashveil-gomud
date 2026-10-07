@@ -87,7 +87,13 @@ face water, in the order **n, e, s, w**. Each piece is a full, opaque
   water-facing corner, where the water from that side continues. So a
   straight coast of `shore-s` pieces joins side by side.
 - Where two water-facing edges meet at a corner, the waterline curves
-  smoothly round it.
+  round it widely (a radius of about 25–30% of the tile), not tightly.
+- Between the fixed 35% crossing points, the waterline **wanders
+  naturally**, up to about 8% in or out, with small coves and points, so
+  coasts never look ruled.
+- Foam and shallows are pixel art: a broken line of light pixel clusters
+  for the foam, and 2–3 stepped bands of lighter water for the shallows.
+  Never a soft glow or a smooth gradient.
 
 | File | Shape |
 |---|---|
