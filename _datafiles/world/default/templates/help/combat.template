@@ -7,7 +7,9 @@ help page, named in brackets.
 
 Combat resolves once a combat round, every 8 seconds (two of the game's
 4-second rounds). Every fighter on both sides takes their turn each combat
-round: an attack, a round of a spell being cast, or waiting. A fight goes on
+round, one at a time and fastest first (<ansi fg="command">help tempo</ansi>): an attack, a round
+of a spell being cast, or waiting. A foe felled before its turn never
+strikes, and a fast fighter earns a second turn some rounds. A fight goes on
 until one side is dead or gone, or nobody is fighting any more. What you
 start mid-round, such as <ansi fg="command">flee</ansi> or a spell, waits for the next combat
 round, up to 8 seconds. Spell rounds, waits, and combat statuses (bleeding,

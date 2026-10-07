@@ -392,6 +392,40 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 // verbatim escapes text for a say template, so it prints as it is.
 func verbatim(s string) string { return strings.ReplaceAll(s, "%", "%%") }
 
+// endAbilityStrike ends one fighter's readied strike after its first turn
+// (Phase 82b: turns interleave, so each fighter's strike ends at its own
+// turn rather than between the old passes).
+func endAbilityStrike(who caster) {
+	if !abilityStrikes[who] {
+		delete(abilityKind, who)
+		return
+	}
+	var c *characters.Character
+	if who.userId > 0 {
+		if u := users.GetByUserId(who.userId); u != nil {
+			c = u.Character
+		}
+	} else if m := mobs.GetInstance(who.mobId); m != nil {
+		c = &m.Character
+	}
+	delete(abilityStrikes, who)
+	delete(abilityKind, who)
+	if c == nil {
+		return
+	}
+	if c.RT != nil {
+		c.RT.ShotNow = false
+	}
+	if c.Aggro == nil || c.Aggro.Type != characters.BackStab {
+		return
+	}
+	c.Aggro.Type = characters.DefaultAttack
+	c.Aggro.StrikeBonus = 0 // a later plain backstab must not inherit it
+	if c.Equipment.Weapon.GetSpec().Subtype == items.Shooting {
+		c.Aggro.Type = characters.Shooting
+	}
+}
+
 // endAbilityStrikes sets a readied strike that never landed (its foe fell
 // first, or its turn was lost) back to a plain attack, after the round's
 // blows.

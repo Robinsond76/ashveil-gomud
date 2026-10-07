@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"strings"
-	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -102,26 +101,15 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	retreatCover = map[int]bool{}
 
 	//
-	// Combat rounds
+	// Combat rounds: every fighter's turn, one at a time, in speed order
+	// (Phase 82b, combat_turnorder.go). Earned second turns reuse the same
+	// gates and attribution; upkeep, chants and waits run on the first.
 	//
-	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt, false)
-
-	affectedPlayers2, affectedMobs2 := handleMobCombat(evt, false)
-	looseHeldShots() // Phase 38c2 review: a quiet Overwatch hold still shoots
-
-	// Earned second physical turns reuse the same gates and attribution. Round
-	// upkeep, chants and waits were already processed in the first pass.
-	endAbilityStrikes()
-	endShadowsteps()
-	clear(battlefieldPowers)
-	p3, m3 := handlePlayerCombat(evt, true)
-	p4, m4 := handleMobCombat(evt, true)
-	affectedPlayers1 = append(affectedPlayers1, append(p3, p4...)...)
-	affectedMobs1 = append(affectedMobs1, append(m3, m4...)...)
+	affectedPlayers1, affectedMobs1 := runTurnOrder(evt)
 
 	// Do any resolution or extra checks based on everyone that has been involved in combat this round.
-	affectedPlayers := append(append(affectedPlayers1, affectedPlayers2...), roundExtraPlayers...)
-	affectedMobs := append(append(affectedMobs1, affectedMobs2...), roundExtraMobs...)
+	affectedPlayers := append(affectedPlayers1, roundExtraPlayers...)
+	affectedMobs := append(affectedMobs1, roundExtraMobs...)
 	noteMoraleDeaths()
 	handleAffected(affectedPlayers, affectedMobs)
 	moralePass()
@@ -133,21 +121,6 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	pruneTempo()
 
 	return events.Continue
-}
-
-func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
-
-	tStart := time.Now()
-
-	for _, userId := range users.GetOnlineUserIds() {
-		p, m := actPlayer(evt, userId, extra)
-		affectedPlayerIds = append(affectedPlayerIds, p...)
-		affectedMobInstanceIds = append(affectedMobInstanceIds, m...)
-	}
-
-	util.TrackTime(`DoCombat::handlePlayerCombat()`, time.Since(tStart).Seconds())
-
-	return affectedPlayerIds, affectedMobInstanceIds
 }
 
 // actPlayer resolves one player's turn of the round (Phase 82b: the body of
@@ -772,24 +745,6 @@ func actPlayer(evt events.NewRound, userId int, extra bool) (affectedPlayerIds [
 	* END HANDLING PHYSICAL COMBAT
 	*
 	**************************/
-
-	return affectedPlayerIds, affectedMobInstanceIds
-}
-
-func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
-
-	tStart := time.Now()
-
-	// Handle mob round of combat
-	for _, mobId := range mobs.GetAllMobInstanceIds() {
-		p, m := actMob(evt, mobId, extra)
-		affectedPlayerIds = append(affectedPlayerIds, p...)
-		affectedMobInstanceIds = append(affectedMobInstanceIds, m...)
-	}
-
-	finishLanding() // Phase 30d2
-
-	util.TrackTime(`World::handleMobCombat()`, time.Since(tStart).Seconds())
 
 	return affectedPlayerIds, affectedMobInstanceIds
 }
