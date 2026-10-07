@@ -217,7 +217,7 @@ func init() {
 	m.plug.AddUserCommand("doll", m.dollCommand, false, false)        // Phase 39d: a Doll Master's dolls
 	m.plug.AddUserCommand("beast", m.beastCommand, false, false)      // Phase 39e: a Beast Tamer's bonded beast
 	m.plug.AddUserCommand("brew", m.brewCommand, false, false)        // Phase 39g: an Alchemist's flasks
-	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed in a fight
+	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed while downed
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.

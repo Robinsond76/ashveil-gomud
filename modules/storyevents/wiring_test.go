@@ -16,11 +16,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/storyevents"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -429,4 +431,40 @@ func TestARandomEncounterHoldsASceneBack(t *testing.T) {
 	mobs.DestroyInstance(mob.InstanceId)
 	module.entered(s.user.UserId, 90011, false)
 	assert.Equal(t, "gorge-descent/start", s.pendingPage(), "and once it is gone the scene opens")
+}
+
+// Phase 64 review: a stance reaches the real company module through the
+// live world, which turns member keys into companion ids and leaves the
+// leader out; a page with only the leader has no witnesses.
+func TestAStanceReachesTheRealCompanyByCompanionKey(t *testing.T) {
+	s := newScene(t)
+	_, err := company.AdminRecruit(s.user.UserId, s.room(), "warrior", 4)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	views, ok := company.CompanyMembers(s.user.UserId)
+	require.True(t, ok)
+	require.Len(t, views, 1)
+	comp := views[0]
+	leader := storyevents.Facts{Key: string(survival.LeaderMemberKey), Name: s.user.Character.Name, Leader: true}
+	member := storyevents.Facts{Key: string(survival.CompanionMemberKey(comp.ID)), Name: comp.Name}
+
+	var witnesses []int
+	opinions.Observe(func(uid int, c opinions.Choice, _ []opinions.Reaction) {
+		if uid == s.user.UserId && strings.HasPrefix(c.Op, "stance-wiring:") {
+			witnesses = c.Witnesses
+		}
+	})
+	for _, stance := range opinions.Stances() {
+		assert.Empty(t, liveWorld{}.Opinion(s.user.UserId, "alone:"+stance, stance, "a test", []storyevents.Facts{leader}), "only the leader saw it")
+	}
+	said := []string{}
+	for _, stance := range opinions.Stances() { // every temperament has a view on one stance
+		said = liveWorld{}.Opinion(s.user.UserId, "stance-wiring:"+stance, stance, "a test", []storyevents.Facts{leader, member})
+		if len(said) > 0 {
+			break
+		}
+	}
+	require.Len(t, said, 1, "the companion has its say once")
+	assert.Contains(t, said[0], comp.Name)
+	assert.Equal(t, []int{comp.ID}, witnesses, "matched by key, the leader left out")
 }

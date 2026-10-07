@@ -57,6 +57,14 @@ func TestOpinionsAreSentWhenTheyChange(t *testing.T) {
 	stub.panel.Members[0].Loyalty = 66
 	f.updateExtras(u)
 	assert.Len(t, *out, 2, "a loyalty change is")
+
+	// Phase 64 review: a note's age ticking over is not a change.
+	stub.panel.Members[0].Notes = []company.OpinionNoteView{{Kind: "spare", Label: "mercy to the beaten", Verdict: 1, Ago: "just now"}}
+	f.updateExtras(u)
+	require.Len(t, *out, 3, "a new note is a change")
+	stub.panel.Members[0].Notes[0].Ago = "2 minutes ago"
+	f.updateExtras(u)
+	assert.Len(t, *out, 3, "only the age moved")
 }
 
 func TestNoOpinionsAreSentWithoutACompanyModule(t *testing.T) {

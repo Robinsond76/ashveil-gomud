@@ -185,6 +185,8 @@ Where the scope left the menus open, the build picked these defaults.
 - **A seam for Phase 65 (bonds).** `opinions.Observe` registers a function that hears every batch of reactions (leader, choice, who liked and who disliked it). Bonds can raise a pair that agreed and lower one that clashed without this phase knowing them.
 - **Help and tutorial.** `help opinions` (under the road, aliases `opinion`, `company opinions`, `companion opinions`, `loyalty opinions`), linked from `adventure`, `company`, `events`, `webclient`, `mercy`, `banter`, `camp`, `inn`, `relics` and `company-meal`; a hint in the Departure lesson after the chronicle's.
 
+- **Review (2026-10-07).** Observers get the resolved witnesses in `Choice.Witnesses` (silent ones included); `sell junk` counts as a relic sale, once per command; deserting companions have no say. Findings and rejections are in `docs/PROJECT_STATUS.md`.
+
 ## 65 Bonds between companions
 
 **Why.** Deadfire companions become friends or rivals with each other. In

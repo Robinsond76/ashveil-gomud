@@ -314,3 +314,34 @@ func TestInspectingACompanionShowsItsTemperamentInWords(t *testing.T) {
 	assert.Contains(t, out, "Likes executing the beaten, a bed at an inn")
 	assert.Contains(t, out, "dislikes a rough camp")
 }
+
+// Phase 64 review: observers (Phase 65 bonds) hear who saw a choice, silent
+// witnesses included, even when the source named no one; a companion
+// already deserting has no say.
+func TestObserversHearEveryWitnessAndDesertersStayQuiet(t *testing.T) {
+	newBrawl(t)
+	now := time.Unix(1_800_000_000, 0)
+	withClock(t, &now)
+	opine(t, map[int]opinionSetup{1: {"grim", 0, 50}, 2: {"wry", 0, 50}, 3: {"stoic", 0, 50}, 4: {"cheerful", 0, 50}})
+	record, _ := module.registry.Get(7)
+	for i := range record.Companions {
+		if record.Companions[i].ID == 3 {
+			record.Companions[i].MoraleDesert = true
+		}
+	}
+	module.registry.Put(record)
+	var witnesses []int
+	var reacted []int
+	opinions.Observe(func(leader int, c opinions.Choice, rs []opinions.Reaction) {
+		if leader == 7 && c.Op == "witnessed" {
+			witnesses = c.Witnesses
+			for _, r := range rs {
+				reacted = append(reacted, r.CompanionID)
+			}
+		}
+	})
+	_, err := module.Opinion(7, opinions.Choice{Kind: opinions.Prudence, Op: "witnessed"})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []int{1, 2, 4}, witnesses, "everyone with the leader saw it, the wry and cheerful shrug included; the deserter is gone")
+	assert.Equal(t, []int{1}, reacted, "only the grim has a view on the careful way")
+}

@@ -48,7 +48,7 @@ func (m *CompanyModule) opinionWitnesses(leaderUserID int, record domain.Record,
 		out[id] = true
 	}
 	for _, c := range record.Companions {
-		if c.Dead() || c.PendingReturn || bound(c) || creatures.Is(c.Archetype) {
+		if c.Dead() || c.PendingReturn || c.MoraleDesert || bound(c) || creatures.Is(c.Archetype) {
 			delete(out, c.ID)
 		}
 	}
@@ -135,6 +135,13 @@ func (m *CompanyModule) Opinion(leaderUserID int, c opinions.Choice) ([]string, 
 	lines := make([]string, 0, len(reactions))
 	for _, r := range reactions {
 		lines = append(lines, r.Line)
+	}
+	// Observers (Phase 65 bonds) hear who actually saw it, silent ones too.
+	c.Witnesses = make([]int, 0, len(seen))
+	for _, comp := range record.Companions {
+		if seen[comp.ID] {
+			c.Witnesses = append(c.Witnesses, comp.ID)
+		}
 	}
 	opinions.Announce(leaderUserID, c, reactions)
 	return lines, nil

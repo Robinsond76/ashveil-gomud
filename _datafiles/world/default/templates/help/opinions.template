@@ -25,9 +25,10 @@ devout; <ansi fg="command">help banter</ansi>) likes some of these and dislikes 
   executing the beaten            you did not
   a bed at an inn                 you paid for rooms (<ansi fg="command">help inn</ansi>)
   a rough camp                    you rested in the wild (<ansi fg="command">help camp</ansi>)
-  sharing your own food           you fed a companion from your own pack, not
-                                  from the company's cargo (<ansi fg="command">help company meal</ansi>)
-  selling relics                  you sold a relic for coin (<ansi fg="command">help relics</ansi>)
+  sharing your own food           you fed or watered a companion from your own
+                                  pack, not the company's cargo (<ansi fg="command">help company meal</ansi>)
+  selling relics                  you sold a relic for coin, by <ansi fg="command">sell</ansi> or <ansi fg="command">sell junk</ansi>
+                                  (<ansi fg="command">help relics</ansi>)
   kindness, greed, courage,       the stance of a choice in a scene on the road
   prudence, reverence, cunning    (<ansi fg="command">help events</ansi>)
 

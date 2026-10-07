@@ -552,3 +552,20 @@ func TestOfflineMercyRecoveryPreservesLaterSession(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int(before)+5, int(saved.Character.Alignment))
 }
+
+// Phase 64 review: a mercy answer whose company save failed is retried after
+// the leader walks away, when the queue no longer names the foe. The retry
+// must not index the empty queue for the opinion's subject.
+func TestFailedMercyRetryAfterLeavingDoesNotPanic(t *testing.T) {
+	b, _ := yieldingBrawl(t)
+	failing := &failingStore{Store: module.store, err: errors.New("disk full")}
+	module.store = failing
+	t.Cleanup(func() { module.store = failing.Store })
+	hooks.MercyTick(events.NewTurn{})
+	p := b.aria.GetPrompt()
+	require.NotNil(t, p)
+	require.Error(t, morale.AnswerMercy(7, p.Rest, "no"))
+	hooks.MercyLeave(events.RoomChange{UserId: 7})
+	failing.err = nil
+	assert.NotPanics(t, func() { hooks.MercyTick(events.NewTurn{}) })
+}

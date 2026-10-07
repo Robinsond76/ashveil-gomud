@@ -504,8 +504,12 @@ func resolveMercy(uid int, q *mercyQueue) error {
 			kind = opinions.Spare
 		}
 		subject := ""
-		if m := mobs.GetInstance(q.ids[0]); m != nil {
-			subject = m.Character.Name
+		// The queue is emptied when a deciding leader walks away, and the
+		// staged answer is retried after; the foe may be gone by then.
+		if len(q.ids) > 0 {
+			if m := mobs.GetInstance(q.ids[0]); m != nil {
+				subject = m.Character.Name
+			}
 		}
 		said, err := company.Opinion(uid, opinions.Choice{Kind: kind, Op: "mercy:" + q.token, Witnesses: append([]int{}, q.witnesses...), Subject: subject})
 		if err != nil {
