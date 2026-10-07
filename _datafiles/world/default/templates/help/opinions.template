@@ -57,4 +57,7 @@ Read <ansi fg="command">opinions</ansi> for your own company.
 
 It gives no gold, experience or power, and it never moves the world's clock.
 
-See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help banter</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help mercy</ansi>, <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help webclient</ansi>.
+Two companions who agree about a choice grow closer, and two who split over
+it grow apart (<ansi fg="command">help bonds</ansi>).
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help bonds</ansi>, <ansi fg="command">help banter</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help mercy</ansi>, <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help webclient</ansi>.

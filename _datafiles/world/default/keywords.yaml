@@ -173,6 +173,7 @@ help:
       - chronicle
       - townsfolk
       - opinions
+      - bonds
     communication:
       - emote
       - say
@@ -350,6 +351,7 @@ help-aliases:
   chronicle: [chronicles, deeds, company chronicle]
   townsfolk: [renown, town memory, talk of the town, townsfolk talk]
   opinions: [opinion, companion opinions, company opinions, loyalty opinions]
+  bonds: [bond, companion bonds, company bonds, friendship, friendships, rivalry, rivalries, rivals, friends]
   events: [event, scene, scenes, story-events, story events, choose, story]
   sigils: [sigil, cast sigil, cast-sigil, sigil chalk, chalk, ward sigil, fire sigil, stillness sigil, mending sigil]
   ambush: [surprise, surprised]

@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/bonds"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -156,11 +157,17 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		if s.Ward != "" && !presentIn(members, s.Ward) && inCompany(leader.UserId, s.Ward) {
 			continue
 		}
+		// Phase 65: a guardian set to guard a rival won't, and says so.
+		if s.Ward != "" && s.Ward == string(struck) && !angel && !doll && !bear && bondRefuses(leader, f, b.FightID, g, ward, struck) {
+			continue
+		}
 		guarded := make([]strategy.Guarded, 0, len(members))
 		for _, m := range members {
 			guarded = append(guarded, strategy.Guarded{
 				Key: string(m.key), HP: m.char.Health, MaxHP: m.char.HealthMax.Value,
-				InReach: formationcombat.GuardGround(f, g.key, m.key, enemyparty.Narrow(rooms.LoadRoom(leader.Character.RoomId))),
+				// Phase 65: a rival is never the most hurt one it guards.
+				InReach: formationcombat.GuardGround(f, g.key, m.key, enemyparty.Narrow(rooms.LoadRoom(leader.Character.RoomId))) &&
+					!bonds.IsRival(company.BondValue(leader.UserId, g.key, m.key)),
 			})
 		}
 		if w, ok := strategy.GuardWard(string(g.key), s.Ward, guarded); !ok || w != string(struck) {
@@ -184,9 +191,15 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 			}
 		}
 		announceGuard(leader, b.FightID, g, ward, left)
+		company.BondEvent(leader.UserId, g.key, struck, bonds.Rescue) // Phase 65
 		return g, true
 	}
-	return guardMember{}, false
+	// Phase 65: a friend steps in for a friend who is hurt, whatever its role.
+	var already map[company.MemberKey]bool
+	if len(struckAlready) > 0 {
+		already = struckAlready[0]
+	}
+	return bondFriendGuard(leader, f, b.FightID, members, ward, struck, already)
 }
 
 func presentIn(members []guardMember, key string) bool {

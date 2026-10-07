@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/bonds"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
@@ -660,5 +661,56 @@ func TestTownsfolkHelp(t *testing.T) {
 		text, err := GetHelpContents(hub)
 		require.NoError(t, err, hub)
 		assert.Contains(t, text, "help townsfolk", "%s links to help townsfolk", hub)
+	}
+}
+
+// Phase 65: help bonds renders, answers to its aliases, is indexed on the
+// road, states the numbers the code enforces, and is linked from the pages
+// a bond touches.
+func TestBondsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "bonds", "help index lists bonds under the road")
+
+	want, err := GetHelpContents("bonds")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{
+		"Help for", "bonds [member]", "Bonds tab", "like kin", "can't stand", "will not guard the other",
+		"bond guard", "lets the blow fall", "-85", "-100", "-60", "50 at most", "never into a feud", "at 40%", "two such steps a battle",
+	} {
+		assert.Contains(t, plain, phrase)
+	}
+	// The numbers on the page are the code's.
+	assert.Equal(t, 25, bonds.FriendAt)
+	assert.Equal(t, 50, bonds.CloseAt)
+	assert.Equal(t, 75, bonds.KinAt)
+	assert.Equal(t, -25, bonds.WaryAt)
+	assert.Equal(t, -50, bonds.RivalAt)
+	assert.Equal(t, -85, bonds.WarnAt)
+	assert.Equal(t, -100, bonds.LeaveAt)
+	assert.Equal(t, -60, bonds.MendAt)
+	assert.Equal(t, 40, bonds.GuardBelowPct)
+	assert.Equal(t, 2, bonds.CompanyGuards)
+	assert.Equal(t, 3, bonds.RescueGain)
+	assert.Equal(t, 2, bonds.RefusalLoss)
+	assert.Equal(t, 1, bonds.Guards(bonds.FriendAt))
+	assert.Equal(t, 2, bonds.Guards(bonds.KinAt))
+	for _, alias := range []string{"bond", "company bonds", "companion bonds", "friendship", "rivalry"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help bonds", alias)
+	}
+	for _, hub := range []string{"adventure", "company", "opinions", "banter", "camp", "guardian", "webclient"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "bonds", "%s mentions bonds", hub)
 	}
 }

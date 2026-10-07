@@ -208,6 +208,13 @@ sharing food, selling relics, the choices in scenes. They say so, and
 their loyalty moves a little. <ansi fg="command">opinions</ansi> reads them, and the web client's Company
 window has an Opinions tab (<ansi fg="command">help opinions</ansi>).
 
+<ansi fg="yellow-bold">Bonds</ansi>
+
+Companions come to trust or resent one another. Friends step in for each
+other when one is hurt; a guardian will not guard a rival, and a rivalry
+pushed to its end sends one away. <ansi fg="command">bonds</ansi> reads them, and the Company window has
+a Bonds tab (<ansi fg="command">help bonds</ansi>).
+
 <ansi fg="yellow-bold">The chronicle</ansi>
 
 Your company keeps a record of its deeds: who joined, left or fell, the

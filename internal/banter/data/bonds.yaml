@@ -1,0 +1,57 @@
+# Phase 65: two companions who trust each other (ctx friend) or can't stand
+# each other (ctx rival) sometimes talk about it. The drawing company
+# module only picks these for a pair whose bond is at that tier; a friend
+# line moves the bond up a point and a rival line down a point (at most once
+# per pair per half hour). Every line names the other with {other}.
+
+# --- friends ---
+- {text: "{other} has stood next to me in worse places than this. I would not have another.", ctx: [friend], pers: [stoic]}
+- {text: "I do not say it often, {other}. I am glad you are here.", ctx: [friend], pers: [stoic]}
+- {text: "If it comes to it, {other}, I will be in front of you.", ctx: [friend], pers: [stoic]}
+- {text: "No fuss. Just know where I stand, {other}.", ctx: [friend], pers: [stoic]}
+- {text: "Have I told you lately, {other}, that you are the best of us?", ctx: [friend], pers: [cheerful]}
+- {text: "{other} and I are going to be old and ridiculous together. It is decided.", ctx: [friend], pers: [cheerful]}
+- {text: "Come sit by me, {other}. There is always room.", ctx: [friend], pers: [cheerful]}
+- {text: "Whatever happens, {other}, this has been a good road.", ctx: [friend], pers: [cheerful]}
+- {text: "{other}, if I fall, you finish it. Do not argue.", ctx: [friend], pers: [grim]}
+- {text: "Do not mistake it for warmth, {other}. I would simply rather it was you at my back.", ctx: [friend], pers: [grim]}
+- {text: "I trust two things out here. My blade and {other}. I have not decided which is sharper.", ctx: [friend], pers: [grim]}
+- {text: "Few have earned a place at my side, {other}. You have one.", ctx: [friend], pers: [grim]}
+- {text: "{other}, between the two of us, the old songs will need new verses.", ctx: [friend], pers: [boastful]}
+- {text: "I have a rule: only great people stand beside me. {other} qualifies, barely.", ctx: [friend], pers: [boastful]}
+- {text: "Together, {other}, we are nearly as good as I am alone. Nearly.", ctx: [friend], pers: [boastful]}
+- {text: "Remember this, {other}, when they tell the tale. I was the one who picked you.", ctx: [friend], pers: [boastful]}
+- {text: "{other}, if you die first I will be insufferable at the funeral. Consider it motivation.", ctx: [friend], pers: [wry]}
+- {text: "I like you, {other}. Do not tell anyone, it would ruin my reputation.", ctx: [friend], pers: [wry]}
+- {text: "You are the only one here whose company I would pay for. Do not let it go to your head.", ctx: [friend], pers: [wry]}
+- {text: "{other}, I would take an arrow for you. A small one. In the arm.", ctx: [friend], pers: [wry]}
+- {text: "I pray for you each night, {other}, whether or not you want me to.", ctx: [friend], pers: [devout]}
+- {text: "{other}, whatever waits, you do not walk it alone.", ctx: [friend], pers: [devout]}
+- {text: "The road brought us together for a reason, {other}. I am grateful for it.", ctx: [friend], pers: [devout]}
+- {text: "I would carry you if I had to, {other}. Do not make me prove it.", ctx: [friend], pers: [devout]}
+
+# --- rivals ---
+- {text: "{other}, we will keep this simple: stay out of my way and I will stay out of yours.", ctx: [rival], pers: [stoic]}
+- {text: "I have said all I will say to {other}.", ctx: [rival], pers: [stoic]}
+- {text: "There is a limit to my patience, {other}. You are close to it.", ctx: [rival], pers: [stoic]}
+- {text: "I will not quarrel with you, {other}. I will simply remember.", ctx: [rival], pers: [stoic]}
+- {text: "I am sure {other} means well. I am quite sure of it. I am saying it again so it sticks.", ctx: [rival], pers: [cheerful]}
+- {text: "Smile, {other}. It costs nothing and spares us all your face.", ctx: [rival], pers: [cheerful]}
+- {text: "I tried to like {other}. I truly did. I need a nap after trying.", ctx: [rival], pers: [cheerful]}
+- {text: "Oh, {other}, you are a trial. A cheerful one, I am sure. Somewhere.", ctx: [rival], pers: [cheerful]}
+- {text: "Do not stand where I cannot see you, {other}.", ctx: [rival], pers: [grim]}
+- {text: "I have buried better people than {other}, and mourned them less.", ctx: [rival], pers: [grim]}
+- {text: "{other} will get us killed, and I will be the one to say I warned you all.", ctx: [rival], pers: [grim]}
+- {text: "Keep your hands where I can see them, {other}. And your mouth shut.", ctx: [rival], pers: [grim]}
+- {text: "{other} fights as if there were something to prove. I have nothing to prove. I simply am.", ctx: [rival], pers: [boastful]}
+- {text: "Every legend needs a rival, {other}. You are a poor choice, but you are available.", ctx: [rival], pers: [boastful]}
+- {text: "Stand aside, {other}, and learn something.", ctx: [rival], pers: [boastful]}
+- {text: "Say what you like, {other}. The songs will be about me.", ctx: [rival], pers: [boastful]}
+- {text: "Oh, {other}, how generous of you to hold the opinions of two people.", ctx: [rival], pers: [wry]}
+- {text: "I would insult {other}, but they would need to follow it for it to land.", ctx: [rival], pers: [wry]}
+- {text: "The best thing about {other} is the quiet while they sleep.", ctx: [rival], pers: [wry]}
+- {text: "If {other} were any more charming I would have to leave the company.", ctx: [rival], pers: [wry]}
+- {text: "I pray for {other}. I pray hard. Mostly for patience, mine.", ctx: [rival], pers: [devout]}
+- {text: "Forgive me, {other}. I am trying to forgive you too.", ctx: [rival], pers: [devout]}
+- {text: "Some burdens are borne in silence, {other}. You are one of mine.", ctx: [rival], pers: [devout]}
+- {text: "I am told every soul is worth saving, {other}. I am told this often, lately.", ctx: [rival], pers: [devout]}

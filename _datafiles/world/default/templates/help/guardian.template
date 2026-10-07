@@ -70,4 +70,7 @@ the battle view shows each guardian's guards left (<ansi fg="command">help webcl
 Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
 
-See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
+A guardian will not guard a rival, and a friend steps in for a hurt friend
+whatever its role (<ansi fg="command">help bonds</ansi>).
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help bonds</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

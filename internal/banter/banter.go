@@ -40,6 +40,8 @@ const (
 	CtxFall     = "fall"     // a won battle in which someone fell
 	CtxFlawless = "flawless" // a won battle nobody was hurt much in
 	CtxSong     = "song"     // the company plays at camp (camp music)
+	CtxFriend   = "friend"   // two companions who trust each other (Phase 65 bonds)
+	CtxRival    = "rival"    // two companions who can't stand each other
 )
 
 // Personalities are the temperaments a companion is rolled with.
@@ -193,6 +195,9 @@ type Said struct {
 	Text   string // the line, names filled in
 	Verb   string
 	LineID string
+	// Ctx is the context the line was drawn from (Phase 65: a friend or
+	// rival line moves the pair's bond).
+	Ctx string
 }
 
 // Pool is the loaded set of lines.
@@ -297,6 +302,10 @@ type Request struct {
 	// Recent is the line ids a member has said lately, by Member.ID, which
 	// are not repeated.
 	Recent map[int]map[string]bool
+	// Bond, when set, says how two members (by Member.ID) feel: 1 for
+	// friends, -1 for rivals, 0 otherwise (Phase 65). A pair of friends or
+	// rivals sometimes talks to each other about it, before anything else.
+	Bond func(a, b int) int
 }
 
 // matches reports whether m satisfies a line's required tags.
@@ -421,6 +430,13 @@ func (p *Pool) say(l Line, m Member, others []Member, rng Rand, req Request) Sai
 	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verbFor(m.Personality, l.ID, text), LineID: l.ID}
 }
 
+// sayIn is say, noting the context the line came from.
+func (p *Pool) sayIn(l Line, m Member, others []Member, rng Rand, req Request, ctx string) Said {
+	s := p.say(l, m, others, rng, req)
+	s.Ctx = ctx
+	return s
+}
+
 func without(ms []Member, id int) []Member {
 	var out []Member
 	for _, m := range ms {
@@ -449,8 +465,24 @@ func (p *Pool) Exchange(rng Rand, req Request) []Said {
 		size = 3
 	}
 	members = members[:size]
+	contexts := req.Contexts
+	if req.Bond != nil {
+		// Phase 65: friends and rivals talk about each other about half
+		// the time they are drawn together, as a pair.
+		var bondCtx string
+		switch req.Bond(members[0].ID, members[1].ID) {
+		case 1:
+			bondCtx = CtxFriend
+		case -1:
+			bondCtx = CtxRival
+		}
+		if bondCtx != "" && rng.Intn(2) == 0 {
+			members = members[:2]
+			contexts = append([]string{bondCtx}, contexts...)
+		}
+	}
 
-	for _, ctx := range req.Contexts {
+	for _, ctx := range contexts {
 		if said := p.exchangeIn(rng, req, members, ctx); len(said) >= 2 {
 			return said
 		}
@@ -468,7 +500,7 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 			continue
 		}
 		first := p.lines[line]
-		said := []Said{p.say(first, opener, others, rng, req)}
+		said := []Said{p.sayIn(first, opener, others, rng, req, ctx)}
 		// The others answer: with a reply when the opener has one they can
 		// say, otherwise with a line of their own.
 		last := first
@@ -485,7 +517,7 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 			if !ok {
 				continue
 			}
-			said = append(said, p.say(p.lines[l], m, rest, rng, req))
+			said = append(said, p.sayIn(p.lines[l], m, rest, rng, req, ctx))
 			last = p.lines[l]
 			if len(said) == 3 {
 				break
@@ -504,7 +536,7 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 				}
 			}
 			if l, ok := p.pick(rng, opener, req, cands); ok {
-				said = append(said, p.say(p.lines[l], opener, rest, rng, req))
+				said = append(said, p.sayIn(p.lines[l], opener, rest, rng, req, ctx))
 			}
 		}
 		return said

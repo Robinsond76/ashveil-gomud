@@ -353,10 +353,34 @@ func decodeRegistry(data []byte, registry *Registry) error {
 // Timer and Scheduler are the shared one-shot timer seam; tests inject a
 // deterministic Scheduler.
 type (
-	Timer         = modtimer.Timer
-	Scheduler     = modtimer.Scheduler
-	realScheduler = modtimer.Direct
+	Timer     = modtimer.Timer
+	Scheduler = modtimer.Scheduler
 )
+
+// realScheduler runs a rest's timer on the game loop once its time has
+// passed: the timer only queues it (campTimerDue), so the end of a rest
+// (recovery, banter, Phase 65 bonds and any desertion they cause) touches
+// the company and the world on the loop, never on the timer's goroutine.
+type realScheduler struct{}
+
+func (realScheduler) AfterFunc(d time.Duration, f func()) Timer {
+	return modtimer.Wrap(time.AfterFunc(modtimer.Clamp(d), func() { events.AddToQueue(campTimerDue{run: f}) }))
+}
+
+// campTimerDue carries a camp timer's callback onto the game loop.
+type campTimerDue struct{ run func() }
+
+func (campTimerDue) Type() string { return `CampTimerDue` }
+
+// onCampTimerDue runs a camp timer's callback on the game loop. A callback
+// for a timer stopped after it fired finds its generation stale and does
+// nothing.
+func onCampTimerDue(e events.Event) events.ListenerReturn {
+	if due, ok := e.(campTimerDue); ok && due.run != nil {
+		due.run()
+	}
+	return events.Continue
+}
 
 // Survival is the Phase 4/7 company rest-recovery seam needed by camping.
 // bonusSurvival is the optional bedroll-aware recovery of a Survival seam.
@@ -579,6 +603,7 @@ func init() {
 	events.RegisterListener(events.BattleEnded{}, m.onBattleEndedMusic)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	events.RegisterListener(campTimerDue{}, onCampTimerDue)
 	userstate.Register(stateContributor{m})
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {

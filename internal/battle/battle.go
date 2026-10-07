@@ -40,6 +40,10 @@ type Battle struct {
 	// the first time its guards are read in the battle (MaxGuardsFor).
 	GuardMax map[string]int
 
+	// Phase 65: bond steps the company has made in this battle, all
+	// together (friends stepping in for friends).
+	BondGuards int
+
 	// Phase 33i2: the enemy group's coordination tier, fixed when the
 	// battle began (0: none given, read as a rabble), and the guards its
 	// guardians have spent in it, all together.
