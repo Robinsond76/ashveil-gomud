@@ -209,14 +209,15 @@ func init() {
 	m.saveUser = nativeSaveUser
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
-	m.plug.AddUserCommand("heal", m.healCommand, false, false)       // Phase 30b
-	m.plug.AddUserCommand("tactics", m.tacticsCommand, false, false) // Phase 30c: company tactics
-	m.plug.AddUserCommand("patch", m.patchUserCommand, false, false) // Phase 35b: company patch
-	m.plug.AddUserCommand("class", m.classCommand, false, false)     // Phase 38b: promotion
-	m.plug.AddUserCommand("talent", m.talentCommand, false, false)   // Phase 38b: talents
-	m.plug.AddUserCommand("doll", m.dollCommand, false, false)       // Phase 39d: a Doll Master's dolls
-	m.plug.AddUserCommand("beast", m.beastCommand, false, false)     // Phase 39e: a Beast Tamer's bonded beast
-	m.plug.AddUserCommand("brew", m.brewCommand, false, false)       // Phase 39g: an Alchemist's flasks
+	m.plug.AddUserCommand("heal", m.healCommand, false, false)        // Phase 30b
+	m.plug.AddUserCommand("tactics", m.tacticsCommand, false, false)  // Phase 30c: company tactics
+	m.plug.AddUserCommand("patch", m.patchUserCommand, false, false)  // Phase 35b: company patch
+	m.plug.AddUserCommand("class", m.classCommand, false, false)      // Phase 38b: promotion
+	m.plug.AddUserCommand("talent", m.talentCommand, false, false)    // Phase 38b: talents
+	m.plug.AddUserCommand("doll", m.dollCommand, false, false)        // Phase 39d: a Doll Master's dolls
+	m.plug.AddUserCommand("beast", m.beastCommand, false, false)      // Phase 39e: a Beast Tamer's bonded beast
+	m.plug.AddUserCommand("brew", m.brewCommand, false, false)        // Phase 39g: an Alchemist's flasks
+	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed in a fight
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.
@@ -296,7 +297,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company opinions [member] | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -910,6 +911,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.alignmentView(user.UserId))
 	case "chemistry":
 		user.SendText(m.chemistryView(user.UserId))
+	case "opinions", "opinion": // Phase 64
+		user.SendText(m.opinionsView(user.UserId, strings.Join(args[1:], " ")))
 	case "specialists", "specialist":
 		// Phase 33f2: who in the company performs each expedition skill.
 		if text := archetypes.SpecialistsView(user.UserId); text != "" {

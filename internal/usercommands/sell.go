@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -70,6 +73,16 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		)
 		if note != `` {
 			user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notes: %s`, mob.Character.Name, note))
+		}
+		if items.IsRelicItem(item.ItemId) {
+			// Phase 64: the company has a view on a relic sold for coin.
+			if said, err := company.Opinion(user.UserId, opinions.Choice{Kind: opinions.SellRelic, Subject: item.DisplayName()}); err != nil {
+				mudlog.Warn("sell: relic opinion", "user", user.UserId, "error", err)
+			} else {
+				for _, line := range said {
+					user.SendText(line)
+				}
+			}
 		}
 		room.SendText(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> sells a <ansi fg="itemname">%s</ansi>.`, user.Character.Name, item.DisplayName()),

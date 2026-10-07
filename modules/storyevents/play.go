@@ -90,6 +90,10 @@ func (m *Module) choose(userID, n int, page string) {
 	if text != "" {
 		lines = append(lines, storyevents.Fill(text, actor.Name))
 	}
+	if c.Stance != "" {
+		// Phase 64: a stance is a choice the companions have a view on.
+		lines = append(lines, m.w.Opinion(userID, fmt.Sprintf("story:%s:%d", ev.ID, op), c.Stance, ev.Title, members)...)
+	}
 	sorted := append([]storyevents.Outcome(nil), outs...)
 	sort.SliceStable(sorted, func(i, j int) bool { return outcomeOrder[sorted[i].Kind] < outcomeOrder[sorted[j].Kind] })
 	room := p.Room

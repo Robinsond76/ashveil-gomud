@@ -201,6 +201,13 @@ with duration and mechanical meaning, apart from persistent bonuses.
 Away, fallen and unavailable conditions are labelled explicitly.
 See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help wounds</ansi>.
 
+<ansi fg="yellow-bold">Opinions</ansi>
+
+Each companion has views on what you choose: mercy, a bed or a rough camp,
+sharing food, selling relics, the choices in scenes. They say so, and
+their loyalty moves a little. <ansi fg="command">opinions</ansi> reads them, and the web client's Company
+window has an Opinions tab (<ansi fg="command">help opinions</ansi>).
+
 <ansi fg="yellow-bold">The chronicle</ansi>
 
 Your company keeps a record of its deeds: who joined, left or fell, the

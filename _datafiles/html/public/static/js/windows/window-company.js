@@ -17,6 +17,9 @@
  *               they would work.
  *   Chronicle - the company's deeds in prose, newest first (Phase 63), with
  *               a filter by kind; `chronicle` reads the same in text.
+ *   Opinions  - what each companion likes, dislikes and has lately said
+ *               about the leader's choices (Phase 64); `opinions` reads the
+ *               same in text.
  *
  * Every name and label is set with textContent, never innerHTML. Menus
  * name items by the reference the server sends ("!<id>:<uuid>"), which
@@ -30,6 +33,10 @@
  *   Company.Camp      - the Camp sub-tab
  *   Company.Chronicle - the Chronicle sub-tab: { total, tally: {kind: n},
  *                       entries: [{seq, at, ago, kind, label, text}] }
+ *   Company.Opinions  - the Opinions sub-tab: { spared, executed, members:
+ *                       [{key, id, name, personality, loyalty, mood, likes,
+ *                       dislikes, notes: [{label, verdict, ago, subject}],
+ *                       deeds}] }
  *   Party             - full party update (roster + vitals)
  *   Party.Vitals      - lightweight vitals-only update
  *
@@ -140,6 +147,11 @@
         .cmp-chron-item { display: flex; flex-direction: column; gap: 1px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
         .cmp-chron-meta { color: var(--t-text-secondary); font-size: 0.9em; }
         .cmp-chron-text { color: var(--t-text); }
+        .cmp-opn-card { display: flex; flex-direction: column; gap: 2px; border-left: 3px solid var(--t-accent-dim); padding-left: 6px; overflow-wrap: anywhere; }
+        .cmp-opn-head { font-weight: bold; }
+        .cmp-opn-mood { color: var(--t-text-secondary); font-weight: normal; }
+        .cmp-opn-yes { color: var(--t-text); }
+        .cmp-opn-no { color: var(--t-text-secondary); }
 
         .cmp-recipes summary { cursor: pointer; font-weight: bold; }
         .cmp-recipes ul { margin: 4px 0; padding-left: 18px; }
@@ -458,6 +470,7 @@
         { id: 'company-inventory', label: 'Inventory' },
         { id: 'company-camp',      label: 'Camp' },
         { id: 'company-chronicle', label: 'Chronicle' },
+        { id: 'company-opinions',  label: 'Opinions' },
     ];
     const SUBTAB_KEY = 'companySubTab';
 
@@ -977,7 +990,7 @@
         // Inventory the companions out (names only, so not on vitals). The
         // Chronicle keeps its own payload; it is redrawn here so a window
         // closed and opened again shows it at once.
-        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); }
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); }
         updateCamp();
     }
 
@@ -1732,6 +1745,47 @@
         keepFocus(panel, () => buildChronicle(panel));
     }
 
+    // --- Opinions (Phase 64) ---
+    // opinions is the newest Company.Opinions payload, kept as the
+    // Chronicle's is, since a full Company snapshot replaces the
+    // namespace's children in GMCPStructs.
+    let opinions = null;
+
+    function buildOpinions(panel) {
+        const data = opinions || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Opinions) || null;
+        keepScroll(panel);
+        panel.textContent = '';
+        const pad = el('div', 'cmp-pad');
+        panel.appendChild(pad);
+        const members = data && Array.isArray(data.members) ? data.members : [];
+        if (!members.length) {
+            pad.appendChild(el('div', 'cmp-note', 'No companions hold opinions yet. Recruit some, and they will have views on mercy, camps, relics and the choices you make (help opinions).'));
+            return;
+        }
+        pad.appendChild(el('div', 'cmp-line', 'What your companions think of your choices.'));
+        members.forEach(m => {
+            const card = el('div', 'cmp-opn-card');
+            const head = el('div', 'cmp-opn-head', m.name || 'Companion');
+            head.appendChild(el('span', 'cmp-opn-mood', ' \u00b7 ' + (m.personality || '') + ' \u00b7 ' + (m.mood || '') + ' (loyalty ' + (m.loyalty == null ? '?' : m.loyalty) + ')'));
+            card.appendChild(head);
+            card.appendChild(el('div', 'cmp-opn-yes', 'Likes: ' + (Array.isArray(m.likes) && m.likes.length ? m.likes.join(', ') : 'nothing in particular') + '.'));
+            card.appendChild(el('div', 'cmp-opn-no', 'Dislikes: ' + (Array.isArray(m.dislikes) && m.dislikes.length ? m.dislikes.join(', ') : 'nothing in particular') + '.'));
+            (Array.isArray(m.notes) ? m.notes : []).forEach(n => {
+                const text = (n.verdict < 0 ? 'Disliked ' : 'Approved of ') + (n.label || '') + ', ' + (n.ago || '') + (n.subject ? ' (' + n.subject + ')' : '') + '.';
+                card.appendChild(el('div', n.verdict < 0 ? 'cmp-opn-no' : 'cmp-opn-yes', text));
+            });
+            (Array.isArray(m.deeds) ? m.deeds : []).forEach(d => card.appendChild(el('div', 'cmp-note', 'Remembers: ' + d)));
+            pad.appendChild(card);
+        });
+        pad.appendChild(el('div', 'cmp-note', 'The company has seen you spare ' + (data.spared || 0) + ' and execute ' + (data.executed || 0) + '. A companion speaks once per choice, and again on the same kind only after a while; approval lifts loyalty no higher than 80, disapproval never below 30.'));
+    }
+
+    function updateOpinions() {
+        const panel = document.getElementById('company-opinions');
+        if (!panel) { return; }
+        keepFocus(panel, () => buildOpinions(panel));
+    }
+
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Party'],
@@ -1740,6 +1794,12 @@
                 chronicle = body && typeof body === 'object' ? body : null;
                 win.open();
                 if (win.isOpen()) { updateChronicle(); }
+                return;
+            }
+            if (namespace === 'Company.Opinions') {
+                opinions = body && typeof body === 'object' ? body : null;
+                win.open();
+                if (win.isOpen()) { updateOpinions(); }
                 return;
             }
             if (namespace === 'Company.Inventory') {

@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/morale"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
@@ -496,7 +497,21 @@ func resolveMercy(uid int, q *mercyQueue) error {
 		if err != nil {
 			return err
 		}
-		q.lines = lines
+		// Phase 64: the witnesses' personalities answer too (those alignment
+		// already moved stay quiet; a retry repeats nothing).
+		kind := opinions.Execute
+		if q.spare {
+			kind = opinions.Spare
+		}
+		subject := ""
+		if m := mobs.GetInstance(q.ids[0]); m != nil {
+			subject = m.Character.Name
+		}
+		said, err := company.Opinion(uid, opinions.Choice{Kind: kind, Op: "mercy:" + q.token, Witnesses: append([]int{}, q.witnesses...), Subject: subject})
+		if err != nil {
+			return err
+		}
+		q.lines = append(lines, said...)
 		q.reactionsSaved = true
 	}
 	if !q.alignmentSaved {

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -400,6 +401,7 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 
 	lines := []string{}
 	ate, drank := false, false
+	sharedOwn := false // Phase 64: the leader's own pack fed a companion
 	for _, step := range plan.Steps {
 		food := larder[step.Food]
 		companionID, isCompanion := companionIDOf(step.Member.Key)
@@ -425,6 +427,9 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 		} else {
 			ate = true
 		}
+		if isCompanion && food.Source == fromLeaderPack && !user.Character.CompanyCargo { // the cargo is the company's, not the leader's to share
+			sharedOwn = true
+		}
 		if !isCompanion {
 			user.Character.CancelBuffsWithFlag("hidden")
 			flag := "food"
@@ -448,6 +453,13 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 	}
 	for _, name := range plan.Thirsty {
 		lines = append(lines, fmt.Sprintf("%s is still thirsty; there's nothing left to drink.", name))
+	}
+	if sharedOwn {
+		if said, err := m.Opinion(user.UserId, opinions.Choice{Kind: opinions.Share}); err != nil {
+			mudlog.Warn("company: share opinion", "leader", user.UserId, "error", err)
+		} else {
+			lines = append(lines, said...)
+		}
 	}
 	if len(lines) == 0 {
 		switch kind {

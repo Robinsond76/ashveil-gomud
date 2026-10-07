@@ -155,7 +155,7 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
@@ -1316,6 +1316,38 @@ await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
   await page.waitForTimeout(50);
   check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: a reopened window shows the deeds at once');
+}
+
+// --- Phase 64: the Opinions sub-tab ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const opn = {
+    spared: 3, executed: 1,
+    members: [
+      { key: 'companion:1', id: 1, name: 'Oswin', personality: 'devout', loyalty: 74, mood: 'loyal',
+        likes: ['mercy to the beaten', 'kindness at a cost'], dislikes: ['executing the beaten'],
+        notes: [{ kind: 'spare', label: 'mercy to the beaten', verdict: 1, ago: '2 hours ago', subject: 'the Hollow Bandit' }],
+        deeds: ['Oswin joined the company at the Waymark Inn.'] },
+      { key: 'companion:2', id: 2, name: xss, personality: 'grim', loyalty: 31, mood: 'wavering',
+        likes: ['a rough camp'], dislikes: ['mercy to the beaten'],
+        notes: [{ kind: 'spare', label: 'mercy to the beaten', verdict: -1, ago: '2 hours ago', subject: '' }], deeds: [] },
+    ],
+  };
+  const opnText = () => page.evaluate(() => document.getElementById('company-opinions').textContent);
+  await page.getByRole('tab', { name: 'Opinions', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Opinions', c), opn);
+  check(await page.locator('#company-opinions .cmp-opn-card').count() === 2, 'Opinions: a card for each companion');
+  check((await opnText()).includes('Oswin') && (await opnText()).includes('Likes: mercy to the beaten, kindness at a cost.'), 'Opinions: what they like, in words');
+  check((await opnText()).includes('Approved of mercy to the beaten, 2 hours ago (the Hollow Bandit).') && (await opnText()).includes('Disliked mercy to the beaten'), 'Opinions: what they lately said');
+  check((await opnText()).includes('spare 3 and execute 1'), 'Opinions: the company\'s mercy counts');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-opinions img')), 'Opinions: server text is text, never markup');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-opinions'); return p.scrollWidth <= p.clientWidth + 1; }), 'Opinions fit a phone');
+  if (outdir) { await page.locator('#company-opinions').screenshot({ path: path.join(outdir, '64-opinions-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-opinions').screenshot({ path: path.join(outdir, '64-opinions.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Opinions', { spared: 0, executed: 0, members: [] }));
+  check((await opnText()).includes('No companions hold opinions yet'), 'Opinions: an empty company says so');
 }
 
 await browser.close();

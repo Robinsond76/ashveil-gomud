@@ -36,6 +36,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -1039,6 +1040,12 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 		// Phase 49: the company talks as it settles in.
 		if said := company.CampBanter(user.UserId, banter.CtxCamp); len(said) > 0 {
 			text += "\n\n" + banter.Format(said)
+		}
+		// Phase 64: a rough camp is a choice too (an inn has its own).
+		if said, err := company.Opinion(user.UserId, opinions.Choice{Kind: opinions.Rough, Subject: room.Title}); err != nil {
+			mudlog.Warn("camping: camp opinion", "leader", user.UserId, "error", err)
+		} else if len(said) > 0 {
+			text += "\n\n" + strings.Join(said, "\n")
 		}
 	}
 	return text

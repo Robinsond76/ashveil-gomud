@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/storyevents"
@@ -55,6 +56,9 @@ type world interface {
 	TakeItems(userID, item, count int) string
 	Gold(userID, amount int) string
 	Loyalty(userID int, op string, members []storyevents.Facts, delta int) string
+	// Opinion reports a choice's stance to the companions with the company
+	// (Phase 64) and returns what they say, one line each.
+	Opinion(userID int, op, stance, subject string, members []storyevents.Facts) []string
 	Battle(userID, roomID int, foes []storyevents.Foe) string
 	Move(userID, roomID int) string
 
@@ -335,6 +339,21 @@ func (liveWorld) Loyalty(userID int, op string, members []storyevents.Facts, del
 		return fmt.Sprintf("%s thinks better of you.", who)
 	}
 	return fmt.Sprintf("%s thinks less of you.", who)
+}
+
+func (liveWorld) Opinion(userID int, op, stance, subject string, members []storyevents.Facts) []string {
+	ids := []int{}
+	for _, f := range members {
+		if id, ok := survival.CompanionIDFromMemberKey(keyOf(f)); ok && !f.Leader {
+			ids = append(ids, id)
+		}
+	}
+	said, err := company.Opinion(userID, opinions.Choice{Kind: opinions.Kind(stance), Op: op, Witnesses: ids, Subject: subject})
+	if err != nil {
+		mudlog.Warn("storyevents: opinion", "user", userID, "error", err)
+		return nil
+	}
+	return said
 }
 
 func (liveWorld) Battle(userID, roomID int, foes []storyevents.Foe) string {
