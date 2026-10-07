@@ -35,6 +35,7 @@ func creating(t *testing.T, id int) *users.UserRecord {
 	u.Character.RaceId = 1
 	u.Character.Validate() // as start does after the race step: opens the slots
 	u.Character.RoomId = -1
+	u.Character.MarkIronOffered() // these tests are about the archetype step (Phase 77)
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(id) })
 	return u

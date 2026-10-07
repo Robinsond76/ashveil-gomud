@@ -177,6 +177,8 @@ help:
       - bonds
       - errands
       - rites
+      - hardcore
+      - blessings
     communication:
       - emote
       - say
@@ -356,6 +358,8 @@ help-aliases:
   townsfolk: [renown, town memory, talk of the town, townsfolk talk]
   opinions: [opinion, companion opinions, company opinions, loyalty opinions]
   errands: [errand, errand send, errand recall, company errands, companion errands, send companion, benched companions, idle companions]
+  hardcore: [iron, iron option, hardcore mode, trial of iron, take the iron]
+  blessings: [blessing, account blessings, account blessing, starting perks]
   rites: [rite, rite hold, rite skip, funeral, funerals, mourning, mourn, the fallen, hold rites]
   bonds: [bond, companion bonds, company bonds, friendship, friendships, rivalry, rivalries, rivals, friends]
   events: [event, scene, scenes, story-events, story events, choose, story]

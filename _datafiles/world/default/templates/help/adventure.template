@@ -11,6 +11,8 @@ a band. Every part has its own page:
   <ansi fg="command">help lifestory</ansi>     where you came from: homeland, upbringing, trade
   <ansi fg="command">help conditions</ansi>    what is affecting you, and for how long
   <ansi fg="command">help experience</ansi>    levels, and what dying costs
+  <ansi fg="command">help hardcore</ansi>      the Iron option: a harder defeat, chosen at creation
+  <ansi fg="command">help blessings</ansi>     small perks your later characters start with
   <ansi fg="command">help autoskill</ansi>     utility skills your company uses for you
   <ansi fg="command">help trap</ansi>          sensing and disarming traps
 

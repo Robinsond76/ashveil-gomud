@@ -87,6 +87,11 @@ func (m *DeathModule) ClaimDefeat(userID int, killer domain.Killer) bool {
 	if len(cfg.scenarios) == 0 {
 		return false
 	}
+	// Ashveil 77: an Iron character is never rescued or spared a level; a
+	// defeat always takes the church route and its cost.
+	if c.IsIron() {
+		return false
+	}
 	if _, overridden := domain.WakeOverride(c.RoomId); overridden {
 		return false
 	}

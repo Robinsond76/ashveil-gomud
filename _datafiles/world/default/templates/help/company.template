@@ -69,8 +69,9 @@ own name in your company, even if two of them are the same archetype.
   kept (<ansi fg="command">help creatures</ansi>).
 
   <ansi fg="command">company recruit [candidate]</ansi>
-  Take one on. Most candidates cost gold; some are offered free, but only
-  once ever, per account. If your company won't have them (see
+  Take one on. Most candidates cost gold (a character with account
+  blessings may pay a few percent less: <ansi fg="command">help blessings</ansi>); some are offered
+  free, but only once ever, per account. If your company won't have them (see
   Alignment, below), they say so instead of joining.
 
   <ansi fg="command">company inspect [candidate]</ansi>

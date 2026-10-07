@@ -1,0 +1,43 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">blessings</ansi>
+
+Blessings are small perks that follow your account. When a character of
+yours does something worth remembering, the deed is written in their
+chronicle (<ansi fg="command">help chronicle</ansi>), and some deeds unlock a blessing. Your <ansi fg="yellow">next</ansi>
+characters start with it, even after you delete the one who earned it
+(<ansi fg="command">help delete</ansi>).
+
+<ansi fg="command">blessings</ansi> lists what your character carries, what you have earned that waits
+for your next character, and what is still to earn, with your progress.
+In the web client, the Character window's Overview shows the same.
+
+<ansi fg="yellow-bold">What they give</ansi>
+
+A blessing gives one of two things, and never combat power beyond a
+starting item:
+
+  - A <ansi fg="yellow">starting item</ansi> in the pack: a camp supply such as a flask of broth, a
+    warming draught, a cooling salve or sigil chalk. Markets never buy
+    these back, so a blessing is not a way to make gold.
+  - A <ansi fg="yellow">recruit discount</ansi>: a few percent off what a recruiter asks
+    (<ansi fg="command">help company</ansi>). All of a character's discounts together never come to
+    more than 10%.
+
+<ansi fg="yellow-bold">How they are earned</ansi>
+
+  - From the lifetime counts in the chronicle: a boss slain, relics found,
+    companions taken on, beaten foes spared, scenes seen through, a class
+    promotion. The counts are of one character's chronicle.
+  - <ansi fg="itemname">Iron</ansi> blessings count only the deeds of an Iron character
+    (<ansi fg="command">help hardcore</ansi>).
+  - You are told the moment one is earned. It is yours for good, once.
+
+<ansi fg="yellow-bold">When they are given</ansi>
+
+At the end of character creation, once. A character keeps the blessings it
+was given, and a blessing earned later by that same character waits for the
+next one. Characters made before blessings existed carry none, but what they
+earn from now on reaches their successors.
+
+Nothing here moves the world's clock, or makes any fight easier or harder.
+
+See also: <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help hardcore</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help delete</ansi>.

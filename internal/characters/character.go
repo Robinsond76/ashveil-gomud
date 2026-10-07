@@ -135,6 +135,8 @@ type Character struct {
 	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`         // Any random other data that needs to be stored
 	Looks               map[string]string              `yaml:"looks,omitempty"`            // Ashveil 72a: the player's picks from looks.yaml (trait id to option id, plus the free line)
 	LifeStory           map[string]string              `yaml:"lifestory,omitempty"`        // Ashveil 72a: the player's life story picks (stage id to option id, and the stat each +1 went to)
+	Hardcore            bool                           `yaml:"hardcore,omitempty"`         // Ashveil 77: the Iron option chosen at creation (a harder defeat), fixed for the character's life
+	Blessings           []string                       `yaml:"blessings,omitempty"`        // Ashveil 77: the account blessings this character was given at creation
 	ExtraLives          int                            `yaml:"extralives,omitempty"`       // How many lives remain. If enabled, players can perma-die if they die at zero
 	Pet                 pets.Pet                       `yaml:"pet,omitempty"`              // Do they have a pet?
 	Created             time.Time                      `yaml:"created"`                    // When this character was created
