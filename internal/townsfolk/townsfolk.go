@@ -237,12 +237,20 @@ func (l Line) saidBy(n NPC) bool {
 	return true
 }
 
+// LeaderKey is the leader's company key in a deed's Keys (chronicle and
+// story events use the same one).
+const LeaderKey = "leader"
+
 // Context is what one listener's choice reads. Entries are the company's
 // deeds, newest first.
 type Context struct {
 	NPC     NPC
 	Now     int64
 	Entries []chronicle.Entry
+	// Leader is the listener's character name. A deed that names no member
+	// (a boss slain, a relic found, a mercy answer: the company's deeds) is
+	// the leader's: {who} says it and member_tag reads the leader's tags.
+	Leader string
 	// Heard reports whether the player was already told of this deed.
 	Heard func(seq int) bool
 	// Flag reports a company flag.
@@ -297,12 +305,22 @@ type Choice struct {
 	Text  string
 }
 
+// companyDeed gives a deed that names no member to the leader, so lines
+// read "Mara put down the ogre" rather than "The company put down".
+func (c Context) companyDeed(e chronicle.Entry) chronicle.Entry {
+	if len(e.Members) == 0 && len(e.Keys) == 0 && strings.TrimSpace(c.Leader) != "" {
+		e.Members = []string{c.Leader}
+		e.Keys = []string{LeaderKey}
+	}
+	return e
+}
+
 // Choose picks what the NPC says to one player: the newest unheard deed
 // that has a line this NPC may say (a ref-specific line beats a plain kind
 // line), else a state line, else nothing.
 func (cat Catalog) Choose(c Context) (Choice, bool) {
 	for i := range c.Entries {
-		e := &c.Entries[i]
+		e := c.companyDeed(c.Entries[i])
 		if c.Heard != nil && c.Heard(e.Seq) {
 			continue
 		}
@@ -311,7 +329,7 @@ func (cat Catalog) Choose(c Context) (Choice, bool) {
 			if !l.IsDeed() || l.Kind != e.Kind || !l.saidBy(c.NPC) {
 				continue
 			}
-			if c.Now-e.At > l.Window() || !l.conditionsMet(c, e) {
+			if c.Now-e.At > l.Window() || !l.conditionsMet(c, &e) {
 				continue
 			}
 			switch {
@@ -329,7 +347,7 @@ func (cat Catalog) Choose(c Context) (Choice, bool) {
 			continue
 		}
 		l := pool[c.pick(len(pool))]
-		return Choice{Line: l, Entry: e, Text: Fill(l.Text, *e)}, true
+		return Choice{Line: l, Entry: &e, Text: Fill(l.Text, e)}, true
 	}
 	var states []Line
 	for _, l := range cat.lines {
@@ -383,17 +401,29 @@ func DaysAgo(at, now int64) int {
 	return int((now - at) / (24 * 3600))
 }
 
-// Speech is what an NPC says: To is the player it is said to ("" says it to
-// the room).
+// Speech is what an NPC says: To is the player it is said to, as a target
+// the say commands take ("@12"; "" says it to the room).
 type Speech struct {
 	To   string
 	Text string
+	// Said, when set, records the telling. The caller calls Confirm once the
+	// line has really been let through, so a line the chatter limits hold
+	// back is not used up.
+	Said func()
+}
+
+// Confirm records that the speech was said.
+func (s Speech) Confirm() {
+	if s.Said != nil {
+		s.Said()
+	}
 }
 
 // Provider is implemented by modules/townsfolk.
 type Provider interface {
-	// Speak decides what the NPC says to the players who hear it (user ids),
-	// and records what was told. ok is false when it has nothing to say.
+	// Speak decides what the NPC says to the players who hear it (user ids).
+	// Nothing is recorded until the caller confirms the speech. ok is false
+	// when it has nothing to say.
 	Speak(npc NPC, listeners []int) (Speech, bool)
 }
 

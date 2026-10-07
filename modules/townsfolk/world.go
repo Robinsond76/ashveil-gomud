@@ -51,7 +51,7 @@ func (liveWorld) SetFlag(userID int, flag string) error {
 
 func (liveWorld) MemberTag(userID int, key, tag string) bool {
 	for _, t := range storyevents.TagsFor(userID, key) {
-		if t == tag {
+		if strings.EqualFold(t, tag) {
 			return true
 		}
 	}

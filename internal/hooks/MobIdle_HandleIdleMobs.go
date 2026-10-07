@@ -67,10 +67,13 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 				mob.Command(`say ` + speech.Text)
 			}
 			if mob.IdleSpoke() {
+				// Only a line let through uses up the deed.
+				speech.Confirm()
 				return events.Continue
 			}
 			// The chatter limits held the line back (the room has heard it);
-			// the talker carries on with its usual idle turn.
+			// the deed stays untold and the talker carries on with its usual
+			// idle turn.
 		}
 	}
 

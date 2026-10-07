@@ -138,6 +138,8 @@ func init() {
 	m.plug.AddUserCommand("renown", m.command, true, false)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
+	// A new deed may be one the towns can speak of: refresh the view.
+	chronicle.OnRecord(func(uid int, _ chronicle.Entry) { m.push(uid) })
 	userstate.Register(stateContributor{m})
 	townsfolk.SetProvider(m)
 	module = m
@@ -261,7 +263,8 @@ func maxWindow(cat townsfolk.Catalog) int64 {
 }
 
 // Speak implements townsfolk.Provider: the first listener with a deed this
-// NPC may tell hears it (once, saved before it is said); with none, the NPC
+// NPC may tell hears it (once: confirming the speech saves it before the
+// queued line runs); with none, the NPC
 // falls back to a state line for the room, or says nothing.
 func (m *Module) Speak(npc townsfolk.NPC, listeners []int) (townsfolk.Speech, bool) {
 	cat := m.lines()
@@ -282,6 +285,7 @@ func (m *Module) Speak(npc townsfolk.NPC, listeners []int) (townsfolk.Speech, bo
 		ctx := townsfolk.Context{
 			NPC:       npc,
 			Now:       now,
+			Leader:    name,
 			Entries:   chronicle.Query(uid, chronicle.Filter{Since: since, Limit: queryLimit}),
 			Heard:     st.heard,
 			Flag:      func(f string) bool { return m.w.Flag(uid, f) },
@@ -301,8 +305,8 @@ func (m *Module) Speak(npc townsfolk.NPC, listeners []int) (townsfolk.Speech, bo
 			}
 			continue
 		}
-		m.told(uid, ch, now)
-		return townsfolk.Speech{To: name, Text: ch.Text}, true
+		uid := uid
+		return townsfolk.Speech{To: fmt.Sprintf("@%d", uid), Text: ch.Text, Said: func() { m.told(uid, ch, now) }}, true
 	}
 	if fallback != nil {
 		return townsfolk.Speech{Text: fallback.Text}, true

@@ -7,7 +7,7 @@ biome: city
 tags:
   - lit
 exits:
-  southwest:
+  northeast:
     roomid: 90001
 spawninfo:
   - mobid: 90301

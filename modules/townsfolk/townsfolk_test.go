@@ -2,6 +2,7 @@ package townsfolk
 
 import (
 	"errors"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -145,6 +146,16 @@ func (r *rig) deed(uid int, e chronicle.Entry) {
 	r.log.Record(uid, e)
 }
 
+// say is a talker's turn whose line was let through: it speaks and the
+// telling is confirmed, as the idle hook does.
+func (r *rig) say(npc townsfolk.NPC, listeners []int) (townsfolk.Speech, bool) {
+	sp, ok := r.m.Speak(npc, listeners)
+	if ok {
+		sp.Confirm()
+	}
+	return sp, ok
+}
+
 func gossip() townsfolk.NPC {
 	return townsfolk.NPC{MobID: 1, Tags: []string{"gossip"}, Zone: "Alderbrook"}
 }
@@ -153,13 +164,13 @@ func TestADeedIsToldOncePerPlayerAndSurvivesARestart(t *testing.T) {
 	r := newRig(t)
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
 
-	sp, ok := r.m.Speak(gossip(), []int{7})
+	sp, ok := r.say(gossip(), []int{7})
 	require.True(t, ok)
-	assert.Equal(t, "Mara", sp.To, "a deed is said to the player")
+	assert.Equal(t, "@7", sp.To, "a deed is said to the player")
 	assert.Equal(t, "Mara put down the Hollow King.", sp.Text)
 	assert.Equal(t, 1, r.store.saves, "what was told is saved before it is said")
 
-	_, ok = r.m.Speak(gossip(), []int{7})
+	_, ok = r.say(gossip(), []int{7})
 	assert.False(t, ok, "the same deed is never told twice")
 
 	// A restart remembers.
@@ -178,45 +189,45 @@ func TestEachPlayerHearsTheirOwnCompanysDeeds(t *testing.T) {
 	r := newRig(t)
 	r.deed(8, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Tobin"}, Subject: "the Pale Wolf"})
 	// Mara has no deeds; Tobin does: the talker speaks to Tobin only.
-	sp, ok := r.m.Speak(gossip(), []int{7, 8})
+	sp, ok := r.say(gossip(), []int{7, 8})
 	require.True(t, ok)
-	assert.Equal(t, "Tobin", sp.To)
+	assert.Equal(t, "@8", sp.To)
 	assert.Contains(t, sp.Text, "the Pale Wolf")
 	// A second deed for Mara is a separate telling.
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
-	sp, ok = r.m.Speak(gossip(), []int{7, 8})
+	sp, ok = r.say(gossip(), []int{7, 8})
 	require.True(t, ok)
-	assert.Equal(t, "Mara", sp.To)
+	assert.Equal(t, "@7", sp.To)
 }
 
 func TestADeedOutsideTheWindowOrWithoutALineIsNotTold(t *testing.T) {
 	r := newRig(t)
 	r.deed(7, chronicle.Entry{Kind: chronicle.Fell, Members: []string{"Mara"}})
 	r.deed(7, chronicle.Entry{Kind: chronicle.Spared, Members: []string{"Mara"}, Subject: "a bandit"}) // priest-only
-	_, ok := r.m.Speak(gossip(), []int{7})
+	_, ok := r.say(gossip(), []int{7})
 	assert.False(t, ok, "no line for a fall; the spare is a priest's")
 	priest := townsfolk.NPC{Tags: []string{"priest"}}
-	sp, ok := r.m.Speak(priest, []int{7})
+	sp, ok := r.say(priest, []int{7})
 	require.True(t, ok)
 	assert.Contains(t, sp.Text, "Mercy, Mara")
 
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
 	r.now = r.now.Add(15 * 24 * time.Hour)
-	_, ok = r.m.Speak(gossip(), []int{7})
+	_, ok = r.say(gossip(), []int{7})
 	assert.False(t, ok, "talk fades after the window")
 }
 
 func TestATelledLineLeavesAMarkThatLaterLinesRead(t *testing.T) {
 	r := newRig(t)
 	r.deed(7, chronicle.Entry{Kind: chronicle.Relic, Members: []string{"Mara"}, Subject: "the Pale Crown"})
-	_, ok := r.m.Speak(gossip(), []int{7})
+	_, ok := r.say(gossip(), []int{7})
 	assert.False(t, ok, "the relic line needs the mark first")
 
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
-	_, ok = r.m.Speak(gossip(), []int{7})
+	_, ok = r.say(gossip(), []int{7})
 	require.True(t, ok)
 	assert.True(t, r.w.flags[7]["boss-slayers"], "telling the boss deed marks the company")
-	sp, ok := r.m.Speak(gossip(), []int{7})
+	sp, ok := r.say(gossip(), []int{7})
 	require.True(t, ok)
 	assert.Equal(t, "And now the Pale Crown too, Mara.", sp.Text, "the mark opens the relic line")
 	assert.Equal(t, []string{"boss-slayers"}, r.m.marks(7, r.m.lines()))
@@ -226,17 +237,17 @@ func TestAFailedMarkNeverBlocksTheTelling(t *testing.T) {
 	r := newRig(t)
 	r.w.setErr = errors.New("no flag provider")
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
-	sp, ok := r.m.Speak(gossip(), []int{7})
+	sp, ok := r.say(gossip(), []int{7})
 	require.True(t, ok)
 	assert.Contains(t, sp.Text, "Hollow King")
 }
 
 func TestWithNothingNewTheTalkerSpeaksOfTheWeatherToTheRoomOrNotAtAll(t *testing.T) {
 	r := newRig(t)
-	_, ok := r.m.Speak(gossip(), []int{7})
+	_, ok := r.say(gossip(), []int{7})
 	assert.False(t, ok, "clear weather and no deeds: silence")
 	r.w.weather = "rain"
-	sp, ok := r.m.Speak(gossip(), []int{7})
+	sp, ok := r.say(gossip(), []int{7})
 	require.True(t, ok)
 	assert.Equal(t, "Wet again.", sp.Text)
 	assert.Empty(t, sp.To, "a state line is said to the room")
@@ -244,21 +255,21 @@ func TestWithNothingNewTheTalkerSpeaksOfTheWeatherToTheRoomOrNotAtAll(t *testing
 
 	// A deed for anyone in the room still wins over the weather.
 	r.deed(8, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Tobin"}, Subject: "the Pale Wolf"})
-	sp, ok = r.m.Speak(gossip(), []int{7, 8})
+	sp, ok = r.say(gossip(), []int{7, 8})
 	require.True(t, ok)
-	assert.Equal(t, "Tobin", sp.To)
+	assert.Equal(t, "@8", sp.To)
 }
 
 func TestSignedOutListenersAndEmptyCatalogsAreIgnored(t *testing.T) {
 	r := newRig(t)
 	r.deed(9, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Ghost"}})
-	_, ok := r.m.Speak(gossip(), []int{9})
+	_, ok := r.say(gossip(), []int{9})
 	assert.False(t, ok, "user 9 has no name: not signed in")
 
 	empty := newRig(t)
 	empty.m.readFiles = func() map[string][]byte { return nil }
 	empty.deed(7, chronicle.Entry{Kind: chronicle.Boss})
-	_, ok = empty.m.Speak(gossip(), []int{7})
+	_, ok = empty.say(gossip(), []int{7})
 	assert.False(t, ok)
 }
 
@@ -300,8 +311,8 @@ func TestAPurgedUserForgetsWhatTheyWereTold(t *testing.T) {
 	r := newRig(t)
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}})
 	r.deed(8, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Tobin"}})
-	_, _ = r.m.Speak(gossip(), []int{7})
-	_, _ = r.m.Speak(gossip(), []int{8})
+	_, _ = r.say(gossip(), []int{7})
+	_, _ = r.say(gossip(), []int{8})
 	r.m.onUserPurged(events.UserPurged{UserId: 7})
 	assert.NotContains(t, r.m.state, 7)
 	assert.Contains(t, r.m.state, 8)
@@ -315,13 +326,13 @@ func TestTheTestAreaSnapshotsAndRestoresWhatWasTold(t *testing.T) {
 	snap, err := c.Capture(7)
 	require.NoError(t, err)
 	assert.Nil(t, snap, "nothing told yet")
-	_, ok := r.m.Speak(gossip(), []int{7})
+	_, ok := r.say(gossip(), []int{7})
 	require.True(t, ok)
 	r.w.pushes = nil
 	require.NoError(t, c.Restore(7, 0, snap))
 	assert.NotContains(t, r.m.state, 7, "a trip's tellings leave no trace")
 	assert.NotEmpty(t, r.w.pushes)
-	_, ok = r.m.Speak(gossip(), []int{7})
+	_, ok = r.say(gossip(), []int{7})
 	assert.True(t, ok, "the deed can be told again after the trip")
 	assert.Contains(t, userstate.Names(), "townsfolk")
 }
@@ -330,7 +341,7 @@ func TestRememberedTellingsAreCapped(t *testing.T) {
 	r := newRig(t)
 	for i := 0; i < maxTold+5; i++ {
 		r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "foe"})
-		_, ok := r.m.Speak(gossip(), []int{7})
+		_, ok := r.say(gossip(), []int{7})
 		require.True(t, ok)
 	}
 	st := r.m.state[7]
@@ -344,7 +355,7 @@ func TestTheCommandAndPanelShowWhatWasToldAndWhatMayBe(t *testing.T) {
 	assert.Contains(t, r.m.render(7), "Nobody has spoken of your company yet")
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
 	assert.Contains(t, r.m.render(7), "Folk may yet speak of", "a fresh deed is listed before it is told")
-	_, _ = r.m.Speak(gossip(), []int{7})
+	_, _ = r.say(gossip(), []int{7})
 	r.now = r.now.Add(2 * time.Hour)
 	r.deed(7, chronicle.Entry{Kind: chronicle.Relic, Members: []string{"Mara"}, Subject: "the Pale Crown"})
 	r.deed(7, chronicle.Entry{Kind: chronicle.Fell, Members: []string{"Mara"}})
@@ -378,7 +389,7 @@ func TestALoadFailureStopsSavingSoNothingIsOverwritten(t *testing.T) {
 	r.m.load()
 	r.store.saved = []byte("kept")
 	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}})
-	_, ok := r.m.Speak(gossip(), []int{7})
+	_, ok := r.say(gossip(), []int{7})
 	assert.True(t, ok, "talk goes on")
 	assert.Equal(t, "kept", string(r.store.saved))
 }
@@ -403,7 +414,9 @@ func TestATalkerMentionsADeedThroughTheRealIdleTurn(t *testing.T) {
 	r := newRig(t)
 	townsfolk.SetProvider(r.m)
 	t.Cleanup(func() { townsfolk.SetProvider(nil) })
-	r.deed(41, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
+	// The real shape of a boss deed (internal/mobcommands/suicide.go): the
+	// company's, naming nobody.
+	r.deed(41, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
 	r.w.names[41] = "Mara"
 
 	room := &rooms.Room{RoomId: 990401, Title: "Market square"}
@@ -441,7 +454,7 @@ func TestATalkerMentionsADeedThroughTheRealIdleTurn(t *testing.T) {
 	}
 
 	require.NotEmpty(t, said)
-	assert.Equal(t, "sayto Mara Mara put down the Hollow King.", said[0], "the deed is said to the player, in the first idle turn")
+	assert.Equal(t, "sayto @41 Mara put down the Hollow King.", said[0], "the deed is said to the player, in the first idle turn")
 	told := 0
 	for _, s := range said {
 		if strings.Contains(s, "Hollow King") {
@@ -452,6 +465,30 @@ func TestATalkerMentionsADeedThroughTheRealIdleTurn(t *testing.T) {
 	for i := 1; i < len(said); i++ {
 		assert.True(t, strings.HasPrefix(said[i], "emote"), "afterwards the usual idle turn: %s", said[i])
 	}
+
+	// The same boss again within the hour: the identical line is held back by
+	// the chatter memory, so the deed stays untold (68 review) ...
+	r.deed(41, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
+	said = nil
+	for round := uint64(10200); round < 10400; round++ {
+		util.SetRoundCount(round)
+		hooks.HandleIdleMobs(events.MobIdle{MobInstanceId: talker.InstanceId})
+		events.ProcessEvents()
+	}
+	for _, s := range said {
+		assert.NotContains(t, s, "Hollow King")
+	}
+	assert.Equal(t, 1, r.m.state[41].Total, "a held-back line is not counted as told")
+	// ... and is told once the player could hear the line again.
+	said = nil
+	for round := uint64(11000); round < 11100; round++ {
+		util.SetRoundCount(round)
+		hooks.HandleIdleMobs(events.MobIdle{MobInstanceId: talker.InstanceId})
+		events.ProcessEvents()
+	}
+	require.NotEmpty(t, said)
+	assert.Equal(t, "sayto @41 Mara put down the Hollow King.", said[0])
+	assert.Equal(t, 2, r.m.state[41].Total)
 }
 
 // A mob that is no talker never reaches the module.
@@ -532,6 +569,9 @@ func TestTheLiveWorldUsesTheStoryEventSeams(t *testing.T) {
 		if leader == 7 && key == "companion:2" {
 			return []string{"devout"}
 		}
+		if leader == 7 && key == "leader" {
+			return []string{"Soldier"} // a source's case, as story events accept it
+		}
 		return nil
 	})
 	w := liveWorld{}
@@ -542,6 +582,7 @@ func TestTheLiveWorldUsesTheStoryEventSeams(t *testing.T) {
 	assert.Error(t, w.SetFlag(7, "Not A Flag"), "the flag seam validates")
 	assert.True(t, w.MemberTag(7, "companion:2", "devout"))
 	assert.False(t, w.MemberTag(7, "leader", "devout"))
+	assert.True(t, w.MemberTag(7, "leader", "soldier"), "tags match regardless of case, as story events' requirements do")
 }
 
 type constantTalker struct{}
@@ -595,4 +636,78 @@ func TestAHeldBackLineLeavesTheUsualIdleTurn(t *testing.T) {
 	require.Len(t, acts, 2, "%v", acts)
 	assert.Equal(t, "say Wet again.", acts[0])
 	assert.Equal(t, "look", acts[1], "the player already heard the line, so the usual idle turn ran (a wandering talker keeps wandering)")
+}
+
+// A line the chatter limits hold back (Speak without Confirm) uses nothing
+// up: the deed is told the next time, and no mark is left (68 review).
+func TestAnUnconfirmedTellingLeavesTheDeedUntold(t *testing.T) {
+	r := newRig(t)
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Members: []string{"Mara"}, Subject: "the Hollow King"})
+	sp, ok := r.m.Speak(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "@7", sp.To)
+	assert.Zero(t, r.store.saves)
+	assert.Zero(t, r.m.state[7].Total)
+	assert.False(t, r.w.flags[7]["boss-slayers"], "no mark for a line never said")
+
+	_, ok = r.say(gossip(), []int{7})
+	require.True(t, ok, "the deed is still there to tell")
+	assert.Equal(t, 1, r.m.state[7].Total)
+	assert.True(t, r.w.flags[7]["boss-slayers"])
+}
+
+// The game records a boss slain, a relic found and a mercy answer as the
+// company's deed, naming nobody: the line names the leader and member_tag
+// reads the leader's tags (68 review; the phase 72 seam).
+func TestACompanyDeedIsTheLeaders(t *testing.T) {
+	r := newRig(t)
+	r.m.readFiles = func() map[string][]byte {
+		return map[string][]byte{"t.yaml": []byte(testLines + `
+- id: soldier-boss
+  kind: boss
+  member_tag: soldier
+  tags: [veteran]
+  text: "A soldier's work, {who}."
+`)}
+	}
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:12"})
+	sp, ok := r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "Mara put down the Hollow King.", sp.Text, "not \"The company put down\"")
+
+	r.deed(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Pale Wolf", Ref: "mob:13"})
+	veteran := townsfolk.NPC{Tags: []string{"veteran"}}
+	_, ok = r.say(veteran, []int{7})
+	assert.False(t, ok, "the leader carries no soldier tag yet")
+	r.w.tags["7|"+townsfolk.LeaderKey+"|soldier"] = true
+	sp, ok = r.say(veteran, []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "A soldier's work, Mara.", sp.Text)
+}
+
+func TestTheLeaderKeyIsTheCompanys(t *testing.T) {
+	assert.Equal(t, string(survival.LeaderMemberKey), townsfolk.LeaderKey)
+}
+
+// A new deed refreshes the web view, so "not yet spoken of" is current
+// (68 review).
+func TestANewDeedRefreshesTheView(t *testing.T) {
+	r := newRig(t)
+	prevW, prevFiles, prevClock := module.w, module.readFiles, module.clock
+	module.w, module.readFiles, module.clock = r.w, r.m.readFiles, r.m.clock
+	module.mu.Lock()
+	prevCat := module.catalog
+	module.catalog = nil
+	module.mu.Unlock()
+	t.Cleanup(func() {
+		module.w, module.readFiles, module.clock = prevW, prevFiles, prevClock
+		module.mu.Lock()
+		module.catalog = prevCat
+		module.mu.Unlock()
+	})
+	chronicle.Record(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King"})
+	require.NotEmpty(t, r.w.pushes)
+	last := r.w.pushes[len(r.w.pushes)-1]
+	assert.Equal(t, "Company.Townsfolk", last.namespace)
+	require.Len(t, last.payload.(panel).Fresh, 1)
 }
