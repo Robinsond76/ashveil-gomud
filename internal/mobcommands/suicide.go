@@ -200,7 +200,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// Phase 63: a boss's fall is the company's deed. An executed boss
 			// is slain too (the mercy answer adds the execution), so bounty
 			// and lair checks matching Boss + mob:<id> see every kill.
-			chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Boss, Subject: mob.Character.Name, Ref: fmt.Sprintf("mob:%d", mob.MobId), Place: room.Title})
+			chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Boss, Subject: mob.Character.Name, Ref: fmt.Sprintf("mob:%d", mob.MobId), Place: room.Title, Zone: room.Zone})
 		}
 		if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
 			// Phase 67: a slain foe's race advances the relics the company wears.

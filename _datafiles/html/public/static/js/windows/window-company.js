@@ -28,6 +28,9 @@
  *   Errands   - who is away on an errand and when they are due, and a card
  *               to send each free companion (Phase 70); `errands` reads the
  *               same in text.
+ *   Bounties  - the bounty board the leader stands at and the bounties the
+ *               company holds, with progress (Phase 76); `bounty` reads the
+ *               same in text.
  *   Rites     - the companions the company has lost and not yet mourned,
  *               with Hold and Let pass buttons at a camp or an inn
  *               (Phase 74); `rites` reads the same in text.
@@ -57,6 +60,10 @@
  *                       label}]}], recent: [string] }
  *   Company.Rites     - the Rites sub-tab: { here, where, rows: [{id, name,
  *                       level, cause, close: [name], offered}] }
+ *   Company.Bounties  - the Bounties sub-tab: { now, at_board, board, band,
+ *                       rotates, max, postings: [{n, kind, name, zone, band,
+ *                       rating, count, reward, taken, done}], held: [{n, kind,
+ *                       name, zone, have, count, reward, left, ready}] }
  *   Company.Bonds     - the Bonds sub-tab: { pairs: [{a, b, a_name, b_name,
  *                       value, tier, phrase, effect, warned}], members: [{id,
  *                       name, feelings: [{id, name, words, tier}]}] }
@@ -523,6 +530,7 @@
         { id: 'company-bonds',     label: 'Bonds' },
         { id: 'company-errands',   label: 'Errands' },
         { id: 'company-rites',     label: 'Rites' },
+        { id: 'company-bounties',  label: 'Bounties' },
     ];
     const SUBTAB_KEY = 'companySubTab';
 
@@ -1054,7 +1062,7 @@
         // Inventory the companions out (names only, so not on vitals). The
         // Chronicle keeps its own payload; it is redrawn here so a window
         // closed and opened again shows it at once.
-        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); updateErrands(); updateRites(); }
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); updateOpinions(); updateBonds(); updateErrands(); updateRites(); updateBounties(); }
         updateCamp();
     }
 
@@ -2119,6 +2127,96 @@
         keepFocus(panel, () => buildRites(panel));
     }
 
+    // --- Bounties (Phase 76) ---
+    // bountyData is the newest Company.Bounties payload; bountyAt is when it
+    // arrived, so "time left" counts down between pushes.
+    let bountyData = null;
+    let bountyAt = 0;
+
+    function bountyButton(label, cmd, title, id, disabled) {
+        const b = el('button', 'cmp-btn', label);
+        b.type = 'button';
+        b.setAttribute('data-focus', 'btn|' + label + '|' + id);
+        b.title = title;
+        if (disabled) { b.disabled = true; }
+        b.addEventListener('click', () => send(cmd));
+        return b;
+    }
+
+    function bountyWhat(t) {
+        const count = Number(t.count) || 1;
+        return (t.kind === 'boss' ? 'Slay the master of the lair in ' : 'Break ' + count + ' groups in ') + (t.zone || 'the wilds');
+    }
+
+    function buildBounties(panel) {
+        const data = bountyData || (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Bounties) || null;
+        keepScroll(panel);
+        panel.textContent = '';
+        const pad = el('div', 'cmp-pad');
+        panel.appendChild(pad);
+        if (!data) {
+            pad.appendChild(el('div', 'cmp-note', 'Bounty boards in towns post lair masters and bands of foes wanted nearby (help bounties).'));
+            return;
+        }
+        const waited = bountyAt ? Math.max(0, Math.floor((Date.now() - bountyAt) / 1000)) : 0;
+        const held = Array.isArray(data.held) ? data.held : [];
+        const postings = Array.isArray(data.postings) ? data.postings : [];
+        const max = Number(data.max) || 3;
+
+        pad.appendChild(el('div', 'cmp-line', 'Held bounties (' + held.length + ' of ' + max + ')'));
+        if (!held.length) {
+            pad.appendChild(el('div', 'cmp-note', 'Your company holds none. Take one at a bounty board in a town.'));
+        }
+        held.forEach(h => {
+            const card = el('div', 'cmp-rite-card');
+            card.setAttribute('data-offered', h.ready ? '1' : '0');
+            const head = el('div', 'cmp-err-head', h.name || 'A mark');
+            head.appendChild(el('span', 'cmp-err-sub', ' ' + (Number(h.reward) || 0) + ' gold'));
+            card.appendChild(head);
+            card.appendChild(el('div', 'cmp-note', bountyWhat(h)));
+            const left = Math.max(0, (Number(h.left) || 0) - waited);
+            card.appendChild(el('div', 'cmp-note', h.ready ? 'Proof found: ready to claim.' : (Number(h.have) || 0) + ' of ' + (Number(h.count) || 1) + ' done; ' + errandLeft(left) + ' left.'));
+            const btns = el('div', 'cmp-rite-btns');
+            if (data.at_board) {
+                btns.appendChild(bountyButton('Claim', 'bounty claim ' + h.n, 'Collect the gold for ' + h.name, 'held' + h.n, !h.ready));
+            }
+            btns.appendChild(bountyButton('Drop', 'bounty drop ' + h.n, 'Give up this bounty', 'held' + h.n, false));
+            card.appendChild(btns);
+            pad.appendChild(card);
+        });
+
+        if (!data.at_board) {
+            pad.appendChild(el('div', 'cmp-note', 'No bounty board here. Boards hang in towns; take and claim bounties at one.'));
+            return;
+        }
+        const rotates = Math.max(0, (Number(data.rotates) || 0) - waited);
+        pad.appendChild(el('div', 'cmp-line', 'The board at ' + (data.board || 'this town') + (data.band ? ' (level ' + data.band + ')' : '') + '; a new list in ' + errandLeft(rotates)));
+        if (!postings.length) {
+            pad.appendChild(el('div', 'cmp-note', 'Nothing is posted. The board lists lairs and bands from the zones near here, and none are known.'));
+        }
+        const full = held.length >= max;
+        postings.forEach(p => {
+            const card = el('div', 'cmp-rite-card');
+            card.setAttribute('data-offered', '0');
+            const head = el('div', 'cmp-err-head', p.name || 'A mark');
+            head.appendChild(el('span', 'cmp-err-sub', ' ' + (Number(p.reward) || 0) + ' gold'));
+            card.appendChild(head);
+            card.appendChild(el('div', 'cmp-note', bountyWhat(p) + ' (zone level ' + (p.band || '?') + (p.rating ? ', ' + p.rating + ' for you' : '') + ')'));
+            const btns = el('div', 'cmp-rite-btns');
+            const label = p.taken ? 'Taken' : (p.done ? 'Settled' : 'Take');
+            btns.appendChild(bountyButton(label, 'bounty take ' + p.n, 'Take this bounty', 'post' + p.n, p.taken || p.done || full));
+            card.appendChild(btns);
+            pad.appendChild(card);
+        });
+        pad.appendChild(el('div', 'cmp-note', 'Gold only, by the zone\'s level band. A bounty never changes a foe. The chronicle is the proof: only kills after you take it count (help bounties).'));
+    }
+
+    function updateBounties() {
+        const panel = document.getElementById('company-bounties');
+        if (!panel) { return; }
+        keepFocus(panel, () => buildBounties(panel));
+    }
+
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Party'],
@@ -2140,6 +2238,13 @@
                 errandClock = errandData && Number(errandData.now) ? Number(errandData.now) - Math.floor(Date.now() / 1000) : 0;
                 win.open();
                 if (win.isOpen()) { updateErrands(); }
+                return;
+            }
+            if (namespace === 'Company.Bounties') {
+                bountyData = body && typeof body === 'object' ? body : null;
+                bountyAt = Date.now();
+                win.open();
+                if (win.isOpen()) { updateBounties(); }
                 return;
             }
             if (namespace === 'Company.Rites') {

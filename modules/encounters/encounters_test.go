@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/bounty"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -732,6 +734,80 @@ func TestAStoryEventStartsANamedGroupThatIsTrackedLikeARandomOne(t *testing.T) {
 	assert.Error(t, w.m.StartGroup(userID, woodRm, foes), "one leader holds one group")
 	assert.Error(t, w.m.StartGroup(userID+1, woodRm, foes[:1]), "an encounter needs two foes")
 	assert.Len(t, w.m.active, 1)
+}
+
+// Phase 76: a won ordinary group is the company's deed, written once from
+// the encounter record; a boss's fall is the mob's own deed, a fled group
+// writes nothing, and a story event's group has no table to name.
+func TestAWonGroupIsWrittenIntoTheChronicleOnce(t *testing.T) {
+	w := setup(t)
+	mem := chronicle.NewMemory()
+	chronicle.SetProvider(mem)
+	t.Cleanup(func() { chronicle.SetProvider(nil) })
+	hunting := false
+	bounty.SetHunting(func(uid int, ref, zone string) bool {
+		return hunting && uid == userID && ref == "group:wolves" && zone == zoneName
+	})
+	t.Cleanup(func() { bounty.SetHunting(nil) })
+	killAll := func() {
+		for _, r := range w.m.active {
+			for _, id := range r.Foes {
+				mobs.GetInstance(id).Character.Health = 0
+			}
+		}
+	}
+
+	// Won without a bounty on it: an ordinary fight is not a deed, so random
+	// fights never crowd the chronicle.
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	killAll()
+	w.m.settleLocked(false)
+	assert.Empty(t, w.m.active)
+	assert.Empty(t, chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}}), "no bounty held, no group deed")
+	hunting = true
+
+	// Fled: a survivor is cleared away, nothing is written.
+	w.m.graces[userID] = encounters.Grace{}
+	w.user.Character.RoomId = startRm
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	w.user.Character.RoomId = startRm
+	w.m.settleLocked(true)
+	assert.Empty(t, w.m.active)
+	assert.Empty(t, chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}}), "a fled group is not broken")
+
+	// Won: every foe falls.
+	w.m.graces[userID] = encounters.Grace{}
+	w.user.Character.RoomId = startRm
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		for _, id := range r.Foes {
+			mobs.GetInstance(id).Character.Health = 0
+		}
+	}
+	w.m.settleLocked(false)
+	w.m.settleLocked(false)
+	deeds := chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}})
+	require.Len(t, deeds, 1, "one group, one deed, however often the round settles")
+	assert.Equal(t, "group:wolves", deeds[0].Ref)
+	assert.Equal(t, "Wolves", deeds[0].Subject)
+	assert.Equal(t, zoneName, deeds[0].Zone)
+	assert.Equal(t, "Room", deeds[0].Place)
+
+	// A lair's boss falls: the Boss deed belongs to the mob's death, not here.
+	w.m.graces[userID] = encounters.Grace{}
+	w.user.Character.RoomId = startRm
+	w.walk(t, "up")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		for _, id := range r.Foes {
+			mobs.GetInstance(id).Character.Health = 0
+		}
+	}
+	w.m.settleLocked(false)
+	assert.Len(t, chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}}), 1, "a boss group adds no group deed")
 }
 
 // fullHP is the HP of a wood wolf of the level: what an unsoftened foe has.
