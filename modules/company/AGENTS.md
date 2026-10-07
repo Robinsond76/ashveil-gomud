@@ -129,3 +129,7 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 - `relocate_test.go` (fakes) and `wiring_relocation_test.go` (brawl world: a real room script, the quest hook, logout/restart/login, the stray sweep, the fallen) cover it.
 
 Phase 49 banter (`banter.go`, pool in `internal/banter`): `Companion.Personality` is rolled in `enlist` (`rollPersonality`, set once; legacy companions derive one from their ID). `CampBanter`/`LastBanter` implement `company.BanterProvider` for `modules/camping` (rest start and end) and `modules/gmcp` (`Company.Camp.banter`); `onBattleEnded` works out `battleBanter` before the patch-up and says it after (only for a victory, never when a new battle has begun). Banter state (recent line ids, the latest exchange, known-dead set) is in memory only and dropped on purge. The leader never speaks. `set banter off` is the player option (`banter.OptionKey`). Chances come from the `Banter*Percent` config keys.
+
+## Opinions (Phase 64)
+
+`opinions.go` implements `company.OpinionProvider` and `OpinionViewer`. A choice arrives from its source through `company.Opinion`; companions react once per choice and once per cooldown, loyalty moves ±2 within 30..80, and a mercy choice leaves alone any companion alignment already moved. State lives on `Companion.Opinions` (last six reactions and when each kind was last spoken), so it saves, clones (`Registry.Get`) and purges with the company record. `OpinionPanel` feeds `opinions`, `company inspect` and the `Company.Opinions` GMCP extra; see `internal/opinions/AGENTS.md`.

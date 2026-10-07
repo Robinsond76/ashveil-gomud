@@ -220,6 +220,14 @@ func (f *fakeWorld) Loyalty(_ int, op string, who []storyevents.Facts, n int) st
 	f.rec("loyalty", "%s %d %s", strings.Join(names, ","), n, op)
 	return strings.Join(names, ", ") + " thinks less of you."
 }
+func (f *fakeWorld) Opinion(_ int, op, stance, subject string, who []storyevents.Facts) []string {
+	names := []string{}
+	for _, m := range who {
+		names = append(names, m.Name)
+	}
+	f.rec("opinion", "%s %s %s %s", stance, subject, op, strings.Join(names, ","))
+	return []string{"Sera says, \"Bold!\""}
+}
 func (f *fakeWorld) Battle(_ int, room int, foes []storyevents.Foe) string {
 	return f.rec("battle", "room %d %v", room, foes)
 }
@@ -809,4 +817,54 @@ func TestASceneEndingOnAMoveIsWrittenBeforeTheMove(t *testing.T) {
 	assert.Equal(t, []call{{"move", "11"}, {"move", "10"}}, r.w.calls)
 	require.Equal(t, []int{1}, probe.before, "written once, after the first move and before the last")
 	assert.Equal(t, "Climb back up", probe.Log(7).Entries[0].Detail)
+}
+
+const stanceFixture = `
+- id: ledge-walk
+  title: The Ledge
+  triggers:
+    - kind: room
+      room: 10
+  pages:
+    start:
+      text: A narrow ledge.
+      choices:
+        - label: Edge along it
+          stance: courage
+          text: You edge along.
+        - label: Turn back
+          text: You turn back.
+`
+
+func TestAStanceChoiceLetsTheCompanionsReactOnce(t *testing.T) {
+	r := newRig(t, stanceFixture)
+	require.True(t, r.enter(10))
+	r.choose(1)
+	var seen []call
+	for _, c := range r.w.calls {
+		if c.kind == "opinion" {
+			seen = append(seen, c)
+		}
+	}
+	require.Len(t, seen, 1, "one report per choice")
+	assert.Contains(t, seen[0].args, "courage The Ledge story:ledge-walk:")
+	assert.Contains(t, strings.Join(r.w.sent, "\n"), "Sera says", "the companions' words follow the choice")
+}
+
+func TestAnUntaggedChoiceHasNoStance(t *testing.T) {
+	r := newRig(t, stanceFixture)
+	require.True(t, r.enter(10))
+	r.choose(2)
+	for _, c := range r.w.calls {
+		assert.NotEqual(t, "opinion", c.kind)
+	}
+}
+
+func TestAnUnknownStanceIsRefusedAtLoad(t *testing.T) {
+	events, err := storyevents.Parse([]byte(strings.Replace(stanceFixture, "courage", "bravado", 1)))
+	require.NoError(t, err)
+	require.Len(t, events, 1)
+	errs := events[0].Validate(storyevents.Lookups{})
+	require.NotEmpty(t, errs)
+	assert.Contains(t, strings.Join(errs, "\n"), "stance")
 }

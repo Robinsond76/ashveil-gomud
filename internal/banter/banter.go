@@ -74,6 +74,10 @@ func verbFor(personality, lineID, text string) string {
 	return options[int(h.Sum32()%uint32(len(options)))]
 }
 
+// Verb is how a personality delivers a line (Phase 64 opinions): the one
+// verb that fits a spoken line, fixed per id so it always reads the same.
+func Verb(personality, id, text string) string { return verbFor(personality, id, text) }
+
 // Groups are archetype families a line may be tagged with instead of one
 // archetype.
 var groups = map[string]string{

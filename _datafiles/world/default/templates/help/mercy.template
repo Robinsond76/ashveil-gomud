@@ -15,6 +15,11 @@ those at alignment +25 or above approve mercy; those at -25 or below
 approve execution. Approval gives 2 loyalty, disapproval costs 1; others
 have no loyalty change. Their beliefs do not change immediately.
 
+The others answer by temperament (help opinions): a devout or cheerful
+companion likes mercy, a grim one dislikes it, and so on. A companion that
+alignment already moved does not speak twice. Each such answer is 2
+loyalty, with the limits that page describes.
+
 You have 30 seconds per displayed question. Invalid answers do not extend
 it. With no answer the foe escapes, giving no rewards or alignment change.
 Leaving, logout, death, tutorial handoff, restart/copyover, or another battle
@@ -23,4 +28,4 @@ If another question is already open, the foes escape instead.
 When players share an enemy, only its first battle's owner decides its fate.
 
 The mercy command is used by the question; answer the displayed yes/no prompt.
-See also: help morale, help alignment, help combat.
+See also: help morale, help alignment, help combat, help opinions.

@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/standing"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -284,19 +286,33 @@ func (m *CampingModule) innStatus(user *users.UserRecord, room *rooms.Room) stri
 	return text
 }
 
-// innRest takes the company's gold and starts a durable real-time stay.
+// innRest takes the company's gold and starts a durable real-time stay. A
+// stay that starts is the company's choice of a bed over a rough camp
+// (Phase 64), so its companions have their say, outside m.mu.
 func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string {
+	text, started := m.innRestLocked(user, room)
+	if started {
+		if said, err := company.Opinion(user.UserId, opinions.Choice{Kind: opinions.Inn, Subject: room.Title}); err != nil {
+			mudlog.Warn("camping: inn opinion", "leader", user.UserId, "error", err)
+		} else if len(said) > 0 {
+			text += "\n" + strings.Join(said, "\n")
+		}
+	}
+	return text
+}
+
+func (m *CampingModule) innRestLocked(user *users.UserRecord, room *rooms.Room) (string, bool) {
 	if err := m.persistenceAvailable(); err != nil {
-		return err.Error()
+		return err.Error(), false
 	}
 	if err := m.survival.Available(); err != nil {
-		return err.Error()
+		return err.Error(), false
 	}
 	// The travel check runs before taking m.mu (camping never holds its lock
 	// while calling another module). Both it and a route start run on the
 	// game loop, so nothing can slip in between.
 	if m.isTravelling(user.UserId) {
-		return "You can't take a room while travelling."
+		return "You can't take a room while travelling.", false
 	}
 	pricing := innStanding(user.UserId, room)
 	m.mu.Lock()
@@ -304,13 +320,13 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 	// Config is written by load() under m.mu, so read it under m.mu too.
 	settings := m.innSettings()
 	if room == nil || !room.HasTag(settings.RoomTag) {
-		return "There is no inn here."
+		return "There is no inn here.", false
 	}
 	if camp, ok := m.camps[user.UserId]; ok && camp.Rest != nil && camp.Rest.State == camping.Resting {
-		return "You are already resting at camp."
+		return "You are already resting at camp.", false
 	}
 	if blocked, why := m.gigBlockLocked(user.UserId); blocked {
-		return why
+		return why, false
 	}
 	if _, ok := m.stays[user.UserId]; ok {
 		if err := m.syncStayLocked(user.UserId); err != nil {
@@ -318,21 +334,21 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 		}
 		if stay, still := m.stays[user.UserId]; still {
 			if stay.Resting() {
-				return "You are already resting at the inn."
+				return "You are already resting at the inn.", false
 			}
-			return "Your company has only just woken. Give it a moment."
+			return "Your company has only just woken. Give it a moment.", false
 		}
 	}
 	if pricing.InnRefused() {
-		return innRefusal(room)
+		return innRefusal(room), false
 	}
 	price, _ := m.innPrice(user.UserId, pricing)
 	if user.Character.Gold < price {
-		return fmt.Sprintf("A room for your company costs %d gold, and you have only %d.", price, user.Character.Gold)
+		return fmt.Sprintf("A room for your company costs %d gold, and you have only %d.", price, user.Character.Gold), false
 	}
 	stay, err := camping.StartInnStay(user.UserId, room.RoomId, price, m.clock().UTC(), settings.RestDuration, settings.FatigueRecovery)
 	if err != nil {
-		return "You can't rest here."
+		return "You can't rest here.", false
 	}
 	user.Character.Gold -= price
 	m.stays[user.UserId] = stay
@@ -341,12 +357,12 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 		// Roll back: nothing changes, and the gold comes back.
 		delete(m.stays, user.UserId)
 		user.Character.Gold += price
-		return err.Error()
+		return err.Error(), false
 	}
 	// The Worth panel refreshes on this event, like every other purchase.
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	m.scheduleStayLocked(stay)
-	return fmt.Sprintf("You pay %d gold and your company settles in to rest. (%s)", price, settings.RestDuration)
+	return fmt.Sprintf("You pay %d gold and your company settles in to rest. (%s)", price, settings.RestDuration), true
 }
 
 // syncStayLocked completes a due stay and applies its recovery, or retries

@@ -16,6 +16,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 )
 
 // Trigger kinds.
@@ -129,6 +131,11 @@ type Choice struct {
 	// Risk, when set, lets the choice fail: its Fail outcomes and text run
 	// instead.
 	Risk *Risk `yaml:"risk,omitempty"`
+	// Stance, when set, is the kind of choice this is to a companion's eyes
+	// (Phase 64 opinions): kindness, greed, courage, prudence, reverence or
+	// cunning. Taking the choice, whether or not its risk falls, lets the
+	// companions with the company say what they think.
+	Stance string `yaml:"stance,omitempty"`
 	// Text is what happens, shown after the choice; {who} is the member who
 	// took it.
 	Text string    `yaml:"text,omitempty"`
@@ -515,6 +522,9 @@ func (e Event) validatePage(id string, p Page, l Lookups) []string {
 		}
 		if a := c.Require.Alignment; a != "" && a != "good" && a != "neutral" && a != "evil" {
 			bad("choice %d: alignment must be good, neutral or evil", n)
+		}
+		if c.Stance != "" && !opinions.IsStance(c.Stance) {
+			bad("choice %d: stance %q must be one of %s", n, c.Stance, strings.Join(opinions.Stances(), ", "))
 		}
 		if c.Require.SkillLevel < 0 || c.Require.MinLevel < 0 || c.Require.Gold < 0 {
 			bad("choice %d: requirement numbers cannot be negative", n)

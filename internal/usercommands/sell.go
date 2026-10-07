@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -70,6 +73,9 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		)
 		if note != `` {
 			user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notes: %s`, mob.Character.Name, note))
+		}
+		if items.IsRelicItem(item.ItemId) {
+			relicSold(user, item.Name())
 		}
 		room.SendText(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> sells a <ansi fg="itemname">%s</ansi>.`, user.Character.Name, item.DisplayName()),
@@ -152,6 +158,7 @@ func sellJunk(user *users.UserRecord, room *rooms.Room) (bool, error) {
 	user.Character.CancelBuffsWithFlag("hidden")
 
 	total, sold := 0, 0
+	relic := "" // Phase 64: the first relic sold, for one company reaction
 	kept := []string{}
 	lines := []string{}
 	for _, item := range candidates {
@@ -169,6 +176,9 @@ func sellJunk(user *users.UserRecord, room *rooms.Room) (bool, error) {
 			lines = append(lines, fmt.Sprintf(`  <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>`, item.DisplayName(), value))
 			total += value
 			sold++
+			if relic == "" && items.IsRelicItem(item.ItemId) {
+				relic = item.Name()
+			}
 			done = true
 			break
 		}
@@ -187,6 +197,22 @@ func sellJunk(user *users.UserRecord, room *rooms.Room) (bool, error) {
 		out += fmt.Sprintf("\nNo one here would buy: %s.", strings.Join(kept, ", "))
 	}
 	user.SendText(out)
+	if relic != "" {
+		relicSold(user, relic)
+	}
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> sells some junk.`, user.Character.Name), user.UserId)
 	return true, nil
+}
+
+// relicSold (Phase 64) lets the company have its say on a relic sold for
+// coin, once per sale command however many relics went.
+func relicSold(user *users.UserRecord, name string) {
+	said, err := company.Opinion(user.UserId, opinions.Choice{Kind: opinions.SellRelic, Subject: name})
+	if err != nil {
+		mudlog.Warn("sell: relic opinion", "user", user.UserId, "error", err)
+		return
+	}
+	for _, line := range said {
+		user.SendText(line)
+	}
 }

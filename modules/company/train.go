@@ -426,5 +426,8 @@ func (m *CompanyModule) inspectMember(leaderUserID int, selector string, exact b
 		lines = append(lines, "Optional skills: "+strings.Join(trained, ", ")+".")
 	}
 	lines = append(lines, "Training: "+pointsLabel(m.trainingPoints(leaderUserID, c))+". See company train.")
+	if line := m.opinionLine(leaderUserID, c.ID); line != "" { // Phase 64
+		lines = append(lines, line)
+	}
 	return strings.Join(lines, "\n"), true
 }

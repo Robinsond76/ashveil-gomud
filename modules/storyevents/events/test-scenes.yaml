@@ -15,6 +15,7 @@
         pale lies against the rock. The rope looks sound for a rope that old.
       choices:
         - label: Send your best climber down the rope
+          stance: courage
           require:
             classes: [ranger, rogue, gryphon-rider]
           hint: a ranger, a rogue or a gryphon-rider
@@ -30,6 +31,7 @@
             - kind: wound
               pct: 20
         - label: Go down yourself, and the company after you
+          stance: courage
           risk:
             pct: 50
             less_per_level: 3
@@ -47,6 +49,7 @@
               room: 90014
           fail_next: ledge
         - label: Turn back from the edge
+          stance: prudence
           text: A bridge that fell is not worth a company that follows it.
     ledge:
       text: >-
@@ -55,6 +58,7 @@
         climb you made.
       choices:
         - label: Go through the dead man's pack
+          stance: greed
           text: Whatever he was carrying, he has no more use for it.
           do:
             - kind: item
@@ -66,6 +70,7 @@
               flag: searched-the-ledge
           next: ledge-done
         - label: Climb back up without touching him
+          stance: reverence
           text: You leave him as he is.
           do:
             - kind: move
@@ -102,6 +107,7 @@
         stream. He does not ask you for anything again.
       choices:
         - label: Share your food and water
+          stance: kindness
           text: He eats like a man who has forgotten how, and gives you the road south in return.
           do:
             - kind: need
@@ -115,6 +121,7 @@
             - kind: flag
               flag: fed-the-deserter
         - label: Have a healer bind the leg properly
+          stance: kindness
           require:
             classes: [cleric, shaman]
           hint: a cleric or a shaman
@@ -126,6 +133,7 @@
             - kind: flag
               flag: healed-the-deserter
         - label: Take his sword while he sleeps
+          stance: cunning
           risk:
             pct: 40
           text: He sleeps hard, with the leg. The sword is a good one, and so is the purse under it.
@@ -160,6 +168,7 @@
         spring runs from a crack in the back wall.
       choices:
         - label: Have the devout one say the old words
+          stance: reverence
           require:
             personality: devout
           hint: a devout companion
@@ -169,6 +178,7 @@
               who: all
               amount: 3
         - label: Kneel in the ash yourself
+          stance: reverence
           require:
             alignment: good
             leader: true
@@ -179,6 +189,7 @@
               who: all
               amount: 2
         - label: Take the bowl and what is in it
+          stance: greed
           risk:
             pct: 30
           text: The coins are old and few. Something about taking them feels like robbing a grave.
@@ -206,3 +217,4 @@
               stat: thirst
               amount: 6
         - label: Leave it as it is
+          stance: prudence

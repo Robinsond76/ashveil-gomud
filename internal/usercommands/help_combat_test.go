@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -580,5 +581,45 @@ func TestChronicleHelp(t *testing.T) {
 		text, err := GetHelpContents(hub)
 		require.NoError(t, err, hub)
 		assert.Contains(t, text, "chronicle", "%s mentions the chronicle", hub)
+	}
+}
+
+// Phase 64: help opinions renders, answers to its aliases, is indexed on
+// the road, states the limits the code enforces, and is linked from the
+// pages whose choices companions react to.
+func TestOpinionsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "opinions", "help index lists opinions under the road")
+
+	want, err := GetHelpContents("opinions")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{
+		"Help for", "opinions [member]", "Opinions tab", "mercy to the beaten", "a rough camp", "selling relics",
+		"gains 2 loyalty", "above 80", "below 30", "farm",
+	} {
+		assert.Contains(t, plain, phrase)
+	}
+	// The numbers on the page are the code's.
+	assert.Equal(t, 2, opinions.Nudge)
+	assert.Equal(t, 80, opinions.Ceiling)
+	assert.Equal(t, 30, opinions.Floor)
+	for _, alias := range []string{"opinion", "company opinions", "companion opinions"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help opinions", alias)
+	}
+	for _, hub := range []string{"adventure", "company", "events", "webclient", "mercy", "banter", "camp", "inn", "relics", "company-meal"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "opinions", "%s mentions opinions", hub)
 	}
 }

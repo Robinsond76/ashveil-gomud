@@ -44,6 +44,9 @@ the safer it is.
   - Hunger, thirst or tiredness.
   - Supplies, items and gold gained or lost.
   - Companions thinking better or worse of you (<ansi fg="command">help alignment</ansi>).
+    A choice that is plainly kind, greedy, bold, careful, reverent or
+    sly is noticed by the companions with you, who each say what they
+    think of it (<ansi fg="command">help opinions</ansi>).
   - A fight with a named group.
   - Being carried to another place, or a mark the company keeps, which
     can change what later scenes offer.

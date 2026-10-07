@@ -43,4 +43,8 @@ Only companions who are with you can speak, and it takes at least two.
 In the web client, Company > Camp shows the company's latest talk under
 "Around the fire" (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>.
+A personality also decides what a companion thinks of your choices: mercy,
+camps, sharing food, relics and the choices in scenes on the road
+(<ansi fg="command">help opinions</ansi>).
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>, <ansi fg="command">help opinions</ansi>.

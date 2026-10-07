@@ -10,3 +10,4 @@ Phase 60. Design and decisions: `docs/plans/2026-10-07-phase-60-story-events.md`
 - Time: real time only for cooldowns; never advance world time.
 - UI: `window-event.js` reads GMCP `Event`; keep its payload in step with `view.go`'s `payload`.
 - Tests: `storyevents_test.go` (fake `world`), `wiring_test.go` (real world through `go` steps). The live module tests run slowly under `-race`; keep fixtures small.
+- **Stances** (Phase 64): a choice may carry `stance:` (`kindness`, `greed`, `courage`, `prudence`, `reverence`, `cunning`). Taking it, risk or not, reports it through `world.Opinion` so the companions with the company react once (`help opinions`). Validated at load against `opinions.Stances()`; it is no outcome and changes nothing itself.

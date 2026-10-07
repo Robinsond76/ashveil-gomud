@@ -83,6 +83,9 @@ type Companion struct {
 	// rolled when it joins. Blank on a companion saved before then, which
 	// banter derives from its ID until one is set.
 	Personality string `yaml:"personality,omitempty"`
+	// Opinions is what it remembers saying about the leader's choices
+	// (Phase 64). Nil until it has said anything.
+	Opinions *OpinionMemory `yaml:"opinions,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -236,6 +239,9 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		if c.Separation != nil {
 			sep := *c.Separation
 			record.Companions[i].Separation = &sep
+		}
+		if c.Opinions != nil {
+			record.Companions[i].Opinions = c.Opinions.Clone()
 		}
 		record.Companions[i].Skills = cloneRanks(c.Skills)
 		record.Companions[i].GrantedSkills = cloneRanks(c.GrantedSkills)
