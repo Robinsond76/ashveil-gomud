@@ -15,4 +15,16 @@ relic:
   ilvl: 27
   mob: 85
   chance: 6
+  awakenings:
+    - name: "Hunter's Habit"
+      kind: slay
+      races: ["ogre"]
+      count: 15
+      target: "ogres"
+      effects: {armor: 2}
+    - name: "Hunter's Pride"
+      kind: lair
+      mob: 85
+      target: "the forest ogre"
+      effects: {evasion: 3}
   lore: 'Those who hunt the forest ogre learn to wear what it cannot easily crush.'

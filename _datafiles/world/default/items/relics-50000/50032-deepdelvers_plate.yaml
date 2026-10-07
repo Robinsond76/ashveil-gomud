@@ -15,4 +15,15 @@ relic:
   ilvl: 50
   mob: 25
   chance: 5
+  awakenings:
+    - name: "Plate Proved"
+      kind: lair
+      mob: 25
+      target: "the abyssal creeper"
+      effects: {armor: 3}
+    - name: "Vault Descent"
+      kind: place
+      zone: "Glassvault Depths"
+      target: "Glassvault Depths"
+      effects: {healthpct: 3}
   lore: 'The ones who went into the Mirror Caves wore armor made to be argued with by the dark.'

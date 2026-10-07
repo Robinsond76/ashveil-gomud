@@ -15,4 +15,16 @@ relic:
   ilvl: 40
   mob: 34
   chance: 5
+  awakenings:
+    - name: "Gripping Roots"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 20
+      target: "woodland horrors"
+      effects: {attack: 4}
+    - name: "Crown Reached"
+      kind: place
+      zone: "Stormcrown Heights"
+      target: "Stormcrown Heights"
+      effects: {evasion: 4}
   lore: 'The wardens of the old wood wore what the wood gave them.'

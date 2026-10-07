@@ -19,4 +19,21 @@ relic:
   ilvl: 35
   mob: 14
   chance: 6
+  awakenings:
+    - name: "Reaper of the Restless"
+      kind: slay
+      races: ["undead"]
+      count: 25
+      target: "undead"
+      effects: {smite: 8}
+    - name: "Lich-Bane"
+      kind: lair
+      mob: 14
+      target: "the lich"
+      effects: {wounded: 8}
+    - name: "Vault Walker"
+      kind: place
+      zone: "Glassvault Depths"
+      target: "Glassvault Depths"
+      effects: {damage: 1}
   lore: 'The lich carried it out of a dead kingdom. It is said to reap best what is already falling.'

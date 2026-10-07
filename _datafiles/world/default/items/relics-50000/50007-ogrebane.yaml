@@ -18,4 +18,21 @@ relic:
   ilvl: 27
   mob: 85
   chance: 5
+  awakenings:
+    - name: "Giant-Slayer"
+      kind: slay
+      races: ["ogre"]
+      count: 15
+      target: "ogres"
+      effects: {damage: 1}
+    - name: "Head of the Hunt"
+      kind: lair
+      mob: 85
+      target: "the forest ogre"
+      effects: {healthpct: 3}
+    - name: "Hollow Hunter"
+      kind: place
+      zone: "Hollowweb Deep"
+      target: "Hollowweb Deep"
+      effects: {attack: 4}
   lore: 'Forest folk say a good axe hates a big neck. This one has hated several.'

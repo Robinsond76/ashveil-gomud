@@ -217,6 +217,8 @@ balance.
 through its real source; relic sale value unchanged by awakening (no new
 profit path); help pages for relics updated.
 
+Built: [phase 67 plan and decisions](2026-10-07-phase-67-relic-awakenings.md).
+
 ## 68 Towns that remember
 
 **Why.** Robinson wants towns that feel alive and dislikes repeated lines.
