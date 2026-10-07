@@ -303,3 +303,22 @@ func TestABackgroundLineHeardLatelyJoinsThePlainOnes(t *testing.T) {
 	}
 	assert.Equal(t, map[string]bool{"plain": true, "soldier": true}, seen, "both lines can be told")
 }
+
+// Phase 78: a background line greets the member who has it, once: {who}
+// names that member, not everyone named on the deed.
+func TestABackgroundLineGreetsOnlyTheMemberWhoHasIt(t *testing.T) {
+	now := 100 * day
+	e := chronicle.Entry{Seq: 1, At: now, Kind: chronicle.Boss, Subject: "the Hollow King",
+		Members: []string{"Mara", "Oswin", "Tess"}, Keys: []string{"leader", "companion:2", "companion:3"}}
+	cat := catalog(t,
+		Line{ID: "soldier", Kind: chronicle.Boss, MemberTag: "trade-soldier", Text: "A soldier, {who}."},
+	)
+	ctx := Context{
+		NPC: gossip(), Now: now, Entries: []chronicle.Entry{e}, Leader: "Mara",
+		MemberTag: func(key, tag string) bool { return (key == "companion:2" || key == "companion:3") && tag == "trade-soldier" },
+	}
+	c, ok := cat.Choose(ctx)
+	require.True(t, ok)
+	assert.Equal(t, "A soldier, Oswin.", c.Text, "the first member with the background, alone")
+	assert.Equal(t, []string{"Mara", "Oswin", "Tess"}, c.Entry.Members, "the deed told is the whole deed")
+}

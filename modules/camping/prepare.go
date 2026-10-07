@@ -2,6 +2,7 @@ package camping
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -103,16 +104,29 @@ func resolveTargets(word string, all []prepTarget) ([]prepTarget, string) {
 	case "all", "company":
 		return all, ""
 	}
+	// A companion's #id tells apart two members of one name.
+	if id, err := strconv.Atoi(strings.TrimPrefix(word, "#")); err == nil {
+		key := string(survival.CompanionMemberKey(id))
+		for _, t := range all[1:] {
+			if t.key == key {
+				return []prepTarget{t}, ""
+			}
+		}
+		return nil, fmt.Sprintf("There is nobody numbered %q at your camp.", word)
+	}
+	var exact, found []prepTarget
 	for _, t := range all {
 		if strings.EqualFold(t.name, word) {
-			return []prepTarget{t}, ""
-		}
-	}
-	var found []prepTarget
-	for _, t := range all {
-		if strings.HasPrefix(strings.ToLower(t.name), word) {
+			exact = append(exact, t)
+		} else if strings.HasPrefix(strings.ToLower(t.name), word) {
 			found = append(found, t)
 		}
+	}
+	if len(exact) == 1 {
+		return exact, ""
+	}
+	if len(exact) > 1 {
+		found = exact
 	}
 	switch len(found) {
 	case 1:
@@ -120,7 +134,22 @@ func resolveTargets(word string, all []prepTarget) ([]prepTarget, string) {
 	case 0:
 		return nil, fmt.Sprintf("There is nobody called %q at your camp.", word)
 	}
+	if len(exact) > 1 {
+		return nil, fmt.Sprintf("More than one member is called %q; use a number: %s.", word, numbered(found))
+	}
 	return nil, fmt.Sprintf("More than one member matches %q; use the whole name.", word)
+}
+
+// numbered lists members with the #id that picks each one.
+func numbered(list []prepTarget) string {
+	out := make([]string, len(list))
+	for i, t := range list {
+		out[i] = t.name
+		if id, ok := survival.CompanionIDFromMemberKey(survival.MemberKey(t.key)); ok {
+			out[i] += " (#" + strconv.Itoa(id) + ")"
+		}
+	}
+	return strings.Join(out, ", ")
 }
 
 func (m *CampingModule) spendOne(leaderUserID, itemID int) bool {

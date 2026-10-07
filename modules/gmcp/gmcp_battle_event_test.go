@@ -384,3 +384,21 @@ func TestScrubAllyDropsTheBreakdown(t *testing.T) {
 	assert.Empty(t, be.Explain)
 	assert.Zero(t, be.Damage)
 }
+
+// Phase 78: a critical strike that armor took whole is no crit on the wire,
+// even when another strike of the round got damage through, so the round
+// heading never says "critical" for it.
+func TestBattleEventCritFlagNeedsDamageThrough(t *testing.T) {
+	v := battleViewer{userId: 7}
+	build := func(strikes []combatstream.Strike) battleEvent {
+		be, ok := buildBattleEvent(v, combatstream.Event{Kind: combatstream.Attack, Source: rigLeader, Target: rigEnemy(88),
+			Outcome: combatstream.OutcomeHit, Damage: 3, Crit: true, Strikes: strikes}, combatstream.FightInfo{}, false)
+		require.True(t, ok)
+		return be
+	}
+	absorbed := build([]combatstream.Strike{{Hit: true, Crit: true, Raw: 4, Damage: 0}, {Hit: true, Raw: 3, Damage: 3}})
+	assert.False(t, absorbed.Crit, "the crit was taken whole by armor")
+	landed := build([]combatstream.Strike{{Hit: true, Crit: true, Raw: 8, Damage: 3}})
+	assert.True(t, landed.Crit)
+	assert.True(t, build(nil).Crit, "a round with no strikes recorded keeps the flag")
+}

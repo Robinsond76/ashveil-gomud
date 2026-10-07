@@ -155,6 +155,14 @@ func (m *Module) show(userID int, ev storyevents.Event, pageID string, result []
 	m.w.Push(userID, "Event", p)
 }
 
+// repush sends the waiting page to the web client's modal again, with no
+// terminal text: the client asked once its connection was ready.
+func (m *Module) repush(userID int) {
+	if ev, p, ok := m.waiting(userID); ok {
+		m.w.Push(userID, "Event", m.pageView(userID, ev, p.Page, nil))
+	}
+}
+
 // reshow shows a waiting page again; header, when set, goes first.
 func (m *Module) reshow(userID int, header string) bool {
 	ev, p, ok := m.waiting(userID)

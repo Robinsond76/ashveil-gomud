@@ -363,7 +363,7 @@ func (cat Catalog) Choose(c Context) (Choice, bool) {
 			continue
 		}
 		l := pool[c.pick(len(pool))]
-		return Choice{Line: l, Entry: &e, Text: Fill(l.Text, e)}, true
+		return Choice{Line: l, Entry: &e, Text: Fill(l.Text, c.greeted(l, e))}, true
 	}
 	var states []Line
 	for _, l := range cat.lines {
@@ -391,6 +391,24 @@ func (cat Catalog) Choose(c Context) (Choice, bool) {
 	}
 	l := states[c.pick(len(states))]
 	return Choice{Line: l, Text: l.Text}, true
+}
+
+// greeted is the deed as a line is told: a member_tag line speaks to the
+// first member who carries the tag, so {who} names that member alone and a
+// background is greeted once, not given to every member of the deed. The
+// deed itself (the chronicle, what is marked heard) is left as it was.
+func (c Context) greeted(l Line, e chronicle.Entry) chronicle.Entry {
+	if l.MemberTag == "" || c.MemberTag == nil || len(e.Keys) != len(e.Members) {
+		return e
+	}
+	for i, k := range e.Keys {
+		if c.MemberTag(k, l.MemberTag) {
+			e.Members = []string{e.Members[i]}
+			e.Keys = []string{k}
+			return e
+		}
+	}
+	return e
 }
 
 // Fill puts a deed's members, subject and place into a line.

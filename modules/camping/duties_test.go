@@ -439,3 +439,33 @@ func TestDutiesLeftUndoneWhenTheCompanyIsFighting(t *testing.T) {
 	assert.Contains(t, text, "left undone")
 	assert.NotContains(t, text, "Bran finds nothing to tend")
 }
+
+// Phase 78: two companions of one name are told apart by #id in the duties
+// view, the picker's rows and the command, and a bare name that fits both
+// is refused rather than picking one.
+func TestDutiesTellApartCompanionsOfOneName(t *testing.T) {
+	d := newDutyWorld(t, 0)
+	d.bran.Name = "Mira"
+	d.surv.needs[2].Name = "Mira"
+
+	view := d.duty(t)
+	assert.Contains(t, view, "Mira (#1): sleep (default)")
+	assert.Contains(t, view, "Mira (#2): sleep (default)")
+
+	refusal := d.duty(t, "mira", "watch")
+	assert.Contains(t, refusal, "use a number")
+	assert.Contains(t, refusal, "Mira (#1), Mira (#2)")
+	assert.Empty(t, d.camp().Duties, "nothing was set for a name that fits two")
+
+	assert.Contains(t, d.duty(t, "#2", "watch"), "Mira (#2)")
+	assert.Equal(t, map[string]string{string(survival.CompanionMemberKey(2)): "watch"}, d.camp().Duties)
+	assert.Contains(t, d.duty(t, "#9", "watch"), "nobody numbered")
+
+	state, ok := d.m.CampStateOf(7, 100, []string{"camping"})
+	require.True(t, ok)
+	require.Len(t, state.Duties, 3)
+	assert.Equal(t, "Mira (#1)", state.Duties[1].Name)
+	assert.Equal(t, "#1", state.Duties[1].Command)
+	assert.Equal(t, "#2", state.Duties[2].Command)
+	assert.Equal(t, "me", state.Duties[0].Command)
+}

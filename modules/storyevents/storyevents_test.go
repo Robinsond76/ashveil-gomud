@@ -868,3 +868,20 @@ func TestAnUnknownStanceIsRefusedAtLoad(t *testing.T) {
 	require.NotEmpty(t, errs)
 	assert.Contains(t, strings.Join(errs, "\n"), "stance")
 }
+
+// Phase 78: the web client asks for the waiting page once its connection is
+// ready (the page shown at login went out before GMCP was on); the modal's
+// message is sent again with no terminal text, and nothing without a page.
+func TestTheWebClientCanAskForTheWaitingPageAgain(t *testing.T) {
+	r := newRig(t)
+	r.m.repush(7)
+	assert.Empty(t, r.w.pushed, "no page waiting, nothing sent")
+
+	require.True(t, r.enter(10))
+	sent, pushed := len(r.w.sent), len(r.w.pushed)
+	r.m.repush(7)
+	require.Len(t, r.w.pushed, pushed+1)
+	assert.True(t, r.w.pushed[pushed].Active)
+	assert.Equal(t, r.w.pushed[pushed-1].Page, r.w.pushed[pushed].Page, "the same page")
+	assert.Len(t, r.w.sent, sent, "no text again")
+}

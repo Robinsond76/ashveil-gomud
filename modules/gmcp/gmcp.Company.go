@@ -121,8 +121,15 @@ type companyMember struct {
 	// are read, with the same wording as the `orders` command; omitted with
 	// none.
 	Orders []string `json:"orders,omitempty"`
+	// OrderCmds are the same orders as `orders [who] add` reads them, one
+	// per entry of Orders, so the web menu can leave out one already set.
+	OrderCmds []string `json:"order_cmds,omitempty"`
 	// Stance is its weapon stance (Phase 69), omitted with none.
 	Stance *companyStance `json:"stance,omitempty"`
+	// StancesFit are the stance keys what it holds can use (Phase 78), so
+	// the stance menu offers only those; empty when none fit, omitted when
+	// its gear can't be read (a companion away).
+	StancesFit *[]string `json:"stances_fit,omitempty"`
 	// Music is its camp-music skill in words ("Strings 2 (3 songs to level
 	// 3)"), omitted with none.
 	Music string `json:"music,omitempty"`
@@ -277,8 +284,12 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	}
 	if list := orders.For(leaderUserID, string(m.Key)); len(list) > 0 {
 		out.Orders = orders.Lines(list)
+		for _, o := range list {
+			out.OrderCmds = append(out.OrderCmds, o.Command())
+		}
 	}
 	out.Stance = stanceOf(leaderUserID, m.Key)
+	out.StancesFit = stancesFit(leaderUserID, m.Key)
 	out.Music = camping.MusicLabelOf(leaderUserID, string(m.Key))
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).

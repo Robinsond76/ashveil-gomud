@@ -304,6 +304,18 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 			return true
 		}
 
+		if identifier == `Event` {
+			// Phase 78: the story-event modal asks for the page waiting on
+			// the company; the one sent at login came before GMCP was on.
+			for _, user := range users.GetAllActiveUsers() {
+				if user.ConnectionId() == connectionId {
+					events.AddToQueue(GMCPEventRequest{UserId: user.UserId})
+					break
+				}
+			}
+			return true
+		}
+
 		if identifier == `Walkto` {
 			// Phase 40d: the web map asks for the walk in progress.
 			for _, user := range users.GetAllActiveUsers() {

@@ -14,6 +14,8 @@ kit, the pot or the forage, paid for with their own sleep.
   Gives a member at your camp a duty. <ansi fg="command">camp duties mira watch</ansi>,
   <ansi fg="command">camp duties me forage</ansi>, <ansi fg="command">camp duties all sleep</ansi>.
   With no member it is your own duty (<ansi fg="command">camp duties watch</ansi>).
+  Two companions with one name are listed as "Mira (#1)" and "Mira (#2)":
+  name one by its number (<ansi fg="command">camp duties #2 watch</ansi>).
   <ansi fg="command">camp duties clear</ansi> sends everyone back to sleep.
 
   Duties stay set from one rest to the next until you change them or

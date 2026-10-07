@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // MovementProvider is implemented by modules/storyevents. While a page is
@@ -114,3 +116,12 @@ func SetCompanyFlag(leaderUserID int, flag string) error {
 	}
 	return p.SetCompanyFlag(leaderUserID, flag)
 }
+
+// OnPushRequest fires, on the game loop, when the web client asks for the
+// page waiting on its company (it asks once the connection is ready, as a
+// page shown at login is sent before GMCP is accepted and lost). The
+// module sends the page's GMCP message again, with no text.
+var OnPushRequest util.Hook[int]
+
+// RequestPush asks for the waiting page to be sent to the web client again.
+func RequestPush(leaderUserID int) { OnPushRequest.Fire(leaderUserID) }

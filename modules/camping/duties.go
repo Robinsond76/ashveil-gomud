@@ -3,6 +3,7 @@ package camping
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -113,6 +114,7 @@ func (m *CampingModule) dutiesCommand(user *users.UserRecord, room *rooms.Room, 
 // before anything is reported, and put back if the save fails.
 func (m *CampingModule) assignDuties(user *users.UserRecord, camp camping.Camp, targets []prepTarget, duty camping.Duty, clear bool) string {
 	var lines []string
+	all, _ := m.prepTargets(user)
 	next := camp.Duties
 	if clear {
 		next = nil
@@ -124,7 +126,7 @@ func (m *CampingModule) assignDuties(user *users.UserRecord, camp camping.Camp, 
 			continue
 		}
 		next = camping.WithDuty(next, t.key, duty)
-		lines = append(lines, dutyLine(t.name, duty))
+		lines = append(lines, dutyLine(dutyName(all, t), duty))
 	}
 	m.mu.Lock()
 	current, ok := m.camps[user.UserId]
@@ -173,7 +175,7 @@ func (m *CampingModule) dutiesView(user *users.UserRecord, camp camping.Camp) st
 		if d == camping.DutySleep {
 			label += " (default)"
 		}
-		lines = append(lines, fmt.Sprintf("  %s: %s", t.name, label))
+		lines = append(lines, fmt.Sprintf("  %s: %s", dutyName(targets, t), label))
 	}
 	if !resting {
 		lines = append(lines, "Set one with: camp duties [member|all] "+dutyWords()+". Anyone on a duty misses the Rested buff; a watcher also ends no better than Ready.")
@@ -564,12 +566,39 @@ func (m *CampingModule) dutyRows(user *users.UserRecord, camp camping.Camp) []ca
 		for _, d := range dutyOptions(t.char) {
 			options = append(options, string(d))
 		}
-		name := t.name
+		name := dutyName(targets, t)
 		command := t.name
 		if t.key == string(survival.LeaderMemberKey) {
 			command = "me"
+		} else if sameName(targets, t) {
+			// Two members of one name: the picker names each by #id.
+			if id, ok := company.CompanionIDFromMemberKey(survival.MemberKey(t.key)); ok {
+				command = "#" + strconv.Itoa(id)
+			}
 		}
 		rows = append(rows, camping.DutyRow{Key: t.key, Name: name, Command: command, Duty: string(camping.DutyOf(duties, t.key)), Options: options})
 	}
 	return rows
+}
+
+// sameName reports whether another target shares t's name.
+func sameName(targets []prepTarget, t prepTarget) bool {
+	for _, o := range targets {
+		if o.key != t.key && strings.EqualFold(o.name, t.name) {
+			return true
+		}
+	}
+	return false
+}
+
+// dutyName is a member's name, with its #id when another shares the name,
+// so the member can be told apart and named in a command.
+func dutyName(targets []prepTarget, t prepTarget) string {
+	if !sameName(targets, t) {
+		return t.name
+	}
+	if id, ok := company.CompanionIDFromMemberKey(survival.MemberKey(t.key)); ok {
+		return t.name + " (#" + strconv.Itoa(id) + ")"
+	}
+	return t.name
 }

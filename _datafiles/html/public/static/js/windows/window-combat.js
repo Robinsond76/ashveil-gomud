@@ -408,7 +408,9 @@
             if (i > 0) { items.push({ label: 'Read order ' + (i + 1) + ' sooner', cmd: 'orders ' + w + ' up ' + (i + 1) }); }
         });
         if (list.length < MAX_ORDERS) {
-            ORDER_ADDS.forEach(a => items.push({ label: 'Add: ' + a[1], cmd: 'orders ' + w + ' add ' + a[0] }));
+            // An order already set is left out: the command refuses a repeat.
+            const set = Array.isArray(m.order_cmds) ? m.order_cmds : [];
+            ORDER_ADDS.filter(a => set.indexOf(a[0]) < 0).forEach(a => items.push({ label: 'Add: ' + a[1], cmd: 'orders ' + w + ' add ' + a[0] }));
         }
         items.push({ label: 'Starting set for the class', cmd: 'orders ' + w + ' preset' });
         if (list.length) { items.push({ label: 'Clear all orders', cmd: 'orders ' + w + ' clear' }); }
@@ -453,7 +455,10 @@
         const w = who(m);
         const cur = m.stance && m.stance.key;
         const items = [];
-        STANCES.filter(st => st[0] !== cur).forEach(st => {
+        // Only the stances what the member holds can use (stances_fit); all
+        // four when its gear can't be read.
+        const fit = Array.isArray(m.stances_fit) ? m.stances_fit : null;
+        STANCES.filter(st => st[0] !== cur && (!fit || fit.indexOf(st[0]) >= 0)).forEach(st => {
             items.push({ label: st[1] + ' (' + st[2] + ')', cmd: 'stance ' + w + ' ' + st[0] });
         });
         if (cur) { items.push({ label: 'No stance', cmd: 'stance ' + w + ' off' }); }
@@ -477,12 +482,19 @@
             box.appendChild(line);
         }
         if (!inBattle) {
-            const b = el('button', 'cbt-btn cbt-stance-btn', st ? 'Stance: ' + st.name : 'Stance: none');
-            b.type = 'button';
-            b.setAttribute('aria-haspopup', 'menu');
-            b.title = 'Weapon stance for ' + m.name + ': trade one strength for another (help stances)';
-            b.addEventListener('click', e => uiMenu(e, stanceMenu(m)));
-            box.appendChild(b);
+            if (stanceMenu(m).length) {
+                const b = el('button', 'cbt-btn cbt-stance-btn', st ? 'Stance: ' + st.name : 'Stance: none');
+                b.type = 'button';
+                b.setAttribute('aria-haspopup', 'menu');
+                b.title = 'Weapon stance for ' + m.name + ': trade one strength for another (help stances)';
+                b.addEventListener('click', e => uiMenu(e, stanceMenu(m)));
+                box.appendChild(b);
+            } else if (!st) {
+                // Nothing held fits a stance: no button to a menu of nothing.
+                const line = el('div', 'cbt-stance-line', 'Stance: none (needs a great weapon, shield, bow or dagger)');
+                line.title = 'Hold a two-handed weapon, a shield, a bow or a dagger to take a stance (help stances)';
+                box.appendChild(line);
+            }
         }
         return box;
     }

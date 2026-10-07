@@ -722,6 +722,30 @@ got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance
 check(JSON.stringify(got) === '["stance #1 off"]', 'stance: take it off');
 got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: none' }).first().click(); await page.getByText('Keen edge (dagger)').click(); });
 check(JSON.stringify(got) === '["stance me keen"]', 'stance: yourself is "me"');
+// Phase 78: the stance menu offers only what the member's gear can use, and
+// the orders menu leaves out an order already set.
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].stance = { key: 'heavy', name: 'Heavy blows', gain: 'blows land 30% harder', cost: '15 points less likely to hit', needs: 'a two-handed weapon (not a staff or a bow)', ready: true };
+  g.members[0].stances_fit = ['heavy', 'wall'];
+  g.members[0].orders = ['When an ally is below 50% health, heal that ally first.'];
+  g.members[0].order_cmds = ['ally 50 then heal'];
+  g.leader.stances_fit = [];
+  window.gmcp('Company', g);
+}, company);
+await page.getByRole('button', { name: 'Stance: Heavy blows' }).click();
+let menu = await page.evaluate(() => [...document.querySelectorAll('[role=menu] [role=menuitem], [role=menu] button')].map(b => b.textContent));
+check(menu.some(l => l.startsWith('Shield wall')) && !menu.some(l => l.startsWith('Keen edge') || l.startsWith('Quick draw')) && menu.includes('No stance'), 'stance: the menu lists only the stances the gear can use (78): ' + menu.join('|'));
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+check(await page.locator('#combat-window .cbt-stance[data-key="leader"] .cbt-stance-btn').count() === 0 && (await page.locator('#combat-window .cbt-stance[data-key="leader"] .cbt-stance-line').textContent()).startsWith('Stance: none'), 'stance: nothing fits, so a line says what is needed, not a button to an empty menu (78)');
+await page.getByRole('button', { name: 'Orders (1)' }).click();
+menu = await page.evaluate(() => [...document.querySelectorAll('[role=menu] [role=menuitem], [role=menu] button')].map(b => b.textContent));
+check(!menu.includes('Add: Ally below 50%: heal them') && menu.includes('Add: Ally below 25%: heal them'), 'orders: the menu leaves out an order already set (78)');
+if (outdir) { await page.screenshot({ path: path.join(outdir, '78-combat-menus.png') }); }
+
 await page.keyboard.press('Escape');
 await page.mouse.click(5, 5);
 await page.evaluate(c => window.gmcp('Company', c), company);

@@ -748,7 +748,10 @@
             : '';
         const promo = info.promotion === 'ready' ? 'Promotion ready'
             : info.promotion === 'waiting-gate' ? 'Promotion waits on alignment' : '';
-        if (info.name) { node('div', 'cw-id-name', info.name, nameEl); }
+        // Before a character is named the server holds a "nameless-123456"
+        // placeholder; the panel shows no name rather than that.
+        const named = info.name && !/^nameless(-\d+)?$/i.test(info.name);
+        if (named) { node('div', 'cw-id-name', info.name, nameEl); }
         const subParts = [info.class, route].filter(Boolean);
         if (subParts.length || info.race) {
             const sub = node('div', 'cw-id-sub', subParts.join(' \u00b7 '), nameEl);

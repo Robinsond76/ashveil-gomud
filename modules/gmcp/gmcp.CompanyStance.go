@@ -34,6 +34,20 @@ func stanceOf(leaderUserID int, key company.MemberKey) *companyStance {
 	return out
 }
 
+// stancesFit is the stance keys a member's gear can use, nil when the gear
+// can't be read.
+func stancesFit(leaderUserID int, key company.MemberKey) *[]string {
+	gear, known := memberGear(leaderUserID, key)
+	if !known {
+		return nil
+	}
+	fit := []string{}
+	for _, st := range stance.Available(gear) {
+		fit = append(fit, string(st))
+	}
+	return &fit
+}
+
 // memberGear is what a member holds, known for the player and a companion
 // that is out.
 func memberGear(leaderUserID int, key company.MemberKey) (stance.Gear, bool) {

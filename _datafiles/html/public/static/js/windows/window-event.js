@@ -18,6 +18,10 @@
  * double click never answers the next page too; the number keys 1 to 6 do
  * the same while the screen is open (closing it stops them). A picture is
  * `static/images/events/<picture>.png`; a missing file is simply not shown.
+ *
+ * Phase 78: a page waiting through a restart or login is sent before GMCP is
+ * on, so on the first Char message the window asks (`Event`) and the server
+ * sends the page again.
  */
 
 /* global Client, VirtualWindows, GameModal, module */
@@ -190,14 +194,25 @@
         document.addEventListener('keydown', keyHandler);
     }
 
+    let asked = false;
+
     window.StoryEvent = { show: show, viewOf: viewOf };
 
     if (typeof VirtualWindows !== 'undefined') {
         document.addEventListener('DOMContentLoaded', function() {
             VirtualWindows.register({
                 window: null,
-                gmcpHandlers: ['Event'],
-                onGMCP: function(namespace, payload) { show(payload); },
+                gmcpHandlers: ['Event', 'Char'],
+                onGMCP: function(namespace, payload) {
+                    if (namespace === 'Event') { show(payload); return; }
+                    // The first character message says the connection is
+                    // ready: ask for a page left waiting through a restart
+                    // or login, which went out before GMCP was on.
+                    if (!asked && typeof Client !== 'undefined' && typeof Client.GMCPRequest === 'function') {
+                        asked = true;
+                        Client.GMCPRequest('Event');
+                    }
+                },
             });
         });
     }
