@@ -315,7 +315,9 @@ func TestABackgroundLineGreetsOnlyTheMemberWhoHasIt(t *testing.T) {
 	)
 	ctx := Context{
 		NPC: gossip(), Now: now, Entries: []chronicle.Entry{e}, Leader: "Mara",
-		MemberTag: func(key, tag string) bool { return (key == "companion:2" || key == "companion:3") && tag == "trade-soldier" },
+		MemberTag: func(key, tag string) bool {
+			return (key == "companion:2" || key == "companion:3") && tag == "trade-soldier"
+		},
 	}
 	c, ok := cat.Choose(ctx)
 	require.True(t, ok)
