@@ -257,20 +257,9 @@
     // Shared tooltip
     // =========================================================================
 
-    var tooltip          = null;
-    var tooltipHideTimer = null;
-
-    function ensureTooltip() {
-        if (tooltip) { return; }
-        tooltip = document.createElement('div');
-        tooltip.id = 'map-tooltip';
-        document.body.appendChild(tooltip);
-    }
+    var tooltip = Client.tooltip('map-tooltip');
 
     function showTooltip(mouseX, mouseY, info, canWalk) {
-        ensureTooltip();
-        clearTimeout(tooltipHideTimer);
-
         var html = '<div class="tt-name">' + (info.name || 'Unknown') + '</div>';
         var rows = [];
         var envDisplay = info.environment
@@ -342,32 +331,12 @@
                     '<span class="tt-value" style="color:#ff6666">\u2665 ' + partyHere.join(', ') + '</span></div>';
         }
 
-        tooltip.innerHTML     = html;
-        tooltip.style.display = 'block';
-        positionTooltip(mouseX, mouseY);
+        tooltip.show(html, { x: mouseX, y: mouseY });
     }
 
-    function positionTooltip(mouseX, mouseY) {
-        if (!tooltip) { return; }
-        var ttW  = tooltip.offsetWidth;
-        var ttH  = tooltip.offsetHeight;
-        var vw   = window.innerWidth;
-        var vh   = window.innerHeight;
-        var left = mouseX + 14;
-        if (left + ttW > vw - 8) { left = mouseX - ttW - 14; }
-        left = Math.max(8, left);
-        var top = mouseY - Math.floor(ttH / 2);
-        if (top + ttH > vh - 8) { top = vh - ttH - 8; }
-        top = Math.max(8, top);
-        tooltip.style.left = left + 'px';
-        tooltip.style.top  = top  + 'px';
-    }
+    function positionTooltip(mouseX, mouseY) { tooltip.position({ x: mouseX, y: mouseY }); }
 
-    function hideTooltip() {
-        tooltipHideTimer = setTimeout(function () {
-            if (tooltip) { tooltip.style.display = 'none'; }
-        }, 80);
-    }
+    function hideTooltip() { tooltip.hide(); }
 
     // =========================================================================
     // Styles
@@ -1548,7 +1517,7 @@
                 var id   = roomAtPoint(e.clientX - rect.left, e.clientY - rect.top);
                 var info = id !== null ? roomInfoStore.get(id) : null;
                 canvas.style.cursor = (id !== null && id !== currentRoomId) ? 'pointer' : '';
-                if (info) { clearTimeout(tooltipHideTimer); showTooltip(e.clientX, e.clientY, info, id !== currentRoomId); }
+                if (info) { showTooltip(e.clientX, e.clientY, info, id !== currentRoomId); }
                 else      { hideTooltip(); }
             });
             canvas.addEventListener('mouseup', function (e) {
@@ -2248,7 +2217,7 @@
 
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals', 'Char', 'Company', 'Walkto', 'Gametime'],
+        gmcpHandlers: ['Room', 'World', 'Party', 'Char', 'Company', 'Walkto', 'Gametime'],
         onGMCP: function (namespace) {
             if (namespace === 'Char.Info' || namespace === 'Char') {
                 updateIdentity();

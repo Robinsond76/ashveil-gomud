@@ -218,18 +218,10 @@
     // -----------------------------------------------------------------------
     // Tooltip
     // -----------------------------------------------------------------------
-    let tooltip      = null;
+    const tooltip = Client.tooltip('gametime-tooltip');
     let tooltipAnchor = null;
 
-    function ensureTooltip() {
-        if (tooltip) { return; }
-        tooltip = document.createElement('div');
-        tooltip.id = 'gametime-tooltip';
-        document.body.appendChild(tooltip);
-    }
-
     function showTooltip(anchorEl) {
-        ensureTooltip();
         const data = Client.GMCPStructs.Gametime;
         if (!data) { return; }
 
@@ -263,21 +255,11 @@
             ? 'Sunrise in ' + hStr + mStr
             : 'Sunset in '  + hStr + mStr;
 
-        tooltip.textContent  = label;
-        tooltip.style.display = 'block';
-
-        const rect = anchorEl.getBoundingClientRect();
-        const ttW  = tooltip.offsetWidth;
-        const vw   = window.innerWidth;
-        let left = rect.right + 8;
-        if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
-        left = Math.max(8, left);
-        tooltip.style.left = left + 'px';
-        tooltip.style.top  = (rect.top + 4) + 'px';
+        tooltip.show(label, anchorEl, { text: true, topOffset: 4 });
     }
 
     function hideTooltip() {
-        if (tooltip) { tooltip.style.display = 'none'; }
+        tooltip.hide(0);
         tooltipAnchor = null;
     }
 
@@ -889,7 +871,7 @@
         const synth = _syntheticData(_animData, currentGameMin);
         drawSky(synth);
 
-        if (tooltipAnchor && tooltip && tooltip.style.display === 'block') {
+        if (tooltipAnchor && tooltip.isShown()) {
             showTooltip(tooltipAnchor);
         }
 

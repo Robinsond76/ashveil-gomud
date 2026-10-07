@@ -514,44 +514,9 @@
     // -----------------------------------------------------------------------
     // Stat tooltip
     // -----------------------------------------------------------------------
-    let statTooltip   = null;
-    let statHideTimer = null;
-
-    function ensureStatTooltip() {
-        if (statTooltip) { return; }
-        statTooltip = document.createElement('div');
-        statTooltip.id = 'cw-stat-tooltip';
-        document.body.appendChild(statTooltip);
-    }
-
-    function showStatTooltip(el, html) {
-        ensureStatTooltip();
-        clearTimeout(statHideTimer);
-        statTooltip.innerHTML = html;
-        statTooltip.style.display = 'block';
-        _positionStatTooltip(el);
-    }
-
-    function _positionStatTooltip(el) {
-        if (!statTooltip) { return; }
-        const rect = el.getBoundingClientRect();
-        const ttW  = statTooltip.offsetWidth;
-        const ttH  = statTooltip.offsetHeight;
-        const vw   = window.innerWidth;
-        const vh   = window.innerHeight;
-        let left = rect.right + 8;
-        if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
-        left = Math.max(8, left);
-        let top = rect.top;
-        if (top + ttH > vh - 8) { top = vh - ttH - 8; }
-        statTooltip.style.left = left + 'px';
-        statTooltip.style.top  = Math.max(8, top) + 'px';
-    }
-
-    function hideStatTooltip() {
-        if (!statTooltip) { return; }
-        statHideTimer = setTimeout(() => { statTooltip.style.display = 'none'; }, 80);
-    }
+    const statTooltip = Client.tooltip('cw-stat-tooltip');
+    const showStatTooltip = (el, html) => statTooltip.show(html, el);
+    const hideStatTooltip = () => statTooltip.hide();
 
     // -----------------------------------------------------------------------
     // Tab switching

@@ -369,14 +369,14 @@
     // -----------------------------------------------------------------------
     // Registration
     // -----------------------------------------------------------------------
+    // One registration: the handler is not tied to the window, so it keeps
+    // the DOM current even while the window is hidden. The window itself
+    // registers with no namespaces so it still joins the dock.
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Game'],
-        onGMCP() { update(); },
+        gmcpHandlers: [],
+        onGMCP() {},
     });
-
-    // Second registration with no window so the handler always fires,
-    // keeping the DOM current even while the window is hidden.
     VirtualWindows.register({
         window:       null,
         gmcpHandlers: ['Game'],

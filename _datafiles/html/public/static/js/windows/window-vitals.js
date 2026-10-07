@@ -441,8 +441,6 @@
     // -----------------------------------------------------------------------
     VirtualWindows.register({
         window:       win,
-        // handleGMCP calls a handler once per matching level; the top names
-        // give one call per payload.
         gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
             if (namespace.indexOf('Company') === 0) {

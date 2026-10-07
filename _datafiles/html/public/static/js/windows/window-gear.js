@@ -381,8 +381,7 @@
     // -----------------------------------------------------------------------
     // Tooltip
     // -----------------------------------------------------------------------
-    let tooltip   = null;
-    let hideTimer = null;
+    const tooltip = Client.tooltip('gw-item-tooltip');
     const rowItemData = new Map();
 
     function _itemHint(item) {
@@ -422,17 +421,7 @@
         return found ? found.grams : null;
     }
 
-    function ensureTooltip() {
-        if (tooltip) { return; }
-        tooltip = document.createElement('div');
-        tooltip.id = 'gw-item-tooltip';
-        document.body.appendChild(tooltip);
-    }
-
     function showTooltip(rowEl, item) {
-        ensureTooltip();
-        clearTimeout(hideTimer);
-
         const details     = (item.details && item.details.length > 0) ? item.details.join(', ') : null;
         const detailClass = item.details && item.details.includes('cursed') ? 'cursed'
                           : item.details && item.details.includes('quest')  ? 'quest' : '';
@@ -480,30 +469,7 @@
             html += '<hr class="gw-tt-divider"><div class="gw-tt-hint">' + hint + '</div>';
         }
 
-        tooltip.innerHTML = html;
-        tooltip.style.display = 'block';
-        positionTooltip(rowEl);
-    }
-
-    function positionTooltip(rowEl) {
-        if (!tooltip) { return; }
-        const rect = rowEl.getBoundingClientRect();
-        const ttW  = tooltip.offsetWidth;
-        const ttH  = tooltip.offsetHeight;
-        const vw   = window.innerWidth;
-        const vh   = window.innerHeight;
-        let left = rect.right + 8;
-        if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
-        left = Math.max(8, left);
-        let top = rect.top;
-        if (top + ttH > vh - 8) { top = vh - ttH - 8; }
-        tooltip.style.left = left + 'px';
-        tooltip.style.top  = Math.max(8, top) + 'px';
-    }
-
-    function hideTooltip() {
-        if (!tooltip) { return; }
-        hideTimer = setTimeout(() => { tooltip.style.display = 'none'; }, 80);
+        tooltip.show(html, rowEl);
     }
 
     function attachTooltip(rowEl) {
@@ -511,9 +477,9 @@
             const item = rowItemData.get(rowEl);
             if (item) { showTooltip(rowEl, item); }
         });
-        rowEl.addEventListener('mouseleave', hideTooltip);
+        rowEl.addEventListener('mouseleave', () => tooltip.hide());
         rowEl.addEventListener('mousemove', () => {
-            if (tooltip && tooltip.style.display === 'block') { positionTooltip(rowEl); }
+            if (tooltip.isShown()) { tooltip.position(rowEl); }
         });
     }
 
@@ -553,16 +519,7 @@
     // Tab switching
     // -----------------------------------------------------------------------
     function makeTabSwitcher(root) {
-        const btns   = root.querySelectorAll('.gw-tab-btn');
-        const panels = root.querySelectorAll('.gw-tab-panel');
-        btns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                btns.forEach(b   => b.classList.remove('active'));
-                panels.forEach(p => p.classList.remove('active'));
-                btn.classList.add('active');
-                root.querySelector('#' + btn.dataset.panel).classList.add('active');
-            });
-        });
+        Client.tabs(root, { button: '.gw-tab-btn', panel: '.gw-tab-panel' });
     }
 
     // -----------------------------------------------------------------------

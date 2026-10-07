@@ -410,16 +410,7 @@
     // Tab switching
     // -----------------------------------------------------------------------
     function makeTabSwitcher(root) {
-        var btns   = root.querySelectorAll('.pw-tab-btn');
-        var panels = root.querySelectorAll('.pw-tab-panel');
-        btns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                btns.forEach(function(b)   { b.classList.remove('active'); });
-                panels.forEach(function(p) { p.classList.remove('active'); });
-                btn.classList.add('active');
-                root.querySelector('#' + btn.dataset.panel).classList.add('active');
-            });
-        });
+        Client.tabs(root, { button: '.pw-tab-btn', panel: '.pw-tab-panel' });
     }
 
     // -----------------------------------------------------------------------
