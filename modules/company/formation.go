@@ -49,7 +49,11 @@ func (m *CompanyModule) renderFormation(leaderUserID int) string {
 	}
 	for _, companion := range record.Companions {
 		if !placed[domain.CompanionMemberKey(companion.ID)] {
-			unplaced = append(unplaced, fmt.Sprintf("%s (#%d)", nameOf(companion, strconv.Itoa(companion.MobTemplateID)), companion.ID))
+			away := ""
+			if companion.OnErrand() { // Phase 70 review: it takes its cell again on return
+				away = ", away on an errand"
+			}
+			unplaced = append(unplaced, fmt.Sprintf("%s (#%d%s)", nameOf(companion, strconv.Itoa(companion.MobTemplateID)), companion.ID, away))
 		}
 	}
 	if len(unplaced) > 0 {

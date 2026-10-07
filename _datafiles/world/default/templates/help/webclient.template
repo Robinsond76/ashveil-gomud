@@ -50,7 +50,8 @@ button in them just types a command for you.
               help townsfolk), Opinions (what each companion likes,
               dislikes and has lately said; help opinions), and Bonds
               (how each pair of companions feels, with a bar for each;
-              help bonds).
+              help bonds), and Errands (who is away and when they are
+              due, and a card to send each free companion; help errands).
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
               Battle view during a battle. A battle also opens as a

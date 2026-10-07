@@ -315,6 +315,8 @@ func (m *CompanyModule) trainSkill(user *users.UserRecord, room *rooms.Room, rec
 	switch {
 	case c.Dead():
 		return fmt.Sprintf("%s has fallen and can't train until raised.", name)
+	case c.OnErrand():
+		return fmt.Sprintf("%s is away on an errand and can't train until they return.", name)
 	case c.Separated():
 		return fmt.Sprintf("%s is separated from the company and can't train until they rejoin.", name)
 	}

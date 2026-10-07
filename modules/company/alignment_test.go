@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/errands"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -544,4 +545,22 @@ func TestInspectResolutionOrder(t *testing.T) {
 
 func registryWithClaim(leaderUserID, templateID int) domain.Registry {
 	return domain.Registry{Companies: map[int]domain.Record{leaderUserID: {LeaderUserID: leaderUserID, Claimed: []int{templateID}}}}
+}
+
+// Phase 70 review: a companion away on an errand neither drifts nor
+// deserts, as help errands promises.
+func TestNoDriftOrDesertionWhileOnAnErrand(t *testing.T) {
+	world := newFakeWorld()
+	world.leaders[7] = 100
+	useFakeLifecycle(t, &fakeLifecycle{})
+	away := withDisposition(domain.Companion{ID: 1, MobTemplateID: 58}, -100, 1)
+	away.Errand = &errands.Errand{Kind: errands.Escort, Length: errands.Long, ReturnsAt: 1 << 40}
+	module, _ := newAlignmentModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{away}},
+	}}, world)
+	runRounds(module, defaultDriftEveryRounds*3)
+	record, _ := module.registry.Get(7)
+	require.Len(t, record.Companions, 1, "it does not desert")
+	assert.Equal(t, domain.Disposition{Alignment: -100, Loyalty: 1}, *record.Companions[0].Disposition)
+	assert.NotNil(t, record.Companions[0].Errand)
 }

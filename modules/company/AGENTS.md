@@ -141,3 +141,12 @@ Phase 49 banter (`banter.go`, pool in `internal/banter`): `Companion.Personality
 - Sources: a camp rest (`CampBanter` with `CtxRested` calls `bondsCampRest` whether or not the leader has banter on), a won battle (`onBattleEnded` calls `bondsBattleWon`), banter friend/rival lines (`bondsFromTalk`, from `exchange`), the Phase 64 seam (`opinions.Observe(m.onOpinionBonds)`, registered in `init`), and combat's `company.BondEvent` (a rescue, a refused guard). `BondValue` reads the registry in place: combat calls it per guard decision.
 - `internal/hooks/combat_bonds.go` is the battle side (bond guard, refusal); its wiring tests are `wiring_bonds_test.go`. Balance cells: `ASHVEIL_BALANCE=1 go test ./modules/company -run TestPhase65BondsInTheMirror`.
 
+
+## Phase 70: errands (`errands.go`, `internal/errands`)
+
+- `Companion.Errand` (saved with the record) puts a companion off the map until it is due. `Companion.Away()` (separated or on an errand) is the "not present" test: use it, not `Separated()`, wherever a member must be present. `Separated()` is only the separation's own countdown (`tickSeparations`, `rejoin`).
+- `startErrand` saves the errand, then detaches the mob (a failed save changes nothing). `tickErrands` (from `onNewRound`) brings home due errands once the leader is online and free (`errandWorld.Free`, the same test as a separated companion): one company save clears them and writes any wound into `State.Wounds`, then `restoreForLeader`, then the leader is paid (`errandWorld.Pay`) and told and the chronicle deed recorded. Pay is after the save, so a crash can lose a reward but never double it.
+- The outcome is `errands.Resolve` of the errand's saved seed. An item is picked from `ErrandItemIds` only when its value is at most the errand's gold, and the rest of that gold is paid in coin; keep that pool to small gathered goods.
+- The formation is no gate (an unplaced companion still fights). `Record.SendAway` takes the companion out of the formation and saves its cell on the errand; `Record.BringBack` (return and recall) puts it back there when the cell is free. Drift and desertion skip a companion on an errand.
+- `errandWorld` is the unit-test seam (`errandSeam`); the wiring test is `wiring_errands_test.go` in the brawl world.
+- A new status for an away member must also be handled in `internal/assessment`, `modules/gmcp` (`statusName`, the battle feed) and the web windows (`errand`).

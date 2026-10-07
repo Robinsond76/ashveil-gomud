@@ -381,7 +381,7 @@
             const placed = battle && battle.positions ? battle.positions[m.key] : null;
             const cell = cellOf(placed) || cellOf(m.cell);
             // As the Combat tab: only members still in the fight stand.
-            if (!cell || m.status === 'awaiting' || m.status === 'fled' || m.status === 'separated') { return; }
+            if (!cell || m.status === 'awaiting' || m.status === 'fled' || m.status === 'separated' || m.status === 'errand') { return; }
             const u = unit(m.key);
             const v = data.vitals(m.key);
             u.side = 'company';

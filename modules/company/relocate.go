@@ -109,7 +109,7 @@ func (m *CompanyModule) separate(leaderUserID, companionID int, reason string) e
 		return domain.ErrUnknownMember
 	}
 	c, ok := findCompanion(before, companionID)
-	if !ok || c.Dead() || c.PendingReturn || c.Separated() {
+	if !ok || c.Dead() || c.PendingReturn || c.Away() {
 		return domain.ErrUnknownMember
 	}
 	instanceID, tracked := m.instance(leaderUserID, companionID)

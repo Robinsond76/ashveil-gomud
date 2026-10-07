@@ -140,7 +140,7 @@ func (m *CompanyModule) campMembers(leaderUserID int) []banter.Member {
 	}
 	var out []banter.Member
 	for _, c := range record.Companions {
-		if c.Dead() || c.Separated() || c.PendingReturn || creatures.Is(c.Archetype) { // 38e review: a hound or a golem doesn't talk
+		if c.Dead() || c.Away() || c.PendingReturn || creatures.Is(c.Archetype) { // 38e review: a hound or a golem doesn't talk
 			continue
 		}
 		out = append(out, m.banterMember(c))
