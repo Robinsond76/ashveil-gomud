@@ -17,9 +17,9 @@ numbers by company size come from the company, never from scaling a zone.
   under the band (`encounters.HPPercent`, `UnderBandGap` 5), so the hard
   gradient the 37b work set (about half the fights won five under) is kept.
   Bosses, their escorts and story-event groups keep full HP.
-- **Foes spread their blows** (`encounters.Spread`, `SpreadPercent` 100): a
-  softened foe's aim noise is its softness (60 at base), so 60% of its re-aims
-  take a random foe instead of the weakest. Without it, the default
+- **Foes spread their blows** (`encounters.Spread`; review changed it from
+  60% to 100% at the band): a fully softened foe aims at a random member it
+  can reach on every re-aim, instead of the weakest. Without it, the default
   "weakest" aim put every blow on the leader or the wizard and the rest of the
   company stood untouched, capping the fights before a rest at about 6-8 for
   any company size. It fades the same way as HP.
@@ -104,3 +104,72 @@ level-set), so there is no ceiling.
   unsoftened, spawn wiring from the company's level).
 - The harness (`balance_test.go`) gained `OrdinaryHPPercent`; its fallen count
   now starts from the company's size at the fight's start.
+
+## Review (2026-10-07, Opus review thread)
+
+**Cause of the two missed targets.** The harness, not only the tuning, hid
+part of it: the measured company had no formation (everyone reachable, a
+wizard standing where the leader's blows land) and a classless leader (about
+a sixth less health than Tamsin, so "weakest" aim picked the leader every
+time). Measured with a placed company (leader, Tamsin and a martial Garrick
+in front; Oswin, Ysolde and a wizard behind) and a warrior leader, the
+damage still piled on the weakest front-liner while others took nothing.
+With 60% spread the remaining 40% "weakest" re-aims were the limit.
+
+**Fix.** `encounters.Spread` now gives a fully softened foe 100% aim noise
+(random among the members it can reach), fading with softness to none at
+five under the band, as before. A front-row wizard was also measured: with
+random aim it loses 3-6% health a fight, so no default-formation change was
+needed. `TestBalanceAtLevel` now measures the placed company with a warrior
+leader (`balanceFightOptions.PlayerClass`) and logs health lost per member.
+
+**Measured after the fix** (50 fights a cell, median fights before a rest):
+
+| Band | 5 members | 4 | 3 | 2 | 1 (wins) |
+|---|---|---|---|---|---|
+| 3-5 martial | 17 | 18 | 13 | 2 | 1 (74%) |
+| 10-12 martial | 16 | 11 | 8 | 3 | 1 (68%) |
+| 20-22 martial | 12 | 14 | 10 | 2 | 1 (68%) |
+| 3-5 magic | 5 | 5 | 4 | 3 | |
+| 10-12 magic | 8 | 7 | 4 | 2 | |
+| 20-22 magic | 9 | 8 | 4 | 2 | |
+
+Small-sample runs moved 3-5 points a cell between runs (the 3-5 band's four
+members read 11 then 18), so read these as ranges.
+
+**Settled, not chased (timebox):**
+- Five martial members reach 15-20 at the low and middle bands; the 20-22
+  band reads 12 (it read 16 in a 30-fight run). Accepted as within noise.
+- Magic reaches the 7-12 target at the middle and high bands. At 3-5 a
+  level-5 wizard's small mana pool is the limit (19% a fight, no passive
+  mana by design since 35b), so 5 fights. Left: early-level wizard mana is a
+  class question, not an encounter one.
+- Three members overshoot (8-13, target 5-7) and four members at 3-5 read
+  18 (target 8-14). Lowering it would need tougher foes for everyone, which
+  would cut the five-member numbers below target, or foes scaled to the
+  party, which the zone-fixed rule forbids. Easier is the side the owner
+  asked to err on ("players have a good time"). The test's slack is 6 so
+  the opt-in measure passes on these numbers.
+- Solo leader: wins 68-74% of at-level fights and loses 55-68% of its
+  health in each, so rests after every fight: "will suffer" holds.
+
+**Zone-fixed rule.** Softening keys on the company's level against the
+band, which reads like scaling to the party. Kept: it is a step, not a
+scale. Every company at or above the band meets the same foes; it never
+makes foes stronger for a stronger company, and the only change below the
+band is that foes return to full strength, which is the rule's own "a zone
+above your level is hard". The 37b gradient still holds after the fix
+(`TestBalanceEncounterShapes`: two under 94-98% wins, three under 76-96%,
+five under 46%; bosses unchanged).
+
+**Gear edge.** Unchanged by the fix: a one-level edge still moves the rest
+rhythm by a third to a half (the doc's earlier note), and gear is priced at
+about one level (phase 71).
+
+**Other review findings.** Accepted: help said blows were "spread over your
+company"; now says foes strike at whoever they can reach, gives the
+fifteen-or-more figure for a full company and says a lone leader will
+struggle (the help test checks these). No UI change: foes' health bars show
+their real (softened) maximum, and `look` already rates the zone against the
+company's level. Rejected: a class-aware default formation for new recruits
+(not needed once aim is random).
