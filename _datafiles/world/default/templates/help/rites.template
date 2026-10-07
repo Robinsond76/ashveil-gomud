@@ -1,0 +1,55 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">rites</ansi>
+
+A loss should cost something besides gold. When a companion is lost for
+good, or walks away after long service, the company wants to mourn them.
+The next time you make camp or take a room at an inn, you are told who is
+waiting, and you can hold rites for them at the fire or let the loss pass
+in silence.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">rites</ansi>                      who the company has not yet mourned, and who trusted them
+  <ansi fg="command">rite hold [member]</ansi>         hold rites for them, at a camp or an inn
+  <ansi fg="command">rite skip [member]</ansi>         let it pass without a word, at a camp or an inn
+
+[member] is a name, or the number shown by <ansi fg="command">rites</ansi> as <ansi fg="command">#4</ansi>; <ansi fg="command">all</ansi> names everyone waiting, and with
+only one waiting you can leave it out. In the web client the Company window
+has a Rites tab with a Hold rites and a Let pass button on each card; it
+fits a phone.
+
+<ansi fg="yellow-bold">When there is something to mourn</ansi>
+
+  lost       a fallen companion no one raised in time (<ansi fg="command">help resurrect</ansi>): always
+  left       a companion who lost faith and walked away (<ansi fg="command">help alignment</ansi>), but only
+             after long service (3 game days served with the band, the
+             Trusted tier of <ansi fg="command">help chemistry</ansi>)
+
+A companion you dismiss yourself is not mourned: that was your choice. The
+occasion is saved with the company in the same moment as the loss, so a
+restart or a copyover cannot lose it, and it can happen only once for each
+companion. At most five wait at a time.
+
+<ansi fg="yellow-bold">Who is touched</ansi>
+
+Those who trusted the one gone (a bond of "trusts" or better, <ansi fg="command">help bonds</ansi>) are
+close; everyone else walking with the company is the band. The bond ends
+with the companion, so who was close is fixed at the loss.
+
+  Hold rites   a line in the chronicle (<ansi fg="command">chronicle rites</ansi>); loyalty up 3 for each close
+               companion and 1 for the rest, to no more than 80; and each
+               pair of close companions grows a little closer (up to 2 points
+               of bond, an hour's rest between, never above "close")
+  Let it pass  a line in the chronicle too; loyalty down 5 for each close
+               companion and 2 for the rest, to no less than 30. It can never
+               be what makes anyone desert, but it is felt (<ansi fg="command">help alignment</ansi>)
+
+If you say nothing at the camp or inn that tells you, the rites pass at the
+next camp or inn you make, at that cost. They wait for you after a restart.
+
+<ansi fg="yellow-bold">What rites are not</ansi>
+
+They cost no gold and give none, give no experience or power, and never
+happen in a fight or move the world's clock. They name no god; what a
+company believes is its own.
+
+See also: <ansi fg="command">help resurrect</ansi>, <ansi fg="command">help bonds</ansi>, <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help webclient</ansi>.

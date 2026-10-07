@@ -175,6 +175,7 @@ help:
       - opinions
       - bonds
       - errands
+      - rites
     communication:
       - emote
       - say
@@ -354,6 +355,7 @@ help-aliases:
   townsfolk: [renown, town memory, talk of the town, townsfolk talk]
   opinions: [opinion, companion opinions, company opinions, loyalty opinions]
   errands: [errand, errand send, errand recall, company errands, companion errands, send companion, benched companions, idle companions]
+  rites: [rite, rite hold, rite skip, funeral, funerals, mourning, mourn, the fallen, hold rites]
   bonds: [bond, companion bonds, company bonds, friendship, friendships, rivalry, rivalries, rivals, friends]
   events: [event, scene, scenes, story-events, story events, choose, story]
   sigils: [sigil, cast sigil, cast-sigil, sigil chalk, chalk, ward sigil, fire sigil, stillness sigil, mending sigil]

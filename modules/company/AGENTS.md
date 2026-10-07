@@ -150,3 +150,10 @@ Phase 49 banter (`banter.go`, pool in `internal/banter`): `Companion.Personality
 - The formation is no gate (an unplaced companion still fights). `Record.SendAway` takes the companion out of the formation and saves its cell on the errand; `Record.BringBack` (return and recall) puts it back there when the cell is free. Drift and desertion skip a companion on an errand.
 - `errandWorld` is the unit-test seam (`errandSeam`); the wiring test is `wiring_errands_test.go` in the brawl world.
 - A new status for an away member must also be handled in `internal/assessment`, `modules/gmcp` (`statusName`, the battle feed) and the web windows (`errand`).
+
+Phase 74 rites (`rites.go`, `internal/rites`, `docs/plans/2026-10-07-phase-74-rites.md`):
+
+- A lost companion (`expire`) and a long-serving deserter (`removeCompanion`, every caller is a desertion) queue a `Record.Rites` occasion with `queueRite` *before* `dropCompanion`, so the departure's one save writes both; a failed drop takes it back (`unqueueRite`). Who was close is fixed then, because the bond ends with the companion. Dismissal queues nothing. Keep `wireRecord`/`decodeCompanies` in step with `Record`: a field missing there is written and never read back (phase 65's bonds were, until 74).
+- `OfferRites` (the `company.RitesProvider`, called by `modules/camping` at a camp rest's and an inn stay's start) lets pass any rite already offered and announces the rest. `rite hold|skip` need `camping.LeaderRest` (a camp or an inn stay) and no battle; tests replace that check with `riteSeam`.
+- Loyalty moves stay in `rites.Floor`..`rites.Ceiling` (the opinions clamp), and a rite never gives gold, experience or power.
+

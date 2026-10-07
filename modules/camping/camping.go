@@ -1066,6 +1066,10 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 		if said := company.CampBanter(user.UserId, banter.CtxCamp); len(said) > 0 {
 			text += "\n\n" + banter.Format(said)
 		}
+		// Phase 74: the company's dead are mourned at a fire.
+		if rites := company.OfferRites(user.UserId); rites != "" {
+			text += "\n\n" + rites
+		}
 		// Phase 64: a rough camp is a choice too (an inn has its own).
 		if said, err := company.Opinion(user.UserId, opinions.Choice{Kind: opinions.Rough, Subject: room.Title}); err != nil {
 			mudlog.Warn("camping: camp opinion", "leader", user.UserId, "error", err)
