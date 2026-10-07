@@ -1,0 +1,72 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">orders</ansi>
+
+A battle plays out on its own, by how you set it up beforehand. Orders are
+the "when this happens, do that" part of the setup: up to <ansi fg="yellow">3 orders</ansi> for each
+member of your company, you included. Each round, before a member's role and
+target rule (<ansi fg="command">help strategy</ansi>), it reads its orders in the order you set them.
+The first whose condition holds and that it can carry out fires, and takes
+the member's turn. If none does, it fights by its strategy as before.
+
+  <ansi fg="command">Brother Oswin tends you, as ordered.</ansi>
+
+The battle log says "as ordered" whenever one fires. An order that keeps
+holding (a guard, a hold) is noted when it starts, not every round.
+
+<ansi fg="yellow-bold">Conditions</ansi>
+
+  <ansi fg="command">ally [n]</ansi>        an ally is below n% of its health (n is a multiple of 5,
+                  from 10 to 90). It means the most hurt ally who is not the
+                  member itself; a fallen ally does not count.
+  <ansi fg="command">self [n]</ansi>        the member itself is below n% of its health.
+  <ansi fg="command">chanting</ansi>        a foe is chanting a spell (<ansi fg="command">help interrupts</ansi>).
+  <ansi fg="command">boss</ansi>            a boss stands among the foes.
+  <ansi fg="command">first</ansi>           it is the battle's first round.
+  <ansi fg="command">foe [kind]</ansi>      a foe of that kind stands: <ansi fg="command">caster</ansi> or <ansi fg="command">healer</ansi>.
+
+<ansi fg="yellow-bold">Actions</ansi>
+
+  <ansi fg="command">heal</ansi>        cast a heal at the ally (or at itself, for <ansi fg="command">self</ansi>) the
+                  condition named: the heavy heal for one in trouble. Needs a
+                  healing spell the member knows and can pay for. An ally a
+                  heal already covers is passed over. Goes with <ansi fg="command">ally</ansi> or
+                  <ansi fg="command">self</ansi>.
+  <ansi fg="command">break</ansi>       turn on the foe the condition named: for <ansi fg="command">chanting</ansi>, the chanter,
+                  to break its chant. A fighter strikes it if it can reach it;
+                  a member that casts (or cannot reach it) sends an attack
+                  spell at it. Goes with <ansi fg="command">chanting</ansi>, <ansi fg="command">boss</ansi> or <ansi fg="command">foe</ansi>.
+  <ansi fg="command">guard</ansi>       step in front of the ally the condition named for this
+                  round, as a guardian would (<ansi fg="command">help guardian</ansi>): it spends the
+                  member's guards, and is read again every round. Goes with
+                  <ansi fg="command">ally</ansi>.
+  <ansi fg="command">strongest</ansi>   cast the strongest attack spell it knows and can pay for,
+                  whatever its mana reserve says. Any condition.
+  <ansi fg="command">hold</ansi>        cast no attack spell this round, keeping its mana: heals
+                  and everything else go on as usual. Any condition.
+
+An order whose action the member cannot carry out (no healing spell, no
+mana, nothing in reach) is passed over for the next. <ansi fg="command">orders</ansi> warns when a member
+has no spell for an order you add.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">orders</ansi>                              everyone's orders
+  <ansi fg="command">orders [who]</ansi>                        one member's, and the menus
+  <ansi fg="command">orders [who] add [condition] then [action]</ansi>
+                                      e.g. <ansi fg="command">orders oswin add ally 50 then heal</ansi>
+  <ansi fg="command">orders [who] remove [number]</ansi>        take one off
+  <ansi fg="command">orders [who] up [number]</ansi>            read it before the one above
+  <ansi fg="command">orders [who] preset</ansi>                 the starting set for its class
+  <ansi fg="command">orders [who] clear</ansi>                  none
+
+[who] is <ansi fg="command">me</ansi>, or a companion by name (part of it will do) or number (<ansi fg="command">#2</ansi>).
+
+Order matters: put the one you care about most first. Set orders before a
+battle: during one they can be read but not changed. They are kept when you
+log out. <ansi fg="command">strategy [who] default</ansi> leaves them alone; <ansi fg="command">orders [who] clear</ansi> is how
+they go.
+
+In the web client, the Combat tab lists each member's orders under their
+row, with an Orders button whose menu adds, removes and reorders them
+(<ansi fg="command">help webclient</ansi>).
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help combat</ansi>.

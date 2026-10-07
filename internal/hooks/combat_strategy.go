@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -75,6 +76,8 @@ type actor struct {
 func strategyPass() {
 	defer func() { hexSide = nil }()
 	pruneCastAims()
+	clear(orderedWards) // Phase 61: guard orders are read afresh each round
+	pruneOrderStreaks()
 	autoSpells := costedAutoSpells()
 	for _, uid := range battle.Players() {
 		b, ok := battle.Current(uid)
@@ -119,6 +122,18 @@ func strategyPass() {
 			}
 			st := enemyparty.MemberStrategy(uid, a.key)
 			role := st.Role
+			// Phase 61: battle orders come before the role and target rule.
+			reserve := st.Reserve
+			if list := orders.For(uid, string(a.key)); len(list) > 0 {
+				turn := runOrders(orderCtx{a: a, u: u, side: side, allies: allies, autoSpells: autoSpells, g: g, foes: foes, room: room, b: b,
+					meleeFirst: role == strategy.Fighter || role == strategy.Guardian}, list)
+				if turn.handled {
+					continue
+				}
+				if turn.hold {
+					reserve = 100 // keeps every point of mana from attack spells
+				}
+			}
 			// A guardian fights as a fighter (Phase 30c2).
 			if role == strategy.Fighter || role == strategy.Guardian {
 				continue
@@ -142,7 +157,7 @@ func strategyPass() {
 				HealBelow: healBelow,
 				// Phase 33e: the member's mana reserve.
 				MaxMana: a.char.ManaMax.Value,
-				Reserve: st.Reserve,
+				Reserve: reserve,
 				// Phase 38a: a hex goes only at a foe worth it.
 				CanHex: hexReady(a, foes),
 				// Phase 38c3: a Necromancer raises a foe that has fallen.

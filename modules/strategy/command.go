@@ -536,6 +536,10 @@ func (m *StrategyModule) describe(userID int, mb member, members []member) strin
 	if st := m.Stored(userID, mb.key); st.IsZero() {
 		b.WriteString("  Unchanged from the archetype's default.\n")
 	}
+	// Phase 61: its battle orders, read before all of the above.
+	if list := m.StoredOrders(userID, mb.key); len(list) > 0 {
+		b.WriteString("  Orders, read first each round (<ansi fg=\"command\">help orders</ansi>):\n" + numbered(list) + "\n")
+	}
 	b.WriteString(usage)
 	return b.String()
 }

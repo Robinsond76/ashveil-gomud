@@ -31,3 +31,29 @@ func (c stateContributor) Restore(userID, _ int, data []byte) error {
 	}
 	return c.m.save()
 }
+
+// ordersContributor snapshots a player's battle orders (Phase 61), apart
+// from strategies so older snapshots still restore.
+type ordersContributor struct{ m *StrategyModule }
+
+func (ordersContributor) Name() string { return "orders" }
+
+func (c ordersContributor) Capture(userID int) ([]byte, error) {
+	c.m.mu.Lock()
+	defer c.m.mu.Unlock()
+	return userstate.Maps{c.m.registry.Orders}.Capture(userID)
+}
+
+func (c ordersContributor) Restore(userID, _ int, data []byte) error {
+	c.m.mu.Lock()
+	if c.m.registry.Orders == nil {
+		c.m.mu.Unlock()
+		return nil
+	}
+	err := userstate.Maps{c.m.registry.Orders}.Apply(userID, data)
+	c.m.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	return c.m.save()
+}

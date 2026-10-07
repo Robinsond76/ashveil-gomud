@@ -60,6 +60,15 @@
  *   - Phase 33i2: under it, how the group fights together and the roles it
  *     shows (the outlook's coordination), as scout says it.
  *
+ * Phase 61, battle orders:
+ *
+ *   - Under each member's row in Setup, their battle orders in the words the
+ *     `orders` command uses (Company's members[].orders), read in order
+ *     each round before the member's strategy, and an "Orders" button whose
+ *     menu sends orders <who> add <condition> then <action>, remove <n>,
+ *     up <n>, preset and clear. Orders are set between battles: in a battle
+ *     they are listed, with no button.
+ *
  * Every name is set with textContent, never innerHTML.
  *
  * Responds to GMCP namespaces:
@@ -149,6 +158,10 @@
         .cbt-member:focus-visible { outline: 2px solid var(--t-accent); }
         .cbt-member .cbt-how { color: var(--t-text-secondary); white-space: nowrap; }
         .cbt-member.is-fallen { opacity: 0.6; border-style: dashed; }
+
+        .cbt-orders { margin: 1px 0 3px 10px; font-size: 0.92em; color: var(--t-text-secondary); display: flex; flex-direction: column; gap: 2px; }
+        .cbt-orders ol { margin: 0; padding-left: 1.4em; }
+        .cbt-orders .cbt-btn { align-self: flex-start; }
 
         .cbt-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 
@@ -304,6 +317,68 @@
         return parts.join(', ');
     }
 
+    // MAX_ORDERS is the most orders a member carries; ORDER_ADDS are the
+    // orders the menu offers, as `orders <who> add` reads them, each with
+    // its short label (the command checks every one).
+    const MAX_ORDERS = 3;
+    const ORDER_ADDS = [
+        ['ally 25 then heal', 'Ally below 25%: heal them'],
+        ['ally 50 then heal', 'Ally below 50%: heal them'],
+        ['ally 75 then heal', 'Ally below 75%: heal them'],
+        ['self 50 then heal', 'Me below 50%: heal myself'],
+        ['ally 25 then guard', 'Ally below 25%: guard them'],
+        ['ally 50 then guard', 'Ally below 50%: guard them'],
+        ['ally 75 then guard', 'Ally below 75%: guard them'],
+        ['chanting then break', 'A foe chants: break it'],
+        ['foe healer then break', 'A healer stands: turn on it'],
+        ['foe caster then break', 'A caster stands: turn on it'],
+        ['boss then break', 'A boss stands: turn on it'],
+        ['boss then strongest', 'A boss stands: cast my strongest'],
+        ['first then strongest', 'Battle opens: cast my strongest'],
+        ['first then hold', 'Battle opens: hold my mana'],
+    ];
+
+    // ordersMenu is a member's orders menu: take one off, read one sooner,
+    // add one of the offered, the class's starting set, or clear them all.
+    function ordersMenu(m, list) {
+        const w = who(m);
+        const items = [];
+        list.forEach((line, i) => {
+            items.push({ label: 'Remove order ' + (i + 1), cmd: 'orders ' + w + ' remove ' + (i + 1) });
+            if (i > 0) { items.push({ label: 'Read order ' + (i + 1) + ' sooner', cmd: 'orders ' + w + ' up ' + (i + 1) }); }
+        });
+        if (list.length < MAX_ORDERS) {
+            ORDER_ADDS.forEach(a => items.push({ label: 'Add: ' + a[1], cmd: 'orders ' + w + ' add ' + a[0] }));
+        }
+        items.push({ label: 'Starting set for the class', cmd: 'orders ' + w + ' preset' });
+        if (list.length) { items.push({ label: 'Clear all orders', cmd: 'orders ' + w + ' clear' }); }
+        return items;
+    }
+
+    // ordersBlock is the orders under a member's row: the list, and the
+    // button that edits it between battles.
+    function ordersBlock(m, inBattle) {
+        const list = Array.isArray(m.orders) ? m.orders : [];
+        if (m.status === 'dead' || (inBattle && !list.length)) { return null; }
+        const box = el('div', 'cbt-orders');
+        box.setAttribute('data-key', m.key);
+        if (list.length) {
+            const ol = el('ol');
+            ol.setAttribute('aria-label', 'Orders for ' + m.name + ', read in this order each round');
+            list.forEach(line => ol.appendChild(el('li', null, line)));
+            box.appendChild(ol);
+        }
+        if (!inBattle) {
+            const b = el('button', 'cbt-btn cbt-orders-btn', list.length ? 'Orders (' + list.length + ')' : 'Orders: none');
+            b.type = 'button';
+            b.setAttribute('aria-haspopup', 'menu');
+            b.title = 'Battle orders for ' + m.name + ': when this happens, do that (help orders)';
+            b.addEventListener('click', e => uiMenu(e, ordersMenu(m, list)));
+            box.appendChild(b);
+        }
+        return box;
+    }
+
     function howText(m, members) {
         const s = m.strategy;
         if (!s) { return ''; }
@@ -402,7 +477,7 @@
         }
         const members = data.members.filter(m => m && m.key);
         root.appendChild(grid(members));
-        root.appendChild(el('div', 'cbt-note', 'A battle plays out on its own, by how you set it up here. Click a member to change it.'));
+        root.appendChild(el('div', 'cbt-note', 'A battle plays out on its own, by how you set it up here. Click a member to change it; orders say what each does when something happens.'));
         const list = el('ul', 'cbt-members');
         list.setAttribute('aria-label', 'How your company fights');
         members.forEach(m => {
@@ -417,6 +492,8 @@
             b.setAttribute('aria-label', m.name + (m.key === 'leader' ? ' (you)' : '') + (how ? ': ' + how : ''));
             b.addEventListener('click', e => uiMenu(e, memberMenu(m, members)));
             li.appendChild(b);
+            const orders = ordersBlock(m, inBattle);
+            if (orders) { li.appendChild(orders); }
             list.appendChild(li);
         });
         root.appendChild(list);

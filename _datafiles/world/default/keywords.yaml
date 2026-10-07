@@ -232,6 +232,7 @@ help:
       - shoot
       - battlescreen
       - strategy
+      - orders
       - tactics
       - targeting
       - wounds
@@ -499,6 +500,7 @@ help-aliases:
   strategy:         [strategies, gambits, roles]
   tactics:          [focus, company-tactics, personalities, personality, casters first, casters-first, healers focus, healers-first, focus the healer, default focus, default-focus, level defaults]
   guardian:         [guardians, guard, guards, ward, wards]
+  orders:           [order, battle-orders, battleorders, when-do, rules]
   abilities:        [ability, class-abilities, class-ability, opening-strike, opening, aimed-shot, aimed, mana-reserve, reserve]
   interrupts:       [interrupt, interrupted, chant, chants, concentration, shield-bash, shieldbash, counter, counters, hexer, wind-up, wind-ups, windup, windups, telegraph, telegraphs, crushing-blow, ogre]
   sharpen:          [whetstone, whetstones, edge]

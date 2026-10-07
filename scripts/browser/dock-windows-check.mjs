@@ -643,6 +643,38 @@ check(JSON.stringify(got) === '["scout"]', 'Scout appears with an enemy group he
 await page.evaluate(() => { const c = JSON.parse(JSON.stringify(Client.GMCPStructs.Company)); c.members[1].name = '<img src=x onerror="window.__xss2=1">'; window.gmcp('Company', c); });
 check(await page.evaluate(() => window.__xss2 === undefined) && (await combat()).includes('<img'), 'markup in a name renders as text');
 
+// --- Phase 61: battle orders under each member's row ---
+await page.evaluate(c => window.gmcp('Company', c), company);
+check(await page.getByRole('button', { name: 'Orders: none' }).count() === 4, 'orders: a button for each member who has not fallen');
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].orders = ['When an ally is below 50% health, heal that ally first.', 'When a foe is chanting, turn on the chanter to break its chant.'];
+  window.gmcp('Company', g);
+}, company);
+check((await page.locator('#combat-window .cbt-orders[data-key="companion:1"] ol li').allTextContents()).join('|') === 'When an ally is below 50% health, heal that ally first.|When a foe is chanting, turn on the chanter to break its chant.', 'orders: listed in order, in the commands\' words');
+check(await page.getByRole('button', { name: 'Orders (2)' }).count() === 1, 'orders: the button counts them');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Add: Ally below 25%: guard them').click(); });
+check(JSON.stringify(got) === '["orders #1 add ally 25 then guard"]', 'orders: add one from the menu');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Remove order 1').click(); });
+check(JSON.stringify(got) === '["orders #1 remove 1"]', 'orders: remove one');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Read order 2 sooner').click(); });
+check(JSON.stringify(got) === '["orders #1 up 2"]', 'orders: read one sooner');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Clear all orders').click(); });
+check(JSON.stringify(got) === '["orders #1 clear"]', 'orders: clear them');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders: none' }).first().click(); await page.getByText('Starting set for the class').click(); });
+check(JSON.stringify(got) === '["orders me preset"]', 'orders: the class starting set (yourself is "me")');
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].orders = ['One.', 'Two.', 'Three.'];
+  window.gmcp('Company', g);
+}, company);
+await page.getByRole('button', { name: 'Orders (3)' }).click();
+const full = await page.evaluate(() => [...[...document.querySelectorAll('body > div')].pop().children].map(c => c.textContent));
+check(!full.some(l => l.startsWith('Add: ')) && full.includes('Remove order 3'), 'orders: with three, none can be added, any can be removed');
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => window.gmcp('Company', c), company);
+
 // --- Task 12: the Comm and Who tabs ---
 await page.getByRole('tab', { name: 'Combat' }).click();
 await page.evaluate(() => { window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Hello' }); window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Again' }); });
@@ -798,6 +830,10 @@ check(kept.heading && kept.said === '' && kept.focus === 'm:412' && kept.open, '
 check(await page.getByRole('button', { name: /^Oswin, fallen/ }).count() === 1, 'and shows the companion fallen');
 await page.evaluate(b => window.gmcp('Company.Battle', b), next);
 check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === '', 'the battle sent again after it: nothing announced');
+// Phase 61: in a battle orders are listed, with no button to change them.
+await page.evaluate(c => { const x = JSON.parse(JSON.stringify(c)); x.members[1].orders = ['When a foe is chanting, turn on the chanter to break its chant.']; window.gmcp('Company', x); }, company);
+check(await page.locator('#combat-window .cbt-orders-btn').count() === 0, 'orders: no edit button during a battle');
+check((await cbt()).includes('turn on the chanter to break its chant'), 'orders: still listed during a battle');
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(b => window.gmcp('Company.Battle', b), next);
 
