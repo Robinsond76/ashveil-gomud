@@ -40,6 +40,7 @@ a band. Every part has its own page:
   <ansi fg="command">help bonds</ansi>         how your companions feel about each other
   <ansi fg="command">help errands</ansi>       sending a companion you can spare on an errand
   <ansi fg="command">help rites</ansi>         mourning a companion who is gone for good
+  <ansi fg="command">help bounties</ansi>      bounty boards: marks wanted, paid on proof
 
 <ansi fg="yellow-bold">Rest</ansi>
   <ansi fg="command">help camp</ansi>          making camp and resting in the wild

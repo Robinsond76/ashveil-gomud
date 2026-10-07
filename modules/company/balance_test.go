@@ -318,7 +318,11 @@ type balanceFightOptions struct {
 	EnemyLevels  []int
 	Coordination int // Zero leaves live group-level coordination in force.
 	Boss         bool
-	LegacyMirror bool // The original five-member mirror remains a stress test.
+	// OrdinaryHPPercent is the share of full HP ordinary (not boss, not
+	// escort) foes spawn with; zero is full (encounters.OrdinaryHPPercent
+	// is what an encounter spawn gives).
+	OrdinaryHPPercent int
+	LegacyMirror      bool // The original five-member mirror remains a stress test.
 	// Classes overrides companions' archetypes (Phase 35b: a wizard for
 	// the mana run); the rest keep the shipped ones.
 	Classes map[int]string
@@ -328,6 +332,9 @@ type balanceFightOptions struct {
 	// Setup runs once the company and the foes stand ready, just before the
 	// attack (Phase 69: gear and stances).
 	Setup func(b *brawl)
+	// PlayerClass gives the leader a class; empty leaves the mirror's
+	// classless leader.
+	PlayerClass string
 }
 
 func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, enemyLevels ...int) *balanceFight {
@@ -345,7 +352,9 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 	}
 	b.withArchetypesFor("", classes)
 	// 30g4: configured classes supply HP on both sides of the even mirror.
-	archetypes.SetProvider(balanceHPProvider(t))
+	hp := balanceHPProvider(t)
+	hp.player = opts.PlayerClass
+	archetypes.SetProvider(hp)
 	for id := 1; id <= 4; id++ {
 		b.companion(id).Character.HPArchetype, _ = module.CompanionArchetype(7, id)
 	}
@@ -421,6 +430,11 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 			mob.Character.RecalculateStats()
 			mob.Character.Health = mob.Character.HealthMax.Value
 		}
+		if opts.OrdinaryHPPercent > 0 && !opts.Boss {
+			mob.Character.HealthMax.Training -= mob.Character.HealthMax.Value * (100 - opts.OrdinaryHPPercent) / 100
+			mob.Character.RecalculateStats()
+			mob.Character.Health = mob.Character.HealthMax.Value
+		}
 		switch {
 		case enemyMode == enemySpread:
 			mob.Targeting, mob.TargetingNoise = string(strategy.Nearest), 100
@@ -447,6 +461,13 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 			}
 		default:
 			t.Fatalf("enemy mode %q", enemyMode)
+		}
+	}
+	if opts.OrdinaryHPPercent > 0 && !opts.Boss {
+		// An encounter spawn also spreads the foes' blows (encounters.Spread).
+		for _, id := range f.enemies {
+			m := mobs.GetInstance(id)
+			m.TargetingNoise = max(m.TargetingNoise, encounters.Spread(opts.OrdinaryHPPercent))
 		}
 	}
 	levelTo(b.aria.Character, level)
@@ -516,7 +537,9 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 	// not spread initial blows when all foes begin at full health.
 	members := []*characters.Character{b.aria.Character}
 	for id := 1; id <= 4; id++ {
-		members = append(members, &b.companion(id).Character)
+		if _, ok := module.instance(7, id); ok { // a smaller company has dismissed some
+			members = append(members, &b.companion(id).Character)
+		}
 	}
 	mirrors := make([]int, len(members))
 	for i := range mirrors {
@@ -541,7 +564,9 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 	// than inherit the attack command's retaliation aim at the leader.
 	if enemyMode != enemySpread {
 		require.NotNil(t, b.aria.Character.Aggro, "attack command opened combat")
-		require.Contains(t, f.enemies, b.aria.Character.Aggro.MobInstanceId)
+		if opts.Setup == nil { // a Setup that dismissed companions may leave a stray first aim
+			require.Contains(t, f.enemies, b.aria.Character.Aggro.MobInstanceId)
+		}
 		for _, id := range f.enemies {
 			mobs.GetInstance(id).Character.EndAggro()
 		}
@@ -620,6 +645,7 @@ func (f *balanceFight) healthRemaining() (hp [2]int) {
 // player's death would cost her a level and move her to a church).
 func (f *balanceFight) run() balanceResult {
 	var res balanceResult
+	startCompany, _ := f.standing()
 	startHP := f.healthRemaining()
 	res.StartHP = startHP
 	for res.Rounds < balanceMaxRounds {
@@ -643,7 +669,7 @@ func (f *balanceFight) run() balanceResult {
 	company, enemy := f.standing()
 	res.Won = enemy == 0 && company > 0
 	res.Stalled = company > 0 && enemy > 0
-	res.Fallen = [2]int{5 - company, len(f.enemies) - enemy}
+	res.Fallen = [2]int{startCompany - company, len(f.enemies) - enemy}
 	res.Tally = *f.tally
 	endHP := f.healthRemaining()
 	for side := range startHP {

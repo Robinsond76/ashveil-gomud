@@ -223,6 +223,12 @@ half an hour to eight hours, and comes home with modest gold, a
 small find, word of a lair, or a wound. <ansi fg="command">errands</ansi> shows who is away, and the
 Company window has an Errands tab (<ansi fg="command">help errands</ansi>).
 
+<ansi fg="yellow-bold">Bounties</ansi>
+
+A bounty board in a town lists lair masters and bands of foes from the zones
+around it. Take a bounty, kill the mark, and claim the gold at a board; your
+chronicle is the proof (<ansi fg="command">bounty</ansi>, <ansi fg="command">help bounties</ansi>). The Company window has a Bounties tab.
+
 <ansi fg="yellow-bold">Rites</ansi>
 
 A companion lost for good, or one who leaves after long service, is

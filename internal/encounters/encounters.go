@@ -32,6 +32,16 @@ const (
 	HealerShareMax     = 20  // percent of a table's weight a healer group may hold
 	RoomGroupLimit     = 4   // unresolved random groups one room holds
 	AbandonSeconds     = 120 // an ownerless group disappears after this long
+	// OrdinaryHPPercent is the share of its level's HP an ordinary group's
+	// foe spawns with for a company at the band's low end or above (owner,
+	// 2026-10-07: a company in a zone for its level should win quickly and
+	// cheaply). Bosses and their escorts keep full HP: a lair is the
+	// set-piece fight. A company under the band meets harder foes (see
+	// HPPercent).
+	OrdinaryHPPercent = 40
+	// UnderBandGap is how many levels under the band's low end a company
+	// is before ordinary foes have their full HP again.
+	UnderBandGap = 5
 	// BossRespawnSeconds is how long a lair stays quiet for a company after
 	// it beats the boss (real time, saved: it never moves the world's clock).
 	BossRespawnSeconds = 30 * 60
@@ -47,10 +57,25 @@ type Member struct {
 // the first member is the boss (count 1) and the rest are its escorts.
 type Composition struct {
 	ID      string   `yaml:"id"`
+	Name    string   `yaml:"name,omitempty"` // what a bounty board calls the group (Phase 76); the id, spaced, when empty
 	Weight  int      `yaml:"weight"`
 	Text    string   `yaml:"text,omitempty"` // the line that opens the encounter
 	Boss    bool     `yaml:"boss,omitempty"`
 	Members []Member `yaml:"members"`
+}
+
+// Title is the composition's name for players: Name, else its id with the
+// dashes read as spaces and each word capitalised ("road-brigands" is "Road
+// Brigands").
+func (c Composition) Title() string {
+	if n := strings.TrimSpace(c.Name); n != "" {
+		return n
+	}
+	words := strings.FieldsFunc(c.ID, func(r rune) bool { return r == '-' || r == '_' || r == ' ' })
+	for i, w := range words {
+		words[i] = strings.ToUpper(w[:1]) + w[1:]
+	}
+	return strings.Join(words, " ")
 }
 
 // Size is how many foes the composition spawns.
@@ -294,6 +319,9 @@ type Foe struct {
 	Boss  bool // the one boss of a boss composition
 	// Escort is true for a boss's escorts.
 	Escort bool
+	// HPPercent is the share of full HP the foe spawns with (Soften); zero
+	// means full.
+	HPPercent int
 }
 
 // Plan expands a composition into the foes to spawn and their levels from
@@ -319,6 +347,44 @@ func Plan(c Composition, band Band, rng Rand) []Foe {
 				f.Level = band.Low + rng(hi-band.Low+1)
 			}
 			foes = append(foes, f)
+		}
+	}
+	return foes
+}
+
+// HPPercent is the share of full HP an ordinary group's foe spawns with
+// against a company of the given level in the band: OrdinaryHPPercent at or
+// above the band's low end, rising evenly to full HP at UnderBandGap levels
+// under it. Difficulty comes only from a zone above the company's level
+// (owner, 2026-10-06), so the softness fades as the company falls short.
+func HPPercent(level int, b Band) int {
+	gap := b.Low - level
+	if gap <= 0 {
+		return OrdinaryHPPercent
+	}
+	return min(100, OrdinaryHPPercent+gap*(100-OrdinaryHPPercent)/UnderBandGap)
+}
+
+// Spread is the aim noise an ordinary foe with hpPercent of its HP gets:
+// the percent of its re-aims that take a random member it can reach instead
+// of its rule's pick. A fully softened foe (OrdinaryHPPercent) aims at random
+// every time, and the noise fades with the softness to none at full HP.
+// Without it every foe goes for the weakest member, so one member (the
+// leader, or a wizard left in the front row) takes nearly every blow and the
+// company rests after a handful of fights while the rest stand untouched.
+func Spread(hpPercent int) int {
+	if hpPercent <= 0 || hpPercent >= 100 {
+		return 0
+	}
+	return min(100, (100-hpPercent)*100/(100-OrdinaryHPPercent))
+}
+
+// Soften sets the HP share of an ordinary group's foes against a company
+// of the given level; a boss and its escorts keep full HP.
+func Soften(foes []Foe, level int, b Band) []Foe {
+	for i := range foes {
+		if !foes[i].Boss && !foes[i].Escort {
+			foes[i].HPPercent = HPPercent(level, b)
 		}
 	}
 	return foes

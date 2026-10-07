@@ -8,6 +8,7 @@ package modules
 import (
 	_ "github.com/GoMudEngine/GoMud/modules/archetype"
 	_ "github.com/GoMudEngine/GoMud/modules/blessings"
+	_ "github.com/GoMudEngine/GoMud/modules/bounties"
 	_ "github.com/GoMudEngine/GoMud/modules/camping"
 	_ "github.com/GoMudEngine/GoMud/modules/chronicle"
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"

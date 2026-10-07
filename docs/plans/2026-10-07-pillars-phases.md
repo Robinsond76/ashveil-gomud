@@ -386,6 +386,8 @@ the chronicle). Bounties refresh on a real-time rotation.
 **Accept.** Post, kill, claim through real commands; reward within band;
 `help bounties`.
 
+Built 2026-10-07: decisions in [phase 76](2026-10-07-phase-76-bounty-boards.md).
+
 ## 77 Hardcore and account blessings
 
 **Why.** Pillars' Trial of Iron is a badge players chase; Deadfire's

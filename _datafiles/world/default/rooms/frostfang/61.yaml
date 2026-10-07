@@ -10,11 +10,12 @@ description: The Frostfire Inn stands as a beacon of warmth and respite amidst F
   bread wafts from the kitchen, promising hearty meals to weary souls. Upstairs, cozy
   rooms with thick fur blankets await, offering solace from the chill. With its jovial
   atmosphere and the innkeeper's renowned hospitality, the Frostfire has become a
-  beloved haven for both locals and wanderers alike.
+  beloved haven for both locals and wanderers alike. A bounty board by the door lists marks wanted in the lands around (help bounties).
 mapsymbol: I
 maplegend: Inn
 tags:
 - inn
+- bounty-board
 - inn-private
 - inn-suite
 exits:
