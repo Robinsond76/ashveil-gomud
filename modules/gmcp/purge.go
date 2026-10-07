@@ -9,6 +9,14 @@ func init() {
 		if evt, ok := e.(events.UserPurged); ok {
 			companyFeeds.forget(evt.UserId)
 			tutorialFeeds.forget(evt.UserId)
+			bestiaryForget(evt.UserId)
+		}
+		return events.Continue
+	})
+	// Phase 66: a client that logged out no longer asks for the bestiary.
+	events.RegisterListener(events.PlayerDespawn{}, func(e events.Event) events.ListenerReturn {
+		if evt, ok := e.(events.PlayerDespawn); ok {
+			bestiaryForget(evt.UserId)
 		}
 		return events.Continue
 	})

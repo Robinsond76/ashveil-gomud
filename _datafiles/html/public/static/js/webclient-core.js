@@ -1422,6 +1422,7 @@ const WINDOW_DOCK_DEFAULTS = [
     { id: 'Company',        side: 'right', group: 'dock' },
     { id: 'Combat',         side: 'right', group: 'dock' },
     { id: 'Communications', side: 'right', group: 'dock' },
+    { id: 'Bestiary',       side: 'right', group: 'dock' },
     { id: 'Online',         side: 'right', group: 'dock' },
     { id: 'KillStats',      side: 'right', group: 'dock' },
 ];

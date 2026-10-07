@@ -429,6 +429,7 @@
                 u.side = 'enemy';
                 u.label = e.label || e.id;
                 u.sprite = e.sprite || 'unknown-humanoid';
+                u.known = Array.isArray(e.known) ? e.known.join(', ') : ''; // Phase 66: its bestiary habits
                 u.cell = cellOf(e.cell);
                 u.band = e.health || '';
                 u.frac = BANDS[e.health] !== undefined ? BANDS[e.health] : 1;
@@ -1012,6 +1013,7 @@
         if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
         if (isShrunk(u) && u.side === 'ally') { text += ' (tap to watch)'; }
         if (u.side !== 'company' && u.band) { text += ', ' + u.band; }
+        if (u.side === 'enemy' && u.known) { text += ' (known: ' + u.known + ')'; }
         if (u.side !== 'enemy' && u.fallen) { text += ', fallen'; }
         if (u.side === 'company' && !u.fallen && battle && battle.nerve === 'faltering') { text += ', shaken'; }
         if (u.yielded) { text += ', surrendered'; }

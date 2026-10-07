@@ -75,8 +75,9 @@ var (
 		`copyover`:    {Copyover, true, true}, // Admin only
 		`conditions`:  {Conditions, true, false},
 		`consider`:    {Consider, true, false},
-		`scout`:       {Scout, true, false}, // Ashveil Phase 32c
-		`why`:         {Why, true, false},   // Ashveil Phase 62
+		`scout`:       {Scout, true, false},    // Ashveil Phase 32c
+		`why`:         {Why, true, false},      // Ashveil Phase 62
+		`bestiary`:    {Bestiary, true, false}, // Ashveil Phase 66
 		`default`:     {Default, false, false},
 		`disarm`:      {Disarm, false, false},
 		`drop`:        {Drop, true, false},

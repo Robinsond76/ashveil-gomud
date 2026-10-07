@@ -153,6 +153,7 @@ damage and who never landed a blow. <ansi fg="command">why</ansi> explains any s
   <ansi fg="command">attack [group]</ansi>    start a fight with a group
   <ansi fg="command">scout [group]</ansi>     see how a group stands, and your chances
   <ansi fg="command">why</ansi>               explain how the latest blows landed or missed
+  <ansi fg="command">bestiary</ansi>          what you have learned of each kind of foe you have beaten
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">orders</ansi>            "when this, do that" rules for each member

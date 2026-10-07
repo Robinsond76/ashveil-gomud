@@ -2,6 +2,7 @@ package mobcommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -194,7 +195,12 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 		scripting.TryMobScriptEvent("onDie", mob.InstanceId, uid, "user", map[string]any{"attackerCount": len(contributors)})
 		if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
+			before := user.Character.KD.GetMobKills(int(mob.MobId))
 			user.Character.KD.AddMobKill(int(mob.MobId))
+			// Phase 66: a kind learned a tier further is said at once.
+			if tier := bestiary.TierFor(before+1, mob.Boss); tier > bestiary.TierFor(before, mob.Boss) {
+				user.SendText(bestiary.LearnedLine(mob.Character.Name, tier))
+			}
 			if mob.IsElite {
 				user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
 			}
