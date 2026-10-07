@@ -56,7 +56,7 @@ the owner signs off on the style anchors.
 |---|---|---|---|---|
 | **A0** | [A0-style-anchors.md](A0-style-anchors.md) | Style anchors: lineup, sample tile, sample icons, mock scenes | 8 | none |
 | **A1** | [A1-base-class-map-units.md](A1-base-class-map-units.md) | Map sprites for the 15 base figures (6 classic lineages, 8 neutral lineages, the fallback) | 15 | E1 |
-| **A2** | [A2-terrain-tiles.md](A2-terrain-tiles.md) | 19 biomes × 3 variants, 5 animated biomes, fog and unknown tiles | 79 | E2 |
+| **A2** | [A2-terrain-tiles.md](A2-terrain-tiles.md) | 18 biomes × 3 variants, 16 road pieces, 5 animated biomes, fog and unknown tiles | 92 | E2 |
 | **A3** | [A3-landmarks.md](A3-landmarks.md) | 27 landmark overlays | 27 | E2 |
 | **A4** | [A4-map-icons-markers-camp.md](A4-map-icons-markers-camp.md) | Resource icons, map markers, camp pieces, app icons | 30 | E2 |
 | **A5** | [A5-ui-icons.md](A5-ui-icons.md) | Status, role, morale and condition icons; battle markers | 52 | E2 |
@@ -80,7 +80,7 @@ folder until the matching step is merged.
 | Step | Work | Unblocks |
 |---|---|---|
 | **E1** | Land the spike as a phase. Density on map units, a high-DPI map canvas, `import_sheet.py` reading the A1 layout (2 idle and 6 walk columns per row). Make the tests' rules depend on density. Even out 1x pixel art on fractional pixel ratios. | A1, map half of A8–A10 |
-| **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. | A2–A5 |
+| **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. Road auto-tiling: the map picks `road-<sides>` from the neighbors that are road and joined by an exit. | A2–A5 |
 | **E3** | High-resolution battle screen. Today it draws a 320×180 canvas scaled by CSS. It must draw at device pixels, with density on units and backgrounds. | A6, A7, battle half of A8–A10 |
 | **E4** | Rewrite the sprite specification's craft and technical sections to point here. Contact sheets come from the imported art. | all, as phases land |
 

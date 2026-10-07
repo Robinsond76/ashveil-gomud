@@ -26,7 +26,7 @@ The game picks a variant per room, so any variant can touch any other.
 | `house` | Worn wooden floorboards with a rug corner or a dropped item. |
 | `land` | Open grassland with tufts, small pale flowers and a stone. |
 | `mountains` | A rocky slope of grey stone and scree with a snow highlight on the peaks. |
-| `road` | A dirt road with ruts down the middle and grass verges. The road runs through the tile so it continues into neighbors. |
+| `road` | **Not drawn as variants:** see "Road pieces" below. |
 | `shore` | Pale sand meeting shallow water along a diagonal, with a little foam. |
 | `slums` | A muddy alley with broken boards, puddles and refuse. |
 | `snow` | A snowfield with drifts and cool blue shadows. |
@@ -34,10 +34,40 @@ The game picks a variant per room, so any variant can touch any other.
 | `swamp` | Murky pools, reeds, lily pads and sodden earth. |
 | `water` | Deep water, darker blue, with a few soft wave crests. |
 
-**The road needs extra care:** a road tile may touch a road above, below,
-left or right. Run it across the middle in **both directions**, so it
-reads as a crossroads, or keep the road texture edge to edge so it joins
-from any side. Note which you chose in `_notes.md`.
+## Road pieces: 16 tiles (`art/source/A2/map/terrain/road-<sides>.png`)
+
+The game picks a road tile by which neighbors it connects to: a neighbor
+that's also road, with an exit between the two rooms. So the road is drawn
+as **pieces**, not variants (owner decision, 2026-10-07). Each piece is a
+full, opaque **512×512** tile:
+
+- grass verges, as on the approved A0 `land` tile, everywhere the road
+  isn't;
+- a rutted dirt road, as on the approved A0 road sample, running from
+  the center to the **middle of each named edge**;
+- the road the **same width** (about 30% of the tile) and in the same
+  position on every edge, so any two pieces line up;
+- no road touching an edge the piece doesn't name.
+
+`<sides>` lists the connected edges in the order **n, e, s, w** (north is
+the top edge):
+
+| File | Shape |
+|---|---|
+| `road-none.png` | No connections: a small worn dirt patch or a milestone in grass |
+| `road-n.png`, `road-e.png`, `road-s.png`, `road-w.png` | Dead end: the road comes in from that edge and fades out at the center |
+| `road-ns.png`, `road-ew.png` | Straight |
+| `road-ne.png`, `road-es.png`, `road-sw.png`, `road-nw.png` | Corner: a smooth curve between the two edges |
+| `road-nes.png`, `road-esw.png`, `road-nsw.png`, `road-new.png` | T-junction: three edges, the fourth side grass |
+| `road-nesw.png` | Crossroads |
+
+Light comes from the top-left on every piece. Draw each piece in its own
+orientation; don't rotate one image, which would turn the light.
+
+**Check before delivering:** lay the pieces out as a small road network
+(a loop with a T-junction, a crossroads and a dead end) on `land` tiles.
+Put it in the review sheet. The road must run continuously with no steps
+or width changes.
 
 ## Animated tiles: 4 frames (`art/source/A2/map/terrain/<biome>-anim-<1..4>.png`)
 
