@@ -212,6 +212,10 @@ func (m *Module) evaluate(userID int) {
 	}
 }
 
+// Given implements blessings.Watcher: a new character was given the
+// account's blessings, so the panel moves them from waiting to carried.
+func (m *Module) Given(userID int) { m.push(userID) }
+
 func (m *Module) onDeed(leaderUserID int, _ chronicle.Entry) { m.evaluate(leaderUserID) }
 
 func (m *Module) onPlayerSpawn(e events.Event) events.ListenerReturn {

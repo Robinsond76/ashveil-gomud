@@ -42,6 +42,18 @@ Spec: [Pillars phases](2026-10-07-pillars-phases.md) §77. Built under the owner
 - `internal/blessings`: file validation (bad ids, unknown deeds, over-cap discounts, too many items), the shipped file and its items, the cap, rounding.
 - `status` Mode row, `online` badge, `Char.Info` flag. Existing creation tests answer the new question (`creationUser.standard`, or `Character.MarkIronOffered` where the test is about something else).
 
+## Review (2026-10-07)
+
+Checked against the owner's rules; each finding verified.
+
+- **No permanent death** (accepted as built): Iron touches only `ClaimDefeat` and the levels `Respawn` takes; `ExtraLives` and the delete path are unchanged.
+- **Foes never stronger** (accepted): nothing in combat, spawning or zone rating reads `IsIron`.
+- **Counts can't be faked or carried over** (accepted): the chronicle drops a user's log on every `UserPurged`, including a deleted character's, so a new character starts at zero; a blessing is earned once per account, so repeating a deed gains nothing. Cheap-looking routes (recruit and dismiss for `joined`) cost real gold and only ever earn the 5% discount once.
+- **Delete-and-recreate farming** (rejected as not worth code): each new character gets the starting items again, and a player could drop them before deleting. That is at most 10-13 camp supplies (value 6-12 gold each, never bought back) per full re-creation and tutorial, well inside the one-level cap. Binding the items would add a new item flag for no real gain.
+- **Recruit discount** (accepted): applied at every shown and charged price, capped at 10%, nothing refunds a recruit, so no profit path.
+- **UI fix:** the Blessings section sat between the stats and Experience/Gold, pushing gold out of view on a phone once several blessings are listed. It now sits last on the Overview (`order: 1`). Browser check added to `scripts/browser/dock-windows-check.mjs` (badge, sections, HTML escaping, survives a full `Char` snapshot, fits 360px).
+- **UI fix:** the panel is pushed at spawn, before `start` gives the blessings, so a new character's window still listed them as waiting. `blessings.NotifyGiven` now refreshes it (`TestGivingBlessingsRefreshesThePanel`).
+
 ## Follow-ups
 
 - **Permanent death** (owner removed it for now): a character-ending route would call the same `delete character` hand-off from `Suicide` for an Iron character, after recording a Hall of the Fallen entry on the account. The Iron option and badge already exist; only the route and a confirmation at creation would change.

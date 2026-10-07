@@ -272,6 +272,23 @@ func EarnedFor(userID int) []string {
 	return p.Earned(userID)
 }
 
+// Watcher is a provider that wants to hear when a character is given its
+// blessings (the module refreshes the web client's panel).
+type Watcher interface {
+	Given(userID int)
+}
+
+// NotifyGiven tells the provider, when it watches, that the user's new
+// character was given blessings.
+func NotifyGiven(userID int) {
+	provMu.RLock()
+	p := provider
+	provMu.RUnlock()
+	if w, ok := p.(Watcher); ok {
+		w.Given(userID)
+	}
+}
+
 // Given is what Apply did.
 type Given struct {
 	Blessing Blessing

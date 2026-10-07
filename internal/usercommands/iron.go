@@ -88,4 +88,7 @@ func giveBlessings(user *users.UserRecord) {
 		lines = append(lines, fmt.Sprintf(`<ansi fg="itemname">%s</ansi>: %s`, g.Blessing.Name, g.Blessing.PerkText()))
 	}
 	user.SendText(`<ansi fg="yellow-bold">Your earlier road follows you:</ansi> ` + strings.Join(lines, `; `) + `. <ansi fg="black-bold">(blessings)</ansi>`)
+	// The web panel last showed these as waiting (pushed at spawn, before
+	// creation ended); refresh it so they show as carried.
+	blessings.NotifyGiven(user.UserId)
 }

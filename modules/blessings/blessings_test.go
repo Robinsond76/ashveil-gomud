@@ -259,3 +259,20 @@ func TestTheModuleIsTheProviderTheCreationStepReads(t *testing.T) {
 	assert.Equal(t, m.Earned(20), blessings.EarnedFor(20))
 	assert.Empty(t, blessings.EarnedFor(99))
 }
+
+// Review fix: the panel is pushed at spawn (blessings waiting), before
+// `start` gives them; giving them refreshes it so they show as carried.
+func TestGivingBlessingsRefreshesThePanel(t *testing.T) {
+	_, w, _ := env(t)
+	u := signIn(w, 21, "Mara", false)
+	deed(21, chronicle.Boss, 1)
+	u.Character = &characters.Character{Name: "Tamsin"}
+	blessings.Apply(u.Character, blessings.EarnedFor(21))
+	before := len(w.pushes)
+	blessings.NotifyGiven(21)
+	require.Len(t, w.pushes, before+1)
+	p := w.pushes[before].payload.(panel)
+	require.Len(t, p.Carried, 1)
+	assert.Equal(t, "road-tested", p.Carried[0].ID)
+	assert.Empty(t, p.Waiting)
+}

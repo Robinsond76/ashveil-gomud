@@ -113,6 +113,31 @@ await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'range
 check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Marksman (elite), rank 50'), 'the character window shows the class, tier and rank');
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 30, route: 'Warden', tier: 'advanced', rank: 25, promotion: 'waiting-gate' }));
 check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Promotion waits on alignment'), 'and a promotion waiting on alignment');
+// Phase 77: the Iron badge and the Blessings section on the Overview.
+{
+  await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 5, hardcore: true }));
+  check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Iron character'), 'an Iron character shows the badge (77)');
+  await page.evaluate(x => window.gmcp('Char.Blessings', {
+    iron: true, discount: 5,
+    carried: [{ id: 'company-keeper', name: 'Company keeper', perk: 'recruits cost 5% less' }],
+    waiting: [{ id: 'road-tested', name: x, perk: 'start with 2 x fortifying broth' }],
+    next: [
+      { id: 'old-hand', name: 'Old hand', condition: 'slay 5 bosses', perk: 'start with 2 x warming draught', need: 5, have: 2 },
+      { id: 'iron-oath', name: 'Iron oath', condition: 'take a class promotion as an Iron character', perk: 'recruits cost 5% less', iron: true, need: 1 },
+    ],
+  }), xss);
+  const bl = () => page.evaluate(() => document.getElementById('cw-blessings').textContent);
+  let text = await bl();
+  check(text.includes('Blessings carried') && text.includes('Company keeper: recruits cost 5% less') && text.includes('waiting for your next character') && text.includes('slay 5 bosses (2 of 5)') && text.includes('5% off every recruit'), 'the Overview lists carried, waiting and still-to-earn blessings (77)');
+  check(await page.evaluate(() => !window.__xss && !document.querySelector('#cw-blessings img')), 'blessing text is never read as HTML (77)');
+  await page.evaluate(() => window.gmcp('Char', { Info: { name: 'Wren', class: 'ranger', race: 'Human', level: 5, hardcore: true } }));
+  check((await bl()).includes('Company keeper'), 'a full Char snapshot keeps the blessings (77)');
+  if (outdir) { await page.locator('#cw-overview').screenshot({ path: path.join(outdir, '77-blessings-desk.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('cw-blessings'); return p.scrollWidth <= p.clientWidth + 1 && p.getBoundingClientRect().right <= window.innerWidth + 1; }), 'the blessings fit a phone (77)');
+  if (outdir) { await page.locator('#cw-overview').screenshot({ path: path.join(outdir, '77-blessings-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+}
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 5 }));
 await page.getByRole('tab', { name: 'Gear' }).click();
 check(await page.evaluate(() => document.getElementById('gw-bp-count').textContent) === 'You 2.5 kg \u00b7 company 46.0 / 50.0 kg', 'Gear header: your weight and the company\'s load against capacity');

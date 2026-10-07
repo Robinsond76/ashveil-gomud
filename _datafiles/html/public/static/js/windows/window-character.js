@@ -139,8 +139,9 @@
             cursor: help;
         }
 
-        /* Phase 77: blessings (small perks for later characters) */
-        #cw-blessings { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; min-width: 0; }
+        /* Phase 77: blessings (small perks for later characters), last on
+           the Overview so experience and gold stay near the top */
+        #cw-blessings { order: 1; display: flex; flex-direction: column; gap: 3px; margin-top: 6px; min-width: 0; }
         #cw-blessings:empty { display: none; }
         #cw-blessings .cw-bl-head { color: var(--t-text-secondary); font-weight: bold; margin-top: 4px; }
         #cw-blessings .cw-bl-row { color: var(--t-text); overflow-wrap: anywhere; }
