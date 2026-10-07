@@ -91,3 +91,5 @@
   both; it no longer renders `Char.Jobs`, which stays for other clients.
 
 - Phase 62: `Company.Battle.Event` attacks carry `explain` (plain lines from `combatstream.Breakdown`: what the hit rolled against, the defence met, armor, named modifiers) for the leader's own company's rounds, in either direction, against a foe they can make out; never for an allied watcher's view (`scrubAlly` drops it) or a masked ("?") foe. Enemy health stays out; enemy armor and the chances in the player's own rolls are shown.
+
+- Phase 66: `Char.Bestiary` (`bestiaryPayload`) is sent only when a client asks (`!!GMCP(Char.Bestiary)`), never in the full `Char` payload, and refreshed on `BattleEnded` only for users who have asked (`bestiaryWatchers`, dropped at despawn and purge). Each `Company.Battle` enemy carries `known`: the habits the leader's bestiary holds of its kind, from the habits tier only.

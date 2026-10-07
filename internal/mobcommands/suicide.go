@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/beasts"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -201,7 +202,14 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Boss, Subject: mob.Character.Name, Ref: fmt.Sprintf("mob:%d", mob.MobId), Place: room.Title})
 		}
 		if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
+			before := user.Character.KD.GetMobKills(int(mob.MobId))
 			user.Character.KD.AddMobKill(int(mob.MobId))
+			// Phase 66: a kind learned a tier further is said at once.
+			// By the template's boss flag, as the entry is built: an
+			// encounter's boss shares its template's thresholds.
+			if tier := bestiary.TierOf(int(mob.MobId), before+1); tier > bestiary.TierOf(int(mob.MobId), before) {
+				user.SendText(bestiary.LearnedLine(mob.Character.Name, tier))
+			}
 			if mob.IsElite {
 				user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
 			}

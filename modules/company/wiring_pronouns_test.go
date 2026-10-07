@@ -392,7 +392,15 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 		events.ProcessEvents()
 		fallback := companyTagPattern.ReplaceAllString(strings.Join(*b.messages, "\n"), "")
 		assert.Contains(t, fallback, "second cutthroat")
-		assert.NotContains(t, fallback, "bandit cutthroat")
+		// Phase 66's bestiary line names the kind on purpose; the death
+		// narration itself must still use the battle label.
+		var narration []string
+		for _, line := range strings.Split(fallback, "\n") {
+			if !strings.HasPrefix(line, "Bestiary:") {
+				narration = append(narration, line)
+			}
+		}
+		assert.NotContains(t, strings.Join(narration, "\n"), "bandit cutthroat")
 	})
 }
 

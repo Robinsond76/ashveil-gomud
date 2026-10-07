@@ -1,0 +1,57 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">bestiary</ansi>
+
+Your bestiary is what you have learned of each kind of creature by beating it.
+It starts empty. Every kind you defeat is entered, and the more you beat of
+a kind, the more you know of it. Nothing is ever entered for a creature you
+have not beaten, and what you know comes with you after a restart.
+
+<ansi fg="yellow-bold">What you learn, and when</ansi>
+
+  <ansi fg="yellow">Lore</ansi>       from the <ansi fg="yellow">1st</ansi> kill: what it is, where it lives, how it moves
+              (alone, or in a pack), and whether it attacks on sight.
+              (Its level varies with where you meet it: <ansi fg="command">consider</ansi> says.)
+  <ansi fg="yellow">Defences</ansi>   from the <ansi fg="yellow">3rd</ansi> kill: how much of a blow its armor can turn aside,
+              whether it dodges well or poorly, how poison and wounds take
+              on it, and whether its reach or sweep hits more than one of you.
+  <ansi fg="yellow">Habits</ansi>     from the <ansi fg="yellow">6th</ansi> kill: how it fights and where it is weak: whether it
+              heals, casts or guards, the spells it knows, a wind-up it begins
+              (and what breaks it), whom it goes for, how well it is trained,
+              and the gear it carries.
+
+A boss is met rarely, so it teaches faster: its tiers come at the <ansi fg="yellow">1st</ansi>, <ansi fg="yellow">2nd</ansi>
+and <ansi fg="yellow">3rd</ansi> kills. A kill counts for you when you or your
+companions hurt the foe and you are still standing, in the room, when it
+falls; whoever lands the last blow. Practice foes teach nothing, and
+neither does the Training zone.
+
+When a kill takes a kind to a new tier, the game says so:
+
+  <ansi fg="command">Bestiary: forest ogre, you now know its habits and weaknesses (bestiary forest ogre).</ansi>
+
+<ansi fg="yellow-bold">Where you see it</ansi>
+
+  <ansi fg="command">bestiary</ansi>          every kind you have beaten, by zone, with its tier
+  <ansi fg="command">bestiary [name]</ansi>    one entry: what you know, and how many kills the next
+                     tier takes (kinds of the same name from different zones
+                     are all shown; a name that is not in your bestiary is
+                     not answered)
+  <ansi fg="command">bestiary [zone]</ansi>    only the kinds from that zone (a zone named in full wins;
+                     otherwise a creature's name wins over a zone's)
+
+  <ansi fg="command">consider [enemy]</ansi>  adds a Bestiary line for the foes you can see: what you know of
+                     their habits, and which kinds are new to you (<ansi fg="command">help consider</ansi>)
+
+In the web client, the <ansi fg="yellow">Bestiary</ansi> tab of the right-hand dock lists the same
+entries; tap one to open it. In a battle, the Battle view, the battle screen
+caption and the Combat tab name the habits you know of the foes you face, such as
+"heals its allies" or "winds up crushing blow".
+
+<ansi fg="yellow-bold">Putting it to use</ansi>
+
+A habit you have learned is a rule you can set before the fight. A foe that
+heals: <ansi fg="command">orders [who] add foe healer then break</ansi>. A foe that chants spells:
+<ansi fg="command">orders [who] add chanting then break</ansi>. A boss: <ansi fg="command">orders [who] add boss then strongest</ansi>
+(<ansi fg="command">help orders</ansi>). A wind-up is broken by a landed critical hit, a stagger, a
+knockdown or a stun (<ansi fg="command">help interrupts</ansi>).
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help consider</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help orders</ansi>, <ansi fg="command">help combat</ansi>

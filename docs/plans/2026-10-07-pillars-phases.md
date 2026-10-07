@@ -200,6 +200,8 @@ learn a foe chants, you set a rule).
 **Accept.** Knowledge tiers unlock through real battles; survives restart;
 `help bestiary`.
 
+Built: [phase 66 plan and decisions](2026-10-07-phase-66-bestiary.md).
+
 ## 67 Relics that awaken
 
 **Why.** Pillars' soulbound weapons unlock powers as their bearer meets

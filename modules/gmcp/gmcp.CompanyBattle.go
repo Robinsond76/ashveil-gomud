@@ -16,6 +16,7 @@ package gmcp
 
 import (
 	"encoding/json"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/stormcraft"
@@ -171,6 +172,7 @@ type enemyFact struct {
 	Reach             bool   // the player can strike it from their cell
 	Sprite            string // Phase 40f: its battle-screen sprite key
 	Target            targetFact
+	Known             []string // Phase 66: its habits, as the leader's bestiary knows them
 }
 
 // targetFact is whom an enemy strikes: a company member (Key) or someone
@@ -203,6 +205,9 @@ type battleEnemy struct {
 	// Phase 40f: the battle screen's sprite key (the mob's own, else its
 	// race's unknown-* silhouette).
 	Sprite string `json:"sprite,omitempty"`
+	// Phase 66: what the leader's bestiary knows of its habits ("heals its
+	// allies"); nothing for a kind not yet learned that far.
+	Known []string `json:"known,omitempty"`
 }
 
 type battleFallen struct {
@@ -343,7 +348,7 @@ func buildBattle(f battleFacts) any {
 		}
 		listed[e.Id] = true
 		be := battleEnemy{ID: mobID(e.Id), Label: e.Label, Cell: battleCell{Row: e.Row, Col: e.Col},
-			Health: enemyparty.HealthWord(e.Health, e.HealthMax), Sprite: e.Sprite}
+			Health: enemyparty.HealthWord(e.Health, e.HealthMax), Sprite: e.Sprite, Known: e.Known}
 		if f.Placed {
 			reach := e.Reach
 			be.Reach = &reach
@@ -497,6 +502,9 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
 			e.Reach = f.Placed && enemyparty.Legal(room, user.UserId, col, group.Party.Formation, key, alive, reach)
 			e.Target = targetOf(user.UserId, room.RoomId, m)
+			if !e.Hidden {
+				e.Known = bestiary.NotesFor(bestiary.KillsOf(user.Character), int(m.MobId))
+			}
 			battleSeen.note(user.UserId, fight, id, e.Hidden)
 		} else if m != nil {
 			// A body not yet taken away, or one that walked off.

@@ -765,6 +765,15 @@
             }
         }
 
+        // Phase 66: what the bestiary knows of the foes' habits (help bestiary).
+        const knownFoes = battle.dark ? [] : battle.enemies.filter(e => Array.isArray(e.known) && e.known.length);
+        if (knownFoes.length) {
+            const note = el('div', 'cbt-note cbt-bestiary',
+                'Bestiary: ' + knownFoes.map(e => e.label + ' ' + e.known.join(', ')).join('; '));
+            note.title = 'Habits you have learned by beating this kind (help bestiary)';
+            root.appendChild(note);
+        }
+
         lines = [];
         if (battle.dark) {
             // As scout: in the dark, nothing to see (32g2 review finding 3).
@@ -784,7 +793,8 @@
             sub.appendChild(el('span', 'cbt-h-' + String(e.health).replace(/ /g, '-'), e.health));
             if (e.reach) { sub.appendChild(el('span', 'cbt-reach', ' •')); }
             const spoken = e.label + ', ' + e.health + (e.reach ? ', within your reach' : '') +
-                (e.target ? ', striking ' + (e.target === 'leader' ? 'you' : nameOf(e.target, battle, data)) : '');
+                (e.target ? ', striking ' + (e.target === 'leader' ? 'you' : nameOf(e.target, battle, data)) : '') +
+                (e.known && e.known.length ? ', known: ' + e.known.join(', ') : '');
             if (e.target) { lines.push({ from: e.id, to: e.target, us: false }); }
             return { cell: e.cell, node: fighterButton(e.id, 'is-enemy', e.label, sub, spoken) };
         });

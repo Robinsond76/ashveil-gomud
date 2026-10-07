@@ -1,9 +1,11 @@
 package gmcp
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -65,6 +67,7 @@ func init() {
 	events.RegisterListener(events.PetItemChange{}, g.petItemChangeHandler)
 
 	events.RegisterListener(events.MobDeath{}, g.killsChangedHandler)
+	events.RegisterListener(events.BattleEnded{}, g.bestiaryChangedHandler) // Phase 66
 	events.RegisterListener(events.PlayerDeath{}, g.killsChangedHandler)
 
 }
@@ -124,6 +127,15 @@ func (g *GMCPCharModule) killsChangedHandler(e events.Event) events.ListenerRetu
 		})
 	}
 
+	return events.Continue
+}
+
+// bestiaryChangedHandler refreshes the bestiary when a battle ends: the
+// company's kills (a companion's included) are all counted by then.
+func (g *GMCPCharModule) bestiaryChangedHandler(e events.Event) events.ListenerReturn {
+	if evt, ok := e.(events.BattleEnded); ok && evt.UserId > 0 && bestiaryAsked(evt.UserId) {
+		events.AddToQueue(GMCPCharUpdate{UserId: evt.UserId, Identifier: `Char.Bestiary`})
+	}
 	return events.Continue
 }
 
@@ -936,6 +948,14 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		}
 	}
 
+	// Phase 66: the bestiary is sent only when asked for or refreshed, never
+	// in the full Char payload.
+	if gmcpModule == `Char.Bestiary` {
+		bestiaryMark(user.UserId)
+		payload.Bestiary = bestiaryPayload(user)
+		return payload.Bestiary, `Char.Bestiary`
+	}
+
 	// If we reached this point and Char wasn't requested, we have a problem.
 	if !all {
 		mudlog.Error(`gmcp.Char`, `error`, `Bad module requested`, `module`, gmcpModule)
@@ -976,6 +996,7 @@ type GMCPCharModule_Payload struct {
 	Skills       []GMCPCharModule_Payload_Skill           `json:"Skills,omitempty"`
 	Jobs         []GMCPCharModule_Payload_Job             `json:"Jobs,omitempty"`
 	Kills        *GMCPCharModule_Payload_Kills            `json:"Kills,omitempty"`
+	Bestiary     *GMCPCharModule_Payload_Bestiary         `json:"Bestiary,omitempty"`
 }
 
 // /////////////////
@@ -1292,4 +1313,66 @@ func classKeys(userID int) (lineage, classID string) {
 		classID = c
 	}
 	return lineage, classID
+}
+
+// /////////////////
+// Char.Bestiary (Phase 66)
+// /////////////////
+type GMCPCharModule_Payload_Bestiary struct {
+	Entries []GMCPCharModule_Payload_BestiaryEntry `json:"entries"`
+}
+
+type GMCPCharModule_Payload_BestiaryEntry struct {
+	ID       int      `json:"id"`
+	Name     string   `json:"name"`
+	Zone     string   `json:"zone,omitempty"`
+	Level    int      `json:"level"`
+	Boss     bool     `json:"boss,omitempty"`
+	Kills    int      `json:"kills"`
+	Tier     int      `json:"tier"`
+	TierName string   `json:"tier_name"`
+	Progress string   `json:"progress"`
+	Lore     []string `json:"lore"`
+	Defences []string `json:"defences,omitempty"`
+	Habits   []string `json:"habits,omitempty"`
+}
+
+// bestiaryWatchers are the players whose client has asked for the
+// bestiary; only they are sent a refresh (its entries are the bulkiest
+// payload, and most clients never open the page).
+var (
+	bestiaryMu       sync.Mutex
+	bestiaryWatchers = map[int]bool{}
+)
+
+func bestiaryMark(userID int) {
+	bestiaryMu.Lock()
+	bestiaryWatchers[userID] = true
+	bestiaryMu.Unlock()
+}
+
+func bestiaryForget(userID int) {
+	bestiaryMu.Lock()
+	delete(bestiaryWatchers, userID)
+	bestiaryMu.Unlock()
+}
+
+func bestiaryAsked(userID int) bool {
+	bestiaryMu.Lock()
+	defer bestiaryMu.Unlock()
+	return bestiaryWatchers[userID]
+}
+
+// bestiaryPayload is every kind the leader has beaten, with the lines its
+// tier has earned (internal/bestiary): nothing of a kind never fought.
+func bestiaryPayload(user *users.UserRecord) *GMCPCharModule_Payload_Bestiary {
+	out := &GMCPCharModule_Payload_Bestiary{Entries: []GMCPCharModule_Payload_BestiaryEntry{}}
+	for _, e := range bestiary.Known(bestiary.KillsOf(user.Character)) {
+		out.Entries = append(out.Entries, GMCPCharModule_Payload_BestiaryEntry{
+			ID: e.MobID, Name: e.Name, Zone: e.Zone, Level: e.Level, Boss: e.Boss, Kills: e.Kills,
+			Tier: int(e.Tier), TierName: e.Tier.Name(), Progress: e.Progress(),
+			Lore: e.Lore, Defences: e.Defences, Habits: e.Habits,
+		})
+	}
+	return out
 }
