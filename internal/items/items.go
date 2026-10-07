@@ -65,7 +65,10 @@ type Item struct {
 	Loot Rolled `yaml:"loot,omitempty"`
 	// Phase 36c: the player marked this item as junk for `sell junk`. A
 	// plain value, so it follows the item wherever it goes.
-	Junk          bool           `yaml:"junk,omitempty"`
+	Junk bool `yaml:"junk,omitempty"`
+	// Phase 67: a relic's awakening progress, one count per awakening in
+	// its spec. Replaced whole on each change, never edited in place.
+	Awaken        []int          `yaml:"awaken,omitempty"`
 	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
 }
 

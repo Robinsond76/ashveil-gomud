@@ -15,4 +15,16 @@ relic:
   ilvl: 40
   mob: 34
   chance: 5
+  awakenings:
+    - name: "Bark Remembers"
+      kind: lair
+      mob: 34
+      target: "the ent"
+      effects: {armor: 3}
+    - name: "Oakwarden's Rite"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 20
+      target: "woodland horrors"
+      effects: {healthpct: 3}
   lore: 'The wardens of the old wood wore what the wood gave them.'

@@ -15,4 +15,16 @@ relic:
   ilvl: 40
   mob: 34
   chance: 5
+  awakenings:
+    - name: "Greenwarden's Vow"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 20
+      target: "woodland horrors"
+      effects: {armor: 2}
+    - name: "Elder Heard"
+      kind: lair
+      mob: 34
+      target: "the ent"
+      effects: {healthpct: 3}
   lore: 'The wardens of the old wood wore what the wood gave them.'

@@ -151,6 +151,16 @@ func relicLines(c *characters.Character) string {
 			lines = append(lines, ` `+rest)
 		}
 	}
+	// Phase 67: each worn relic's awakenings, with the next one's count.
+	for _, slot := range characters.AllSlots() {
+		itm := c.Equipment.Get(slot)
+		if itm.IsDisabled() || itm.ItemId < 1 {
+			continue
+		}
+		if status := itm.AwakeningStatus(); status != "" {
+			lines = append(lines, fmt.Sprintf(` <ansi fg="yellow">%s</ansi>: %s`, itm.Name(), status))
+		}
+	}
 	if len(lines) == 0 {
 		return ""
 	}

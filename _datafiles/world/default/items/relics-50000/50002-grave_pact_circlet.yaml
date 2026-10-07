@@ -16,4 +16,16 @@ relic:
   ilvl: 35
   mob: 14
   chance: 4
+  awakenings:
+    - name: "Mourner's Vigil"
+      kind: slay
+      races: ["undead"]
+      count: 20
+      target: "undead"
+      effects: {healpct: 6}
+    - name: "Pact Sealed"
+      kind: lair
+      mob: 14
+      target: "the lich"
+      effects: {armor: 3}
   lore: 'Whoever wears it has struck a bargain with something that does not like to lose.'

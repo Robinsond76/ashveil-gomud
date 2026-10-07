@@ -109,3 +109,36 @@ func TestGMCPItemListsCarryRelicText(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(data), "relic")
 }
+
+// Phase 67: a relic's awakenings and their progress ride the same relic
+// lines, in the gear tooltip and the Company window's rows, so the web
+// client shows them at any width the tooltip does.
+func TestGMCPRelicLinesCarryAwakeningProgress(t *testing.T) {
+	testItemSpecs(t,
+		items.ItemSpec{ItemId: 989411, Name: "Test Waker", NameSimple: "waker", Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Tier: 6,
+			Damage: items.Damage{Attacks: 1, DiceCount: 1, SideCount: 6}, Value: 100, Weight: 1000,
+			Relic: &items.RelicSpec{Signature: "Waking", Effects: map[string]int{classes.Wounded: 10}, ILvl: 30, Mob: 1, Chance: 5,
+				Awakenings: []items.AwakeningSpec{
+					{Name: "First Rite", Kind: items.AwakenSlay, Races: []string{"ogre"}, Count: 4, Target: "ogres", Effects: map[string]int{classes.Damage: 1}},
+					{Name: "Last Rite", Kind: items.AwakenLair, Mob: 1, Target: "the warden", Effects: map[string]int{classes.Armor: 3}},
+				}}},
+	)
+	itm := items.New(989411)
+	itm.AdvanceAwakening(0, 3)
+	got := newInventory_Item(itm).Relic
+	require.Len(t, got, 3)
+	assert.Contains(t, got[1], "Sleeping, First Rite (3 of 4): slay 4 ogres while it is worn")
+	assert.Contains(t, got[2], "Sleeping, Last Rite (0 of 1): defeat the warden while it is worn")
+
+	itm.AdvanceAwakening(0, 1)
+	got = newInventory_Item(itm).Relic
+	assert.Equal(t, "Awakened, First Rite: +1 damage on every landed blow.", got[1])
+
+	var eq characters.Worn
+	eq.Weapon = itm
+	member := company.InventoryMemberOf("ysolde", "Ysolde", company.MemberState{Equipment: eq})
+	worn := inventoryMemberOf(member).Worn
+	require.NotEmpty(t, worn)
+	assert.Equal(t, got, worn[0].Relic, "a companion's relic shows its own progress")
+	assert.Len(t, cargoItem(encumbrance.CargoStack{ItemId: 989411, Count: 1}).Relic, 3, "a stack in cargo shows what it wakes")
+}

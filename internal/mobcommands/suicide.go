@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/GoMudEngine/GoMud/internal/awakening"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/beasts"
 	"github.com/GoMudEngine/GoMud/internal/bestiary"
@@ -202,6 +203,8 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Boss, Subject: mob.Character.Name, Ref: fmt.Sprintf("mob:%d", mob.MobId), Place: room.Title})
 		}
 		if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
+			// Phase 67: a slain foe's race advances the relics the company wears.
+			awakening.Slain(uid, mob.Character.Race())
 			before := user.Character.KD.GetMobKills(int(mob.MobId))
 			user.Character.KD.AddMobKill(int(mob.MobId))
 			// Phase 66: a kind learned a tier further is said at once.

@@ -17,4 +17,21 @@ relic:
   ilvl: 50
   mob: 25
   chance: 6
+  awakenings:
+    - name: "Gaze Unbroken"
+      kind: slay
+      races: ["eldritch horror"]
+      count: 20
+      target: "eldritch horrors"
+      effects: {auraresolv: 4}
+    - name: "Bulwark Tested"
+      kind: lair
+      mob: 25
+      target: "the abyssal creeper"
+      effects: {block: 3}
+    - name: "Mirror Walker"
+      kind: place
+      zone: "Glassvault Depths"
+      target: "Glassvault Depths"
+      effects: {healthpct: 3}
   lore: 'It was dragged up from the deep caves with the creeper that guarded it, and it has not yet been breached.'

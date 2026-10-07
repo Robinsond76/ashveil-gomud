@@ -161,3 +161,25 @@ func TestFilterByMemberKey(t *testing.T) {
 	c.Entries[2].Keys[0] = "changed"
 	assert.Equal(t, "companion:4", l.Entries[2].Keys[0], "a clone shares no keys")
 }
+
+// Phase 67: a relic's awakening is a deed, with a sentence and filter words,
+// and OnRecord observers see every deed a caller records.
+func TestAwakenedDeedHasProseWordsAndObservers(t *testing.T) {
+	e := Entry{Kind: Awakened, Members: []string{"Mara"}, Subject: "Ogrebane", Detail: "Giant-Slayer", Place: "Hollowweb Deep"}
+	assert.Equal(t, "Mara's Ogrebane awoke to Giant-Slayer at Hollowweb Deep.", Prose(e))
+	assert.Equal(t, "The company's relic awoke.", Prose(Entry{Kind: Awakened}))
+	for _, w := range []string{"awakened", "awakenings", "awakening"} {
+		k, ok := KindByWord(w)
+		assert.True(t, ok, w)
+		assert.Equal(t, Awakened, k)
+	}
+
+	var seen []Entry
+	OnRecord(func(_ int, got Entry) { seen = append(seen, got) })
+	Record(7, Entry{Kind: Boss, Ref: "mob:3"}) // no provider installed: still observed
+	require.Len(t, seen, 1)
+	assert.Equal(t, "mob:3", seen[0].Ref)
+	Record(0, Entry{Kind: Boss})
+	Record(7, Entry{Kind: "nonsense"})
+	assert.Len(t, seen, 1, "an invalid deed is not observed")
+}

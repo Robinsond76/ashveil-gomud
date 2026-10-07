@@ -35,6 +35,7 @@ const (
 	Executed  Kind = "executed"  // a yielded foe was put to death
 	Promoted  Kind = "promoted"  // a member took an advanced or elite class
 	Story     Kind = "story"     // a story event ended on a choice
+	Awakened  Kind = "awakened"  // a relic woke a new power (Phase 67)
 )
 
 // KindInfo is a kind's player-facing name and filter words.
@@ -59,6 +60,7 @@ var Kinds = []KindInfo{
 	{Executed, "Executions", []string{"executed", "executions", "execution"}},
 	{Promoted, "Promotions", []string{"promoted", "promotions", "promotion"}},
 	{Story, "Stories", []string{"story", "stories", "events"}},
+	{Awakened, "Awakenings", []string{"awakened", "awakenings", "awakening"}},
 }
 
 // KindByWord resolves what a player typed to a kind.
@@ -199,6 +201,12 @@ func Prose(e Entry) string {
 			return fmt.Sprintf("At %s, %s chose: %s.", title, whoMid(e.Members), strings.TrimRight(sentence(e.Detail), ".!?"))
 		}
 		return fmt.Sprintf("The company met with %s%s.", title, e.at())
+	case Awakened:
+		relic := orThing(e.Subject, "relic")
+		if e.Detail != "" {
+			return fmt.Sprintf("%s's %s awoke to %s%s.", who, relic, strings.TrimRight(e.Detail, ".!?"), e.at())
+		}
+		return fmt.Sprintf("%s's %s awoke%s.", who, relic, e.at())
 	}
 	return who + " did something worth remembering."
 }
@@ -391,6 +399,18 @@ func current() Provider {
 	return provider
 }
 
+var observers []func(leaderUserID int, e Entry)
+
+// OnRecord calls fn for every deed a caller records, after it is kept (or
+// when no module is installed). Phase 67's relic awakenings watch the deeds
+// this way, so a lair's master slain advances a relic from the same record
+// the chronicle keeps. fn must not block and may record deeds of its own.
+func OnRecord(fn func(leaderUserID int, e Entry)) {
+	mu.Lock()
+	defer mu.Unlock()
+	observers = append(observers, fn)
+}
+
 // Record notes a deed. It does nothing while no module is installed, so a
 // caller never needs to check.
 func Record(leaderUserID int, e Entry) {
@@ -399,6 +419,12 @@ func Record(leaderUserID int, e Entry) {
 	}
 	if p := current(); p != nil {
 		p.Record(leaderUserID, e)
+	}
+	mu.RLock()
+	watchers := observers
+	mu.RUnlock()
+	for _, fn := range watchers {
+		fn(leaderUserID, e)
 	}
 }
 

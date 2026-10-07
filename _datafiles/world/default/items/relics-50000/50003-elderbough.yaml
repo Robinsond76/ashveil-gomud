@@ -18,4 +18,21 @@ relic:
   ilvl: 40
   mob: 34
   chance: 6
+  awakenings:
+    - name: "Heartwood Hunter"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 25
+      target: "woodland horrors"
+      effects: {rangedpct: 5}
+    - name: "Elder's Mark"
+      kind: lair
+      mob: 34
+      target: "the ent"
+      effects: {evasion: 4}
+    - name: "Summit Sight"
+      kind: place
+      zone: "Stormcrown Heights"
+      target: "Stormcrown Heights"
+      effects: {attack: 4}
   lore: 'The ent shed it like a limb. Arrows loosed from it seem to find the way.'

@@ -31,6 +31,13 @@ a strong choice, not a runaway one. They end the moment the piece comes off.
 <ansi fg="command">inventory</ansi> lists the relics you wear, each signature in words, and each set's
 progress with the bonuses in force.
 
+<ansi fg="yellow-bold">Awakenings</ansi>
+
+Each relic also has two or three awakenings: deeds, such as slaying a number of
+ogres, defeating a lair's master or reaching a zone, that wake a further small
+power once they are done while it is worn. <ansi fg="command">look</ansi> at a relic to see each one with
+its progress. See <ansi fg="command">help awakenings</ansi>.
+
 <ansi fg="yellow-bold">Where they come from</ansi>
 
 Every relic belongs to one boss, and a Scribe of rank 4 can read which. Each
@@ -55,5 +62,5 @@ the day: relics do not roll quality. Hand one to a companion with
 most, which is still the best price any find fetches (<ansi fg="command">help sell</ansi>). Some
 companions dislike a relic sold for coin and some do not mind (<ansi fg="command">help opinions</ansi>).
 
-See also: <ansi fg="command">help rarity</ansi>, <ansi fg="command">help equipmenttiers</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help encounters</ansi>, <ansi fg="command">help identify</ansi>,
+See also: <ansi fg="command">help awakenings</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help equipmenttiers</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help encounters</ansi>, <ansi fg="command">help identify</ansi>,
 <ansi fg="command">help equipment</ansi>.
