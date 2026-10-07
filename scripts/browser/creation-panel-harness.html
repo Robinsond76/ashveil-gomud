@@ -1,0 +1,56 @@
+<!doctype html>
+<!--
+  Phase 72a browser check harness: the real web client core, the sprite
+  loader, sprite-tint.js and the creation panel, fed GMCP payloads by creation-panel-check.mjs (which
+  serves the repository over HTTP so the sprite manifest loads). Commands the windows send are recorded in
+  window.sent instead of going to a server. Not served by the game.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creation panel check</title>
+<link id="theme-css" rel="stylesheet" href="../../_datafiles/html/public/static/css/theme-brooding.css">
+<link rel="stylesheet" href="../../_datafiles/html/public/static/css/windows.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--t-bg); color: var(--t-text); font-family: 'DejaVu Sans Mono', monospace; }
+  #main-container { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
+  #terminal { flex: 1; min-width: 0; }
+</style>
+<script src="../../_datafiles/html/public/static/js/xterm/xterm.4.19.0.js"></script>
+<script src="../../_datafiles/html/public/static/js/xterm/xterm-addon-fit.js"></script>
+<script src="../../_datafiles/html/public/static/js/mp3.js"></script>
+<script src="../../_datafiles/html/public/static/js/keep-scroll.js"></script>
+<script src="../../_datafiles/html/public/static/js/vwin.js"></script>
+<script src="../../_datafiles/html/public/static/js/webclient-core.js"></script>
+<script>
+  window.sent = [];
+  Client.SendInput = function(cmd) { window.sent.push(cmd); };
+  Client.GMCPRequest = function() {};
+  // As Client's own store: nest on dots, then dispatch.
+  window.gmcp = function(namespace, body) {
+    const parts = namespace.split('.');
+    const last = parts.pop();
+    let cursor = Client.GMCPStructs;
+    parts.forEach(seg => { cursor = cursor[seg] = cursor[seg] || {}; });
+    cursor[last] = body;
+    VirtualWindows.handleGMCP(namespace, body);
+  };
+</script>
+<script src="../../_datafiles/html/public/static/js/sprites.js"></script>
+<script src="../../_datafiles/html/public/static/js/sprite-tint.js"></script>
+<script src="../../_datafiles/html/public/static/js/windows/window-creation.js"></script>
+</head>
+<body>
+<div id="main-container">
+  <div id="dock-left"></div>
+  <div id="terminal"></div>
+  <div id="dock-right"></div>
+</div>
+<script>
+  DockSlots.left  = new DockSlot('left');
+  DockSlots.right = new DockSlot('right');
+  VirtualWindows.openAll();
+</script>
+</body>
+</html>

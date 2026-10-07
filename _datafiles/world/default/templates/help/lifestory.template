@@ -1,0 +1,35 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">lifestory</ansi>
+
+Where you came from. Three questions at creation, each with a short tale:
+your homeland, how you were brought up, and the trade you followed. They
+are written once and stay that way.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">lifestory</ansi>             tells your story and what it gave you
+  <ansi fg="command">lifestory choose</ansi>      writes it, if it is not written yet
+                        (<ansi fg="command">cancel</ansi> stops with nothing written)
+  <ansi fg="command">lifestory [player]</ansi>    who someone here is, at a glance
+
+<ansi fg="yellow-bold">What it gives</ansi>
+
+A small start, never a lasting edge:
+
+  Each answer gives +1 to a stat it names (your choice when it names
+  two). No stat gains more than +2 from your story, so the three
+  answers give at most +3 in all.
+  Your trade (your background) gives a keepsake for your pack, and
+  sometimes a first rung in a skill.
+
+The tale is read back in your own pronouns. Other players see only the
+three names, never the numbers.
+
+<ansi fg="yellow-bold">Backgrounds</ansi>
+
+Your trade is your background. Later parts of the game, such as events and
+towns, may notice it. <ansi fg="command">lifestory</ansi> shows yours.
+
+Characters made before life stories existed are asked once, when they next
+log in. Skip it and <ansi fg="command">creation</ansi> or <ansi fg="command">lifestory choose</ansi> asks again whenever you like.
+
+See also: <ansi fg="command">help appearance</ansi>, <ansi fg="command">help stats</ansi>.

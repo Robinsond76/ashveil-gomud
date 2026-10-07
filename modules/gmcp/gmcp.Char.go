@@ -514,12 +514,15 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 	if all || g.wantsGMCPPayload(`Char.Info`, gmcpModule) {
 		lineageID, classID := classKeys(user.UserId)
+		skin, hair := user.Character.LookColors()
 		payload.Info = &GMCPCharModule_Payload_Info{
 			Account:        user.Username,
 			Name:           user.Character.Name,
 			Class:          user.Character.ClassTitle(),
 			Lineage:        lineageID,
 			ClassID:        classID,
+			Skin:           skin,
+			Hair:           hair,
 			Race:           user.Character.Race(),
 			Alignment:      user.Character.AlignmentName(),
 			Level:          user.Character.Level,
@@ -986,8 +989,12 @@ type GMCPCharModule_Payload_Info struct {
 	// Lineage is the base archetype, ClassID the promoted class (the
 	// archetype until the character promotes). Empty before an archetype
 	// is chosen.
-	Lineage        string `json:"lineage,omitempty"`
-	ClassID        string `json:"classid,omitempty"`
+	Lineage string `json:"lineage,omitempty"`
+	ClassID string `json:"classid,omitempty"`
+	// Phase 72a: the skin tone and hair colour (#rrggbb) the player chose,
+	// painted on their map and battle sprites; omitted without looks.
+	Skin           string `json:"skin,omitempty"`
+	Hair           string `json:"hair,omitempty"`
 	Race           string `json:"race,omitempty"`
 	Alignment      string `json:"alignment,omitempty"`
 	Level          int    `json:"level,omitempty"`

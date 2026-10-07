@@ -1,0 +1,8 @@
+itemid: 30400
+name: soldier's tin badge
+namesimple: badge
+description: A dented tin badge stamped with the mark of a company that no longer exists. A keepsake from your trade (help backgrounds).
+type: object
+subtype: mundane
+value: 1
+weight: 50

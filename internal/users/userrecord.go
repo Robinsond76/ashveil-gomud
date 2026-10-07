@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/creation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
@@ -641,6 +642,9 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 
 	// If no prompt found or it seems like a new prompt, create a new one and replace the old
 	u.activePrompt = prompt.New(command, rest)
+	// Ashveil 72a: a replaced creation prompt takes its web panel with it,
+	// or the panel's buttons would answer the new prompt.
+	creation.Clear(u.UserId)
 
 	return u.activePrompt, true
 }
@@ -652,6 +656,7 @@ func (u *UserRecord) GetPrompt() *prompt.Prompt {
 
 func (u *UserRecord) ClearPrompt() {
 	u.activePrompt = nil
+	creation.Clear(u.UserId)
 }
 
 // SyncInputMask (Ashveil 32h) masks the user's connection exactly while

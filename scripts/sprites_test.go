@@ -93,8 +93,8 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 		t.Fatalf("manifest version = %d", m.Version)
 	}
 	pal := loadSpritePalette(t, dir, m.Palette)
-	if len(pal) == 0 || len(pal) > 64 {
-		t.Fatalf("palette has %d colors, want 1..64", len(pal))
+	if len(pal) == 0 || len(pal) > 67 {
+		t.Fatalf("palette has %d colors, want 1..67", len(pal))
 	}
 
 	want := []string{

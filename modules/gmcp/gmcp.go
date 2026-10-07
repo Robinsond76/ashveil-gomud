@@ -254,6 +254,17 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 			return true
 		}
 
+		if identifier == `Char.Creation` {
+			// Phase 72a: the creation panel asks for the step the player is on.
+			for _, user := range users.GetAllActiveUsers() {
+				if user.ConnectionId() == connectionId {
+					events.AddToQueue(GMCPCreationRequest{UserId: user.UserId})
+					break
+				}
+			}
+			return true
+		}
+
 		if strings.HasPrefix(identifier, `Char`) {
 			// Try to find the user ID associated with this connection
 			for _, user := range users.GetAllActiveUsers() {

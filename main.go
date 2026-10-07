@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/appearance"
 	"github.com/GoMudEngine/GoMud/internal/audio"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -31,6 +32,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/language"
+	"github.com/GoMudEngine/GoMud/internal/lifestory"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/migration"
 	"github.com/GoMudEngine/GoMud/internal/modmanager"
@@ -1772,6 +1774,13 @@ func loadAllDataFiles(isReload bool) {
 	mutators.LoadDataFiles()
 	colorpatterns.LoadColorPatterns()
 	audio.LoadAudioConfig()
+	// Ashveil 72a: looks and life stories (a world without the files simply has none).
+	if err := appearance.Load(); err != nil {
+		mudlog.Error("LoadDataFiles", "looks", err)
+	}
+	if err := lifestory.Load(); err != nil {
+		mudlog.Error("LoadDataFiles", "lifestory", err)
+	}
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.
 }
 

@@ -14,6 +14,8 @@ help:
       - quickmenu
       - mobile
     character:
+      - appearance
+      - lifestory
       - actionpoints
       - alignment
       - conditions
@@ -360,6 +362,8 @@ help-aliases:
   retreat: [flee, withdrawal, company-withdrawal, escape]
   mercy: [surrender, surrendered, yield, yielding, execution]
   delete:           [deletion, delete-character, reroll]
+  appearance:       [looks, description, describe, appearance-edit, mirror]
+  lifestory:        [backstory, background, backgrounds, life-story, life story, homeland, upbringing, trade, creation]
   quickmenu:        [quick menu, quick-menu, arrow keys, arrows, menu, enter menu, keyboard]
   webclient:        [web client, web-client, dock, panels, tabs, layout]
   mobile:           [phone, touch, touchscreen, touch bar, touch-bar, install, install app, add to home screen, pwa, web app]

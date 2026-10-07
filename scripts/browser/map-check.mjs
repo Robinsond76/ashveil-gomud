@@ -105,6 +105,19 @@ check(s.keys.join() === 'knight,warrior,adventurer' && s.spriteDrawn, 'class, th
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 check((await state(page)).keys.join() === 'warrior,adventurer', 'an unpromoted class is its lineage');
 
+// Phase 72a: the player's skin and hair colours (Char.Info) repaint the figure.
+const plainSig = () => page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await settle(page);
+const untinted = await plainSig();
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', skin: '#5a3a28', hair: '#d8b868' });
+await page.waitForTimeout(150);
+s = await state(page);
+check(s.look && s.look.skin === '#5a3a28' && s.look.hair === '#d8b868', 'Char.Info skin and hair become the figure\'s look');
+check(await plainSig() !== untinted, 'the tinted figure is drawn differently');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', skin: 'red', hair: '' });
+check((await state(page)).look === null, 'a colour that is not #rrggbb is ignored');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+
 await moveTo(page, 2, 0); await tick(page, 60);
 s = await state(page);
 check(s.face === 'up' && s.walking, 'walking north faces up and walks');

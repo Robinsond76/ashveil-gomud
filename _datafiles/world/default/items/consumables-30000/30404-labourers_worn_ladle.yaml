@@ -1,0 +1,8 @@
+itemid: 30404
+name: labourer's worn ladle
+namesimple: ladle
+description: An iron ladle polished by years of work-camp stew. A keepsake from your trade (help backgrounds).
+type: object
+subtype: mundane
+value: 1
+weight: 50
