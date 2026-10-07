@@ -1162,6 +1162,12 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 
 	plugins.OnNetConnect(connDetails)
 
+	// Phase 79: the web client's windows ask for their GMCP pages
+	// (!!GMCP(Char.Creation) and the like) as soon as the socket is up,
+	// before anyone has logged in. The prefix handler must sit in front of
+	// the login prompts, as it does for telnet, or a request typed at the
+	// username prompt is taken as the username.
+	connDetails.AddInputHandler("TextPrefixHandler", inputhandlers.TextPrefixHandler)
 	loginHandler := inputhandlers.GetLoginPromptHandler()
 	connDetails.AddInputHandler("LoginPromptHandler", loginHandler)
 
@@ -1235,7 +1241,6 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 					}
 					userObject = loggedInUser
 					connDetails.RemoveInputHandler("LoginPromptHandler")
-					connDetails.AddInputHandler("TextPrefixHandler", inputhandlers.TextPrefixHandler)
 					connDetails.AddInputHandler("EchoInputHandler", inputhandlers.EchoInputHandler)
 					connDetails.AddInputHandler("HistoryInputHandler", inputhandlers.HistoryInputHandler)
 					if userObject.Role == users.RoleAdmin {
@@ -1316,7 +1321,6 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 			// Remove the prompt handler (it signaled completion by returning true)
 			connDetails.RemoveInputHandler("LoginPromptHandler")
 			// Replace it with a regular echo handler.
-			connDetails.AddInputHandler("TextPrefixHandler", inputhandlers.TextPrefixHandler)
 			connDetails.AddInputHandler("EchoInputHandler", inputhandlers.EchoInputHandler)
 			// Add admin command handler
 			connDetails.AddInputHandler("HistoryInputHandler", inputhandlers.HistoryInputHandler) // Put history tracking after login handling, since login handling aborts input until complete

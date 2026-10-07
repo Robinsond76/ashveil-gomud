@@ -314,7 +314,13 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company opinions [member] | company bonds [member] | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
+const companyUsage = "Usage: company [what], one of:\n" +
+	"  Hiring:   company recruit [candidate] | company inspect <mob-id-or-name> | company summon <mob-id-or-name> | company dismiss <member|all>\n" +
+	"  The band: company status | company tactics | company chemistry | company specialists | company opinions [member] | company bonds [member] | company alignment\n" +
+	"  Gear:     company gear <member> | company inventory | company patch | company repair [golem]\n" +
+	"  Needs:    company eat | company drink | company fill | company meal\n" +
+	"  Growth:   company archetype <member> <archetype> | company growth [member stat] | company train [member skill]\n" +
+	"See help company."
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).

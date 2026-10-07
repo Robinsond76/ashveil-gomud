@@ -404,7 +404,10 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Remove from current room
 	room.RemoveMob(mob.InstanceId)
 
-	if config.Death.CorpsesEnabled {
+	// Phase 79: a fallen companion leaves no corpse to loot or to "crumble
+	// to dust" mid-fight; the company keeps them until they are raised or
+	// lost (modules/company).
+	if bool(config.Death.CorpsesEnabled) && !mob.Character.IsCompanion() {
 		room.AddCorpse(rooms.Corpse{
 			MobId:        int(mob.MobId),
 			Character:    mob.Character,

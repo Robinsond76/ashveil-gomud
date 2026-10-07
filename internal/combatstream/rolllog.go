@@ -28,6 +28,10 @@ type Roll struct {
 	Strikes  []Strike
 	// Ours is true when a member of the company swung.
 	Ours bool
+	// Turn is the round's number within the fight, counted from the first
+	// round the log saw (Phase 79): the engine's Round is a server-wide
+	// counter that means nothing to a player. Zero when not yet logged.
+	Turn int
 }
 
 // RollLog is the rolls of each leader's latest fight, newest last.
@@ -55,7 +59,16 @@ func (l *RollLog) Clear(leaderUserId int) {
 func (l *RollLog) Add(leaderUserId int, r Roll) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	rolls := append(l.rolls[leaderUserId], r)
+	prev := l.rolls[leaderUserId]
+	switch {
+	case len(prev) == 0 || prev[len(prev)-1].FightID != r.FightID:
+		r.Turn = 1
+	case prev[len(prev)-1].Round == r.Round:
+		r.Turn = prev[len(prev)-1].Turn
+	default:
+		r.Turn = prev[len(prev)-1].Turn + 1
+	}
+	rolls := append(prev, r)
 	if len(rolls) > RollLogCap {
 		rolls = append([]Roll(nil), rolls[len(rolls)-RollLogCap:]...)
 	}
@@ -110,7 +123,11 @@ func (r Roll) Describe(viewerUserId int) []string {
 	case r.Outcome == OutcomeHit || r.Outcome == OutcomeCrit:
 		result = "hit but did no damage"
 	}
-	out := []string{fmt.Sprintf("Round %d: %s -> %s, %s.", r.Round, name(r.Source), name(r.Target), result)}
+	round := r.Turn
+	if round == 0 {
+		round = int(r.Round)
+	}
+	out := []string{fmt.Sprintf("Round %d: %s -> %s, %s.", round, name(r.Source), name(r.Target), result)}
 	for _, line := range r.Breakdown() {
 		out = append(out, "  "+line)
 	}
