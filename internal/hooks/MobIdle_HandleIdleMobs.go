@@ -35,9 +35,24 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		}
 	}
 
-	if conversations.HasConverseFile(int(mob.MobId), mob.Character.Zone) && util.Rand(100) < int(configs.GetGamePlayConfig().MobConverseChance) {
-		if mobRoom := rooms.LoadRoom(mob.Character.RoomId); mobRoom != nil {
+	mobRoom := rooms.LoadRoom(mob.Character.RoomId)
+
+	// Says and emotes queued during this idle turn obey the chatter limits
+	// (internal/mobs/chatter.go): rare, and never the same line twice to a
+	// player within the memory window.
+	var listeners []int
+	if mobRoom != nil {
+		listeners = mobRoom.GetPlayers()
+	}
+	mob.BeginIdle(listeners)
+	defer mob.EndIdle()
+
+	if mob.ChatterReady() && conversations.HasConverseFile(int(mob.MobId), mob.Character.Zone) && util.Rand(100) < int(configs.GetGamePlayConfig().MobConverseChance) {
+		if mobRoom != nil {
 			mobcommands.Converse(``, mob, mobRoom) // Execute this directly so that target mob doesn't leave the room before this command executes
+			if mob.InConversation() {
+				mob.MarkChatter()
+			}
 		}
 	}
 
