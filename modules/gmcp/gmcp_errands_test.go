@@ -14,8 +14,10 @@ import (
 // errandCompany is a company module that can read its companions' errands.
 type errandCompany struct{ panel company.ErrandPanel }
 
-func (o *errandCompany) FormationFor(int) (company.Formation, bool) { return company.Formation{}, false }
-func (o *errandCompany) InstanceFor(int, int) (int, bool)           { return 0, false }
+func (o *errandCompany) FormationFor(int) (company.Formation, bool) {
+	return company.Formation{}, false
+}
+func (o *errandCompany) InstanceFor(int, int) (int, bool) { return 0, false }
 func (o *errandCompany) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) {
 	var k company.MemberKey
 	return 0, k, false
