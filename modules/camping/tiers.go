@@ -15,7 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/flasks"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/livecompanions"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -39,18 +39,12 @@ func (m *CampingModule) companions(leaderUserID int) (map[int]*characters.Charac
 	}
 	live := map[int]*characters.Character{}
 	var roster []int
-	for _, ref := range survival.CurrentRoster(leaderUserID) {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok || ref.Dead || ref.Away || ref.Needless {
-			continue // a dead (Phase 25b), separated (33h3) or construct (38e) companion earns no rest
-		}
-		roster = append(roster, companionID)
-		instanceID, ok := company.InstanceFor(leaderUserID, companionID)
-		if !ok {
-			continue
-		}
-		if mob := mobs.GetInstance(instanceID); mob != nil {
-			live[companionID] = &mob.Character
+	// A dead (Phase 25b), separated (33h3) or construct (38e) companion earns no rest.
+	companions, _ := livecompanions.Of(leaderUserID, livecompanions.SkipInactive)
+	for _, c := range companions {
+		roster = append(roster, c.CompanionID)
+		if c.Mob != nil {
+			live[c.CompanionID] = &c.Mob.Character
 		}
 	}
 	return live, roster

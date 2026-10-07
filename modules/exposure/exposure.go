@@ -15,18 +15,17 @@ import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/livecompanions"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -184,19 +183,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	data, err := s.plug.ReadBytes("exposure")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = newRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "exposure", func() Registry { return newRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("exposure", registry)
+	return modstore.Save(s.plug, "exposure", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping invalid leaders, member keys,
@@ -310,22 +301,16 @@ func newModule() *ExposureModule {
 // companionRoster lists a leader's company companions, with the live
 // character for those currently spawned.
 func companionRoster(leaderUserID int) ([]member, bool) {
-	roster := survival.CurrentRoster(leaderUserID)
-	if roster == nil {
+	companions, ok := livecompanions.Of(leaderUserID, livecompanions.SkipDead) // a dead companion (Phase 25b) is drained of nothing
+	if !ok {
 		return nil, false
 	}
 	var out []member
-	for _, ref := range roster {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok || ref.Dead {
-			continue // a dead companion (Phase 25b) is drained of nothing
-		}
-		mb := member{Key: ref.Key, Name: ref.Name}
-		if instanceId, ok := company.InstanceFor(leaderUserID, companionID); ok {
-			if mob := mobs.GetInstance(instanceId); mob != nil {
-				mb.Character = &mob.Character
-				mb.RoomId = mob.Character.RoomId
-			}
+	for _, c := range companions {
+		mb := member{Key: c.Ref.Key, Name: c.Ref.Name}
+		if c.Mob != nil {
+			mb.Character = &c.Mob.Character
+			mb.RoomId = c.Mob.Character.RoomId
 		}
 		out = append(out, mb)
 	}

@@ -7,7 +7,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -139,20 +139,11 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *domain.Registry) error {
-	// ReadIntoStruct currently discards YAML decoding errors. Decode here so
-	// unreadable company data cannot become an empty, writable registry.
-	data, err := s.plug.ReadBytes("companies")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *domain.NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeCompanies(data, registry)
+	return modstore.Load(s.plug, "companies", func() domain.Registry { return *domain.NewRegistry() }, decodeCompanies, registry)
 }
+
 func (s pluginStore) Save(registry domain.Registry) error {
-	return s.plug.WriteStruct("companies", registry)
+	return modstore.Save(s.plug, "companies", registry)
 }
 
 type CompanyModule struct {
@@ -853,15 +844,7 @@ func resolveCompanion(record domain.Record, selector string) (domain.Companion, 
 		}
 		return domain.Companion{}, false
 	}
-	var exact, partial []domain.Companion
-	for _, c := range record.Companions {
-		name := strings.ToLower(nameOf(c, ""))
-		if name == selector {
-			exact = append(exact, c)
-		} else if strings.Contains(name, selector) {
-			partial = append(partial, c)
-		}
-	}
+	exact, partial := domain.SplitNameMatches(record.Companions, selector, func(c domain.Companion) string { return nameOf(c, "") })
 	if len(exact) == 1 {
 		return exact[0], true
 	}
@@ -1059,13 +1042,7 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 }
 
 func (m *CompanyModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("company: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("company: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("company", m.loadErr, m.store != nil)
 }
 
 func (m *CompanyModule) save() error {
