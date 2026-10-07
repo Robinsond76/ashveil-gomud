@@ -567,11 +567,15 @@ func TestChronicleHelp(t *testing.T) {
 	for _, phrase := range []string{"Help for", "chronicle boss", "chronicle all", "Chronicle tab", "newest 300 deeds", "executions", "promotions"} {
 		assert.Contains(t, plain, phrase)
 	}
-	for _, alias := range []string{"chronicles", "deeds", "company chronicle", "history"} {
+	for _, alias := range []string{"chronicles", "deeds", "company chronicle"} {
 		got, err := GetHelpContents(alias)
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help chronicle", alias)
 	}
+	// GoMud's own history command keeps its page (review: an alias took it).
+	history, err := GetHelpContents("history")
+	require.NoError(t, err)
+	assert.NotEqual(t, want, history, "help history is the history command's page")
 	for _, hub := range []string{"adventure", "company", "events", "webclient"} {
 		text, err := GetHelpContents(hub)
 		require.NoError(t, err, hub)

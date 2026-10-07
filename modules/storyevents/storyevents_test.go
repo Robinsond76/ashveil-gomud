@@ -776,5 +776,37 @@ func TestAScenesEndIsWrittenInTheChronicle(t *testing.T) {
 	assert.Equal(t, "The Cliff", entries[0].Subject)
 	assert.Equal(t, "event:cliff", entries[0].Ref)
 	assert.NotEmpty(t, entries[0].Detail, "the choice that ended it")
+	require.Len(t, entries[0].Keys, 1, "the member who took it, by company key")
+	assert.Regexp(t, `^(leader|companion:\d+)$`, entries[0].Keys[0])
 	assert.Contains(t, chronicle.Prose(entries[0]), "At The Cliff,")
+}
+
+// probeChronicle notes, at each Record, how many world calls had run, so a
+// test can tell whether a deed was written before or after an outcome.
+type probeChronicle struct {
+	*chronicle.Memory
+	calls  func() int
+	before []int
+}
+
+func (p *probeChronicle) Record(leaderUserID int, e chronicle.Entry) {
+	p.before = append(p.before, p.calls())
+	p.Memory.Record(leaderUserID, e)
+}
+
+// Review fix: a scene that ends on a move is written before the move runs,
+// so the deed's place is the scene's room, not where the company was sent.
+func TestASceneEndingOnAMoveIsWrittenBeforeTheMove(t *testing.T) {
+	r := newRig(t)
+	probe := &probeChronicle{Memory: chronicle.NewMemory(), calls: func() int { return len(r.w.calls) }}
+	chronicle.SetProvider(probe)
+	t.Cleanup(func() { chronicle.SetProvider(nil) })
+
+	require.True(t, r.enter(10))
+	r.choose(2) // go down together: move to 11, on to the ledge
+	r.choose(2) // climb back up: move to 10, the end
+	require.Nil(t, r.pending())
+	assert.Equal(t, []call{{"move", "11"}, {"move", "10"}}, r.w.calls)
+	require.Equal(t, []int{1}, probe.before, "written once, after the first move and before the last")
+	assert.Equal(t, "Climb back up", probe.Log(7).Entries[0].Detail)
 }

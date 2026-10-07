@@ -404,8 +404,8 @@ func TestBossKillDropsItsMasterworkInstrument(t *testing.T) {
 }
 
 // Phase 63: a boss kill and its relic are written in each company's
-// chronicle, by the real death path; an ordinary foe and a mercy kill are
-// not boss deeds.
+// chronicle, by the real death path; an ordinary foe is not a boss deed,
+// and an executed boss is one.
 func TestBossKillAndRelicAreWrittenInTheChronicle(t *testing.T) {
 	mem := chronicle.NewMemory()
 	chronicle.SetProvider(mem)
@@ -425,11 +425,14 @@ func TestBossKillAndRelicAreWrittenInTheChronicle(t *testing.T) {
 		relic := log.Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Relic}})
 		require.Len(t, relic, 1, "and its own relic roll")
 		assert.Equal(t, "drop foe", relic[0].Detail, "the relic names the boss it came from")
+		assert.NotContains(t, relic[0].Subject, "<", "the relic's plain name, no colour markup")
+		assert.NotContains(t, relic[0].Subject, "unidentified")
+		assert.NotEmpty(t, relic[0].Subject)
 		assert.True(t, strings.HasPrefix(relic[0].Ref, "item:"))
 	}
 }
 
-func TestOrdinaryFoeAndMercyKillWriteNoBossDeed(t *testing.T) {
+func TestAnOrdinaryFoeWritesNoBossDeedAndAnExecutedBossDoes(t *testing.T) {
 	mem := chronicle.NewMemory()
 	chronicle.SetProvider(mem)
 	t.Cleanup(func() { chronicle.SetProvider(nil) })
@@ -446,5 +449,5 @@ func TestOrdinaryFoeAndMercyKillWriteNoBossDeed(t *testing.T) {
 	t.Cleanup(func() { mobs.RemoveTestInstance(boss.InstanceId) })
 	_, err = Suicide("mercy", boss, w.room)
 	require.NoError(t, err)
-	assert.Zero(t, chronicle.Total(w.users[0].UserId, chronicle.Boss), "an execution is written by the mercy answer, not as a kill")
+	assert.Equal(t, 1, chronicle.Total(w.users[0].UserId, chronicle.Boss), "an executed boss is slain too (review fix: bounties and lairs match Boss deeds)")
 }

@@ -146,13 +146,15 @@ func (m *Module) render(userID int, rest string) string {
 	}
 	if r.all || pages == 1 {
 		fmt.Fprintf(&b, `<ansi fg="black-bold">%d deed(s) kept, newest first.</ansi>`, len(all))
+	} else if r.page == pages {
+		fmt.Fprintf(&b, `<ansi fg="black-bold">Page %d of %d, the oldest kept. </ansi><ansi fg="command">chronicle all</ansi><ansi fg="black-bold"> reads every deed.</ansi>`, r.page, pages)
 	} else {
 		more := ""
 		if r.kind != "" {
 			more = " " + firstWord(r.kind)
 		}
 		fmt.Fprintf(&b, `<ansi fg="black-bold">Page %d of %d, newest first. </ansi><ansi fg="command">chronicle%s %d</ansi><ansi fg="black-bold"> reads the next; </ansi><ansi fg="command">chronicle all</ansi><ansi fg="black-bold"> reads every deed.</ansi>`,
-			r.page, pages, more, min(r.page+1, pages))
+			r.page, pages, more, r.page+1)
 	}
 	if r.kind == "" {
 		if t := m.tallyLine(l); t != "" {

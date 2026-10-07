@@ -2,8 +2,7 @@
 
 Your company keeps a chronicle: a running record of the deeds it is known
 for, written down as they happen and read back in plain sentences, newest
-first. It is how the world, and later your own companions, remember what
-you did.
+first. It is the company's own story of what it did.
 
 <ansi fg="yellow-bold">Reading it</ansi>
 
@@ -41,7 +40,6 @@ Each deed names who was involved, where it happened and how long ago.
     <ansi fg="command">chronicle</ansi> never forgets: it includes the deeds that have scrolled off.
   - Times are real time. Nothing here moves the world's clock, and reading
     it costs nothing, even in a fight.
-  - The chronicle only remembers. It gives no gold, experience or power
-    of its own; later features read it, so what you do is noticed.
+  - The chronicle only remembers. It gives no gold, experience or power.
 
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help events</ansi>, <ansi fg="command">help webclient</ansi>.

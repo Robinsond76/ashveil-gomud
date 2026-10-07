@@ -172,6 +172,6 @@ func relicDrop(mob *mobs.Mob, uid int, label string, src loot.Source) ([]items.I
 		return nil, err
 	}
 	// Phase 63: the find is the company's deed.
-	chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Relic, Subject: itm.DisplayName(), Detail: label, Ref: fmt.Sprintf("item:%d", itm.ItemId)})
+	chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Relic, Subject: itm.Name(), Detail: label, Ref: fmt.Sprintf("item:%d", itm.ItemId)})
 	return []items.Item{*itm}, nil
 }

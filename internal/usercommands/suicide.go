@@ -8,8 +8,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -124,6 +126,21 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		user.Character.KillerMobInstanceId = 0
 		user.Character.KillerMobIsElite = false
 		user.Character.KillerMobName = ``
+	}
+
+	// Phase 63: the leader's fall is the company's deed, written here, at
+	// the death itself, so it reads before the defeat it may lead to.
+	if user.Character.Zone != `Training` {
+		killerName := ``
+		if spec := mobs.GetMobSpec(mobs.MobId(killerMobId)); killerMobId > 0 && spec != nil {
+			killerName = spec.Character.Name
+		}
+		place := ``
+		if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+			place = r.Title
+		}
+		chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Fell, Members: []string{user.Character.Name},
+			Keys: []string{string(company.LeaderMemberKey)}, Subject: killerName, Place: place})
 	}
 
 	// Ashveil Phase 53: a defeat scenario may settle this death (rescue,

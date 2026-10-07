@@ -56,12 +56,14 @@ func TestDismissingOneOrAllIsWritten(t *testing.T) {
 	got := deeds(mem, chronicle.Dismissed)
 	require.Len(t, got, 1)
 	assert.Equal(t, []string{"Oswin"}, got[0].Members)
+	assert.Equal(t, []string{"companion:1"}, got[0].Keys, "the key tells apart companions who share a name")
 
 	_, err = module.dismiss(7, "all")
 	require.NoError(t, err)
 	got = deeds(mem, chronicle.Dismissed)
 	require.Len(t, got, 2)
 	assert.Equal(t, []string{"Tamsin", "Ysolde"}, got[0].Members, "one deed names everyone sent away")
+	assert.Equal(t, []string{"companion:2", "companion:3"}, got[0].Keys)
 	assert.Equal(t, "Tamsin and Ysolde were sent away.", chronicle.Prose(got[0]))
 
 	_, err = module.dismiss(7, "all")
@@ -96,6 +98,7 @@ func TestACompanionsDeathResurrectionAndLossAreWritten(t *testing.T) {
 	fell := deeds(mem, chronicle.Fell)
 	require.Len(t, fell, 1)
 	assert.Equal(t, "mob:"+strconv.Itoa(deathTemplate), fell[0].Ref)
+	assert.Equal(t, []string{"companion:1"}, fell[0].Keys)
 	module.onMobDeath(eventsMobDeath(101))
 	assert.Len(t, deeds(mem, chronicle.Fell), 1, "a second death event for the same companion adds nothing")
 
@@ -126,8 +129,23 @@ func TestAPromotionIsWrittenForThePlayerAndForACompanion(t *testing.T) {
 	assert.Equal(t, "class:priest", got[0].Ref)
 	assert.Equal(t, "Priest", got[0].Subject)
 	assert.Equal(t, []string{w.aria.Character.Name}, got[0].Members)
+	assert.Equal(t, []string{"leader"}, got[0].Keys)
 	w.cmd("class", "promote priest confirm")
 	assert.Len(t, deeds(mem, chronicle.Promoted), 1, "a repeated confirmation writes nothing")
+}
+
+func TestACompanionsPromotionIsWrittenWithItsKey(t *testing.T) {
+	mem := useChronicle(t)
+	w, _ := classBrawl(t, 3, 0)
+	w.companion(2).Character.Level = 10
+	setCompanionAlignment(t, 2, 40)
+	w.respawn()
+	require.Contains(t, w.cmd("class", "promote #2 priest confirm"), "Brother Oswin is now a Priest.")
+	got := deeds(mem, chronicle.Promoted)
+	require.Len(t, got, 1)
+	assert.Equal(t, []string{"Brother Oswin"}, got[0].Members)
+	assert.Equal(t, []string{"companion:2"}, got[0].Keys)
+	assert.Contains(t, chronicle.Prose(got[0]), "Brother Oswin became a Priest")
 }
 
 func eventsMobDeath(instance int) events.MobDeath {

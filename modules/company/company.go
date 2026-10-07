@@ -536,7 +536,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		}
 	}
 	m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Joined, Members: []string{nameOf(companion, "A companion")}, Ref: fmt.Sprintf("mob:%d", templateID)})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Joined, Members: []string{nameOf(companion, "A companion")}, Keys: []string{string(domain.CompanionMemberKey(companion.ID))}, Ref: fmt.Sprintf("mob:%d", templateID)})
 	return companion, nil
 }
 
@@ -680,7 +680,7 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: []string{name}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: []string{companionName(companion)}, Keys: []string{string(domain.CompanionMemberKey(companion.ID))}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
 	text := fmt.Sprintf("Companion dismissed: %s (#%d).", name, companion.ID)
 	if line := gearReturnLine(leaderUserID, name, returned, gold); line != "" {
 		text += " " + line
@@ -697,7 +697,7 @@ func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, 
 	}
 	// Phase 63: every caller is a desertion (loyalty ran out); dismissal
 	// has its own path and its own deed.
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Deserted, Members: []string{nameOf(companion, "A companion")}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Deserted, Members: []string{companionName(companion)}, Keys: []string{string(domain.CompanionMemberKey(companion.ID))}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
 	return nil
 }
 
@@ -835,11 +835,12 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	if leader != nil && (len(returned) > 0 || gold > 0) {
 		m.finishGearReturn(leader)
 	}
-	var names []string
+	var names, keys []string
 	for _, companion := range record.Companions {
-		names = append(names, nameOf(companion, "A companion"))
+		names = append(names, companionName(companion))
+		keys = append(keys, string(domain.CompanionMemberKey(companion.ID)))
 	}
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: names})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: names, Keys: keys})
 	text := fmt.Sprintf("Dismissed %d companion(s).", count)
 	if line := gearReturnLine(leaderUserID, "The company", returned, gold); line != "" {
 		text += " " + line

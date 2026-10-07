@@ -87,11 +87,15 @@ func (k Kind) Valid() bool {
 // Entry is one deed. Members and Subject are display names; Ref is the
 // stable key later phases match on ("mob:12", "item:50033", "event:cliff",
 // "class:samurai", "scenario:captured"), so a renamed thing still matches.
+// Keys are the members' company keys ("leader", "companion:7"), in the
+// order of Members, so a later phase can tell apart two companions with one
+// name; a companion's id is never reused within a company.
 type Entry struct {
 	Seq     int      `yaml:"seq" json:"seq"`
 	At      int64    `yaml:"at" json:"at"` // real time, Unix seconds
 	Kind    Kind     `yaml:"kind" json:"kind"`
 	Members []string `yaml:"members,omitempty" json:"members,omitempty"`
+	Keys    []string `yaml:"keys,omitempty" json:"keys,omitempty"`
 	Subject string   `yaml:"subject,omitempty" json:"subject,omitempty"`
 	Detail  string   `yaml:"detail,omitempty" json:"detail,omitempty"`
 	Place   string   `yaml:"place,omitempty" json:"place,omitempty"`
@@ -180,9 +184,9 @@ func Prose(e Entry) string {
 		return fmt.Sprintf("%s slew %s%s.", who, orThing(e.Subject, "a lair's master"), e.at())
 	case Relic:
 		if e.Detail != "" {
-			return fmt.Sprintf("%s took %s from %s%s.", who, orThing(e.Subject, "a relic"), e.Detail, e.at())
+			return fmt.Sprintf("%s found %s on %s%s.", who, orThing(e.Subject, "a relic"), e.Detail, e.at())
 		}
-		return fmt.Sprintf("%s took %s%s.", who, orThing(e.Subject, "a relic"), e.at())
+		return fmt.Sprintf("%s found %s%s.", who, orThing(e.Subject, "a relic"), e.at())
 	case Spared:
 		return fmt.Sprintf("%s showed mercy to %s%s.", who, orThing(e.Subject, "a beaten foe"), e.at())
 	case Executed:
@@ -249,6 +253,7 @@ type Filter struct {
 	Kinds  []Kind // any of these kinds
 	Ref    string // this exact reference
 	Member string // a deed naming this member (case-insensitive)
+	Key    string // a deed naming the member with this company key
 	Since  int64  // at or after this Unix time
 	Limit  int    // at most this many, newest first; 0 is no limit
 }
@@ -271,6 +276,17 @@ func (f Filter) Matches(e Entry) bool {
 	}
 	if f.Since > 0 && e.At < f.Since {
 		return false
+	}
+	if f.Key != "" {
+		found := false
+		for _, k := range e.Keys {
+			if k == f.Key {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
 	}
 	if f.Member != "" {
 		found := false
@@ -304,6 +320,7 @@ func (l Log) Clone() Log {
 	out.Entries = make([]Entry, len(l.Entries))
 	for i, e := range l.Entries {
 		e.Members = append([]string(nil), e.Members...)
+		e.Keys = append([]string(nil), e.Keys...)
 		out.Entries[i] = e
 	}
 	if l.Tally != nil {

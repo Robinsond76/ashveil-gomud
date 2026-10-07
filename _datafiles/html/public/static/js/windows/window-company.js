@@ -974,8 +974,10 @@
             if (again) { again.focus(); }
         }
         // The other sub-tabs read the snapshot too: Camp its needs, and
-        // Inventory the companions out (names only, so not on vitals).
-        if (namespace !== 'Company.Vitals') { updateInventory(); }
+        // Inventory the companions out (names only, so not on vitals). The
+        // Chronicle keeps its own payload; it is redrawn here so a window
+        // closed and opened again shows it at once.
+        if (namespace !== 'Company.Vitals') { updateInventory(); updateChronicle(); }
         updateCamp();
     }
 
@@ -1719,7 +1721,9 @@
             list.appendChild(li);
         });
         pad.appendChild(list);
-        pad.appendChild(el('div', 'cmp-note', 'The newest 60 are shown; type chronicle all to read every deed kept.'));
+        if (total > entries.length) {
+            pad.appendChild(el('div', 'cmp-note', 'The newest ' + entries.length + ' are shown; type chronicle all to read every deed kept.'));
+        }
     }
 
     function updateChronicle() {

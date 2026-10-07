@@ -591,11 +591,13 @@ func (m *CompanyModule) promote(user *users.UserRecord, room *rooms.Room, rest [
 		mudlog.Warn("company: promote", "leader", user.UserId, "error", cerr)
 		return "Your records couldn't be saved; nothing changed. Please try again."
 	}
-	promoted := s.name
+	promoted, key := s.name, string(domain.LeaderMemberKey)
 	if s.player {
 		promoted = user.Character.Name
+	} else {
+		key = string(domain.CompanionMemberKey(s.c.ID))
 	}
-	chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Promoted, Members: []string{promoted}, Subject: chosen.Name, Ref: "class:" + chosen.ID})
+	chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Promoted, Members: []string{promoted}, Keys: []string{key}, Subject: chosen.Name, Ref: "class:" + chosen.ID})
 	text := fmt.Sprintf("%s %s now a %s.", s.label(), s.are(), chosen.Name)
 	if s.player {
 		text = fmt.Sprintf("You are now a %s.", chosen.Name)

@@ -23,7 +23,7 @@ func TestProseReadsEveryKindAsASentence(t *testing.T) {
 		{Entry{Kind: Lost, Members: []string{"Mara"}}, "Mara was lost for good; no one raised them in time."},
 		{Entry{Kind: Defeated, Detail: "They were left for dead.", Place: "the ford"}, "The company was beaten at the ford. They were left for dead."},
 		{Entry{Kind: Boss, Subject: "the Hollow King", Place: "the Throne Room"}, "The company slew the Hollow King at the Throne Room."},
-		{Entry{Kind: Relic, Subject: "the Pale Crown", Detail: "the Hollow King"}, "The company took the Pale Crown from the Hollow King."},
+		{Entry{Kind: Relic, Subject: "the Pale Crown", Detail: "the Hollow King"}, "The company found the Pale Crown on the Hollow King."},
 		{Entry{Kind: Spared, Subject: "a bandit"}, "The company showed mercy to a bandit."},
 		{Entry{Kind: Executed, Subject: "a bandit"}, "The company put a bandit to the sword."},
 		{Entry{Kind: Promoted, Members: []string{"Mara"}, Subject: "Samurai"}, "Mara became a Samurai."},
@@ -145,4 +145,19 @@ func TestTheSeamDoesNothingWithoutAProviderAndReadsWithOne(t *testing.T) {
 	assert.Zero(t, Total(1, Relic), "companies are separate")
 	assert.NotZero(t, Query(1, Filter{})[0].At, "the memory stamps the time")
 	assert.Equal(t, "Hollow Queen", Query(1, Filter{Limit: 1})[0].Subject)
+}
+
+// A later phase tells apart two companions with one name by their keys.
+func TestFilterByMemberKey(t *testing.T) {
+	var l Log
+	l.Add(Entry{Kind: Fell, Members: []string{"Mara"}, Keys: []string{"companion:1"}})
+	l.Add(Entry{Kind: Fell, Members: []string{"Mara"}, Keys: []string{"companion:4"}})
+	l.Add(Entry{Kind: Dismissed, Members: []string{"Mara", "Tobin"}, Keys: []string{"companion:4", "companion:5"}})
+	assert.Len(t, l.Query(Filter{Member: "mara"}), 3)
+	assert.Len(t, l.Query(Filter{Key: "companion:4"}), 2)
+	assert.Len(t, l.Query(Filter{Key: "companion:1", Kinds: []Kind{Fell}}), 1)
+	assert.Empty(t, l.Query(Filter{Key: "leader"}))
+	c := l.Clone()
+	c.Entries[2].Keys[0] = "changed"
+	assert.Equal(t, "companion:4", l.Entries[2].Keys[0], "a clone shares no keys")
 }

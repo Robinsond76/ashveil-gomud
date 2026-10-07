@@ -2,8 +2,7 @@
 // its deeds. The entry shapes, prose and query seam are in
 // internal/chronicle; this module owns the saved logs, the `chronicle`
 // command, the `Company.Chronicle` GMCP message the web client's Chronicle
-// tab reads, and the hooks that need no other module's help (a leader's
-// death). Other modules record their own deeds from their real sources with
+// tab reads. Other code records its deeds from their real sources with
 // chronicle.Record.
 //
 // Everything runs on the game loop and uses real time only.
@@ -91,7 +90,6 @@ func init() {
 	})
 	m.plug.AddUserCommand("chronicle", m.chronicleCommand, true, false)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
-	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	userstate.Register(stateContributor{m})
 	chronicle.SetProvider(m)
@@ -194,21 +192,5 @@ func (m *Module) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if evt, ok := e.(events.PlayerSpawn); ok {
 		m.push(evt.UserId)
 	}
-	return events.Continue
-}
-
-// onPlayerDeath records the leader's own fall; a companion's death is
-// recorded by the company module, which knows which companion it was.
-func (m *Module) onPlayerDeath(e events.Event) events.ListenerReturn {
-	evt, ok := e.(events.PlayerDeath)
-	if !ok || evt.UserId <= 0 {
-		return events.Continue
-	}
-	m.Record(evt.UserId, chronicle.Entry{
-		Kind:    chronicle.Fell,
-		Members: []string{m.w.Name(evt.UserId, evt.CharacterName)},
-		Subject: m.w.MobName(evt.KillerMobId),
-		Place:   m.w.RoomTitle(evt.RoomId),
-	})
 	return events.Continue
 }

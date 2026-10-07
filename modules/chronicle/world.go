@@ -3,7 +3,6 @@ package chronicle
 import (
 	"encoding/json"
 
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -15,12 +14,6 @@ import (
 type world interface {
 	// Place is the title of the room the leader stands in ("" when unknown).
 	Place(userID int) string
-	// RoomTitle is a room's title ("" when it does not load).
-	RoomTitle(roomID int) string
-	// Name is the leader's character name, or fallback.
-	Name(userID int, fallback string) string
-	// MobName is a mob template's name ("" for 0 or an unknown id).
-	MobName(mobID int) string
 	// Online reports whether the user is signed in.
 	Online(userID int) bool
 	// Push sends the web client a GMCP message.
@@ -34,32 +27,15 @@ func (liveWorld) Place(userID int) string {
 	if u == nil || u.Character == nil {
 		return ""
 	}
-	return liveWorld{}.RoomTitle(u.Character.RoomId)
+	return roomTitle(u.Character.RoomId)
 }
 
-func (liveWorld) RoomTitle(roomID int) string {
+func roomTitle(roomID int) string {
 	if roomID <= 0 {
 		return ""
 	}
 	if r := rooms.LoadRoom(roomID); r != nil {
 		return r.Title
-	}
-	return ""
-}
-
-func (liveWorld) Name(userID int, fallback string) string {
-	if u := users.GetByUserId(userID); u != nil && u.Character != nil && u.Character.Name != "" {
-		return u.Character.Name
-	}
-	return fallback
-}
-
-func (liveWorld) MobName(mobID int) string {
-	if mobID <= 0 {
-		return ""
-	}
-	if spec := mobs.GetMobSpec(mobs.MobId(mobID)); spec != nil {
-		return spec.Character.Name
 	}
 	return ""
 }

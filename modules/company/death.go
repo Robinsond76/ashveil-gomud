@@ -165,7 +165,7 @@ func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID int, evt 
 		m.startAnchor(leaderUserID)
 	}
 	m.banter.noteFall(leaderUserID, companionID) // Phase 49: mourned at the battle's end
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Fell, Members: []string{companionName(c)}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Fell, Members: []string{companionName(c)}, Keys: []string{string(domain.CompanionMemberKey(c.ID))}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
 	mudlog.Info("company: companion died", "leader", leaderUserID, "companion", companionID, "op", death.OpID, "allowance", allowance)
 	if err := m.save(); err != nil {
 		mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)
@@ -287,7 +287,7 @@ func (m *CompanyModule) expire(leaderUserID, companionID int) error {
 		return err
 	}
 	mudlog.Info("company: companion lost", "leader", leaderUserID, "companion", companionID, "op", lost.OpID)
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Lost, Members: []string{lost.Name}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Lost, Members: []string{lost.Name}, Keys: []string{string(domain.CompanionMemberKey(c.ID))}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
 	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="red">%s is lost to you.</ansi> Their name is carved among your fallen.`, lost.Name))
 	return nil
 }

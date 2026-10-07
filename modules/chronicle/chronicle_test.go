@@ -52,24 +52,14 @@ type pushed struct {
 }
 
 type fakeWorld struct {
-	place   string
-	online  map[int]bool
-	pushes  []pushed
-	rooms   map[int]string
-	mobs    map[int]string
-	nameFor string
+	place  string
+	online map[int]bool
+	pushes []pushed
+	rooms  map[int]string
 }
 
-func (f *fakeWorld) Place(int) string        { return f.place }
-func (f *fakeWorld) RoomTitle(id int) string { return f.rooms[id] }
-func (f *fakeWorld) Name(_ int, fallback string) string {
-	if f.nameFor != "" {
-		return f.nameFor
-	}
-	return fallback
-}
-func (f *fakeWorld) MobName(id int) string { return f.mobs[id] }
-func (f *fakeWorld) Online(id int) bool    { return f.online[id] }
+func (f *fakeWorld) Place(int) string   { return f.place }
+func (f *fakeWorld) Online(id int) bool { return f.online[id] }
 func (f *fakeWorld) Push(id int, ns string, p any) {
 	f.pushes = append(f.pushes, pushed{id, ns, p})
 }
@@ -84,7 +74,7 @@ type rig struct {
 func newRig(t *testing.T) *rig {
 	t.Helper()
 	r := &rig{
-		w:     &fakeWorld{place: "the Waymark Inn", online: map[int]bool{7: true}, rooms: map[int]string{30: "the ford"}, mobs: map[int]string{12: "a wolf"}},
+		w:     &fakeWorld{place: "the Waymark Inn", online: map[int]bool{7: true}},
 		store: &memStore{},
 		now:   time.Unix(1_800_000_000, 0),
 	}
@@ -185,21 +175,6 @@ func TestTheTestAreaSnapshotsAndRestoresTheChronicle(t *testing.T) {
 	assert.Contains(t, userstate.Names(), "chronicle", "the module registered with the test area")
 }
 
-func TestTheLeadersOwnDeathIsRecordedWithTheKillerAndPlace(t *testing.T) {
-	r := newRig(t)
-	r.w.nameFor = "Wren"
-	r.m.onPlayerDeath(events.PlayerDeath{UserId: 7, RoomId: 30, CharacterName: "wren", KillerMobId: 12})
-	e := r.m.Log(7).Entries[0]
-	assert.Equal(t, chronicle.Fell, e.Kind)
-	assert.Equal(t, []string{"Wren"}, e.Members)
-	assert.Equal(t, "a wolf", e.Subject)
-	assert.Equal(t, "the ford", e.Place)
-	assert.Equal(t, "Wren fell to a wolf at the ford.", chronicle.Prose(e))
-
-	r.m.onPlayerDeath(events.PlayerDeath{UserId: 7, RoomId: 30, CharacterName: "wren"})
-	assert.Equal(t, "Wren fell at the ford.", chronicle.Prose(r.m.Log(7).Entries[1]), "an unknown killer is left out")
-}
-
 func TestThePackageSeamReachesTheModule(t *testing.T) {
 	r := newRig(t)
 	chronicle.SetProvider(r.m)
@@ -233,11 +208,13 @@ func TestChronicleCommandReadsInPagesAndByKind(t *testing.T) {
 	assert.Contains(t, page1, "The company slew the Hollow King at the Waymark Inn.")
 	assert.Equal(t, 12, strings.Count(page1, "\n  <ansi"), "twelve deeds a page")
 	assert.Contains(t, page1, "Page 1 of 2")
+	assert.Contains(t, page1, "chronicle 2", "page one points at the next")
 	assert.Contains(t, page1, "All told: 13 joined, 1 fallen, 1 bosses.", "the tally counts every deed")
 	assert.Less(t, strings.Index(page1, "wolf"), strings.Index(page1, "Hollow King"), "newest first")
 
 	page2 := r.m.render(7, "2")
-	assert.Contains(t, page2, "Page 2 of 2")
+	assert.Contains(t, page2, "Page 2 of 2, the oldest kept.")
+	assert.NotContains(t, page2, "chronicle 2", "the last page does not point at itself")
 	assert.NotContains(t, page2, "wolf")
 
 	assert.Equal(t, r.m.render(7, "99"), page2, "a page past the end shows the last")
@@ -270,7 +247,7 @@ func TestThePanelCarriesTheNewestDeedsTheTallyAndTheKindNames(t *testing.T) {
 	assert.Equal(t, "relic", p.Entries[0].Kind)
 	assert.Equal(t, "Relics", p.Entries[0].Label)
 	assert.Equal(t, "just now", p.Entries[0].Ago)
-	assert.Contains(t, p.Entries[0].Text, "took the Pale Crown from the Hollow King")
+	assert.Contains(t, p.Entries[0].Text, "found the Pale Crown on the Hollow King")
 	assert.Equal(t, "joined", p.Entries[1].Kind)
 
 	none := r.m.panelFor(99)

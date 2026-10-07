@@ -170,6 +170,12 @@ func defaultText(sc domain.Scenario, where string) string {
 	}
 }
 
+// recordDefeat writes the defeat the company woke from in its chronicle
+// (Phase 63), placed where it fell, not where it woke.
+func recordDefeat(userID int, sc domain.Scenario, fell *rooms.Room) {
+	chronicle.Record(userID, chronicle.Entry{Kind: chronicle.Defeated, Detail: defeatPhrase(sc.Kind), Ref: "scenario:" + sc.ID, Place: roomTitleOf(fell)})
+}
+
 // applyScenario carries out a scenario's effects once the company is where
 // it wakes. It runs in the same step that clears the death's pending mark,
 // after the move, so nothing is taken from a company that never woke.
@@ -177,8 +183,6 @@ func defaultText(sc domain.Scenario, where string) string {
 func (m *DeathModule) applyScenario(user *users.UserRecord, sc domain.Scenario, room *rooms.Room) []string {
 	c := user.Character
 	var lines []string
-	// Phase 63: a defeat the company woke from is a deed of the chronicle.
-	chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Defeated, Detail: defeatPhrase(sc.Kind), Ref: "scenario:" + sc.ID, Place: roomTitleOf(room)})
 	switch sc.Kind {
 	case domain.Rescued:
 		m.wearDown(user.UserId, sc)

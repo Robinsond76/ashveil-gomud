@@ -575,12 +575,30 @@ func TestDefeatScenarioIsWrittenInTheChronicle(t *testing.T) {
 	chronicle.SetProvider(mem)
 	t.Cleanup(func() { chronicle.SetProvider(nil) })
 	env := newDefeatEnv(t, 86)
-	forceScenario(t, "brigand-robbery")
+	forceScenario(t, "brigand-capture")
 	env.foe(86)
 	env.run("suicide", "")
 	got := mem.Log(env.user.UserId).Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Defeated}})
 	require.Len(t, got, 1)
-	assert.Equal(t, "scenario:brigand-robbery", got[0].Ref)
-	assert.Equal(t, "They were robbed of what they carried.", got[0].Detail)
+	assert.Equal(t, "scenario:brigand-capture", got[0].Ref)
+	assert.Equal(t, "They woke in captivity.", got[0].Detail)
+	// Placed where the company fell (room 2002), not where it woke (the brigand camp).
+	assert.Equal(t, rooms.LoadRoom(2002).Title, got[0].Place)
+
+	// The leader's own fall is written at the death itself, with the
+	// killer, before the defeat it led to (review fix: it came after).
+	var all []chronicle.Entry
+	for _, e := range mem.Log(env.user.UserId).Entries {
+		if e.Kind != chronicle.Joined { // the test company's own recruit
+			all = append(all, e)
+		}
+	}
+	require.Len(t, all, 2)
+	assert.Equal(t, chronicle.Fell, all[0].Kind)
+	assert.Equal(t, []string{"Ysabel"}, all[0].Members)
+	assert.Equal(t, []string{"leader"}, all[0].Keys)
+	assert.Equal(t, mobs.GetMobSpec(86).Character.Name, all[0].Subject)
+	assert.Equal(t, rooms.LoadRoom(2002).Title, all[0].Place)
+	assert.Equal(t, chronicle.Defeated, all[1].Kind)
 	assert.Contains(t, chronicle.Prose(got[0]), "The company was beaten")
 }

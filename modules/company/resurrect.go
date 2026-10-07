@@ -146,7 +146,7 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 		return domain.ResurrectionResult{}, err
 	}
 	result := domain.ResurrectionResult{ID: c.ID, Name: companionName(c), Level: state.Level}
-	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Raised, Members: []string{result.Name}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Raised, Members: []string{result.Name}, Keys: []string{string(domain.CompanionMemberKey(c.ID))}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
 	mudlog.Info("company: companion resurrected", "leader", leaderUserID, "companion", c.ID, "op", op, "level", state.Level, "room", roomID)
 	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, c.MobTemplateID, &state, c.Identity(), growthWeightsOf(c))
 	if err != nil {

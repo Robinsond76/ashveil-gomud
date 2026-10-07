@@ -755,6 +755,7 @@ func TestLiveSmoke(t *testing.T) {
 			t.Errorf("the formation was lost across a restart:\n%s", out)
 		}
 		p1b.do("orders oswin", `1\. When an ally is below 50% health, heal that ally first\.`) // Phase 61: orders persist
+		p1b.do("chronicle joined", `Tamsin Reed joined the company`) // Phase 63: the chronicle persists
 		out = p1b.do("status", `More: company status`)
 		if !strings.Contains(out, "Torvald") {
 			t.Errorf("status after restart: %s", out)

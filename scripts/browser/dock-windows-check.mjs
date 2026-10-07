@@ -1251,7 +1251,7 @@ await page.setViewportSize({ width: 1280, height: 900 });
     total: 9,
     tally: { joined: 2, boss: 1, relic: 1, fell: 1 },
     entries: [
-      { seq: 5, at: 1, ago: '2 hours ago', kind: 'relic', label: 'Relics', text: 'The company took the Pale Crown from the Hollow King at the Throne Room.' },
+      { seq: 5, at: 1, ago: '2 hours ago', kind: 'relic', label: 'Relics', text: 'The company found the Pale Crown on the Hollow King at the Throne Room.' },
       { seq: 4, at: 1, ago: '2 hours ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King at the Throne Room.' },
       { seq: 3, at: 1, ago: '1 day ago', kind: 'fell', label: 'Fallen', text: xss + ' fell to a wolf.' },
       { seq: 2, at: 1, ago: '3 days ago', kind: 'joined', label: 'Joined', text: 'Oswin joined the company at the Waymark Inn.' },
@@ -1262,6 +1262,7 @@ await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(c => window.gmcp('Company.Chronicle', c), chronicle);
   check((await chron()).includes('9 deeds recorded') && (await chron()).includes('The company slew the Hollow King'), 'Chronicle: the deeds in prose');
   check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: one row a deed');
+  check((await chron()).includes('The newest 4 are shown'), 'Chronicle: says when older deeds are only in the command');
   check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-chronicle img')), 'Chronicle: server text is text, never markup');
   await page.locator('#company-chronicle').getByRole('button', { name: 'Bosses' }).click();
   check(await page.locator('#company-chronicle .cmp-chron-item').count() === 1, 'Chronicle: the filter narrows to a kind');
@@ -1275,6 +1276,21 @@ await page.setViewportSize({ width: 1280, height: 900 });
   if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '63-chronicle.png') }); }
   await page.evaluate(() => window.gmcp('Company.Chronicle', { total: 0, tally: {}, entries: [] }));
   check((await chron()).includes('Nothing is written yet'), 'Chronicle: an empty record says so');
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), { ...chronicle, total: 4 });
+  check(!(await chron()).includes('are shown'), 'Chronicle: no "newest" note when every deed is shown');
+  // Closed and opened again (the dock's close, as the window menu does it),
+  // the tab shows the deeds it already holds without waiting for a new one.
+  await page.evaluate(() => {
+    const w = VirtualWindows.getWindows().find(v => v._id === 'Company');
+    if (w._win === 'docked') { w._removeDocked(); }
+    if (w._contentEl && w._contentEl.parentNode) { w._contentEl.parentNode.removeChild(w._contentEl); }
+    w._win = false;
+    w.reopen();
+  });
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  await page.waitForTimeout(50);
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: a reopened window shows the deeds at once');
 }
 
 await browser.close();
