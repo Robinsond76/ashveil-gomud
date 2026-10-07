@@ -693,12 +693,36 @@ check(await page.getByRole('tab', { name: 'Comm' }).count() === 1 && await page.
 await page.evaluate(() => window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Seen' }));
 check(await page.evaluate(() => document.querySelector('.dock-tabgroup-badge:not([hidden])') === null), 'no count while Comm shows');
 const dockTabs = () => page.evaluate(() => [...document.querySelectorAll('#dock-right [role=tab].dock-tabgroup-tab')].map(t => t.textContent));
-check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm"]', 'the dock\'s tabs: Character, Company, Combat, Comm');
+check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Bestiary"]', 'the dock\'s tabs: Character, Company, Combat, Comm, Bestiary');
 await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'Online').reopen());
-check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Who"]', 'Who appears when Online is enabled');
+check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Bestiary","Who"]', 'Who appears when Online is enabled');
 await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'KillStats').reopen());
 check((await dockTabs()).includes('Kills'), 'Kills appears when Kill Stats is enabled');
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'dock-full.png') }); }
+
+// --- Phase 66: the Bestiary tab ---
+const bestiaryFix = { entries: [
+  { id: 7, name: 'hollow wolf', zone: 'Dark Forest', level: 4, kills: 3, tier: 2, tier_name: 'defences', progress: '3 more kills to learn its habits', lore: ['A wolf of level 4, found in Dark Forest.', '<img src=x onerror="window.__xssb=1">'], defences: ['Armor turns aside about 10% of each blow.'] },
+  { id: 85, name: 'forest ogre', zone: 'Dark Forest', level: 22, boss: true, kills: 3, tier: 3, tier_name: 'habits', progress: 'everything is known', lore: ['A large ogre.'], defences: ['Resists hexes.'], habits: ['Winds up Crushing Blow now and then.'] },
+  { id: 1, name: 'rat', zone: '', level: 1, kills: 1, tier: 1, tier_name: 'lore', progress: '2 more kills to learn its defences', lore: ['A rat.'] },
+] };
+await page.getByRole('tab', { name: 'Bestiary' }).click();
+await page.evaluate(b => window.gmcp('Char.Bestiary', b), bestiaryFix);
+check(await page.evaluate(() => document.querySelectorAll('#bs-window details').length) === 3, 'bestiary: an entry for each kind');
+check(await page.evaluate(() => [...document.querySelectorAll('#bs-window .bs-zone')].map(z => z.textContent).join('|')) === 'Dark Forest|Elsewhere', 'bestiary: grouped by zone, none as Elsewhere');
+check(await page.evaluate(() => window.__xssb === undefined), 'bestiary: text is not run as markup');
+await page.evaluate(() => document.querySelector('#bs-window details').open = true);
+check(await page.evaluate(() => document.querySelector('#bs-window details .bs-body').textContent.includes('Defences') && !document.querySelector('#bs-window details .bs-body').textContent.includes('Habits')), 'bestiary: only the lines the tier has earned');
+await page.evaluate(b => window.gmcp('Char.Bestiary', b), bestiaryFix);
+check(await page.evaluate(() => document.querySelector('#bs-window details').open), 'bestiary: an open entry stays open across a refresh');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'bestiary-desk.png') }); }
+await page.setViewportSize({ width: 360, height: 740 });
+check(await page.evaluate(() => { const p = document.getElementById('bs-window'); return p.scrollWidth <= p.clientWidth + 1; }), 'bestiary: fits a 360px viewport');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'bestiary-phone.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => window.gmcp('Char.Bestiary', { entries: [] }));
+check(await page.evaluate(() => document.querySelector('#bs-window .bs-empty') !== null), 'bestiary: an empty one says how to fill it');
+await page.getByRole('tab', { name: 'Character' }).click();
 
 // --- Phase 32g2: the Battle view ---
 const battleFix = {
@@ -718,6 +742,11 @@ const battleFix = {
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Character' }).click();
 await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+// Phase 66: habits the bestiary knows of a foe show in the Battle view.
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.enemies[0].known = ['heals its allies', 'casts spells']; window.gmcp('Company.Battle', x); }, battleFix);
+check(await page.evaluate(() => { const n = document.querySelector('#combat-window .cbt-bestiary'); return n && n.textContent === 'Bestiary: the cutthroat captain heals its allies, casts spells'; }), 'Battle names the habits the bestiary knows');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+check(await page.locator('#combat-window .cbt-bestiary').count() === 0, 'Battle says nothing of a foe not yet learned');
 // Phase 30f: effective combat cells and reserve presentation are separate
 // from the saved Setup formation.
 await page.evaluate(b => {

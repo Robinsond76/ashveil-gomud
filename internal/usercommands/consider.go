@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -72,6 +73,9 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	lines = append(lines, rep.Lines()...)
 	if line := skillGapLine(user, g.Visible()); line != `` {
 		lines = append(lines, line)
+	}
+	if line := bestiary.FoeLine(bestiary.KillsOf(user.Character), g.Visible()); line != `` {
+		lines = append(lines, `<ansi fg="yellow-bold">Bestiary:</ansi> `+line+` (<ansi fg="command">bestiary [name]</ansi>)`)
 	}
 	lines = append(lines, fmt.Sprintf(`Type <ansi fg="command">scout %s</ansi> to see how they stand.`, GroupKeyword(room, g)))
 	user.SendText(strings.Join(lines, "\n"))
