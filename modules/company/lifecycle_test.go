@@ -1,6 +1,7 @@
 package company
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,7 +29,12 @@ func TestMain(m *testing.M) {
 	// Pure company tests do not load optional modules. Wiring fixtures load
 	// and register the real shared cargo provider explicitly through plugins.Load.
 	encumbrance.SetProvider(nil)
-	os.Exit(m.Run())
+	code := m.Run()
+	if bad := checkStagedShipped(); len(bad) > 0 && code == 0 {
+		fmt.Fprintf(os.Stderr, "tests wrote over shipped files copied by copyShipped (remove, then write): %v\n", bad)
+		code = 1
+	}
+	os.Exit(code)
 }
 
 func TestPluginStoreRejectsMalformedDataWithoutOverwritingIt(t *testing.T) {

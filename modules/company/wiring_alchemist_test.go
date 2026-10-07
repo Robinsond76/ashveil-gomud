@@ -158,20 +158,21 @@ func TestAnAlchemistThrowsNothingItHasNotLearned(t *testing.T) {
 }
 
 func TestAnApothecaryDraughtHealsMoreSplashesAndCleans(t *testing.T) {
-	healed := func(class string, level int) (int, *brawl) {
+	// One brawl per class throws the draught eight times: a fresh fixture for
+	// every throw cost about two seconds each (company test speed-up).
+	throws := func(class string, level int) (sum int) {
 		b := alchemistBrawl(t, class, level, "draught")
 		b.startWitchFight()
-		b.hurtOne(1, 100)
-		return b.companion(1).Character.Health - 100, b
+		for i := 0; i < 8; i++ {
+			b.aria.Character.FlasksSpent = 0
+			b.hurtOne(1, 100)
+			sum += b.companion(1).Character.Health - 100
+		}
+		return sum
 	}
 	// A draught's heal is rolled, so compare totals over several throws
 	// (39h review: one throw each flaked about 1 run in 10).
-	plain, potent := 0, 0
-	for i := 0; i < 8; i++ {
-		p, _ := healed("", 10)
-		q, _ := healed("apothecary", 10)
-		plain, potent = plain+p, potent+q
-	}
+	plain, potent := throws("", 10), throws("apothecary", 10)
 	assert.Greater(t, potent, plain, "Potent draughts heal 30% more")
 
 	// Splash draught (20): the next most hurt ally takes 30% as much.
@@ -217,10 +218,12 @@ func TestABombardiersFlasksBurnHotterWiderAndLeaveFoesAlight(t *testing.T) {
 	assert.Equal(t, 3, bombBurning, "Pitch and tar leaves them alight")
 }
 
+// Ten fights a class (twenty before the company test speed-up): the gap
+// between 100% and 70% of Sparks is far wider than the dice spread.
 func TestHotterFlasksBurnHarderThanAPlainOne(t *testing.T) {
 	total := func(class string) (sum int) {
 		t.Run(class+"/total", func(t *testing.T) {
-			for i := 0; i < 20; i++ {
+			for i := 0; i < 10; i++ {
 				t.Run("", func(t *testing.T) {
 					b := alchemistBrawl(t, class, 10, "draught", "fireflask")
 					b.startWitchFight()
