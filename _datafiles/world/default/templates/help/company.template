@@ -222,6 +222,14 @@ half an hour to eight hours, and comes home with modest gold, a
 small find, word of a lair, or a wound. <ansi fg="command">errands</ansi> shows who is away, and the
 Company window has an Errands tab (<ansi fg="command">help errands</ansi>).
 
+<ansi fg="yellow-bold">Rites</ansi>
+
+A companion lost for good, or one who leaves after long service, is
+waiting to be mourned. At your next camp or inn you can hold rites for
+them (<ansi fg="command">rites</ansi>, <ansi fg="command">rite hold</ansi>): the close companions are steadied, and a
+rite let pass costs the company loyalty. The Company window has a Rites tab
+(<ansi fg="command">help rites</ansi>).
+
 <ansi fg="yellow-bold">The chronicle</ansi>
 
 Your company keeps a record of its deeds: who joined, left or fell, the

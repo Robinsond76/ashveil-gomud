@@ -74,8 +74,9 @@ func (c *Character) wornGear() (string, map[string]int) {
 		if slot == items.Pack {
 			continue
 		}
-		if it := c.Equipment.Get(slot); it.ItemId > 0 && items.IsRelicItem(it.ItemId) {
-			key += strconv.Itoa(it.ItemId) + ":" + strconv.Itoa(it.AwakenedMask()) + "," // Phase 67: a waking relic changes the key
+		if it := c.Equipment.Get(slot); it.ItemId > 0 && (items.IsRelicItem(it.ItemId) || it.Trophy > 0) {
+			// Phase 67: a waking relic changes the key; Phase 71: so does an enchant.
+			key += strconv.Itoa(it.ItemId) + ":" + strconv.Itoa(it.AwakenedMask()) + ":" + strconv.Itoa(it.Trophy) + ","
 		}
 	}
 	if key == "" {

@@ -82,6 +82,8 @@ forgiven the warning. To mend one, set a guardian's ward to someone else
 (a rival's refusal costs the bond each hour), and let them camp, win and
 agree about your choices.
 
+Holding rites for a companion you have lost brings the ones who trusted them closer (<ansi fg="command">help rites</ansi>).
+
 Bonds are saved with the company and kept through logging out. A companion
 who leaves or is dismissed takes their bonds with them. Bonds give no gold,
 experience or power, and they never move the world's clock.

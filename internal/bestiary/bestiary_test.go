@@ -1,10 +1,15 @@
 package bestiary
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTiersComeFromKills(t *testing.T) {
@@ -56,4 +61,35 @@ func TestKillsOfReadsTheCharactersOwnTally(t *testing.T) {
 	c.KD.AddMobKill(85)
 	c.KD.AddMobKill(85)
 	assert.Equal(t, map[int]int{85: 2}, KillsOf(c))
+}
+
+// Phase 71: the habits tier names the trophies a kind may yield, by race,
+// with the chance for an ordinary foe and "always" for a boss; a kind whose
+// race carries none says nothing, and nothing shows before the habits tier.
+func TestHabitsNameTheTrophiesAKindMayYield(t *testing.T) {
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 99751, Name: "grave ash", Type: items.Commodity, Value: 12,
+		Trophy: &items.TrophySpec{Part: items.TrophyAsh, Races: []string{"ghostly spirit"}, Chance: 25, Effects: map[string]int{classes.SpellPct: 6}}})
+	t.Cleanup(func() { items.RemoveTestItemSpec(99751) })
+
+	foe := &mobs.Mob{MobId: 99752, Character: *characters.New()}
+	foe.Character.Name = "wisp"
+	entry, ok := Build(foe, 6)
+	require.True(t, ok)
+	assert.Contains(t, strings.Join(entry.Habits, "\n"), "Hunted for trophies: grave ash (about 25 in 100 kills) (help enchanting).")
+	early, _ := Build(foe, 3)
+	assert.NotContains(t, strings.Join(early.Habits, "\n"), "Hunted for")
+	assert.NotContains(t, strings.Join(early.Defences, "\n"), "Hunted for")
+
+	foe.Boss = true
+	entry, _ = Build(foe, 3)
+	assert.Contains(t, strings.Join(entry.Habits, "\n"), "Hunted for a trophy it always yields, one of: grave ash (help enchanting).")
+
+	foe.Character.Zone = "Training"
+	entry, _ = Build(foe, 3)
+	assert.NotContains(t, strings.Join(entry.Habits, "\n"), "Hunted for", "the training yard yields none")
+
+	items.RemoveTestItemSpec(99751)
+	foe.Character.Zone = ""
+	entry, _ = Build(foe, 3)
+	assert.NotContains(t, strings.Join(entry.Habits, "\n"), "Hunted for")
 }

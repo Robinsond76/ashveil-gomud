@@ -196,3 +196,17 @@ func TestErrandDeedProseAndWords(t *testing.T) {
 	}
 	assert.True(t, Errand.Valid())
 }
+
+// Phase 74: rites read as sentences, held or let pass, and answer to their
+// filter words.
+func TestRitesProse(t *testing.T) {
+	held := Entry{Kind: Rites, Subject: "Hild", Detail: "lost for good", Ref: "rite:held"}
+	assert.Equal(t, "The company held rites for Hild (lost for good).", Prose(held))
+	assert.Equal(t, "The company let Hild go without a word (left the company).", Prose(Entry{Kind: Rites, Subject: "Hild", Detail: "left the company", Ref: "rite:skipped"}))
+	assert.Equal(t, "The company held rites for one of their own.", Prose(Entry{Kind: Rites}))
+	for _, w := range []string{"rites", "rite", "funerals"} {
+		k, ok := KindByWord(w)
+		assert.True(t, ok, w)
+		assert.Equal(t, Rites, k)
+	}
+}

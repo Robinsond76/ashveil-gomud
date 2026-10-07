@@ -271,7 +271,7 @@ func (m *CompanyModule) moraleDepartures(uid int) error {
 		if err := m.removeCompanion(uid, current, c); err != nil {
 			return err
 		}
-		m.alignmentWorld().Tell(uid, fmt.Sprintf("%s has lost faith in your company and deserts.", nameOf(c, m.companionLabel(uid, c.ID))))
+		m.alignmentWorld().Tell(uid, fmt.Sprintf("%s has lost faith in your company and deserts.", nameOf(c, m.companionLabel(uid, c.ID)))+m.riteHint(uid, c.ID))
 	}
 	return nil
 }

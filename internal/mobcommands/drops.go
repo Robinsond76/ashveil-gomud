@@ -70,8 +70,9 @@ func lastOfGroup(mob *mobs.Mob, room *rooms.Room) bool {
 func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]personalDrop {
 	profile, ok := dropProfile(room)
 	relics := mob.Boss && len(loot.RelicsOf(int(mob.MobId))) > 0
-	masterworks := mob.Boss && len(loot.InstrumentDropsOf(int(mob.MobId))) > 0 // camp music
-	if (!ok && !relics && !masterworks) || len(contributors) == 0 {
+	masterworks := mob.Boss && len(loot.InstrumentDropsOf(int(mob.MobId))) > 0                   // camp music
+	trophies := mob.Character.Zone != `Training` && len(loot.Trophies(mob.Character.Race())) > 0 // Phase 71
+	if (!ok && !relics && !masterworks && !trophies) || len(contributors) == 0 {
 		return nil
 	}
 	kind := loot.Ordinary
@@ -99,8 +100,13 @@ func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]pers
 		if masterworks {
 			add(loot.InstrumentRoll(int(mob.MobId), src), nil)
 		}
+		if trophies {
+			if t := loot.TrophyRoll(kind, mob.Character.Race(), src); t != nil {
+				d.Items = append(d.Items, *t)
+			}
+		}
 		if !ok {
-			// A boss outside any drop profile drops only its relic.
+			// A boss outside any drop profile drops only its relic and trophy.
 			if len(d.Items) > 0 {
 				out[uid] = d
 				noteDrop(uid, d)
