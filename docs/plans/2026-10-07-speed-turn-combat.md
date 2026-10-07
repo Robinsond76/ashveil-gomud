@@ -328,6 +328,37 @@ Order: 82a and 82b may run in parallel (web client vs Go). 82c needs 82b.
   column with the terminal below it showing the battle lines in the smaller
   size; closing restores the old layout and font.
 
+#### 82a as built (2026-10-07, full autonomy): amendments and checks
+
+- **Built against master, not after 79.** Robinson paused every other task
+  for the overhaul (14:03), so 79 is parked; 79 will rebase on this layout.
+- **Markup:** `#main-container` holds `#dock-left`, `#center` (a column:
+  `#battle-pane` then `#terminal`) and `#dock-right`. The battle screen is
+  appended into `#battle-pane` and its CSS is static (no fixed overlay);
+  `body.battle-open` and `body[data-battle-text]` carry the state for CSS
+  and the terminal's font step.
+- **Font step:** `resizeTerminal` steps 20→15, 18→14, 16→13 and 13→11
+  while the pane is open and "Smaller text" (default) is on; the choice is
+  the `ashveil-battle-text` key (`smaller`/`same`) and a checkbox on the
+  screen's head, not a settings menu entry (it belongs beside the thing it
+  changes).
+- **Scale:** whole-number 1-4× of 320×180 from the pane width and half the
+  column height, so the terminal always keeps at least half the column on
+  desktop (27 rows at 1280×800 with one dock, both browsers).
+- **Phone:** the pane takes at most 55% of the Game view and scrolls, so
+  the whole screen (legend, focus buttons, Help) is reachable; a second
+  Retreat button sits in the head, in reach without scrolling (phone only).
+  A battle opening brings the Game view up (the pane lives there), also
+  when it starts while the last fight's outcome still shows; Help keeps the
+  pane open above the text it lands in. These were failures of the real
+  phone check, not design choices made up front.
+- **Checks:** `scripts/browser/battle-pane-check.mjs` (Chromium and
+  Firefox; Firefox installed in the container for it), `battle-check.mjs`,
+  `dock-windows-check.mjs`, `mobile-check.mjs`, `make js-lint`,
+  `make js-test`, help tests. Screenshots:
+  `/mnt/project-files/screens/82a-{desktop-one-dock,desktop-no-dock,desktop-restored,phone}-{chromium,firefox}.png`.
+- **Left for 82d:** the "Round N" terminal line and the turn-order strip.
+
 ### Phase 82b: speed-ordered turns (Go)
 
 - **Rebase and measure point:** merge phase 81 (class tuning) before the
