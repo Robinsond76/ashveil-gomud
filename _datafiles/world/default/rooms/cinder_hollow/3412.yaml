@@ -1,0 +1,25 @@
+roomid: 3412
+zone: Cinder Hollow
+title: Charred Clearing
+description: Scorched earth steams faintly even after rain. A cart wheel lies half-burnt in a
+  ditch.
+biome: land
+exits:
+  east:
+    roomid: 3413
+  west:
+    roomid: 3411
+  south:
+    roomid: 3420
+  north:
+    roomid: 3405
+resources:
+- firewood
+- forage
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: hollow

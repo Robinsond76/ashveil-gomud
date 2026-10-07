@@ -1,0 +1,23 @@
+roomid: 3602
+zone: Hollowweb Deep
+title: Gloomy Hollow
+description: Pale cocoons dangle overhead and the ground is spun with threads. A web shivers on
+  its own.
+biome: forest
+exits:
+  east:
+    roomid: 3603
+  west:
+    roomid: 3601
+  south:
+    roomid: 3608
+resources:
+- game
+- forage
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: web

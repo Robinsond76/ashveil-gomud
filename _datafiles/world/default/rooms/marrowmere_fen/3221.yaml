@@ -1,0 +1,17 @@
+roomid: 3221
+zone: Marrowmere Fen
+title: Sodden Staithe
+description: Boardwalk planks have sunk a hand's width into the peat.
+biome: land
+exits:
+  east:
+    roomid: 3222
+  north:
+    roomid: 3215
+resources:
+- firewood
+- herbs
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true

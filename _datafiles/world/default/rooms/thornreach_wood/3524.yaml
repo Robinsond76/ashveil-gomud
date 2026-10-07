@@ -1,0 +1,23 @@
+roomid: 3524
+zone: Thornreach Wood
+title: The Wolf's Hollow
+description: A huge hollow tree stands apart from the others, its roots bared like knuckles. Gnawed bones lie in heaps around it.
+biome: forest
+exits:
+  east:
+    roomid: 3525
+  west:
+    roomid: 3523
+  north:
+    roomid: 3518
+resources:
+- shelter
+maplegend: Cave
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 40

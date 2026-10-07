@@ -1,0 +1,22 @@
+roomid: 3615
+zone: Hollowweb Deep
+title: Tangled Gallery
+description: Pale cocoons dangle overhead and the ground is spun with threads. A shrivelled husk
+  hangs in a cocoon.
+biome: dungeon
+exits:
+  east:
+    roomid: 3616
+  west:
+    roomid: 3614
+  south:
+    roomid: 3621
+  north:
+    roomid: 3607
+resources:
+- forage
+- shelter
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

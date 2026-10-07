@@ -1,0 +1,17 @@
+roomid: 3801
+zone: Glassvault Depths
+title: Glittering Grotto
+description: Water drips from the roof into pools that never freeze. Cave moths drift around a
+  glowing fungus.
+biome: cave
+exits:
+  east:
+    roomid: 3802
+  south:
+    roomid: 3806
+resources:
+- water
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

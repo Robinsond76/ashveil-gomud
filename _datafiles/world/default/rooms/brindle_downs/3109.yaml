@@ -1,0 +1,22 @@
+roomid: 3109
+zone: Brindle Downs
+title: Sheep-cropped Tump
+description: Wind combs the long grass flat and the sky feels very large. A gorse thicket hides
+  the next rise.
+biome: land
+exits:
+  east:
+    roomid: 3110
+  west:
+    roomid: 3108
+  south:
+    roomid: 3116
+  north:
+    roomid: 3103
+resources:
+- game
+- forage
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

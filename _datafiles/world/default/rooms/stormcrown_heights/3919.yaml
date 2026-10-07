@@ -1,0 +1,21 @@
+roomid: 3919
+zone: Stormcrown Heights
+title: Wind-scoured Crag
+description: Snow streams off the ridge in long banners and the wind never stops.
+biome: snow
+exits:
+  east:
+    roomid: 3920
+  west:
+    roomid: 3918
+  south:
+    roomid: 3925
+  north:
+    roomid: 3911
+resources:
+- water
+- shelter
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

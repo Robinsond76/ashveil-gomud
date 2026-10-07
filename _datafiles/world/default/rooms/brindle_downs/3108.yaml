@@ -1,0 +1,27 @@
+roomid: 3108
+zone: Brindle Downs
+title: The Drovers' Rest
+description: A long low alehouse built for cattle drovers, with a hearth big enough to roast a
+  calf and benches worn smooth by a century of boots. The landlord keeps a slate of prices and
+  a bed for any company that pays.
+biome: city
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3109
+  west:
+    roomid: 3107
+  south:
+    roomid: 3115
+  north:
+    roomid: 3102
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true

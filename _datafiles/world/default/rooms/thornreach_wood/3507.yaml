@@ -1,0 +1,21 @@
+roomid: 3507
+zone: Thornreach Wood
+title: Bramble Root Path
+description: Ancient trees lean over the path and the light is green and dim. Fresh claw marks
+  score a nearby oak.
+biome: forest
+exits:
+  east:
+    roomid: 3508
+  west:
+    roomid: 3506
+  south:
+    roomid: 3515
+  north:
+    roomid: 3501
+resources:
+- firewood
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

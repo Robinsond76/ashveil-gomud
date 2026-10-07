@@ -1,0 +1,26 @@
+roomid: 3410
+zone: Cinder Hollow
+title: The Cinder Arms
+description: A long burnt-timber inn rebuilt in dark oak by charcoal burners. Black tallow candles
+  gutter on every table, and the landlord keeps a loaded crossbow behind the bar.
+biome: city
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3411
+  west:
+    roomid: 3409
+  south:
+    roomid: 3418
+  north:
+    roomid: 3404
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

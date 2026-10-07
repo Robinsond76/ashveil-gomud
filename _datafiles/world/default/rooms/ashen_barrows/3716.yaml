@@ -1,0 +1,21 @@
+roomid: 3716
+zone: Ashen Barrows
+title: Silent Gallery
+description: Stone arches hold up a ceiling of dry roots and old dust. Bone dust crunches underfoot.
+biome: dungeon
+exits:
+  east:
+    roomid: 3717
+  west:
+    roomid: 3715
+  south:
+    roomid: 3722
+  north:
+    roomid: 3708
+resources:
+- shelter
+- firewood
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

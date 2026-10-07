@@ -1,0 +1,16 @@
+roomid: 3405
+zone: Cinder Hollow
+title: Ashen Burn
+description: Cinders crunch underfoot and the air smells of old smoke. A smouldering stump pops
+  and spits sparks.
+biome: land
+exits:
+  south:
+    roomid: 3412
+resources:
+- herbs
+- game
+mapx: 6
+mapy: 0
+mapz: 0
+hascoordinates: true

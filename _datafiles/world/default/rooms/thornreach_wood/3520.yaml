@@ -1,0 +1,17 @@
+roomid: 3520
+zone: Thornreach Wood
+title: Darkling Coppice
+description: Ancient trees lean over the path and the light is green and dim.
+biome: land
+exits:
+  west:
+    roomid: 3519
+  north:
+    roomid: 3512
+resources:
+- herbs
+- firewood
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

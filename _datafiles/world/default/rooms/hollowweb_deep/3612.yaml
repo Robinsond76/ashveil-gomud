@@ -1,0 +1,22 @@
+roomid: 3612
+zone: Hollowweb Deep
+title: Dim Under-Root
+description: The air is still and cold, and the trees are wrapped in silk. A shrivelled husk hangs
+  in a cocoon.
+biome: forest
+exits:
+  east:
+    roomid: 3613
+  west:
+    roomid: 3611
+  south:
+    roomid: 3620
+  north:
+    roomid: 3605
+resources:
+- forage
+- game
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true

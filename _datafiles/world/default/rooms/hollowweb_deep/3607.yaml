@@ -1,0 +1,25 @@
+roomid: 3607
+zone: Hollowweb Deep
+title: Hushed Nest
+description: The air is still and cold, and the trees are wrapped in silk. Dozens of tiny eyes
+  glint among the webs.
+biome: forest
+exits:
+  east:
+    roomid: 3608
+  west:
+    roomid: 3606
+  south:
+    roomid: 3615
+  north:
+    roomid: 3601
+resources:
+- herbs
+- forage
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: web

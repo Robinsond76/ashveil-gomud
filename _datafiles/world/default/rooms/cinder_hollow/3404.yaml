@@ -1,0 +1,18 @@
+roomid: 3404
+zone: Cinder Hollow
+title: Blackened Stack
+description: Scorched earth steams faintly even after rain. A smouldering stump pops and spits
+  sparks.
+biome: land
+exits:
+  west:
+    roomid: 3403
+  south:
+    roomid: 3410
+resources:
+- game
+- herbs
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true

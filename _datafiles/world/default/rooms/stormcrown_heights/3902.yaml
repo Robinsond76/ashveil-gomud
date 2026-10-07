@@ -1,0 +1,22 @@
+roomid: 3902
+zone: Stormcrown Heights
+title: Windblown Crown Path
+description: Snow streams off the ridge in long banners and the wind never stops. A shattered
+  banner lies under the ice.
+biome: snow
+exits:
+  east:
+    roomid: 3903
+  west:
+    roomid: 3901
+  south:
+    roomid: 3907
+resources:
+- shelter
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: heights

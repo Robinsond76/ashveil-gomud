@@ -1,0 +1,17 @@
+roomid: 3306
+zone: Greywatch Pass
+title: Scree Tarn Edge
+description: Loose scree shifts underfoot at every step. Old watch-fire ash lies in a stone ring.
+biome: mountains
+exits:
+  east:
+    roomid: 3307
+  west:
+    roomid: 3213
+resources:
+- game
+- herbs
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

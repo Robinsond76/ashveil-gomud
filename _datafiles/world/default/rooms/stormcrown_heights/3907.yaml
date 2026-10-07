@@ -1,0 +1,25 @@
+roomid: 3907
+zone: Stormcrown Heights
+title: Bitter Peak
+description: Ice crusts the rock and the path is a thread of footprints. A distant roar rolls
+  down the mountain.
+biome: snow
+exits:
+  east:
+    roomid: 3908
+  west:
+    roomid: 3906
+  south:
+    roomid: 3915
+  north:
+    roomid: 3902
+resources:
+- game
+- water
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: heights

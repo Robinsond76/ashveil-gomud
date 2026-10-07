@@ -1,0 +1,24 @@
+roomid: 3219
+zone: Marrowmere Fen
+title: Brackish Reedbed
+description: Black water stands between tussocks of reed and sedge.
+biome: shore
+exits:
+  east:
+    roomid: 3220
+  west:
+    roomid: 3218
+  south:
+    roomid: 3224
+  north:
+    roomid: 3211
+resources:
+- fishing
+- herbs
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: fen

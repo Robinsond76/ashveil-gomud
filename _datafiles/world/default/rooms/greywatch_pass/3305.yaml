@@ -1,0 +1,18 @@
+roomid: 3305
+zone: Greywatch Pass
+title: Echoing Ledge
+description: Cold wind funnels through the gap and snatches at cloaks. Broken arrow shafts litter
+  the ground.
+biome: mountains
+exits:
+  west:
+    roomid: 3304
+  south:
+    roomid: 3311
+resources:
+- game
+- water
+mapx: 5
+mapy: 0
+mapz: 0
+hascoordinates: true

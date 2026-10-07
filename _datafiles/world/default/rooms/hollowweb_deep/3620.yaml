@@ -1,0 +1,19 @@
+roomid: 3620
+zone: Hollowweb Deep
+title: Sticky Under-Root
+description: Pale cocoons dangle overhead and the ground is spun with threads.
+biome: dungeon
+exits:
+  west:
+    roomid: 3619
+  south:
+    roomid: 3625
+  north:
+    roomid: 3612
+resources:
+- firewood
+- herbs
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,17 @@
+roomid: 3504
+zone: Thornreach Wood
+title: Bramble Ride
+description: Ancient trees lean over the path and the light is green and dim. Something has rubbed
+  bark off the nearest trunk, very high up.
+biome: forest
+exits:
+  west:
+    roomid: 3503
+  south:
+    roomid: 3510
+resources:
+- forage
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true

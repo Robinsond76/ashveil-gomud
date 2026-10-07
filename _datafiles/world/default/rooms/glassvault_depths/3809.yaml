@@ -1,0 +1,24 @@
+roomid: 3809
+zone: Glassvault Depths
+title: The Glassblower's Camp
+description: A miners' camp of tents and lanterns at a crystal-lined pool. A cook and a surgeon
+  serve the diggers and anyone with coin.
+biome: house
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3810
+  west:
+    roomid: 3808
+  south:
+    roomid: 3816
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

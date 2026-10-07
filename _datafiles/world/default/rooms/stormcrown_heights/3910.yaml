@@ -1,0 +1,21 @@
+roomid: 3910
+zone: Stormcrown Heights
+title: Rimed Ridge
+description: Cloud boils below and lightning flickers along the ridge. Old climbers' ropes hang
+  frozen from a crag.
+biome: snow
+exits:
+  east:
+    roomid: 3911
+  west:
+    roomid: 3909
+  south:
+    roomid: 3918
+  north:
+    roomid: 3904
+resources:
+- game
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

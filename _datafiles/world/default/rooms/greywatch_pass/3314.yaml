@@ -1,0 +1,20 @@
+roomid: 3314
+zone: Greywatch Pass
+title: Grey Tarn Edge
+description: Cold wind funnels through the gap and snatches at cloaks. A raven watches from a
+  ledge above.
+biome: cliffs
+exits:
+  east:
+    roomid: 3315
+  south:
+    roomid: 3320
+  north:
+    roomid: 3307
+resources:
+- shelter
+- herbs
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

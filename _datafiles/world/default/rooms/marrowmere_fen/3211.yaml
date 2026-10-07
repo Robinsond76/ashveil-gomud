@@ -1,0 +1,19 @@
+roomid: 3211
+zone: Marrowmere Fen
+title: Peaty Staithe
+description: Mist lies low over the fen and every footstep squelches. A heron stands motionless
+  on one leg.
+biome: shore
+exits:
+  east:
+    roomid: 3212
+  west:
+    roomid: 3210
+  south:
+    roomid: 3219
+resources:
+- fishing
+mapx: 5
+mapy: 1
+mapz: 0
+hascoordinates: true

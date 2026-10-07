@@ -1,0 +1,20 @@
+roomid: 3603
+zone: Hollowweb Deep
+title: Tangled Passage
+description: Pale cocoons dangle overhead and the ground is spun with threads. Something drops
+  from the branches and skitters away.
+biome: dungeon
+exits:
+  east:
+    roomid: 3604
+  west:
+    roomid: 3602
+  south:
+    roomid: 3609
+resources:
+- firewood
+- forage
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

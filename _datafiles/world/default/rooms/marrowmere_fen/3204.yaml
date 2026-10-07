@@ -1,0 +1,18 @@
+roomid: 3204
+zone: Marrowmere Fen
+title: Peaty Reedbed
+description: Frogs fall silent as you pass and the reeds close behind. A heron stands motionless
+  on one leg.
+biome: land
+exits:
+  west:
+    roomid: 3203
+  south:
+    roomid: 3210
+resources:
+- forage
+- game
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true

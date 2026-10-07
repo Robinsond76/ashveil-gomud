@@ -17,3 +17,6 @@ mapx: 2
 mapy: 5
 mapz: 0
 hascoordinates: true
+encounter:
+  enabled: true
+  table: fringe

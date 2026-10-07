@@ -1,0 +1,20 @@
+roomid: 3102
+zone: Brindle Downs
+title: Stony Hollow
+description: A drystone wall runs along the slope, patched with turf. Bleached sheep bones lie
+  by the track.
+biome: land
+exits:
+  east:
+    roomid: 3103
+  west:
+    roomid: 3101
+  south:
+    roomid: 3108
+resources:
+- game
+- forage
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true

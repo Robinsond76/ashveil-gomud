@@ -1,0 +1,17 @@
+roomid: 3122
+zone: Brindle Downs
+title: Open Drove Road
+description: A drystone wall runs along the slope, patched with turf.
+biome: land
+exits:
+  west:
+    roomid: 3121
+  north:
+    roomid: 3117
+resources:
+- firewood
+- herbs
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true

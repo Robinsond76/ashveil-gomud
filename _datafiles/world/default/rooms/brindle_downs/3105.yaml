@@ -1,0 +1,18 @@
+roomid: 3105
+zone: Brindle Downs
+title: Heathery Sheepwalk
+description: Wind combs the long grass flat and the sky feels very large. Bleached sheep bones
+  lie by the track.
+biome: forest
+exits:
+  west:
+    roomid: 3104
+  south:
+    roomid: 3111
+resources:
+- firewood
+- game
+mapx: 5
+mapy: 0
+mapz: 0
+hascoordinates: true

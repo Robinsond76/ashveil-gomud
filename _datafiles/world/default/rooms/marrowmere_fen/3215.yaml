@@ -1,0 +1,26 @@
+roomid: 3215
+zone: Marrowmere Fen
+title: The Bittern Inn
+description: A stilted inn above the dank, reed-thatched and smoky. Its landlady trades eel pies
+  and dry beds to anyone who has crossed the fen.
+biome: city
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3216
+  west:
+    roomid: 3214
+  south:
+    roomid: 3221
+  north:
+    roomid: 3207
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

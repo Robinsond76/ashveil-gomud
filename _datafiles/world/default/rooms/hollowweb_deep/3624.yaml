@@ -1,0 +1,20 @@
+roomid: 3624
+zone: Hollowweb Deep
+title: Gloomy Passage
+description: Something drops from the branches and skitters away.
+biome: forest
+exits:
+  east:
+    roomid: 3625
+  north:
+    roomid: 3619
+resources:
+- game
+- forage
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: web

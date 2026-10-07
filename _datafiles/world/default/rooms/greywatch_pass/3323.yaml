@@ -1,0 +1,23 @@
+roomid: 3323
+zone: Greywatch Pass
+title: Guardian's Gap
+description: A narrow cleft in the pass is blocked by a huge cairn of ice and boulders. Something cold and heavy waits in the dark behind it.
+biome: mountains
+exits:
+  east:
+    roomid: 3324
+  west:
+    roomid: 3322
+  north:
+    roomid: 3317
+resources:
+- shelter
+maplegend: Cave
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 40

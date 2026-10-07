@@ -1,0 +1,18 @@
+roomid: 3703
+zone: Ashen Barrows
+title: Vaulted Gallery
+description: Stone arches hold up a ceiling of dry roots and old dust. A brazier of green fire
+  burns without fuel.
+biome: dungeon
+exits:
+  west:
+    roomid: 3702
+  south:
+    roomid: 3709
+resources:
+- firewood
+- shelter
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

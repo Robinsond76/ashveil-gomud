@@ -1,0 +1,21 @@
+roomid: 3216
+zone: Marrowmere Fen
+title: Heron Backwater
+description: Black water stands between tussocks of reed and sedge. A rotted punt lies half-sunk
+  in the mud.
+biome: shore
+exits:
+  east:
+    roomid: 3217
+  west:
+    roomid: 3215
+  south:
+    roomid: 3222
+  north:
+    roomid: 3208
+resources:
+- herbs
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

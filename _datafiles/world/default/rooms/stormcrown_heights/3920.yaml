@@ -1,0 +1,17 @@
+roomid: 3920
+zone: Stormcrown Heights
+title: Bitter Ridge
+description: Ice crusts the rock and the path is a thread of footprints.
+biome: cliffs
+exits:
+  west:
+    roomid: 3919
+  north:
+    roomid: 3912
+resources:
+- shelter
+- firewood
+mapx: 7
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,16 @@
+roomid: 3521
+zone: Thornreach Wood
+title: Mossy Root Path
+description: Roots as thick as a man's waist cross the track.
+biome: forest
+exits:
+  east:
+    roomid: 3522
+  north:
+    roomid: 3515
+resources:
+- shelter
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true

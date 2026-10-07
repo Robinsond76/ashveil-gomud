@@ -1,0 +1,21 @@
+roomid: 3107
+zone: Brindle Downs
+title: Long Down
+description: Short turf rolls away in every direction, cropped by sheep. A cairn of white stones
+  marks the way.
+biome: land
+exits:
+  east:
+    roomid: 3108
+  west:
+    roomid: 3106
+  south:
+    roomid: 3114
+  north:
+    roomid: 3101
+resources:
+- forage
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

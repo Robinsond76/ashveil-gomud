@@ -1,0 +1,17 @@
+roomid: 3120
+zone: Brindle Downs
+title: Stony Ridge
+description: Wind combs the long grass flat and the sky feels very large.
+biome: land
+exits:
+  east:
+    roomid: 3121
+  north:
+    roomid: 3115
+resources:
+- game
+- forage
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true

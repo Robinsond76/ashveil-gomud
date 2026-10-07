@@ -1,0 +1,22 @@
+roomid: 3417
+zone: Cinder Hollow
+title: Ashen Stack
+description: Charcoal burners abandoned the stacks here and bandits took their place. Fresh bootprints
+  cross the ash.
+biome: land
+exits:
+  east:
+    roomid: 3418
+  west:
+    roomid: 3416
+  south:
+    roomid: 3423
+  north:
+    roomid: 3409
+resources:
+- firewood
+- game
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true

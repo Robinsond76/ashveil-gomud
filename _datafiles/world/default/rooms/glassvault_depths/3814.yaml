@@ -1,0 +1,24 @@
+roomid: 3814
+zone: Glassvault Depths
+title: Dry Gallery
+description: A dry side gallery with flat floor and a natural chimney. A company can light a fire
+  here safely.
+biome: cave
+tags:
+- camping
+exits:
+  east:
+    roomid: 3815
+  west:
+    roomid: 3813
+  south:
+    roomid: 3820
+  north:
+    roomid: 3807
+resources:
+- firewood
+- shelter
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,20 @@
+roomid: 3519
+zone: Thornreach Wood
+title: Darkling Glade
+description: Thorn and bramble close in on both sides of the narrow ride.
+biome: forest
+exits:
+  east:
+    roomid: 3520
+  west:
+    roomid: 3518
+  south:
+    roomid: 3525
+  north:
+    roomid: 3511
+resources:
+- shelter
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true

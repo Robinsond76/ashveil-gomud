@@ -1,0 +1,17 @@
+roomid: 3420
+zone: Cinder Hollow
+title: Burnt Stack
+description: Cinders crunch underfoot and the air smells of old smoke.
+biome: forest
+exits:
+  west:
+    roomid: 3419
+  north:
+    roomid: 3412
+resources:
+- firewood
+- forage
+mapx: 6
+mapy: 2
+mapz: 0
+hascoordinates: true

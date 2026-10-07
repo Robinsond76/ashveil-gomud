@@ -1,0 +1,57 @@
+name: Glassvault Depths
+roomid: 3805
+defaultbiome: cave
+tileready: true
+encounters:
+  band:
+    low: 25
+    high: 28
+  entrychance: 15
+  tables:
+    vault:
+    - id: vault-stalkers
+      weight: 30
+      text: Cave stalkers scuttle out of the crystal wall.
+      members:
+      - mobid: 24
+        count: 3
+    - id: vault-creepers
+      weight: 20
+      text: Cave creepers drop from the ceiling.
+      members:
+      - mobid: 22
+        count: 2
+      - mobid: 23
+        count: 1
+    - id: vault-bats
+      weight: 20
+      text: A cloud of echo bats screams out of a fissure.
+      members:
+      - mobid: 23
+        count: 3
+    - id: vault-brood
+      weight: 12
+      text: A big brood of stalkers boils out of the dark.
+      members:
+      - mobid: 24
+        count: 4
+    - id: vault-fungus
+      weight: 18
+      text: Sentient fungus lurches out of a side gallery, a creeper at its side.
+      members:
+      - mobid: 32
+        count: 1
+      - mobid: 22
+        count: 1
+    lair:
+    - id: lich-of-the-pool
+      weight: 100
+      text: The pool bulges and a lich rises from it, its stalkers around it.
+      members:
+      - mobid: 14
+        count: 1
+      - mobid: 24
+        count: 2
+      - mobid: 22
+        count: 1
+      boss: true

@@ -1,0 +1,20 @@
+roomid: 3606
+zone: Hollowweb Deep
+title: Tangled Run
+description: Silk sticks to your sleeves, and every step leaves a thread. A shrivelled husk hangs
+  in a cocoon.
+biome: forest
+exits:
+  east:
+    roomid: 3607
+  south:
+    roomid: 3614
+  west:
+    roomid: 3513
+resources:
+- herbs
+- forage
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

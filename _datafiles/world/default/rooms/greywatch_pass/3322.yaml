@@ -1,0 +1,19 @@
+roomid: 3322
+zone: Greywatch Pass
+title: Windswept Col
+description: Loose scree shifts underfoot at every step.
+biome: mountains
+exits:
+  east:
+    roomid: 3323
+  west:
+    roomid: 3321
+  north:
+    roomid: 3316
+resources:
+- water
+- herbs
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true

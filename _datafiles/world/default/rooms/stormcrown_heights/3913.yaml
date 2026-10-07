@@ -1,0 +1,18 @@
+roomid: 3913
+zone: Stormcrown Heights
+title: Bitter Edge
+description: Snow streams off the ridge in long banners and the wind never stops. Something huge
+  has left a trail in the snow.
+biome: snow
+exits:
+  east:
+    roomid: 3914
+  north:
+    roomid: 3905
+resources:
+- shelter
+- water
+mapx: 0
+mapy: 2
+mapz: 0
+hascoordinates: true

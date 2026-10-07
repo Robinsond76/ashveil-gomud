@@ -1,0 +1,22 @@
+roomid: 3702
+zone: Ashen Barrows
+title: Forgotten Niche
+description: Cracked flagstones cover the floor and the dust has been disturbed. Bone dust crunches
+  underfoot.
+biome: dungeon
+exits:
+  east:
+    roomid: 3703
+  west:
+    roomid: 3701
+  south:
+    roomid: 3708
+resources:
+- shelter
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: crypt

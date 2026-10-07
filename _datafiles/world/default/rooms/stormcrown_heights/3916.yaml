@@ -1,0 +1,24 @@
+roomid: 3916
+zone: Stormcrown Heights
+title: Windbreak Cave
+description: A shallow cave with a wall of piled stones across its mouth. A company can camp here
+  and wake alive.
+biome: snow
+tags:
+- camping
+exits:
+  east:
+    roomid: 3917
+  west:
+    roomid: 3915
+  south:
+    roomid: 3923
+  north:
+    roomid: 3908
+resources:
+- firewood
+- shelter
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,20 @@
+roomid: 3203
+zone: Marrowmere Fen
+title: Reedy Hummock
+description: Mist lies low over the fen and every footstep squelches. Marsh lights flicker over
+  the far reeds.
+biome: shore
+exits:
+  east:
+    roomid: 3204
+  west:
+    roomid: 3202
+  south:
+    roomid: 3209
+resources:
+- fishing
+- water
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

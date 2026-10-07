@@ -1,0 +1,20 @@
+roomid: 3921
+zone: Stormcrown Heights
+title: High Crown Path
+description: Cloud boils below and lightning flickers along the ridge.
+biome: snow
+exits:
+  east:
+    roomid: 3922
+  north:
+    roomid: 3914
+resources:
+- water
+- game
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: heights

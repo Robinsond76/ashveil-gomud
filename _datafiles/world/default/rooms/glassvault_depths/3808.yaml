@@ -1,0 +1,21 @@
+roomid: 3808
+zone: Glassvault Depths
+title: Faceted Passage
+description: Water drips from the roof into pools that never freeze. Something skitters across
+  the ceiling far above.
+biome: cave
+exits:
+  east:
+    roomid: 3809
+  west:
+    roomid: 3807
+  south:
+    roomid: 3815
+  north:
+    roomid: 3803
+resources:
+- shelter
+mapx: 3
+mapy: 1
+mapz: 0
+hascoordinates: true

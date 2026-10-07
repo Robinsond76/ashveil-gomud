@@ -1,0 +1,16 @@
+roomid: 3505
+zone: Thornreach Wood
+title: Tangled Ride
+description: Moss muffles every sound and the air smells of loam. Fresh claw marks score a nearby
+  oak.
+biome: forest
+exits:
+  south:
+    roomid: 3512
+resources:
+- game
+- forage
+mapx: 6
+mapy: 0
+mapz: 0
+hascoordinates: true

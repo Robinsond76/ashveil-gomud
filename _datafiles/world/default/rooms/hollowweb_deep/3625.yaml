@@ -1,0 +1,16 @@
+roomid: 3625
+zone: Hollowweb Deep
+title: Hushed Hollow
+description: A web shivers on its own.
+biome: forest
+exits:
+  west:
+    roomid: 3624
+  north:
+    roomid: 3620
+resources:
+- game
+mapx: 6
+mapy: 3
+mapz: 0
+hascoordinates: true

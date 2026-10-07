@@ -1,0 +1,21 @@
+roomid: 3817
+zone: Glassvault Depths
+title: Cold Shaft
+description: Glassy crystals jut from the walls and throw back every light. A crack in the crystal
+  widens.
+biome: cave
+exits:
+  east:
+    roomid: 3818
+  west:
+    roomid: 3816
+  south:
+    roomid: 3822
+  north:
+    roomid: 3810
+resources:
+- water
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true

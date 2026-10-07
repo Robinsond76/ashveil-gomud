@@ -1,0 +1,20 @@
+roomid: 3304
+zone: Greywatch Pass
+title: Scree Saddle
+description: Cold wind funnels through the gap and snatches at cloaks. Old watch-fire ash lies
+  in a stone ring.
+biome: cliffs
+exits:
+  east:
+    roomid: 3305
+  west:
+    roomid: 3303
+  south:
+    roomid: 3310
+resources:
+- water
+- shelter
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true

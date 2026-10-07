@@ -1,0 +1,23 @@
+roomid: 3112
+zone: Brindle Downs
+title: Shepherds' Fold
+description: A ring of drystone wall shelters a flat patch of turf, kept by shepherds for lambing
+  season. A company can bed down here out of the wind.
+biome: land
+tags:
+- camping
+exits:
+  east:
+    roomid: 3113
+  west:
+    roomid: 3111
+  south:
+    roomid: 3119
+resources:
+- firewood
+- shelter
+- forage
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true
