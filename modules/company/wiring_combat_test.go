@@ -1,12 +1,14 @@
 package company
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -72,28 +74,102 @@ func spawnRoom(roomId int, mobIds ...int) string {
 	return out
 }
 
+// shippedFile is one shipped data file, staged once per test process.
+type shippedFile struct {
+	rel    string
+	data   []byte
+	staged string
+}
+
+var (
+	shippedCacheMu sync.Mutex
+	shippedCache   = map[string][]shippedFile{}
+	shippedStage   string
+)
+
+// shippedFiles lists, reads, and stages a shipped path (a file or a
+// directory tree) once per process: the brawl fixtures copy the same item,
+// spell, and mob trees for every test, and creating those files each time
+// dominated the suite's runtime. The staged copies are hard-linked into each
+// test's data dir, so a test must replace (remove, then write) a copied file
+// rather than write over it; checkStagedShipped, run by TestMain, fails the
+// package when one did.
+func shippedFiles(t *testing.T, rel string) []shippedFile {
+	t.Helper()
+	shippedCacheMu.Lock()
+	defer shippedCacheMu.Unlock()
+	if files, ok := shippedCache[rel]; ok {
+		return files
+	}
+	if shippedStage == "" {
+		dir, err := os.MkdirTemp("", "company-shipped-")
+		require.NoError(t, err)
+		shippedStage = dir
+	}
+	shipped := shippedWorld(t)
+	var files []shippedFile
+	require.NoError(t, filepath.Walk(filepath.Join(shipped, rel), func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		r, err := filepath.Rel(shipped, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		staged := filepath.Join(shippedStage, r)
+		if _, err := os.Stat(staged); err != nil {
+			if err := os.MkdirAll(filepath.Dir(staged), 0755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(staged, data, 0600); err != nil {
+				return err
+			}
+		}
+		files = append(files, shippedFile{rel: r, data: data, staged: staged})
+		return nil
+	}))
+	shippedCache[rel] = files
+	return files
+}
+
+// checkStagedShipped reports staged files a test changed in place, then
+// removes the staging dir.
+func checkStagedShipped() (bad []string) {
+	shippedCacheMu.Lock()
+	defer shippedCacheMu.Unlock()
+	for _, files := range shippedCache {
+		for _, f := range files {
+			if got, err := os.ReadFile(f.staged); err != nil || !bytes.Equal(got, f.data) {
+				bad = append(bad, f.rel)
+			}
+		}
+	}
+	if shippedStage != "" {
+		_ = os.RemoveAll(shippedStage)
+	}
+	return bad
+}
+
+// copyShipped puts shipped files in a test's data dir, hard-linking the
+// process-wide staged copies (writing them when linking fails).
 func copyShipped(t *testing.T, dataDir string, rels ...string) {
 	t.Helper()
-	shipped := shippedWorld(t)
+	made := map[string]bool{}
 	for _, rel := range rels {
-		require.NoError(t, filepath.Walk(filepath.Join(shipped, rel), func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() {
-				return err
+		for _, f := range shippedFiles(t, rel) {
+			dst := filepath.Join(dataDir, f.rel)
+			if dir := filepath.Dir(dst); !made[dir] {
+				require.NoError(t, os.MkdirAll(dir, 0755))
+				made[dir] = true
 			}
-			r, err := filepath.Rel(shipped, path)
-			if err != nil {
-				return err
+			if err := os.Link(f.staged, dst); err != nil {
+				require.NoError(t, os.WriteFile(dst, f.data, 0600))
 			}
-			data, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			dst := filepath.Join(dataDir, r)
-			if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-				return err
-			}
-			return os.WriteFile(dst, data, 0600)
-		}))
+		}
 	}
 }
 
