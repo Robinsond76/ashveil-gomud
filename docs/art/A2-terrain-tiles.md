@@ -27,7 +27,7 @@ The game picks a variant per room, so any variant can touch any other.
 | `land` | Open grassland with tufts, small pale flowers and a stone. |
 | `mountains` | A rocky slope of grey stone and scree with a snow highlight on the peaks. |
 | `road` | **Not drawn as variants:** see "Road pieces" below. |
-| `shore` | Pale sand meeting shallow water along a diagonal, with a little foam. |
+| `shore` | **Not drawn as variants:** see "Coast pieces" below. |
 | `slums` | A muddy alley with broken boards, puddles and refuse. |
 | `snow` | A snowfield with drifts and cool blue shadows. |
 | `spiderweb` | Web-strung ground with pale silk strands and a cocoon. Eerie, not cartoonish. |
@@ -69,6 +69,43 @@ orientation; don't rotate one image, which would turn the light.
 Put it in the review sheet. The road must run continuously with no steps
 or width changes.
 
+## Coast pieces: 16 tiles (`art/source/A2/map/terrain/shore-<sides>.png`)
+
+A shore tile is drawn by **which of its four neighbors are water**, as the
+roads are (owner decision, 2026-10-07). `<sides>` lists the edges that
+face water, in the order **n, e, s, w**. Each piece is a full, opaque
+**512×512** tile of pale beach sand, shallow water and a foam line.
+
+**Edge rule.** Every piece follows it, so any two pieces line up:
+
+- An edge that faces water is **open water** along its whole length, and
+  matches the approved `water` tile where they meet.
+- The **waterline** runs parallel to each water-facing edge, **35% of
+  the tile in from it**. A strip of shallows lightens toward the sand, and
+  a thin foam line marks the waterline.
+- An edge that doesn't face water is **sand**, except within 35% of a
+  water-facing corner, where the water from that side continues. So a
+  straight coast of `shore-s` pieces joins side by side.
+- Where two water-facing edges meet at a corner, the waterline curves
+  smoothly round it.
+
+| File | Shape |
+|---|---|
+| `shore-none.png` | No water beside it: a small sandy beach patch. Sand to every edge, a few shells and pebbles. |
+| `shore-n.png`, `shore-e.png`, `shore-s.png`, `shore-w.png` | Straight coast: water along the named side |
+| `shore-ns.png`, `shore-ew.png` | A sand strip between water on two opposite sides |
+| `shore-ne.png`, `shore-es.png`, `shore-sw.png`, `shore-nw.png` | Outer corner: water on two adjacent sides, sand in the opposite corner |
+| `shore-nes.png`, `shore-esw.png`, `shore-nsw.png`, `shore-new.png` | Headland: water on three sides, sand reaching in from the fourth |
+| `shore-nesw.png` | A sandbar islet: water on all sides, a small sandy island in the middle |
+
+Light comes from the top-left; don't rotate one image. The coast pieces
+have no animation. The water tiles beside them already move.
+
+**Check before delivering:** build a small coastline on `land` and `water`
+tiles. Include a straight stretch, an outer corner, a headland, a strip
+between two waters and an islet. Put it in the review sheet. The
+waterline must join with no steps.
+
 ## Animated tiles: 4 frames (`art/source/A2/map/terrain/<biome>-anim-<1..4>.png`)
 
 These replace the base tile while the biome animates. Each frame is a full
@@ -78,7 +115,6 @@ These replace the base tile while the biome animates. Each frame is a full
 | Biome | Motion |
 |---|---|
 | `water` | Wave crests slide and shimmer. |
-| `shore` | The water's edge laps in and out; foam forms and fades. |
 | `swamp` | A few bubbles rise and pop; reeds sway slightly. |
 | `snow` | Light snowfall drifts down across the tile. |
 | `desert` | Sand streams drift across the ripples. |
