@@ -3,8 +3,9 @@ zone: Brindle Downs
 title: Drover's Leanto
 description: A turf-roofed lean-to leans against a boundary stone. Someone left a few scraps of
   a hunter's notes under a flat rock.
-items:
+spawninfo:
 - itemid: 30063
+  respawnrate: 1 real hour
 biome: land
 exits:
   east:

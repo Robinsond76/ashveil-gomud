@@ -1,8 +1,7 @@
 roomid: 3723
 zone: Ashen Barrows
-title: The Lich's Court
-description: Rows of stone thrones face a dais of black glass. Dark robes and rusted crowns lie
-  in heaps. The air is bitterly cold.
+title: The Warden's Court
+description: Rows of stone thrones face a dais of black glass. Rusted shields and broken coffin lids lie in heaps. The air is bitterly cold.
 biome: dungeon
 exits:
   east:

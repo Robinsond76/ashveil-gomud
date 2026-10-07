@@ -44,11 +44,11 @@ encounters:
       - mobid: 22
         count: 1
     lair:
-    - id: creeper-and-stalkers
+    - id: lich-of-the-pool
       weight: 100
-      text: The pool bulges and an abyssal creeper rises, its stalkers around it.
+      text: The pool bulges and a lich rises from it, its stalkers around it.
       members:
-      - mobid: 25
+      - mobid: 14
         count: 1
       - mobid: 24
         count: 2

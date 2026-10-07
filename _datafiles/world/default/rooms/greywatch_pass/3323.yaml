@@ -1,8 +1,7 @@
 roomid: 3323
 zone: Greywatch Pass
-title: Ogre's Gap
-description: A narrow cleft in the pass is blocked by a huge cairn of skulls and boulders. Ogre
-  tracks in the mud lead into the dark behind it.
+title: Guardian's Gap
+description: A narrow cleft in the pass is blocked by a huge cairn of ice and boulders. Something cold and heavy waits in the dark behind it.
 biome: mountains
 exits:
   east:

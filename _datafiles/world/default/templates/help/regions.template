@@ -6,16 +6,16 @@ meet there (<ansi fg="command">help encounters</ansi>), so a company at or above
 easy, and one well under it needs careful preparation.
 
 <ansi fg="yellow-bold">The road, in order</ansi>
-  Alderbrook             levels 2-4     the hamlet's fringe: rats, dogs, brigands
-  Brindle Downs          levels 4-6     open sheep country with wolves and brigands
-  Marrowmere Fen         levels 6-8     marsh: crocodiles, poachers, spiders
-  Greywatch Pass         levels 9-11    mountain pass; an ogre lairs at the Gap
-  Cinder Hollow          levels 12-14   burnt woods held by ruffians
-  Thornreach Wood        levels 15-17   thorn and wolf; an ent in its hollow
-  Hollowweb Deep         levels 18-20   spider country; the queen in her den
-  Ashen Barrows          levels 21-24   crypts: skeletons, acolytes, a lich
-  Glassvault Depths      levels 25-28   caves: stalkers, creepers, an abyssal one
-  Stormcrown Heights     levels 29-33   the summit: an ogre and an ent hold the throne
+  Alderbrook          levels 2-4    the hamlet's fringe: rats, dogs, brigands
+  Brindle Downs       levels 4-6    sheep country: wolves and brigands
+  Marrowmere Fen      levels 6-8    marsh: crocodiles, poachers, spiders
+  Greywatch Pass      levels 9-11   mountain pass; an ice guardian at the Gap
+  Cinder Hollow       levels 12-14  burnt woods held by ruffians
+  Thornreach Wood     levels 15-17  thorn and wolf; a great wolf in its hollow
+  Hollowweb Deep      levels 18-20  spider country; an ogre in the web
+  Ashen Barrows       levels 21-24  crypts: skeletons and a bone warden
+  Glassvault Depths   levels 25-28  caves: creepers; a lich in the pool
+  Stormcrown Heights  levels 29-33  the summit throne: three great bosses
   Each region's west end joins the one before it and its east end the one
   after. At levels 30 and above a character may promote to an elite class
   (<ansi fg="command">help classes</ansi>).
@@ -31,17 +31,19 @@ easy, and one well under it needs careful preparation.
 
 <ansi fg="yellow-bold">Lairs and relics</ansi>
   Each boss waits in a lair room marked on the map, at the far end of its
-  region. Beat one and it may drop a relic of its own (<ansi fg="command">help relics</ansi>); the
-  ogre, the ent, the spider queen, the lich and the abyssal creeper each
-  have relics to win, and the summit's throne is held by an ogre or an
-  ent, whichever comes.
+  region. The ogre (Hollowweb Deep), the lich (Glassvault Depths) and the
+  summit's ent, spider queen and abyssal creeper may drop a relic of their
+  own (<ansi fg="command">help relics</ansi>). A relic needs about the boss's level to wear:
+  22 for the ogre's, 30 for the lich's, and 35, 40 and 45 for the summit's,
+  so those last are trophies to grow into.
   A lair falls quiet for your company for about half an hour once beaten
   (<ansi fg="command">help encounters</ansi>).
 
 <ansi fg="yellow-bold">Finds</ansi>
   Two hunters' recipe pages lie in the open: one in a lean-to on Brindle
   Downs and one in a trapper's cache in Marrowmere Fen. <ansi fg="command">use</ansi> a page to learn
-  its dish (<ansi fg="command">help recipes</ansi>).
+  its dish (<ansi fg="command">help recipes</ansi>). A page taken is back within the hour, so
+  every company can find one.
 
 <ansi fg="yellow-bold">Finding your way</ansi>
   In the web client the map draws each region as tiles; click a tile you

@@ -52,11 +52,11 @@ encounters:
       - mobid: 19
         count: 1
     lair:
-    - id: queen-and-brood
+    - id: ogre-in-the-webs
       weight: 100
-      text: Silk ropes quiver and the spider queen drops from her web, her brood behind her.
+      text: Silk ropes snap and a forest ogre crashes out of the web, spiders swarming at its heels.
       members:
-      - mobid: 37
+      - mobid: 85
         count: 1
       - mobid: 36
         count: 2

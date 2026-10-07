@@ -17,13 +17,13 @@ what testing the shipped features needs. Every decision has its reason.
   | --- | --- | --- | --- | --- |
   | Brindle Downs | 4-6 | land | 3101-3123 | none |
   | Marrowmere Fen | 6-8 | shore | 3201-3225 | none |
-  | Greywatch Pass | 9-11 | mountains | 3301-3324 | forest ogre (85) |
+  | Greywatch Pass | 9-11 | mountains | 3301-3324 | ice guardian (52, no relic) |
   | Cinder Hollow | 12-14 | land | 3401-3424 | none |
-  | Thornreach Wood | 15-17 | forest | 3501-3525 | ent (34) |
-  | Hollowweb Deep | 18-20 | forest, dungeon | 3601-3625 | spider queen (37) |
-  | Ashen Barrows | 21-24 | dungeon, cave | 3701-3724 | lich (14) |
-  | Glassvault Depths | 25-28 | cave | 3801-3822 | abyssal creeper (25) |
-  | Stormcrown Heights | 29-33 | snow, cliffs | 3901-3925 | ogre or ent |
+  | Thornreach Wood | 15-17 | forest | 3501-3525 | great timber wolf (56, no relic) |
+  | Hollowweb Deep | 18-20 | forest, dungeon | 3601-3625 | forest ogre (85) |
+  | Ashen Barrows | 21-24 | dungeon, cave | 3701-3724 | bone warden (92, no relic) |
+  | Glassvault Depths | 25-28 | cave | 3801-3822 | lich (14) |
+  | Stormcrown Heights | 29-33 | snow, cliffs | 3901-3925 | ent, spider queen or abyssal creeper |
 
 - **Alderbrook** gains a band (2-4), a `fringe` table (rats, dogs, brigands, a
   poacher trio with a bonesetter) and eight encounter rooms, so the first
@@ -64,13 +64,34 @@ what testing the shipped features needs. Every decision has its reason.
 | Dungeon, cave and web rooms keep the dark biomes | They exercise the light module and its to-hit penalties |
 | Pages lie on the floor and stay until picked up | The world is temporary; a page respawn clock is a world-replacement concern |
 
+## Review changes (2026-10-07)
+
+- **Lairs follow relic wear levels.** 36d sets relic ilvl to boss level + 5
+  and a relic is worn at ilvl - 5, so each relic boss belongs where its own
+  level (band low + 3) is its relic's wear level: ogre 22, lich 30, ent 35,
+  spider queen 40, abyssal creeper 45. The build lairs gave a level-12
+  company ogre relics it could not wear until 22 (and the ent and spider
+  queen before the lich). Now the ogre lairs in Hollowweb Deep (boss 21),
+  the lich in Glassvault Depths (boss 28), and the summit holds the ent,
+  spider queen and creeper as trophies to grow into (their bands, 34-60,
+  wait for the replacement world). Greywatch Pass, Thornreach Wood and Ashen
+  Barrows keep lairs with relic-less bosses so lair play is testable at
+  every band. `TestTestWorldLairsMatchTheirRelicLevels` holds this.
+- **Recipe pages respawn.** A floor item is gone for every other company
+  once one picks it up, so the pages are `spawninfo` entries that return an
+  hour after being taken.
+- **Aliases.** `help regions` no longer claims `zone` (the admin zone
+  command's page), `levels` or `world`.
+
 ## Deferred
 
 - Named settlements, merchants beyond the existing markets, quest givers, a
   boss respawn clock and zone `loot:` profiles (the item-level default of
   band to top plus 2 applies).
 - Elite-level bands beyond 33 (levels 34-60); the replacement world places
-  them.
+  them, and with them the ent, spider queen and creeper lairs at their relic
+  levels. The pilot lairs (Dark Forest ogre at 5-7, Catacombs lich at 10-12)
+  predate this and still sit under their relics' wear levels.
 - Landmark art for lairs beyond the existing legends (Cave, Throneroom, Pond,
   Keep, Hermit), and a map screenshot pass.
 

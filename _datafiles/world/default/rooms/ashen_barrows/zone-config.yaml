@@ -46,14 +46,14 @@ encounters:
       - mobid: 15
         count: 2
     lair:
-    - id: lich-court
+    - id: warden-court
       weight: 100
-      text: The air turns bitter cold. A lich stands, flanked by its honour guard.
+      text: The air turns bitter cold. A bone warden stands, flanked by its honour guard.
       members:
-      - mobid: 14
-        count: 1
       - mobid: 92
         count: 1
       - mobid: 15
         count: 2
+      - mobid: 17
+        count: 1
       boss: true

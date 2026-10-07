@@ -54,11 +54,11 @@ encounters:
       - mobid: 70
         count: 1
     lair:
-    - id: ogre-and-pack
+    - id: guardian-and-pack
       weight: 100
-      text: The cairn shudders and a huge ogre steps out, wolves at its heels.
+      text: The cairn shudders and an ice guardian steps out, wolves at its heels.
       members:
-      - mobid: 85
+      - mobid: 52
         count: 1
       - mobid: 55
         count: 2

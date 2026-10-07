@@ -1,8 +1,7 @@
 roomid: 3524
 zone: Thornreach Wood
-title: The Ent's Hollow
-description: A huge hollow tree stands apart from the others, its roots bared like knuckles. The
-  ground around it is untouched by anything that grows.
+title: The Wolf's Hollow
+description: A huge hollow tree stands apart from the others, its roots bared like knuckles. Gnawed bones lie in heaps around it.
 biome: forest
 exits:
   east:

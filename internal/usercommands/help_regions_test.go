@@ -35,6 +35,12 @@ func TestRegionsHelpListsTheRoadAndItsBands(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help regions", alias)
 	}
+	// Review fix: aliases must not take other topics' words: `zone` is the
+	// admin zone command's page and `levels`/`world` are too broad.
+	for _, word := range []string{"levels", "zone", "world"} {
+		got, _ := GetHelpContents(word)
+		assert.NotEqual(t, want, got, "help %s is not help regions", word)
+	}
 	text := tagPattern.ReplaceAllString(want, "")
 	assert.Contains(t, text, "Help for regions")
 

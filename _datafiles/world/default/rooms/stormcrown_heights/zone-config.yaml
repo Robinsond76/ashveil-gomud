@@ -56,19 +56,8 @@ encounters:
       - mobid: 90
         count: 1
     lair:
-    - id: summit-ogre
-      weight: 50
-      text: The throne shakes, and a huge ogre storms down the steps.
-      members:
-      - mobid: 85
-        count: 1
-      - mobid: 55
-        count: 2
-      - mobid: 29
-        count: 1
-      boss: true
     - id: summit-ent
-      weight: 50
+      weight: 34
       text: The mountain cracks and an ent in a coat of ice strides out.
       members:
       - mobid: 34
@@ -76,5 +65,27 @@ encounters:
       - mobid: 55
         count: 2
       - mobid: 36
+        count: 1
+      boss: true
+    - id: summit-queen
+      weight: 33
+      text: Frost-silk ropes drop from the throne and the spider queen descends, her brood behind her.
+      members:
+      - mobid: 37
+        count: 1
+      - mobid: 36
+        count: 2
+      - mobid: 35
+        count: 1
+      boss: true
+    - id: summit-creeper
+      weight: 33
+      text: Black ice cracks under the throne and an abyssal creeper heaves itself out, stalkers around it.
+      members:
+      - mobid: 25
+        count: 1
+      - mobid: 24
+        count: 2
+      - mobid: 22
         count: 1
       boss: true

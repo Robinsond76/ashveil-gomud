@@ -1,8 +1,7 @@
 roomid: 3622
 zone: Hollowweb Deep
-title: The Spinner's Den
-description: A vast web fills this hollow from floor to roof, strung with cocoons the size of
-  men. Something large hangs motionless in its centre.
+title: The Ogre's Web
+description: A vast web fills this hollow from floor to roof, torn through by something huge. Gnawed cocoons lie in heaps below it.
 biome: forest
 exits:
   east:

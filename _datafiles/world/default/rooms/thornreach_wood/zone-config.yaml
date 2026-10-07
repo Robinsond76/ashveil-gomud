@@ -14,7 +14,9 @@ encounters:
       text: Timber wolves run through the bramble in a pack.
       members:
       - mobid: 56
-        count: 3
+        count: 1
+      - mobid: 56
+        count: 2
     - id: thorn-spiders
       weight: 20
       text: Spider warriors drop out of the canopy.
@@ -54,11 +56,11 @@ encounters:
       - mobid: 33
         count: 1
     lair:
-    - id: ent-and-pack
+    - id: alpha-and-pack
       weight: 100
-      text: The ancient tree tears itself out of the ground, wolves at its roots.
+      text: A huge grey wolf pads out of the hollow tree, its pack and a spider at its flanks.
       members:
-      - mobid: 34
+      - mobid: 56
         count: 1
       - mobid: 56
         count: 2

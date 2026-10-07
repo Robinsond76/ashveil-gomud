@@ -1,6 +1,7 @@
 package encounters
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -175,31 +176,68 @@ func TestTestWorldPlacesEveryRelicBossInALair(t *testing.T) {
 	}
 	sort.Ints(missing)
 	assert.Empty(t, missing, "relic bosses with no lair")
-	// The tests' own claim: the chain places all five bosses (not only the
-	// pilots), so the order of play matches their levels.
+	// The chain itself places all five bosses (not only the pilots).
 	for _, boss := range []int{85, 34, 37, 14, 25} {
 		assert.True(t, placed[boss], "boss %d", boss)
 	}
 }
 
-// The recipe pages from phase 56 lie on the floor of landmark rooms.
+// A relic needs its wearer to be the boss's intended level (36d: relic ilvl
+// is boss level + 5, worn at ilvl - 5). Each chain lair puts its relic boss
+// where the boss's own level is within two of that requirement, so a
+// company earns a relic it can wear about when it wins it. Only the summit,
+// the chain's top, holds bosses meant for higher bands (34-60, deferred to
+// the replacement world).
+func TestTestWorldLairsMatchTheirRelicLevels(t *testing.T) {
+	loadShippedWorld(t)
+	top := testWorldZones[len(testWorldZones)-1].name
+	for _, z := range testWorldZones {
+		cfg := rooms.GetZoneConfig(z.name)
+		for _, c := range cfg.Encounters.Tables["lair"] {
+			relics := loot.RelicsOf(c.Members[0].MobID)
+			if len(relics) == 0 {
+				continue
+			}
+			bossLevel := z.low + encounters.BossLevelBonus
+			req := relics[0].Relic.ILvl - 5
+			if z.name == top {
+				assert.GreaterOrEqual(t, req, bossLevel-2, "%s %s: relic too low for the summit", z.name, c.ID)
+				continue
+			}
+			assert.InDelta(t, req, bossLevel, 2, "%s %s: boss level %d, relic worn at %d", z.name, c.ID, bossLevel, req)
+		}
+	}
+}
+
+// The recipe pages from phase 56 spawn on the floor of landmark rooms and
+// come back an hour after someone takes one, so every company can learn
+// them (a plain floor item would be gone for good after the first pickup).
 func TestTestWorldPlacesTheRecipePages(t *testing.T) {
 	loadShippedWorld(t)
-	found := map[int]int{}
+	found := map[int]*rooms.Room{}
 	for _, z := range testWorldZones[1:] {
-		for id, r := range zoneRooms(t, z.name) {
-			for _, it := range r.Items {
-				found[it.ItemId] = id
+		for _, r := range zoneRooms(t, z.name) {
+			for _, si := range r.SpawnInfo {
+				if si.ItemId > 0 {
+					found[si.ItemId] = r
+				}
 			}
 		}
 	}
 	for _, page := range []int{30063, 30064} {
-		id, ok := found[page]
+		r, ok := found[page]
 		require.True(t, ok, "recipe page %d is placed", page)
 		spec := items.GetItemSpec(page)
 		require.NotNil(t, spec)
 		assert.Equal(t, page, spec.ItemId)
-		assert.NotZero(t, id)
+		for _, si := range r.SpawnInfo {
+			if si.ItemId == page {
+				assert.Equal(t, "1 real hour", si.RespawnRate, "page %d respawns", page)
+			}
+		}
+		r.Prepare(false)
+		_, onFloor := r.FindOnFloor(fmt.Sprintf("!%d", page), false)
+		assert.True(t, onFloor, "page %d lies on the floor of room %d", page, r.RoomId)
 	}
 }
 

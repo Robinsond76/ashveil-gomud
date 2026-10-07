@@ -1,8 +1,7 @@
 roomid: 3821
 zone: Glassvault Depths
 title: The Mirror Pool
-description: A still black pool fills the cavern, and its surface shows no reflection. Long pale
-  limbs have left marks on the shore.
+description: A still black pool fills the cavern, and its surface shows no reflection. A cold, robed shape is bound beneath the water.
 biome: cave
 exits:
   east:

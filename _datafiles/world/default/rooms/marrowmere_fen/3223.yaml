@@ -3,8 +3,9 @@ zone: Marrowmere Fen
 title: Trapper's Cache
 description: A fen-trapper hung a waxed bundle from a willow branch here, out of reach of eels.
   A greasy page is tucked in the bundle.
-items:
+spawninfo:
 - itemid: 30064
+  respawnrate: 1 real hour
 biome: shore
 exits:
   east:
