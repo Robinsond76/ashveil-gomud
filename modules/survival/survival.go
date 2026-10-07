@@ -9,15 +9,15 @@ package survival
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -40,21 +40,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *domain.Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("survival")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *domain.NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "survival", func() domain.Registry { return *domain.NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry domain.Registry) error {
-	return s.plug.WriteStruct("survival", registry)
+	return modstore.Save(s.plug, "survival", registry)
 }
 
 // decodeRegistry parses stored bytes, normalizing values and dropping
@@ -165,13 +155,7 @@ func init() {
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("survival: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("survival: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("survival", m.loadErr, m.store != nil)
 }
 
 func (m *SurvivalModule) save() error {
@@ -843,17 +827,15 @@ func parseCompanionSelector(selector string) (int, bool) {
 // matchCompanionName matches an exact name, then a single unambiguous
 // substring, against the current companion roster.
 func matchCompanionName(roster []domain.MemberRef, selector string) (domain.MemberKey, string, error) {
-	var partial []domain.MemberRef
+	companions := make([]domain.MemberRef, 0, len(roster))
 	for _, ref := range roster {
-		if ref.Key == domain.LeaderMemberKey {
-			continue
+		if ref.Key != domain.LeaderMemberKey {
+			companions = append(companions, ref)
 		}
-		if strings.EqualFold(ref.Name, selector) {
-			return ref.Key, ref.Name, nil
-		}
-		if ref.Name != "" && strings.Contains(strings.ToLower(ref.Name), selector) {
-			partial = append(partial, ref)
-		}
+	}
+	exact, partial := company.SplitNameMatches(companions, selector, func(ref domain.MemberRef) string { return ref.Name })
+	if len(exact) > 0 {
+		return exact[0].Key, exact[0].Name, nil
 	}
 	if len(partial) == 1 {
 		return partial[0].Key, partial[0].Name, nil

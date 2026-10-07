@@ -105,10 +105,77 @@ each decision has its reason.
   than toggling `.active`), and arrow-key support is not added. Reason:
   both would change visible behavior; this pass was no-change.
 
+## Server-side follow-up (2026-10-07)
+
+Go proposals 1 to 4 were carried out in a third pass as pure refactors
+(behavior unchanged; the existing module tests are the safety net, plus a
+unit test for each new package). Each decision has its reason.
+
+- **Shared scheduler (proposal 4), the seam and bookkeeping only.** New
+  `internal/modtimer` holds `Timer`, `Scheduler`, the direct
+  (timer-goroutine) scheduler, and `Arm`, `Stop` and `Claim`, which bump
+  the generation, replace the timer and decide whether a firing callback is
+  still live. Camping (camp and inn timers) and expedition use them; their
+  own `Timer`, `Scheduler` and `realScheduler` names remain as aliases so
+  tests are unchanged. Decision: the threading is not unified. Expedition's
+  `realScheduler` still queues the callback onto the game loop
+  (`travelTimerDue`) and camping's still runs it on the timer goroutine.
+  Reason: moving camping onto the loop changes when its world work runs
+  (the `restedPending` and `campRewards` deferral exists because it does
+  not), which is the risk the proposal named; the duplicated code was the
+  scaffolding, and that is shared now. The modules keep their own timer and
+  generation maps because several tests read them.
+- **Module persistence (proposal 1), load, save and the availability gate.**
+  New `internal/modstore` with `Load` (absent file gives the empty
+  registry, anything else goes through the module's decode so a YAML error
+  never becomes an empty writable registry), `Save` and `Available`.
+  Twelve modules use it: camping, company, archetype, survival, weather,
+  mount, walking, exposure, encumbrance, expedition, market and strategy
+  (`Load` and `Save` only; its error text is player-facing). Each module's
+  `pluginStore` stays as a thin wrapper, so `Store` fakes and tests are
+  untouched. Decision: the drift is left as it was. Only market's decode
+  treats an empty file as corrupt (`ErrCorruptStore`); that rule lives in
+  its decode function and still applies. Reason: making every module reject
+  an empty file is a behavior change on a load path, and a generic
+  `Store[R]` with a cloning option would have changed archetype's and
+  camping's save calls. Not converted: `encounters` and `gathering` (their
+  decode is inline in `Load`) and `testarea` (a different `Store` shape);
+  each is a one-module job when its file is next opened.
+- **Live-companion roster (proposal 2), the roster walk only.** New
+  `internal/livecompanions`: `Of(leader, filter)` returns each roster
+  companion with its mob (nil when not spawned), `Able(leader, inRoom)`
+  returns the spawned, up companions in a wanted room. Exposure, walking
+  (skip the dead), camping rest tiers (skip dead, separated and
+  constructs), gathering and archetype utilities (spawned, in room, not
+  downed) use it, each passing its own rule as before. Decision: the
+  "present and usable" predicates inside `modules/company` (`members.go`,
+  `equipment.go`, `train.go`, `inventory_data.go`, `morale.go`) are not
+  merged. Reason: they differ by Dead, PendingReturn, IsLive, IsAttached,
+  WithLeader and CharmedByOther, some citing phases 25b and 33h3, and
+  they read the company record, not the survival roster; folding them
+  needs a per-caller audit and would risk a silent change to who can be
+  trained, equipped or counted for morale. Camp specialists and camping's
+  `rosterNames` were also left (they read the company's own list).
+- **Member selectors (proposal 3), the name match only.** New
+  `company.SplitNameMatches(items, selector, name)` returns the exact and
+  the substring hits; `resolveCompanion`, `ambiguousCompanion` and
+  survival's `matchCompanionName` use it and keep their own policy (company
+  calls duplicate exact names ambiguous, survival takes the first exact
+  one). Decision: the `#N` / `me` / `leader` / empty-selector rules are not
+  unified, and the web client's `memberSelector` sending `leader` (which
+  `strategy.resolve` rejects) is not touched. Reason: those are what
+  players can type, so merging them changes behavior and needs its own help
+  and test pass, as the proposal said. One nuance: the exact test is now
+  `strings.EqualFold` on both sides in both modules (company used
+  lowercased equality); the two agree for every name the game produces.
+- **Verified:** `make generate`, `make validate`, `go test -race -timeout
+  30m ./...`, `make js-lint`.
+
 ## Proposals: Go
 
 Ranked by value. Risk is the reviewer's estimate of what could change for
-a player.
+a player. Proposals 1 to 4 were carried out, in part, in the server-side
+follow-up above; the text below is the original proposal.
 
 1. **Shared module persistence (medium risk).** Eleven modules define
    the same `Store` interface, `pluginStore`, `persistenceAvailable`,

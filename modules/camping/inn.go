@@ -3,6 +3,7 @@ package camping
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/modconfig"
+	"github.com/GoMudEngine/GoMud/internal/modtimer"
 	"strings"
 	"time"
 
@@ -392,32 +393,22 @@ func (m *CampingModule) scheduleStayLocked(stay camping.InnStay) {
 		return
 	}
 	remaining := stay.RemainingAt(m.clock().UTC())
-	m.innTimerGeneration[leaderUserID]++
-	generation := m.innTimerGeneration[leaderUserID]
-	m.stopInnTimerLocked(leaderUserID)
-	m.innTimers[leaderUserID] = m.scheduler.AfterFunc(remaining, func() {
+	m.innTimerGeneration = modtimer.Arm(m.innTimers, m.innTimerGeneration, leaderUserID, m.scheduler, remaining, func(generation uint64) {
 		m.onInnTimer(leaderUserID, generation)
 	})
 }
 
 func (m *CampingModule) stopInnTimerLocked(leaderUserID int) {
-	if timer, ok := m.innTimers[leaderUserID]; ok {
-		timer.Stop()
-		delete(m.innTimers, leaderUserID)
-	}
+	modtimer.Stop(m.innTimers, leaderUserID)
 }
 
 // onInnTimer runs off the game loop. It only persists state.
 func (m *CampingModule) onInnTimer(leaderUserID int, generation uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.innTimerGeneration[leaderUserID] != generation {
+	if !modtimer.Claim(m.innTimers, m.innTimerGeneration, leaderUserID, generation) {
 		return
 	}
-	if _, ok := m.innTimers[leaderUserID]; !ok {
-		return
-	}
-	delete(m.innTimers, leaderUserID)
 	stay, ok := m.stays[leaderUserID]
 	if !ok || !stay.Resting() {
 		return
