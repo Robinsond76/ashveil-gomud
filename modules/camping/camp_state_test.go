@@ -21,8 +21,9 @@ func TestCampStateOf(t *testing.T) {
 
 	s, ok := m.CampStateOf(7, 100, []string{"camping"})
 	require.True(t, ok)
-	assert.Equal(t, camping.CampState{CanCamp: true, Recipes: s.Recipes}, s)
+	assert.Equal(t, camping.CampState{CanCamp: true, Recipes: s.Recipes, RecipeBook: s.RecipeBook}, s)
 	assert.Len(t, s.Recipes, 1, "the common chill remedy is in every book")
+	assert.Len(t, s.RecipeBook, 1)
 	s, _ = m.CampStateOf(7, 100, nil)
 	assert.False(t, s.CanCamp, "nowhere to camp here")
 

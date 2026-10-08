@@ -25,8 +25,8 @@ See also: <ansi fg="command">help status</ansi>, <ansi fg="command">help surviva
 
 
 In the web client, Company > Status shows each owned member's active
-effects and wounds separately from persistent bonuses. Character >
-Effects shows the same details for you. An effect known to hurt you
+effects and wounds separately from persistent bonuses, yours included
+(there is no separate Character Effects tab). An effect known to hurt you
 (a weakening modifier, bleeding, poison, lost actions and the like) is
 labelled Harmful; one known to help is labelled Helpful. Timed effects count
 down in the panel with a bar showing the time left; combat-round effects

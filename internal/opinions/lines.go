@@ -1,7 +1,6 @@
 package opinions
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
@@ -25,7 +24,7 @@ var lines = map[string]map[Kind]string{
 		Share:    "That's the way. Nobody goes hungry on my watch.",
 		Kindness: "That was kind. I like us better for it.",
 		Courage:  "Bold! I'd follow you off a cliff, mostly.",
-		Execute:  "Did we have to? Sigh. Well.",
+		Execute:  "Did we have to? Well. It is done.",
 		Greed:    "Is that all we are, a bag and a purse?",
 		Rough:    "Mud again. Lovely. Just lovely.",
 	},
@@ -72,12 +71,17 @@ var lines = map[string]map[Kind]string{
 }
 
 // LineFor is what a personality of a given name says about a kind, or ""
-// when it has no verdict on it. id picks the verb (a companion id).
-func LineFor(name, personality string, k Kind) string {
+// when it has no verdict on it, set down as prose by n so a run of
+// reactions varies its shape and never repeats a voice's words.
+func LineFor(n *banter.Narrator, name, personality string, k Kind) string {
 	text, ok := lines[strings.ToLower(personality)][k]
-	if !ok || Verdict(personality, k) == Neutral {
+	verdict := Verdict(personality, k)
+	if !ok || verdict == Neutral {
 		return ""
 	}
-	verb := banter.Verb(strings.ToLower(personality), string(k), text)
-	return fmt.Sprintf(`%s %s, "%s"`, name, verb, text)
+	mood := banter.MoodWarm
+	if verdict == Dislikes {
+		mood = banter.MoodSour
+	}
+	return n.Say(name, strings.ToLower(personality), string(k), text, mood)
 }

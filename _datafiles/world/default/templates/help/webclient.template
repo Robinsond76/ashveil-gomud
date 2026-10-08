@@ -38,13 +38,14 @@ button in them just types a command for you.
   Below it, the tabs:
 
   <ansi fg="yellow">Character</ansi>   Overview (your name, class, level, stats, experience,
-              gold, an Iron badge, and your account blessings), Gear
+              gold, an Iron badge, and your account blessings as cards marked
+              Active, Next character or Locked), Gear
               (what you wear and carry, and its weight), Skills (each
               trained skill with what it does, then what your abilities
-              and company can do), Quests, Effects, and Pet when you
-              have one.
+              and company can do), Quests, and Pet when you have one.
+              Effects are on Company > Status.
   <ansi fg="yellow">Company</ansi>     Status (formation, where you click a member and then a cell to
-              move or swap them, and each member), Inventory (everyone's
+              move or swap them, and one full-width card a member), Inventory (everyone's
               gear, your horses, and the cargo), Camp, Chronicle (the
               company's deeds in sentences, newest first, with a filter by
               kind, and what the towns say of you; help chronicle and
@@ -72,7 +73,7 @@ button in them just types a command for you.
 
 <ansi fg="yellow-bold">What the buttons and menus send</ansi>
 
-  Inventory: tap a member's slot, or click cargo gear, to compare or equip a living member; drag cargo onto a member.
+  Inventory: tabs (All, Equipment, Potions, Food & drink, Materials, Other) sort the cargo; click cargo gear to compare or equip a living member. Worn gear is under Character > Gear.
   Character > Gear: select a slot, choose a compatible cargo item, review
   Current → After and Equip item. Preview removal then Remove equipment
   returns the exact worn item to cargo. Unavailable choices explain why. Eat, drink and use items from
@@ -161,15 +162,15 @@ See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help compan
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
-Company Inventory shows shared cargo once, plus each member's gear slots (tap or drag to equip). Character Gear previews any member's changes.
+Company Inventory shows shared cargo once, sorted by tabs. Character Gear lists every member's worn gear and previews any member's changes.
 
 Company Status separates active effects, wounds and persistent bonuses.
 Character Skills separates trained ranks, automatic combat abilities,
 field and camp capabilities, including disabled settings and conditions,
 and Company training: each companion's optional skills and training
 points, read only (train with company train).
-Character Effects shows your effects and wounds with their true duration
-and meaning. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
+Your own effects and wounds, with their true duration and meaning, are on
+your card in Company Status. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
 
 The Battle view uses current combat positions on narrow ground, with two active columns and any overflow marked Reserve. Setup continues to show your saved formation. See help battlefield.
 

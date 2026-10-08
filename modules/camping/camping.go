@@ -1823,6 +1823,7 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	s := camping.CampState{Inn: has(m.innSettings().RoomTag), Gear: gear, Supplies: supplies, Tents: tents}
 	if leader := users.GetByUserId(leaderUserID); leader != nil && leader.Character != nil {
 		s.Recipes = m.recipesLines(leader)
+		s.RecipeBook = m.recipeRows(leader)
 	}
 	if !ok {
 		s.CanCamp = has(m.roomTag())

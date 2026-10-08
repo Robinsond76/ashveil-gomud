@@ -46,7 +46,7 @@ func inventoryTestSources(stacks []encumbrance.CargoStack) inventorySources {
 func inventoryUser(t *testing.T) *users.UserRecord {
 	testItemSpecs(t,
 		items.ItemSpec{ItemId: 989201, Name: "waterskin", Weight: 1000, Uses: 5, Subtype: items.Drinkable},
-		items.ItemSpec{ItemId: 989202, Name: "seared meat", Weight: 300, Subtype: items.Edible},
+		items.ItemSpec{ItemId: 989202, Name: "seared meat", Weight: 300, Subtype: items.Edible, Goods: items.GoodsProvision},
 	)
 	u := users.NewUserRecord(7, 1)
 	u.Character.Name = "Dain"
@@ -94,6 +94,9 @@ func TestCompanyInventoryPayload(t *testing.T) {
 	assert.Equal(t, "!989202", meat["ref"], "cargo take matches a stack by item id")
 	assert.Equal(t, 6.0, meat["count"])
 	assert.Equal(t, 300.0, meat["grams"])
+	assert.Equal(t, "provision", meat["goods"], "the inventory tabs sort trade goods by category (89 review)")
+	_, hasGoods := cargo[1].(map[string]any)["goods"]
+	assert.False(t, hasGoods, "an item that is no trade good sends no goods")
 	assert.Equal(t, 2.0, cargo[1].(map[string]any)["uses"])
 }
 

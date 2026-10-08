@@ -12,7 +12,7 @@
  *              (profession titles derived from skills) are not shown: a
  *              class names a character in Ashveil (Phase 57)
  *   Quests   - in-progress quest log, click to expand
- *   Effects  - active effects, wounds and persistent bonuses with durations
+ *   (Effects moved to Company > Status, which shows everyone's, yours included)
  *   Pet      - only while the player has a pet (window-pet.js)
  *
  * Other windows' scripts host their content here through
@@ -141,12 +141,19 @@
 
         /* Phase 77: blessings (small perks for later characters), last on
            the Overview so experience and gold stay near the top */
-        #cw-blessings { order: 1; display: flex; flex-direction: column; gap: 3px; margin-top: 6px; min-width: 0; }
+        #cw-blessings { order: 1; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; min-width: 0; }
         #cw-blessings:empty { display: none; }
-        #cw-blessings .cw-bl-head { color: var(--t-text-secondary); font-weight: bold; margin-top: 4px; }
-        #cw-blessings .cw-bl-row { color: var(--t-text); overflow-wrap: anywhere; }
-        #cw-blessings .cw-bl-row.todo { color: var(--t-text-muted); }
-        #cw-blessings .cw-bl-name { color: var(--t-accent); }
+        #cw-blessings .cw-bl-head { color: var(--t-text-secondary); font-weight: bold; margin-top: 6px; }
+        #cw-blessings .cw-bl-card { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; border: 1px solid var(--t-accent-dim); border-left: 3px solid var(--t-accent); border-radius: 3px; min-width: 0; overflow-wrap: anywhere; }
+        #cw-blessings .cw-bl-card.waiting { border-left-color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-card.todo { border-style: dashed; border-left-style: dashed; border-left-color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+        #cw-blessings .cw-bl-name { color: var(--t-accent); font-weight: bold; }
+        #cw-blessings .cw-bl-state { color: var(--t-text-secondary); font-size: 0.85em; white-space: nowrap; }
+        #cw-blessings .cw-bl-card.todo .cw-bl-name { color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-line { color: var(--t-text); }
+        #cw-blessings .cw-bl-card.todo .cw-bl-line { color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-note { color: var(--t-text-secondary); }
 
         #cw-char-name .cw-char-race {
             cursor: help;
@@ -506,26 +513,6 @@
         @media (hover: hover) and (pointer: fine) {
             button.csk-card:hover { background: var(--t-bg-surface); border-color: var(--t-accent); }
         }
-
-        /* ---- Effects tab ---- */
-        #cw-effects {
-            padding: 4px 6px;
-            gap: 4px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            align-content: flex-start;
-        }
-
-        .cw-affect-empty {
-            grid-column: 1 / -1;
-            color: var(--t-text-secondary);
-            font-size: 0.76em;
-            font-style: italic;
-            text-align: center;
-            padding: 14px 0;
-        }
-
-        #cw-effects .cw-subhead, #cw-effects .cw-capability { grid-column: 1 / -1; }
     `);
 
     // -----------------------------------------------------------------------
@@ -567,7 +554,7 @@
 
     // -----------------------------------------------------------------------
     // Hosted sub-tabs (Phase 32g): other windows' content, by order among
-    // the built-in tabs (Overview 0, Skills 2, Quests 3, Effects 4).
+    // the built-in tabs (Overview 0, Skills 2, Quests 3).
     // -----------------------------------------------------------------------
     const hosted   = [];   // { id, label, order, build, visible }
     const overview = [];   // build functions appended to Overview
@@ -665,7 +652,6 @@
                 '<button class="cw-tab-btn active" data-panel="cw-overview" data-order="0">Overview</button>' +
                 '<button class="cw-tab-btn"        data-panel="cw-skills-tab" data-order="2">Skills</button>' +
                 '<button class="cw-tab-btn"        data-panel="cw-quests" data-order="3">Quests</button>' +
-                '<button class="cw-tab-btn"        data-panel="cw-effects" data-order="4">Effects</button>' +
             '</div>' +
 
             '<div class="cw-tab-panel active" id="cw-overview">' +
@@ -687,10 +673,6 @@
                 '<div class="cw-sub" id="cw-capabilities"></div>' +
                 '<h4 class="cw-subhead">Company training</h4>' +
                 '<div class="cw-sub" id="cw-company-skills"></div>' +
-            '</div>' +
-
-            '<div class="cw-tab-panel" id="cw-effects">' +
-                '<div class="cw-affect-empty">No active effects</div>' +
             '</div>';
 
         document.body.appendChild(el);
@@ -1030,39 +1012,6 @@
         });
     }
 
-    function _formatMods(mods) {
-        if (!mods || Object.keys(mods).length === 0) { return ''; }
-        return Object.entries(mods)
-            .map(([k, v]) => (v >= 0 ? '+' : '') + v + ' ' + k)
-            .join('  ');
-    }
-
-    function updateEffects() {
-        const panel = document.getElementById('cw-effects');
-        if (!panel) { return; }
-        const all = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Conditions;
-        const state = all && all.leader;
-        keepScroll(panel);
-        panel.textContent = '';
-        if (state) {
-            [['effects', 'Active effects', 'effect'], ['wounds', 'Wounds', 'wound'], ['bonuses', 'Persistent bonuses', 'bonus']].forEach(group => {
-                capabilityText(panel, group[1], true);
-                const entries = state[group[0]] || [];
-                entries.forEach(c => panel.appendChild(CompanyData.condition(c, group[2])));
-                if (!entries.length) { capabilityText(panel, 'None'); }
-            });
-            return;
-        }
-        // Legacy Char.Affects remains usable without a Company provider.
-        const affects = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Affects) || {};
-        Object.keys(affects).sort().forEach(key => {
-            const c = affects[key];
-            capabilityText(panel, [(c.name || key) + ' — ' + (c.duration_max === -1 ? 'Persistent' : c.duration_left + ' seconds remaining') + '.',
-                CompanyData.sentence(c.description), _formatMods(c.affects || {})].filter(Boolean).join(' '));
-        });
-        if (!Object.keys(affects).length) { capabilityText(panel, 'No active effects'); }
-    }
-
     // Phase 77: the account's blessings, from Char.Blessings: what this
     // character carries, what waits for the next one, and what is left to
     // earn. All text is set with textContent.
@@ -1077,25 +1026,32 @@
         host.textContent = '';
         const data = blessingsData || (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Blessings);
         if (!data) { return; }
-        const section = (title, rows, line, todo) => {
+        // One card a blessing: its name and state (Active, Next character or
+        // Locked) on the first line, then what it does or what earns it.
+        const section = (title, rows, kind, state, line) => {
             if (!Array.isArray(rows) || !rows.length) { return; }
             node('div', 'cw-bl-head', title, host);
             rows.forEach(r => {
-                const row = node('div', 'cw-bl-row' + (todo ? ' todo' : ''), '', host);
-                node('span', 'cw-bl-name', String(r.name || ''), row);
-                row.appendChild(document.createTextNode(': ' + line(r)));
+                const card = node('div', 'cw-bl-card ' + kind, '', host);
+                const top  = node('div', 'cw-bl-top', '', card);
+                node('span', 'cw-bl-name', String(r.name || ''), top);
+                node('span', 'cw-bl-state', state(r), top);
+                const text = line(r);
+                if (text.line) { node('div', 'cw-bl-line', text.line, card); }
+                if (text.note) { node('div', 'cw-bl-note', text.note, card); }
             });
         };
-        section('Blessings carried', data.carried, r => String(r.perk || ''), false);
-        section('Earned, waiting for your next character', data.waiting, r => String(r.perk || ''), false);
-        section('Blessings still to earn', data.next, r => {
-            let t = String(r.condition || '');
-            if (r.iron && !data.iron) { t += ' (Iron characters only)'; }
-            else if (r.need > 1) { t += ' (' + (r.have || 0) + ' of ' + r.need + ')'; }
-            return t;
-        }, true);
+        const perk = r => ({ line: String(r.perk || '') });
+        section('Blessings carried', data.carried, 'active', () => 'Active', perk);
+        section('Earned, waiting for your next character', data.waiting, 'waiting', () => 'Next character', perk);
+        section('Blessings still to earn', data.next, 'todo', () => 'Locked', r => {
+            let note = '';
+            if (r.iron && !data.iron) { note = 'Iron characters only'; }
+            else if (r.need > 1) { note = (r.have || 0) + ' of ' + r.need; }
+            return { line: String(r.condition || ''), note };
+        });
         if (data.discount) {
-            node('div', 'cw-bl-row', 'Your blessings take ' + data.discount + '% off every recruit.', host);
+            node('div', 'cw-bl-note', 'Your blessings take ' + data.discount + '% off every recruit.', host);
         }
     }
 
@@ -1109,7 +1065,6 @@
         updateSkills();
         updateCapabilities();
         updateCompanySkills();
-        updateEffects();
     }
 
     // -----------------------------------------------------------------------
@@ -1120,12 +1075,12 @@
         gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
             // A Company snapshot only changes the company training list;
-            // of its extras, only Conditions (Effects) is shown here.
+            // its extras (conditions included) are shown by the Company window.
             if (namespace === 'Company') {
                 if (win.isOpen()) { updateCompanySkills(); updateTempo(); }
                 return;
             }
-            if (namespace.startsWith('Company.') && namespace !== 'Company.Conditions') { return; }
+            if (namespace.startsWith('Company.')) { return; }
             if (namespace === 'Char.Blessings') {
                 blessingsData = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Blessings) || null;
             }

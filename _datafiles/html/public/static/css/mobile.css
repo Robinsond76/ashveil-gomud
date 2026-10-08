@@ -184,8 +184,8 @@ body.mobile #battle-badge {
 /* ---- Settings: one column ----------------------------------------------- */
 body.mobile #floating-menu { width: 100vw; max-width: 100vw; max-height: 100dvh; border-radius: 0; }
 
-/* Phase 48: a member's equipment slots are finger-sized on a phone */
-body.mobile .cmp-slot { min-height: 44px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--t-accent-dim); }
+/* Phase 89: inventory category tabs are finger-sized on a phone */
+body.mobile .cmp-inv-tab { min-height: 44px; padding: 4px 12px; }
 
 /* ---- Walk to...: search over visited rooms (Phase 47) ------------------- */
 body.mobile #walk-search {

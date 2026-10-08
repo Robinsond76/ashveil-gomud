@@ -20,7 +20,7 @@ func TestCompanyCampPayload(t *testing.T) {
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, map[string]any{"has_camp": true, "here": true, "room": "", "fire_lit": true, "resting": true, "rested": false,
-		"embers": false, "tent": false, "tents": []any{}, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}, "duties": []any{}, "duties_locked": false, "recipes": []any{}}, got)
+		"embers": false, "tent": false, "tents": []any{}, "gear": []any{}, "supplies": []any{}, "prepared": []any{}, "theft_risk": false, "rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false, "room_id": 0.0, "allied_camps": []any{}, "duties": []any{}, "duties_locked": false, "recipes": []any{}, "recipe_book": []any{}}, got)
 
 	// Phase 40a3: a finished rest leaves embers, and a pitched tent shows.
 	state = camping.CampState{HasCamp: true, Here: true, Rested: true, Embers: true, Tent: true}
@@ -55,6 +55,11 @@ func TestCompanyCampPayload(t *testing.T) {
 	state = camping.CampState{Recipes: []string{"hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)"}}
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, []any{"hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)"}, got["recipes"])
+	state = camping.CampState{RecipeBook: []camping.RecipeRow{{Name: "hunter's stew", Kind: "dish", Skill: "cooking", Level: 3, Ready: true,
+		Needs: []camping.RecipeNeed{{Name: "raw game meat", Count: 2, Have: 2}}}}}
+	require.NoError(t, json.Unmarshal(extra.build(u), &got))
+	assert.Equal(t, []any{map[string]any{"name": "hunter's stew", "kind": "dish", "skill": "cooking", "level": float64(3), "ready": true,
+		"needs": []any{map[string]any{"name": "raw game meat", "count": float64(2), "have": float64(2)}}}}, got["recipe_book"])
 	state = camping.CampState{HasCamp: true, Here: true, FireLit: true, Resting: true, RestPercent: 25, RestSeconds: 45}
 
 	none := campExtra(func(int, int, []string) (camping.CampState, bool) { return camping.CampState{}, false }, nil)
