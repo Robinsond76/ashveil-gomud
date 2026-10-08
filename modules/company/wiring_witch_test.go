@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -51,6 +50,10 @@ func witchBrawl(t *testing.T, level int) *brawl {
 	hexes.Default.Reset()
 	t.Cleanup(hexes.Default.Reset)
 	t.Cleanup(scripting.UseHexRollForTest(func(int) int { return 0 }))
+	// Chants are timed to the round in these tests (Dread Whisper is given
+	// exactly its chant's rounds), so no blow may break one: a broken chant
+	// restarts with no morale check, as the Phase 83 shuffled run saw.
+	t.Cleanup(hooks.UseBreakRollForTest(func(n int) int { return n - 1 }))
 	// The game registers these (hooks.RegisterListeners).
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
@@ -327,13 +330,6 @@ func TestDreadWhisperMakesAFoeTakeAMoraleCheck(t *testing.T) {
 		b.toughen()
 		b.hold(nil)
 		out += b.fight()
-	}
-	if !strings.Contains(out, "loses nerve and flees.") || !strings.Contains(out, "(dread)") {
-		agg := b.aria.Character.Aggro
-		t.Logf("DIAG out=%q\naggro=%+v mana=%d living=%d round=%d", out, agg, b.aria.Character.Mana, len(b.livingBandits()), b.round)
-		if agg != nil {
-			t.Logf("DIAG spell=%+v", agg.SpellInfo)
-		}
 	}
 	assert.Contains(t, out, "loses nerve and flees.")
 	assert.Contains(t, out, "(dread)")
