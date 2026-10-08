@@ -21,6 +21,7 @@ type tempoFight struct {
 type tempoState struct {
 	char   *characters.Character
 	epoch  uint64
+	opened uint64 // the combat round the meter was first filled (Phase 82b: opening bonuses move that round's first slot)
 	fights map[tempoFight]bool
 	meter  combat.Meter
 }
@@ -129,7 +130,7 @@ func fillTempo(who caster, c *characters.Character) {
 	if st == nil || st.char != c ||
 		(len(fights) > 0 || len(st.fights) > 0) && !sharesTempoFight(fights, st.fights) ||
 		len(fights) == 0 && st.epoch != c.CombatEpoch {
-		st = &tempoState{char: c}
+		st = &tempoState{char: c, opened: combatRound.Load()}
 		st.meter.Bonus = float64(c.ClassEffects().Int(classes.OpenMeter)) // Phase 39b: Iaijutsu
 		st.meter.Bonus += float64(scoutMeter(who))                        // Phase 38c2: Scouted ground
 		if c.RT != nil && c.RT.Beast != nil {

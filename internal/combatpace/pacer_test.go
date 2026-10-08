@@ -62,7 +62,7 @@ func TestLinesGoOutInOrderAtThePacesGap(t *testing.T) {
 	p := New()
 	spec := Normal.ForRound(8 * time.Second)
 	for _, l := range []string{"a\n", "b\n", "c\n"} {
-		p.Hold(1, 2, l, spec, at(0))
+		p.Hold(1, 2, 0, l, spec, at(0))
 	}
 	if !p.Busy(1) {
 		t.Fatal("held lines should make the player busy")
@@ -81,7 +81,7 @@ func TestGapsShrinkToFitTheWindow(t *testing.T) {
 	p := New()
 	spec := Fast.ForRound(8 * time.Second) // 0.4s gap, 3s window
 	for i := 0; i < 21; i++ {              // 20 gaps = 8s unscaled
-		p.Hold(1, 2, string(rune('a'+i)), spec, at(0))
+		p.Hold(1, 2, 0, string(rune('a'+i)), spec, at(0))
 	}
 	var last time.Time
 	var order []string
@@ -104,10 +104,10 @@ func TestDramaticAndQuickBeats(t *testing.T) {
 	p := New()
 	p.Mark("The bandit howls.") // marks match without the trailing newline
 	spec := Normal.ForRound(8 * time.Second)
-	p.Hold(1, 2, "You strike the bandit. (critical hit, 9 damage)\n", spec, at(0))
-	p.Hold(1, 2, "The bandit howls.\n", spec, at(0))
-	p.Hold(1, 2, "The spell bursts.\n", spec, at(0))
-	p.Hold(1, 2, "  the rat (3 damage)\n", spec, at(0))
+	p.Hold(1, 2, 0, "You strike the bandit. (critical hit, 9 damage)\n", spec, at(0))
+	p.Hold(1, 2, 0, "The bandit howls.\n", spec, at(0))
+	p.Hold(1, 2, 0, "The spell bursts.\n", spec, at(0))
+	p.Hold(1, 2, 0, "  the rat (3 damage)\n", spec, at(0))
 	got := release(p, 4000)
 	want := map[string]int{
 		"You strike the bandit. (critical hit, 9 damage)\n": 0,
@@ -120,8 +120,8 @@ func TestDramaticAndQuickBeats(t *testing.T) {
 	}
 
 	p.StartRound()
-	p.Hold(1, 4, "The bandit howls.\n", spec, at(0))
-	p.Hold(1, 4, "The bandit howls.\n", spec, at(0))
+	p.Hold(1, 4, 0, "The bandit howls.\n", spec, at(0))
+	p.Hold(1, 4, 0, "The bandit howls.\n", spec, at(0))
 	if got := release(p, 4000); got["The bandit howls.\n"] != 800 {
 		t.Fatalf("a mark outlived its round: %v", got)
 	}
@@ -130,10 +130,10 @@ func TestDramaticAndQuickBeats(t *testing.T) {
 func TestAnOlderRoundIsFlushedAheadOfANewOne(t *testing.T) {
 	p := New()
 	spec := Normal.ForRound(8 * time.Second)
-	p.Hold(1, 2, "old1", spec, at(0))
-	p.Hold(1, 2, "old2", spec, at(0))
+	p.Hold(1, 2, 0, "old1", spec, at(0))
+	p.Hold(1, 2, 0, "old2", spec, at(0))
 	p.Due(at(0)) // old1 out
-	flushed := p.Hold(1, 4, "new1", spec, at(8000))
+	flushed := p.Hold(1, 4, 0, "new1", spec, at(8000))
 	if !reflect.DeepEqual(flushed, []Release{{UserId: 1, Text: "old2"}}) {
 		t.Fatalf("flushed %v, want [old2]", flushed)
 	}
@@ -146,10 +146,10 @@ func TestAnOlderRoundIsFlushedAheadOfANewOne(t *testing.T) {
 func TestFlushAndFlushAll(t *testing.T) {
 	p := New()
 	spec := Slow.ForRound(8 * time.Second)
-	p.Hold(2, 2, "b1", spec, at(0))
-	p.Hold(1, 2, "a1", spec, at(0))
-	p.Hold(1, 2, "a2", spec, at(0))
-	p.Hold(3, 2, "c1", spec, at(0))
+	p.Hold(2, 2, 0, "b1", spec, at(0))
+	p.Hold(1, 2, 0, "a1", spec, at(0))
+	p.Hold(1, 2, 0, "a2", spec, at(0))
+	p.Hold(3, 2, 0, "c1", spec, at(0))
 	if got, ended := p.Flush(3); !reflect.DeepEqual(got, []Release{{UserId: 3, Text: "c1"}}) || !ended {
 		t.Fatalf("Flush(3) = %v %v", got, ended)
 	}
@@ -185,8 +185,8 @@ func TestFollowJoinsHeldLinesOnly(t *testing.T) {
 		t.Fatal("Follow held a line for a player with nothing held")
 	}
 	spec := Normal.ForRound(8 * time.Second)
-	p.Hold(1, 2, "r1", spec, at(0))
-	p.Hold(1, 2, "r2", spec, at(0))
+	p.Hold(1, 2, 0, "r1", spec, at(0))
+	p.Hold(1, 2, 0, "r2", spec, at(0))
 	if !p.Follow(1, "after") {
 		t.Fatal("Follow did not join the held lines")
 	}
@@ -206,8 +206,8 @@ func TestAnOpenRoundIsBusyUntilDrained(t *testing.T) {
 			t.Fatalf("player %d not busy as the round opens", id)
 		}
 	}
-	p.Hold(1, 2, "l1", spec, at(0))
-	p.Hold(1, 2, "l2", spec, at(0))
+	p.Hold(1, 2, 0, "l1", spec, at(0))
+	p.Hold(1, 2, 0, "l2", spec, at(0))
 	// The first turn: player 2 and 3 were sent nothing, and their round
 	// ends; player 1 still has a line held.
 	_, drained := p.Due(at(0))
@@ -234,9 +234,9 @@ func TestAnOpenRoundIsBusyUntilDrained(t *testing.T) {
 func TestALateLineOfAnOlderRoundJoinsTheNewer(t *testing.T) {
 	p := New()
 	spec := Normal.ForRound(8 * time.Second)
-	p.Hold(1, 4, "n1", spec, at(0))
-	p.Hold(1, 4, "n2", spec, at(0))
-	if flushed := p.Hold(1, 2, "late", spec, at(0)); flushed != nil {
+	p.Hold(1, 4, 0, "n1", spec, at(0))
+	p.Hold(1, 4, 0, "n2", spec, at(0))
+	if flushed := p.Hold(1, 2, 0, "late", spec, at(0)); flushed != nil {
 		t.Fatalf("a late older line flushed the newer round: %v", flushed)
 	}
 	got := release(p, 3000)
@@ -253,7 +253,7 @@ func TestABusyRoundStillFillsItsWindow(t *testing.T) {
 	p := New()
 	spec := Normal.ForRound(8 * time.Second)
 	for i := 0; i < 30; i++ {
-		p.Hold(1, 2, string(rune('A'+i)), spec, at(0))
+		p.Hold(1, 2, 0, string(rune('A'+i)), spec, at(0))
 	}
 	got := release(p, 7000)
 	if len(got) != 30 {
@@ -273,10 +273,10 @@ func TestABusyRoundStillFillsItsWindow(t *testing.T) {
 func TestDataGoesOutWithTheNextTextLine(t *testing.T) {
 	p := New()
 	spec := Normal.ForRound(8 * time.Second)
-	p.Hold(1, 2, "line one", spec, at(0))
+	p.Hold(1, 2, 0, "line one", spec, at(0))
 	p.HoldData(1, 2, "d1", spec, at(0))
 	p.HoldData(1, 2, "d2", spec, at(0))
-	p.Hold(1, 2, "line two", spec, at(0))
+	p.Hold(1, 2, 0, "line two", spec, at(0))
 	p.HoldData(1, 2, "d3", spec, at(0))
 
 	var order []string
@@ -315,7 +315,7 @@ func TestDataAloneAndFlushedWithText(t *testing.T) {
 		t.Fatalf("data-only release %v drained %v", rel, drained)
 	}
 
-	p.Hold(2, 2, "t1", spec, at(0))
+	p.Hold(2, 2, 0, "t1", spec, at(0))
 	p.HoldData(2, 2, "d1", spec, at(0))
 	got, ended := p.Flush(2)
 	want := []Release{{UserId: 2, Text: "t1"}, {UserId: 2, Data: "d1", IsData: true}}
@@ -327,7 +327,7 @@ func TestDataAloneAndFlushedWithText(t *testing.T) {
 func TestOlderRoundDataIsFlushedAheadOfANewRound(t *testing.T) {
 	p := New()
 	spec := Normal.ForRound(8 * time.Second)
-	p.Hold(1, 2, "old", spec, at(0))
+	p.Hold(1, 2, 0, "old", spec, at(0))
 	p.HoldData(1, 2, "od", spec, at(0))
 	flushed := p.HoldData(1, 4, "nd", spec, at(8000))
 	want := []Release{{UserId: 1, Text: "old"}, {UserId: 1, Data: "od", IsData: true}}
@@ -342,7 +342,7 @@ func TestFollowDataWaitsOnlyBehindHeldEntries(t *testing.T) {
 	if p.FollowData(1, "x") {
 		t.Fatal("nothing held: data goes out at once")
 	}
-	p.Hold(1, 2, "l1", spec, at(0))
+	p.Hold(1, 2, 0, "l1", spec, at(0))
 	if !p.FollowData(1, "x") {
 		t.Fatal("held lines: data follows them")
 	}

@@ -181,6 +181,8 @@ func copyShipped(t *testing.T, dataDir string, rels ...string) {
 func newBrawl(t *testing.T) *brawl {
 	hooks.ResetTempoForTest()
 	t.Cleanup(hooks.ResetTempoForTest)
+	hooks.ResetBattleClockForTest()
+	t.Cleanup(hooks.ResetBattleClockForTest)
 	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 1 }))
 	t.Cleanup(hooks.UseMoraleStateForTest(nil, nil))
 	t.Cleanup(hooks.UseMoraleRollForTest(func(int) int { return 99 }))
@@ -357,6 +359,14 @@ func newBrawl(t *testing.T) *brawl {
 // on one named bandit, as `attack <bandit>` did before Phase 32c (a fight is
 // now started by naming a group, and the first aim is chosen for her). The
 // 29a/29b scenarios that need a particular foe use it.
+// actsFirst makes a fighter the round's first slot (Phase 82b: turns run
+// in speed order, and the brawl pins every tempo at one, so raw Speed
+// breaks the tie). Fixtures that relied on the old "the player's blows
+// come before any mob's" order call it.
+func (b *brawl) actsFirst(c *characters.Character) {
+	c.Stats.Speed.ValueAdj = 200
+}
+
 func (b *brawl) aimAt(name string) {
 	b.t.Helper()
 	_, id := b.road.FindByName(name)

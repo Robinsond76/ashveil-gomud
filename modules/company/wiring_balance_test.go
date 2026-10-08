@@ -169,6 +169,7 @@ func TestBalanceEarnedTurnsSurviveAnEarlierKill(t *testing.T) {
 	b.saveTactics(strategy.Tactics{Focus: strategy.Weakest})
 	b.toughen()
 	b.hardenBandits()
+	b.actsFirst(b.aria.Character) // Phase 82b: her first blow, not a companion's, fells the opening foe
 	opening := b.bandits["bandit cutthroat"][0]
 	b.cmd("attack", fmt.Sprintf("#%d", opening))
 	for _, m := range b.livingBandits() {
@@ -422,9 +423,10 @@ func TestBalanceEnemyEarnedTurnSurvivesAnEarlierKill(t *testing.T) {
 	}
 	require.NotNil(t, attacker, "a bandit fighting")
 	attacker.Character.SetAggro(0, fallen.InstanceId, characters.DefaultAttack)
+	b.actsFirst(b.aria.Character) // Phase 82b: her turn, the earlier blow, comes before the bandit's
 	seen := b.listen()
 	// The member falls to an earlier blow this round: after upkeep has
-	// kept the bandit's aim, during the player's pass (players act first).
+	// kept the bandit's aim, at the player's turn (she acts first).
 	felled := false
 	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
 		if !felled && e.Kind == combatstream.Attack && e.Source.UserId == 7 {

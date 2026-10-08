@@ -241,6 +241,33 @@ migrated.
 - Sims call `DoCombat` directly and count rounds, so the clock (82c) does
   not change their numbers; 82c reports seconds per fight beside rounds.
 
+### 82b measurement (2026-10-07, before phase 81 merged)
+
+`ASHVEIL_BALANCE=1 ASHVEIL_BALANCE_FIGHTS=30 go test ./modules/company -run
+TestBalanceAtLevel -v`, 30 fights a cell, on the 82b branch (phase 81 was
+still open, so this is the same class numbers #179 measured; re-measure
+after 81 lands if its tuning touches the sim classes). Median fights before
+a rest by company size (five / four / three / two / solo win rate), with the
+#179 numbers in brackets:
+
+| Band  | Martial                          | Magic                     |
+|-------|----------------------------------|---------------------------|
+| 3-5   | 20 / 14 / 12 / 2 / 80% (17/18/13/2/74%) | 5 / 5 / 4 / 3 (5/5/4/3) |
+| 10-12 | 14 / 15 / 11 / 2 / 73% (16/11/8/3/68%)  | 8 / 7 / 5 / 3 (8/7/4/2) |
+| 20-22 | 16 / 9 / 11 / 3 / 67% (12/14/10/2/68%)  | 8 / 9 / 5 / 2 (9/8/4/2) |
+
+Every cell is inside, or within sample noise of, the #179 numbers: five
+members 14-20 against the 15-20 target, four 9-15 against 8-14, three 11-12
+(over the 5-7 target, as before), two members 2-3, solo wins 67-80% and
+rests every fight, magic 5-9. A fast foe striking first costs a company
+nothing it can measure at thirty fights, because at-level foes carry 40%
+HP and usually fall in the round they would have struck. **The at-level
+knob stays at 40%.** Class mirror sims were not re-run for 82b: nothing in
+the turn order changes a class's numbers, a mirror fields the same classes
+on both sides so a faster first strike moves both sides alike, and phase
+81 is re-measuring them anyway; its review should read them on a branch
+that carries 82b.
+
 ## Web client (decision 8: the battle screen docks above the terminal)
 
 ### Layout
@@ -412,6 +439,65 @@ Order: 82a and 82b may run in parallel (web client vs Go). 82c needs 82b.
   at a time).
 - Acceptance: at normal, no two actions of a battle arrive less than 0.6 s
   apart; at-level fight length in range; `make smoke` passes.
+
+#### 82c as built (2026-10-07, full autonomy): amendments and measurement
+
+- **One clock for the world, not one per cluster** (amends decision 4).
+  `DoCombat` is one pass over every fight with round-keyed state shared
+  across them (marks last `round <= MarkRound+1`, battle cries, openings,
+  `battle.StartRound`, the fight stream's round stamps), through some
+  thirty passes. Per-cluster rounds would mean per-cluster round numbers
+  through all of them for a case (two companies fighting apart at once)
+  the game rarely sees. So `BattleClock` (`internal/hooks/combat_clock.go`,
+  a `NewTurn` listener) resolves every fight whenever a player is in one,
+  and `CombatOnCadence` runs only while no player fights (mob against mob
+  stays on the 8 s cadence then). Two companies fighting apart share the
+  clock: each round waits for the slower playback of the two. The rounds
+  resolve exactly as before, under the game lock, so sims and tests that
+  call `DoCombat` are untouched.
+- **Each player reads at their own pace; the round waits for the slowest**
+  (amends decision 5's "a cluster's beat is the slowest chosen pace"). A
+  fast reader in a fight with a slow one sees fast beats and then a pause,
+  rather than slow beats; the round length is the same either way. Off
+  reads at once and the round still lasts the minimum (3 s, `MinRoundMs` in
+  the combat config) or the slowest reader's playback plus the tail.
+- **Rounds are numbered by a counter**, not by the game round the cadence
+  used to pass: the clock's rounds fall between game rounds, and the
+  battle screen's `fight_round` now counts 1, 2, 3 instead of stepping by
+  two. The counter is game-loop state and starts over with the process,
+  like the battles.
+- **Beats** are the design's table, as `Beat`/`Follow`/`Extra`/`Tail` in
+  the pacer's specs beside the by-line numbers the cadence still uses.
+  Lines carry the turn slot they came from (`events.Slot`, set by the turn
+  loop; inherited like the cause), so a turn's first line waits a beat and
+  its follow-ups a quarter of one. Nothing is squeezed: `Beats()` has no
+  window. The due time is computed on the turn after the round, once its
+  lines are held, from the pacer's `PlaybackEnd`.
+- **Game-round effects (decision 6), audited:** every status a fight
+  applies (bleeding, staggered, knockdown, armor broken, exposed, burning,
+  overloaded, stunned, hobbled, asleep, paralyzed, blighted, fogbound,
+  windchilled, the four weapon poisons) is already a combat-round buff and
+  ends with the fight. The one in-battle effect still on game rounds is the
+  stock **Poisoned** buff (13; a Nightblade's Envenom, a gryphon's venom,
+  the Miasma hex's mark): 1d8 every three game rounds, three times, by its
+  own script. Converting it would need a status spec with a fixed damage
+  model and would make it vanish at the fight's end. Left as is: in real
+  time it costs about the same whatever the round length, and the world's
+  content is temporary. Rule for new content: an in-battle effect is a
+  combat status. `GetDurations` now reports battle rounds for a
+  combat-round buff; `conditions` reads "N battle rounds left"; the GMCP
+  `Char` affects estimate seconds at the minimum round.
+- **Measured** (`TestPacedCombatThroughTheRealRound`, the brawl's five
+  against five with the company's health pinned, normal pace, fake clock):
+  7.0 s a round over 16 rounds, 111.6 s in all, about 9.5 lines a round.
+  At-level fights are about 4 rounds (#179) with fewer foes, so a band
+  fight is about 25-30 s at normal, inside the 25-45 s target; the
+  five-against-five ceiling of 90 s is a fight of twelve rounds or so,
+  which a real fight (no pinned health) does not reach. Not re-tuned.
+- Not done here: the web battle timeline's backlog collapse still assumes
+  an 8 s round (`ROUND_MS`); with beats the backlog stays short, so it is
+  harmless, and 82a/82d may read the clock's due time (`BattleClockDue`)
+  for a round timer.
 
 ### Phase 82d: turn order on screen and tempo shown
 

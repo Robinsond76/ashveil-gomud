@@ -132,6 +132,9 @@ type CombatConfig struct {
 	TempoSpeedRef    ConfigFloat `yaml:"TempoSpeedRef"`
 	TempoSpeedSpan   ConfigFloat `yaml:"TempoSpeedSpan"`
 	MaxTurnsPerRound ConfigInt   `yaml:"MaxTurnsPerRound"`
+	// Battle clock (Phase 82c): a round in a player's fight lasts as long
+	// as its actions' beats need, and never less than MinRoundMs.
+	MinRoundMs ConfigInt `yaml:"MinRoundMs"`
 }
 
 type GameplayParty struct {
@@ -445,6 +448,9 @@ func (c *CombatConfig) validate() {
 	}
 	if c.MaxTurnsPerRound < 1 || c.MaxTurnsPerRound > 2 {
 		c.MaxTurnsPerRound = 2
+	}
+	if c.MinRoundMs < 500 || c.MinRoundMs > 30000 {
+		c.MinRoundMs = 3000
 	}
 
 	// Agility (Phase 30g3)
