@@ -117,7 +117,8 @@ Screen readers: the picture is decorative. The Combat tab's Battle view
 and the story text carry everything: the Battle view lists the same turn
 order in words ("Turn order: Wren, the first wolf, ...").
 
-On a phone the picture fills the screen and allied companies show as pennants
-you tap to watch (<ansi fg="command">help mobile</ansi>).
+On a phone the screen sits at the top of the Game view, the picture at its
+smallest size, and allied companies show as pennants you tap to watch
+(<ansi fg="command">help mobile</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help formation</ansi>

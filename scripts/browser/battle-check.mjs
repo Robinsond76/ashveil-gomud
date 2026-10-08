@@ -115,7 +115,7 @@ check((await page.evaluate(() => document.querySelector('#battle-screen .bs-titl
 // Phase 82d: the round's turn order under the picture.
 {
   const tags = await page.evaluate(() => Array.from(document.querySelectorAll('#battle-screen .bs-order .bs-turn')).map(t => t.textContent + (t.classList.contains('is-enemy') ? '!' : '') + (t.classList.contains('is-acting') ? '*' : '') + (t.classList.contains('is-done') ? '-' : '')));
-  check(JSON.stringify(tags) === JSON.stringify(['Wren', 'second!', 'Brant', 'first!', 'Wren']), 'the strip lists the order as short tags, foes dashed, a fast leader twice, nobody acting yet: ' + JSON.stringify(tags));
+  check(JSON.stringify(tags) === JSON.stringify(['Wren', 'wolf 2!', 'Brant', 'wolf 1!', 'Wren']), 'the strip lists the order as short tags (a foe by its kind and number), foes dashed, a fast leader twice, nobody acting yet: ' + JSON.stringify(tags));
   check((await page.evaluate(() => document.querySelector('#battle-screen .bs-order .bs-turn').title)) === 'Wren, turn 1', 'a tag names the fighter and its turn');
   // With animations off a turn's event marks its slot at once.
   await events({ fight: 1, round: 1, events: [{ seq: 1, kind: 'attack', src: 'm:2', tgt: 'leader', outcome: 'hit', damage: 3, weapon: 'claws', slot: 2 }] });

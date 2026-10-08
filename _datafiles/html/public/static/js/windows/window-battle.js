@@ -1069,13 +1069,19 @@
         paintCaption();
     }
 
-    // orderTag is a slot's short name tag: a member's first name, a foe's
-    // label without its article, the unseen as a question mark.
+    // orderTag is a slot's short name tag: a member's first name; a foe's
+    // kind with its number ("the second wolf" is "wolf 2", "a hulking brute"
+    // is "brute"); the unseen a question mark.
+    const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
     function orderTag(id) {
         if (id === '?') { return '?'; }
         const u = units.get(id);
-        const label = u ? u.label : id;
-        return String(label).replace(/^(the|a|an) /i, '').split(' ')[0] || id;
+        const words = String(u ? u.label : id).replace(/^(the|a|an) /i, '').split(' ').filter(Boolean);
+        if (!words.length) { return id; }
+        if (u && u.side !== 'enemy') { return words[0]; }
+        const n = ORDINALS.indexOf(words[0].toLowerCase());
+        if (n >= 0 && words.length > 1) { return words[words.length - 1] + ' ' + (n + 1); }
+        return words[words.length - 1];
     }
 
     // paintOrder draws the round's turn order (Phase 82d): the slot now
