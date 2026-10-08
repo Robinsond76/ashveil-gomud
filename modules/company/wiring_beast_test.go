@@ -37,8 +37,7 @@ func beastBrawlWith(t *testing.T, level int, route string, before func(*brawl)) 
 	t.Cleanup(hooks.ResetBeastsForTest)
 	// Beasts stand hard to kill, as toughen makes the company.
 	t.Cleanup(beasts.UseSpawnHookForTest(func(m *mobs.Mob) {
-		m.Character.HealthMax.Value = 1000
-		m.Character.Health = 1000
+		hardTo(&m.Character, 1000)
 	}))
 	b, stream := abilityBrawl(t, map[int]string{1: "beasttamer", 2: "cleric", 3: "warrior", 4: "ranger"})
 	for _, who := range []string{"garrick", "ysolde", "oswin"} {
@@ -216,8 +215,7 @@ func TestAPlayerBeastTamerSendsItsBeastIn(t *testing.T) {
 	domain.ResetBeastsForTest()
 	t.Cleanup(domain.ResetBeastsForTest)
 	t.Cleanup(beasts.UseSpawnHookForTest(func(m *mobs.Mob) {
-		m.Character.HealthMax.Value = 1000
-		m.Character.Health = 1000
+		hardTo(&m.Character, 1000)
 	}))
 	b, stream := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
 	b.withArchetypesFor("beasttamer", map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
@@ -245,8 +243,7 @@ func TestTheBeastCommandShowsTheHealthTheBeastFightsWith(t *testing.T) {
 	stood := 0
 	t.Cleanup(beasts.UseSpawnHookForTest(func(m *mobs.Mob) {
 		stood = m.Character.HealthLimit()
-		m.Character.HealthMax.Value = 1000
-		m.Character.Health = 1000
+		hardTo(&m.Character, 1000)
 	}))
 	b.hardenBandits()
 	b.fight()

@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -515,6 +516,7 @@ func helpTopics(t *testing.T) []string {
 			topics = append(topics, topic)
 		}
 	}
+	sort.Strings(topics) // map order is random; a failure should repeat
 	return topics
 }
 
@@ -681,6 +683,12 @@ func TestLiveSmoke(t *testing.T) {
 			// from before cannot end the read early.
 			p1.expect(regexp.QuoteMeta("help "+topic), 20*time.Second)
 			out := p1.expect(smokePrompt, 20*time.Second)
+			// A page may print an example prompt (keyring, lock, picklock
+			// do), which ends the read above early. Let the rest of the
+			// page arrive and drop it, or its text ("help keyring" in the
+			// lock pages) would satisfy the next topic's echo wait and
+			// leave that topic reading as empty.
+			out += p1.drain(30 * time.Millisecond)
 			if strings.Contains(out, "No help found") || len(strings.TrimSpace(out)) < 60 {
 				empty = append(empty, topic)
 			}

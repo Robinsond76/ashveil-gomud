@@ -194,6 +194,10 @@ effects, a web creation panel, skin and hair colour on sprites.
 [Spec](2026-10-07-phase-72a-character-creation.md). No unbuilt
 dependencies; phase 72 now depends on it.
 
+**80 Flaky tests** (added 2026-10-07, owner's full autonomy; 79 is the
+Fable polish pass): tests that fail at random under load, fixed at the root.
+[Findings](2026-10-07-phase-80-flaky-tests.md).
+
 ## Folded into existing phases
 
 - **36c** also ships the 36a deferrals: merchants buy rolled gear (priced
