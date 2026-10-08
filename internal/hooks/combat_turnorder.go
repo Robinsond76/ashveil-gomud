@@ -172,12 +172,16 @@ func runTurnOrder(evt events.NewRound) (affectedPlayerIds []int, affectedMobInst
 	defer func() { currentSlot.Store(0); events.SetSlot(0) }()
 	for i, s := range roundOrder {
 		currentSlot.Store(int32(i + 1))
+		// Phase 30d2: the last mob's wind-up blow, if its swing never
+		// happened, is told as wasted. Turns of both sides interleave
+		// now, so it is closed before the next turn whoever takes it,
+		// and the wasted line still follows the blow it belongs to.
+		finishLanding()
 		events.SetSlot(i + 1) // Phase 82c: the turn's lines are paced as one beat
 		extra := s.k > 1
 		if s.who.userId > 0 {
 			p, m = actPlayer(evt, s.who.userId, extra)
 		} else {
-			finishLanding() // Phase 30d2: the last mob's wind-up blow, if its swing never happened, is told as wasted
 			p, m = actMob(evt, s.who.mobId, extra)
 		}
 		affectedPlayerIds = append(affectedPlayerIds, p...)
