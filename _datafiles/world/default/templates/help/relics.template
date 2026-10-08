@@ -65,7 +65,7 @@ A relic has a fixed item level, and needs a character 5 levels below it
 the day: relics do not roll quality. Hand one to a companion with
 <ansi fg="command">company equip</ansi>, or sell it: a merchant pays a quarter of its value at
 most, which is still the best price any find fetches (<ansi fg="command">help sell</ansi>). Some
-companions dislike a relic sold for coin and some do not mind (<ansi fg="command">help opinions</ansi>).
+companions approve of a relic sold for coin and some disapprove (<ansi fg="command">help opinions</ansi>).
 
 See also: <ansi fg="command">help awakenings</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help equipmenttiers</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help encounters</ansi>, <ansi fg="command">help identify</ansi>,
 <ansi fg="command">help equipment</ansi>.

@@ -218,7 +218,9 @@ func GetCmdSuggestions(text string, includeAdmin bool) []string {
 		}
 
 		testCmd := strings.ToLower(info.Command)
-		if testCmd != text && strings.HasPrefix(testCmd, text) {
+		// A help topic that is only a topic (stances, events, relics) is
+		// not a command to finish typing (Phase 79).
+		if testCmd != text && strings.HasPrefix(testCmd, text) && IsRegistered(testCmd) {
 			results = append(results, info.Command[len(text):])
 		}
 	}

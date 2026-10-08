@@ -236,7 +236,7 @@ func (b Blessing) PerkText() string {
 		parts = append(parts, `start with `+name)
 	}
 	if b.Perk.Discount > 0 {
-		parts = append(parts, fmt.Sprintf(`recruits cost %d%% less`, b.Perk.Discount))
+		parts = append(parts, fmt.Sprintf(`pay %d%% less for recruits`, b.Perk.Discount))
 	}
 	return strings.Join(parts, `; `)
 }

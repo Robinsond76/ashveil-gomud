@@ -104,6 +104,11 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	mudlog.Debug(`Mob Death`, `name`, mob.Character.Name, `rest`, rest)
 
+	// Phase 79: a company member never leaves a corpse; the company keeps
+	// them until they are raised or lost (modules/company). Read before the
+	// charm is cleared below.
+	companion := mob.Character.IsCompanion()
+
 	// Make sure to clean up any charm stuff if it's being removed
 	if charmedUserId := mob.Character.RemoveCharm(); charmedUserId > 0 {
 		if charmedUser := users.GetByUserId(charmedUserId); charmedUser != nil {
@@ -252,7 +257,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Shared kills use a fixed claim, not the first pickup command. A corpse is
 	// used even in worlds configured for floor drops, so gold/items cannot leak
 	// through an unowned floor path. The corpse owns the physical loot once.
-	claimCorpse := len(contributors) > 0 && !permaGear
+	// Phase 79: a company member never leaves a corpse; nothing of theirs
+	// is loot.
+	claimCorpse := len(contributors) > 0 && !permaGear && !companion
 	claimOwner := 0
 	if claimCorpse {
 		claimOwner = lootClaimant(mob, contributors)
@@ -367,7 +374,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Remove from current room
 		room.RemoveMob(mob.InstanceId)
 
-		if bool(config.Death.CorpsesEnabled) || claimCorpse {
+		if (bool(config.Death.CorpsesEnabled) && !companion) || claimCorpse {
 			c := rooms.Corpse{
 				ClaimUserId:  claimOwner,
 				BattleSpoils: claimCorpse,
@@ -404,7 +411,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Remove from current room
 	room.RemoveMob(mob.InstanceId)
 
-	if config.Death.CorpsesEnabled {
+	if bool(config.Death.CorpsesEnabled) && !companion {
 		room.AddCorpse(rooms.Corpse{
 			MobId:        int(mob.MobId),
 			Character:    mob.Character,

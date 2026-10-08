@@ -48,8 +48,8 @@ above your level; if you want an easy one, take one near your level.
 
 <ansi fg="yellow-bold">The pay</ansi>
 
-Gold only, by the zone's level band and no more: 20 gold for each level in the
-middle of the band for a lair master, and 6 gold per level for each band
+Gold only, by the zone's level band and no more: 20 gold times the band's
+middle level for a lair master, and 6 gold per level for each band
 broken (three bands). A level 8 zone (7-9) pays 160 for a lair and 144 for the
 three bands. It is paid from your company's leader and comes with a line in
 your chronicle (<ansi fg="command">chronicle bounties</ansi>). A bounty is a way to be paid for what you

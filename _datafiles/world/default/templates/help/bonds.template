@@ -38,8 +38,9 @@ constructs and the fallen have none, and the leader has loyalty instead
                            and one less again when their alignments are far
                            apart. Once every half hour at most.
   A battle won together    +1 for each pair left standing, unless their
-                           temperaments clash or their alignments are far
-                           apart. Once every ten minutes.
+                           temperaments clash, or they are an ordinary pair
+                           whose alignments are far apart. Once every ten
+                           minutes.
   Banter                   a pair of friends or rivals sometimes talk about
                            each other (<ansi fg="command">help banter</ansi>): +1 or -1, once every
                            half hour.

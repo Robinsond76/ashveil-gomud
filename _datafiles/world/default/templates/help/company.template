@@ -240,7 +240,14 @@ rite let pass costs the company loyalty. The Company window has a Rites tab
 <ansi fg="yellow-bold">The chronicle</ansi>
 
 Your company keeps a record of its deeds: who joined, left or fell, the
-bosses it killed, the relics it found, mercy and executions, promotions,
-defeats and how scenes on the road ended. <ansi fg="command">chronicle</ansi> reads it, and the web
-client's Company window has a Chronicle tab (<ansi fg="command">help chronicle</ansi>). Town
-talkers mention those deeds, once each (<ansi fg="command">help townsfolk</ansi>).
+bosses it killed, the relics it found and the powers they woke, mercy and
+executions, promotions, defeats, how scenes on the road ended, errands,
+bounties and rites. <ansi fg="command">chronicle</ansi> reads it, and the web client's Company
+window has a Chronicle tab (<ansi fg="command">help chronicle</ansi>). Town talkers mention those
+deeds, once each (<ansi fg="command">help townsfolk</ansi>).
+
+<ansi fg="yellow-bold">Scenes on the road</ansi>
+
+Now and then the road stops the company with a choice: a ruin, a stranger's
+fire, a cliff. <ansi fg="command">event</ansi> shows the scene and <ansi fg="command">choose [number]</ansi> answers it;
+your companions have opinions about the choice (<ansi fg="command">help events</ansi>, <ansi fg="command">help opinions</ansi>).

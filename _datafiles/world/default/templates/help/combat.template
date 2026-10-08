@@ -154,7 +154,8 @@ side did, who did the most, the highest hit, each side's blocks, parries,
 and dodges, kills, how each enemy ended,
 and your company's health, and why it went as it did: who took the most
 damage and who never landed a blow. <ansi fg="command">why</ansi> explains any single blow
-(<ansi fg="command">help battlelog</ansi>).
+(<ansi fg="command">help battlelog</ansi>), and what you have learned of each kind of foe is in
+your <ansi fg="command">bestiary</ansi> (<ansi fg="command">help bestiary</ansi>).
 
 <ansi fg="yellow-bold">Commands</ansi>
 

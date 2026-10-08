@@ -1952,7 +1952,9 @@
             if (p.effect) { card.appendChild(el('div', 'cmp-note', p.effect)); }
             pad.appendChild(card);
         });
-        const members = data && Array.isArray(data.members) ? data.members : [];
+        // With one pair, each member's line would only repeat the card
+        // (Phase 79); the per-member summary earns its place from two pairs up.
+        const members = pairs.length > 1 && data && Array.isArray(data.members) ? data.members : [];
         members.forEach(m => {
             const feelings = Array.isArray(m.feelings) ? m.feelings : [];
             if (!feelings.length) { return; }
