@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -445,4 +446,54 @@ func TestPaceOffStillKeepsTheMinimumRound(t *testing.T) {
 	events.AddToQueue(events.NewTurn{})
 	events.ProcessEvents()
 	assert.Equal(t, before+1, len(*starts), "a fresh clock resolves on its first turn")
+}
+
+// TestAnEmptyRoundIsNotWaitedOut (Phase 82d review): when every fighter is
+// slower than tempo 1, the round after the opening turn has no turns; the
+// clock does not hold the fight for the minimum round then but resolves the
+// next round on the next turn, while rounds with turns keep the minimum.
+func TestAnEmptyRoundIsNotWaitedOut(t *testing.T) {
+	b := newBrawl(t)
+	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 0.9 }))
+	b.aria.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
+	start := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var rounds []time.Duration // when Aria was told each "Round N"
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 && strings.Contains(text, "Round ") {
+			rounds = append(rounds, now.Sub(start))
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.NewTurn{}, hooks.BattleClock},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+	} {
+		freshEvents(t)
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+	b.toughen()
+	b.aimAt("bandit captain")
+
+	for turn := 0; turn < 200 && len(rounds) < 4; turn++ { // 10s
+		b.toughen()
+		events.AddToQueue(events.NewTurn{})
+		events.ProcessEvents()
+		now = now.Add(50 * time.Millisecond)
+	}
+	require.GreaterOrEqual(t, len(rounds), 4, "rounds resolved on the clock: %v", rounds)
+	gaps := make([]time.Duration, 0, 3)
+	for i := 1; i < 4; i++ {
+		gaps = append(gaps, rounds[i]-rounds[i-1])
+	}
+	assert.GreaterOrEqual(t, gaps[0], 3*time.Second, "the opening round, with everyone's turn, keeps the minimum: %v", rounds)
+	assert.LessOrEqual(t, gaps[1], 100*time.Millisecond, "the empty second round is followed at once: %v", rounds)
+	assert.GreaterOrEqual(t, gaps[2], 3*time.Second, "the third round, with turns again, keeps the minimum: %v", rounds)
 }
