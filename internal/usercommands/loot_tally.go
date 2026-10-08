@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -14,6 +15,7 @@ import (
 // and the leather cap from the skeleton corpses.") instead of a line per item.
 type lootTally struct {
 	groups []*lootGroup
+	left   int // things the company couldn't carry, told once after the take
 }
 
 type lootGroup struct {
@@ -23,6 +25,7 @@ type lootGroup struct {
 	gold    int
 	order   []string
 	counts  map[string]int
+	bases   map[string]string // display name -> spec name, for plurals
 }
 
 func (t *lootTally) group(c *rooms.Corpse) *lootGroup {
@@ -36,7 +39,7 @@ func (t *lootTally) group(c *rooms.Corpse) *lootGroup {
 			return g
 		}
 	}
-	g := &lootGroup{color: color, name: c.Character.Name, corpses: map[*rooms.Corpse]struct{}{c: {}}, counts: map[string]int{}}
+	g := &lootGroup{color: color, name: c.Character.Name, corpses: map[*rooms.Corpse]struct{}{c: {}}, counts: map[string]int{}, bases: map[string]string{}}
 	t.groups = append(t.groups, g)
 	return g
 }
@@ -45,24 +48,43 @@ func (t *lootTally) addGold(c *rooms.Corpse, amt int) {
 	t.group(c).gold += amt
 }
 
-func (t *lootTally) addItem(c *rooms.Corpse, name string) {
+func (t *lootTally) addItem(c *rooms.Corpse, item items.Item) {
 	g := t.group(c)
+	name := item.DisplayName()
 	if g.counts[name] == 0 {
 		g.order = append(g.order, name)
+		g.bases[name] = item.Name()
 	}
 	g.counts[name]++
 }
 
 // lootItemPhrase is "the leather cap" for one, "2 wooden shields" for more.
-func lootItemPhrase(name string, n int) string {
+// base is the item's plain name inside its display name (which may carry
+// colour, a quest star or a "(cursed)" tag); only base is pluralised.
+func lootItemPhrase(name, base string, n int) string {
 	if n <= 1 {
 		return fmt.Sprintf(`the <ansi fg="itemname">%s</ansi>`, name)
 	}
-	plural := name
-	if !strings.HasSuffix(strings.ToLower(name), "s") { // "tattered pants" stays
-		plural = mobparty.Plural(name)
+	if i := strings.LastIndex(name, base); base != `` && i >= 0 {
+		name = name[:i] + lootPlural(base) + name[i+len(base):]
+	} else {
+		return fmt.Sprintf(`the <ansi fg="itemname">%s</ansi> (x%d)`, name, n)
 	}
-	return fmt.Sprintf(`%d <ansi fg="itemname">%s</ansi>`, n, plural)
+	return fmt.Sprintf(`%d <ansi fg="itemname">%s</ansi>`, n, name)
+}
+
+// lootPlural pluralises an item name: "bolt of silk" -> "bolts of silk",
+// "plate cuirass" -> "plate cuirasses", while names already plural
+// ("tattered pants", "iron greaves") stay as they are.
+func lootPlural(name string) string {
+	if i := strings.Index(name, " of "); i > 0 {
+		return lootPlural(name[:i]) + name[i:]
+	}
+	lower := strings.ToLower(name)
+	if strings.HasSuffix(lower, "s") && !strings.HasSuffix(lower, "ss") && !strings.HasSuffix(lower, "us") {
+		return name
+	}
+	return mobparty.Plural(name)
 }
 
 func joinLoot(parts []string) string {
@@ -92,7 +114,7 @@ func (t *lootTally) flush(user *users.UserRecord, room *rooms.Room) {
 			theirs = append(theirs, `some <ansi fg="gold">gold</ansi>`)
 		}
 		for _, name := range g.order {
-			p := lootItemPhrase(name, g.counts[name])
+			p := lootItemPhrase(name, g.bases[name], g.counts[name])
 			mine = append(mine, p)
 			theirs = append(theirs, p)
 		}
@@ -103,4 +125,6 @@ func (t *lootTally) flush(user *users.UserRecord, room *rooms.Room) {
 		room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> takes %s from the %s.`, user.Character.Name, joinLoot(theirs), g.corpseName()), user.UserId)
 	}
 	t.groups = nil
+	leftBehind(user, t.left)
+	t.left = 0
 }

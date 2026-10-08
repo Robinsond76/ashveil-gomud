@@ -220,7 +220,7 @@ func getWithTally(rest string, user *users.UserRecord, room *rooms.Room, flags e
 						Item:   item,
 						Gained: true,
 					})
-					tally.addItem(corpseRef, item.DisplayName())
+					tally.addItem(corpseRef, item)
 					tookSomething = true
 				} else {
 					user.SendText(fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi>.`, item.DisplayName()))
@@ -244,17 +244,17 @@ func getWithTally(rest string, user *users.UserRecord, room *rooms.Room, flags e
 						Item:   item,
 						Gained: true,
 					})
-					tally.addItem(corpseRef, item.DisplayName())
+					tally.addItem(corpseRef, item)
 					tookSomething = true
 				} else {
 					user.SendText(fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi>.`, item.DisplayName()))
 				}
 			}
 
+			tally.left += left
 			if ownTally {
 				tally.flush(user, room)
 			}
-			leftBehind(user, left)
 			if !tookSomething && left == 0 {
 				user.SendText(fmt.Sprintf(`There is nothing to take from the %s.`, corpseName))
 			}
