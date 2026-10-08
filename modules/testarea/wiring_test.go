@@ -514,3 +514,21 @@ func TestDroppedItemsAndGoldVanishInTheArea(t *testing.T) {
 	onNewRound(events.NewRound{})
 	assert.Empty(t, room.Items, "anything left on the floor is swept")
 }
+
+// TestAdminRecruitsGetRandomUniqueNames pins that test-area recruits of a
+// person class carry generated names, never the template's generic one, and
+// that no two in a company share a given name.
+func TestAdminRecruitsGetRandomUniqueNames(t *testing.T) {
+	tr := newTrip(t)
+	u := tr.user
+	tr.withCompany()
+	seen := map[string]bool{}
+	for i := 0; i < 3; i++ {
+		text, err := company.AdminRecruit(u.UserId, u.Character.RoomId, "wizard", 3)
+		require.NoError(t, err)
+		assert.NotContains(t, text, "Recruit Wizard")
+		given := strings.ToLower(strings.Fields(strings.TrimPrefix(text, "Recruited "))[0])
+		assert.False(t, seen[given], "duplicate name %s", given)
+		seen[given] = true
+	}
+}

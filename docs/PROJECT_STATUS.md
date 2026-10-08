@@ -2708,6 +2708,7 @@ delegated to the lead. 33a–33e are complete.
   now 69 (6:1); the guard test covers the new aliases and base-16 colors.
   Left as is: reds at 124 (2.8:1, zone names, harmful spells) are dim but
   readable and carry meaning by hue.
+- **Test-area recruits get random names (2026-10-08).** `testarea companion add [class] [level]` now names a person companion from the recruiters' generated-name lists (given name plus an occasional byname), instead of the template's generic name. The given name is never one already in the company, at a recruiter, online, or the leader's; creatures keep their species name. Decision: reuse the existing name lists rather than add new ones. Tests: `TestAdminRecruitsGetRandomUniqueNames`.
 
 ### 38b faith routes design approved (2026-10-05)
 

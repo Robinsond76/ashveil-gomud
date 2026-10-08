@@ -453,6 +453,12 @@ type generatedHire struct {
 }
 
 func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map[int]struct{}, claim bool, hire *generatedHire) (domain.Companion, error) {
+	return m.enlistNamed(leaderUserID, roomID, templateID, allowed, claim, hire, "")
+}
+
+// enlistNamed is enlist with a name given to a companion that has no
+// generated hire (the admin test area's); blank keeps the template's name.
+func (m *CompanyModule) enlistNamed(leaderUserID, roomID, templateID int, allowed map[int]struct{}, claim bool, hire *generatedHire, name string) (domain.Companion, error) {
 	reservedNextID, err := survival.NextReservedCompanionID(leaderUserID)
 	if err != nil {
 		return domain.Companion{}, err
@@ -479,6 +485,13 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	m.seedDisposition(leaderUserID, companion)
 	m.rollPersonality(leaderUserID, companion) // Phase 49
 	var spawnState *domain.MemberState
+	if hire == nil && name != "" {
+		companion.Name = name
+		if err := m.registry.SetIdentity(leaderUserID, companion.ID, companion.Identity()); err != nil {
+			restoreBefore()
+			return domain.Companion{}, err
+		}
+	}
 	if hire != nil {
 		g := hire.candidate
 		companion.Name, companion.Description = g.Name, g.Trait
