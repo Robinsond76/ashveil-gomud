@@ -382,3 +382,53 @@ func TestCadenceWaitsForAFightsLastLines(t *testing.T) {
 		t.Fatal("the cadence did not resume once the lines were out")
 	}
 }
+
+// A battle's summary (and the news held back for its end) is a report: it
+// goes out whole behind the fight's last blow, at every pace, never one line
+// per beat like the blows.
+func TestEndOfBattleReportGoesOutAtOnce(t *testing.T) {
+	report := []string{"── The fight is over ──", "", "The fight", "Damage dealt   Company 170", "Kills          Osric 2", "The sun sets."}
+	for _, pace := range []combatpace.Pace{combatpace.Off, combatpace.Fast, combatpace.Normal, combatpace.Slow} {
+		t.Run(string(pace), func(t *testing.T) {
+			r := newPaceRig(t)
+			r.user.SetConfigOption(combatpace.OptionKey, string(pace))
+			combatRoundCounter.Store(1)
+			resolveCombatRound(func(events.Event) events.ListenerReturn {
+				r.user.SendText("blow one")
+				r.user.SendText("blow two")
+				sendReport(r.user, report)
+				return events.Continue
+			})
+			events.ProcessEvents()
+			if pace != combatpace.Off {
+				r.advance(50 * time.Millisecond)
+				r.advance(10 * time.Second)
+			}
+			want := strings.Join(append([]string{"blow one", "blow two"}, report...), "|")
+			if got := strings.Join(r.got, "|"); got != want {
+				t.Fatalf("got %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+// The report's later lines come in one turn of the clock, not a beat apart.
+func TestReportLinesShareOneTurn(t *testing.T) {
+	r := newPaceRig(t)
+	combatRoundCounter.Store(1)
+	resolveCombatRound(func(events.Event) events.ListenerReturn {
+		r.user.SendText("blow")
+		sendReport(r.user, []string{"head", "second", "third", "fourth"})
+		return events.Continue
+	})
+	events.ProcessEvents()
+	r.advance(50 * time.Millisecond)
+	if strings.Join(r.got, "|") != "blow" {
+		t.Fatalf("got %v", r.got)
+	}
+	// Normal pace: the header waits 1s after the blow; once it is out the rest are out with it.
+	r.advance(1000 * time.Millisecond)
+	if got := strings.Join(r.got, "|"); got != "blow|head|second|third|fourth" {
+		t.Fatalf("report came line by line: %q", got)
+	}
+}

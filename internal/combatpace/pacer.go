@@ -14,6 +14,7 @@ const (
 	Plain    Beat = iota // the pace's ordinary gap
 	Dramatic             // a critical hit's pain or death line
 	Quick                // an indented follow-up line
+	Instant              // no wait: a block that goes out whole (the battle summary)
 )
 
 // Release is a held entry now due, for its player: a line of text, or (when
@@ -55,13 +56,15 @@ type Pacer struct {
 	mu     sync.Mutex
 	queues map[int]*queue
 	marks  map[string]struct{}
+	// instant are lines marked to go out without a wait (MarkInstant).
+	instant map[string]struct{}
 	// open are players in a combat round whose lines haven't all gone out:
 	// from the round's start (before its lines are held) until they drain.
 	open map[int]struct{}
 }
 
 func New() *Pacer {
-	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, open: map[int]struct{}{}}
+	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, instant: map[string]struct{}{}, open: map[int]struct{}{}}
 }
 
 var (
@@ -102,6 +105,17 @@ func (p *Pacer) Mark(texts ...string) {
 	}
 }
 
+// MarkInstant flags lines to go out with the line before them, with no wait
+// of their own. A block printed after a fight (its summary) is marked so it
+// arrives whole instead of line by line like the blows.
+func (p *Pacer) MarkInstant(texts ...string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, t := range texts {
+		p.instant[key(t)] = struct{}{}
+	}
+}
+
 // Marked reports whether a line is marked dramatic this round.
 func (p *Pacer) Marked(text string) bool {
 	p.mu.Lock()
@@ -118,6 +132,7 @@ func (p *Pacer) StartRound(userIds ...int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.marks = map[string]struct{}{}
+	p.instant = map[string]struct{}{}
 	p.open = make(map[int]struct{}, len(userIds))
 	for _, id := range userIds {
 		p.open[id] = struct{}{}
@@ -125,6 +140,9 @@ func (p *Pacer) StartRound(userIds ...int) {
 }
 
 func (p *Pacer) beatOf(text string) Beat {
+	if _, ok := p.instant[key(text)]; ok {
+		return Instant
+	}
 	if _, ok := p.marks[key(text)]; ok {
 		return Dramatic
 	}
@@ -225,6 +243,9 @@ func (q *queue) remaining(userId int) []Release {
 // whether it opens a new turn (newSlot), with the extra before a pain or
 // death line.
 func (s Spec) gap(b Beat, newSlot bool) time.Duration {
+	if b == Instant {
+		return 0
+	}
 	if s.Beats {
 		d := s.Follow
 		if newSlot {

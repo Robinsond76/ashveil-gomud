@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/loot"
@@ -420,8 +421,19 @@ func (fs fightSides) end(outcome string) {
 			return
 		}
 	}
-	for _, line := range combatstream.Render(*sum, fs.leader.UserId) {
-		fs.leader.SendText(line)
+	lines := combatstream.Render(*sum, fs.leader.UserId)
+	sendReport(fs.leader, lines)
+}
+
+// sendReport sends a block of lines printed after a fight: the first line
+// takes its turn behind the fight's last blows, and the rest follow it at
+// once whatever the combat pace. A report is not a blow to be played out.
+func sendReport(u *users.UserRecord, lines []string) {
+	if len(lines) > 1 {
+		combatpace.Default().MarkInstant(lines[1:]...)
+	}
+	for _, line := range lines {
+		u.SendText(line)
 	}
 }
 
