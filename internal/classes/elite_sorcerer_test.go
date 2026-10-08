@@ -77,3 +77,13 @@ func TestSorcererIsAnOpenRouteWithAnOpenElite(t *testing.T) {
 	require.Len(t, lines, 7, "every elite rank, once")
 	assert.Contains(t, lines[6], "Instant Lance")
 }
+
+// Phase 84: the Sorcerer looses its Lance at three foes or fewer; the High
+// Sorcerer's High Lance lifts the limit.
+func TestLanceFoesLimitsTheSorcererNotTheHighSorcerer(t *testing.T) {
+	assert.Equal(t, 3, EffectsForLineage("wizard", "sorcerer", 10, nil).Int(LanceFoes))
+	assert.Equal(t, 3, EffectsForLineage("wizard", "sorcerer", 25, nil).Int(LanceFoes))
+	assert.Equal(t, 0, EffectsForLineage("wizard", "high-sorcerer", 30, nil).Int(LanceFoes))
+	assert.Equal(t, 0, EffectsForLineage("wizard", "high-sorcerer", 60, nil).Int(LanceFoes))
+	assert.Equal(t, 0, EffectsForLineage("wizard", "", 25, nil).Int(LanceFoes), "a plain wizard has no Lance to limit")
+}

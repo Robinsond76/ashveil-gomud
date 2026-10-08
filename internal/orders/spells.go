@@ -10,6 +10,8 @@ type Caster struct {
 	Knows  func(spellID string) bool
 	Mana   int
 	Flasks int
+	// LanceFoes (Phase 84) is the most foes it looses a Lance at (0: any).
+	LanceFoes int
 }
 
 func (c Caster) affordable(sp strategy.Spell) bool {
@@ -43,7 +45,8 @@ func (c Caster) Heal(share int) (strategy.Spell, bool) {
 }
 
 // Attack is the attack spell an order casts, in the order a caster prefers
-// them: Lightning, the Arcane Lance, a spell at the whole group (only when
+// them: Lightning, the Arcane Lance (not at a crowd past its LanceFoes limit,
+// unless aimed at one foe), a spell at the whole group (only when
 // foes is two or more, and never for a single target), then the plain
 // single-target spell, then the group spell as a last resort. The
 // strategy.ActionKind says how the caller aims it.
@@ -51,7 +54,9 @@ func (c Caster) Attack(foes int, single bool) (strategy.Spell, strategy.ActionKi
 	if sp, ok := c.first(strategy.UseStorm); ok {
 		return sp, strategy.Storm, true
 	}
-	if sp, ok := c.first(strategy.UseBurst); ok {
+	// Phase 84: against a crowd the Lance gives way to the group spell, as
+	// in strategy.Decide; an order aimed at one foe keeps it.
+	if sp, ok := c.first(strategy.UseBurst); ok && (single || strategy.LanceFits(c.LanceFoes, foes)) {
 		return sp, strategy.Attack, true
 	}
 	if !single && foes >= 2 {
