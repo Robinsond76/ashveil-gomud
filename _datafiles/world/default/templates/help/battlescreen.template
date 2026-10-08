@@ -27,7 +27,7 @@ change the company's focus.
   attacks and spells weaker)</ansi>. The Combat tab's Battle view shows it too.
 - Enemy health is shown in five steps, never as numbers: unhurt, scratched,
   wounded, badly wounded, near death. Hover or tap a figure to read its
-  name and health, and to see whom it strikes.
+  name, class and health, and to see whom it strikes.
 - A member who has been promoted (<ansi fg="command">help promotion</ansi>) is drawn as that
   class, a Paladin in white and brass rather than a plain warrior, and
   hovering names the class. The neutral lines have their own figures too:
