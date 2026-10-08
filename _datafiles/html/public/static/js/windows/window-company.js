@@ -1264,13 +1264,16 @@
     const WEARABLE_TYPES = ['weapon', 'body', 'head', 'feet', 'legs', 'gloves', 'offhand', 'neck', 'ring', 'belt', 'pack'];
     let invTab = 'all';
 
-    // itemCategory is the tab an item sorts under (never 'all').
+    // itemCategory is the tab an item sorts under (never 'all'). Trade
+    // goods sort by their trade category: provisions (raw fish) are food,
+    // valuables and curios (a garnet, a sealed letter) are not materials.
     function itemCategory(i) {
-        const type = (i.type || '').toLowerCase(), sub = (i.subtype || '').toLowerCase();
+        const type = (i.type || '').toLowerCase(), sub = (i.subtype || '').toLowerCase(), goods = (i.goods || '').toLowerCase();
         if (WEARABLE_TYPES.indexOf(type) >= 0 || sub === 'wearable') { return 'equipment'; }
         if (type === 'potion') { return 'potions'; }
-        if (type === 'food' || type === 'drink' || sub === 'edible' || sub === 'drinkable') { return 'food'; }
-        if (type === 'commodity' || type === 'botanical' || type === 'gemstone') { return 'materials'; }
+        if (type === 'food' || type === 'drink' || sub === 'edible' || sub === 'drinkable' || goods === 'provision') { return 'food'; }
+        if (goods === 'valuable' || goods === 'curio') { return 'other'; }
+        if (type === 'commodity' || type === 'botanical' || type === 'gemstone' || goods) { return 'materials'; }
         return 'other';
     }
 

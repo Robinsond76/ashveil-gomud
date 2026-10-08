@@ -354,24 +354,29 @@ check(JSON.stringify(got) === '["autoloot on"]', 'autoloot is an explicit opt-in
 sharedInventory.cargo.push({ ref: '!9:coat', name: 'quilted coat', grams: 900, count: 1, type: 'body', subtype: 'wearable' },
   { ref: '!11:tonic', name: 'red tonic', grams: 200, count: 2, type: 'potion', subtype: 'usable' },
   { ref: '!12:ore', name: 'iron ore', grams: 500, count: 3, type: 'commodity', subtype: 'mundane' },
-  { ref: '!13:key', name: 'brass key', grams: 10, count: 1, type: 'key', subtype: 'mundane' });
+  { ref: '!13:key', name: 'brass key', grams: 10, count: 1, type: 'key', subtype: 'mundane' },
+  // 89 review: trade goods sort by their trade category.
+  { ref: '!14:garnet', name: 'garnet', grams: 20, count: 1, type: 'gemstone', subtype: 'mundane', goods: 'valuable' },
+  { ref: '!15:fish', name: 'raw fish', grams: 300, count: 1, type: 'commodity', subtype: 'mundane', goods: 'provision' });
 sharedInventory.members[1].worn = [{ ref: '!5:club', name: 'oak club', label: 'oak club', grams: 1200, count: 1, uses: 0, uses_max: 0, type: 'weapon', subtype: 'blunt', slot: 'weapon' }];
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
 check(!(await invText()).includes('oak club') && !(await invText()).includes('iron sword') && await page.locator('#company-inventory [aria-label$="equipment"]').count() === 0, 'shared inventory lists no worn gear');
 check((await invText()).includes('Character \u203a Gear'), 'the inventory points to Character > Gear for worn gear');
 const tabNames = () => page.evaluate(() => [...document.querySelectorAll('#company-inventory .cmp-inv-tab')].map(b => b.textContent));
-check(JSON.stringify(await tabNames()) === JSON.stringify(['All', 'Equipment 2', 'Potions 2', 'Food & drink 8', 'Materials 3', 'Other 2']), 'tabs: All plus each non-empty category with its count: ' + JSON.stringify(await tabNames()));
+check(JSON.stringify(await tabNames()) === JSON.stringify(['All', 'Equipment 2', 'Potions 2', 'Food & drink 9', 'Materials 3', 'Other 3']), 'tabs: All plus each non-empty category with its count: ' + JSON.stringify(await tabNames()));
 check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'All' && (await invText()).includes('pack horse') && (await invText()).includes('quilted coat') && (await invText()).includes('red tonic'), 'All is the current view: horses and every cargo item');
 await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Equipment' }).click();
 check((await invText()).includes('quilted coat') && (await invText()).includes('steel glaive') && !(await invText()).includes('red tonic') && !(await invText()).includes('pack horse') && !(await invText()).includes('seared meat'), 'Equipment: only wearable and weapon cargo');
 got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'quilted coat' }).click(); await page.getByText('Equip Brother Oswin', { exact: true }).click(); });
 check(JSON.stringify(got) === '["company equip #1 !9:coat"]', 'a filtered item keeps its menu and exact reference');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Food & drink' }).click();
+check((await invText()).includes('raw fish') && !(await invText()).includes('iron ore'), 'Food & drink: provisions among the food');
 await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Potions' }).click();
 check((await invText()).includes('red tonic x2') && !(await invText()).includes('quilted coat'), 'Potions: only potions');
 await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Other' }).click();
-check((await invText()).includes('brass key') && !(await invText()).includes('iron ore'), 'Other: what fits nowhere else');
+check((await invText()).includes('brass key') && (await invText()).includes('garnet') && !(await invText()).includes('iron ore'), 'Other: what fits nowhere else, valuables included');
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
-check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'Other 2', 'the chosen tab survives an update');
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'Other 3', 'the chosen tab survives an update');
 await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Materials' }).click();
 await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.cargo = x.cargo.filter(c => c.type !== 'commodity'); window.gmcp('Company.Inventory', x); }, sharedInventory);
 check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'All' && !(await tabNames()).some(t => t.startsWith('Materials')), 'an emptied tab disappears and the view returns to All');
