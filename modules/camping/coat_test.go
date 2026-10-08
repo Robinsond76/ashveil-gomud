@@ -209,8 +209,8 @@ func TestCampPoisonUnassignAndDeadRowsAreIgnored(t *testing.T) {
 	campPoison(t, module, user, "assign bran off leechbane")
 	module.companionsOf = func(int) (map[int]*characters.Character, []int) { return nil, nil } // Bran left
 	text := campPoison(t, module, user, "preview")
-	assert.Contains(t, text, "Ready to apply to 1 blades.", "a departed member's row is ignored")
-	assert.Contains(t, campPoison(t, module, user, "apply"), "You coat 1 blades")
+	assert.Contains(t, text, "Ready to apply to 1 blade.", "a departed member's row is ignored")
+	assert.Contains(t, campPoison(t, module, user, "apply"), "You coat 1 blade.")
 	assert.Equal(t, 2, vials[leechbaneVial])
 }
 

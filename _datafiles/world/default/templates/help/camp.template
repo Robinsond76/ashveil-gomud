@@ -103,9 +103,11 @@ round count; a rest takes real time, not game time.
   rest begins. In the web client the Camp tab lists them under "Before you
   sleep", each with a button, who does it, and what it uses; a chore with
   nothing to do says why, such as "No blades are dull enough to need the
-  whetstone." Once the company sleeps the chores close; sharpen, camp
-  cook and camp poison apply refuse until the rest ends. Poison and
-  sharpening work anywhere you stand still; cooking needs a lit fire.
+  whetstone." Fortifying broth and watch incense join the list when you
+  carry them (camp prepare broth all, camp prepare incense). Once the
+  company sleeps the chores close; sharpen, camp cook and camp poison
+  apply refuse until the rest ends. Poison and sharpening work anywhere
+  you stand still; cooking needs a lit fire.
 
   When a camp rest finishes, gear you are wearing reveals what it is, and
   your best Scribe reads the unidentified gear the company carries

@@ -5,9 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -76,8 +78,9 @@ func TestCampActivitiesOfferTheWhetstoneBeforeSleep(t *testing.T) {
 	row := activityRowOf(t, m, "sharpen")
 	assert.True(t, row.Ready)
 	assert.Equal(t, "camp sharpen", row.Command)
-	assert.Contains(t, row.Note, "Hero")
-	assert.Contains(t, row.Note, "Bran")
+	// Review: the leader is "you", and names join with "and".
+	assert.Regexp(t, `blades for (yourself|you) and Bran,`, row.Note)
+	assert.NotContains(t, row.Note, "Hero")
 	assert.Contains(t, row.Note, "whetstone use")
 
 	// The button's command is the player's command.
@@ -96,7 +99,7 @@ func TestCampActivitiesSayWhenThereIsNoWhetstone(t *testing.T) {
 	m, _, _, _ := campBeforeSleep(t, 0)
 	row := activityRowOf(t, m, "sharpen")
 	assert.False(t, row.Ready)
-	assert.Contains(t, row.Note, "no whetstone")
+	assert.Equal(t, "You and Bran have dull blades, but you have no whetstone.", row.Note)
 }
 
 func TestCampActivitiesListPoisonAndCook(t *testing.T) {
@@ -123,4 +126,78 @@ func TestCampActivitiesCloseWhenTheCompanySleeps(t *testing.T) {
 	assert.Contains(t, m.sharpenArgs(user, nil), "while the company rests")
 	assert.False(t, user.Character.Equipment.Weapon.Sharpened())
 	assert.Contains(t, strings.ToLower(m.cook(user, fork, nil)), "while the company rests")
+}
+
+// Review: the Poison row gives the reason, not the plan's first blade row
+// with its markup: "already carries its poison" once every blade is coated,
+// and the blocker when vials run short.
+func TestCampPoisonActivityGivesTheReason(t *testing.T) {
+	vials := stock{bitterleafVial: 1}
+	module, user, _, _ := campedFixture(t, vials)
+	campPoison(t, module, user, "assign self main bitterleaf")
+	campPoison(t, module, user, "assign bran main bitterleaf")
+
+	row := module.poisonActivity(user)
+	assert.False(t, row.Ready)
+	assert.Equal(t, "Short of Bitterleaf: need 2, have 1.", row.Note)
+
+	campPoison(t, module, user, "unassign bran main")
+	row = module.poisonActivity(user)
+	assert.True(t, row.Ready)
+	assert.Contains(t, row.Note, "You coat 1 blade from your vials")
+
+	assert.Contains(t, campPoison(t, module, user, "apply"), "You coat 1 blade.")
+	row = module.poisonActivity(user)
+	assert.False(t, row.Ready)
+	assert.Equal(t, "Every assigned blade already carries its poison; no application is needed.", row.Note)
+	assert.NotContains(t, row.Note, "<ansi")
+}
+
+// Review: broth and watch incense, set by before a rest, are chores too;
+// each row shows only when the company carries the supply.
+func TestCampActivitiesListRestSuppliesCarried(t *testing.T) {
+	keys := func(rows []camping.ActivityRow) []string {
+		var out []string
+		for _, r := range rows {
+			out = append(out, r.Key)
+		}
+		return out
+	}
+	supplies := stock{}
+	w, _, _ := prepWorld(t, supplies)
+	assert.Equal(t, []string{"sharpen", "poison", "cook"}, keys(w.m.campActivities(w.user, w.camp())), "no supplies carried, no rows for them")
+
+	supplies[camping.BrothItemID] = 1
+	supplies[camping.IncenseItemID] = 1
+	rows := w.m.campActivities(w.user, w.camp())
+	require.Equal(t, []string{"sharpen", "poison", "cook", "broth", "incense"}, keys(rows))
+	assert.True(t, rows[3].Ready)
+	assert.Equal(t, "camp prepare broth all", rows[3].Command)
+	assert.Contains(t, rows[3].Note, "Sets fortifying broth by for you:")
+	assert.False(t, rows[4].Ready)
+	assert.Contains(t, rows[4].Note, "Needs a Camp Watch")
+
+	// The buttons run the player's commands; then the rows say it is done.
+	assert.Contains(t, prepare(w, "broth", "all"), "Fortifying broth is set by")
+	w.m.specialist = specialistsAt(t, 100, map[string]archetypes.Specialist{archetypes.UtilityWatch: {Name: "Bran", Level: 1}})
+	assert.True(t, w.m.campActivities(w.user, w.camp())[4].Ready)
+	assert.Contains(t, prepare(w, "incense"), "watchsage")
+	rows = w.m.campActivities(w.user, w.camp())
+	assert.False(t, rows[3].Ready)
+	assert.Equal(t, "Everyone has broth set by or a draught working.", rows[3].Note)
+	assert.False(t, rows[4].Ready)
+	assert.Equal(t, "Watch incense is already set for the next rest.", rows[4].Note)
+}
+
+// Review: the no-whetstone line names the leader "You", alone or first,
+// and one companion takes "has".
+func TestCampActivitiesNoWhetstoneGrammar(t *testing.T) {
+	m, user, _, bran := campBeforeSleep(t, 0)
+	bran.Equipment.Weapon = items.Item{}
+	assert.Equal(t, "You have dull blades, but you have no whetstone.", activityRowOf(t, m, "sharpen").Note)
+
+	armed(bran, testSwordID, 0)
+	user.Character.Equipment.Weapon = items.Item{}
+	user.Character.Equipment.Offhand = items.Item{}
+	assert.Equal(t, "Bran has dull blades, but you have no whetstone.", activityRowOf(t, m, "sharpen").Note)
 }

@@ -434,7 +434,7 @@ if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(o
 // Camp activities: the chores before sleeping, each a button that is
 // enabled only when it would do something, with its note beside it.
 const chores = [
-  { key: 'sharpen', label: 'Sharpen', command: 'camp sharpen', ready: true, note: 'You hone the blades of Wren, Oswin, using 2 whetstone uses (8 uses left).' },
+  { key: 'sharpen', label: 'Sharpen', command: 'camp sharpen', ready: true, note: 'You hone blades for yourself and Oswin, using 2 whetstone uses (8 uses left).' },
   { key: 'poison', label: 'Poison', command: 'camp poison apply', ready: false, note: 'No poison is assigned. Set blades with camp poison assign <member|self> <main|off> <poison>.' },
   { key: 'cook', label: 'Cook', command: 'camp cook', ready: false, note: 'Oswin cooks hunter\'s stew once the fire is lit.' },
 ];
