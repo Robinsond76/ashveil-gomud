@@ -72,11 +72,16 @@ func TestPacklordHoundExposesAFoeItHasHobbled(t *testing.T) {
 func TestPacklordHoundHobblesFoesBelowThreeQuartersAtRankFortyFive(t *testing.T) {
 	hobbled := func(t *testing.T, level int) bool {
 		b, _ := beastBrawl(t, level, "packlord")
+		noCrits(t)
 		b.hardenBandits()
 		b.fight()
 		for i := 0; i < 5; i++ {
 			for _, m := range b.livingBandits() {
-				m.Character.Health = m.Character.HealthMax.Value * 6 / 10 // 60%: above half, below three quarters
+				// 70%: above half, below three quarters. The company's own
+				// blows land before the hound's bite and wear the foe down, so
+				// a foe set just over half could be bitten under it (the
+				// level 44 case); 70% leaves 200 points of room.
+				m.Character.Health = m.Character.HealthMax.Value * 7 / 10
 			}
 			b.toughen()
 			if strings.Contains(b.fight(), "(hobbled)") {
@@ -86,7 +91,7 @@ func TestPacklordHoundHobblesFoesBelowThreeQuartersAtRankFortyFive(t *testing.T)
 		return false
 	}
 	fresh(t, "level 45", func(t *testing.T) { assert.True(t, hobbled(t, 45), "wider hobble") })
-	fresh(t, "level 44", func(t *testing.T) { assert.False(t, hobbled(t, 44), "a foe at 60% is above half") })
+	fresh(t, "level 44", func(t *testing.T) { assert.False(t, hobbled(t, 44), "a foe at 70% is above half") })
 }
 
 func TestPacklordHoundStartsWithMeterToSpare(t *testing.T) {
@@ -611,6 +616,7 @@ func TestDeadeyeBoltThatFellsItsFoeNeedsNoWinding(t *testing.T) {
 	// fells its foe: with the rank no bolt is ever wound, without it each is.
 	run := func(t *testing.T, level int) (bolts, reloads int) {
 		b, stream := arbalistBrawl(t, level, "deadeye")
+		noCrits(t) // a critical bolt needs no winding (Hair trigger), which would hide the winding counted below
 		foes := b.livingBandits()
 		for i := 0; i < 5 && i < len(foes); i++ {
 			b.toughen()
