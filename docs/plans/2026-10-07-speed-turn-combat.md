@@ -241,6 +241,33 @@ migrated.
 - Sims call `DoCombat` directly and count rounds, so the clock (82c) does
   not change their numbers; 82c reports seconds per fight beside rounds.
 
+### 82b measurement (2026-10-07, before phase 81 merged)
+
+`ASHVEIL_BALANCE=1 ASHVEIL_BALANCE_FIGHTS=30 go test ./modules/company -run
+TestBalanceAtLevel -v`, 30 fights a cell, on the 82b branch (phase 81 was
+still open, so this is the same class numbers #179 measured; re-measure
+after 81 lands if its tuning touches the sim classes). Median fights before
+a rest by company size (five / four / three / two / solo win rate), with the
+#179 numbers in brackets:
+
+| Band  | Martial                          | Magic                     |
+|-------|----------------------------------|---------------------------|
+| 3-5   | 20 / 14 / 12 / 2 / 80% (17/18/13/2/74%) | 5 / 5 / 4 / 3 (5/5/4/3) |
+| 10-12 | 14 / 15 / 11 / 2 / 73% (16/11/8/3/68%)  | 8 / 7 / 5 / 3 (8/7/4/2) |
+| 20-22 | 16 / 9 / 11 / 3 / 67% (12/14/10/2/68%)  | 8 / 9 / 5 / 2 (9/8/4/2) |
+
+Every cell is inside, or within sample noise of, the #179 numbers: five
+members 14-20 against the 15-20 target, four 9-15 against 8-14, three 11-12
+(over the 5-7 target, as before), two members 2-3, solo wins 67-80% and
+rests every fight, magic 5-9. A fast foe striking first costs a company
+nothing it can measure at thirty fights, because at-level foes carry 40%
+HP and usually fall in the round they would have struck. **The at-level
+knob stays at 40%.** Class mirror sims were not re-run for 82b: nothing in
+the turn order changes a class's numbers, a mirror fields the same classes
+on both sides so a faster first strike moves both sides alike, and phase
+81 is re-measuring them anyway; its review should read them on a branch
+that carries 82b.
+
 ## Web client (decision 8: the battle screen docks above the terminal)
 
 ### Layout

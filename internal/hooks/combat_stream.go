@@ -29,6 +29,7 @@ const BattleSummarySetting = `battlesummary`
 
 func emitCombat(e combatstream.Event) (combatstream.Event, bool) {
 	e.Round = combatRound.Load()
+	e.Slot = CurrentTurnSlot()
 	return combatstream.Default().Emit(e)
 }
 

@@ -334,6 +334,7 @@ func TestSpellAtAWaitingGroupIsHeld(t *testing.T) {
 	waiting := b.waitingBandit()
 	health := waiting.Character.Health
 	b.aria.Character.Mana = 100
+	b.actsFirst(b.aria.Character) // Phase 82b: her cast resolves before a foe's blow can break it
 	b.aria.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "mm", TargetMobInstanceIds: []int{waiting.InstanceId}})
 	got := b.fight()
 	assert.Contains(t, got, "Your spell has no foe in your battle.")

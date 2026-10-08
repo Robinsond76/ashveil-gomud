@@ -20,7 +20,8 @@ the Tamer still keeps a single beast (help beast).
   50 Hound of war       the warhound has 175% of a wolf's health
   55 Rending fangs      +3 damage on the warhound's bites (in all)
   60 First strike       the warhound starts a battle with 50 points on its
-                        action meter, so it usually strikes before the foes do
+                        action meter, so it takes an early turn in the
+                        first round, ahead of the foes (<ansi fg="command">help tempo</ansi>)
 
 It needs the Houndmaster first (<ansi fg="command">help beasttamer-routes</ansi>) and keeps every rank of it. At level 30 a
 character that holds it promotes with <ansi fg="command">class promote [member] packlord confirm</ansi>. Any alignment may take it.
