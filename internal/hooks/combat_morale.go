@@ -446,8 +446,10 @@ func MercyTick(e events.Event) events.ListenerReturn {
 		if room := rooms.LoadRoom(q.room); room == nil || room.VisibilityForUser(u) < 1 && !u.Character.HasBuffFlag("nightvision") || m.Character.HasBuffFlag("hidden") {
 			label = "a surrendered foe"
 		}
-		question := p.Ask(util.CapitalizeFirst(named(mobTag(label)))+" kneels, hands raised. Spare "+m.Character.CombatPronouns().Object+"? [yes/no]", []string{"yes", "no"})
-		u.SendText(question.Question)
+		// The prompt line adds "[yes/no]" itself; the kneeling is told once, as
+		// a line of its own, and the prompt carries only the question.
+		u.SendText(util.CapitalizeFirst(named(mobTag(label))) + " kneels, hands raised.")
+		p.Ask("Spare "+m.Character.CombatPronouns().Object+"?", []string{"yes", "no"})
 	}
 	return events.Continue
 }

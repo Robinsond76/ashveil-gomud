@@ -2,6 +2,7 @@ package company
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -77,10 +78,19 @@ func TestMoraleRoundYieldProtectionAndSpare(t *testing.T) {
 		_, inParty := enemyparty.PartyOf(b.road, id)
 		assert.False(t, inParty)
 	}
+	*b.messages = nil
 	hooks.MercyTick(events.NewTurn{})
+	events.ProcessEvents()
 	p := b.aria.GetPrompt()
 	require.NotNil(t, p)
-	assert.Contains(t, p.Questions[0].Question, "first cutthroat") // stable ordinal or bandit name below
+	// The kneeling is told once, in a line of its own; the prompt line
+	// (which adds "[yes/no]" itself) carries only the question.
+	told := companyTagPattern.ReplaceAllString(strings.Join(*b.messages, "\n"), "")
+	assert.Contains(t, told, "first cutthroat kneels, hands raised.")
+	assert.NotContains(t, told, "Spare")
+	assert.NotContains(t, told, "[yes/no]")
+	assert.True(t, strings.HasPrefix(p.Questions[0].Question, "Spare "))
+	assert.NotContains(t, p.Questions[0].Question, "[yes/no]")
 	token := p.Rest
 	before := b.aria.Character.Alignment
 	id := ids[0]

@@ -123,6 +123,7 @@ type Broadcast struct {
 	IsCommunication  bool
 	SourceIsMod      bool
 	SkipLineRefresh  bool
+	HoldInBattle     bool // ambient: a player in a battle gets it when the battle ends
 }
 
 func (b Broadcast) Type() string { return `Broadcast` }

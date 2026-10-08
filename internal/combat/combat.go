@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -341,7 +342,7 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 
 	weaponName := races.GetRace(sourceChar.GetRaceId()).UnarmedName
 	if sourceChar.Equipment.Weapon.ItemId > 0 {
-		weaponName = sourceChar.Equipment.Weapon.DisplayName()
+		weaponName = WeaponNoun(sourceChar.Equipment.Weapon.DisplayName())
 	}
 
 	toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
@@ -631,7 +632,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				itemSpec := weapon.GetSpec()
 
-				weaponName = weapon.DisplayName()
+				weaponName = WeaponNoun(weapon.DisplayName())
 
 				weaponSubType = itemSpec.Subtype
 				attacks, dCount, dSides, dBonus, critBuffs = weapon.GetDiceRoll()
@@ -1142,4 +1143,20 @@ func withoutBleeding(effects []int, bloodless bool) []int {
 		}
 	}
 	return out
+}
+
+var weaponMarkup = regexp.MustCompile(`<[^>]*>`)
+
+// WeaponNoun is the kind of weapon a combat line names: "mace" for the
+// "acolyte's mace", so a line reads "Oswin's mace smashes" and not "Oswin's
+// acolyte's mace". A name like "sword of flame" gives "sword".
+func WeaponNoun(name string) string {
+	plain := strings.TrimSpace(weaponMarkup.ReplaceAllString(name, ""))
+	if i := strings.Index(plain, " of "); i > 0 {
+		plain = plain[:i]
+	}
+	if i := strings.LastIndex(plain, " "); i >= 0 {
+		return plain[i+1:]
+	}
+	return plain
 }

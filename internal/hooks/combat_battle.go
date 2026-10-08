@@ -322,6 +322,7 @@ func endBattle(userId int, outcome string) {
 	}
 	battle.End(userId)
 	finishMorale(b, outcome)
+	releaseAmbient(userId)
 	// Phase 35b: the company patches itself up, if the player is still
 	// out of battle when the event runs.
 	events.AddToQueue(events.BattleEnded{UserId: userId, Outcome: outcome})

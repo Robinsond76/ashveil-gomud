@@ -270,7 +270,6 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	claimOwner := 0
 	if claimCorpse {
 		claimOwner = lootClaimant(mob, contributors)
-		room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, mobNameTag(mob), users.CharacterName(claimOwner)))
 	}
 
 	if !permaGear {
@@ -399,6 +398,10 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				c.Character.RemoveFromBody(item)
 			}
 			room.AddCorpse(c)
+			// Said only when the body holds something: an empty one has no loot to claim.
+			if claimCorpse && c.HasItems() {
+				room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, mobNameTag(mob), users.CharacterName(claimOwner)))
+			}
 		}
 		for _, c := range otherSpoils {
 			room.AddCorpse(c)

@@ -609,6 +609,7 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	retargetKeepingStrike(user.Character, 0, newTargetId)
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+	fallenFirst(lostId)
 	user.SendText(turnsToward(`You`, mobTag(mobName(newTargetId))))
 	return true
 }
@@ -640,8 +641,19 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	retargetKeepingStrike(&mob.Character, 0, newTargetId)
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+	fallenFirst(lostId)
 	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newTargetId))))
 	return true
+}
+
+// fallenFirst says a lost target's fall before the "turns toward" line that
+// follows it. The round's own death notices come at its end, so without this
+// a fighter's kill and its next target read as one turn too many.
+func fallenFirst(lostId int) {
+	if m := mobs.GetInstance(lostId); m != nil && m.Character.Health < 1 &&
+		!m.Character.HasBuffFlag("revive-on-death") && !dolls.IsDoll(m) && !isBeastInstance(m.InstanceId) {
+		mobDeathNotice(m)
+	}
 }
 
 // fogReach is the reach a foe strikes the member at key with (Phase 39i): a
