@@ -539,7 +539,7 @@ func (m *CampingModule) poisonCheck(user *users.UserRecord) (string, []poisonRow
 			n++
 		}
 	}
-	lines = append(lines, "Needed: "+strings.Join(needed, ", ")+".", fmt.Sprintf("Ready to apply to %d blades.", n))
+	lines = append(lines, "Needed: "+strings.Join(needed, ", ")+".", fmt.Sprintf("Ready to apply to %s.", plural(n, "blade")))
 	return strings.Join(lines, "\n"), out, true
 }
 
@@ -556,11 +556,11 @@ func (m *CampingModule) poisonApply(user *users.UserRecord) string {
 			continue
 		}
 		if !m.spendDose(user.UserId, r.poison.VialID) {
-			return fmt.Sprintf("A %s vial went missing partway; %d blades are coated. Check camp poison.", r.poison.Name, coated)
+			return fmt.Sprintf("A %s vial went missing partway; %s coated. Check camp poison.", r.poison.Name, plural(coated, "blade"))
 		}
 		r.blade.Item.ClearCoat()
 		r.blade.Item.Coat(r.poison.ID, items.CoatExpiry(now), items.CoatContacts, now)
 		coated++
 	}
-	return fmt.Sprintf("You coat %d blades. Each lasts %d minutes or %d wounding blows.", coated, items.CoatMinutes, items.CoatContacts)
+	return fmt.Sprintf("You coat %s. Each lasts %d minutes or %d wounding blows.", plural(coated, "blade"), items.CoatMinutes, items.CoatContacts)
 }

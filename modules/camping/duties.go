@@ -463,6 +463,7 @@ func (m *CampingModule) workerNames(user *users.UserRecord, keys []string) strin
 func (m *CampingModule) settleTending(user *users.UserRecord, duties map[string]string) []string {
 	tenders := m.dutyWorkers(user, duties, camping.DutyTend)
 	var lines []string
+	var idle []dutyWorker
 	kit := m.restKit(user.UserId)
 	for _, w := range tenders {
 		if kit {
@@ -476,7 +477,19 @@ func (m *CampingModule) settleTending(user *users.UserRecord, duties map[string]
 			lines = append(lines, fmt.Sprintf("%s %s the company's gear: %s", w.subject(), w.verb("tend", "tends"), text))
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("%s %s nothing to tend: no wound the kit can treat, and no blade a whetstone can help.", w.subject(), w.verb("find", "finds")))
+		idle = append(idle, w)
+	}
+	// Tenders with nothing to do say so once between them, not once each.
+	switch len(idle) {
+	case 0:
+	case 1:
+		lines = append(lines, fmt.Sprintf("%s %s nothing to tend: no wound the kit can treat, and no blade a whetstone can help.", idle[0].subject(), idle[0].verb("find", "finds")))
+	default:
+		keys := make([]string, len(idle))
+		for i, w := range idle {
+			keys[i] = w.key
+		}
+		lines = append(lines, fmt.Sprintf("%s find nothing to tend: no wound the kit can treat, and no blade a whetstone can help.", m.workerNames(user, keys)))
 	}
 	return lines
 }

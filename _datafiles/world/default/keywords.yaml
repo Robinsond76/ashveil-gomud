@@ -506,7 +506,7 @@ help-aliases:
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   walkto:           [autowalk, auto-walk, click-to-walk, click to walk, walk to, walk-to, tile-ready, tile ready, tile regions, showcase, alderbrook]
-  camp:             [camping, campfire]
+  camp:             [camping, campfire, camp chores, camp-chores, before you sleep]
   inn:              [inns, inn-room, inn-rooms, inn-tiers, private-room, suite, common-room]
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
