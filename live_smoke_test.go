@@ -766,7 +766,12 @@ func TestLiveSmoke(t *testing.T) {
 		w.send("smoker2")
 		w.expect(`password:`, 10*time.Second)
 		w.send("smokepass2")
-		out := w.expect(`Welcome to the Mud`, 30*time.Second)
+		// The telnet player's quit may still be closing; take the seat.
+		out, _ := w.tryExpect(`Welcome to the Mud|Kick them\?`, 30*time.Second)
+		if strings.Contains(out, "Kick them?") {
+			w.send("y")
+			out += w.expect(`Welcome to the Mud`, 30*time.Second)
+		}
 		for _, bad := range []string{"try again", "Invalid login"} {
 			if strings.Contains(out, bad) {
 				t.Errorf("the web login printed %q after an early GMCP request:\n%s", bad, out)
