@@ -13,6 +13,12 @@ import (
 )
 
 func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	return getWithTally(rest, user, room, flags, nil)
+}
+
+// getWithTally is Get; a non-nil tally collects `get all <corpse>` loot so a
+// caller looting several corpses (Loot) can report it in one line per kind.
+func getWithTally(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag, tally *lootTally) (bool, error) {
 
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
@@ -181,6 +187,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if rest == "all" {
 			tookSomething := false
 			left := 0
+			ownTally := tally == nil
+			if ownTally {
+				tally = &lootTally{}
+			}
 
 			if corpseRef.Gold > 0 {
 				goldAmt := corpseRef.Gold
@@ -192,8 +202,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					GoldChange: -goldAmt,
 				})
 
-				user.SendText(fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, goldAmt, corpseName))
-				room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> takes some <ansi fg="gold">gold</ansi> from the %s.`, user.Character.Name, corpseName), user.UserId)
+				tally.addGold(corpseRef, goldAmt)
 				tookSomething = true
 			}
 
@@ -211,8 +220,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 						Item:   item,
 						Gained: true,
 					})
-					user.SendText(fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the %s.`, item.DisplayName(), corpseName))
-					room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> takes the <ansi fg="itemname">%s</ansi> from the %s.`, user.Character.Name, item.DisplayName(), corpseName), user.UserId)
+					tally.addItem(corpseRef, item)
 					tookSomething = true
 				} else {
 					user.SendText(fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi>.`, item.DisplayName()))
@@ -236,15 +244,17 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 						Item:   item,
 						Gained: true,
 					})
-					user.SendText(fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the %s.`, item.DisplayName(), corpseName))
-					room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> takes the <ansi fg="itemname">%s</ansi> from the %s.`, user.Character.Name, item.DisplayName(), corpseName), user.UserId)
+					tally.addItem(corpseRef, item)
 					tookSomething = true
 				} else {
 					user.SendText(fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi>.`, item.DisplayName()))
 				}
 			}
 
-			leftBehind(user, left)
+			tally.left += left
+			if ownTally {
+				tally.flush(user, room)
+			}
 			if !tookSomething && left == 0 {
 				user.SendText(fmt.Sprintf(`There is nothing to take from the %s.`, corpseName))
 			}
