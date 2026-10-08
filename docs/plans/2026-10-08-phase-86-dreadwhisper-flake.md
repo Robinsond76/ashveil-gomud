@@ -22,3 +22,11 @@ the hex ledger is reset, the cast is "sure" in battle, and `moraleSay` reaches t
 The one Phase 83 observation (chant restarted, neither line printed) points at a broken chant, and `witchBrawl` did not pin the
 chant-break dice, the same gap as the Sparks test. Decision: pin them in `witchBrawl` too (no witch test is about interrupts).
 This is a hardening against a mechanism that exists, not a proven cause; if it ever fails again it is a new lead.
+
+## Review (2026-10-08)
+
+No code change. The caster recasts: in three failing unpinned transcripts (3 of 80 race runs) all 31 attempts chanted and each
+was broken once, so "never casts again" (Phase 85 note) was a misread, not a caster bug. Breaking the targets on purpose
+fails both tests (Sparks without the overloaded buff 3 of 3; Dread Whisper with every hex resisted 2 of 2). Pinned Sparks
+passed 160 of 160 race runs. In 20 runs of every witch test `breakRoll` was never called, so the `witchBrawl` pin is
+insurance only; a future Dread Whisper failure is still an open lead.
