@@ -1,6 +1,8 @@
 package usercommands
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -84,4 +86,93 @@ func TestAutoLootRequiresExplicitOptIn(t *testing.T) {
 	_, err = AutoLoot("off", u, nil, 0)
 	require.NoError(t, err)
 	assert.False(t, u.Character.AutoLoot)
+}
+
+// Looting says what was taken once per kind of corpse, not once per item.
+func TestLootCombinesTakenThingsIntoOneLine(t *testing.T) {
+	u := users.NewUserRecord(7, 1)
+	u.Character.CompanyCargo = true
+	for id, name := range map[int]string{989711: "wooden shield", 989712: "tattered pants", 989713: "leather cap"} {
+		spec := items.ItemSpec{ItemId: id, Name: name, Weight: 100}
+		items.SetTestItemSpec(&spec)
+		id := id
+		t.Cleanup(func() { items.RemoveTestItemSpec(id) })
+	}
+	start := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(start) })
+	util.SetRoundCount(500)
+	corpse := func(ids ...int) rooms.Corpse {
+		c := rooms.Corpse{MobId: 1, ClaimUserId: 7, BattleSpoils: true, RoundCreated: 500, Character: *characters.New(), Gold: 3}
+		c.Character.Name = "skeleton"
+		for _, id := range ids {
+			c.Items = append(c.Items, items.New(id))
+		}
+		return c
+	}
+	room := &rooms.Room{Corpses: []rooms.Corpse{corpse(989711, 989712), corpse(989711, 989713)}}
+	text := plainLootText(captureUserText(t, func() { _, err := Loot("", u, room, 0); require.NoError(t, err) }))
+	assert.Equal(t, 1, strings.Count(text, "You take"), text)
+	assert.Contains(t, text, "6 gold")
+	assert.Contains(t, text, "2 wooden shields")
+	assert.Contains(t, text, "the tattered pants")
+	assert.Contains(t, text, "the leather cap")
+	assert.Contains(t, text, "skeleton corpses")
+
+	// One corpse keeps the singular noun.
+	room = &rooms.Room{Corpses: []rooms.Corpse{corpse(989713)}}
+	text = plainLootText(captureUserText(t, func() { _, err := Get("all corpse", u, room, 0); require.NoError(t, err) }))
+	assert.Equal(t, 1, strings.Count(text, "You take"), text)
+	assert.Contains(t, text, "3 gold and the")
+	assert.Contains(t, text, "skeleton corpse")
+	assert.NotContains(t, text, "corpses")
+}
+
+func plainLootText(s string) string {
+	return regexp.MustCompile(`<[^>]*>`).ReplaceAllString(s, "")
+}
+
+// Review of #197: names ending in "ss" or "us" and "x of y" names pluralise
+// properly; names already plural stay; markup around the name survives.
+func TestLootItemPhrasePlurals(t *testing.T) {
+	cases := map[string]string{
+		"wooden shield":        "wooden shields",
+		"tattered pants":       "tattered pants",
+		"iron greaves":         "iron greaves",
+		"brigandine chausses":  "brigandine chausses",
+		"fitted plate cuirass": "fitted plate cuirasses",
+		"hound harness":        "hound harnesses",
+		"celestial lotus":      "celestial lotuses",
+		"vial of leadroot":     "vials of leadroot",
+		"bolt of silk":         "bolts of silk",
+		"history of frostfang": "histories of frostfang",
+	}
+	for in, want := range cases {
+		assert.Equal(t, want, lootPlural(in), in)
+	}
+	got := plainLootText(lootItemPhrase(`<ansi fg="questflag">★</ansi>old key <ansi fg="black-bold">(cursed)</ansi>`, "old key", 2))
+	assert.Equal(t, "2 ★old keys (cursed)", got)
+	got = plainLootText(lootItemPhrase(`<ansi fg="r">o</ansi><ansi fg="g">rb</ansi>`, "orb", 3))
+	assert.Equal(t, "the orb (x3)", got, "a name split by colour is counted, not mangled")
+}
+
+// Review of #197: looting several corpses with a full company says once what
+// was left, after the one line of what was taken.
+func TestLootSaysOnceWhatWasLeftBehind(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	room := testRoom()
+	user := carrier(t, 7, "Dain", room)
+	start := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(start) })
+	util.SetRoundCount(500)
+	for range 2 {
+		c := rooms.Corpse{MobId: 1, ClaimUserId: 7, BattleSpoils: true, RoundCreated: 500, Character: *characters.New(), Gold: 2}
+		c.Character.Name = "rat"
+		c.Items = []items.Item{newItem(carryAnvil), newItem(carryPebble)}
+		room.Corpses = append(room.Corpses, c)
+	}
+	text := plainLootText(captureUserText(t, func() { _, err := Loot("", user, room, 0); require.NoError(t, err) }))
+	assert.Equal(t, 1, strings.Count(text, "You take"), text)
+	assert.Equal(t, 1, strings.Count(text, "You leave"), text)
+	assert.Contains(t, text, "You leave 2 things behind")
+	assert.Less(t, strings.Index(text, "You take"), strings.Index(text, "You leave"), text)
 }

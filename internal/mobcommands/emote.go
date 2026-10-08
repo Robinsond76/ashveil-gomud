@@ -106,7 +106,7 @@ func Emote(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	room.SendText(
-		fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="20">%s</ansi>`, mob.Character.Name, rest))
+		fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="69">%s</ansi>`, mob.Character.Name, rest))
 
 	return true, nil
 }

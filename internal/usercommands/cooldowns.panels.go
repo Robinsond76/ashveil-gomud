@@ -17,7 +17,7 @@ func buildCooldownsPanel(user *users.UserRecord) string {
 	if err != nil {
 		layout = templates.NewPanelLayout("open", "single", 1, 1)
 		layout.AddPanelsToSlot(layout.AddSlot(), "cooldowns")
-		layout.Panel("cooldowns").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Cooldowns</ansi> `).SetWidth(78)
+		layout.Panel("cooldowns").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Cooldowns</ansi> `).SetWidth(78)
 	}
 
 	if len(allCooldowns) == 0 {
