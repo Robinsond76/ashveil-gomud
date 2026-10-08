@@ -2,6 +2,7 @@ package mobcommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -139,8 +140,12 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// Phase 29c: no battle opens between mobs, so the room is told
 			// here.
 			if !isSneaking {
+				// Phase 87 review: a foe in a battle is named by its battle
+				// label ("the second skeleton"), as every other combat line
+				// names it, not by the name all its kind share.
 				room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s goes for %s.`,
-					util.Article(`<ansi fg="mobname">`+mob.Character.Name+`</ansi>`), util.Article(`<ansi fg="mobname">`+m.Character.Name+`</ansi>`))))
+					util.Article(`<ansi fg="mobname">`+battle.EnemyDisplayName(mob.InstanceId, mob.Character.Name)+`</ansi>`),
+					util.Article(`<ansi fg="mobname">`+battle.EnemyDisplayName(m.InstanceId, m.Character.Name)+`</ansi>`))))
 			}
 		}
 

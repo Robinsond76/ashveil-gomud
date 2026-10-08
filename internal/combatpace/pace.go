@@ -53,9 +53,10 @@ type Spec struct {
 }
 
 var specs = map[Pace]Spec{
-	Fast:   {Gap: 400 * time.Millisecond, Dramatic: 800 * time.Millisecond, Quick: 150 * time.Millisecond, Window: 3 * time.Second, Beat: 600 * time.Millisecond, Follow: 150 * time.Millisecond, Extra: 300 * time.Millisecond, Tail: 400 * time.Millisecond},
-	Normal: {Gap: 800 * time.Millisecond, Dramatic: 1400 * time.Millisecond, Quick: 250 * time.Millisecond, Window: 6 * time.Second, Beat: 1000 * time.Millisecond, Follow: 250 * time.Millisecond, Extra: 500 * time.Millisecond, Tail: 600 * time.Millisecond},
-	Slow:   {Gap: 1000 * time.Millisecond, Dramatic: 1800 * time.Millisecond, Quick: 300 * time.Millisecond, Window: 7500 * time.Millisecond, Beat: 1500 * time.Millisecond, Follow: 300 * time.Millisecond, Extra: 700 * time.Millisecond, Tail: 800 * time.Millisecond},
+	Fast: {Gap: 400 * time.Millisecond, Dramatic: 800 * time.Millisecond, Quick: 150 * time.Millisecond, Window: 3 * time.Second, Beat: 600 * time.Millisecond, Follow: 150 * time.Millisecond, Extra: 300 * time.Millisecond, Tail: 400 * time.Millisecond},
+	// Phase 87: what was "slow" is now Normal, and Slow is 1.5 times that.
+	Normal: {Gap: 1000 * time.Millisecond, Dramatic: 1800 * time.Millisecond, Quick: 300 * time.Millisecond, Window: 7500 * time.Millisecond, Beat: 1500 * time.Millisecond, Follow: 300 * time.Millisecond, Extra: 700 * time.Millisecond, Tail: 800 * time.Millisecond},
+	Slow:   {Gap: 1500 * time.Millisecond, Dramatic: 2700 * time.Millisecond, Quick: 450 * time.Millisecond, Window: 11250 * time.Millisecond, Beat: 2250 * time.Millisecond, Follow: 450 * time.Millisecond, Extra: 1050 * time.Millisecond, Tail: 1200 * time.Millisecond},
 }
 
 // Spec is the pace's timing. Off, or an unknown pace, is all zero.

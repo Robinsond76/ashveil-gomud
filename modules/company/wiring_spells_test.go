@@ -90,8 +90,8 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	low, high := max(1, int(float64(flat+1)*factor)), max(1, int(float64(flat+6)*factor))
 	assert.True(t, n >= low && n <= high, "(%d+1d6)×%.2f damage, got %d", flat, factor, n)
 	all := strings.Join(*heard, "")
-	assert.Contains(t, all, "(chanting: Magic Missile, 2 rounds)", "the chant names the spell and its rounds")
-	assert.Contains(t, all, "(chanting: Magic Missile, 1 round)")
+	assert.Contains(t, all, "(chanting: Magic Missile, 2 turns)", "the chant names the spell and its rounds")
+	assert.Contains(t, all, "(chanting: Magic Missile, 1 turn)")
 
 	// Minor Heal All from Brother Oswin, the company wounded first.
 	oswin.Character.SpellBook["healall"] = 1

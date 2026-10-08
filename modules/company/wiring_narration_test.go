@@ -94,7 +94,7 @@ func TestNarrationThroughTheRealRound(t *testing.T) {
 			if e.Crit {
 				key = "critical hit, " + key
 			}
-			if e.Quality != "" { // Phase 35d: the line names a glancing or telling blow
+			if e.Quality != "" && !(e.Crit && e.Quality == "glancing") { // Phase 87: a critical hit is never called glancing; Phase 35d: the line names a glancing or telling blow
 				key = e.Quality + ", " + key
 			}
 			hits[key]++

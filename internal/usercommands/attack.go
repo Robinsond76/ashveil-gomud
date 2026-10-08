@@ -184,7 +184,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if attackMobInstanceId == 0 && attackPlayerId == 0 {
-		user.SendText("You attack the darkness!")
+		user.SendText("You attack the darkness.")
 		return true, nil
 	}
 
@@ -204,7 +204,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if m != nil {
 			if m.Character.IsCharmed(user.UserId) {
-				user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend!`, m.Character.Name))
+				user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend.`, m.Character.Name))
 				return true, nil
 			}
 
@@ -304,7 +304,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 				if partyInfo.IsMember(attackPlayerId) {
-					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
+					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party.`, p.Character.Name))
 					return true, nil
 				}
 			}

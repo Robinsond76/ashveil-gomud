@@ -64,9 +64,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 
 			} else {
 				user.Character.Health--
-				user.SendText(`<ansi fg="red">you are bleeding out!</ansi>`)
+				user.SendText(`<ansi fg="red">you are bleeding out.</ansi>`)
 				if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-					room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is <ansi fg="red">bleeding out</ansi>! Somebody needs to provide aid!`, user.Character.Name), user.UserId)
+					room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is <ansi fg="red">bleeding out</ansi>. Somebody needs to provide aid.`, user.Character.Name), user.UserId)
 				}
 			}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -89,7 +90,7 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 		events.AddToQueue(events.Buff{MobInstanceId: target.InstanceId, BuffId: id, Source: `combat`})
 		a.holder.say(fmt.Sprintf(you, tag), others, suffix)
 	}
-	if fx.Has(classes.Talons) && !status.Live(&target.Character, status.Bleeding) {
+	if fx.Has(classes.Talons) && !combat.IsBloodless(&target.Character) && !status.Live(&target.Character, status.Bleeding) {
 		apply(status.Bleeding, `Your talons rake %s, and it bleeds.`, `%s's talons rake `+verbatim(tag)+`.`, ` (bleeding)`)
 	}
 	if fx.Has(classes.DiveDown) && lanceHeld(a.char) {

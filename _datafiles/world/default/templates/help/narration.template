@@ -11,9 +11,11 @@ numbers that matter sit in brackets at the end of the line.
   <ansi fg="command">(1 damage, bleeding)</ansi>  a status doing its damage, on the victim's turn
   <ansi fg="command">(5 damage, 2 absorbed)</ansi>    a hit on you; your armor absorbed 2 of it
   <ansi fg="command">(4 healed)</ansi>                health a spell gave back
-  <ansi fg="command">(chanting: Magic Missile, 2 rounds)</ansi>
-                            a spell being cast, and the rounds left
-                            before it is released
+  <ansi fg="command">(chanting: Magic Missile, 2 turns)</ansi>
+                            a spell being cast, and the caster's turns
+                            left before it is released (a quick caster
+                            takes two in a round, so the count can drop
+                            by two between round headers)
 
 A line with nothing in brackets is a miss, a block, a parry, a dodge, or
 someone getting ready (<ansi fg="command">help defense</ansi>). Every miss is shown, yours and
@@ -45,6 +47,10 @@ first (<ansi fg="command">help combatpace</ansi>).
 - A spell shows its chant each round, then one line when it is released.
   A spell that heals several people lists them all on one line:
   "Garrick Vane (3 healed) · Ysolde (2 healed) · you (4 healed)".
+
+Skeletons, golems, dolls, spirits and the rest that have no blood or living
+flesh are struck as bone, cloth and dust: their hit lines say so, and a
+critical hit never makes them bleed.
 
 Names of people are written as they are ("Garrick Vane"); everything else
 gets "the" ("the bandit captain").

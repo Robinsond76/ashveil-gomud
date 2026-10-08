@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -493,7 +494,10 @@ func damageSuffixQuality(damage int, crit bool, absorbed int, quality string, st
 	if crit {
 		out = "critical hit, " + out
 	}
-	if quality == QualityGlancing || quality == QualityTelling {
+	// Phase 87: a critical hit is never called a graze; its line reads of a
+	// deep wound, so only the critical hit is named (the damage still
+	// carries the glancing quality's cut).
+	if quality == QualityTelling || quality == QualityGlancing && !crit {
 		out = quality + ", " + out
 	}
 	if absorbed > 0 {
@@ -773,7 +777,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackResult.Crit = true // record that at least one crit occurred this round
 						// Phase 30a review: added, so a later crit never drops an
 						// earlier strike's status.
-						attackResult.BuffTarget = append(attackResult.BuffTarget, critBuffs...)
+						attackResult.BuffTarget = append(attackResult.BuffTarget, withoutBleeding(critBuffs, IsBloodless(&targetChar))...)
 						attackTargetDamage += critDamageBonus(dCount, dSides, dBonus,
 							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj)
 						// Phase 38c2: a Marksman's Called Shot hits harder when it crits.
@@ -891,9 +895,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				}
 				if isCrit && attackTargetDamage > 0 {
 					attackResult.CritLanded = true
-					effect := critBuffs
+					effect := withoutBleeding(critBuffs, IsBloodless(&targetChar))
 					if len(effect) == 0 {
-						effect = status.CritEffect(weaponSubType, nil, util.Rand)
+						effect = withoutBleeding(status.CritEffect(weaponSubType, nil, util.Rand), IsBloodless(&targetChar))
 						attackResult.BuffTarget = append(attackResult.BuffTarget, effect...)
 					}
 					critStatuses = append(critStatuses, status.Words(effect)...)
@@ -941,6 +945,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				// A crit the armor took entirely reads as any fully blocked
 				// blow does: a miss (Phase 29c review fix).
 				msgs := items.GetAttackMessage(weaponSubType, pct, isCrit && attackTargetDamage > 0)
+				// Phase 87: no blood, throats or living flesh on a skeleton.
+				if attackTargetDamage > 0 && IsBloodless(&targetChar) {
+					if hollow, ok := items.GetBloodlessAttackMessage(pct, isCrit); ok {
+						msgs = hollow
+					}
+				}
 
 				toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
 					&sourceChar, &targetChar, sourceType, targetType,
@@ -1106,4 +1116,30 @@ func petNameOr(name string) string {
 		return `pet`
 	}
 	return name
+}
+
+// IsBloodless reports whether a character has no blood or living flesh (its
+// race says so): it takes blows as bone, cloth, or dust and never bleeds
+// (Phase 87).
+func IsBloodless(c *characters.Character) bool {
+	if c == nil {
+		return false
+	}
+	r := races.GetRace(c.GetRaceId())
+	return r != nil && r.Bloodless
+}
+
+// withoutBleeding drops the bleeding status from a crit's effects when the
+// target has nothing to bleed.
+func withoutBleeding(effects []int, bloodless bool) []int {
+	if !bloodless || !slices.Contains(effects, status.Bleeding) {
+		return effects
+	}
+	out := make([]int, 0, len(effects))
+	for _, id := range effects {
+		if id != status.Bleeding {
+			out = append(out, id)
+		}
+	}
+	return out
 }

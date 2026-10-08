@@ -67,7 +67,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 
 			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Given a new quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))
 
-			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You have been given a new quest: <ansi fg="questname">%s</ansi>!`, questInfo.Name), questUser.UserId)
+			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You have been given a new quest: <ansi fg="questname">%s</ansi>.`, questInfo.Name), questUser.UserId)
 			questUser.SendText(questUpTxt)
 		}
 	} else if stepName == `end` {
@@ -76,7 +76,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 
 			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Completed a quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))
 
-			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You have completed the quest: <ansi fg="questname">%s</ansi>!`, questInfo.Name), questUser.UserId)
+			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You have completed the quest: <ansi fg="questname">%s</ansi>.`, questInfo.Name), questUser.UserId)
 			questUser.SendText(questUpTxt)
 		}
 
@@ -101,7 +101,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 		// Gold reward?
 		if questInfo.Rewards.Gold > 0 {
-			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>!`, questInfo.Rewards.Gold))
+			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>.`, questInfo.Rewards.Gold))
 			questUser.Character.Gold += questInfo.Rewards.Gold
 
 			events.AddToQueue(events.EquipmentChange{
@@ -113,7 +113,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Item reward?
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
-			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi>!`, newItm.NameSimple()))
+			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi>.`, newItm.NameSimple()))
 			questUser.Character.StoreItem(newItm)
 
 			iSpec := newItm.GetSpec()
@@ -200,7 +200,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 
 			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Made progress on a quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))
 
-			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You've made progress on the quest: <ansi fg="questname">%s</ansi>!`, questInfo.Name), questUser.UserId)
+			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You've made progress on the quest: <ansi fg="questname">%s</ansi>.`, questInfo.Name), questUser.UserId)
 			questUser.SendText(questUpTxt)
 		}
 	}
