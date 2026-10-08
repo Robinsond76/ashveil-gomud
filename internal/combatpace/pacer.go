@@ -385,6 +385,20 @@ func (p *Pacer) PlaybackEnd() time.Time {
 	return end
 }
 
+// Holding reports whether any player still has lines held: a round is still
+// playing out to someone. The fixed cadence (Phase 82c) waits for it, so a
+// fight's last round is never cut short by the next cadence round's flush.
+func (p *Pacer) Holding() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, q := range p.queues {
+		if q.next < len(q.lines) {
+			return true
+		}
+	}
+	return false
+}
+
 // Busy reports whether a player is in a combat round whose lines haven't
 // all gone out: views that must not run ahead of the narration (the
 // prompt, the web client's vitals and battle view) wait while it is true.

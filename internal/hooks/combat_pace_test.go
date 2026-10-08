@@ -343,3 +343,42 @@ func TestNearAFight(t *testing.T) {
 		t.Fatal("a fighting player is near a fight")
 	}
 }
+
+// TestCadenceWaitsForAFightsLastLines (Phase 82c review): a fight's last
+// round, resolved on the battle clock, is still playing out to the player
+// after the fight is over, when no player fights and the fixed cadence is
+// due again. The cadence must not start a round then: starting one flushes
+// every held line at once, and the fight's end would arrive in a burst.
+func TestCadenceWaitsForAFightsLastLines(t *testing.T) {
+	r := newPaceRig(t)
+	ResetBattleClockForTest()
+	t.Cleanup(ResetBattleClockForTest)
+	clock.active = true // the fight ran on the clock...
+	r.round(1, "a1", "a2", "a3", "a4")
+	clock = battleClock{} // ...and this round ended it: nobody fights now
+	r.advance(50 * time.Millisecond)
+	if strings.Join(r.got, "|") != "a1" {
+		t.Fatalf("after one turn got %v", r.got)
+	}
+
+	ran := 0
+	cadence := func(events.Event) events.ListenerReturn { ran++; return events.Continue }
+	combatOnCadence(events.NewRound{RoundNumber: 2}, cadence)
+	events.ProcessEvents()
+	if ran != 0 {
+		t.Fatal("the cadence resolved a round while the last fight's lines were still held")
+	}
+	if strings.Join(r.got, "|") != "a1" {
+		t.Fatalf("the cadence flushed the fight's last lines: %v", r.got)
+	}
+
+	// The lines play out on their beats, and then the cadence runs again.
+	r.advance(2 * time.Second)
+	if strings.Join(r.got, "|") != "a1|a2|a3|a4" {
+		t.Fatalf("the last round did not play out: %v", r.got)
+	}
+	combatOnCadence(events.NewRound{RoundNumber: 4}, cadence)
+	if ran != 1 {
+		t.Fatal("the cadence did not resume once the lines were out")
+	}
+}
