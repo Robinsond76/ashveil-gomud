@@ -25,6 +25,7 @@ func NotifySunriseSunset(e events.Event) events.ListenerReturn {
 		events.AddToQueue(events.Broadcast{
 			Text:             sunriseTxt,
 			TextScreenReader: sunriseTxtSR,
+			HoldInBattle:     true,
 		})
 		return events.Continue
 	}
@@ -35,6 +36,7 @@ func NotifySunriseSunset(e events.Event) events.ListenerReturn {
 	events.AddToQueue(events.Broadcast{
 		Text:             sunsetTxt,
 		TextScreenReader: sunsetTxtSR,
+		HoldInBattle:     true,
 	})
 
 	return events.Continue

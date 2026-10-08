@@ -3,10 +3,12 @@ package combat
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -301,7 +303,7 @@ func defenseLines(defense, defenderWeapon string) (toAttacker, toDefender, toRoo
 
 // sendDefenseLines sends a defended strike's lines (Phase 30g2).
 func sendDefenseLines(r *AttackResult, defense string, source, target *characters.Character, sourceType, targetType SourceTarget) {
-	toAttacker, toDefender, toRoom := defenseLines(defense, target.Equipment.Weapon.DisplayName())
+	toAttacker, toDefender, toRoom := defenseLines(defense, WeaponNounOf(&target.Equipment.Weapon))
 	one := func(m items.ItemMessage) items.MessageOptions { return items.MessageOptions{m} }
 	// Across rooms (a shot), the attacker's room sees only where it went.
 	across := items.ItemMessage(`<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi>, and the blow is turned aside.`)
@@ -341,7 +343,7 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 
 	weaponName := races.GetRace(sourceChar.GetRaceId()).UnarmedName
 	if sourceChar.Equipment.Weapon.ItemId > 0 {
-		weaponName = sourceChar.Equipment.Weapon.DisplayName()
+		weaponName = WeaponNounOf(&sourceChar.Equipment.Weapon)
 	}
 
 	toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
@@ -631,7 +633,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				itemSpec := weapon.GetSpec()
 
-				weaponName = weapon.DisplayName()
+				weaponName = WeaponNounOf(&weapon)
 
 				weaponSubType = itemSpec.Subtype
 				attacks, dCount, dSides, dBonus, critBuffs = weapon.GetDiceRoll()
@@ -1142,4 +1144,42 @@ func withoutBleeding(effects []int, bloodless bool) []int {
 		}
 	}
 	return out
+}
+
+var (
+	weaponMarkup = regexp.MustCompile(`<[^>]*>`)
+	weaponAside  = regexp.MustCompile(`\s*[(\[][^)\]]*[)\]]`)
+)
+
+// WeaponNoun is the kind of weapon a combat line names: "mace" for the
+// "acolyte's mace", so a line reads "Oswin's mace smashes" and not "Oswin's
+// acolyte's mace". A name like "sword of flame" gives "sword"; a trailing
+// "(rare)" or "(glowing)" is dropped.
+func WeaponNoun(name string) string {
+	plain := strings.TrimSpace(weaponAside.ReplaceAllString(weaponMarkup.ReplaceAllString(name, ""), ""))
+	if i := strings.LastIndex(plain, ", "); i >= 0 {
+		plain = plain[i+2:] // "Dawnfang, a keen shortsword"
+	}
+	if i := strings.Index(plain, " of "); i > 0 {
+		plain = plain[:i]
+	}
+	if i := strings.LastIndex(plain, " "); i >= 0 {
+		return plain[i+1:]
+	}
+	return plain
+}
+
+// WeaponNounOf is the weapon a combat line names for an item: the kind of
+// weapon from its base name (rolled quality, affixes and labels left out),
+// or a relic's or other named weapon's own name ("Ashen Reaper").
+func WeaponNounOf(weapon *items.Item) string {
+	if weapon == nil || weapon.ItemId < 1 {
+		return ``
+	}
+	spec := weapon.GetSpec()
+	name := strings.TrimSpace(spec.Name)
+	if spec.Relic != nil || (name != `` && unicode.IsUpper([]rune(name)[0])) {
+		return name
+	}
+	return WeaponNoun(name)
 }

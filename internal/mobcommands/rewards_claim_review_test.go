@@ -82,3 +82,85 @@ func TestLootClaimOutsideOneAllianceGoesToMostDamage(t *testing.T) {
 		})
 	}
 }
+
+// Phase 88: the "battle loot is claimed" line is said only when the body
+// holds something; an empty one has nothing to claim.
+func TestNoLootLineForAnEmptyBody(t *testing.T) {
+	mudlog.SetupLogger(nil, "low", "", false)
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	battle.Reset()
+	t.Cleanup(battle.Reset)
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Death.CorpsesEnabled = true
+	gameplay.Death.CorpseItems = false
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+	for _, gold := range []int{0, 5} {
+		room := rooms.NewEmptyRoom()
+		foe := &mobs.Mob{MobId: 94950, InstanceId: 94951 + gold}
+		foe.Character = *characters.New()
+		foe.Character.Name = "forest imp"
+		foe.Character.RoomId = room.RoomId
+		foe.Character.Level = 2
+		foe.Character.Gold = gold
+		foe.Character.PlayerDamage = map[int]int{94960: 10}
+		u := users.NewUserRecord(94960, 0)
+		u.Character.Name = "Aria"
+		u.Character.RoomId = room.RoomId
+		u.Character.Health = 10
+		users.SetTestUser(u)
+		battle.Begin(94960, room.RoomId, 1, "imps", []int{foe.InstanceId})
+		var said []string
+		freshEvents(t)
+		id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+			said = append(said, e.(events.Message).Text)
+			return events.Cancel
+		})
+		_, err := Suicide("", foe, room)
+		require.NoError(t, err)
+		events.ProcessEvents()
+		events.UnregisterListener(events.Message{}, id)
+		out := strings.Join(said, "\n")
+		if gold == 0 {
+			assert.NotContains(t, out, "claimed by", "an empty body has no loot to claim")
+		} else {
+			// Phase 88 review: the body is named with its article.
+			assert.Contains(t, out, `Battle loot from the <ansi fg="mobname">forest imp</ansi> is claimed by`)
+		}
+	}
+}
+
+// Phase 88: a surrendered foe that is spared leaves without a trace: no kill
+// in the bestiary, no death event for quests or bounties, no reward.
+func TestASparedFoeIsNotSlain(t *testing.T) {
+	mudlog.SetupLogger(nil, "low", "", false)
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	battle.Reset()
+	t.Cleanup(battle.Reset)
+	room := rooms.NewEmptyRoom()
+	foe := &mobs.Mob{MobId: 94970, InstanceId: 94971}
+	foe.Character = *characters.New()
+	foe.Character.Name = "forest imp"
+	foe.Character.RoomId = room.RoomId
+	foe.Character.PlayerDamage = map[int]int{94980: 10}
+	u := users.NewUserRecord(94980, 0)
+	u.Character.Name = "Aria"
+	u.Character.RoomId = room.RoomId
+	users.SetTestUser(u)
+	xp := u.Character.Experience
+	var died []events.Event
+	freshEvents(t)
+	id := events.RegisterListener(events.MobDeath{}, func(e events.Event) events.ListenerReturn {
+		died = append(died, e)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.MobDeath{}, id) })
+	_, err := Suicide("vanish", foe, room)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Empty(t, died)
+	assert.Zero(t, u.Character.KD.GetMobKills(94970))
+	assert.Equal(t, xp, u.Character.Experience)
+	assert.Empty(t, room.Corpses)
+}

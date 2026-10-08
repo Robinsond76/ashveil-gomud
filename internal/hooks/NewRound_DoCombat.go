@@ -389,7 +389,6 @@ func actPlayer(evt events.NewRound, userId int, extra bool) (affectedPlayerIds [
 		defUser.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 		if defUser.Character.Health < 1 {
-			user.SendText(`Your rage subsides.`)
 			user.Character.Aggro = nil
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 			return affectedPlayerIds, affectedMobInstanceIds
@@ -604,7 +603,6 @@ func actPlayer(evt events.NewRound, userId int, extra bool) (affectedPlayerIds [
 			if reassignPlayerTarget(user, uRoom) {
 				return affectedPlayerIds, affectedMobInstanceIds
 			}
-			user.SendText("Your rage subsides.")
 			user.Character.Aggro = nil
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 			return affectedPlayerIds, affectedMobInstanceIds

@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -29,6 +30,19 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 	}
 
 	for _, u := range users.GetAllActiveUsers() {
+
+		// Ambient news (a sunset) would break into the battle log, so it
+		// waits for the battle to end.
+		if broadcast.HoldInBattle {
+			if _, inBattle := battle.Current(u.UserId); inBattle {
+				text := broadcast.Text
+				if u.ScreenReader && len(broadcast.TextScreenReader) > 0 {
+					text = broadcast.TextScreenReader
+				}
+				heldAmbient[u.UserId] = append(heldAmbient[u.UserId], text)
+				continue
+			}
+		}
 
 		// Ashveil Phase 29f: a broadcast a combat round caused ("X has
 		// DIED!", a level gained by a kill) waits its turn among a pacing
@@ -81,4 +95,21 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// heldAmbient is the ambient broadcasts waiting for each player's battle to end.
+var heldAmbient = map[int][]string{}
+
+// releaseAmbient tells a player what the world did while they fought.
+func releaseAmbient(userId int) {
+	held := heldAmbient[userId]
+	delete(heldAmbient, userId)
+	if len(held) == 0 {
+		return
+	}
+	if u := users.GetByUserId(userId); u != nil {
+		for _, text := range held {
+			u.SendText(text)
+		}
+	}
 }
