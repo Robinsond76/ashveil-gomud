@@ -14,6 +14,7 @@ encounters:
     fringe:
       - id: field-rats
         weight: 35
+        pack: true
         text: Rats boil out of the hedgerow and swarm toward your company.
         members:
           - mobid: 1
@@ -28,6 +29,7 @@ encounters:
             count: 2
       - id: stray-dogs
         weight: 20
+        pack: true
         text: Half-starved junkyard dogs bark and charge down the lane.
         members:
           - mobid: 31

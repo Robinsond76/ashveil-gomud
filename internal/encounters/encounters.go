@@ -63,11 +63,14 @@ type Member struct {
 // Composition is one weighted outcome of a table. For a boss composition
 // the first member is the boss (count 1) and the rest are its escorts.
 type Composition struct {
-	ID      string   `yaml:"id"`
-	Name    string   `yaml:"name,omitempty"` // what a bounty board calls the group (Phase 76); the id, spaced, when empty
-	Weight  int      `yaml:"weight"`
-	Text    string   `yaml:"text,omitempty"` // the line that opens the encounter
-	Boss    bool     `yaml:"boss,omitempty"`
+	ID     string `yaml:"id"`
+	Name   string `yaml:"name,omitempty"` // what a bounty board calls the group (Phase 76); the id, spaced, when empty
+	Weight int    `yaml:"weight"`
+	Text   string `yaml:"text,omitempty"` // the line that opens the encounter
+	Boss   bool   `yaml:"boss,omitempty"`
+	// Pack marks a deliberate single-kind group (a wolf pack, a swarm of
+	// rats) that Mix leaves as authored.
+	Pack    bool     `yaml:"pack,omitempty"`
 	Members []Member `yaml:"members"`
 }
 
@@ -329,6 +332,56 @@ type Foe struct {
 	// HPPercent is the share of full HP the foe spawns with (Soften); zero
 	// means full.
 	HPPercent int
+}
+
+// Mix gives an ordinary group of one kind a second kind (Phase 89: enemy
+// groups are not rows of the same creature). A composition of three or more
+// foes that is all one kind, is no boss group and is no deliberate Pack has
+// its back half (two of four, one of three) replaced by another kind drawn
+// by weight from the rest of its table: the kinds the zone's other
+// ordinary groups field, so the foes fit the zone and the band's levels.
+// Healers and solitary templates are never drawn in (the healer share and
+// four-foe rules stay as validated). A table with no other kind leaves the
+// composition as it is. The group keeps its size, so difficulty is
+// unchanged. The table's own slices are not modified.
+func Mix(c Composition, table []Composition, lookup Lookup, rng Rand) Composition {
+	if c.Boss || c.Pack || len(c.Members) != 1 || c.Size() < 3 {
+		return c
+	}
+	own := c.Members[0].MobID
+	type option struct{ mob, weight int }
+	var options []option
+	total := 0
+	for _, other := range table {
+		if other.Boss {
+			continue
+		}
+		for _, m := range other.Members {
+			t, ok := lookup(m.MobID)
+			if m.MobID == own || !ok || t.Healer || t.Solitary {
+				continue
+			}
+			w := max(other.Weight, 1) * m.Count
+			options = append(options, option{m.MobID, w})
+			total += w
+		}
+	}
+	if total == 0 {
+		return c
+	}
+	pick := rng(total)
+	alt := options[len(options)-1].mob
+	for _, o := range options {
+		if pick < o.weight {
+			alt = o.mob
+			break
+		}
+		pick -= o.weight
+	}
+	swap := c.Size() / 2
+	out := c
+	out.Members = []Member{{MobID: own, Count: c.Size() - swap}, {MobID: alt, Count: swap}}
+	return out
 }
 
 // Plan expands a composition into the foes to spawn and their levels from

@@ -11,6 +11,7 @@ encounters:
     pass:
     - id: snow-wolves
       weight: 25
+      pack: true
       text: Grey wolves drop from the rocks and circle the company.
       members:
       - mobid: 55

@@ -900,3 +900,44 @@ func TestBossesEscortsAndStoryGroupsKeepFullHP(t *testing.T) {
 		}
 	}
 }
+
+// TestAWholeKindGroupComesMixed drives the real step into a room whose table
+// holds a row of wolves and a pack of spiders: the wolves arrive with a spider.
+func TestAWholeKindGroupComesMixed(t *testing.T) {
+	w := setup(t)
+	zone := rooms.GetZoneConfig(zoneName)
+	require.NotNil(t, zone)
+	cfg := *zone
+	cfg.Encounters.Tables = map[string][]encounters.Composition{
+		"woods": {
+			{ID: "wolves", Weight: 1, Text: "Wolves!", Members: []encounters.Member{{MobID: 96101, Count: 3}}},
+			{ID: "spiders", Weight: 1, Members: []encounters.Member{{MobID: 96102, Count: 2}}},
+		},
+	}
+	t.Cleanup(rooms.SetTestZoneConfig(&cfg))
+	w.roll = 0 // the first composition
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		kinds := map[int]int{}
+		for _, id := range r.Foes {
+			kinds[int(mobs.GetInstance(id).MobId)]++
+		}
+		assert.Equal(t, map[int]int{96101: 2, 96102: 1}, kinds)
+	}
+}
+
+// TestAMixedGroupsOpeningLineNamesTheNewcomers: the authored line names one
+// kind, so a mixed group's opening names the kind Mix added (89 review).
+func TestAMixedGroupsOpeningLineNamesTheNewcomers(t *testing.T) {
+	setup(t)
+	wolves := encounters.Composition{ID: "wolves", Members: []encounters.Member{{MobID: 96101, Count: 3}}}
+	mixed := func(n int) encounters.Composition {
+		return encounters.Composition{ID: "wolves", Members: []encounters.Member{{MobID: 96101, Count: 4 - n}, {MobID: 96102, Count: n}}}
+	}
+	assert.Equal(t, " A wood spider comes with them.", mixedLine(wolves, mixed(1)))
+	assert.Equal(t, " Two wood spiders come with them.", mixedLine(wolves, mixed(2)))
+	assert.Equal(t, "", mixedLine(wolves, wolves), "an unmixed group's line is as written")
+	authoredMix := mixed(1)
+	assert.Equal(t, "", mixedLine(authoredMix, authoredMix), "an authored mix names its own kinds")
+}

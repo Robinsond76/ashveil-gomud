@@ -125,6 +125,18 @@ func TestFightsAndCompanionTools(t *testing.T) {
 	assert.Contains(t, tr.run("testarea", "clear"), "3 foes are gone")
 	assert.Contains(t, tr.run("testarea", "clear"), "No foes")
 
+	// Counted kinds build a mixed group: two imps and a skeleton.
+	assert.Contains(t, tr.run("testarea", "fight 2 2 imp 1 skeleton"), "3 foes of level 2")
+	kinds := map[int]int{}
+	for _, id := range room.GetMobs() {
+		if m := mobs.GetInstance(id); m != nil && m.EncounterOwner == u.UserId {
+			kinds[int(m.MobId)]++
+			assert.Equal(t, 2, m.Character.Level)
+		}
+	}
+	assert.Equal(t, map[int]int{33: 2, 15: 1}, kinds)
+	assert.Contains(t, tr.run("testarea", "clear"), "3 foes are gone")
+
 	// Companions of any class and level, and class changes.
 	assert.Contains(t, tr.run("testarea", "companion add halberdier 12"), "level 12")
 	assert.Contains(t, tr.run("testarea", "companion add shogun 20"), "shogun")
@@ -261,5 +273,34 @@ func TestEachHubExitLeadsBack(t *testing.T) {
 		}
 		got, ok := read(e.RoomID)[back]
 		assert.True(t, ok && got.RoomID == HubRoom, "room %d (the hub's %s) leads back %s", e.RoomID, dir, back)
+	}
+}
+
+func TestParseFoes(t *testing.T) {
+	for _, tc := range []struct {
+		words []string
+		want  []int
+		err   string
+	}{
+		{[]string{"2", "imp", "1", "skeleton"}, []int{33, 33, 15}, ""},
+		{[]string{"3", "skeleton"}, []int{15, 15, 15}, ""},        // counted, same as the older form
+		{[]string{"3", "skeleton", "imp"}, []int{15, 33, 15}, ""}, // older: types repeat in turn
+		{[]string{"4", "skeleton", "imp", "wolf", "ent"}, []int{15, 33, 56, 34}, ""},
+		{[]string{"3"}, []int{15, 15, 15}, ""},               // older: the default foe
+		{[]string{"1", "imp", "1", "15"}, []int{33, 15}, ""}, // an id beside a name
+		{[]string{"3", "58"}, []int{58, 58, 58}, ""},         // older: an id
+		{[]string{"1", "imp"}, nil, "must be from 2 to 6"},
+		{[]string{"4", "imp", "3", "wolf"}, nil, "must be from 2 to 6"},
+		{[]string{"2", "imp", "1", "nonsense"}, nil, "no foe type"},
+		{[]string{"9", "imp"}, nil, "must be from 2 to 6"},
+		{[]string{"9"}, nil, "size must be"},
+	} {
+		got, err := parseFoes(tc.words)
+		if tc.err != "" {
+			assert.Contains(t, err, tc.err, tc.words)
+			continue
+		}
+		assert.Empty(t, err, tc.words)
+		assert.Equal(t, tc.want, got, tc.words)
 	}
 }

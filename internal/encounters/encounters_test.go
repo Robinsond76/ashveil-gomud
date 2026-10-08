@@ -240,3 +240,31 @@ func TestSoftenLeavesABossAndItsEscortsAlone(t *testing.T) {
 		assert.Equal(t, OrdinaryHPPercent, f.HPPercent)
 	}
 }
+
+func TestMixGivesOneKindGroupsASecondKind(t *testing.T) {
+	horde := Composition{ID: "horde", Weight: 1, Members: []Member{{MobID: 1, Count: 4}}}
+	patrol := Composition{ID: "patrol", Weight: 1, Members: []Member{{MobID: 1, Count: 3}}}
+	pair := Composition{ID: "pair", Weight: 1, Members: []Member{{MobID: 2, Count: 2}}}
+	healers := Composition{ID: "healers", Weight: 1, Members: []Member{{MobID: 4, Count: 1}, {MobID: 3, Count: 2}}}
+	boss := Composition{ID: "lair", Boss: true, Weight: 1, Members: []Member{{MobID: 5, Count: 1}, {MobID: 3, Count: 2}}}
+	table := []Composition{horde, patrol, pair, healers, boss}
+	first := func(int) int { return 0 }
+
+	got := Mix(horde, table, testMobs, first)
+	assert.Equal(t, []Member{{MobID: 1, Count: 2}, {MobID: 2, Count: 2}}, got.Members, "half the group is another kind from the table")
+	assert.Equal(t, horde.Size(), got.Size(), "the size, and so the difficulty, is unchanged")
+	assert.Equal(t, []Member{{MobID: 1, Count: 4}}, horde.Members, "the table's composition is not modified")
+
+	got = Mix(patrol, table, testMobs, func(n int) int { return n - 1 })
+	assert.Len(t, got.Members, 2)
+	assert.Equal(t, 3, got.Size())
+	assert.NotEqual(t, 4, got.Members[1].MobID, "never a healer")
+	assert.NotEqual(t, 5, got.Members[1].MobID, "never a boss or solitary template")
+
+	assert.Equal(t, pair, Mix(pair, table, testMobs, first), "a pair stays as it is")
+	assert.Equal(t, boss, Mix(boss, table, testMobs, first), "a boss group is as written")
+	packed := horde
+	packed.Pack = true
+	assert.Equal(t, packed, Mix(packed, table, testMobs, first), "a pack stays one kind")
+	assert.Equal(t, horde, Mix(horde, []Composition{horde, patrol}, testMobs, first), "a table with one kind has nothing to draw")
+}

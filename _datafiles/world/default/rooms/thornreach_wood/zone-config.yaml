@@ -41,6 +41,7 @@ encounters:
         count: 3
     - id: thorn-horde
       weight: 8
+      pack: true
       text: A big pack of wolves breaks cover, circling the company.
       members:
       - mobid: 56

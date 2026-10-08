@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Phase 29b2: spawn groups. A room's hostile mobs fight as groups of at
@@ -235,7 +236,98 @@ func (r *Room) FormSpawnGroups() {
 		joined[mob.InstanceId] = true
 	}
 
+	r.mixSpawnGroups(ours, pool, joined)
 	r.nameSpawnGroups(ours, joined)
+}
+
+// mixSwap is one member of a one-kind group to replace with a pool entry.
+type mixSwap struct {
+	InstanceId int
+	Entry      int // index into the pool
+}
+
+// planMixes picks, for each idle group of three or more that is all one
+// kind, its last member to swap for a pool entry of another kind (Phase 89:
+// a group is not a row of the same creature). pick returns 0..n-1. A group
+// that is fighting, already mixed, or smaller is left; so is any group when
+// the pool has no other kind.
+func planMixes(groups map[string][]groupable, order []string, pool []SpawnInfo, pick func(n int) int) []mixSwap {
+	var swaps []mixSwap
+	for _, g := range order {
+		members := groups[g]
+		if len(members) < 3 {
+			continue
+		}
+		skip := false
+		for _, m := range members {
+			skip = skip || m.Fighting || m.MobId != members[0].MobId // fighting, or already mixed
+		}
+		if skip {
+			continue
+		}
+		var other []int
+		for i, e := range pool {
+			if e.MobId != members[0].MobId {
+				other = append(other, i)
+			}
+		}
+		if len(other) == 0 {
+			continue
+		}
+		swaps = append(swaps, mixSwap{InstanceId: members[len(members)-1].InstanceId, Entry: other[pick(len(other))]})
+	}
+	return swaps
+}
+
+// mixSpawnGroups makes the room's idle one-kind groups of three or more
+// mixed, swapping a member for another kind from the room's spawn list.
+// The replaced member's spawn entry tracks the newcomer, which joins the
+// group the way a top-up does.
+func (r *Room) mixSpawnGroups(prefix string, pool []SpawnInfo, joined map[int]bool) {
+	if len(pool) < 2 {
+		return
+	}
+	groups := map[string][]groupable{}
+	var order []string
+	for _, instanceId := range r.mobs {
+		mob := mobs.GetInstance(instanceId)
+		if mob == nil || !groupsHere(mob) || !strings.HasPrefix(mob.SpawnGroup, prefix) {
+			continue
+		}
+		if _, ok := groups[mob.SpawnGroup]; !ok {
+			order = append(order, mob.SpawnGroup)
+		}
+		groups[mob.SpawnGroup] = append(groups[mob.SpawnGroup], groupable{InstanceId: instanceId, MobId: int(mob.MobId),
+			Group: mob.SpawnGroup, Fighting: mob.Character.Aggro != nil || battle.Engaged(instanceId)})
+	}
+	for _, sw := range planMixes(groups, order, pool, util.Rand) {
+		old := mobs.GetInstance(sw.InstanceId)
+		if old == nil {
+			continue
+		}
+		mob := r.spawnMob(pool[sw.Entry])
+		if mob == nil {
+			continue
+		}
+		group, name, desc := old.SpawnGroup, old.GroupName, old.GroupDesc
+		// The replaced member's entry tracks the newcomer, so the room
+		// keeps its head count: the entry respawns its own kind only
+		// when the newcomer dies (89 review: putting the entry on
+		// cooldown respawned it later as an extra member).
+		for i, e := range r.SpawnInfo {
+			if e.InstanceId == sw.InstanceId {
+				r.SpawnInfo[i].InstanceId = mob.InstanceId
+			}
+		}
+		r.RemoveMob(sw.InstanceId)
+		mobs.DestroyInstance(sw.InstanceId)
+		mob.Hostile = true
+		mob.SpawnGroup, mob.GroupName, mob.GroupDesc = group, name, desc
+		mob.MaxWander = 0
+		r.mobs = append(r.mobs, mob.InstanceId)
+		roomManager.roomsWithMobs[r.RoomId] = len(r.mobs)
+		joined[mob.InstanceId] = true
+	}
 }
 
 // nameSpawnGroups gives each of the room's spawn groups its name (Phase

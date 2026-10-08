@@ -26,7 +26,8 @@ fighters, ten or so for ten. Choose the beat with <ansi fg="command">set combatp
 <ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help tactics</ansi><ansi fg="yellow-bold">)</ansi>
 
 Enemies come in named groups ("A band of ruffians (4)"), and you fight a
-whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. From
+whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. A group of three or
+more usually mixes kinds (two skeletons with an imp), except a pack of wolves or rats. From
 then on it plays out on its own, from how your company was set up.
 Only <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) takes you out: the company withdraws together.
 You can still order a new focus for the whole company (<ansi fg="command">company tactics focus [rule]</ansi>, once a round,
