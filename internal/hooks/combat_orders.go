@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -93,7 +94,8 @@ type orderCtx struct {
 }
 
 func (c orderCtx) caster() orders.Caster {
-	return orders.Caster{Spells: classCosted(c.a.char, c.autoSpells), Knows: c.a.knows, Mana: c.a.char.Mana, Flasks: flasks.Remaining(c.a.char)}
+	return orders.Caster{Spells: classCosted(c.a.char, c.autoSpells), Knows: c.a.knows, Mana: c.a.char.Mana, Flasks: flasks.Remaining(c.a.char),
+		LanceFoes: c.a.char.ClassEffects().Int(classes.LanceFoes)}
 }
 
 // runOrders reads one member's orders and carries out the one that fires.

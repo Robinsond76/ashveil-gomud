@@ -236,3 +236,25 @@ func TestEvaluateTriesEachFoeThatMeetsTheCondition(t *testing.T) {
 		t.Fatalf("the second chanter should be taken, got %+v %v", f, ok)
 	}
 }
+
+// Phase 84: a Sorcerer's Lance gives way to the group spell against a crowd,
+// as strategy.Decide does; an order aimed at one foe keeps the Lance, and a
+// caster with no limit (a High Sorcerer) never gives it up.
+func TestAttackSparksACrowdInsteadOfTheLance(t *testing.T) {
+	c := casterWith(40, "mm", "sparks", "arcanelance")
+	c.Spells = append(c.Spells, strategy.Spell{ID: "arcanelance", Use: strategy.UseBurst, Cost: 12})
+	c.LanceFoes = 3
+	if sp, kind, _ := c.Attack(3, false); sp.ID != "arcanelance" || kind != strategy.Attack {
+		t.Errorf("the Lance at 3 foes, got %v %v", sp, kind)
+	}
+	if sp, kind, _ := c.Attack(4, false); sp.ID != "sparks" || kind != strategy.AttackAll {
+		t.Errorf("sparks for a crowd, got %v %v", sp, kind)
+	}
+	if sp, _, _ := c.Attack(4, true); sp.ID != "arcanelance" {
+		t.Errorf("an order aimed at one foe keeps the Lance, got %v", sp)
+	}
+	c.LanceFoes = 0
+	if sp, _, _ := c.Attack(5, false); sp.ID != "arcanelance" {
+		t.Errorf("no limit keeps the Lance, got %v", sp)
+	}
+}

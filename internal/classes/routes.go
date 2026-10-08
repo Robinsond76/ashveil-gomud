@@ -318,7 +318,7 @@ func init() {
 	register(Class{ID: "sorcerer", Name: "Sorcerer", Lineage: "wizard", Tier: TierAdvanced, Gate: GateAny,
 		Role: "costly magical burst: one heavy Arcane Lance at a time",
 		Ranks: []Rank{
-			teaches(rank(10, "Arcane Lance", "a heavy bolt at one foe, about twice a Magic Missile; chant 2 rounds, cost 15", Lance, 1, LanceCost, 15), "arcanelance"),
+			teaches(rank(10, "Arcane Lance", "a heavy bolt at one foe, about twice a Magic Missile; chant 2 rounds, cost 15; against four or more foes it showers the group with sparks instead", Lance, 1, LanceCost, 15, LanceFoes, 3), "arcanelance"),
 			rank(15, "Gathered power", "the Lance deals 60% more damage", LancePct, 60),
 			rank(20, "Steady chant", "blows break the Sorcerer's chant 50% less often", ChantBreak, 50),
 			rank(25, "Cheaper lance", "the Lance costs 12", LanceCost, 12),
@@ -326,7 +326,7 @@ func init() {
 	register(Class{ID: "high-sorcerer", Name: "High Sorcerer", Lineage: "wizard", Tier: TierElite, Parent: "sorcerer", Gate: GateAny,
 		Role: "a Lance that strikes harder, sooner and twice, and a chant blows rarely break",
 		Ranks: []Rank{
-			rank(30, "High Lance", "the Lance deals 75% more damage", LancePct, 75),
+			rank(30, "High Lance", "the Lance deals 75% more damage, and is loosed whatever the number of foes", LancePct, 75, LanceFoes, 0),
 			rank(35, "Gathered chant", "every other Lance chants a round less", LanceTrim, 1),
 			rank(40, "Unbroken chant", "blows break its chant 75% less often", ChantBreak, 75),
 			rank(45, "Twin Lance", "the Lance also strikes a second foe for a quarter of its damage", LanceTwin, 25),

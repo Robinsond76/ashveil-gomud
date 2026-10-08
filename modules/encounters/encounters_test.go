@@ -810,6 +810,30 @@ func TestAWonGroupIsWrittenIntoTheChronicleOnce(t *testing.T) {
 	assert.Len(t, chronicle.Query(userID, chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Group}}), 1, "a boss group adds no group deed")
 }
 
+// Phase 84: a high band (levels 20 and up) spawns its ordinary foes softer
+// still, so a five-member company's rest rhythm holds up there.
+func TestOrdinaryFoesSpawnSofterStillInAHighBand(t *testing.T) {
+	w := setup(t)
+	t.Cleanup(rooms.SetTestZoneConfig(&rooms.ZoneConfig{Name: zoneName, Encounters: encounters.ZoneConfig{
+		Band: encounters.Band{Low: 20, High: 22},
+		Tables: map[string][]encounters.Composition{
+			"woods": {{ID: "wolves", Weight: 1, Text: "Wolves!", Members: []encounters.Member{{MobID: 96101, Count: 3}}}},
+		},
+	}}))
+	w.user.Character.Level = 20 // the band's low end
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		require.Len(t, r.Foes, 3)
+		for _, id := range r.Foes {
+			foe := mobs.GetInstance(id)
+			want := fullHP(t, foe.Character.Level) * encounters.HighBandHPPercent / 100
+			assert.InDelta(t, want, foe.Character.HealthMax.Value, 2, "a high band's foes have the softer share of their level's HP")
+			assert.Less(t, encounters.HighBandHPPercent, encounters.OrdinaryHPPercent)
+		}
+	}
+}
+
 // fullHP is the HP of a wood wolf of the level: what an unsoftened foe has.
 func fullHP(t *testing.T, level int) int {
 	t.Helper()

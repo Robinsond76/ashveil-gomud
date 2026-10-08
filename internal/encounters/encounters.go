@@ -39,6 +39,13 @@ const (
 	// set-piece fight. A company under the band meets harder foes (see
 	// HPPercent).
 	OrdinaryHPPercent = 40
+	// HighBandLow is the band low end from which foes' damage has outgrown
+	// the company's endurance, and HighBandHPPercent is the softer share
+	// those bands' ordinary foes spawn with (Phase 84: a five-member company
+	// at levels 20-22 rested after a median 12 fights against the 15-20
+	// target, while 3-5 and 10-12 read 18 and 16).
+	HighBandLow       = 20
+	HighBandHPPercent = 30
 	// UnderBandGap is how many levels under the band's low end a company
 	// is before ordinary foes have their full HP again.
 	UnderBandGap = 5
@@ -358,11 +365,22 @@ func Plan(c Composition, band Band, rng Rand) []Foe {
 // under it. Difficulty comes only from a zone above the company's level
 // (owner, 2026-10-06), so the softness fades as the company falls short.
 func HPPercent(level int, b Band) int {
+	soft := BandHPPercent(b)
 	gap := b.Low - level
 	if gap <= 0 {
-		return OrdinaryHPPercent
+		return soft
 	}
-	return min(100, OrdinaryHPPercent+gap*(100-OrdinaryHPPercent)/UnderBandGap)
+	return min(100, soft+gap*(100-soft)/UnderBandGap)
+}
+
+// BandHPPercent is the share of full HP an ordinary group's foe spawns with
+// for a company the band is meant for: OrdinaryHPPercent, less in the high
+// bands (HighBandLow and up).
+func BandHPPercent(b Band) int {
+	if b.Low >= HighBandLow {
+		return HighBandHPPercent
+	}
+	return OrdinaryHPPercent
 }
 
 // Spread is the aim noise an ordinary foe with hpPercent of its HP gets:

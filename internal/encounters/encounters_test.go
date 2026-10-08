@@ -210,6 +210,25 @@ func TestOrdinaryFoesSoftenForACompanyAtOrAboveTheBandAndFadeUnderIt(t *testing.
 	assert.Equal(t, 50, Spread(70), "halfway to full HP, half its re-aims are random")
 }
 
+// Phase 84: bands from HighBandLow up spawn ordinary foes softer; the lower
+// bands are untouched, and the under-band fade still climbs to full HP.
+func TestHighBandsSoftenOrdinaryFoesFurther(t *testing.T) {
+	assert.Equal(t, OrdinaryHPPercent, BandHPPercent(Band{Low: HighBandLow - 1, High: HighBandLow + 1}))
+	assert.Equal(t, OrdinaryHPPercent, BandHPPercent(Band{Low: 10, High: 12}))
+	high := Band{Low: HighBandLow, High: HighBandLow + 2}
+	assert.Equal(t, HighBandHPPercent, BandHPPercent(high))
+	assert.Equal(t, HighBandHPPercent, HPPercent(high.Low, high))
+	assert.Equal(t, HighBandHPPercent, HPPercent(high.High+5, high))
+	prev := HighBandHPPercent
+	for gap := 1; gap <= UnderBandGap; gap++ {
+		got := HPPercent(high.Low-gap, high)
+		assert.Greater(t, got, prev, "each level under the band hardens the foes")
+		prev = got
+	}
+	assert.Equal(t, 100, HPPercent(high.Low-UnderBandGap, high))
+	assert.Equal(t, 100, Spread(HighBandHPPercent), "a fully softened foe aims at random")
+}
+
 func TestSoftenLeavesABossAndItsEscortsAlone(t *testing.T) {
 	band := Band{Low: 8, High: 10}
 	foes := Soften(Plan(Composition{Boss: true, Members: []Member{{1, 1}, {2, 2}}}, band, func(int) int { return 0 }), 8, band)
