@@ -3845,3 +3845,5 @@ keeps its own history.
 - Nested `AGENTS.md` files — package-specific constraints.
 - Git history — retired plans/proposals and detailed completed work logs.
   Use `git show 792455ea:<old-path>` for the snapshot before this cleanup.
+
+- Click echo: UI clicks that name an item by raw id (`look !40004:1-...`) now show a readable label in the terminal ("look Rusty Sword"), or nothing when none is known; typed commands echo as typed. Web client sends `!!ECHO(label)command`; main.go's websocket loop strips it for logged-in players and `EchoInputHandler` echoes the label.

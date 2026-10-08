@@ -134,7 +134,7 @@ function injectStyles(css) {
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
                 if (typeof item.fn === 'function') { item.fn(e); return; }
-                Client.SendInput(item.cmd);
+                Client.SendInput(item.cmd, item.label);
             });
             entries.push(entry);
             menuEl.appendChild(entry);
@@ -1945,7 +1945,19 @@ const Client = (() => {
         }
     }
 
-    function SendInput(str) {
+    // A UI click is sent through here. A command that names an item by its
+    // raw id ("look !40004:1-032b...") would echo that id into the terminal,
+    // so it goes out as !!ECHO(label)command: the server runs the command
+    // and echoes only the label (nothing when none is given). Plain
+    // commands echo as typed.
+    const rawIdPattern = /(^|\s)![0-9]+:/;
+
+    function SendInput(str, label) {
+        if (typeof str === 'string' && rawIdPattern.test(str)) {
+            const shown = (typeof label === 'string') ? label.replace(/[()\r\n]/g, '').trim() : '';
+            sendData('!!ECHO(' + shown + ')' + str);
+            return;
+        }
         sendData(str);
     }
 

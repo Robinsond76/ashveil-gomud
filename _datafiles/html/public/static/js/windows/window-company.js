@@ -1159,7 +1159,7 @@
     }
 
     function sharedCargoMenu(i, inv) {
-        const menu = [{ label: 'Look', cmd: 'look ' + i.ref }];
+        const menu = [{ label: 'look ' + i.name, cmd: 'look ' + i.ref }];
         const wearable = i.type === 'weapon' || i.subtype === 'wearable';
         if (wearable) {
             inv.members.filter(m => m.key === 'leader' || m.available).forEach(m => {

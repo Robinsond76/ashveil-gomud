@@ -380,7 +380,7 @@
         if (e.sub) { push(e.label, e.sub()); return; }
         close();
         if (typeof e.fn === 'function') { e.fn(); return; }
-        if (e.cmd) { Client.SendInput(e.cmd); }
+        if (e.cmd) { Client.SendInput(e.cmd, e.label); }
     }
 
     function open() {
