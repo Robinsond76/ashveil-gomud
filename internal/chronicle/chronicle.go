@@ -40,6 +40,7 @@ const (
 	Rites     Kind = "rites"     // the company mourned, or did not, a companion gone for good (Phase 74)
 	Group     Kind = "group"     // a named group of foes was broken (Phase 76)
 	Bounty    Kind = "bounty"    // a bounty was claimed at a board (Phase 76)
+	Mastered  Kind = "mastered"  // the company learned a creature's habits (Phase 85)
 )
 
 // KindInfo is a kind's player-facing name and filter words.
@@ -69,6 +70,7 @@ var Kinds = []KindInfo{
 	{Rites, "Rites", []string{"rites", "rite", "funerals", "funeral"}},
 	{Group, "Groups", []string{"group", "groups", "bands", "packs"}},
 	{Bounty, "Bounties", []string{"bounty", "bounties"}},
+	{Mastered, "Beast lore", []string{"lore", "mastered", "mastery", "beasts", "beast"}},
 }
 
 // KindByWord resolves what a player typed to a kind.
@@ -231,6 +233,8 @@ func Prose(e Entry) string {
 			return fmt.Sprintf("%s claimed the bounty on %s%s: %s.", who, orThing(e.Subject, "a mark"), e.at(), strings.TrimRight(e.Detail, ".!?"))
 		}
 		return fmt.Sprintf("%s claimed the bounty on %s%s.", who, orThing(e.Subject, "a mark"), e.at())
+	case Mastered:
+		return fmt.Sprintf("The company learned the habits of %s%s.", theName(orThing(e.Subject, "a creature")), e.at())
 	case Rites:
 		name := orThing(e.Subject, "one of their own")
 		gone := ""
@@ -256,6 +260,22 @@ func sentence(s string) string {
 		s += "."
 	}
 	return s
+}
+
+// theName puts "the" before a common name ("big rat") and leaves a proper
+// name ("Rodric") or one that already has an article alone.
+func theName(s string) string {
+	s = strings.TrimSpace(s)
+	low := strings.ToLower(s)
+	switch {
+	case s == "":
+		return s
+	case strings.HasPrefix(low, "the "), strings.HasPrefix(low, "a "), strings.HasPrefix(low, "an "):
+		return s
+	case s[0] >= 'A' && s[0] <= 'Z':
+		return s
+	}
+	return "the " + s
 }
 
 func withArticle(s string) string {
@@ -358,6 +378,11 @@ func (f Filter) Matches(e Entry) bool {
 // Tally keeps counting what has gone.
 const MaxEntries = 300
 
+// KindCaps limits how many deeds of a kind the log keeps, oldest dropped
+// first, so a kind that can repeat in bursts never crowds out the rest.
+// Tally still counts every deed (Phase 85).
+var KindCaps = map[Kind]int{Mastered: 30}
+
 // Log is one company's chronicle: the deeds, oldest first, and a running
 // count of every deed ever recorded by kind (never trimmed).
 type Log struct {
@@ -390,6 +415,9 @@ func (l *Log) Add(e Entry) Entry {
 	l.NextSeq++
 	e.Seq = l.NextSeq
 	l.Entries = append(l.Entries, e)
+	if limit, capped := KindCaps[e.Kind]; capped {
+		l.dropOldestOver(e.Kind, limit)
+	}
 	if over := len(l.Entries) - MaxEntries; over > 0 {
 		l.Entries = append([]Entry(nil), l.Entries[over:]...)
 	}
@@ -398,6 +426,29 @@ func (l *Log) Add(e Entry) Entry {
 	}
 	l.Tally[e.Kind]++
 	return e
+}
+
+// dropOldestOver removes the oldest kept deeds of kind k beyond limit.
+func (l *Log) dropOldestOver(k Kind, limit int) {
+	n := 0
+	for _, e := range l.Entries {
+		if e.Kind == k {
+			n++
+		}
+	}
+	if n <= limit {
+		return
+	}
+	kept := make([]Entry, 0, len(l.Entries)-(n-limit))
+	drop := n - limit
+	for _, e := range l.Entries {
+		if e.Kind == k && drop > 0 {
+			drop--
+			continue
+		}
+		kept = append(kept, e)
+	}
+	l.Entries = kept
 }
 
 // Query is the deeds that pass f, newest first.

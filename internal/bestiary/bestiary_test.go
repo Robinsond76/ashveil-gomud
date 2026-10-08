@@ -93,3 +93,25 @@ func TestHabitsNameTheTrophiesAKindMayYield(t *testing.T) {
 	entry, _ = Build(foe, 3)
 	assert.NotContains(t, strings.Join(entry.Habits, "\n"), "Hunted for")
 }
+
+func TestMasteredDeedIsBuiltFromTheTemplate(t *testing.T) {
+	spec := &mobs.Mob{MobId: 99761, Zone: "Old Road", Character: *characters.New()}
+	spec.Character.Name = "big rat"
+	mobs.SetTestSpec(spec)
+	t.Cleanup(func() { mobs.RemoveTestSpec(99761) })
+
+	deed, ok := MasteredDeed(99761, "Old King's Road")
+	require.True(t, ok)
+	assert.Equal(t, "mastered", string(deed.Kind))
+	assert.Equal(t, "big rat", deed.Subject)
+	assert.Equal(t, "mob:99761", deed.Ref)
+	assert.Equal(t, "Old Road", deed.Zone)
+	assert.Equal(t, "Old King's Road", deed.Place)
+	assert.Empty(t, deed.Members, "a company deed names no one")
+
+	_, ok = MasteredDeed(99762, "anywhere")
+	assert.False(t, ok, "an unknown template has no deed")
+	spec.Practice = true
+	_, ok = MasteredDeed(99761, "anywhere")
+	assert.False(t, ok, "a practice foe teaches nothing")
+}

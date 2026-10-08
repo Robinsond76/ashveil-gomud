@@ -106,3 +106,16 @@ company's study of its foes shows in its history and in what towns say.
   reputation by mastery.
 - A blessing for mastering many kinds (a later phase may add one; `Total`
   already counts them).
+
+## Build notes (2026-10-08)
+
+Built as designed; no design change. Small decisions:
+
+| Decision | Reason |
+| --- | --- |
+| The cap lives in `Log.dropOldestOver`, run before the `MaxEntries` trim, and counts only kept entries of the kind. | Keeps `Add` simple and leaves other kinds untouched; the tally is bumped after, so it still counts every deed. |
+| Prose adds "the" unless the name starts with a capital letter or already begins with an article (`theName`). | Covers proper names and templates such as "the Pale Wolf" without "the the". |
+| The deed is recorded inside the existing tier-up branch only when the new tier is `Habits`. | The tally only grows, so the crossing fires once; Training is already excluded there. |
+| The web filter needed no change: the Chronicle tab builds its buttons from the labels on the deeds present, so Beast lore appears once the first deed is kept. | Checked in `window-company.js` (`chronicleKinds`); the design said it builds from `chronicle.Kinds`, but the label arrives on each entry. |
+| The shipped test line reads "Heard {who} has the measure of {subject} now." and a common name reads without an article. | Test content only (temporary world); the replacement world writes its own. |
+| Help: lore line and 30-line note in `help chronicle`; a paragraph in `help bestiary`; a clause in the Combat tutorial's bestiary hint. | Per the design's acceptance list. |

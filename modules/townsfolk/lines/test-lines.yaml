@@ -27,6 +27,10 @@
   flag: boss-slayers
   tags: [gossip]
   text: "Slayers of dragons and wardens, and now {subject} besides. The town will want to meet you, {who}."
+- id: mastered-measure
+  kind: mastered
+  tags: [gossip]
+  text: "Heard {who} has the measure of {subject} now."
 - id: rain-talk
   weather: [rain, storm]
   tags: [gossip]

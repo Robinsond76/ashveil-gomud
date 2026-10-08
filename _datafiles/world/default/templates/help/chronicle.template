@@ -8,7 +8,7 @@ first. It is the company's own story of what it did.
 
   <ansi fg="command">chronicle</ansi>           the newest 12 deeds, and a count of every deed ever
   <ansi fg="command">chronicle 2</ansi>         the next page
-  <ansi fg="command">chronicle boss</ansi>      only one kind (see the list below); add a page number to turn it
+  <ansi fg="command">chronicle boss</ansi>      only one kind (see the list below; <ansi fg="command">chronicle lore</ansi> for beast lore); add a page number to turn it
   <ansi fg="command">chronicle all</ansi>       every deed kept, with <ansi fg="command">chronicle all relics</ansi> for one kind
 
 In the web client the Company window has a Chronicle tab: the same deeds,
@@ -34,6 +34,7 @@ with a button to filter by kind. It fits a phone as it does the desktop.
   groups       a band you held a bounty on was broken, every foe down (<ansi fg="command">help bounties</ansi>)
   bounties     a bounty was claimed at a board (<ansi fg="command">help bounties</ansi>)
   rites        the company held rites for a companion gone for good, or let it pass (<ansi fg="command">help rites</ansi>)
+  lore         the company learned a creature's habits (the 6th kill of a kind, the 3rd of a boss) (<ansi fg="command">help bestiary</ansi>)
 
 Each deed names who was involved, where it happened and how long ago.
 
@@ -43,6 +44,8 @@ Each deed names who was involved, where it happened and how long ago.
     restart and a copyover, and goes only when the character is deleted.
   - It keeps the newest 300 deeds. The count at the bottom of
     <ansi fg="command">chronicle</ansi> never forgets: it includes the deeds that have scrolled off.
+  - Beast lore is written once per kind, and only for kinds learned from now
+    on. The chronicle keeps the newest 30 of those lines, apart from the 300.
   - Times are real time. Nothing here moves the world's clock, and reading
     it costs nothing, even in a fight.
   - The chronicle only remembers. It gives no gold, experience or power.

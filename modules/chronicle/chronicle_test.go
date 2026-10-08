@@ -236,6 +236,22 @@ func TestChronicleCommandReadsInPagesAndByKind(t *testing.T) {
 	assert.Contains(t, bad, "Usage: chronicle")
 }
 
+// Phase 85: beast lore reads through its filter words, and the web panel
+// carries its label (the tab builds its filter from the panel's kinds).
+func TestBeastLoreFiltersByItsWordsAndLabelsItsPanelLine(t *testing.T) {
+	r := newRig(t)
+	r.m.Record(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:9"})
+	r.m.Record(7, chronicle.Entry{Kind: chronicle.Mastered, Subject: "big rat", Ref: "mob:3", Place: "Old King's Road"})
+	for _, word := range []string{"lore", "beasts", "mastered"} {
+		out := r.m.render(7, word)
+		assert.Contains(t, out, "beast lore", word)
+		assert.Contains(t, out, "The company learned the habits of the big rat at Old King's Road.", word)
+		assert.NotContains(t, out, "Hollow King", word)
+	}
+	p := r.m.panelFor(7)
+	assert.Equal(t, "Beast lore", p.Entries[0].Label)
+}
+
 func TestThePanelCarriesTheNewestDeedsTheTallyAndTheKindNames(t *testing.T) {
 	r := newRig(t)
 	r.fill(70)
