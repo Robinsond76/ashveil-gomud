@@ -204,12 +204,17 @@ func TestBalanceAtLevel(t *testing.T) {
 	}
 	onlySizes := os.Getenv("ASHVEIL_BALANCE_ONLY")
 	rng := rand.New(rand.NewSource(1))
-	for _, bandRange := range [][2]int{{3, 5}, {10, 12}, {20, 22}} {
+	bands := [][2]int{{3, 5}, {10, 12}, {20, 22}}
+	// ASHVEIL_BALANCE_BAND (such as "20-22" or "25-28") runs one band
+	// instead, which need not be one of the three above.
+	if only := os.Getenv("ASHVEIL_BALANCE_BAND"); only != "" {
+		var lo, hi int
+		_, err := fmt.Sscanf(only, "%d-%d", &lo, &hi)
+		require.NoError(t, err, "ASHVEIL_BALANCE_BAND reads low-high")
+		bands = [][2]int{{lo, hi}}
+	}
+	for _, bandRange := range bands {
 		low, high := bandRange[0], bandRange[1]
-		// ASHVEIL_BALANCE_BAND (such as "20-22") limits the run to one band.
-		if only := os.Getenv("ASHVEIL_BALANCE_BAND"); only != "" && only != fmt.Sprintf("%d-%d", low, high) {
-			continue
-		}
 		band := encounters.Band{Low: low, High: high}
 		for _, magic := range []bool{false, true} {
 			for size := 5; size >= 1; size-- {

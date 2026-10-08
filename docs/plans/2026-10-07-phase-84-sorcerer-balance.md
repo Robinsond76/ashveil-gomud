@@ -124,3 +124,42 @@ through the real step listener in a 20-22 zone).
 
 `make generate`, `make validate`, `make js-lint`, `make js-test`,
 `go test -race -timeout 30m ./...`.
+
+## Review (2026-10-08)
+
+Independent review of PR #193. No game code changed.
+
+**Checked.**
+- The limit is keyed on the rank, not a name: the Arcane Lance rank sets
+  `lancefoes` 3 and the High Sorcerer's High Lance rank sets it 0; ranks along
+  a class path overwrite earlier values (`EffectsForLineage`), so a High
+  Sorcerer reads 0 and a Sorcerer 3. `Decide` and the `strongest` order both
+  count standing foes (`standingFoes`), so the Sorcerer goes back to the Lance
+  as foes fall.
+- Battle text: a crowd gets the wizard's own Shower of Sparks chant and lines,
+  so nothing new to read. `why` explains rolls, not spell choice, so it needs
+  no change. Help (`wizard-routes`, `high-sorcerer`, the rank texts) claims
+  exactly the rule; `strategy` still reads true; no help page quotes the 40%
+  foe share.
+- Sorcerer L50 spot-check (placed line, 60 fights): Sorcerer 46%, base wizard
+  46%, the same run. Matches the build's 47 / 50.
+
+**Decision: the 30% share stays for every band from 20 up.** Spot-checked the
+two higher shipped bands with five members (40 fights a cell; the harness's
+`ASHVEIL_BALANCE_BAND` now takes any band, such as `25-28`):
+
+| Band | 5 martial at 40% | 5 martial at 30% | 5 magic at 30% |
+| --- | --- | --- | --- |
+| 20-22 (build) | 12 | 16 | 10 |
+| 25-28 | 18 | 21 | 11 |
+| 29-33 | 15 | 18 | 11 |
+
+At 40% the higher bands already sit inside 15-20, but 29-33 sits on its floor;
+at 30% they read 21 and 18, one over the top at most, within the noise of a
+40-fight cell. Kept the blanket rule rather than a per-band step because
+(1) the owner asked that at-level fights err easy, so one over the top is the
+safer miss than one under the floor; (2) a step per band would tune numbers
+to a stock world that is being replaced; (3) one rule is easier to retune
+when the real zones exist. Every company won every fight.
+
+**Gates.** `go test -race -timeout 30m ./...` and `make smoke` on the final code.
