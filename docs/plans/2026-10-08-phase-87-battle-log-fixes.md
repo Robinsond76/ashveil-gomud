@@ -112,3 +112,35 @@ Pages updated: `combatpace`, `combat`, `narration` (turns left, bloodless),
 Indexed under the existing `narration` keyword (new aliases `bloodless`,
 `skeleton`). The tutorial's `set combatpace` hint names no speeds and is still
 right.
+
+## Review (2026-10-08)
+
+Independent review played three live fights (level 6 Warrior with a Ranger,
+Wizard and Cleric against four skeletons) and read the full diff. Accepted and
+fixed, each with a regression test:
+
+- **A killing Aimed Shot read as never loosed.** The swing resolves on a copy of
+  the fighter, so its live aim still read as readied after the kill; the new
+  retarget carried the spent shot onto the next foe, and the turn's end then
+  said "the shot finds no target" and refunded the wait (an Aimed Shot every
+  round). `spendStrike` marks the strike loosed before the kill's retarget.
+  `TestAKillingAimedShotIsSpent`.
+- **Numbered foes.** The "goes for" line (a companion turning on a foe through
+  the mob `attack` command) used the bare name: "Recruit Cleric goes for the
+  skeleton". It now names the battle label ("goes for the third skeleton").
+  `TestGoesForNamesANumberedFoe`.
+- **Minor Heal's count skipped a number** (3 turns, then 1, then the heal): its
+  script still said `WAIT_ROUNDS = 2` after heal.yaml went to 1. Fixed, and
+  `TestShippedChantCountsMatchWaitRounds` pins every script to its spell file.
+- **The summary broke apart at 360px.** Long values (most damage, company,
+  enemies) were wrapped by the phone terminal mid-name and back under the
+  labels. Rows now wrap at 48 columns between their parts, continuing under
+  the value column (the phone shows 49 columns with "Smaller text" off).
+  `TestSummaryWrapsLongValuesUnderTheirColumn`; `help battle-summary` updated.
+- **Exclamation marks the build missed** in battle and reward text: ward of
+  life, quest given/completed/progress, bleeding out, dropping to the ground
+  (now capitalised), "You aren't in combat", "You are in combat".
+
+Checked and accepted as built: Wizard melee (the quarterstaff is 1d6 like the
+mace); bloodless skeleton hit lines; the tip after the summary; the "chant
+finishing" line; knockdown wording.

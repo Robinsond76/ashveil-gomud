@@ -301,7 +301,7 @@ func wardAfterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	rt.Saved = ""
 	switch saved {
 	case "ward of life":
-		defender.say("The ward of life holds you at 1 health!", "The ward of life holds %s at 1 health!", " (ward of life)")
+		defender.say("The ward of life holds you at 1 health.", "The ward of life holds %s at 1 health.", " (ward of life)")
 	case "elixir":
 		// Phase 39i2: the blow left the ally at 1 health; the elixir brings it
 		// up to the Panacean's share of its health.

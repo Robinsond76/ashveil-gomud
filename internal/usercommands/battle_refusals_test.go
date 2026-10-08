@@ -57,7 +57,7 @@ func TestBattleRefusesWhatWouldChangeIt(t *testing.T) {
 		{"break", func() (bool, error) { return Break("", user, room, 0) }, BattleOnlyFlee},
 		{"go", func() (bool, error) { return Go("north", user, room, 0) }, BattleOnlyFlee},
 		// 32d review: a word that isn't an exit isn't told about flee.
-		{"not an exit", func() (bool, error) { return Go("attak", user, room, 0) }, "You can't do that! You are in combat!"},
+		{"not an exit", func() (bool, error) { return Go("attak", user, room, 0) }, "You can't do that. You are in combat."},
 		{"drink", func() (bool, error) { return Drink("potion", user, room, 0) }, BattleUnderWay},
 		{"eat", func() (bool, error) { return Eat("potion", user, room, 0) }, BattleUnderWay},
 		{"use", func() (bool, error) { return Use("potion", user, room, 0) }, BattleUnderWay},

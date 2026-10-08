@@ -6,24 +6,31 @@ When your company's fight ends, you get a short summary of it:
 
   <ansi fg="command">The fight</ansi>
   <ansi fg="command">Damage dealt   Company 96 · Enemies 38</ansi>
-  <ansi fg="command">Most damage    You 23 · Garrick Vane 21 · Ysolde 18</ansi>
-  <ansi fg="command">Highest hit    Garrick Vane 11 on bandit captain (critical)</ansi>
+  <ansi fg="command">Most damage    You 23 · Garrick Vane 21 ·</ansi>
+  <ansi fg="command">               Ysolde 18</ansi>
+  <ansi fg="command">Highest hit    Garrick Vane 11 on bandit captain</ansi>
+  <ansi fg="command">               (critical)</ansi>
   <ansi fg="command">Kills          Garrick Vane 2 · You 1 · Ysolde 2</ansi>
   <ansi fg="command">Moves          Opening Strike 1</ansi>
 
   <ansi fg="command">What it cost</ansi>
-  <ansi fg="command">Defenses       Company 4 blocked, 1 parried · Enemies 3 dodged</ansi>
+  <ansi fg="command">Defenses       Company 4 blocked, 1 parried ·</ansi>
+  <ansi fg="command">               Enemies 3 dodged</ansi>
   <ansi fg="command">Damage taken   Tamsin Reed 21 · You 9</ansi>
   <ansi fg="command">Never landed   Ysolde 3 missed, 1 turned aside</ansi>
 
   <ansi fg="command">How it ended</ansi>
-  <ansi fg="command">Enemies        bandit captain slain · bandit slinger fled</ansi>
-  <ansi fg="command">Company        You 12/14 · Garrick Vane 6/15 · Tamsin Reed fallen</ansi>
+  <ansi fg="command">Enemies        bandit captain slain ·</ansi>
+  <ansi fg="command">               bandit slinger fled</ansi>
+  <ansi fg="command">Company        You 12/14 · Garrick Vane 6/15 ·</ansi>
+  <ansi fg="command">               Tamsin Reed fallen</ansi>
 
 The summary is grouped in three parts, a blank line apart: <ansi fg="yellow">The fight</ansi>
 (damage, kills, moves, the sigil), <ansi fg="yellow">What it cost</ansi> (healing, defenses,
 interrupts, guards, damage taken, blows that never landed) and <ansi fg="yellow">How it
 ended</ansi> (spoils, the enemies and your company). A part with nothing in it is left out.
+A long line carries on underneath its own column, so the summary reads the
+same on a phone.
 
 The heading tells how it ended: <ansi fg="yellow">The fighting is over</ansi> (you won),
 <ansi fg="yellow">The company is beaten</ansi> (every member fell), or <ansi fg="yellow">The fight breaks off</ansi>

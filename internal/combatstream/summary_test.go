@@ -1,7 +1,9 @@
 package combatstream
 
 import (
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,7 +74,7 @@ func TestSummaryStillStandingAndInterruptsAndGuards(t *testing.T) {
 	assert.Equal(t, []Amount{{Who: tamsin, Value: 1}}, sum.Guards)
 	assert.Equal(t, 1, sum.HeldBack)
 
-	lines := Render(*sum, 7)
+	lines := unwrapped(Render(*sum, 7))
 	assert.Equal(t, "── The fight breaks off ──", lines[0])
 	assert.Contains(t, lines, "Healing        Company 3 (1 held back by a wound)")
 	assert.Contains(t, lines, "Interrupts     dealt 1 (Crushing Blow) · failed 1 · taken 1")
@@ -88,7 +90,7 @@ func TestSummaryInterruptsWithoutFailures(t *testing.T) {
 	s.Emit(Event{Kind: Interrupt, Source: tamsin, Target: captain, Outcome: OutcomeSucceeded, Status: "Withering Hex"})
 	s.Emit(Event{Kind: Interrupt, Source: captain, Target: tamsin, Outcome: OutcomeSucceeded, Status: "Minor Heal"})
 	sum, _ := s.EndFight(id, 3, OutcomeBrokenOff, Final{})
-	assert.Contains(t, Render(*sum, 7), "Interrupts     dealt 2 (Withering Hex, Withering Hex) · taken 1")
+	assert.Contains(t, unwrapped(Render(*sum, 7)), "Interrupts     dealt 2 (Withering Hex, Withering Hex) · taken 1")
 }
 
 func TestRender(t *testing.T) {
@@ -98,8 +100,10 @@ func TestRender(t *testing.T) {
 		"",
 		"The fight",
 		"Damage dealt   Company 16 · Enemies 8",
-		"Most damage    Garrick Vane 9 · You 4 · Tamsin Reed 3",
-		"Highest hit    Garrick Vane 9 on bandit captain (critical)",
+		"Most damage    Garrick Vane 9 · You 4 ·",
+		"               Tamsin Reed 3",
+		"Highest hit    Garrick Vane 9 on bandit captain",
+		"               (critical)",
 		"Effects        dazed 2 · slowed 1",
 		"Kills          Garrick Vane 1",
 		"",
@@ -109,9 +113,41 @@ func TestRender(t *testing.T) {
 		"Never landed   Tamsin Reed 1 missed",
 		"",
 		"How it ended",
-		"Enemies        bandit captain slain · bandit slinger fled",
-		"Company        You 12/14 · Garrick Vane 15/15 · Tamsin Reed fallen",
+		"Enemies        bandit captain slain ·",
+		"               bandit slinger fled",
+		"Company        You 12/14 · Garrick Vane 15/15 ·",
+		"               Tamsin Reed fallen",
 	}, lines)
+}
+
+// Phase 87 review: a long value wraps between its parts (or words) within
+// the phone's width, each continuation under the value column, so a
+// 360px terminal never breaks a name mid-word or wraps under the labels.
+func TestSummaryWrapsLongValuesUnderTheirColumn(t *testing.T) {
+	rows := summaryLine("Most damage", "Corrin 114 · You 85 · Kester the Younger 20 · Ines Holloway 6")
+	assert.Equal(t, []string{
+		"Most damage    Corrin 114 · You 85 ·",
+		"               Kester the Younger 20 ·",
+		"               Ines Holloway 6",
+	}, rows)
+	for _, r := range summaryLine("Never landed", "Tamsin Reed 2 missed, 1 turned aside, 1 stopped by armor or a ward that is very long indeed") {
+		assert.LessOrEqual(t, utf8.RuneCountInString(r), summaryWidth, r)
+	}
+	assert.Equal(t, []string{"Company        "}, summaryLine("Company", ""))
+}
+
+// unwrapped joins each wrapped summary row back onto one line, for
+// assertions about a row's whole value.
+func unwrapped(lines []string) []string {
+	var out []string
+	for _, l := range lines {
+		if strings.HasPrefix(l, summaryIndent) && len(out) > 0 {
+			out[len(out)-1] += " " + strings.TrimPrefix(l, summaryIndent)
+			continue
+		}
+		out = append(out, l)
+	}
+	return out
 }
 
 // Phase 30g2: every defended strike counts to the defender's side, a
@@ -128,7 +164,7 @@ func TestSummaryCountsDefenses(t *testing.T) {
 	assert.Equal(t, DefenseCounts{Blocked: 2, Parried: 1}, sum.CompanyDefenses)
 	assert.Equal(t, DefenseCounts{Dodged: 2}, sum.EnemyDefenses)
 	assert.Equal(t, 3, sum.EnemyDamage, "a round with a defended strike still counts its damage")
-	assert.Contains(t, Render(*sum, 7), "Defenses       Company 2 blocked, 1 parried · Enemies 2 dodged")
+	assert.Contains(t, unwrapped(Render(*sum, 7)), "Defenses       Company 2 blocked, 1 parried · Enemies 2 dodged")
 }
 
 func TestRenderLeavesOutEmptyLines(t *testing.T) {
@@ -136,7 +172,7 @@ func TestRenderLeavesOutEmptyLines(t *testing.T) {
 	id := s.Open(1, 100, "bandits#0", aria, nil, []Ref{captain})
 	s.Emit(Event{Kind: Attack, Source: captain, Target: aria, Outcome: OutcomeMiss})
 	sum, _ := s.EndFight(id, 2, OutcomeDefeat, Final{Company: []MemberHealth{{Ref: aria, Health: -2, Max: 14}}})
-	lines := Render(*sum, 99)
+	lines := unwrapped(Render(*sum, 99))
 	assert.Equal(t, []string{
 		"── The company is beaten ──",
 		"",
@@ -176,7 +212,7 @@ func TestSlainLeaderIsFallenAndEnemyEndings(t *testing.T) {
 		{Ref: straw, Ending: EndingBeaten},
 	}, sum.Enemies)
 	assert.Empty(t, sum.Kills, "beating a practice foe is no kill")
-	assert.Contains(t, Render(*sum, 7), "Company        You fallen · Garrick Vane 9/15")
+	assert.Contains(t, unwrapped(Render(*sum, 7)), "Company        You fallen · Garrick Vane 9/15")
 }
 
 func TestNamedFightHeadings(t *testing.T) {
@@ -245,7 +281,7 @@ func TestSummaryShowsSpoilsOnlyWhenThereAreSome(t *testing.T) {
 		assert.NotContains(t, l, "Spoils")
 	}
 	sum.Spoils = []string{"a fine drop sword", "27 gold"}
-	lines := Render(*sum, 7)
+	lines := unwrapped(Render(*sum, 7))
 	assert.Contains(t, lines, "Spoils         a fine drop sword · 27 gold")
 	spoils, enemies := -1, -1
 	for i, l := range lines {
@@ -281,7 +317,7 @@ func TestSummaryExplainsTheFight(t *testing.T) {
 	assert.Equal(t, Swings{Who: tamsin, Thrown: 4, Missed: 2, Turned: 1, Absorbed: 1}, sum.NeverLanded[0])
 	assert.Equal(t, []Count{{Name: "Opening Strike", Count: 2}}, sum.Moves)
 	sum.Sigil = "fire sigil: fire spells 25% stronger"
-	lines := Render(*sum, 7)
+	lines := unwrapped(Render(*sum, 7))
 	assert.Contains(t, lines, "Never landed   Tamsin Reed 2 missed, 1 turned aside, 1 stopped by armor or a ward")
 	assert.Contains(t, lines, "Moves          Opening Strike 2")
 	assert.Contains(t, lines, "Sigil          fire sigil: fire spells 25% stronger")

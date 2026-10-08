@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
@@ -63,4 +64,18 @@ func TestAHealThatOutlastsTheFightSaysSo(t *testing.T) {
 	hooks.NoteFinishingChantsForTest(b.aria, room)
 	events.ProcessEvents()
 	assert.NotContains(t, strings.Join(*heard, ""), "finishes Magic Missile")
+}
+
+// Phase 87 review: an Aimed Shot that kills its target was loosed. The
+// kill's turn onto the next foe must not carry the spent shot on, read it
+// as never loosed ("finds no target"), or refund its wait.
+func TestAKillingAimedShotIsSpent(t *testing.T) {
+	b, stream := eliteBrawl(t, "", 1, "", 30)
+	b.cmd("strategy", "tamsin abilities off")
+	b.start()
+	b.companion(4).Character.Equipment.Weapon = items.New(10014)
+	out := rangerRounds(b, stream, 4, isolate(b))
+	require.Contains(t, out, "takes careful aim at the first cutthroat")
+	assert.NotContains(t, out, "finds no target", "the shot flew and killed")
+	assert.Equal(t, 1, strings.Count(out, "takes careful aim at the"), "a loosed Aimed Shot keeps its wait: once in four rounds")
 }

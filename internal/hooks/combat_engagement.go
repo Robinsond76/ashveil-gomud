@@ -218,6 +218,17 @@ func retargetKeepingStrike(c *characters.Character, userId, mobInstanceId int) {
 	c.SetAggro(userId, mobInstanceId, attackType(old))
 }
 
+// spendStrike marks a readied strike as loosed after the swing that killed
+// its target (Phase 87 review). The swing resolves on a copy of the
+// fighter, so the live aim still reads as readied; without this the kill's
+// turn onto the next foe would carry the spent shot on, and the turn's end
+// would call it never loosed and refund its wait.
+func spendStrike(c *characters.Character) {
+	if a := c.Aggro; a != nil && a.Type == characters.BackStab && a.ExitName == `` {
+		a.Type, a.StrikeBonus = characters.DefaultAttack, 0
+	}
+}
+
 // retargetable reports whether the upkeep may give a member a target: it
 // has none, or its current one is a plain attack.
 func retargetable(a *characters.Aggro) bool {
