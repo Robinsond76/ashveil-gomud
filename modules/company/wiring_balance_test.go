@@ -31,7 +31,7 @@ func TestBalanceSpreadHasDistinctOpeningAims(t *testing.T) {
 	f.toughen()
 	for _, id := range f.enemies {
 		m := mobs.GetInstance(id)
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	first := map[string]string{}
 	combatstream.Default().Subscribe(func(e combatstream.Event) {
@@ -126,11 +126,11 @@ func TestBalanceFocusOpensOnActualWeakest(t *testing.T) {
 			for _, c := range f.members() {
 				require.NotNil(t, c.Aggro)
 				assert.Equal(t, target, c.Aggro.MobInstanceId)
-				c.HealthMax.Value, c.Health = 1000, 1000
+				hardTo(c, 1000)
 			}
 			for _, id := range f.enemies {
 				m := mobs.GetInstance(id)
-				m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+				hardTo(&m.Character, 1000)
 			}
 			first := map[string]int{}
 			combatstream.Default().Subscribe(func(e combatstream.Event) {
@@ -214,7 +214,7 @@ func TestBalanceStrengthDamageThroughDoCombat(t *testing.T) {
 	target := mobs.GetInstance(c.Aggro.MobInstanceId)
 	target.Character.Equipment = characters.Worn{}
 	target.Character.Stats.Strength.ValueAdj = 12
-	target.Character.HealthMax.Value, target.Character.Health = 1000, 1000
+	hardTo(&target.Character, 1000)
 	var blows []combatstream.Event
 	combatstream.Default().Subscribe(func(e combatstream.Event) {
 		if e.Kind == combatstream.Attack && e.Source.UserId == 7 {
@@ -468,7 +468,7 @@ func TestBalanceMirrorClericIsACasterWhoCastsNothing(t *testing.T) {
 	f.toughen()
 	for _, id := range f.enemies {
 		m := mobs.GetInstance(id)
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	f.step() // upkeep chooses the opening aims
 	oswin := f.companion(2).InstanceId

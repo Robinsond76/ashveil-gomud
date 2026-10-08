@@ -160,7 +160,7 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 		def := &mobs.Mob{InstanceId: 999001, Character: *characters.New()}
 		def.Character.RoomId = camp.RoomId
 		def.Character.RaceId = 1
-		def.Character.Health, def.Character.HealthMax.Value = 1000000, 1000000
+		hardTo(&def.Character, 1000000)
 		def.Character.Stats.Speed.ValueAdj = 100000 // the 25% floor without chemistry
 		user.Character.SetAggro(0, def.InstanceId, characters.DefaultAttack)
 		for _, msg := range combat.AttackPlayerVsMob(user, def).MessagesToSource {

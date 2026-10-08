@@ -265,7 +265,7 @@ func TestAlliedPartyConsentRecheckedAtCastCompletion(t *testing.T) {
 			other := users.NewUserRecord(93321, 0)
 			other.Character.Name = "Ally"
 			other.Character.RoomId = b.road.RoomId
-			other.Character.HealthMax.Value = 100
+			hardMaxTo(other.Character, 100)
 			other.Character.Health = 1
 			users.SetTestUser(other)
 			b.road.AddPlayer(other.UserId)
@@ -314,7 +314,7 @@ func TestAlliedPartySupportRequiresBothOwnersAndKeepsCompanyScope(t *testing.T) 
 	b := newBrawl(t)
 	other := users.NewUserRecord(93322, 0)
 	other.Character.RoomId = b.road.RoomId
-	other.Character.HealthMax.Value = 100
+	hardMaxTo(other.Character, 100)
 	other.Character.Health = 1
 	users.SetTestUser(other)
 	b.road.AddPlayer(other.UserId)
@@ -384,8 +384,7 @@ func TestBystanderCannotHelpAnotherPlayersBattle(t *testing.T) {
 	// Bandits must survive the opening round: the enemy patient below is
 	// named by instance (an intermittent failure before the 33d review).
 	for _, m := range bandits {
-		m.Character.HealthMax.Value = 1000
-		m.Character.Health = 1000
+		hardTo(&m.Character, 1000)
 	}
 	oswin := b.companion(2)
 	b.toughen()
@@ -423,7 +422,7 @@ func TestBystanderChantDropsPatientDrawnIntoABattle(t *testing.T) {
 	b := newBrawl(t)
 	other := b.bystander()
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value = 1000
+	hardMaxTo(&tamsin.Character, 1000)
 	tamsin.Character.Health = 500
 	b.as(8, "cast", "heal #"+strconv.Itoa(tamsin.InstanceId))
 	require.NotNil(t, other.Character.Aggro, "outside a battle, another company's companion can be helped")

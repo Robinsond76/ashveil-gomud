@@ -628,7 +628,7 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	forceCrits(t) // Phase 35d: only heavy force breaks a one-round heal
 	breakDice(t, 0)
 	for try := 0; try < 8 && len(interruptsOf(*stream, "u:8")) == 0; try++ {
-		brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
+		hardTo(brom.Character, 1000)
 		b.toughen()
 		brom.Character.SetCast(3, characters.SpellAggroInfo{SpellId: "heal", TargetUserIds: []int{8}})
 		b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
@@ -640,7 +640,7 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	brom.Character.Equipment.Offhand = items.New(20019)
-	brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
+	hardTo(brom.Character, 1000)
 	b.toughen()
 	b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
 	b.fight()

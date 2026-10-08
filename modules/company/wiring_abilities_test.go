@@ -249,7 +249,8 @@ func TestTwoHealersDoNotHealTheSameAlly(t *testing.T) {
 	}
 	b.start()
 	// Aria alone is hurt: one heal, not two.
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 300
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 300
 	n := len(*stream)
 	b.fight()
 	round := since(*stream, n)
@@ -269,7 +270,7 @@ func TestTwoHealersDoNotHealTheSameAlly(t *testing.T) {
 	assert.Equal(t, 1, chanting)
 
 	// Next round the first heal is still chanting: it still covers her.
-	b.aria.Character.HealthMax.Value = 1000
+	hardMaxTo(b.aria.Character, 1000)
 	n = len(*stream)
 	b.fight()
 	for _, e := range since(*stream, n) {

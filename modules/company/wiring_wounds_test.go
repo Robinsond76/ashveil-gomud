@@ -39,7 +39,7 @@ func TestABleedThatRunsOutLeavesALightWound(t *testing.T) {
 		// toughen, not the fixture's full refresh, so the company can't fall
 		b.toughen()
 		for _, m := range b.livingBandits() {
-			m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+			hardTo(&m.Character, 1000)
 		}
 		tamsin.Character.Wounds = wounds.Lasting(tamsin.Character.Wounds) // only the bleed's
 		b.fight()
@@ -102,7 +102,7 @@ func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
 	for i := 0; i < 3 && status.Has(&captain.Character); i++ {
 		b.toughen()
-		captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
+		hardTo(&captain.Character, 1000)
 		captain.Character.Wounds = nil
 		b.fight()
 	}
@@ -123,7 +123,7 @@ func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
 	for i := 0; i < 3 && status.Has(&captain.Character); i++ {
 		b.toughen()
-		captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
+		hardTo(&captain.Character, 1000)
 		b.fight()
 	}
 	require.False(t, status.Has(&captain.Character))
@@ -155,13 +155,14 @@ func TestAClericDoesNotHealAMemberAtTheirLimit(t *testing.T) {
 
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.toughen()
 	b.fight()
 
 	// Aria at 300 of 1000, but wounded down to a limit of 300.
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 300
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 300
 	b.aria.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "leg", Points: 700}}
 	require.Equal(t, 300, b.aria.Character.HealthLimit())
 	b.fight()

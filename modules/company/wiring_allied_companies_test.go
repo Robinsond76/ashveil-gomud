@@ -79,15 +79,12 @@ func TestAlliedCompaniesSharedBattleAuthorityAndReward(t *testing.T) {
 	for _, ids := range b.bandits {
 		for _, id := range ids {
 			m := mobs.GetInstance(id)
-			m.Character.HealthMax.Value = 1000
-			m.Character.Health = 1000
+			hardTo(&m.Character, 1000)
 		}
 	}
 	b.toughen()
-	ally.Character.HealthMax.Value = 10000
-	ally.Character.Health = 10000
-	companion.Character.HealthMax.Value = 10000
-	companion.Character.Health = 10000
+	hardTo(ally.Character, 10000)
+	hardTo(&companion.Character, 10000)
 	b.aimAt("bandit captain")
 	b.fight()
 	battle7, ok := battle.Current(7)
@@ -160,8 +157,7 @@ func TestAlliedFinalEnemyPaysAfterCombatClosesBattle(t *testing.T) {
 	p := parties.Get(7)
 	p.SetAutoAttack(8, true)
 	b.toughen()
-	ally.Character.HealthMax.Value = 10000
-	ally.Character.Health = 10000
+	hardTo(ally.Character, 10000)
 	b.aimAt("bandit captain")
 	b.fight()
 	gameplay := configs.GetGamePlayConfig()
@@ -221,13 +217,10 @@ func TestAlliedSupportRespectsIntegratedBattleBoundary(t *testing.T) {
 			t.Cleanup(func() { effecttargets.SetAlliedLeaders(previous) })
 			b.toughen()
 			for _, m := range b.livingBandits() {
-				m.Character.Health = 1000
-				m.Character.HealthMax.Value = 1000
+				hardTo(&m.Character, 1000)
 			}
-			ally.Character.Health = 1000
-			ally.Character.HealthMax.Value = 1000
-			companion.Character.Health = 1000
-			companion.Character.HealthMax.Value = 1000
+			hardTo(ally.Character, 1000)
+			hardTo(&companion.Character, 1000)
 			sp := spells.GetSpell("healall")
 			original := sp.Scope
 			sp.Scope = spells.ScopeAllied
