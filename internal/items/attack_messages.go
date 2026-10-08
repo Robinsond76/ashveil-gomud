@@ -102,14 +102,21 @@ func GetPreAttackMessage(subType ItemSubType, messageType Intensity) AttackOptio
 // GetAttackMessage picks a strike's pool. Phase 29c: only a real critical
 // hit draws the critical pool; any other roll, even one over 100% (a
 // sharpened top roll), caps at heavy.
+// A landed blow's lines are Weak below NormalAttackPct of the weapon's top
+// damage, Normal below HeavyAttackPct, and Heavy from there.
+const (
+	NormalAttackPct = 30
+	HeavyAttackPct  = 75
+)
+
 func GetAttackMessage(subType ItemSubType, pctDamage int, crit bool) AttackOptions {
 
 	var intensity Intensity
 	if crit {
 		intensity = Critical
-	} else if pctDamage >= 75 {
+	} else if pctDamage >= HeavyAttackPct {
 		intensity = Heavy
-	} else if pctDamage >= 30 {
+	} else if pctDamage >= NormalAttackPct {
 		intensity = Normal
 	} else if pctDamage >= 1 {
 		intensity = Weak
@@ -144,9 +151,9 @@ func GetBloodlessAttackMessage(pctDamage int, crit bool) (AttackOptions, bool) {
 	switch {
 	case crit:
 		intensity = Critical
-	case pctDamage >= 75:
+	case pctDamage >= HeavyAttackPct:
 		intensity = Heavy
-	case pctDamage >= 30:
+	case pctDamage >= NormalAttackPct:
 		intensity = Normal
 	default:
 		intensity = Weak

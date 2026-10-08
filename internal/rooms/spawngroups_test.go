@@ -147,3 +147,26 @@ func TestPlanSpawnGroupsStragglers(t *testing.T) {
 	assert.Empty(t, plan.Assign)
 	assert.Empty(t, plan.TopUp)
 }
+
+func TestPlanMixesSwapsOneKindGroups(t *testing.T) {
+	pool := []SpawnInfo{{MobId: 15}, {MobId: 33}, {MobId: 36}}
+	one := func(id ...int) []groupable {
+		var out []groupable
+		for i, m := range id {
+			out = append(out, groupable{InstanceId: 100 + i, MobId: m})
+		}
+		return out
+	}
+	first := func(n int) int { return 0 }
+	groups := map[string][]groupable{
+		"a": one(15, 15, 15), // swapped for the first other kind
+		"b": one(15, 15),     // too small
+		"c": one(15, 33, 15), // already mixed
+		"d": one(33, 33, 33), // swapped
+	}
+	groups["e"] = one(15, 15, 15)
+	groups["e"][1].Fighting = true // in a fight
+	swaps := planMixes(groups, []string{"a", "b", "c", "d", "e"}, pool, first)
+	assert.Equal(t, []mixSwap{{InstanceId: 102, Entry: 1}, {InstanceId: 102, Entry: 0}}, swaps)
+	assert.Nil(t, planMixes(groups, []string{"a"}, []SpawnInfo{{MobId: 15}}, first), "no other kind to draw")
+}

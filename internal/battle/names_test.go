@@ -191,3 +191,13 @@ func TestEnemyNamesReserveAuthoredFallbacks(t *testing.T) {
 		}
 	})
 }
+
+func TestMixedGroupNamesNumberEachKindOnItsOwn(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	Begin(8, 100, 1, "a ragged band", []int{51, 52, 53})
+	AssignEnemyNames(8, []EnemyName{named(51, "imp"), named(52, "skeleton"), named(53, "imp")})
+	assert.Equal(t, "first imp", EnemyDisplayName(51, "fallback"))
+	assert.Equal(t, "second imp", EnemyDisplayName(53, "fallback"))
+	assert.Equal(t, "skeleton", EnemyDisplayName(52, "fallback"), "a kind with one member is not numbered")
+}

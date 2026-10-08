@@ -17,12 +17,14 @@ encounters:
         count: 3
     - id: down-wolves
       weight: 25
+      pack: true
       text: Timber wolves slink out of the long grass.
       members:
       - mobid: 56
         count: 3
     - id: stray-dogs
       weight: 15
+      pack: true
       text: A pack of feral dogs charges across the down.
       members:
       - mobid: 31

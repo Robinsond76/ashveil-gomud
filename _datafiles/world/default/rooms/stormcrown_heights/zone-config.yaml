@@ -11,6 +11,7 @@ encounters:
     heights:
     - id: crown-wolves
       weight: 25
+      pack: true
       text: Snow wolves run along the ridge and cut off the path.
       members:
       - mobid: 55
@@ -33,6 +34,7 @@ encounters:
         count: 2
     - id: crown-horde
       weight: 10
+      pack: true
       text: A huge pack of snow wolves rises from the drifts.
       members:
       - mobid: 55
