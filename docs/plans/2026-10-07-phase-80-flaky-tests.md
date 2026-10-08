@@ -51,6 +51,45 @@ them flakes.
 
 No player-facing change, so no help page.
 
+## Review (2026-10-08, Opus review thread)
+
+Merged as built, with one comment fix. Checked:
+
+- **No assertion was weakened or skipped.** The Packlord level 44 case still
+  fails when foes start below half (mutation: 40% start fails "a foe at 70% is
+  above half"), so the 70% start keeps the check live. The `hardTo` regression
+  test fails when the `Training` line is removed.
+- **`noCrits` pins every d100, not only the crit roll** (hit, dodge, poison and
+  native ability rolls all read 99). Harmless in both callers because
+  `alwaysLand` sets to-hit to 100, and the hobble and winding checks are
+  health thresholds, not rolls, but the comment said "other rolls stay
+  random". Comment corrected to say so and to pair it with `alwaysLand`.
+- **Smoke drain**: the 30 ms quiet drain plus the sorted order is sound; a
+  page arrives in one write, and only a page naming the next sorted topic as
+  `help <topic>` could still mislead the echo wait.
+- Gates: `make validate`, `go test -race -timeout 30m ./...` (141 ok, one
+  failure below), `make smoke`, GitHub CI green on the reviewed head.
+
+**New flake found, not this PR's:** `TestBattleEventsThroughTheRealRound`
+failed once in the full race run: its fight ended and a second fight opened
+mid-test (two `fight-end` events, the later payloads on fight 2 with
+`fight_round` back at 1), while bandits still stood. It passed 1000 of 1000 runs
+alone under four-way load and reproduced once in about 100 runs behind the
+balance and banter tests, so it is a rare random sequence, most likely
+`closeIdleBattles` breaking the battle off in a round where nobody aims at the
+other side (the bandits are not hostile, and the companion set to 1 health
+dies early), then the next round opening a new one. The test was last changed
+by 82c (pace by action beat). The PR touches nothing it uses. Follow-up:
+make the test hold one fight (keep Aria aimed each round, or assert per fight)
+or confirm the break-off is intended under the battle clock.
+
+**On #189's unnamed Go Tests failure:** partly agree. The healer test is a
+fair candidate, but this battle-event test is the one actually seen failing
+after the speed-turn merge, so it is at least as likely. Unconfirmed either way
+(the CI log keeps only its last lines).
+
 ## Status
 
-Paused 2026-10-07 for the combat overhaul, resumed 2026-10-08 and brought up to date with master; PR #185 is open and unmerged, waiting for the review thread.
+Reviewed and merged 2026-10-08 (PR #185). Follow-ups: migrate older tests that
+set `HealthMax.Value` directly to `hardTo`; fix the battle-event fight restart
+above.
