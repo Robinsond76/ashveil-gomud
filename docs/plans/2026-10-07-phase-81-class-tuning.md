@@ -83,11 +83,6 @@ Win% (HP lost where it matters). "Before" is master; "after" is this phase.
   They are kept as the record of how the numbers were found; the re-measure on
   tempo combat below is the one that stands.
 
-## Verification
-
-- `make generate`, `make validate`, `go test -race -timeout 30m ./...`,
-  `make js-lint`, `make js-test`.
-
 ## Re-measure on tempo combat (2026-10-08, after phase 82a-82d merged)
 
 Same harnesses, 50 fights a cell (noise about +/-14 points), master classes
@@ -111,10 +106,10 @@ changes, so its numbers stand.
 +95% and +110%) was measured at 100 fights and moved nothing at L40-50
 (Sorcerer 30 / 36 against the base wizard's 43 / 46), so it was reverted and
 the values above stay. Damage is not what holds the advanced Sorcerer back at
-high level (a 2-round chant that blows interrupt, on a company whose
-other casters carry the fight); a real fix needs the chant itself looked at
-(its length or a first-cast free chant), which is a Sorcerer redesign rather
-than a number tweak. Recorded as a follow-up; the High Sorcerer, which is the
+high level. The build read the cause as the Lance's chant; the review
+found the chant is the same as Magic Missile's and the likelier cause is the
+Lance crowding out Shower of Sparks against groups (see "Review" below).
+Recorded as a follow-up Sorcerer redesign; the High Sorcerer, which is the
 route's destination, is well ahead of the base wizard.
 
 Warlock and Theurgist are unchanged and read level with the base wizard
@@ -124,3 +119,56 @@ within noise on both combat models.
 
 - `make generate`, `make validate`, `go test -race -timeout 30m ./...`,
   `make js-lint`, `make js-test`.
+
+## Review (2026-10-08)
+
+Merged as built, with this doc corrected. What was checked:
+
+- **Rank values, help and tests agree.** Every changed rank's text in
+  `routes.go` / `routes_creature.go` matches its effect value and the help
+  pages (`cleric-routes`, `wizard-routes`, `high-sorcerer`, `stone-golem`,
+  `nightblade`); the Elder Druid's Grove is a percent of Rejuvenation, so its
+  "100%" / "130%" lines stay true. No other help page quotes an old number.
+- **The Sorcerer call (kept as a follow-up, cause corrected).** The build's
+  stated cause is wrong: the Lance's chant is not longer than a Magic
+  Missile's. Both spells have `waitrounds: 1` (`arcanelance.yaml`,
+  `mm.yaml`), so both chant the same two rounds. What the Sorcerer does give
+  up is the base wizard's Shower of Sparks: `strategy.Decide` (and
+  `orders.Caster.Attack`) try the Lance before the group spell, so against
+  the mirror's five foes the Sorcerer bolts one foe while the base wizard
+  sparks the row. Spot-checks, placed line, 50 fights a cell (noise +/-14):
+
+  | Cell | Base wizard | Sorcerer as built | Trial: Lance only against 1-2 foes |
+  | --- | --- | --- | --- |
+  | L15 | (52, build run) | (68, build run) | 64 |
+  | L25 | (62, build run) | (54, build run) | 40 |
+  | L40 | 38 | 50 | 40 |
+  | L50 | 40 | 22, 34 | 50, 50 |
+
+  Only L50 shows a gap beyond noise, and the trial closes it there but reads
+  lower at L25, so a targeting change is not clearly better across levels
+  and was not shipped. The plain Sorcerer past L30 is also the route a
+  player keeps only by declining High Sorcerer, which reads well ahead.
+  Follow-up (Sorcerer redesign): decide when the Lance should give way to
+  Sparks (foe count, or the target's health), measured at L15-50 with 100
+  fights a cell; no chant change is needed.
+- **At-level rhythm on the tempo combat** (`TestBalanceAtLevel`, 30 fights a
+  cell, placed formation; median fights before rest, p25/median/p75):
+
+  | Band | 5 martial | 4 martial | 3 martial | 5 magic | 4 magic | 3 magic | solo wins |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | 3-5 | 15/18/22 | 11/13/15 | 9/10/12 | 4/5/5 | 4/5/6 | 3/4/4 | 83% |
+  | 10-12 | 13/16/20 | 11/14/17 | 7/9/12 | 6/7/8 | 6/7/8 | 3/4/6 | 63% |
+  | 20-22 | 10/12/15 | 9/12/14 | 6/8/9 | 8/10/11 | 6/9/11 | 4/5/6 | 60% |
+
+  Every company of three or more won every fight. Against the targets
+  (5 members 15-20, magic 7-12, 4: 8-14, 3: 5-7) the numbers sit where the
+  pre-82 tuning left them (#179: 5 martial 12-17, magic 8-9 at bands 10+
+  and 5 at 3-5, solo 68-74%): 5 martial meets the target at the low and
+  middle bands and reads 12 at 20-22, magic reads 5 at 3-5 (an L5 wizard's
+  mana, as before). No drift from the combat overhaul, so per the 82 rule
+  no at-level foe number changed. The test asserts these with its slack and
+  passed.
+- Gates after the review: `make generate`, `make validate`,
+  `go test -race -timeout 30m ./...`, `make smoke`.
+
