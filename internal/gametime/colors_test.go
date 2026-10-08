@@ -8,11 +8,19 @@ import (
 	"testing"
 )
 
+// xtermBase is the standard xterm palette for colors 0-15.
+var xtermBase = [16][3]int{
+	{0, 0, 0}, {128, 0, 0}, {0, 128, 0}, {128, 128, 0}, {0, 0, 128}, {128, 0, 128}, {0, 128, 128}, {192, 192, 192},
+	{128, 128, 128}, {255, 0, 0}, {0, 255, 0}, {255, 255, 0}, {0, 0, 255}, {255, 0, 255}, {0, 255, 255}, {255, 255, 255},
+}
+
 // xtermLuminance returns the WCAG relative luminance of an xterm 256-color
-// cube (16-231) or grayscale (232-255) index.
+// index: the base 16, the color cube (16-231) or grayscale (232-255).
 func xtermLuminance(n int) float64 {
 	var r, g, b int
 	switch {
+	case n < 16:
+		r, g, b = xtermBase[n][0], xtermBase[n][1], xtermBase[n][2]
 	case n >= 232:
 		r = 8 + (n-232)*10
 		g, b = r, r
@@ -32,15 +40,16 @@ func xtermLuminance(n int) float64 {
 }
 
 // TestTimeOfDayColorsReadableOnBlack keeps the day, dusk and night clock
-// colors legible (4.5:1) against a black terminal.
+// colors, and text aliases that were once as dark as the old night blue,
+// legible (4.5:1) against a black terminal.
 func TestTimeOfDayColorsReadableOnBlack(t *testing.T) {
 	for _, world := range []string{"default", "empty"} {
 		raw, err := os.ReadFile("../../_datafiles/world/" + world + "/ansi-aliases.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, name := range []string{"night", "day", "day-dusk"} {
-			m := regexp.MustCompile(`(?m)^\s+` + name + `:\s*(\d+)\s*$`).FindSubmatch(raw)
+		for _, name := range []string{"night", "day", "day-dusk", "role-mod", "holy", "item-nothing", "item-cursed", "md-hr1", "md-hr2"} {
+			m := regexp.MustCompile(`(?m)^\s+` + name + `:\s*(\d+)\s*(?:#.*)?$`).FindSubmatch(raw)
 			if m == nil {
 				t.Fatalf("%s: alias %q not found", world, name)
 			}
