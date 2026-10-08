@@ -168,6 +168,17 @@ don't need to):
   chest or cloak shifts by one art pixel).
 - Columns 3–8 are a **6-frame walk**: right contact, down, passing, left
   contact, down, passing. The loop must be seamless.
+- **The legs must really stride.** In the side row the contact frames
+  have the feet well apart (the gap between the heels is about half the
+  body's height, as on the approved A1 sheets), and the two contact
+  frames lead with opposite legs. In the down and up rows the feet visibly
+  alternate. Arms and cloak swing a little against the legs. A walk that
+  only shifts the feet a pixel or two, or reuses one stride in every
+  frame, reads as sliding on the map.
+- **Scale uniformly.** Never stretch or squash a figure, a weapon or a
+  pose on one axis to fit a cell; it makes art pixels non-square. If a
+  pose is too wide or a weapon too tall, redraw it (angle the weapon,
+  bring the arms in).
 - Every figure in a row stands on the same ground line, with the feet's
   lowest point level. The walk's "down" frames dip by at most 1 art pixel.
 - The view is a slight 3/4 from above, the same as the A0 lineup. Every
@@ -178,6 +189,9 @@ don't need to):
 - The side-on stance has a little 3/4 toward the viewer.
 - A 4-frame breathing loop: frames 1–4 rise and settle. Cloaks and
   smoke may move a little.
+- No frame may split or tear the figure. Check every frame of every
+  sheet at full size for straight vertical or horizontal seams, where a
+  warp has cut the drawing.
 - Feet stay on one ground line.
 - **One fixed scale for every figure of a size class.** Never scale a
   figure so its tallest point fills the cell; a raised staff or spear
