@@ -55,6 +55,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// and end their fights on the combat event stream (29b).
 	battlePass()
 
+	// Ashveil Phase 82d: each player's text marks where the round begins.
+	tellRoundStart(evt.RoundNumber)
+
 	// Ashveil Phase 39d: a Doll Master's dolls stand for the battle.
 	dollPass()
 

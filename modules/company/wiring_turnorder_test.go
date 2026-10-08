@@ -1,10 +1,15 @@
 package company
 
 import (
+	"math"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -177,4 +182,43 @@ func TestTurnOrderAFasterFoeBreaksAChantBeforeItsRelease(t *testing.T) {
 			require.Len(t, landed, 1, "the missile landed:\n%s", out)
 		})
 	}
+}
+
+// Phase 82d: a member's tempo can be read between rounds for the panels,
+// as the next round would use it, and each round of a player's fight
+// begins with one dim line naming it.
+func TestMemberTempoAndTheRoundLineThroughTheRealRound(t *testing.T) {
+	b := newBrawl(t)
+	b.toughen()
+	b.hold(nil)
+	t.Cleanup(hooks.UseTempoForTest(nil)) // the real calculation
+	b.aria.Character.Stats.Speed.ValueAdj = 40
+	want := math.Round(combat.Tempo(b.aria.Character)*100) / 100
+	got, ok := hooks.MemberTempo(7, company.LeaderMemberKey)
+	require.True(t, ok)
+	assert.Equal(t, want, got, "the leader's tempo is the fight's own formula")
+	assert.Greater(t, got, 1.0, "a quick leader has more than a turn a round")
+	cgot, ok := hooks.MemberTempo(7, company.CompanionMemberKey(1))
+	require.True(t, ok, "a present companion's tempo can be read")
+	assert.Equal(t, math.Round(combat.Tempo(&b.companion(1).Character)*100)/100, cgot)
+	_, ok = hooks.MemberTempo(7, company.CompanionMemberKey(99))
+	assert.False(t, ok, "no such companion, no tempo")
+
+	b.aimAt("bandit captain")
+	heard := b.ariaHears()
+	b.fight()
+	first := slices.IndexFunc(*heard, func(s string) bool { return strings.Contains(s, "Round 1") })
+	require.GreaterOrEqual(t, first, 0, "the first round is named: %q", *heard)
+	assert.Equal(t, "Round 1", strings.TrimSpace((*heard)[first]), "the line is the round's number alone")
+	blow := slices.IndexFunc(*heard, func(s string) bool {
+		return strings.Contains(s, "bandit") && (strings.Contains(s, "hit") || strings.Contains(s, "miss") || strings.Contains(s, "swing"))
+	})
+	if blow >= 0 {
+		assert.Less(t, first, blow, "the round's line comes before its first blow")
+	}
+	*heard = nil
+	b.fight()
+	require.NotEmpty(t, *heard)
+	assert.Equal(t, "Round 2", strings.TrimSpace((*heard)[0]), "the next round opens with its line: %q", *heard)
+	assert.Equal(t, 1, strings.Count(strings.Join(*heard, "\n"), "Round 2"), "once a round")
 }

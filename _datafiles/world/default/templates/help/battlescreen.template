@@ -39,9 +39,17 @@ change the company's focus.
   match a colour to its status without hovering.
   A bright mark means it is chanting a spell. A flash and a number show a blow, a heal,
   or a miss as it lands. A fallen figure lies down.
-- Under the picture, a line tells the latest blow in words ("Wren hits the
+- Under the picture, a strip shows the round's turn order (<ansi fg="command">help tempo</ansi>),
+  fastest first, as short name tags: the one acting now is bright, those
+  who have acted are dimmed, foes have a dashed edge, and a fast fighter
+  earning two turns appears twice. Hover a tag for the full name and turn.
+  Hovering one of your own figures also names its tempo, the turns a round
+  its Speed, burden, armor and stance give it.
+- Below that, a line tells the latest blow in words ("Wren hits the
   second wolf (6)"), and the title shows the round. Hovering a figure shows
-  its own name and health instead.
+  its own name and health instead. In the game text each round of your
+  fight opens with a dim "Round N" line, so the text alone shows where
+  rounds break.
 - In the dark, or against a foe you can't make out, you see one shadow
   instead of the enemy (<ansi fg="command">help light</ansi>). The shadow stands in a place no foe you
   can see holds.
@@ -106,7 +114,8 @@ change the company's focus.
   (<ansi fg="command">help tactics</ansi>), as the Combat tab's do. <ansi fg="yellow">Help</ansi> opens this page.
 
 Screen readers: the picture is decorative. The Combat tab's Battle view
-and the story text carry everything, and are unchanged.
+and the story text carry everything: the Battle view lists the same turn
+order in words ("Turn order: Wren, the first wolf, ...").
 
 On a phone the picture fills the screen and allied companies show as pennants
 you tap to watch (<ansi fg="command">help mobile</ansi>).

@@ -23,6 +23,15 @@ Whatever opens your action meter also moves your first turn earlier in
 the fight's first round: a Samurai's Iaijutsu (half a turn), a
 Pathfinder's Scouted ground and a Packlord's hound really do strike first.
 
+<ansi fg="yellow-bold">Where you see it</ansi>
+
+Each member's tempo shows in the web client's Company panel ("Tempo 1.2"
+by the name), on the Character panel under your stats, and when you hover
+your figure on the battle screen. During a fight the battle screen shows
+the round's turn order as a strip under the picture, the Combat tab's
+Battle view lists it in words, and the game text opens each round with a
+dim "Round N" line (<ansi fg="command">help battlescreen</ansi>). Foes' tempos are never shown.
+
 <ansi fg="yellow-bold">The action meter</ansi>
 
 Each combat round fills your meter by 100 times your tempo. Each full 100

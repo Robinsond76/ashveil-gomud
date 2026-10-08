@@ -327,6 +327,7 @@
             color: var(--t-party-invited-text);
         }
 
+        .party-member-tempo { font-size: 0.85em; color: var(--t-text-secondary); margin-left: 6px; white-space: nowrap; }
         .party-member-level {
             font-size: 0.7em;
             color: var(--t-text-secondary);
@@ -851,9 +852,15 @@
             if (m.class_name && m.archetype) { node.title = m.archetype + ' line'; }
             header.appendChild(node);
         }
+        // Phase 82d: its combat tempo, turns a round (help tempo).
+        if (typeof m.tempo === 'number') {
+            const tempo = el('span', 'party-member-tempo', 'Tempo ' + m.tempo);
+            tempo.title = 'Combat tempo: turns a round, from Speed, burden, armor bulk and stance (help tempo)';
+            header.appendChild(tempo);
+        }
         card.appendChild(header);
 
-        const spoken = [m.name, m.level ? 'level ' + m.level : '', rank || ''];
+        const spoken = [m.name, m.level ? 'level ' + m.level : '', rank || '', typeof m.tempo === 'number' ? 'tempo ' + m.tempo : ''];
         // Phase 38c1: under the class name in the header, its tier (an elite
         // badge) and rank, and whether a promotion is ready or waiting on
         // alignment.

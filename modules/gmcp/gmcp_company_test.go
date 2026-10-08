@@ -619,3 +619,25 @@ func TestCompanyStancesFitGear(t *testing.T) {
 
 	assert.Nil(t, stancesFit(7, company.MemberKey("companion:1")), "a companion not out has no readable gear")
 }
+
+// Phase 82d: each member's combat tempo rides its entry, two decimals, so
+// the panels can show it; a member not here to read carries none.
+func TestCompanyPayloadTempo(t *testing.T) {
+	prev := memberTempo
+	memberTempo = func(_ int, key company.MemberKey) (float64, bool) {
+		switch key {
+		case company.LeaderMemberKey:
+			return 1.25, true
+		case company.CompanionMemberKey(1):
+			return 0.8, true
+		}
+		return 0, false
+	}
+	t.Cleanup(func() { memberTempo = prev })
+	got := companyJSON(t, sampleCompany())
+	assert.Equal(t, 1.25, got["leader"].(map[string]any)["tempo"])
+	members := got["members"].([]any)
+	assert.Equal(t, 0.8, members[0].(map[string]any)["tempo"])
+	assert.NotContains(t, members[1].(map[string]any), "tempo", "an awaiting companion has no tempo to show")
+	assert.NotContains(t, members[2].(map[string]any), "tempo", "nor a dead one")
+}

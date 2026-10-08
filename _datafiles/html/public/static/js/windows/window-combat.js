@@ -774,6 +774,19 @@
         return d ? d.name : '';
     }
 
+    // orderName names a turn-order slot: a fighter of either side, an
+    // ally's member by name, or a foe the player can't make out.
+    function orderName(id, battle, data) {
+        if (id === '?') { return 'an unseen foe'; }
+        const own = nameOf(id, battle, data);
+        if (own) { return own; }
+        for (const al of (battle.allies || [])) {
+            const m = (al.members || []).find(x => x.id === id);
+            if (m) { return m.name || id; }
+        }
+        return id;
+    }
+
     // dollOwner names a doll's Master: "your" or a companion's name with 's.
     function dollOwner(d, data) {
         if (d.master === 'leader') { return 'your'; }
@@ -803,6 +816,13 @@
         }
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
+        // Phase 82d: the round's turn order in words, fastest first (help tempo).
+        if (Array.isArray(battle.order) && battle.order.length) {
+            const names = battle.order.map(o => orderName(o.id, battle, data));
+            const note = el('div', 'cbt-note cbt-order', 'Turn order: ' + names.join(', '));
+            note.title = 'Who acts when this round, by tempo; a fast fighter may act twice (help tempo)';
+            root.appendChild(note);
+        }
         // Phase 39c: a Shaman's weather over the battle (help shaman).
         if (battle.weather && battle.weather.name) {
             const w = battle.weather;
