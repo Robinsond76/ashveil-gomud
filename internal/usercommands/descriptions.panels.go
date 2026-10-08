@@ -22,7 +22,7 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 		if err != nil {
 			layout = templates.NewPanelLayout("open", "single", 1, 1)
 			layout.AddPanelsToSlot(layout.AddSlot(), "basic")
-			layout.Panel("basic").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Basic Info</ansi> `).SetWidth(78)
+			layout.Panel("basic").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Basic Info</ansi> `).SetWidth(78)
 		}
 		layout.Panel("basic").SetLabelWidth(13)
 
@@ -42,7 +42,7 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 		if err != nil {
 			layout = templates.NewPanelLayout("open", "single", 1, 1)
 			layout.AddPanelsToSlot(layout.AddSlot(), "stats")
-			layout.Panel("stats").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Specific Stats</ansi> `).SetWidth(78)
+			layout.Panel("stats").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Specific Stats</ansi> `).SetWidth(78)
 		}
 		layout.Panel("stats").SetLabelWidth(13)
 
@@ -90,7 +90,7 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 		if err != nil {
 			layout = templates.NewPanelLayout("open", "single", 1, 1)
 			layout.AddPanelsToSlot(layout.AddSlot(), "mods")
-			layout.Panel("mods").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Modifiers</ansi> `).SetWidth(78)
+			layout.Panel("mods").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Modifiers</ansi> `).SetWidth(78)
 		}
 		layout.Panel("mods").SetLabelWidth(13)
 
@@ -187,7 +187,7 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 		if err != nil {
 			layout = templates.NewPanelLayout("open", "single", 1, 1)
 			layout.AddPanelsToSlot(layout.AddSlot(), "magic")
-			layout.Panel("magic").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Magical Effects</ansi> `).SetWidth(78)
+			layout.Panel("magic").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Magical Effects</ansi> `).SetWidth(78)
 		}
 		layout.Panel("magic").SetLabelWidth(13)
 
@@ -355,7 +355,7 @@ func buildTrainPanel(data TrainingOptions) string {
 	if err != nil {
 		layout = templates.NewPanelLayout("open", "single", 1, 1)
 		layout.AddPanelsToSlot(layout.AddSlot(), "train")
-		layout.Panel("train").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Skills Taught Here</ansi> `).SetWidth(78)
+		layout.Panel("train").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Skills Taught Here</ansi> `).SetWidth(78)
 	}
 	layout.Panel("train").SetLabelWidth(12)
 

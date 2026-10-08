@@ -13,7 +13,7 @@ Your trip is saved: a disconnect or a server restart still lets you return. The 
 <ansi fg="yellow-bold">Characters</ansi>
 <ansi fg="command">testarea class</ansi> [class]  Become any archetype, advanced or elite class (no gates). Without a class it lists them.
 <ansi fg="command">testarea level</ansi> [1-100]  Set your level.
-<ansi fg="command">testarea companion add</ansi> [class] [level]  Recruit a companion of any class, or a creature (hound, stone-golem). A creature keeps its species: it can change level, not class. Stone mortar for a golem is in the supplies kit.
+<ansi fg="command">testarea companion add</ansi> [class] [level]  Recruit a companion of any class (with a random name), or a creature (hound, stone-golem). A creature keeps its species: it can change level, not class. Stone mortar for a golem is in the supplies kit.
 <ansi fg="command">testarea companion class</ansi> [member] [class]  Change a companion's class. <ansi fg="command">testarea companion level</ansi> [member] [level]  Change its level.
 
 <ansi fg="yellow-bold">Gear and the world</ansi>
