@@ -513,6 +513,46 @@ Order: 82a and 82b may run in parallel (web client vs Go). 82c needs 82b.
 - Acceptance: a player can see who acts next and why (tempo) without
   reading the text.
 
+#### 82d as built (2026-10-08, full autonomy): amendments and checks
+
+- **Branch:** built on 82c (#186) with 82a (#188) merged in, since it needs
+  both; its PR is against the 82c branch and lists what is its own.
+- **Strip:** `.bs-order` under the legend, name tags from
+  `Company.Battle.order` (82b data): a member's first name, a foe's label
+  without its article, "?" for an unseen foe; foes have a dashed edge. The
+  acting slot comes from each event's `slot` (82b data) as its happening
+  plays (a `slot` op at the step's start, so the strip keeps pace with the
+  animation; at once with animations off); a new `fight_round` resets it.
+  *Amendment:* no class glyphs at phone width; the tags are short and
+  truncate with an ellipsis, which reads the same on a phone, and glyphs
+  would need art for every foe kind. Hover a tag for the full name, turn
+  and (own members) tempo.
+- **Tempo shown:** `Company` members carry `tempo` (two decimals, the
+  fight's own formula with the member's stance applied on a copy,
+  `hooks.MemberTempo`; none for a member not here). The Company panel shows
+  "Tempo 1.25" by the name, the Character tab under the stats, the battle
+  screen's caption when hovering an own figure and in the tag's tooltip.
+  Foes' tempos are never sent or shown (they would give away a number the
+  player can only infer, as enemy health is hidden).
+- **Combat tab:** "Turn order: Wren, the cutthroat captain, an unseen foe,
+  Oswin, Brannoc" (allies by name) under the focus bar, for the accessible
+  path.
+- **Terminal:** `tellRoundStart` sends every player in a live battle one
+  dim line (`Round N`, the fight's own round from 1, as the screen's title
+  counts) after `battlePass` and before any upkeep or turn, so it is held
+  as a slot-0 line and paced with the round. Every client gets it; a
+  text-only player sees where rounds break too.
+- **Checks:** `battle-check.mjs` (strip tags, acting and done states, the
+  reset at a new round), `dock-windows-check.mjs` (order line with an unseen
+  foe and an ally, tempo on member cards and the Character tab, spoken
+  summaries), `mobile-check.mjs`, `battle-pane-check.mjs`, `make js-lint`,
+  `make js-test`; Go: `TestCompanyPayloadTempo`,
+  `TestMemberTempoAndTheRoundLineThroughTheRealRound` (the real round:
+  tempo matches the formula, "Round 1" before the first blow, "Round 2"
+  opens the next round once), help tests. The `damage digits rise` check
+  in `battle-check.mjs` failed once on timing (its flash window is 260 ms)
+  and passed on two reruns; not changed.
+
 ## Follow-ups considered and left out
 
 - **Mid-round input** (retreat cutting a round short): not built; the round

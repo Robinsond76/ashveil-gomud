@@ -209,6 +209,30 @@ func runTurnOrder(evt events.NewRound) (affectedPlayerIds []int, affectedMobInst
 	return affectedPlayerIds, affectedMobInstanceIds
 }
 
+// roundHadTurns reports whether anyone in the last round's order had a
+// turn to take: a filled meter, or a cast or wait already under way, which
+// goes on with an empty one. False means the round passed with nobody
+// acting (Phase 82d review: the battle clock does not wait out such a round).
+func roundHadTurns() bool {
+	for _, s := range roundOrder {
+		if tempoTurns[s.who] > 0 {
+			return true
+		}
+		var c *characters.Character
+		if s.who.userId > 0 {
+			if u := users.GetByUserId(s.who.userId); u != nil {
+				c = u.Character
+			}
+		} else if m := mobs.GetInstance(s.who.mobId); m != nil {
+			c = &m.Character
+		}
+		if c != nil && c.Aggro != nil && (c.Aggro.RoundsWaiting > 0 || c.Aggro.Type == characters.SpellCast) {
+			return true
+		}
+	}
+	return false
+}
+
 // RoundTurnOrder is the latest round's order as the web client's battle
 // data lists it: every fighter in the same fights as the player, in the
 // order they acted. Empty outside a round or when the player is not in one.

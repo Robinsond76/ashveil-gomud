@@ -34,6 +34,13 @@ import (
 // at the same time share the clock: each round waits for the slower
 // playback of the two.
 //
+// A round in which nobody's meter filled (Phase 82d review: after the
+// opening turn every fighter slower than tempo 1 skips the next round, so
+// the second round of most fights was three silent seconds) is not waited
+// out: when the round had no turns and no lines are held, the next round
+// resolves on the next turn. The meters still decide who acts; only the
+// pause is skipped, so the fight is as long in rounds and as fair as before.
+//
 // Rounds are numbered by a counter of combat rounds, not by the game round
 // (which the cadence used to pass): a fight's rounds count 1, 2, 3 on the
 // battle screen, and the clock's rounds, which fall between game rounds,
@@ -43,6 +50,7 @@ import (
 type battleClock struct {
 	active  bool
 	pending bool // a round resolved; its due time is set on the next turn, once its lines are held
+	empty   bool // the last round had no turns (every fighter's meter short): the next follows at once
 	roundAt time.Time
 	due     time.Time
 	spec    combatpace.Spec // the slowest pace of the last round's players
@@ -114,6 +122,9 @@ func BattleClock(e events.Event) events.ListenerReturn {
 	}
 	if clock.pending {
 		clock.due = clock.dueAfter()
+		if clock.empty && !combatpace.Default().Holding() {
+			clock.due = now // nothing happened and nothing is left to read: no empty 3s
+		}
 		clock.pending = false
 	}
 	if now.Before(clock.due) {
@@ -121,7 +132,7 @@ func BattleClock(e events.Event) events.ListenerReturn {
 	}
 	clock.spec = slowestPaceNearFights().Beats()
 	resolveCombatRound(DoCombat)
-	clock.roundAt, clock.pending = now, true
+	clock.roundAt, clock.pending, clock.empty = now, true, !roundHadTurns()
 	return events.Continue
 }
 

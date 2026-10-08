@@ -120,6 +120,13 @@
         #battle-screen canvas { display: block; margin: 4px auto; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
         #battle-screen .bs-legend { min-height: 1.3em; display: flex; flex-wrap: wrap; gap: 2px 10px; justify-content: center; color: var(--t-text-secondary); font-size: 0.9em; }
         #battle-screen .bs-legend .bs-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 1px; vertical-align: baseline; }
+        /* Phase 82d: the round's turn order under the picture. */
+        #battle-screen .bs-order { min-height: 1.4em; display: flex; flex-wrap: wrap; gap: 2px 4px; justify-content: center; align-items: center; font-size: 0.9em; }
+        #battle-screen .bs-order .bs-order-label { color: var(--t-text-secondary); margin-right: 2px; }
+        #battle-screen .bs-turn { display: inline-block; max-width: 7em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 5px; border: 1px solid var(--t-accent-dim); border-radius: 3px; color: var(--t-text-secondary); }
+        #battle-screen .bs-turn.is-enemy { border-style: dashed; }
+        #battle-screen .bs-turn.is-done { opacity: 0.45; }
+        #battle-screen .bs-turn.is-acting { color: var(--t-text); border-color: var(--t-border-accent); font-weight: bold; opacity: 1; }
         #battle-screen .bs-last { min-height: 1.3em; text-align: center; font-style: italic; }
         #battle-screen .bs-caption { min-height: 1.3em; color: var(--t-text-secondary); text-align: center; }
         #battle-screen .bs-outcome { text-align: center; font-weight: bold; min-height: 1.3em; }
@@ -209,6 +216,7 @@
     let raf = 0;
     let zone = '';              // Room.Info.area, for a zone's own backdrop
     let roundNo = 0;            // the round of the latest events
+    let actingSlot = 0;         // Phase 82d: the turn-order slot now acting, 0 before the first
     let lastBlow = '';          // the latest happening, in words
     let sched = new TL.Scheduler();
     let paceHistory = [];       // how event batches arrived, to infer the pace of a server that sends none
@@ -416,6 +424,8 @@
             u.className = m.class_name || '';
             // Phase 69: the weapon stance it fights in, named when its figure is tapped.
             u.stance = (m.stance && m.stance.ready !== false) ? m.stance.name : '';
+            // Phase 82d: its combat tempo, named when its figure is tapped.
+            u.tempo = typeof m.tempo === 'number' ? m.tempo : 0;
             // Phase 39g: an Alchemist's flasks left, named when its figure is tapped.
             u.flasks = (v.flasks_max > 0) ? v.flasks + ' of ' + v.flasks_max + ' flasks' : '';
             u.cell = cell;
@@ -600,14 +610,15 @@
     function onEvents(body) {
         const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) })).filter(e => !landsOnNothing(e));
         // fight_round counts this fight's rounds; round is the server's counter.
-        if (body.fight_round) { roundNo = body.fight_round; paintChrome(); }
+        if (body.fight_round && body.fight_round !== roundNo) { roundNo = body.fight_round; actingSlot = 0; paintChrome(); }
         // The feed carries the player's pace; inference from how batches
         // arrive is only the fallback for a server that does not send it.
         if (body.pace && TL.BUDGETS[body.pace]) { feedPace = body.pace; }
         paceHistory.push({ at: Date.now(), n: evs.length });
         if (paceHistory.length > 8) { paceHistory.shift(); }
         if (motion() === 'off') {
-            evs.forEach(e => { const line = narrate(e); if (line) { lastBlow = line; } applyEvent(e); });
+            evs.forEach(e => { const line = narrate(e); if (line) { lastBlow = line; } if (e.slot) { actingSlot = e.slot; } applyEvent(e); });
+            paintOrder();
             paintCaption();
             draw();
             return;
@@ -647,6 +658,8 @@
             if (e) {
                 const line = narrate(e);
                 if (line) { h.steps[0].ops.push({ op: 'log', when: 'start', text: line }); }
+                // Phase 82d: the strip follows the turn as its happening plays.
+                if (e.slot) { h.steps[0].ops.push({ op: 'slot', when: 'start', slot: e.slot }); }
             }
             // The outcome shows when the fight's end plays, after the last
             // blow; the screen is ended (no more snapshots change it) now.
@@ -695,6 +708,7 @@
             units.delete(o.unit);
             break;
         case 'log': lastBlow = o.text; paintCaption(); break;
+        case 'slot': actingSlot = o.slot; paintOrder(); break;
         case 'outcome': outcomeQueued = false; beginOutcome(o.outcome, o.why); break;
         case 'react': react(o); break;
         default: break;
@@ -825,6 +839,7 @@
         outcomeQueued = false;
         lastBlow = '';
         roundNo = 0;
+        actingSlot = 0;
         userOpened = false;
         minimised = false;
         hide();
@@ -873,7 +888,7 @@
     // DOM
     // ---------------------------------------------------------------------
 
-    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, retreatBtn, autoBox, textBox, animSelect, focusBtns = [];
+    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, orderNode, retreatBtn, autoBox, textBox, animSelect, focusBtns = [];
 
     function build() {
         if (overlay) { return; }
@@ -916,6 +931,11 @@
         legendNode = el('div', 'bs-legend');
         legendNode.setAttribute('aria-hidden', 'true');
         overlay.appendChild(legendNode);
+        // Phase 82d: the round's turn order; the Combat tab lists it in words.
+        orderNode = el('div', 'bs-order');
+        orderNode.setAttribute('aria-hidden', 'true');
+        orderNode.title = 'This round\'s turn order, fastest first; a fast fighter may appear twice (help tempo)';
+        overlay.appendChild(orderNode);
         lastNode = el('div', 'bs-last');
         lastNode.setAttribute('aria-live', 'off');
         captionNode = el('div', 'bs-caption');
@@ -1045,7 +1065,42 @@
         autoBox.checked = currentSetting() === 'auto';
         textBox.checked = textSetting() === 'smaller';
         animSelect.value = motion();
+        paintOrder();
         paintCaption();
+    }
+
+    // orderTag is a slot's short name tag: a member's first name; a foe's
+    // kind with its number ("the second wolf" is "wolf 2", "a hulking brute"
+    // is "brute"); the unseen a question mark.
+    const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+    function orderTag(id) {
+        if (id === '?') { return '?'; }
+        const u = units.get(id);
+        const words = String(u ? u.label : id).replace(/^(the|a|an) /i, '').split(' ').filter(Boolean);
+        if (!words.length) { return id; }
+        if (u && u.side !== 'enemy') { return words[0]; }
+        const n = ORDINALS.indexOf(words[0].toLowerCase());
+        if (n >= 0 && words.length > 1) { return words[words.length - 1] + ' ' + (n + 1); }
+        return words[words.length - 1];
+    }
+
+    // paintOrder draws the round's turn order (Phase 82d): the slot now
+    // acting bright, those already acted dim, the rest to come.
+    function paintOrder() {
+        if (!orderNode) { return; }
+        while (orderNode.firstChild) { orderNode.removeChild(orderNode.firstChild); }
+        const order = battle && !outcomeText && Array.isArray(battle.order) ? battle.order : [];
+        if (!order.length) { return; }
+        orderNode.appendChild(el('span', 'bs-order-label', 'Order:'));
+        order.forEach(o => {
+            const u = o.id === '?' ? null : units.get(o.id);
+            const tag = el('span', 'bs-turn', orderTag(o.id));
+            if (!u || u.side === 'enemy' || o.id === '?') { tag.classList.add('is-enemy'); }
+            if (o.slot === actingSlot) { tag.classList.add('is-acting'); }
+            else if (o.slot < actingSlot) { tag.classList.add('is-done'); }
+            tag.title = (u ? u.label : (o.id === '?' ? 'a foe you can\'t make out' : o.id)) + ', turn ' + o.slot + (u && u.tempo ? ', tempo ' + u.tempo : '');
+            orderNode.appendChild(tag);
+        });
     }
 
     function paintCaption() {
@@ -1061,6 +1116,7 @@
         if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'company' && u.flasks && !u.fallen) { text += ', ' + u.flasks; }
         if (u.side === 'company' && u.stance && !u.fallen) { text += ', ' + u.stance + ' stance'; }
+        if (u.side === 'company' && u.tempo && !u.fallen) { text += ', tempo ' + u.tempo; }
         if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
         if (isShrunk(u) && u.side === 'ally') { text += ' (tap to watch)'; }
         if (u.side !== 'company' && u.band) { text += ', ' + u.band; }
@@ -1795,6 +1851,7 @@
             feedPace = '';
             lastBlow = '';
             roundNo = 0;
+            actingSlot = 0;
             minimised = false;
             userOpened = false;
             watching = null;
@@ -1881,6 +1938,8 @@
                 biome,
                 zone,
                 round: roundNo,
+                acting: actingSlot,
+                order: battle && Array.isArray(battle.order) ? battle.order.map(o => o.id + ':' + o.slot) : [],
                 lastBlow,
                 motion: motion(),
                 text: textSetting(),
