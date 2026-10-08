@@ -141,3 +141,33 @@ reproduced; recorded as a follow-up.
    their current health, which some tests rely on (the healer test needs Aria
    wounded).
 5. Other packages' `HealthMax.Value` sites are not migrated (see above).
+
+## Review (2026-10-08)
+
+Independent review thread; no code change.
+
+- **The fix ends nothing it should keep, and keeps nothing it should end.**
+  `engagedWith` only gates the upkeep's re-aim (`upkeepEngagements`), and only
+  for a group the leader is already in battle with (`inBattleWith`). Whether a
+  battle ends is still decided elsewhere: a won fight by `battleOutcome` when
+  the group has no one standing, and an idle one by `closeIdleBattles` through
+  `setOn`. Retreat (a `Retreat` aim, not a plain attack), `break` (refused in
+  battle; outside one `StandDown` still holds in `keepCompanyEngaged`) and a
+  company focus change (`beginRefocus`, before the upkeep) are untouched. An
+  aim on a corpse is cleared when its holder next acts and finds no target,
+  so it does not linger past the fight. Accepted, not changed: `aimedAtTheFallen` is not limited to the
+  battle's own group, which is harmless because `inBattleWith` already is.
+- **Mutation checks.** With `aimedAtTheFallen` returning false,
+  `TestABattleGoesOnWhenEveryAimFellInOneRound` fails ("the battle goes on").
+  With `seedDice`'s reseed cleanup removed, `TestSeededDiceDoNotOutliveTheirTest`
+  fails. Both pass restored.
+- **No loosened tests.** The diff adds no skip, retry or `Eventually`, and
+  removes no assertion; the removed lines are the hand-set `Health` and
+  `HealthMax.Value` pairs `hardTo` replaces and the two `rand.Seed` calls.
+- **Live fight.** A smoke-world server, a warrior with two companions, the
+  brigand pair on the Old Kings Road with both brigands zapped to 1 health:
+  both fell in round 1, one "The fight with a band of road brigands is over"
+  and summary, no second "Round 1", loot and levels as usual.
+- **Gates:** `make generate`, `make validate`, `go test -race -timeout 30m ./...`
+  (142 packages ok, `TestDreadWhisperMakesAFoeTakeAMoraleCheck` not seen) and
+  `make smoke` pass.
