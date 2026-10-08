@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/bonds"
 	"github.com/GoMudEngine/GoMud/internal/camping"
@@ -150,9 +151,9 @@ func (m *CompanyModule) settleRite(record *domain.Record, rite domain.Rite, held
 				d.Loyalty = next
 				record.Companions[i].Disposition = &d
 				if held {
-					lines = append(lines, fmt.Sprintf("%s is steadied by it. (loyalty %+d)", companionName(c), delta))
+					lines = append(lines, fmt.Sprintf("%s is steadied by it.", companionName(c))+banter.Aside(delta))
 				} else {
-					lines = append(lines, fmt.Sprintf("%s takes it hard. (loyalty %+d)", companionName(c), delta))
+					lines = append(lines, fmt.Sprintf("%s takes it hard.", companionName(c))+banter.Aside(delta))
 				}
 			}
 		}

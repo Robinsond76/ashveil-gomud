@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
@@ -72,6 +73,7 @@ func (m *CompanyModule) Opinion(leaderUserID int, c opinions.Choice) ([]string, 
 	seen := m.opinionWitnesses(leaderUserID, record, c.Witnesses)
 	now := m.now().Unix()
 	var reactions []opinions.Reaction
+	var narrator banter.Narrator
 	for i, comp := range record.Companions {
 		if !seen[comp.ID] {
 			continue
@@ -114,9 +116,9 @@ func (m *CompanyModule) Opinion(leaderUserID int, c opinions.Choice) ([]string, 
 		mem.Remember(domain.OpinionNote{Kind: string(c.Kind), Verdict: verdict, At: now, Subject: c.Subject})
 		record.Companions[i].Opinions = mem
 		name := companionName(comp)
-		line := opinions.LineFor(name, personality, c.Kind)
+		line := opinions.LineFor(&narrator, name, personality, c.Kind)
 		if delta != 0 {
-			line += fmt.Sprintf(" (loyalty %+d)", delta)
+			line += banter.Aside(delta)
 		}
 		reactions = append(reactions, opinions.Reaction{CompanionID: comp.ID, Name: name, Personality: personality, Kind: c.Kind, Verdict: verdict, Line: line, Delta: delta})
 	}

@@ -50,15 +50,18 @@ func TestRestBanterAtStartAndEnd(t *testing.T) {
 	module.lightFire(user, eligibleRoom())
 	text := module.startRest(user, eligibleRoom())
 	assert.Contains(t, text, "You settle in by the fire to rest.")
-	assert.Contains(t, text, `Hild</ansi> mutters, "Keep the fire low."`)
-	assert.Contains(t, text, `Brann</ansi> remarks, "Cheerful as ever."`)
+	assert.Contains(t, text, "Keep the fire low.")
+	assert.Contains(t, text, "Cheerful as ever.")
+	assert.Contains(t, text, "Hild</ansi>", "the speaker is named")
+	assert.Contains(t, text, "Brann</ansi>", "the speaker is named")
+	assert.NotContains(t, text, "Hild</ansi> mutters, ", "camp talk no longer reads as a log of 'Name says'")
 
 	now = now.Add(camping.RestDuration)
 	scheduler.fireLatest()
 	events.ProcessEvents()
 	end := strings.Join(*messages, "")
 	assert.Contains(t, end, "feels rested")
-	assert.Contains(t, end, `Hild</ansi> mutters, "Keep the fire low."`, "and again as the rest ends")
+	assert.Contains(t, end, "Keep the fire low.", "and again as the rest ends")
 	assert.Equal(t, []string{banter.CtxCamp, banter.CtxRested}, stub.asked)
 }
 
