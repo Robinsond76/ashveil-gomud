@@ -21,6 +21,12 @@ was logged until the cause showed.
 | `TestPacklordHoundHobblesFoesBelowThreeQuartersAtRankFortyFive/level_44` | The company's blows land before the hound's bite and wear a foe set at 60% under half, where a level 44 hound legitimately hobbles. Crits made it likelier. | Foes start at 70% (still above half, below three quarters; 200 points of room instead of 100) and `noCrits`. What the test checks is unchanged. |
 | `make smoke`: "1 of 1354 help topics render nothing: [keyring]" | The topic list came from map iteration (random order) and the step ended each read at the first `HP:../.. MP:../..]` prompt. `keyring`, `lock`, `unlock` and `picklock` print an example prompt, which ended the read early; the page's tail (`help keyring` is named in the lock pages) then satisfied the *next* topic's echo wait, so that topic read as empty. | Topics are sorted, and the step drains the rest of the page after the prompt. The cause is test-side; no page changed. |
 
+| `TestHealersDefaultSaysWhyTheLeaderTurns` (found 2026-10-08 in a shuffled loaded run after the speed-turn merge) | The healer foe kept its natural health, so the companions' blows (crits among them) could fell it before Aria's turn; she then turned toward another foe and the test's "no `You turn toward`" check failed. | `hardenBandits` before the round, so the healer outlasts it. 800 of 800 clean under load. |
+
+## Speed-turn merge (82a-82d)
+
+Merged master into the branch. The pace tests (`wiring_pace_test.go`, battle event, morale) replace the pace clock with `SetPaceClockForTest`, so they do not read wall-clock time; the sigil and poison tests use `time.Now()` only with hour-scale or minutes-scale expiries. The helper tests (`hardTo`, `noCrits`, Packlord, Deadeye, Warlord) stayed clean under load after the merge. The unnamed Go Tests failure on #189's head (d7b299b0) could not be read from CI; the healer test above is the only new failure two shuffled loaded full-package runs produced, and it passes locally in the 82d state, so it is the likeliest candidate but unconfirmed.
+
 ## Not reproduced
 
 - **PR #107's unnamed CI failure.** The GitHub Go Tests log is unreadable past
@@ -47,4 +53,4 @@ No player-facing change, so no help page.
 
 ## Status
 
-Paused 2026-10-07 at the owner's request (only the combat overhaul proceeds). Work is complete and gated; PR #185 is open and unmerged, waiting for the review thread.
+Paused 2026-10-07 for the combat overhaul, resumed 2026-10-08 and brought up to date with master; PR #185 is open and unmerged, waiting for the review thread.
