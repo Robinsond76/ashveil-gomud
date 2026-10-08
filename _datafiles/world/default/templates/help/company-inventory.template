@@ -22,11 +22,14 @@ refuses a shield or weapon the class isn't taught (<ansi fg="command">help shiel
 about armor heavier than its training (<ansi fg="command">help armor</ansi>).
 
 In the web client, Company Inventory shows shared Cargo, treasury, supplies
-and containers, and every member's equipment slots: tap a slot to pick a
-cargo item for it, or drag cargo onto a member (<ansi fg="command">help companion-gear</ansi>). In
-Character > Gear, choose a member, select a slot and a compatible item for a
-Current → After preview; equip or preview removal there. Clicking a cargo
-item sends these commands for you (<ansi fg="command">help webclient</ansi>).
+and containers. Worn gear is not listed there, since it does not count toward
+the load: it is under Character > Gear (<ansi fg="command">help companion-gear</ansi>). Tabs above the
+cargo sort it: All (everything), Equipment, Potions, Food & drink, Materials
+and Other. Ores, hides, herbs and trophies are Materials; raw fish and meat
+are Food & drink; gems, trinkets and curios kept for sale are Other. A tab
+with nothing in it is hidden, and each shows how many items it holds. Tap a cargo item to look at it, compare it for a member, or equip it.
+In Character > Gear, choose a member, select a slot and a compatible item for a
+Current → After preview; equip or preview removal there (<ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help company meal</ansi>,
 <ansi fg="command">help company</ansi>, <ansi fg="command">help inventory</ansi>.

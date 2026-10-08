@@ -17,7 +17,7 @@ func TestCompanionGearHelp(t *testing.T) {
 	plain := tagPattern.ReplaceAllString(text, "")
 	for _, want := range []string{"Help for companion gear", "company equip [member] [item]", "company remove [member] [slot]",
 		"company gear [member]", "When a companion leaves", "comes back to your cargo", "never earns you free gear",
-		"doll wield", "Only your own dolls can be dressed", "Company > Inventory", "drag", "Character > Gear"} {
+		"doll wield", "Only your own dolls can be dressed", "Company > Inventory", "tabs", "Character > Gear"} {
 		assert.Contains(t, plain, want)
 	}
 	assert.NotContains(t, plain, "{{")

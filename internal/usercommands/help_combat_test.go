@@ -284,7 +284,7 @@ func TestFormationDefaultsHelp(t *testing.T) {
 	}
 	text, err = GetHelpContents("company-inventory")
 	require.NoError(t, err)
-	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "every member's equipment slots")
+	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Worn gear is not listed there")
 }
 
 // Phase 38a: the Witch and hexes pages render, are indexed (hexes under

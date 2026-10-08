@@ -9,9 +9,12 @@
  *               left to raise), then GoMud's human party under
  *               "Travelling with" (level, rank, location, health).
  *   Inventory - `company inventory` for the web: the load and its split,
- *               every member's worn and carried items (the player first),
- *               the horses, and the cargo, with tooltips and click menus
+ *               every member's carried items (the player first), the
+ *               horses, and the cargo, with tooltips and click menus
  *               that send real commands; Meal, Eat, and Drink buttons.
+ *               Worn gear is in Character > Gear. Category tabs (Phase 89:
+ *               All, Equipment, Potions, Food & drink, Materials, Other;
+ *               empty ones hidden) filter the carried items.
  *   Camp      - the camp seen from here, the fire, a rest's progress, the
  *               rest tier, each member's needs; buttons shown only when
  *               they would work.
@@ -120,6 +123,16 @@
         }
         .cmp-tab-btn.active { background: var(--t-bg); color: var(--t-text); border-bottom: 2px solid var(--t-accent); }
         .cmp-tab-btn:focus-visible { outline: 2px solid var(--t-accent); outline-offset: -2px; }
+
+        .cmp-inv-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 2px; }
+        .cmp-inv-tab {
+            font: inherit; font-size: 0.8em; color: var(--t-text-secondary);
+            background: var(--t-bg-surface); border: 1px solid var(--t-border);
+            border-radius: 3px; padding: 3px 10px; cursor: pointer;
+        }
+        .cmp-inv-tab[aria-pressed="true"] { color: var(--t-text); border-color: var(--t-accent); box-shadow: inset 0 0 0 1px var(--t-accent); font-weight: bold; }
+        .cmp-inv-tab:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
+        @media (hover: hover) and (pointer: fine) { .cmp-inv-tab:hover { border-color: var(--t-accent); color: var(--t-text); } }
 
         .cmp-panel { flex: 1; min-height: 0; overflow-y: auto; }
         .cmp-panel[hidden] { display: none !important; }
@@ -241,18 +254,10 @@
         }
 
         button.cmp-item { cursor: pointer; }
-        /* Phase 48: a member's equipment slots; drop targets for cargo */
-        .cmp-equip-member { margin-bottom: 6px; }
-        .cmp-equip-member h5 { margin: 4px 0 2px; font-size: 1em; display: flex; justify-content: space-between; gap: 6px; }
-        .cmp-slot .cmp-name { overflow-wrap: anywhere; flex: 1; text-align: left; }
-        .cmp-slot .cmp-slotname { color: var(--t-text-secondary); min-width: 4.5em; }
-        .cmp-slot.empty .cmp-name { color: var(--t-text-secondary); font-style: italic; }
-        .cmp-drop { outline: 2px dashed var(--t-accent); outline-offset: -2px; }
-        .cmp-away { opacity: 0.6; }
         @media (hover: hover) and (pointer: fine) {
             button.cmp-item:hover { background: var(--t-bg-hover); color: var(--t-text); box-shadow: inset 0 0 0 1px var(--t-accent); }
             /* Phase 57: every part of a highlighted row stays readable */
-            button.cmp-item:hover .cmp-meta, button.cmp-item:hover .cmp-slotname { color: inherit; }
+            button.cmp-item:hover .cmp-meta { color: inherit; }
         }
         button.cmp-item:focus-visible { outline: 2px solid var(--t-accent); }
         .cmp-item .cmp-meta { color: var(--t-text-secondary); white-space: nowrap; }
@@ -1166,10 +1171,9 @@
         return menu;
     }
 
-    function itemRow(i, menu, drag) {
+    function itemRow(i, menu) {
         const li = el('li');
         const row = el(menu ? 'button' : 'div', 'cmp-item');
-        if (drag) { draggable(row, drag(i)); }
         if (menu) {
             row.type = 'button';
             row.setAttribute('aria-haspopup', 'menu');
@@ -1183,9 +1187,9 @@
         return li;
     }
 
-    function itemList(items, menuFor, drag) {
+    function itemList(items, menuFor) {
         const ul = el('ul', 'cmp-items');
-        items.forEach(i => ul.appendChild(itemRow(i, menuFor ? () => menuFor(i) : null, drag)));
+        items.forEach(i => ul.appendChild(itemRow(i, menuFor ? () => menuFor(i) : null)));
         return ul;
     }
 
@@ -1205,136 +1209,10 @@
             return block;
         }
         if (!shared) { block.appendChild(el('div', 'cmp-sub', m.pack ? 'Pack: ' + m.pack + ' (+' + CompanyData.kg(m.pack_bonus_g) + ')' : 'No pack')); }
-        block.appendChild(el('div', 'cmp-sub', 'Wearing'));
-        block.appendChild(m.worn.length ? itemList(m.worn, shared && (isYou || m.available) ? (i => [{ label: 'Remove to cargo', cmd: 'company remove ' + memberSelector(m.key) + ' ' + i.slot }]) : (isYou ? (i => yourItemMenu(i, true)) : null)) : el('div', 'cmp-note', 'nothing'));
         if (!shared) { block.appendChild(el('div', 'cmp-sub', 'Carrying'));
-        block.appendChild(m.carried.length ? itemList(m.carried, isYou ? (i => yourItemMenu(i, false)) : null) : el('div', 'cmp-note', 'nothing')); }
+        const carried = filterItems(m.carried);
+        block.appendChild(carried.length ? itemList(carried, isYou ? (i => yourItemMenu(i, false)) : null) : el('div', 'cmp-note', invTab === 'all' ? 'nothing' : 'nothing here')); }
         return block;
-    }
-
-    // --- Equipment slots (Phase 48) ---
-
-    // fitsSlot: whether a cargo item can go in a slot (the server decides
-    // for real; this only offers sensible picks).
-    function fitsSlot(i, slot) {
-        const type = (i.type || '').toLowerCase();
-        return type === slot || (slot === 'offhand' && type === 'weapon');
-    }
-
-    // fitsMember: a creature (Phase 38e) wears only gear cut for its
-    // species, and nobody else wears that gear.
-    function fitsMember(i, m) {
-        const cut = Array.isArray(i.worn_by) ? i.worn_by : [];
-        return m.species ? cut.indexOf(m.species) >= 0 : cut.length === 0;
-    }
-
-    function equipCommand(sel, i, slot) {
-        // A slot can be named only with an exact (instance) reference.
-        return 'company equip ' + sel + ' ' + i.ref + (i.ref && i.ref.charAt(0) === '!' && i.ref.indexOf(':') > 0 ? ' ' + slot : '');
-    }
-
-    function dragRef(e) {
-        try { return JSON.parse(e.dataTransfer.getData('application/x-ashveil-gear') || 'null'); } catch (err) { return null; }
-    }
-
-    // dropTarget makes node accept a dragged gear item when ok(drag) says so,
-    // calling onDrop(drag).
-    function dropTarget(node, ok, onDrop) {
-        node.addEventListener('dragover', e => {
-            const types = Array.from(e.dataTransfer && e.dataTransfer.types || []);
-            if (!types.includes('application/x-ashveil-gear')) { return; }
-            e.preventDefault();
-            node.classList.add('cmp-drop');
-        });
-        node.addEventListener('dragleave', () => node.classList.remove('cmp-drop'));
-        node.addEventListener('drop', e => {
-            node.classList.remove('cmp-drop');
-            const drag = dragRef(e);
-            if (!drag) { return; }
-            e.preventDefault();
-            // A drop on the wrong spot does nothing; it never falls through
-            // to the member or cargo behind it.
-            e.stopPropagation();
-            if (ok(drag)) { onDrop(drag); }
-        });
-    }
-
-    function draggable(node, payload) {
-        node.draggable = true;
-        node.addEventListener('dragstart', e => {
-            e.dataTransfer.setData('application/x-ashveil-gear', JSON.stringify(payload));
-            e.dataTransfer.effectAllowed = 'move';
-        });
-    }
-
-    function equipmentSection(inv) {
-        const section = el('section', 'cmp-block');
-        section.setAttribute('aria-label', 'Equipment');
-        section.appendChild(el('h4', null, 'Equipment'));
-        section.appendChild(el('div', 'cmp-note', 'Tap a slot to pick from cargo, or drag a cargo item onto a member. Changes are refused in battle.'));
-        const slots = Array.isArray(inv.slots) ? inv.slots : [];
-        inv.members.forEach((m, idx) => {
-            const isYou = idx === 0;
-            const sel = memberSelector(m.key);
-            const ready = isYou || m.available;
-            const box = el('div', 'cmp-equip-member' + (ready ? '' : ' cmp-away'));
-            box.setAttribute('role', 'group');
-            box.setAttribute('aria-label', m.name + (isYou ? ' (you)' : '') + ' equipment');
-            const h = el('h5');
-            h.appendChild(el('span', null, m.name + (isYou ? ' (you)' : '')));
-            h.appendChild(el('span', 'cmp-weight', m.fallen ? 'fallen' : CompanyData.kg(m.grams)));
-            box.appendChild(h);
-            if (m.fallen) {
-                box.appendChild(el('div', 'cmp-note', 'Fallen: their gear is with the body.'));
-                section.appendChild(box);
-                return;
-            }
-            if (m.unrecorded) {
-                box.appendChild(el('div', 'cmp-note', 'Gear not yet recorded.'));
-                section.appendChild(box);
-                return;
-            }
-            if (!ready) { box.appendChild(el('div', 'cmp-note', 'Away from you: gear can change when they rejoin.')); }
-            const ul = el('ul', 'cmp-items');
-            const closed = Array.isArray(m.closed) ? m.closed : [];
-            slots.filter(slot => closed.indexOf(slot.slot) < 0).forEach(slot => {
-                const worn = (m.worn || []).find(w => w.slot === slot.slot);
-                const picks = ready ? (inv.cargo || []).filter(i => fitsSlot(i, slot.slot) && fitsMember(i, m)) : [];
-                const menu = () => {
-                    const out = [];
-                    if (worn) {
-                        out.push({ label: 'Look', cmd: 'look ' + worn.ref });
-                        out.push({ label: 'Remove to cargo', cmd: 'company remove ' + sel + ' ' + slot.slot });
-                    }
-                    picks.forEach(i => out.push({ label: (worn ? 'Swap in ' : 'Equip ') + label(i), cmd: equipCommand(sel, i, slot.slot) }));
-                    if (worn && window.GearEditor) { out.push({ label: 'Compare in Gear', fn: () => window.GearEditor.show(sel, slot.slot) }); }
-                    return out;
-                };
-                const interactive = ready && (worn || picks.length);
-                const li = el('li');
-                const row = el(interactive ? 'button' : 'div', 'cmp-item cmp-slot' + (worn ? '' : ' empty'));
-                if (interactive) {
-                    row.type = 'button';
-                    row.setAttribute('aria-haspopup', 'menu');
-                    row.addEventListener('click', e => uiMenu(e, menu()));
-                    row.setAttribute('data-focus', 'slot|' + sel + '|' + slot.slot);
-                }
-                row.appendChild(el('span', 'cmp-slotname', slot.label));
-                row.appendChild(el('span', 'cmp-name', worn ? label(worn) : 'empty'));
-                row.appendChild(el('span', 'cmp-meta', worn ? CompanyData.kg(worn.grams) : ''));
-                if (worn) { row.title = itemTip(worn); }
-                if (ready && worn && worn.slot !== 'pack') { draggable(row, { from: 'worn', member: sel, slot: slot.slot, ref: worn.ref }); }
-                if (ready) {
-                    dropTarget(row, d => d.from === 'cargo' && fitsSlot(d, slot.slot) && fitsMember(d, m), d => send(equipCommand(sel, d, slot.slot)));
-                }
-                li.appendChild(row);
-                ul.appendChild(li);
-            });
-            box.appendChild(ul);
-            if (ready) { dropTarget(box, d => d.from === 'cargo' && (d.type || '') !== '' && fitsMember(d, m), d => send('company equip ' + sel + ' ' + d.ref)); }
-            section.appendChild(box);
-        });
-        return section;
     }
 
     function horseMenu(h, yourItems) {
@@ -1380,6 +1258,67 @@
         const panel = document.getElementById('company-inventory');
         if (!panel) { return; }
         keepFocus(panel, () => buildInventory(panel));
+    }
+
+    // --- Inventory tabs (Phase 89) ---
+
+    // Worn gear lives in Character > Gear; these tabs sort what is carried.
+    const INV_TABS = [
+        { id: 'all', label: 'All' },
+        { id: 'equipment', label: 'Equipment' },
+        { id: 'potions', label: 'Potions' },
+        { id: 'food', label: 'Food & drink' },
+        { id: 'materials', label: 'Materials' },
+        { id: 'other', label: 'Other' },
+    ];
+    const WEARABLE_TYPES = ['weapon', 'body', 'head', 'feet', 'legs', 'gloves', 'offhand', 'neck', 'ring', 'belt', 'pack'];
+    let invTab = 'all';
+
+    // itemCategory is the tab an item sorts under (never 'all'). Trade
+    // goods sort by their trade category: provisions (raw fish) are food,
+    // valuables and curios (a garnet, a sealed letter) are not materials.
+    function itemCategory(i) {
+        const type = (i.type || '').toLowerCase(), sub = (i.subtype || '').toLowerCase(), goods = (i.goods || '').toLowerCase();
+        if (WEARABLE_TYPES.indexOf(type) >= 0 || sub === 'wearable') { return 'equipment'; }
+        if (type === 'potion') { return 'potions'; }
+        if (type === 'food' || type === 'drink' || sub === 'edible' || sub === 'drinkable' || goods === 'provision') { return 'food'; }
+        if (goods === 'valuable' || goods === 'curio') { return 'other'; }
+        if (type === 'commodity' || type === 'botanical' || type === 'gemstone' || goods) { return 'materials'; }
+        return 'other';
+    }
+
+    function filterItems(items) {
+        const list = Array.isArray(items) ? items : [];
+        return invTab === 'all' ? list : list.filter(i => itemCategory(i) === invTab);
+    }
+
+    // carriedItems is everything counted on the tabs: shared cargo, or
+    // every member's own pack.
+    function carriedItems(inv) {
+        if (inv.shared) { return inv.cargo || []; }
+        return inv.members.reduce((all, m) => all.concat(m.carried || []), (inv.cargo || []).slice());
+    }
+
+    function inventoryTabs(inv) {
+        const counts = {};
+        carriedItems(inv).forEach(i => { const c = itemCategory(i); counts[c] = (counts[c] || 0) + Math.max(1, i.count || 1); });
+        const tabs = INV_TABS.filter(t => t.id === 'all' || counts[t.id]);
+        if (!tabs.some(t => t.id === invTab)) { invTab = 'all'; }
+        const bar = el('div', 'cmp-inv-tabs');
+        bar.setAttribute('role', 'group');
+        bar.setAttribute('aria-label', 'Inventory categories');
+        tabs.forEach(t => {
+            const b = el('button', 'cmp-inv-tab', t.id === 'all' ? t.label : t.label + ' ' + counts[t.id]);
+            b.type = 'button';
+            b.setAttribute('data-focus', 'invtab|' + t.id);
+            b.setAttribute('aria-pressed', t.id === invTab ? 'true' : 'false');
+            b.addEventListener('click', () => { invTab = t.id; updateInventory(); });
+            bar.appendChild(b);
+        });
+        const wrap = el('div');
+        wrap.appendChild(bar);
+        wrap.appendChild(el('div', 'cmp-note', 'Worn gear is under Character › Gear.'));
+        return wrap;
     }
 
     function buildInventory(panel) {
@@ -1435,8 +1374,9 @@
             actions.appendChild(button(inv.autoloot ? 'Autoloot off' : 'Autoloot on', inv.autoloot ? 'autoloot off' : 'autoloot on', 'Toggle automatic loot after battle'));
         }
         pad.appendChild(actions);
+        pad.appendChild(inventoryTabs(inv));
 
-        if (inv.shared) {
+        if (inv.shared && invTab === 'all') {
             const containers = el('section', 'cmp-block');
             containers.setAttribute('aria-label', 'Assigned packs');
             containers.appendChild(el('h4', null, 'Containers'));
@@ -1447,7 +1387,6 @@
             if (!(inv.containers || []).length) { containers.appendChild(el('div', 'cmp-note', 'No assigned packs. Equip a pack from shared cargo (help pack).')); }
             pad.appendChild(containers);
         }
-        if (inv.shared) { pad.appendChild(equipmentSection(inv)); }
         const you = inv.members[0];
         if (!inv.shared) { inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, false))); }
 
@@ -1461,7 +1400,7 @@
         } else {
             horses.appendChild(el('div', 'cmp-note', 'none (help mount)'));
         }
-        pad.appendChild(horses);
+        if (invTab === 'all') { pad.appendChild(horses); }
 
         const cargo = el('section', 'cmp-block');
         cargo.setAttribute('aria-label', 'Cargo');
@@ -1469,14 +1408,10 @@
         ch.appendChild(el('span', null, 'Cargo'));
         if (inv.load) { ch.appendChild(el('span', 'cmp-weight', CompanyData.kg(inv.load.cargo_g))); }
         cargo.appendChild(ch);
-        cargo.appendChild(inv.cargo && inv.cargo.length
-            ? itemList(inv.cargo, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }],
-                inv.shared ? (i => ({ from: 'cargo', ref: i.ref, type: (i.type || '').toLowerCase(), worn_by: i.worn_by || [] })) : null)
-            : el('div', 'cmp-note', 'empty'));
-        if (inv.shared) {
-            // Dropping worn gear on the cargo takes it off, back to cargo.
-            dropTarget(cargo, d => d.from === 'worn', d => send('company remove ' + d.member + ' ' + d.slot));
-        }
+        const cargoItems = filterItems(inv.cargo || []);
+        cargo.appendChild(cargoItems.length
+            ? itemList(cargoItems, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }])
+            : el('div', 'cmp-note', invTab === 'all' ? 'empty' : 'nothing here'));
         pad.appendChild(cargo);
     }
 

@@ -34,8 +34,8 @@ Nothing is duplicated or automatically upgraded. There are no equipment presets.
 
 The legacy equip/wear/wield and remove commands manage the leader only.
 gearup directs you to deliberate assignment rather than choosing by price.
-In Company > Inventory, every member's slots are listed: tap a slot to pick from
-the cargo that fits, or drag cargo onto a member (help companion-gear).
+Company > Inventory sorts the cargo into tabs and does not list worn gear; tap a
+cargo item to equip it for a member (help companion-gear).
 Character > Gear is the equipment editor for you and each companion (choose
 whose gear at the top). Select a slot (including Pack),
 then a compatible exact cargo item to preview it. Current → After shows weapon
