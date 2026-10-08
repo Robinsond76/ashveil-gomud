@@ -46,6 +46,7 @@ func newPaceRig(t *testing.T) *paceRig {
 		fn  events.Listener
 	}{
 		{events.Message{}, Message_SendMessage},
+		{events.CombatReport{}, CombatReport_Mark},
 		{events.NewTurn{}, ReleasePacedCombat},
 		{events.RedrawPrompt{}, RedrawPrompt_SendRedraw},
 		{events.RoomChange{}, FlushPacedOnRoomChange},

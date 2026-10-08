@@ -67,6 +67,7 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	}{
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
+		{events.CombatReport{}, hooks.CombatReport_Mark},
 		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
@@ -142,7 +143,12 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	// (0.6s) and at least 3s after the round before it.
 	require.GreaterOrEqual(t, len(*starts), 2, "the fight took more than one round")
 	perRound := make([][]time.Duration, len(*starts))
-	for _, l := range sent {
+	for i, l := range sent {
+		if i > summary {
+			// The summary goes out whole behind its heading, not a beat a line.
+			assert.Equal(t, sent[summary].at, l.at, "summary line %q came apart from its heading", l.text)
+			continue
+		}
 		r := 0
 		for r+1 < len(*starts) && l.at >= (*starts)[r+1] {
 			r++

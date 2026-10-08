@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
-	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -110,7 +109,7 @@ func releaseAmbient(userId int) {
 	}
 	if u := users.GetByUserId(userId); u != nil {
 		// News the battle held back follows the summary at once.
-		combatpace.Default().MarkInstant(held...)
+		events.AddToQueue(events.CombatReport{UserId: userId})
 		for _, text := range held {
 			u.SendText(text)
 		}

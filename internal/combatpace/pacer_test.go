@@ -383,3 +383,18 @@ func TestFollowDataWaitsOnlyBehindHeldEntries(t *testing.T) {
 		t.Fatal("held lines: data follows them")
 	}
 }
+
+func TestReportLinesGoOutWithoutAWait(t *testing.T) {
+	p := New()
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	spec := Normal.ForRound(6 * time.Second)
+	p.Hold(1, 1, 1, "blow", spec, now)
+	p.Hold(1, 1, 1, "header", spec, now)
+	p.StartReport(1)
+	p.Hold(1, 1, 0, "row one", spec, now)
+	p.Follow(1, "row two")
+	out, _ := p.Due(now.Add(spec.Gap))
+	if len(out) != 4 || out[3].Text != "row two" {
+		t.Fatalf("report rows waited behind the header: %v", out)
+	}
+}

@@ -365,3 +365,12 @@ func CombatData_Hold(e events.Event) events.ListenerReturn {
 	}
 	return events.Continue
 }
+
+// CombatReport_Mark is events.CombatReport's listener: the player's lines
+// that follow it in this round go out without a beat of their own.
+func CombatReport_Mark(e events.Event) events.ListenerReturn {
+	if evt, ok := e.(events.CombatReport); ok {
+		combatpace.Default().StartReport(evt.UserId)
+	}
+	return events.Continue
+}
