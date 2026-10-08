@@ -211,6 +211,16 @@
 
         .cmp-recipes summary { cursor: pointer; font-weight: bold; }
         .cmp-recipes ul { margin: 4px 0; padding-left: 18px; }
+        .cmp-recipes .cmp-rb-group { color: var(--t-text-secondary); font-weight: bold; margin: 8px 0 2px; }
+        .cmp-recipe { border-left: 3px solid var(--t-accent-dim); padding: 2px 0 2px 6px; margin: 2px 0; }
+        .cmp-recipe[data-ready="1"] { border-left-color: var(--t-accent); }
+        .cmp-recipe summary { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-weight: normal; }
+        .cmp-recipe .cmp-rb-name { color: var(--t-text); overflow-wrap: anywhere; }
+        .cmp-recipe[data-ready="1"] .cmp-rb-name { color: var(--t-accent); font-weight: bold; }
+        .cmp-recipe .cmp-rb-state { color: var(--t-text-secondary); font-size: 0.85em; white-space: nowrap; }
+        .cmp-recipe ul { list-style: none; padding-left: 0; margin: 3px 0 2px; }
+        .cmp-recipe li { color: var(--t-text-secondary); }
+        .cmp-recipe li.is-short { color: var(--t-party-hp-low); }
         .cmp-block h4 .cmp-weight { color: var(--t-text-secondary); font-weight: normal; }
         .cmp-sub { color: var(--t-text-secondary); font-size: 0.9em; margin-top: 2px; }
 
@@ -473,7 +483,7 @@
         }
 
         .company-members > li {
-            flex: 1 1 200px;
+            flex: 1 1 100%;
             min-width: 0;
         }
 
@@ -1592,6 +1602,42 @@
         return block;
     }
 
+    // recipeBookRows groups the book by kind: dishes, remedies, then dishes
+    // learned at a hearth. Each recipe is a line with its name and whether it
+    // can be made now; its ingredients (what is to hand against what it
+    // takes) and the rank it asks unfold under it. Ready ones come first.
+    function recipeBookRows(rows) {
+        const groups = [['dish', 'Dishes'], ['remedy', 'Remedies'], ['hearth', 'Learned at a hearth']];
+        const out = [];
+        groups.forEach(g => {
+            const mine = rows.filter(r => (r.kind || 'dish') === g[0]);
+            if (!mine.length) { return; }
+            out.push(el('div', 'cmp-rb-group', g[1]));
+            mine.map((r, i) => ({ r, i })).sort((a, b) => (b.r.ready ? 1 : 0) - (a.r.ready ? 1 : 0) || a.i - b.i).forEach(x => {
+                const r = x.r;
+                const needs = Array.isArray(r.needs) ? r.needs : [];
+                const short = needs.some(n => n.have < n.count);
+                let state = 'Can make now';
+                if (r.kind === 'hearth') { state = 'At a hearth'; }
+                else if (!r.ready) { state = short ? 'Missing ingredients' : 'Needs ' + (r.skill || 'cooking') + ' ' + r.level; }
+                const item = el('details', 'cmp-recipe');
+                item.setAttribute('data-ready', r.ready ? '1' : '0');
+                const head = el('summary');
+                head.appendChild(el('span', 'cmp-rb-name', r.name + (r.kind === 'remedy' && r.for ? ' (for ' + r.for + ')' : '')));
+                head.appendChild(el('span', 'cmp-rb-state', state));
+                item.appendChild(head);
+                if (needs.length || r.skill) {
+                    const list = el('ul');
+                    needs.forEach(n => list.appendChild(el('li', n.have < n.count ? 'is-short' : null, n.count + ' ' + n.name + ' (have ' + n.have + ')')));
+                    if (r.skill && r.level) { list.appendChild(el('li', null, 'Needs ' + r.skill + ' ' + r.level)); }
+                    item.appendChild(list);
+                }
+                out.push(item);
+            });
+        });
+        return out;
+    }
+
     // recipesOpen remembers whether the Camp tab's recipe book is unfolded.
     let recipesOpen = false;
 
@@ -1764,9 +1810,13 @@
             book.open = recipesOpen;
             book.addEventListener('toggle', () => { recipesOpen = book.open; });
             book.appendChild(el('summary', null, 'Recipe book (' + camp.recipes.length + ')'));
-            const list = el('ul');
-            camp.recipes.forEach(r => list.appendChild(el('li', 'cmp-line', r)));
-            book.appendChild(list);
+            if (Array.isArray(camp.recipe_book) && camp.recipe_book.length) {
+                recipeBookRows(camp.recipe_book).forEach(n => book.appendChild(n));
+            } else {
+                const list = el('ul');
+                camp.recipes.forEach(r => list.appendChild(el('li', 'cmp-line', r)));
+                book.appendChild(list);
+            }
             book.appendChild(el('div', 'cmp-note', 'Type cook with a new mix of ingredients to find another dish (help recipes).'));
             pad.appendChild(book);
         }

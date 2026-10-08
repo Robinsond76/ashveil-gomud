@@ -228,6 +228,9 @@ type CampState struct {
 	// Recipes (Phase 56) are the dishes the leader has learned, one line
 	// each ("Hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)").
 	Recipes []string
+	// RecipeBook is the same book as structured rows (the Camp tab groups
+	// them by kind and marks which can be made from what is to hand).
+	RecipeBook []RecipeRow
 	// Music (camp music) is the Music block of the Camp tab: who plays
 	// what and what the next song gives. Gig is the inn's gig board, set
 	// only in a room with an inn.
@@ -370,4 +373,26 @@ func RestEnded(leaderUserID, roomID int) {
 	for _, fn := range fns {
 		fn(leaderUserID, roomID)
 	}
+}
+
+// RecipeNeed is one ingredient of a recipe: how many it takes and how many
+// the company has to hand.
+type RecipeNeed struct {
+	Name  string
+	Count int
+	Have  int
+}
+
+// RecipeRow is one entry of the recipe book. Kind is "dish", "remedy" or
+// "hearth" (a dish learned elsewhere, with no camp ingredients listed); For
+// names the ailment of a remedy; Skill and Level are the cooking rank a dish
+// asks; Ready says it can be made now.
+type RecipeRow struct {
+	Name  string
+	Kind  string
+	For   string
+	Needs []RecipeNeed
+	Skill string
+	Level int
+	Ready bool
 }
