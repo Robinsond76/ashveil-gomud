@@ -28,8 +28,9 @@ the systems that build groups, not hand-made content.
     bat groups of the shipped zones carry it.
   - *Zone spawn groups* (`FormSpawnGroups`, `planMixes`): an idle spawn group
     of three or more that is all one kind swaps its last member for another
-    kind from the room's own hostile spawn list; the swapped spawn entry goes
-    on cooldown as if the mob had died, and the newcomer joins the group. A
+    kind from the room's own hostile spawn list; the swapped spawn entry
+    tracks the newcomer (so the room keeps its head count), and the newcomer
+    joins the group. A
     group in a fight, already mixed, or in a room with one kind is left.
   - *Test-area random fights and story groups* build their foes by hand
     (`testarea fight`, authored story events), so they are as written.
@@ -54,4 +55,42 @@ generate, validate, js-lint, js-test and `go test -race -timeout 30m ./...` ran
 once. One failure, `TestWonBattleCompanionsTalk` (`wiring_banter_test.go:73`,
 "5 is not <= 4": five spoken lines after a victory where the test allows four):
 it fails about 2 in 40 on unmodified master as well, so it is a pre-existing
-flake unrelated to this phase, left for a flake phase.
+flake unrelated to this phase, left for a flake phase (the review found
+the cause and fixed the test; see below).
+
+## Review (2026-10-08)
+
+Opus review thread. Accepted and fixed:
+
+- **Spawn groups grew.** `mixSpawnGroups` put the swapped member's spawn
+  entry on cooldown, so when it came due it respawned its old kind, which
+  joined the idle group: a room of three became a group of four. The entry
+  now tracks the newcomer; it respawns its own kind only after the newcomer
+  dies. `TestARoomsOneKindGroupMixesAndKeepsItsHeadCount` drives `Prepare`
+  three times (fails on the old code).
+- **The opening line named one kind.** "A patrol of skeletons shambles
+  forward" opened a group of two skeletons and a bone warden. A mixed
+  encounter's line now names the newcomers ("A bone warden comes with
+  them.", "Two forest imps come with them.";
+  `TestAMixedGroupsOpeningLineNamesTheNewcomers`). Marrowmere's "three huge
+  crocodiles" now reads "huge crocodiles".
+- **Glancing prose.** A blow's lines were picked by damage alone, so a
+  glancing blow of half the weapon's top took the solid lines ("thrust
+  punches through Corrin's guard ... (glancing, 4 damage)"). A glancing
+  blow now takes the weak lines and a telling one at least the solid lines
+  (`blowProsePct`; `TestABlowsLinesMatchItsQuality` through a real pass,
+  fails on the old code). Crits and blows that did nothing are unchanged.
+- **`TestWonBattleCompanionsTalk` (2 in 40 on master).** Not a game bug:
+  since #203 a spoken line can break around its speaker ("Not one wound,"
+  Garrick announces. "A masterpiece."), and the test counted quoted
+  stretches, so a four-line exchange counted five. It now counts lines;
+  150 of 150 clean (2 failures in 150 before).
+
+Checked and kept: `Mix` draws only from the same zone table's ordinary
+compositions, and `Plan` still sets levels from the band and the group's
+size, so no foe comes above the band and the at-level numbers (measured
+with fixed foes) are unchanged. Across the shipped tables the newcomer's
+health at the band's low is within about a fifth of the kind it replaces;
+the toughest draw is a pack animal (a wolf joining brigands), which those
+zones already field three or four at a time. A pack's members may still be
+drawn into another group (a dog running with brigands); kept.

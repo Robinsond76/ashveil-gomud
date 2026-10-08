@@ -532,6 +532,23 @@ func applyDefenseReduction(damage, defenseRating int) (finalDamage, reduction in
 
 // damagePercentOfMax returns the dealt damage expressed as a percentage of the
 // theoretical maximum damage for the given dice configuration.
+// blowProsePct keeps a landed blow's lines in step with its quality (89
+// review): a glancing blow reads as a weak one ("nicks", not "punches
+// through the guard"), and a telling blow at least as a solid one. A crit
+// reads as a crit, and a blow that did nothing as a miss.
+func blowProsePct(pct int, quality string, crit bool) int {
+	if pct < 1 || crit {
+		return pct
+	}
+	switch quality {
+	case QualityGlancing:
+		return min(pct, items.NormalAttackPct-1)
+	case QualityTelling:
+		return max(pct, items.NormalAttackPct)
+	}
+	return pct
+}
+
 func damagePercentOfMax(damage, dCount, dSides, dBonus int) int {
 	maxDmg := dCount*dSides + dBonus
 	if maxDmg < 1 {

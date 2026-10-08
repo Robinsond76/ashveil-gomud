@@ -943,7 +943,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				// An edge raises the strike's ceiling too, so a sharpened
 				// top roll isn't described as a critical.
-				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus)
+				pct := blowProsePct(damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus), hitQuality, isCrit)
 				// A crit the armor took entirely reads as any fully blocked
 				// blow does: a miss (Phase 29c review fix).
 				msgs := items.GetAttackMessage(weaponSubType, pct, isCrit && attackTargetDamage > 0)

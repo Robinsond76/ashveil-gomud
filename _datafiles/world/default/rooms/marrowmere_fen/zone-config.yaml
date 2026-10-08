@@ -19,7 +19,7 @@ encounters:
         count: 1
     - id: croc-trio
       weight: 20
-      text: The reeds part on three huge crocodiles.
+      text: The reeds part on huge crocodiles.
       members:
       - mobid: 60
         count: 3

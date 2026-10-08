@@ -68,9 +68,17 @@ func TestWonBattleCompanionsTalk(t *testing.T) {
 	banterPercents(t, 100, 100, 100)
 	out := battleWon(b, combatstream.OutcomeVictory)
 	require.Regexp(t, spoken, out, "companions spoke after the victory")
-	lines := spoken.FindAllString(out, -1)
-	assert.GreaterOrEqual(t, len(lines), 2)
-	assert.LessOrEqual(t, len(lines), 4)
+	// Count spoken lines, not quotes: since camp talk reads like a book
+	// (#203) a line can break its speech around the speaker ("Not one
+	// wound," Garrick announces. "A masterpiece."), two quotes on one line.
+	lines := 0
+	for _, line := range strings.Split(out, "\n") {
+		if spoken.MatchString(line) {
+			lines++
+		}
+	}
+	assert.GreaterOrEqual(t, lines, 2)
+	assert.LessOrEqual(t, lines, 4, out)
 	record, _ := module.registry.Get(7)
 	named := 0
 	for _, c := range record.Companions {

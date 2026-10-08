@@ -281,8 +281,8 @@ func planMixes(groups map[string][]groupable, order []string, pool []SpawnInfo, 
 
 // mixSpawnGroups makes the room's idle one-kind groups of three or more
 // mixed, swapping a member for another kind from the room's spawn list.
-// The replaced member's spawn entry goes on cooldown like a killed one, and
-// the newcomer joins the group the way a top-up does.
+// The replaced member's spawn entry tracks the newcomer, which joins the
+// group the way a top-up does.
 func (r *Room) mixSpawnGroups(prefix string, pool []SpawnInfo, joined map[int]bool) {
 	if len(pool) < 2 {
 		return
@@ -310,10 +310,13 @@ func (r *Room) mixSpawnGroups(prefix string, pool []SpawnInfo, joined map[int]bo
 			continue
 		}
 		group, name, desc := old.SpawnGroup, old.GroupName, old.GroupDesc
+		// The replaced member's entry tracks the newcomer, so the room
+		// keeps its head count: the entry respawns its own kind only
+		// when the newcomer dies (89 review: putting the entry on
+		// cooldown respawned it later as an extra member).
 		for i, e := range r.SpawnInfo {
 			if e.InstanceId == sw.InstanceId {
-				r.SpawnInfo[i].InstanceId = 0
-				r.SpawnInfo[i].DespawnedRound = util.GetRoundCount()
+				r.SpawnInfo[i].InstanceId = mob.InstanceId
 			}
 		}
 		r.RemoveMob(sw.InstanceId)

@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,6 +34,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -318,6 +320,7 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	if !ok {
 		return false
 	}
+	authored := comp
 	comp = encounters.Mix(comp, table, lookup, m.rng)
 	foes := encounters.Soften(encounters.Plan(comp, zone.Band, m.rng), companyview.LevelFor(users.GetByUserId(userID)), zone.Band)
 	enc, err := m.spawn(roomID, userID, foes)
@@ -330,8 +333,33 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	if text == "" {
 		text = defaultText
 	}
-	room.SendText(text)
+	room.SendText(text + mixedLine(authored, comp))
 	return true
+}
+
+// mixedLine is what an opening line gains when Mix gave a one-kind group a
+// second kind (89 review): the authored text names only the first kind, so
+// the newcomers are named after it (" A bone warden comes with them.").
+func mixedLine(authored, mixed encounters.Composition) string {
+	if len(authored.Members) != 1 || len(mixed.Members) != 2 {
+		return ""
+	}
+	m := mixed.Members[1]
+	spec := mobs.GetMobSpec(mobs.MobId(m.MobID))
+	if spec == nil || spec.Character.Name == "" {
+		return ""
+	}
+	name := spec.Character.Name
+	plural := strings.HasSuffix(name, "s") && !strings.HasSuffix(name, "ss") // "echo bats"
+	switch {
+	case m.Count == 1 && plural:
+		return " " + mobparty.Capitalize(name) + " come with them."
+	case m.Count == 1:
+		return " " + mobparty.Capitalize(mobparty.Article(name)+" "+name) + " comes with them."
+	case !plural:
+		name = mobparty.Plural(name)
+	}
+	return " " + mobparty.Capitalize(mobparty.CountWord(m.Count)+" "+name) + " come with them."
 }
 
 // StartGroup implements encounters.StartProvider (Phase 60): a story event
