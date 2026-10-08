@@ -79,21 +79,48 @@ Win% (HP lost where it matters). "Before" is master; "after" is this phase.
   mirror (6-30%); that is a harness property (casters take the aim), not a
   class defect, and it was left alone as the at-level tuning relies on it
   being so.
-- Robinson ordered the combat overhaul to speed-ordered, one-at-a-time turns
-  (phase 82, building now). Tuning here stopped at "no longer weak" and did not
-  chase fine margins; every number in this plan is for the model on master
-  today and must be re-measured after the overhaul.
+- The first tables above were measured before the combat overhaul (phase 82).
+  They are kept as the record of how the numbers were found; the re-measure on
+  tempo combat below is the one that stands.
 
 ## Verification
 
 - `make generate`, `make validate`, `go test -race -timeout 30m ./...`,
   `make js-lint`, `make js-test`.
 
-## Paused (2026-10-07 14:03)
+## Re-measure on tempo combat (2026-10-08, after phase 82a-82d merged)
 
-Paused at Robinson's request so only the combat overhaul proceeds. Done:
-measurements, tuning, help, tests and docs; `make generate`, `make validate`,
-`make js-lint` and `make js-test` passed. Not done: the full
-`go test -race -timeout 30m ./...` run (stopped part way) and the PR. Resume by
-merging master, running the race suite and opening the PR (or re-measuring
-after the overhaul first).
+Same harnesses, 50 fights a cell (noise about +/-14 points), master classes
+against this branch's classes, both on the tempo combat. Per the 82 plan, no
+at-level foe number was touched: `TestBalanceAtLevel` fields only base
+classes (warrior, cleric, ranger, base wizard), none of which this phase
+changes, so its numbers stand.
+
+| Class | Master classes | This branch | Verdict |
+| --- | --- | --- | --- |
+| Druid (L35 summon cell; Priest 44 / 46) | 34 | **44** | Level with the Priest again. |
+| Elder Druid | 30 (under the Druid) | **54** | Leads the Druid by 10. |
+| High Sorcerer (L40 / L50) | 44 / 62 | **60 / 76** | Above the base wizard (66 / 44 here) at L50, level at L40; Archmage 72 / 58, Necromancer 60 / 60. |
+| Sorcerer (L15 / L25 / L40 / L50) | 56 / 38 / 30 / 28 | **68 / 54 / 34 / 34** | Still 10-30 under the base wizard (52 / 62 / 66 / 44) at L40-50. See below. |
+| Arcanist (L15 / L25 / L40 / L50) | 70 / 56 / 44 / 42 | 66 / 60 / 50 / 52 | Small lift, inside noise. |
+| Stone Golem (L5 / L10 / L20; warrior 72 / 88 / 62) | 60 / 86 / 68 | **66 / 94 / 76** | Level or ahead at every level. |
+| Nightblade (L50, 4 foes two levels up; Assassin 40 / 30) | 30 | 38 | Above the Assassin on this branch; noise-limited as before. |
+| Bearward (L15; base 80 / 76) | 68 | 80 | Not changed by this phase: the two runs differ by dice alone (+/-14); no class change warranted. |
+
+**Sorcerer.** A trial of a larger Lance (+80% damage, cost 10; High Sorcerer
++95% and +110%) was measured at 100 fights and moved nothing at L40-50
+(Sorcerer 30 / 36 against the base wizard's 43 / 46), so it was reverted and
+the values above stay. Damage is not what holds the advanced Sorcerer back at
+high level (a 2-round chant that blows interrupt, on a company whose
+other casters carry the fight); a real fix needs the chant itself looked at
+(its length or a first-cast free chant), which is a Sorcerer redesign rather
+than a number tweak. Recorded as a follow-up; the High Sorcerer, which is the
+route's destination, is well ahead of the base wizard.
+
+Warlock and Theurgist are unchanged and read level with the base wizard
+within noise on both combat models.
+
+## Verification
+
+- `make generate`, `make validate`, `go test -race -timeout 30m ./...`,
+  `make js-lint`, `make js-test`.

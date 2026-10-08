@@ -154,7 +154,7 @@ func TestHoundAndGolemBothFightUnderTheirOwnRules(t *testing.T) {
 	b.hardenBandits()
 	hound, golem := b.companion(5), b.companion(6)
 	assert.Equal(t, 20, hound.Character.ClassEffects().Int(classes.Pounce), "the hound's rank is live in the real mob")
-	assert.Equal(t, 15, golem.Character.ClassEffects().Int(classes.Slow), "the golem's rank is live in the real mob")
+	assert.Equal(t, 10, golem.Character.ClassEffects().Int(classes.Slow), "the golem's rank is live in the real mob")
 	assert.Equal(t, 25, golem.Character.ClassEffects().Int(classes.SpellWeak))
 	for range 4 {
 		b.fight()
