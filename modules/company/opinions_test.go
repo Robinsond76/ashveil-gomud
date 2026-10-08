@@ -87,6 +87,27 @@ func TestAPersonalityReactsToAChoiceAndLoyaltyMoves(t *testing.T) {
 	assert.Equal(t, bystander, loyaltyOf(t, 4), "a companion nobody named did not witness it")
 }
 
+func TestTwoCompanionsNeverSayTheSameWordsAboutAChoice(t *testing.T) {
+	newBrawl(t)
+	now := time.Unix(1_800_000_000, 0)
+	withClock(t, &now)
+	opine(t, map[int]opinionSetup{
+		1: {"boastful", 0, 50},
+		2: {"boastful", 0, 50},
+		3: {"stoic", 0, 50},
+	})
+	said, err := module.Opinion(7, opinions.Choice{Kind: opinions.Rough, Subject: "Verge", Witnesses: []int{1, 2, 3}})
+	require.NoError(t, err)
+	require.Len(t, said, 3)
+	joined := strings.Join(said, "\n")
+	assert.Equal(t, 1, strings.Count(joined, "I have standards"), "the second boastful voice does not repeat the first: %q", joined)
+	assert.Equal(t, 3, strings.Count(joined, "(loyalty"), "every change still shows, quietly")
+	assert.Contains(t, joined, `black-bold">(loyalty`, "the loyalty aside is dim")
+	for _, line := range said {
+		assert.NotRegexp(t, `^[^"]* (says|boasts|declares|murmurs), "`, line, "not the old 'Name says,' template")
+	}
+}
+
 func TestAnOpinionIsGivenOncePerChoiceAndOncePerCooldown(t *testing.T) {
 	newBrawl(t)
 	now := time.Unix(1_800_000_000, 0)

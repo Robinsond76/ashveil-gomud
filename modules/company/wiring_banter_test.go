@@ -17,7 +17,8 @@ import (
 // Phase 49 wiring: a recruit is rolled a personality; after a won battle,
 // and at a camp rest, companions talk; `set banter off` silences them.
 
-var spoken = regexp.MustCompile(`(says|laughs|mutters|boasts|remarks|murmurs|asks|grins|growls|declares|quips|says quietly), "`)
+// spoken matches a quoted line of speech (the quote holds no markup).
+var spoken = regexp.MustCompile(`"[^"<>]{8,}"`)
 
 func banterPercents(t *testing.T, battle, camp, rested int) {
 	t.Helper()

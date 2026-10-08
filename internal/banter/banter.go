@@ -50,14 +50,14 @@ var Personalities = []string{"stoic", "cheerful", "grim", "boastful", "wry", "de
 // Verbs is how each personality delivers a line.
 var verbs = map[string]string{
 	"stoic": "says", "cheerful": "laughs", "grim": "mutters",
-	"boastful": "boasts", "wry": "remarks", "devout": "murmurs",
+	"boastful": "says", "wry": "says", "devout": "murmurs",
 }
 
 // altVerbs vary a personality's delivery, so a cheerful companion does not
 // laugh at every line.
 var altVerbs = map[string][]string{
-	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"declares"},
-	"wry": {"quips"}, "devout": {"says quietly"},
+	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"calls out"},
+	"wry": {"quips"}, "devout": {"says"},
 }
 
 // verbFor is how a line is delivered: a question is asked; otherwise one
@@ -195,6 +195,9 @@ type Said struct {
 	Text   string // the line, names filled in
 	Verb   string
 	LineID string
+	// Personality is the speaker's temperament; it picks the small
+	// gestures that open or break a line (prose.go).
+	Personality string
 	// Ctx is the context the line was drawn from (Phase 65: a friend or
 	// rival line moves the pair's bond).
 	Ctx string
@@ -427,7 +430,7 @@ func (p *Pool) say(l Line, m Member, others []Member, rng Rand, req Request) Sai
 	text = strings.ReplaceAll(text, "{fallen}", req.Fallen)
 	text = strings.ReplaceAll(text, "{leader}", req.Leader)
 	text = strings.ReplaceAll(text, "{name}", m.callName(req.Members))
-	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verbFor(m.Personality, l.ID, text), LineID: l.ID}
+	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verbFor(m.Personality, l.ID, text), LineID: l.ID, Personality: m.Personality}
 }
 
 // sayIn is say, noting the context the line came from.
@@ -513,6 +516,7 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 			if len(cands) == 0 {
 				cands = p.usable(m, req, ctx, "", len(rest))
 			}
+			cands = p.unsaid(cands, said)
 			l, ok := p.pick(rng, m, req, cands)
 			if !ok {
 				continue
@@ -535,6 +539,7 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 					cands = append(cands, c)
 				}
 			}
+			cands = p.unsaid(cands, said)
 			if l, ok := p.pick(rng, opener, req, cands); ok {
 				said = append(said, p.sayIn(p.lines[l], opener, rest, rng, req, ctx))
 			}
@@ -542,6 +547,25 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 		return said
 	}
 	return nil
+}
+
+// unsaid drops the lines already spoken in this exchange, so two voices
+// never say the same thing at one fire.
+func (p *Pool) unsaid(cands []int, said []Said) []int {
+	var out []int
+	for _, c := range cands {
+		heard := false
+		for _, s := range said {
+			if s.LineID != "" && s.LineID == p.lines[c].ID {
+				heard = true
+				break
+			}
+		}
+		if !heard {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // repliesFor lists the lines speaker m can say answering prompt (a reply
@@ -558,17 +582,15 @@ func (p *Pool) repliesFor(m Member, req Request, prompt string, others int) []in
 	return out
 }
 
-// Format is an exchange as game text, one line per voice, each with the
-// speaker's name colored.
+// Format is an exchange as game text, one line per voice, written as
+// prose (see Narrator).
 func Format(said []Said) string {
-	var b strings.Builder
-	for i, s := range said {
-		if i > 0 {
-			b.WriteString("\n")
-		}
-		fmt.Fprintf(&b, `<ansi fg="cyan">%s</ansi> %s, "%s"`, s.Name, s.Verb, s.Text)
+	var n Narrator
+	lines := make([]string, 0, len(said))
+	for _, s := range said {
+		lines = append(lines, n.Line(s))
 	}
-	return b.String()
+	return strings.Join(lines, "\n")
 }
 
 // PersonalityFor is the personality used for a member that has none saved:
