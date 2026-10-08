@@ -73,8 +73,8 @@ func TestProseNeverOpensWithNameSaysTwice(t *testing.T) {
 
 func TestTwoVoicesNeverSayTheSameWords(t *testing.T) {
 	var n Narrator
-	first := plain(n.Line(said("Maren", "boastful", "rough", "Sleeping in dirt? I have standards.")))
-	second := plain(n.Line(said("Hild", "boastful", "rough", "Sleeping in dirt? I have standards.")))
+	first := plain(n.Say("Maren", "boastful", "rough", "Sleeping in dirt? I have standards.", MoodSour))
+	second := plain(n.Say("Hild", "boastful", "rough", "Sleeping in dirt? I have standards.", MoodSour))
 	if strings.Count(first+second, "standards") != 1 {
 		t.Fatalf("the words were repeated: %q / %q", first, second)
 	}
@@ -92,13 +92,140 @@ func TestQuoteFirstTurnsAFullStopIntoAComma(t *testing.T) {
 	}
 }
 
-func TestSplitNeedsTwoWordsEachSide(t *testing.T) {
-	if _, _, _, ok := splitText("Fine. Go."); ok {
-		t.Fatal("too short to split")
+func TestSplitNeedsAFullThoughtEachSide(t *testing.T) {
+	for _, text := range []string{
+		"Fine. Go.",
+		"Sleeping in dirt? I have standards.",
+		// Nor inside a list after a sentence break.
+		"Look at us. Heroes, wanderers, and professional fire-watchers.",
+	} {
+		if a, b, _, ok := splitText(text); ok {
+			t.Fatalf("split %q as %q / %q", text, a, b)
+		}
 	}
-	a, b, sentence, ok := splitText("Sleeping in dirt? I have standards.")
-	if !ok || !sentence || a != "Sleeping in dirt?" || b != "I have standards." {
+	// The tag never lands just before a punchline: it keeps the joke whole.
+	a, b, sentence, ok := splitText("If I had known adventure meant this much walking, I would have asked for a horse. Oh, I did.")
+	if !ok || sentence || b != "I would have asked for a horse. Oh, I did." {
 		t.Fatal(a, b, sentence, ok)
+	}
+	a, b, sentence, ok = splitText("Gold is a poor god now. It will own you, in time.")
+	if !ok || !sentence || a != "Gold is a poor god now." || b != "It will own you, in time." {
+		t.Fatal(a, b, sentence, ok)
+	}
+	a, b, sentence, ok = splitText("Is it me, or is it getting colder?")
+	if !ok || sentence || a != "Is it me" || b != "or is it getting colder?" {
+		t.Fatal(a, b, sentence, ok)
+	}
+}
+
+// looks are the ways one speaker turns to another.
+var looks = regexp.MustCompile(`glances at|turns toward|looks across at|answers|sour look|no mind`)
+
+func TestOnlyARepliesTurnsToTheLastSpeaker(t *testing.T) {
+	texts := []string{
+		"Another day on the road. I have had worse.",
+		"The fire is good. That is enough.",
+		"Do you think our luck will hold?",
+		"Keep the fire low. There are eyes out there, I am sure of it.",
+	}
+	names := []string{"Odo", "Tamsin", "Ilse"}
+	for seed := 0; seed < 300; seed++ {
+		var n Narrator
+		for i, text := range texts {
+			s := said(names[i%3], Personalities[(seed+i)%len(Personalities)], fmt.Sprint(seed, "-", i), text)
+			if out := plain(n.Line(s)); looks.MatchString(out) {
+				t.Fatalf("seed %d: a line that answers nobody turns to someone: %q", seed, out)
+			}
+		}
+	}
+	turned := false
+	for seed := 0; seed < 50 && !turned; seed++ {
+		var n Narrator
+		n.Line(said("Odo", "wry", fmt.Sprint("q", seed), "Is it me, or is it getting colder?"))
+		reply := said("Tamsin", "stoic", fmt.Sprint("r", seed), "It is not you. Put on another layer.")
+		reply.Reply = true
+		turned = looks.MatchString(plain(n.Line(reply)))
+	}
+	if !turned {
+		t.Fatal("a reply never turned to the one it answers")
+	}
+}
+
+func TestGesturesFitTheMood(t *testing.T) {
+	warm := map[string]bool{}
+	for _, list := range beats {
+		for _, b := range list {
+			warm[b] = true
+		}
+	}
+	for seed := 0; seed < 200; seed++ {
+		for _, p := range Personalities {
+			// A complaint never opens with a cheerful gesture, and agreeing
+			// with one never claps a shoulder.
+			var n Narrator
+			first := plain(n.Say("Maren", p, fmt.Sprint("rough", seed), "Sleeping in dirt? I have standards.", MoodSour))
+			echo := plain(n.Say("Hild", p, fmt.Sprint("rough", seed), "Sleeping in dirt? I have standards.", MoodSour))
+			if strings.Contains(echo, "claps") || strings.Contains(echo, "grins") {
+				t.Fatalf("a sour agreement reads warm: %q", echo)
+			}
+			for b := range warm {
+				if sourOK(p, b) {
+					continue
+				}
+				if strings.Contains(first, "Maren "+b+".") {
+					t.Fatalf("a complaint opens with a plain gesture %q: %q", b, first)
+				}
+			}
+			// Talk over the fallen never laughs, grins or quips.
+			var g Narrator
+			s := said("Pell", p, fmt.Sprint("fall", seed), "I cannot make a joke about it. Not about Odo. Not today.")
+			s.Ctx = CtxFall
+			out := plain(g.Line(s))
+			for _, light := range []string{"laugh", "grin", "quips", "announces", "hums", "stretches"} {
+				if strings.Contains(out, light) {
+					t.Fatalf("grief reads light (%s): %q", light, out)
+				}
+			}
+		}
+	}
+}
+
+// sourOK reports whether a plain gesture is also a sour one for p.
+func sourOK(p, b string) bool {
+	for _, s := range sourBeats[p] {
+		if s == b {
+			return true
+		}
+	}
+	return false
+}
+
+func TestAnExchangeMarksItsReplies(t *testing.T) {
+	p, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	members := []Member{
+		{ID: 1, Name: "Odo", Archetype: "wizard", Personality: "wry"},
+		{ID: 2, Name: "Tamsin", Archetype: "ranger", Personality: "stoic"},
+		{ID: 3, Name: "Hild", Archetype: "cleric", Personality: "devout"},
+	}
+	replies := 0
+	for seed := int64(0); seed < 400; seed++ {
+		said := p.Exchange(rand.New(rand.NewSource(seed)), Request{Contexts: []string{CtxCamp}, Members: members, Leader: "Robinson"})
+		for i, s := range said {
+			answers := p.lines[p.byID[s.LineID]].Reply
+			want := i > 0 && answers != "" && answers == said[i-1].LineID
+			if s.Reply != want {
+				t.Fatalf("seed %d line %d (%s) Reply=%v, answers %q after %q", seed, i, s.LineID, s.Reply, answers, said[max(i-1, 0)].LineID)
+			}
+			if s.Reply {
+				replies++
+			}
+		}
+	}
+	if replies == 0 {
+		t.Fatal("no exchange had a reply")
 	}
 }
 

@@ -103,6 +103,7 @@ func TestTwoCompanionsNeverSayTheSameWordsAboutAChoice(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(joined, "I have standards"), "the second boastful voice does not repeat the first: %q", joined)
 	assert.Equal(t, 3, strings.Count(joined, "(loyalty"), "every change still shows, quietly")
 	assert.Contains(t, joined, `black-bold">(loyalty`, "the loyalty aside is dim")
+	assert.NotContains(t, joined, "claps", "agreeing with a complaint is no friendly clap on the shoulder")
 	for _, line := range said {
 		assert.NotRegexp(t, `^[^"]* (says|boasts|declares|murmurs), "`, line, "not the old 'Name says,' template")
 	}

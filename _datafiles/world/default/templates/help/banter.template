@@ -25,7 +25,9 @@ for nightfall on the world clock.
 
 Talk reads like a page of a story, not a log: sometimes the quote comes first,
 sometimes a small gesture does, sometimes the speaker's name sits in the
-middle of the line. Two companions never say the same words in one go. When a
+middle of the line. A gesture fits the mood of the words, and a companion turns
+to another only when answering them. Two companions never say the same words in
+one go; the second agrees with a nod instead. When a
 choice of yours shifts a companion's loyalty (<ansi fg="command">help opinions</ansi>), the change
 sits quietly in grey at the end of the line.
 

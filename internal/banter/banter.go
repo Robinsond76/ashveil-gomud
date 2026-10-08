@@ -56,7 +56,7 @@ var verbs = map[string]string{
 // altVerbs vary a personality's delivery, so a cheerful companion does not
 // laugh at every line.
 var altVerbs = map[string][]string{
-	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"calls out"},
+	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"announces"},
 	"wry": {"quips"}, "devout": {"says"},
 }
 
@@ -198,6 +198,12 @@ type Said struct {
 	// Personality is the speaker's temperament; it picks the small
 	// gestures that open or break a line (prose.go).
 	Personality string
+	// Reply is set when the line answers the one said just before it, so
+	// it may be written as an answer (prose.go).
+	Reply bool
+	// Mood is MoodWarm or MoodSour for a line said in plain approval or
+	// displeasure (an opinion); grief over the fallen comes from Ctx.
+	Mood int
 	// Ctx is the context the line was drawn from (Phase 65: a friend or
 	// rival line moves the pair's bond).
 	Ctx string
@@ -511,17 +517,19 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 			rest := without(members, m.ID)
 			var cands []int
 			if replies := p.replies[last.ID]; len(replies) > 0 {
-				cands = p.repliesFor(m, req, last.ID, len(rest))
+				cands = p.unsaid(p.repliesFor(m, req, last.ID, len(rest)), said)
 			}
-			if len(cands) == 0 {
-				cands = p.usable(m, req, ctx, "", len(rest))
+			reply := len(cands) > 0
+			if !reply {
+				cands = p.unsaid(p.usable(m, req, ctx, "", len(rest)), said)
 			}
-			cands = p.unsaid(cands, said)
 			l, ok := p.pick(rng, m, req, cands)
 			if !ok {
 				continue
 			}
-			said = append(said, p.sayIn(p.lines[l], m, rest, rng, req, ctx))
+			s := p.sayIn(p.lines[l], m, rest, rng, req, ctx)
+			s.Reply = reply
+			said = append(said, s)
 			last = p.lines[l]
 			if len(said) == 3 {
 				break
