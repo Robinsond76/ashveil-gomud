@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -326,6 +327,13 @@ func TestDreadWhisperMakesAFoeTakeAMoraleCheck(t *testing.T) {
 		b.toughen()
 		b.hold(nil)
 		out += b.fight()
+	}
+	if !strings.Contains(out, "loses nerve and flees.") || !strings.Contains(out, "(dread)") {
+		agg := b.aria.Character.Aggro
+		t.Logf("DIAG out=%q\naggro=%+v mana=%d living=%d round=%d", out, agg, b.aria.Character.Mana, len(b.livingBandits()), b.round)
+		if agg != nil {
+			t.Logf("DIAG spell=%+v", agg.SpellInfo)
+		}
 	}
 	assert.Contains(t, out, "loses nerve and flees.")
 	assert.Contains(t, out, "(dread)")
