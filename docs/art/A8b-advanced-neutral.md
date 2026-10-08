@@ -16,11 +16,13 @@ golem) is drawn **alone**. Its creature has its own battle sprite (A7).
 
 ## Halberdier (from `halberdier`)
 
+The whole line carries a curved single-edged glaive in a grounded steppe style (owner decision, 2026-10-08). None of the glaives has an axe bit, hook or spike.
+
 | ID | Role in play | Design |
 |---|---|---|
-| `sweeper` | A wider, harder sweep | An ochre and leather coat, a broad-bladed glaive with a wide head, a red plume on the kettle helm. Battle: the polearm held low and wide for a sweep. |
-| `vanguard` | Holds a column, answers blows | A slate coat, steel pauldrons and a high collar, a blue-grey plume, a halberd braced butt-down. Battle: braced, the point toward the enemy. |
-| `valkyrie` | A sweep charged with lightning | Bone-pale and storm-blue cloth, a winged helm, a brass pauldron, a halberd head with faint crackling arcs. Battle: arcs flicker on the blade. |
+| `sweeper` | A wider, harder sweep | A weathered ochre wool split coat over dark iron lamellar, a red sash and horsehair tassel, a small pale fur shoulder, and a compact plain crescent glaive with a red tassel. Battle: the glaive held low and wide for a sweep. |
+| `vanguard` | Holds a column, answers blows | Heavy iron lamellar and rounded shoulder plates over a slate wool undercoat, a conical helmet with mail cheeks and neck, no plume or fur. A compact, angular engraved glaive. Battle: braced and guarded, the point toward the enemy. |
+| `valkyrie` | A sweep charged with lightning | Dark iron lamellar, a pale feather crest and fur, a bone-pale and storm-blue coat with bronze details. A feather-engraved glaive with two faded blue ribbons. Battle: a dim lightning accent on the blade. |
 
 ## Samurai (from `samurai`)
 

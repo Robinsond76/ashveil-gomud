@@ -23,7 +23,7 @@ its scale, grain and proportions.
 | `cleric` | Pale undyed wool robes with a brass-trimmed stole and an iron holy symbol on a cord. A tall brass-topped staff. (The owner approved the staff in place of a mace and shield, 2026-10-06.) |
 | `wizard` | A long slate blue-grey robe with a deep hood, and a gaunt face or long beard in shadow. A tall gnarled staff topped by a dim pewter-set stone. |
 | `witch` | Layered tattered heather shawls and a hood, ash-moss under-robes, bone and herb charms at the belt. A crooked ash staff hung with a small lantern. (The owner's witch sample is the target look.) |
-| `halberdier` | A kettle helm and a steel breastplate over a tawny padded coat. A halberd carried upright, its blade above the head. |
+| `halberdier` | A plain, lighter tawny steppe coat without fur, a dark lamellar vest, and a simple conical helmet with a leather neck flap. A curved single-edged glaive. (The owner approved this glaive design in place of the halberd, 2026-10-08; the class keeps its name.) |
 | `samurai` | A banded lacquered cuirass in deep red-brown, flared shoulder guards and a horned kabuto. A katana at the hip, hand on the hilt. Grounded and historical. |
 | `shaman` | A hide mantle with a thick fur collar, a carved bone mask pushed up or worn. A feathered totem staff with small bones and beads. |
 | `dollmaster` | A long plum frock coat with brass buttons and a bone-white mane. A wooden control bar with three strings held up in one hand, a jointed wooden doll dangling below it, a spool of thread at the belt. Unsettling, not cute. |

@@ -57,7 +57,7 @@ class's A1 map figure, drawn larger and side-on.
 | `cleric` | The approved A1 design: pale robes and the brass-topped staff, held ready in both hands. The holy symbol glints on one frame. |
 | `wizard` | Staff planted; a faint glow at the stone swells and fades. |
 | `witch` | Staff or wand low, the hood shading the face, a thin curl of grave-mist at the hem. |
-| `halberdier` | Halberd lowered and angled forward, feet set wide. |
+| `halberdier` | The approved glaive design (see A1): the glaive lowered and angled forward, feet set wide. |
 | `samurai` | A low ready stance, hand on the katana hilt (not yet drawn). |
 | `shaman` | Totem staff raised slightly, the mask down, feathers stirring. |
 | `dollmaster` | Control bar raised; the doll hangs on its strings and sways. |
