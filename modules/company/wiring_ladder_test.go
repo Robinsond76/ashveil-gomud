@@ -185,6 +185,9 @@ func TestHealersDefaultSaysWhyTheLeaderTurns(t *testing.T) {
 	b.aria.Character.Level = 6
 	b.cmd("attack", fmt.Sprintf("#%d", bruiser))
 	b.toughen()
+	// The healer must outlast the round: a companion's lucky blows could fell
+	// it before Aria's turn, and she would then turn toward another foe.
+	b.hardenBandits()
 	b.aria.Character.EndAggro()
 	got := b.fight()
 	assert.Contains(t, got, "Your company marks the bandit slinger as a healer and goes for it first.")
