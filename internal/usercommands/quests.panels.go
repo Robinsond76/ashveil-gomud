@@ -19,7 +19,7 @@ type questRow struct {
 
 func buildQuestsPanel(rows []questRow, questsFound, questsTotal int) string {
 	title := fmt.Sprintf(
-		` <ansi fg="black-bold">.:</ansi><ansi fg="20">Quests ( %d out of %d shown )</ansi> `,
+		` <ansi fg="black-bold">.:</ansi><ansi fg="69">Quests ( %d out of %d shown )</ansi> `,
 		questsFound, questsTotal,
 	)
 

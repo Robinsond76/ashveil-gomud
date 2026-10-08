@@ -204,7 +204,7 @@
 
     /* ── Gametime ────────────────────────────────────────────── */
     --t-gametime-time:   var(--p-accent-mid);
-    --t-gametime-date:   #4878a0;
+    --t-gametime-date:   #3d6687;
     --t-gametime-label-bg: rgba(240, 244, 248, 0.88);
 
     /* ── Comm ────────────────────────────────────────────────── */

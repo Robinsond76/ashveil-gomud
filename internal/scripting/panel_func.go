@@ -29,7 +29,7 @@ func PanelLayoutLoad(name string) *ScriptPanelLayout {
 //	var layout = PanelLayoutNew({ border: "full", charset: "rounded", gap: 1, margin: 1 });
 //	var slot = layout.AddSlot();
 //	slot.AddRow(["myPanel"]);
-//	layout.Panel("myPanel").SetTitle(' <ansi fg="20">Stats</ansi> ').SetWidth(34);
+//	layout.Panel("myPanel").SetTitle(' <ansi fg="69">Stats</ansi> ').SetWidth(34);
 //	layout.Panel("myPanel").Add("Str:", "S:", "42");
 //	SendText(layout.Render());
 func PanelLayoutNew(opts ...map[string]any) *ScriptPanelLayout {
