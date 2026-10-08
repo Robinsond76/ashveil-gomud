@@ -203,7 +203,7 @@ func (m *CampingModule) recipesLines(user *users.UserRecord) []string {
 }
 
 // bookNeeds counts a recipe's ingredients against what is to hand.
-func bookNeeds(inputs []int, have map[int]int) ([]camping.RecipeNeed, bool) {
+func bookNeeds(inputs []int, have func(itemID int) int) ([]camping.RecipeNeed, bool) {
 	counts := map[int]int{}
 	var ids []int
 	for _, id := range inputs {
@@ -216,8 +216,9 @@ func bookNeeds(inputs []int, have map[int]int) ([]camping.RecipeNeed, bool) {
 	needs := make([]camping.RecipeNeed, 0, len(ids))
 	ready := true
 	for _, id := range ids {
-		needs = append(needs, camping.RecipeNeed{Name: itemName(id), Count: counts[id], Have: have[id]})
-		if have[id] < counts[id] {
+		n := have(id)
+		needs = append(needs, camping.RecipeNeed{Name: itemName(id), Count: counts[id], Have: n})
+		if n < counts[id] {
 			ready = false
 		}
 	}
@@ -230,14 +231,18 @@ func bookNeeds(inputs []int, have map[int]int) ([]camping.RecipeNeed, bool) {
 func (m *CampingModule) recipeRows(user *users.UserRecord) []camping.RecipeRow {
 	all := m.campSettings().Recipes
 	recipes := knownCampRecipes(user, all)
-	have := map[int]int{}
+	stock := map[int]int{}
 	for _, s := range campStock(user) {
-		have[s.ItemID] = s.Count
+		stock[s.ItemID] = s.Count
 	}
+	// Dishes cook from the pack and cargo (campStock); remedies draw herbs
+	// from the whole company, companions' packs included (cureWith).
+	dishHave := func(id int) int { return stock[id] }
+	herbHave := func(id int) int { return m.gearCount(user.UserId, id) }
 	cook := m.bestCook(user, all)
 	var rows []camping.RecipeRow
 	for _, r := range recipes {
-		needs, ready := bookNeeds(r.Inputs, have)
+		needs, ready := bookNeeds(r.Inputs, dishHave)
 		if r.Skill != "" && cook.rank(r.Skill) < r.MinLevel {
 			ready = false
 		}
@@ -264,7 +269,7 @@ func (m *CampingModule) recipeRows(user *users.UserRecord) []camping.RecipeRow {
 	// Remedies (Phase 55) are in the same book.
 	for _, a := range survival.Ailments() {
 		if remedyKnown(user, a) {
-			needs, ready := bookNeeds(remedyRecipe(a), have)
+			needs, ready := bookNeeds(remedyRecipe(a), herbHave)
 			rows = append(rows, camping.RecipeRow{Name: a.RemedyName, Kind: "remedy", For: strings.ToLower(a.Name), Needs: needs, Ready: ready})
 		}
 	}

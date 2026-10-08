@@ -270,6 +270,7 @@ func TestRecipeRowsMarkWhatCanBeMadeNow(t *testing.T) {
 	w, cargo := discoveryWorld(t)
 	cargo.stacks[29] = 1
 	cargo.stacks[30018] = 1
+	w.m.itemCount = func(_, itemID int) int { return cargo.stacks[itemID] }
 	rows := w.m.recipeRows(w.user)
 	require.Len(t, rows, 2, "the common dish and the common remedy at first")
 	assert.Equal(t, "dish", rows[0].Kind)
@@ -282,5 +283,17 @@ func TestRecipeRowsMarkWhatCanBeMadeNow(t *testing.T) {
 	assert.Equal(t, 2, rows[1].Needs[0].Count)
 	cargo.stacks[29] = 0
 	assert.False(t, w.m.recipeRows(w.user)[0].Ready, "no meat, not ready")
+
+	// Review: a remedy draws herbs from the whole company (camp prepare
+	// remedy spends from companions' packs too), so the book counts them.
+	w.m.itemCount = func(_, itemID int) int {
+		if itemID == 30018 {
+			return 3 // one in the cargo, two in a companion's pack
+		}
+		return 0
+	}
+	remedy := w.m.recipeRows(w.user)[1]
+	assert.Equal(t, 3, remedy.Needs[0].Have)
+	assert.True(t, remedy.Ready, "herbs in a companion's pack make the remedy")
 	assert.Len(t, w.m.recipesLines(w.user), len(w.m.recipeRows(w.user)), "text lines and rows are the same book")
 }
