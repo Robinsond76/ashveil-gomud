@@ -900,3 +900,29 @@ func TestBossesEscortsAndStoryGroupsKeepFullHP(t *testing.T) {
 		}
 	}
 }
+
+// TestAWholeKindGroupComesMixed drives the real step into a room whose table
+// holds a row of wolves and a pack of spiders: the wolves arrive with a spider.
+func TestAWholeKindGroupComesMixed(t *testing.T) {
+	w := setup(t)
+	zone := rooms.GetZoneConfig(zoneName)
+	require.NotNil(t, zone)
+	cfg := *zone
+	cfg.Encounters.Tables = map[string][]encounters.Composition{
+		"woods": {
+			{ID: "wolves", Weight: 1, Text: "Wolves!", Members: []encounters.Member{{MobID: 96101, Count: 3}}},
+			{ID: "spiders", Weight: 1, Members: []encounters.Member{{MobID: 96102, Count: 2}}},
+		},
+	}
+	t.Cleanup(rooms.SetTestZoneConfig(&cfg))
+	w.roll = 0 // the first composition
+	w.walk(t, "north")
+	require.Len(t, w.m.active, 1)
+	for _, r := range w.m.active {
+		kinds := map[int]int{}
+		for _, id := range r.Foes {
+			kinds[int(mobs.GetInstance(id).MobId)]++
+		}
+		assert.Equal(t, map[int]int{96101: 2, 96102: 1}, kinds)
+	}
+}

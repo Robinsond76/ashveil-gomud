@@ -25,6 +25,7 @@ encounters:
         count: 1
     - id: vault-bats
       weight: 20
+      pack: true
       text: A cloud of echo bats screams out of a fissure.
       members:
       - mobid: 23

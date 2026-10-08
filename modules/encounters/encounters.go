@@ -318,6 +318,7 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	if !ok {
 		return false
 	}
+	comp = encounters.Mix(comp, table, lookup, m.rng)
 	foes := encounters.Soften(encounters.Plan(comp, zone.Band, m.rng), companyview.LevelFor(users.GetByUserId(userID)), zone.Band)
 	enc, err := m.spawn(roomID, userID, foes)
 	if err != nil {
