@@ -102,12 +102,12 @@ slot := layout.AddSlot()
 layout.AddPanelsToSlot(slot, "info", "stats")
 
 layout.Panel("info").
-    SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> `).
+    SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Info</ansi> `).
     SetWidth(30).
     Add(`<ansi fg="yellow">Name:</ansi>`, `<ansi fg="yellow">N:</ansi>`, character.Name)
 
 layout.Panel("stats").
-    SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Stats</ansi> `).
+    SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Stats</ansi> `).
     SetWidth(32).
     SetColumns(2).
     Add(`<ansi fg="yellow">Strength:</ansi>`, `<ansi fg="yellow">Str:</ansi>`, fmt.Sprintf("%d", str)).
@@ -179,22 +179,22 @@ slots:
   - rows:
       - panels:
           - id: info
-            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi>'
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="69">Info</ansi>'
             width: 32
 
   - rows:
       - panels:
           - id: attributes
-            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi>'
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="69">Attributes</ansi>'
             width: 44
             columns: 2
             column_gap: 2
       - panels:
           - id: wealth
-            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Wealth</ansi>'
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="69">Wealth</ansi>'
             width: 21
           - id: training
-            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Training</ansi>'
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="69">Training</ansi>'
             width: 22
 ```
 
@@ -471,7 +471,7 @@ between the corner/horizontal characters and the title text. To match the
 standard GoMud `.:` prefix:
 
 ```go
-layout.Panel("info").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> `)
+layout.Panel("info").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Info</ansi> `)
 ```
 
 To produce a plain title:

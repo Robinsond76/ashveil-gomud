@@ -107,9 +107,9 @@ func Emote(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// emoteAliases are sent without regard to Mute (Not marked as a communication)
 	// This is because they are pre-written.
 	if emoteText, ok := emoteAliases[rest]; ok {
-		user.SendText(fmt.Sprintf(`You Emote: <ansi fg="username">%s</ansi> <ansi fg="20">%s</ansi>`, user.Character.Name, emoteText))
+		user.SendText(fmt.Sprintf(`You Emote: <ansi fg="username">%s</ansi> <ansi fg="69">%s</ansi>`, user.Character.Name, emoteText))
 		room.SendText(
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="20">%s</ansi>`, user.Character.Name, emoteText),
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="69">%s</ansi>`, user.Character.Name, emoteText),
 			user.UserId,
 		)
 		return true, nil
@@ -123,11 +123,11 @@ func Emote(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if rest[0] == '@' && len(rest) > 1 {
 		rest = rest[1:]
 	} else {
-		user.SendText(fmt.Sprintf(`You Emote: <ansi fg="username">%s</ansi> <ansi fg="20">%s</ansi>`, user.Character.Name, rest))
+		user.SendText(fmt.Sprintf(`You Emote: <ansi fg="username">%s</ansi> <ansi fg="69">%s</ansi>`, user.Character.Name, rest))
 	}
 
 	room.SendTextCommunication(
-		fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="20">%s</ansi>`, user.Character.Name, rest),
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="69">%s</ansi>`, user.Character.Name, rest),
 		user.UserId,
 	)
 

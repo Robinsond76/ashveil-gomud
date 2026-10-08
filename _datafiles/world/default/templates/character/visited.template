@@ -1,4 +1,4 @@
- ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Zones Discovered</ansi> ─────────────────────────────────────────────────────┐
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="69">Zones Discovered</ansi> ─────────────────────────────────────────────────────┐
  {{ $nlLen := sub (len .Records) 1 }}{{ range $idx, $zInfo := .Records }}  <ansi fg="yellow-bold">{{ padRight 30 $zInfo.Name }}</ansi> <ansi fg="green">{{ $zInfo.BarFull }}</ansi><ansi fg="black-bold">{{ $zInfo.BarEmpty }}</ansi> <ansi fg="cyan-bold">{{ padRight 4 $zInfo.Completion }}</ansi>{{ if lt $idx $nlLen }}{{ end }}
  {{ end -}}
  └──────────────────────────────────────────────────────────────────────────┘
