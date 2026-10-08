@@ -40,14 +40,15 @@ func TestAHealOrderHealsWhenItsConditionHolds(t *testing.T) {
 
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.toughen()
 	out := b.fight()
 	assert.NotEqual(t, characters.SpellCast, oswin.Character.Aggro.Type, "no one hurt: the order waits")
 	assert.NotContains(t, out, "as ordered")
 
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 600
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 600
 	out = b.fight()
 	require.NotNil(t, oswin.Character.Aggro)
 	assert.Equal(t, characters.SpellCast, oswin.Character.Aggro.Type, "the order sent Oswin to heal though he is a fighter")
@@ -75,15 +76,17 @@ func TestAHealOrderLeavesAnAllyAHealAlreadyCovers(t *testing.T) {
 	b.cmd("orders", "oswin add ally 70 then heal")
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.toughen()
 	b.fight()
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 600
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 600
 	b.fight()
 	require.Len(t, orderEvents(*stream, "heal"), 1)
 	// Still chanting next round: the order is not read again mid-chant.
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 600
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 600
 	b.fight()
 	assert.LessOrEqual(t, len(orderEvents(*stream, "heal")), 2)
 }
@@ -126,7 +129,8 @@ func TestAGuardOrderMakesAFighterGuard(t *testing.T) {
 	b.fight()
 	assert.Empty(t, guardEvents(*got, combatstream.GuardUsed), "Aria is unhurt: Tamsin holds her place")
 
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 500
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 500
 	b.strike(0, false)
 	out := b.fight()
 	assert.Contains(t, out, "Tamsin Reed moves to guard you, as ordered.")
@@ -137,7 +141,8 @@ func TestAGuardOrderMakesAFighterGuard(t *testing.T) {
 	assert.Len(t, orderEvents(*got, "guard"), 1)
 
 	// The order keeps holding; its note is not repeated every round.
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 500
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 500
 	b.strike(0, false)
 	out = b.fight()
 	assert.NotContains(t, out, "moves to guard you, as ordered")
@@ -246,7 +251,7 @@ func TestASelfHealOrderHealsTheMember(t *testing.T) {
 	b.cmd("orders", "oswin add self 50 then heal")
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.toughen()
 	b.fight()
@@ -310,7 +315,8 @@ func TestAGuardOrderWithNoGuardLeftGivesWay(t *testing.T) {
 		}
 	}
 	got := b.listen()
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 500
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 500
 	b.mobCasts(mobs.GetInstance(slinger), "mm")
 	out := b.fight()
 	assert.NotContains(t, out, "moves to guard you, as ordered")

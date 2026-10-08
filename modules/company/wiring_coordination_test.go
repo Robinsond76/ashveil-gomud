@@ -398,7 +398,7 @@ func TestAnEnemyHealerHealsAgainstASoloPlayer(t *testing.T) {
 	healerRole(slinger)
 	b.aimAt("bandit captain")
 	for i := 0; i < 3 && castStarts(*stream, slinger, "heal") == 0; i++ {
-		b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+		hardTo(b.aria.Character, 1000)
 		b.hold(map[int]int{bruiser.InstanceId: 100})
 		b.fight()
 	}

@@ -24,10 +24,12 @@ func TestCompanyPatchHealsToTheThreshold(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 10
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 20}}
 	garrick := b.companion(3)
-	garrick.Character.HealthMax.Value, garrick.Character.Health = 100, 75
+	hardTo(&garrick.Character, 100)
+	garrick.Character.Health = 75
 	b.cmd("company", "tactics patch 70")
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 
@@ -53,7 +55,8 @@ func TestCompanyPatchKeepsTheReserve(t *testing.T) {
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 100, 60
 	b.cmd("strategy", "oswin reserve 50")
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 1000, 10
+	hardTo(&tamsin.Character, 1000)
+	tamsin.Character.Health = 10
 	b.cmd("company", "patch")
 	assert.GreaterOrEqual(t, oswin.Character.Mana, 50, "he keeps half his mana")
 	assert.Less(t, oswin.Character.Mana, 53, "and spends down to it")
@@ -108,7 +111,8 @@ func TestPatchThresholdIsItsOwnTactic(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 500, 500
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 10
 	b.cmd("company", "tactics healing 30")
 	assert.Equal(t, strategy.DefaultPatch, strategy.TacticsFor(7).Patch, "patch stays at its default")
 
@@ -152,7 +156,8 @@ func TestBattleEndPatchWaitsWhileTheCompanyFights(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 10
 	tamsin.Character.Aggro = &characters.Aggro{MobInstanceId: b.livingBandits()[0].InstanceId}
 	events.AddToQueue(events.BattleEnded{UserId: b.aria.UserId, Outcome: "victory"})
 	events.ProcessEvents()
@@ -175,7 +180,8 @@ func TestPatchIgnoresAimAtAFallenFoe(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 10
 	fallen := b.livingBandits()[0]
 	fallen.Character.Health = 0
 	ysolde := b.companion(4)
@@ -196,9 +202,11 @@ func TestCompanyPatchLeavesAnAllysCompanyAlone(t *testing.T) {
 	b.withArchetypes("")
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
-	allyTamsin.Character.HealthMax.Value, allyTamsin.Character.Health = 100, 10
+	hardTo(&allyTamsin.Character, 100)
+	allyTamsin.Character.Health = 10
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 10
 
 	assert.Contains(t, b.cmd("company", "patch"), "Your company patches itself up.")
 	assert.Greater(t, tamsin.Character.Health, 10, "her own Tamsin is healed")

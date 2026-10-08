@@ -322,15 +322,13 @@ func TestAnotherActiveCompanyBattleContinuesAfterRetreat(t *testing.T) {
 	other.Character.Level = 3
 	other.Character.RoomId = b.road.RoomId
 	other.Character.Validate()
-	other.Character.HealthMax.Value = 1000
-	other.Character.Health = 1000
+	hardTo(other.Character, 1000)
 	users.SetTestUser(other)
 	b.road.AddPlayer(8)
 	t.Cleanup(func() { b.road.RemovePlayer(8); users.RemoveTestUser(8); battle.End(8) })
 	foe := mobs.NewMobById(9108, b.road.RoomId)
 	b.road.AddMob(foe.InstanceId)
-	foe.Character.HealthMax.Value = 1000
-	foe.Character.Health = 1000
+	hardTo(&foe.Character, 1000)
 	other.Character.SetAggro(0, foe.InstanceId, characters.DefaultAttack)
 	foe.Character.SetAggro(8, 0, characters.DefaultAttack)
 	b.fight()
@@ -355,8 +353,7 @@ func TestLateAttachedMemberDoesNotJoinCapturedRetreat(t *testing.T) {
 	require.NoError(t, module.ReturnFlight(7))
 	late := b.companion(1)
 	require.NotEqual(t, old, late.InstanceId)
-	late.Character.HealthMax.Value = 1000
-	late.Character.Health = 1000
+	hardTo(&late.Character, 1000)
 	b.fight()
 	b.fight()
 	assert.Equal(t, 920102, b.aria.Character.RoomId)
@@ -421,7 +418,8 @@ func TestWimpyOrdersOneRetreat(t *testing.T) {
 	}, events.First)
 	t.Cleanup(func() { events.UnregisterListener(events.Input{}, listener) })
 	b.aria.SetConfigOption("wimpy", 50)
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 100
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 100
 	for i := 0; i < 3; i++ {
 		b.aria.WimpyCheck() // three hits in one round
 	}
@@ -447,7 +445,7 @@ func TestRetreatFromAPlayerFight(t *testing.T) {
 	rook := users.NewUserRecord(8, 1)
 	rook.Character.Name = "Rook"
 	rook.Character.RoomId = b.road.RoomId
-	rook.Character.HealthMax.Value, rook.Character.Health = 1000, 1000
+	hardTo(rook.Character, 1000)
 	rook.Character.Stats.Speed.ValueAdj = 20
 	users.SetTestUser(rook)
 	b.road.AddPlayer(8)

@@ -414,8 +414,9 @@ func TestPanaceanElixirKeepsAFallingAllyOnItsFeet(t *testing.T) {
 		forceBlows(t, true)
 		b.startWitchFight()
 		ysolde, garrick := b.companion(4), b.companion(3)
-		ysolde.Character.HealthMax.Value, ysolde.Character.Health = 100, 1
-		garrick.Character.HealthMax.Value, garrick.Character.Health = 1000, 1000
+		hardTo(&ysolde.Character, 100)
+		ysolde.Character.Health = 1
+		hardTo(&garrick.Character, 1000)
 		b.aria.Character.Health = b.aria.Character.HealthMax.Value
 		for _, m := range b.livingBandits() {
 			target := garrick
@@ -452,7 +453,8 @@ func TestPanaceanElixirWorksOnceUntilTheSecondElixir(t *testing.T) {
 		forceBlows(t, true)
 		b.startWitchFight()
 		ysolde := b.companion(4)
-		ysolde.Character.HealthMax.Value, ysolde.Character.Health = 20, 1 // a quarter is 5: the next blow is lethal again
+		hardTo(&ysolde.Character, 20) // a quarter is 5: the next blow is lethal again
+		ysolde.Character.Health = 1
 		b.aria.Character.Health = b.aria.Character.HealthMax.Value
 		for _, m := range b.livingBandits() {
 			m.Character.SetAggro(0, ysolde.InstanceId, characters.DefaultAttack)

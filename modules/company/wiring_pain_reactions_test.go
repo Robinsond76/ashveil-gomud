@@ -26,11 +26,11 @@ func TestPainReactionsThroughCombatRound(t *testing.T) {
 	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
 	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
-	b.aria.Character.Health, b.aria.Character.HealthMax.Value = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	for _, ids := range b.bandits {
 		for _, id := range ids {
 			mob := mobs.GetInstance(id)
-			mob.Character.Health, mob.Character.HealthMax.Value = 1000, 1000
+			hardTo(&mob.Character, 1000)
 		}
 	}
 	require.Contains(t, b.cmd("attack", "bandit cutthroats"), "You go for")

@@ -230,11 +230,11 @@ func TestNerveThroughRoundHesitationAndFlight(t *testing.T) {
 				r.Companions[i].Disposition = &domain.Disposition{Alignment: a, Loyalty: 20}
 			}
 			module.registry.Put(r)
-			b.aria.Character.HealthMax.Value = 100
+			hardMaxTo(b.aria.Character, 100)
 			b.aria.Character.Health = 20
 			for i := 1; i <= 4; i++ {
 				m := b.companion(i)
-				m.Character.HealthMax.Value = 100
+				hardMaxTo(&m.Character, 100)
 				m.Character.Health = 20
 			}
 			roll := 0
@@ -412,8 +412,7 @@ func TestSharedMoraleOwnerDepartureAndSameRoundTie(t *testing.T) {
 	b, other, _ := alliedBrawl(t)
 	forceBlows(t, false)
 	b.toughen()
-	other.Character.HealthMax.Value = 10000
-	other.Character.Health = 10000
+	hardTo(other.Character, 10000)
 	for _, m := range b.livingBandits() {
 		m.Temperament = "craven"
 	}

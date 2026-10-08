@@ -41,8 +41,7 @@ func roundTickDeath(t *testing.T, dies func(b *brawl, captain *mobs.Mob)) {
 	b.toughen()
 	b.aimAt("bandit captain")
 	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
-	captain.Character.HealthMax.Value = 1000
-	captain.Character.Health = 1000
+	hardTo(&captain.Character, 1000)
 	for i := 0; i < 30 && captain.Character.PlayerDamage[7] <= 0; i++ {
 		b.toughen()
 		b.fight()

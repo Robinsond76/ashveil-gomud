@@ -395,10 +395,11 @@ func TestBlightHalvesHealingItsHolderReceives(t *testing.T) {
 	b := witchBrawl(t, 1)
 	c := b.aria.Character
 	require.NoError(t, c.AddBuff(status.Blighted, false)) // (it recalculates, so before the health is set)
-	c.HealthMax.Value, c.Health = 1000, 100
+	hardTo(c, 1000)
+	c.Health = 100
 	assert.Equal(t, 5, c.ApplyHealthChange(10), "halved while blighted")
 	c.RemoveBuff(status.Blighted)
-	c.HealthMax.Value = 1000
+	hardMaxTo(c, 1000)
 	assert.Equal(t, 10, c.ApplyHealthChange(10), "whole once it lifts")
 	assert.Equal(t, -10, c.ApplyHealthChange(-10), "damage is not")
 }

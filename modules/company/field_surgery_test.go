@@ -23,7 +23,8 @@ func TestFieldSurgeryTreatsTheMostWoundedMembersWorstWound(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 20, 20
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 70
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 70
 	tamsin.Character.Wounds = []wounds.Wound{
 		{Kind: wounds.Fracture, Place: "arm", Points: 6},
 		{Kind: wounds.Cut, Place: "leg", Points: 2},
