@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 var _ domain.AdminProvider = (*CompanyModule)(nil)
@@ -72,7 +73,11 @@ func (m *CompanyModule) AdminRecruit(leaderUserID, roomID int, class string, lev
 	if record, has := m.registry.Get(leaderUserID); has && len(record.Companions) >= m.maxCompanions() {
 		return "", domain.ErrCompanyFull
 	}
-	companion, err := m.enlist(leaderUserID, roomID, templateID, map[int]struct{}{templateID: {}}, false, nil)
+	name := ""
+	if !creatures.Is(archetype) {
+		name = m.adminRecruitName(leaderUserID)
+	}
+	companion, err := m.enlistNamed(leaderUserID, roomID, templateID, map[int]struct{}{templateID: {}}, false, nil, name)
 	if err != nil {
 		return "", err
 	}
@@ -172,4 +177,50 @@ func (m *CompanyModule) AdminSetMember(leaderUserID, roomID int, selector, class
 		parts = append(parts, fmt.Sprintf("is now level %d", level))
 	}
 	return fmt.Sprintf("%s (#%d) %s.", nameOf(companion, templateName(companion.MobTemplateID, "The companion")), companion.ID, strings.Join(parts, " and ")), nil
+}
+
+// adminRecruitName is a random name for a test-area recruit, from the
+// generated-recruit name lists: its given name is free in the company, at
+// the recruiters and among online players, and is never the leader's.
+// Blank when the lists are empty or every name is taken (the template's
+// name stays).
+func (m *CompanyModule) adminRecruitName(leaderUserID int) string {
+	rules := m.rosterRules()
+	taken := map[string]bool{}
+	if record, ok := m.registry.Get(leaderUserID); ok {
+		for _, c := range record.Companions {
+			taken[givenKey(nameOf(c, ""))] = true
+		}
+	}
+	for _, r := range m.recruiters() {
+		for _, c := range r.Candidates {
+			taken[c.ID] = true
+			taken[givenKey(templateName(c.MobTemplateID, ""))] = true
+		}
+	}
+	for _, u := range users.GetAllActiveUsers() {
+		if u != nil && u.Character != nil {
+			taken[givenKey(u.Character.Name)] = true
+		}
+	}
+	if leader := users.GetByUserId(leaderUserID); leader != nil && leader.Character != nil {
+		taken[givenKey(leader.Character.Name)] = true
+	}
+	var free []string
+	for _, n := range rules.GivenNames {
+		if n = strings.TrimSpace(n); n != "" && !taken[givenKey(n)] {
+			free = append(free, n)
+		}
+	}
+	if len(free) == 0 {
+		return ""
+	}
+	rng := m.random()
+	name := free[rng.Intn(len(free))]
+	if len(rules.Bynames) > 0 && rng.Intn(100) < rules.BynamePercent {
+		if by := strings.TrimSpace(rules.Bynames[rng.Intn(len(rules.Bynames))]); by != "" {
+			name += " " + by
+		}
+	}
+	return name
 }
