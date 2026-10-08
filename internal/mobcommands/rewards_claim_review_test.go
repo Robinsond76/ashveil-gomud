@@ -124,7 +124,8 @@ func TestNoLootLineForAnEmptyBody(t *testing.T) {
 		if gold == 0 {
 			assert.NotContains(t, out, "claimed by", "an empty body has no loot to claim")
 		} else {
-			assert.Contains(t, out, "claimed by")
+			// Phase 88 review: the body is named with its article.
+			assert.Contains(t, out, `Battle loot from the <ansi fg="mobname">forest imp</ansi> is claimed by`)
 		}
 	}
 }

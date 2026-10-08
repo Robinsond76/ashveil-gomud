@@ -38,3 +38,30 @@ Robinson's log of an imp fight showed five problems. Decisions and findings:
 10. **"Brother Oswin's acolyte's mace".** Combat lines now name the kind of
     weapon ("Brother Oswin's mace"), the last word of its name
     (`combat.WeaponNoun`). `TestWeaponNounIsTheKindOfWeapon`, `TestFightLogWording`.
+
+## Review (2026-10-08)
+
+Played live at the Fork at the Black Oak with Brother Oswin and Tamsin Reed
+against three forest imps (`set combatpace off`). The kill now comes before the
+turn ("The first imp crumples and does not rise." then "Tamsin Reed turns
+toward the second imp."), weapons read "Brother Oswin's mace", "Your
+broadsword", "Tamsin Reed's cudgel", and no stray rage or corpse lines
+appeared. The level-1 company lost that fight, so no foe surrendered live; the
+surrender prompt is covered by `TestMoraleRoundYieldProtectionAndSpare`.
+
+Fixed:
+
+- **Rolled weapons named "(rare)".** The last-word rule read a rolled weapon's
+  display name ("Dawnfang, a keen iron shortsword (rare)") and named it
+  "(rare)"; an item adjective gave "(glowing)". Combat lines now take the kind
+  from the item's base name (`combat.WeaponNounOf`); relics and other
+  capitalised names keep their name ("Ashen Reaper"). Parry lines and "You
+  draw your ..." use it too. `TestWeaponNounOfAnItem`.
+- **"Battle loot from first imp".** The loot line now carries the article:
+  "Battle loot from the first imp is claimed by Torvald."
+  (`TestNoLootLineForAnEmptyBody`).
+
+Checked, no change: nothing in classes, skills or buffs grants rage, so "Your
+rage subsides" hid no effect. Held sunrise and sunset lines go out at
+`endBattle`, which every battle end passes through (including a player who
+logs off), and they queue behind any paced battle lines still being shown.

@@ -400,7 +400,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			room.AddCorpse(c)
 			// Said only when the body holds something: an empty one has no loot to claim.
 			if claimCorpse && c.HasItems() {
-				room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, mobNameTag(mob), users.CharacterName(claimOwner)))
+				room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, util.Article(mobNameTag(mob)), users.CharacterName(claimOwner)))
 			}
 		}
 		for _, c := range otherSpoils {

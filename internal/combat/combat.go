@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"unicode"
 	"time"
+	"unicode"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
