@@ -21,7 +21,7 @@ and the turn-order strip (82d) at 1280 px and 390 px against a live server.
 | A fallen (raisable) companion left a corpse that "crumbles to dust" mid-fight. | `internal/mobcommands/suicide.go` | A companion leaves no corpse on any of the three death paths (claimed loot, plain corpse, perma-gear); the flag is read before the charm is removed. The resurrect wiring test asserts no corpse. |
 | Web Room panel tagged companions "charmed" (the terminal already hides it). | `modules/gmcp/gmcp.Room.go`, `quickmenu.js` | They are tagged `companion`; the quick menu treats it as not a foe. Test `TestRoomPanelTagsCompanionsNotCharmed`. |
 | Blessings: "a later character will recruits cost 5% less". | `internal/blessings` `PerkText` | "pay 5% less for recruits". |
-| Mob pronouns: "The first skeleton is back on their feet" / "closes their guard". | `internal/status`, `modules/walking` | "is up again" / "'s guard closes"; the walking line avoids the pronoun too. |
+| Mob pronouns: "The first skeleton is back on their feet" / "closes their guard". | `internal/status`, `modules/walking` | "is up again" / "'s guard closes"; the walking recovery line reads "is up again, though still exhausted" (the review fixed it: the build had left "finds their feet"). |
 | Tab completion offered help topics that are not commands (`events`, `stances`, `relics`, `awakenings`, `enchanting`, `battlelog`, `hardcore`). | `internal/usercommands` `GetCmdSuggestions` | Only registered commands are completed. |
 | `company` with no verb printed one 600-character line. | `modules/company` `companyUsage` | Grouped on six lines (hiring, the band, gear, needs, growth). |
 
@@ -61,3 +61,11 @@ and the turn-order strip (82d) at 1280 px and 390 px against a live server.
   in one round share a number.
 - **No corpse for a companion.** Nothing looted it (their gear is kept by
   the company registry), and the decay line read as a second death.
+
+## Review (2026-10-08)
+
+Two small fixes (the walking line above, and the Bonds tab's comment said
+three pairs where the code says two). Help claims, the round numbering and
+the handler order were verified against the code; the web login, grouped
+`company` usage, the Room panel's `companion` tag and the quick menu were
+checked on the real page against a live server at 1280 px and 360 px.

@@ -665,7 +665,7 @@ func bandMessage(change bandChange, self bool, name string) string {
 	switch change.after {
 	case ExhaustedBuffId:
 		if change.before == CollapsedBuffId {
-			return pick(self, "You find your feet again, though you are still exhausted.", name+" finds their feet again, though still exhausted.")
+			return pick(self, "You find your feet again, though you are still exhausted.", name+" is up again, though still exhausted.")
 		}
 		return pick(self, "You are exhausted. Rest at a camp or an inn.", name+" is exhausted.")
 	case CollapsedBuffId:

@@ -1953,7 +1953,7 @@
             pad.appendChild(card);
         });
         // With one pair, each member's line would only repeat the card
-        // (Phase 79); the per-member summary earns its place from three up.
+        // (Phase 79); the per-member summary earns its place from two pairs up.
         const members = pairs.length > 1 && data && Array.isArray(data.members) ? data.members : [];
         members.forEach(m => {
             const feelings = Array.isArray(m.feelings) ? m.feelings : [];
