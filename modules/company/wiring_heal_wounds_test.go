@@ -52,7 +52,8 @@ func TestHealWoundsIsRefusedInAFight(t *testing.T) {
 func TestHealListsWithoutChangingAnything(t *testing.T) {
 	b := newBrawl(t)
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 30
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 30
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 40}}
 	out := b.cmd("heal", "")
 	assert.Contains(t, out, "Tamsin Reed: 30/100 (wound limit 60); a broken arm (holds back 40)")
@@ -72,7 +73,8 @@ func TestHealWoundsClericThenItems(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 20, 8
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 30
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 30
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 40}}
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 
@@ -203,7 +205,8 @@ func TestHealWoundsALeaderClericHealsToTheLimit(t *testing.T) {
 	c.SpellBook["tend"] = 1
 	c.Level = 20 // the heal's level bonus outweighs any dice roll
 	c.ManaMax.Value, c.Mana = 40, 40
-	c.HealthMax.Value, c.Health = 100, 50
+	hardTo(c, 100)
+	c.Health = 50
 	c.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "hand", Points: 2}}
 	out := b.cmd("heal", "wounds")
 	assert.Contains(t, out, "You tend your own cut hand, and it draws closed.")

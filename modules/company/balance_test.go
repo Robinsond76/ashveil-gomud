@@ -1142,7 +1142,7 @@ func TestBalanceStatusesLand(t *testing.T) {
 		}
 	}
 	require.NotNil(t, target, "an enemy still stands after one round")
-	target.Character.HealthMax.Value, target.Character.Health = 1000, 1000 // it outlasts its bleed
+	hardTo(&target.Character, 1000) // it outlasts its bleed
 	events.AddToQueue(events.Buff{MobInstanceId: target.InstanceId, BuffId: status.Bleeding, Source: "test"})
 	events.ProcessEvents()
 	require.True(t, target.Character.HasBuff(status.Bleeding), "the bleed landed")

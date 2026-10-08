@@ -60,8 +60,7 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	var dealt []string
 	for try := 0; try < 30 && dealt == nil; try++ {
 		b.toughen()
-		captain.Character.HealthMax.Value = 1000
-		captain.Character.Health = 1000
+		hardTo(&captain.Character, 1000)
 		oswin.Character.ManaMax.Value = 100
 		oswin.Character.Mana = 100
 		_, err := mobcommands.TryCommand("cast", "mm #"+strconv.Itoa(captain.InstanceId), oswin.InstanceId)

@@ -16,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math/rand"
 	"strconv"
 	"strings"
 	"testing"
@@ -26,7 +25,6 @@ func battlefieldBrawl(t *testing.T) *brawl {
 	b := newBrawl(t)
 	roomTags := append([]string(nil), b.road.Tags...)
 	t.Cleanup(func() { b.road.Tags = roomTags })
-	rand.Seed(30)
 	b.withArchetypes("")
 	b.toughen()
 	b.hold(nil)
@@ -286,7 +284,7 @@ func TestBattlefieldRealSpawnAndCampWatchConsumeDetectionOnce(t *testing.T) {
 		m := mobs.GetInstance(id)
 		assert.Equal(t, -1, m.AmbushAdvantage)
 		assert.Equal(t, 7, m.AmbushOwner)
-		m.Character.Health, m.Character.HealthMax.Value = 10000, 10000
+		hardTo(&m.Character, 10000)
 		m.Character.SetAggro(7, 0, characters.DefaultAttack, 20)
 	}
 	enemyparty.WatchAmbush(b.road.RoomId, first, 7)
@@ -388,7 +386,7 @@ func TestBattlefieldOpeningDoesNotSuppressAnotherPlayersBattle(t *testing.T) {
 	brom := users.NewUserRecord(8, 2)
 	brom.Character.Name, brom.Character.RaceId, brom.Character.RoomId = "Brom", 1, b.road.RoomId
 	brom.Character.Validate()
-	brom.Character.HealthMax.Value, brom.Character.Health = 10000, 10000
+	hardTo(brom.Character, 10000)
 	users.SetTestUser(brom)
 	b.road.AddPlayer(8)
 	t.Cleanup(func() { b.road.RemovePlayer(8); users.RemoveTestUser(8) })
@@ -398,7 +396,7 @@ func TestBattlefieldOpeningDoesNotSuppressAnotherPlayersBattle(t *testing.T) {
 	require.True(t, ok)
 	for _, id := range p.Members {
 		m := mobs.GetInstance(id)
-		m.Character.HealthMax.Value, m.Character.Health = 10000, 10000
+		hardTo(&m.Character, 10000)
 		m.AmbushAdvantage = 0
 		m.Character.SetAggro(8, 0, characters.DefaultAttack, 0)
 	}

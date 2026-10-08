@@ -103,7 +103,7 @@ func TestAttackStartsABattleWithAGroup(t *testing.T) {
 	aim := b.aria.Character.Aggro.MobInstanceId
 	assert.Contains(t, []int{pair[0].InstanceId, pair[1].InstanceId}, aim)
 
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.fight()
 	cur, ok := battle.Current(7)
 	require.True(t, ok)
@@ -159,10 +159,10 @@ func TestALoneMobIsAttackedByItsName(t *testing.T) {
 func TestNothingTypedChangesABattle(t *testing.T) {
 	b := newBrawl(t)
 	for _, m := range spawnedHostiles(t, 920106) {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000 // none falls: her aim holds
+		hardTo(&m.Character, 1000) // none falls: her aim holds
 	}
 	b.into(920106)
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.cmd("attack", "ruffians")
 	b.fight()
 	_, ok := battle.Current(7)
@@ -244,7 +244,7 @@ func TestLookAtAGroup(t *testing.T) {
 	assert.Contains(t, got, "Type scout ruffians to see how they stand, or attack ruffians to fight them.")
 	assert.NotContains(t, b.cmd("look", "ruffian"), "strong,", "a member is looked at as before")
 
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.cmd("attack", "ruffians")
 	b.fight()
 	assert.Contains(t, b.cmd("look", "ruffians"), "fighting you.")
@@ -278,7 +278,7 @@ func TestScoutAGroup(t *testing.T) {
 	assert.Contains(t, got, "*")
 
 	// In a fight, and on a waiting group, it works the same.
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.cmd("attack", kind)
 	b.fight()
 	assert.Contains(t, b.cmd("scout", kind), "as they stand")
@@ -309,10 +309,10 @@ func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	module.registry.Remove(7)
 	t.Cleanup(func() { module.registry.Put(rec) })
 	for _, m := range spawnedHostiles(t, 920106) {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	room := b.into(920106)
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.cmd("attack", "ruffians")
 	b.fight()
 	_, ok := battle.Current(7)
@@ -327,7 +327,7 @@ func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	mobs.DestroyInstance(target)
 	all := ""
 	for i := 0; i < 3; i++ {
-		b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+		hardTo(b.aria.Character, 1000)
 		all += b.fight()
 	}
 	a := b.aria.Character.Aggro

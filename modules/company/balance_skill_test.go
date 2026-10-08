@@ -107,7 +107,7 @@ func TestBalanceWarriorsAreTheTanks(t *testing.T) {
 		require.False(t, a.UntrainedArmor(), class)
 		total := 0
 		for i := 0; i < swings; i++ {
-			a.Health, a.HealthMax.Value = 10000, 10000
+			hardTo(a, 10000)
 			total += combat.AttackMobVsPlayer(mob, b.aria).DamageToTarget
 		}
 		perSwing[class] = float64(total) / float64(swings)

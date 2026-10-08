@@ -103,7 +103,8 @@ func (b *brawl) shapeBandits() (captain, bruiser, slinger, cutA, cutB int) {
 	b.t.Helper()
 	set := func(id, max, hp int) {
 		m := mobs.GetInstance(id)
-		m.Character.HealthMax.Value, m.Character.Health = max, hp
+		hardTo(&m.Character, max)
+		m.Character.Health = hp
 	}
 	captain, bruiser, slinger = b.bandits["bandit captain"][0], b.bandits["bandit bruiser"][0], b.bandits["bandit slinger"][0]
 	cutA, cutB = b.bandits["bandit cutthroat"][0], b.bandits["bandit cutthroat"][1]
@@ -206,8 +207,8 @@ func TestAPlayerAloneAimsByTheirRule(t *testing.T) {
 	pair := spawnedHostiles(t, 920103)
 	require.Len(t, pair, 2)
 	room := b.into(920103)
-	pair[0].Character.HealthMax.Value, pair[0].Character.Health = 100, 100
-	pair[1].Character.HealthMax.Value, pair[1].Character.Health = 120, 120
+	hardTo(&pair[0].Character, 100)
+	hardTo(&pair[1].Character, 120)
 
 	b.cmd("attack", "ruffians")
 	assert.Equal(t, pair[1].InstanceId, aimOf(b.aria.Character), "the strongest of the group")
@@ -215,7 +216,7 @@ func TestAPlayerAloneAimsByTheirRule(t *testing.T) {
 	// Weaken the other below the first: alone, she stays on her foe
 	// (sticky), then turns by her rule only when it falls.
 	pair[1].Character.Health = 50
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.fight()
 	assert.Equal(t, pair[1].InstanceId, aimOf(b.aria.Character), "a kept aim is sticky")
 	room.RemoveMob(pair[1].InstanceId)
@@ -246,7 +247,7 @@ func TestAClericCompanionHealsTheHurt(t *testing.T) {
 
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
 	for _, m := range b.livingBandits() { // aims are set: now no one falls
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.toughen()
 	b.fight()
@@ -256,7 +257,8 @@ func TestAClericCompanionHealsTheHurt(t *testing.T) {
 	require.NotZero(t, aim)
 
 	// Aria below half: Oswin heals her, with mana and a chant.
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 300
+	hardTo(b.aria.Character, 1000)
+	b.aria.Character.Health = 300
 	out := b.fight()
 	require.NotNil(t, oswin.Character.Aggro)
 	assert.Equal(t, characters.SpellCast, oswin.Character.Aggro.Type, "Oswin chants")
@@ -271,7 +273,7 @@ func TestAClericCompanionHealsTheHurt(t *testing.T) {
 	// foe without a "turns toward".
 	healed := false
 	for i := 0; i < 3 && !healed; i++ {
-		b.aria.Character.HealthMax.Value = 1000
+		hardMaxTo(b.aria.Character, 1000)
 		out = b.fight()
 		for _, e := range *stream {
 			if e.Kind == combatstream.Heal && e.Source.Name == "Brother Oswin" {

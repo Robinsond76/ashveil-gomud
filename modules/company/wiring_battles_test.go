@@ -138,8 +138,7 @@ func TestSecondPlayerTakesTheNextGroup(t *testing.T) {
 	brom.Character.Level = 3
 	brom.Character.RoomId = b.road.RoomId
 	brom.Character.Validate()
-	brom.Character.HealthMax.Value = 1000
-	brom.Character.Health = 1000
+	hardTo(brom.Character, 1000)
 	users.SetTestUser(brom)
 	b.road.AddPlayer(brom.UserId)
 	t.Cleanup(func() { b.road.RemovePlayer(8) })
@@ -180,8 +179,7 @@ func TestAttackOnAWaitingGroupIsRefused(t *testing.T) {
 	// The battle must outlast its first round: a lucky round once felled
 	// every engaged bandit and ended it (a random failure, seen in Phase 44).
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value = 1000
-		m.Character.Health = 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.fight()
 	cur, ok := battle.Current(7)
@@ -370,8 +368,7 @@ func TestDownedPlayerIsNotDrawnIntoNewBattles(t *testing.T) {
 	b.looseBandits()
 	b.aimAt("bandit captain")
 	for i := 0; i < 2; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		b.fight()
 	}
 	_, ok := battle.Current(7)
@@ -399,7 +396,7 @@ func TestDownedPlayerIsNotDrawnIntoNewBattles(t *testing.T) {
 func TestBackstabAtAWaitingGroupIsCalledOff(t *testing.T) {
 	b := newBrawl(t)
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.looseBandits()
 	b.aimAt("bandit captain")
@@ -437,8 +434,7 @@ func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 			m.Character.Stats.Speed.ValueAdj = 0
 			// The battle's foe must outlast the retreat's rounds, or a quick
 			// waiting group becomes the battle (30g4 lowered enemy HP).
-			m.Character.HealthMax.Value = 1000
-			m.Character.Health = 1000
+			hardTo(&m.Character, 1000)
 			continue
 		}
 		m.Character.Stats.Speed.ValueAdj = 100000
@@ -551,8 +547,7 @@ func TestASpawnedPairIsOneBattle(t *testing.T) {
 	b.cmd("attack", "ruffians")
 	var cur battle.Battle
 	for i := 0; i < 5; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		b.fight()
 		if c, ok := battle.Current(7); ok {
 			cur = c
@@ -575,7 +570,7 @@ func TestASpawnedPairIsOneBattle(t *testing.T) {
 func TestCastAtAWaitingGroupIsRefused(t *testing.T) {
 	b := newBrawl(t)
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.looseBandits()
 	b.aimAt("bandit captain")

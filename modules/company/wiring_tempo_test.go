@@ -125,8 +125,7 @@ func TestTempoRealRoundPvPAndCompanionTurns(t *testing.T) {
 		foe.Character.Level = 1
 		foe.Character.RoomId = b.road.RoomId
 		foe.Character.Validate()
-		foe.Character.HealthMax.Value = 1000
-		foe.Character.Health = 1000
+		hardTo(foe.Character, 1000)
 		users.SetTestUser(foe)
 		b.road.AddPlayer(8)
 		t.Cleanup(func() { b.road.RemovePlayer(8) })
@@ -222,8 +221,7 @@ func TestTempoSlowWaitingStillTicksOnZeroTurnRound(t *testing.T) {
 				foe := users.NewUserRecord(8, 2)
 				foe.Character.Name = "Brom"
 				foe.Character.RoomId = b.road.RoomId
-				foe.Character.HealthMax.Value = 10000
-				foe.Character.Health = 10000
+				hardTo(foe.Character, 10000)
 				users.SetTestUser(foe)
 				b.road.AddPlayer(8)
 				t.Cleanup(func() { b.road.RemovePlayer(8) })

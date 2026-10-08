@@ -28,7 +28,8 @@ func (b *brawl) saveTactics(t strategy.Tactics) {
 // rules have fixed answers through a round.
 func (b *brawl) hold(hp map[int]int) {
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 800
+		hardTo(&m.Character, 1000)
+		m.Character.Health = 800
 		if v, ok := hp[m.InstanceId]; ok {
 			m.Character.Health = v
 		}
@@ -154,17 +155,19 @@ func TestTacticsFocusTurnsAPlayerAlone(t *testing.T) {
 	pair := spawnedHostiles(t, 920103)
 	require.Len(t, pair, 2)
 	b.into(920103)
-	pair[0].Character.HealthMax.Value, pair[0].Character.Health = 1000, 900
-	pair[1].Character.HealthMax.Value, pair[1].Character.Health = 1000, 500
+	hardTo(&pair[0].Character, 1000)
+	pair[0].Character.Health = 900
+	hardTo(&pair[1].Character, 1000)
+	pair[1].Character.Health = 500
 
 	b.cmd("attack", "ruffians")
 	require.Equal(t, pair[1].InstanceId, aimOf(b.aria.Character), "the weakest, by default")
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.fight() // the battle begins
 	require.Equal(t, pair[1].InstanceId, aimOf(b.aria.Character))
 	pair[0].Character.Health, pair[1].Character.Health = 900, 500
 	require.NoError(t, battle.SetFocus(7, string(strategy.Strongest)))
-	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	hardTo(b.aria.Character, 1000)
 	b.fight()
 	assert.Equal(t, pair[0].InstanceId, aimOf(b.aria.Character), "alone, she turns by the focus at once")
 	assert.NotNil(t, mobs.GetInstance(pair[1].InstanceId), "from a foe still standing")
@@ -203,9 +206,11 @@ func TestEnemyPersonalities(t *testing.T) {
 			b.hold(nil)
 			b.toughen()
 			tamsin, oswin, garrick := b.companion(1), b.companion(2), b.companion(3)
-			garrick.Character.HealthMax.Value, garrick.Character.Health = 200, 120 // 60%, 120
-			tamsin.Character.Health = 300                                          // 30%, 300
-			oswin.Character.HealthMax.Value, oswin.Character.Health = 200, 150     // 75%, 150
+			hardTo(&garrick.Character, 200) // 60%, 120
+			garrick.Character.Health = 120
+			tamsin.Character.Health = 300 // 30%, 300
+			hardTo(&oswin.Character, 200) // 75%, 150
+			oswin.Character.Health = 150
 			bandit := mobs.GetInstance(captain)
 			bandit.Targeting, bandit.TargetingNoise = c.rule, c.noise
 			bandit.Character.Aggro = nil // it re-aims at the upkeep

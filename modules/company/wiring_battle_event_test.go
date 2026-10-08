@@ -216,8 +216,7 @@ func combatRoundsToPlay(t *testing.T, b *brawl, now *time.Time) int {
 	var round uint64 = 1
 	n := 0
 	for i := 0; i < 400 && len(b.livingBandits()) > 0; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		round++
 		n++
 		events.AddToQueue(events.NewRound{RoundNumber: round})

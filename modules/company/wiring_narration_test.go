@@ -188,8 +188,7 @@ func TestTwoPlayersOneGroupOneOpener(t *testing.T) {
 	shared := false
 	for i := 0; i < 200 && len(b.livingBandits()) > 0; i++ {
 		b.toughen()
-		brom.Character.HealthMax.Value = 1000
-		brom.Character.Health = 1000
+		hardTo(brom.Character, 1000)
 		b.fight()
 		aria, okA := battle.Current(7)
 		bromB, okB := battle.Current(8)

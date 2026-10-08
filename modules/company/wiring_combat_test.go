@@ -447,9 +447,15 @@ func (b *brawl) toughen() {
 // Training plus Mods, so setting Value alone let a foe drop back to its
 // natural 48 health mid-fight and die before the test's own scenario ran out.
 func hardTo(c *characters.Character, hp int) {
+	hardMaxTo(c, hp)
+	c.Health = hp
+}
+
+// hardMaxTo raises (or sets) a fighter's maximum health to hp, as a stat
+// recalculation keeps it, and leaves their current health alone.
+func hardMaxTo(c *characters.Character, hp int) {
 	c.HealthMax.Training = hp - c.HealthMax.Mods
 	c.HealthMax.Value, c.HealthMax.ValueAdj = hp, hp
-	c.Health = hp
 }
 
 // fightToTheEnd runs rounds until no bandit is standing, checking every
@@ -637,8 +643,7 @@ func TestSoloPlayerWithARecordTurnsOnHerOwn(t *testing.T) {
 
 	b.aimAt("bandit cutthroat")
 	for i := 0; i < 8; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		before := len(b.livingBandits())
 		got := b.fight()
 		assert.NotContains(t, got, "can't reach", "round %d", b.round)

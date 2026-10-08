@@ -134,8 +134,8 @@ func TestSkillEdgeDecidesRealBlows(t *testing.T) {
 		mob.Character.Equipment.Offhand = items.Item{}
 		b.aria.Character.Equipment.Offhand = items.Item{}
 		for i := 0; i < 400; i++ {
-			mob.Character.Health, mob.Character.HealthMax.Value = 10000, 10000
-			b.aria.Character.Health, b.aria.Character.HealthMax.Value = 10000, 10000
+			hardTo(&mob.Character, 10000)
+			hardTo(b.aria.Character, 10000)
 			if combat.AttackPlayerVsMob(b.aria, mob).DamageToTarget > 0 {
 				aria++
 			}

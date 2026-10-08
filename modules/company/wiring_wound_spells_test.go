@@ -49,7 +49,8 @@ var woundLimitNote = regexp.MustCompile(`\((\d+) healed, wound limit (\d+) of (\
 func TestAHeldBackHealNamesTheWoundLimit(t *testing.T) {
 	b := newBrawl(t)
 	c := b.aria.Character
-	c.HealthMax.Value, c.Health = 100, 49
+	hardTo(c, 100)
+	c.Health = 49
 	c.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 50}} // limit 50
 	out := b.castOnSelf("heal", func(s string) bool { return strings.Contains(s, "healed") })
 	m := woundLimitNote.FindStringSubmatch(out)
@@ -64,7 +65,8 @@ func TestAHeldBackHealNamesTheWoundLimit(t *testing.T) {
 func TestTendClosesAWoundThroughARealCast(t *testing.T) {
 	b := newBrawl(t)
 	c := b.aria.Character
-	c.HealthMax.Value, c.Health = 100, 40
+	hardTo(c, 100)
+	c.Health = 40
 	c.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 20}}
 	out := b.castOnSelf("tend", func(s string) bool { return strings.Contains(s, "wound treated") })
 	require.Contains(t, out, "a broken arm", out)
