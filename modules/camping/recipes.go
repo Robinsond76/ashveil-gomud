@@ -179,15 +179,73 @@ func (m *CampingModule) cookCommand(rest string, user *users.UserRecord, room *r
 // recipesLines lists the dishes the leader knows, and the hint that more
 // can be found.
 func (m *CampingModule) recipesLines(user *users.UserRecord) []string {
+	rows := m.recipeRows(user)
+	lines := make([]string, 0, len(rows))
+	for _, r := range rows {
+		parts := make([]string, 0, len(r.Needs))
+		for _, n := range r.Needs {
+			parts = append(parts, fmt.Sprintf("%d %s", n.Count, n.Name))
+		}
+		need := ""
+		if r.Skill != "" && r.Level > 0 {
+			need = fmt.Sprintf(" (%s %d)", r.Skill, r.Level)
+		}
+		switch r.Kind {
+		case "hearth":
+			lines = append(lines, r.Name+" (at a hearth)")
+		case "remedy":
+			lines = append(lines, fmt.Sprintf("%s (remedy for %s): %s", r.Name, r.For, strings.Join(parts, ", ")))
+		default:
+			lines = append(lines, fmt.Sprintf("%s: %s%s", r.Name, strings.Join(parts, ", "), need))
+		}
+	}
+	return lines
+}
+
+// bookNeeds counts a recipe's ingredients against what is to hand.
+func bookNeeds(inputs []int, have map[int]int) ([]camping.RecipeNeed, bool) {
+	counts := map[int]int{}
+	var ids []int
+	for _, id := range inputs {
+		if counts[id] == 0 {
+			ids = append(ids, id)
+		}
+		counts[id]++
+	}
+	sort.Ints(ids)
+	needs := make([]camping.RecipeNeed, 0, len(ids))
+	ready := true
+	for _, id := range ids {
+		needs = append(needs, camping.RecipeNeed{Name: itemName(id), Count: counts[id], Have: have[id]})
+		if have[id] < counts[id] {
+			ready = false
+		}
+	}
+	return needs, ready
+}
+
+// recipeRows is the recipe book as structured rows for the Camp tab: dishes,
+// remedies and dishes learned at a hearth, each with its ingredients, what
+// is to hand, and whether it can be made now.
+func (m *CampingModule) recipeRows(user *users.UserRecord) []camping.RecipeRow {
 	all := m.campSettings().Recipes
 	recipes := knownCampRecipes(user, all)
-	var lines []string
+	have := map[int]int{}
+	for _, s := range campStock(user) {
+		have[s.ItemID] = s.Count
+	}
+	cook := m.bestCook(user, all)
+	var rows []camping.RecipeRow
 	for _, r := range recipes {
-		need := ""
-		if r.Skill != "" && r.MinLevel > 0 {
-			need = fmt.Sprintf(" (%s %d)", r.Skill, r.MinLevel)
+		needs, ready := bookNeeds(r.Inputs, have)
+		if r.Skill != "" && cook.rank(r.Skill) < r.MinLevel {
+			ready = false
 		}
-		lines = append(lines, fmt.Sprintf("%s: %s%s", itemName(r.Output), cookbook.Describe(r.Inputs), need))
+		row := camping.RecipeRow{Name: itemName(r.Output), Kind: "dish", Needs: needs, Ready: ready}
+		if r.Skill != "" && r.MinLevel > 0 {
+			row.Skill, row.Level = r.Skill, r.MinLevel
+		}
+		rows = append(rows, row)
 	}
 	// 56 review: a dish learned at a hearth or from a page that the camp
 	// does not cook is still in the book.
@@ -200,16 +258,17 @@ func (m *CampingModule) recipesLines(user *users.UserRecord) []string {
 			continue // music craft lists the instruments a member can make
 		}
 		if !inCamp[id] {
-			lines = append(lines, itemName(id)+" (at a hearth)")
+			rows = append(rows, camping.RecipeRow{Name: itemName(id), Kind: "hearth"})
 		}
 	}
 	// Remedies (Phase 55) are in the same book.
 	for _, a := range survival.Ailments() {
 		if remedyKnown(user, a) {
-			lines = append(lines, fmt.Sprintf("%s (remedy for %s): %s", a.RemedyName, strings.ToLower(a.Name), cookbook.Describe(remedyRecipe(a))))
+			needs, ready := bookNeeds(remedyRecipe(a), have)
+			rows = append(rows, camping.RecipeRow{Name: a.RemedyName, Kind: "remedy", For: strings.ToLower(a.Name), Needs: needs, Ready: ready})
 		}
 	}
-	return lines
+	return rows
 }
 
 // recipesCommand is `recipes`: the book.

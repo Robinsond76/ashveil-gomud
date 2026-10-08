@@ -104,7 +104,7 @@ await page.evaluate(() => {
 });
 const subtabs = () => page.evaluate(() => [...document.querySelectorAll('#character-window .cw-tab-btn')]
   .filter(b => !b.hidden).map(b => b.textContent));
-check(JSON.stringify(await subtabs()) === JSON.stringify(['Overview', 'Gear', 'Skills', 'Quests', 'Effects']), 'Character sub-tabs in order; no Pet without a pet');
+check(JSON.stringify(await subtabs()) === JSON.stringify(['Overview', 'Gear', 'Skills', 'Quests']), 'Character sub-tabs in order; no Pet without a pet');
 check(await page.evaluate(() => ['Worth', 'Gear', 'Pet', 'Party'].every(id => !VirtualWindows.getWindows().some(w => w._id === id))), 'Worth, Gear, Pet, and Party are no longer windows of their own');
 const overview = await page.evaluate(() => document.getElementById('cw-overview').textContent);
 check(overview.includes('Wren') && overview.includes('40 / 100') && overview.includes('300'), 'Overview carries Worth (XP, gold, bank)');
@@ -128,7 +128,7 @@ check((await page.evaluate(() => document.getElementById('cw-char-name').textCon
   }), xss);
   const bl = () => page.evaluate(() => document.getElementById('cw-blessings').textContent);
   let text = await bl();
-  check(text.includes('Blessings carried') && text.includes('Company keeper: recruits cost 5% less') && text.includes('waiting for your next character') && text.includes('slay 5 bosses (2 of 5)') && text.includes('5% off every recruit'), 'the Overview lists carried, waiting and still-to-earn blessings (77)');
+  check(text.includes('Blessings carried') && text.includes('Company keeper') && text.includes('recruits cost 5% less') && text.includes('Active') && text.includes('Next character') && text.includes('Locked') && text.includes('slay 5 bosses') && text.includes('2 of 5') && text.includes('5% off every recruit'), 'the Overview lists carried, waiting and still-to-earn blessings as cards (77): ' + text);
   check(await page.evaluate(() => !window.__xss && !document.querySelector('#cw-blessings img')), 'blessing text is never read as HTML (77)');
   await page.evaluate(() => window.gmcp('Char', { Info: { name: 'Wren', class: 'ranger', race: 'Human', level: 5, hardcore: true } }));
   check((await bl()).includes('Company keeper'), 'a full Char snapshot keeps the blessings (77)');
@@ -569,7 +569,7 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   let st = await bookState();
   check(st && !st.open && st.summary === 'Recipe book (4)' && st.items === 4, 'the recipe book is folded with its count (56)');
   check(await page.evaluate(() => { const b = [...document.querySelectorAll('#company-camp .cmp-btn')].find(x => x.textContent === 'Rest'); const d = document.querySelector('#company-camp details.cmp-recipes'); return !!b && !!d && (b.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0; }), 'the book sits below the camp buttons (56)');
-  await page.locator('#company-camp details.cmp-recipes summary').click();
+  await page.locator('#company-camp details.cmp-recipes > summary').click();
   await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, rest_seconds: 1 });
   st = await bookState();
   check(st && st.open, 'an unfolded book stays open across a refresh (56)');
@@ -578,7 +578,29 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the recipe book fits a phone (56)');
   if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '56-camp-recipes-phone.png') }); }
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.locator('#company-camp details.cmp-recipes summary').click();
+  // Phase 90: the structured book groups by kind, ready dishes first, ingredients unfold.
+  const recipe_book = [
+    { name: "hunter's stew", kind: 'dish', needs: [{ name: 'raw game meat', count: 2, have: 1 }, { name: 'wild thyme', count: 1, have: 1 }], skill: 'cooking', level: 3, ready: false },
+    { name: 'seared game meat', kind: 'dish', needs: [{ name: 'raw game meat', count: 1, have: 1 }], skill: 'cooking', level: 1, ready: true },
+    { name: 'thyme tea', kind: 'remedy', for: 'chill', needs: [{ name: 'wild thyme', count: 2, have: 1 }], ready: false },
+    { name: 'fire-baked bread', kind: 'hearth', needs: [], ready: false },
+  ];
+  await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, recipe_book });
+  const book = await page.evaluate(() => {
+    const d = document.querySelector('#company-camp details.cmp-recipes');
+    return { groups: [...d.querySelectorAll('.cmp-rb-group')].map(g => g.textContent), names: [...d.querySelectorAll('.cmp-rb-name')].map(n => n.textContent), states: [...d.querySelectorAll('.cmp-rb-state')].map(n => n.textContent), short: d.querySelectorAll('li.is-short').length };
+  });
+  check(JSON.stringify(book.groups) === JSON.stringify(['Dishes', 'Remedies', 'Learned at a hearth']), 'the book is grouped by kind (90)');
+  check(book.names[0] === 'seared game meat' && book.states[0] === 'Can make now' && book.states[1] === 'Missing ingredients' && book.names[2] === 'thyme tea (for chill)' && book.states[3] === 'At a hearth', 'ready dishes come first and each says whether it can be made (90): ' + JSON.stringify(book));
+  check(book.short === 2, 'ingredients the company lacks are marked (90)');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the grouped book fits a phone (90)');
+  if (outdir) {
+    await page.locator('#company-camp details.cmp-recipes details.cmp-recipe').first().locator('summary').click();
+    await page.locator('#company-camp').screenshot({ path: path.join(outdir, '90-panels-recipes-360.png') });
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('#company-camp details.cmp-recipes > summary').click();
   await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, recipes: [] });
   check(await bookState() === null, 'no book with no recipes (56)');
 }
@@ -1253,10 +1275,9 @@ await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0]
 check((await skillsText()).includes('Company training') && (await skillsText()).includes('Cooking rank 2') && (await skillsText()).includes('3 training points') && (await skillsText()).includes('No optional skills') && (await skillsText()).includes('1 training point'), 'Skills lists the companions\' optional skills and training points (35c)');
 check(await page.locator('#cw-company-skills img').count() === 0 && await page.locator('#cw-company-skills button').count() === 0 && !(await page.evaluate(() => window.__xss35c)), 'company training text is plain and has no train button');
 check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'company training fits a narrow viewport');
-await page.getByRole('tab', { name: 'Effects', exact: true }).click();
-check((await page.locator('#cw-effects').textContent()).includes('Wounds') && (await page.locator('#cw-effects').textContent()).includes('Holds back 3 health'), 'Character Effects includes wound mechanics apart from persistent bonuses');
-await page.evaluate(markup => window.gmcp('Char.Affects', {test: {name: markup, description: markup, duration_max: 30, duration_left: 20}}), xss);
-check(await page.locator('#cw-effects img').count() === 0, 'Character Effects never interprets server labels as HTML');
+// Effects live in Company > Status, for the leader and every member (the Character window has no Effects tab).
+await page.getByRole('tab', { name: 'Company' }).first().click();
+await page.getByRole('tab', { name: 'Status', exact: true }).click();
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'phase34d-effects-narrow.png') }); }
 await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -1267,11 +1288,11 @@ conditions.leader.effects = [{ name: 'Slowed', description: 'Moves slowly.', dur
   { name: 'Sleepy', description: 'Drowsing.', duration: 'Until removed' }];
 conditions['companion:1'].state = 'away-live';
 await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
-const effectsText = () => page.locator('#cw-effects').textContent();
+const effectsText = () => page.locator('#party-panel .company-member.is-leader').textContent();
 check((await effectsText()).includes('Harmful') && (await effectsText()).includes('Helpful'), 'effects say Harmful or Helpful in words, not colour alone');
-check(await page.locator('#cw-effects .cmp-condition', { hasText: 'Sleepy' }).locator('.cmp-condition-tag').count() === 0, 'an effect neither known to harm nor help has no tag');
+check(await page.locator('#party-panel .cmp-condition', { hasText: 'Sleepy' }).locator('.cmp-condition-tag').count() === 0, 'an effect neither known to harm nor help has no tag');
 check(!/\.\./.test(await effectsText()), 'effect text never doubles a full stop');
-const meter = page.locator('#cw-effects [role=meter]');
+const meter = page.locator('#party-panel .cmp-condition [role=meter]');
 check(await meter.count() === 1 && await meter.getAttribute('aria-valuemax') === '60', 'a timed effect has a duration meter');
 const leftBefore = await meter.getAttribute('aria-valuenow');
 await page.waitForTimeout(3200);
@@ -1281,6 +1302,7 @@ check(!/\.\./.test(await page.locator('#cw-skills-tab').textContent()), 'capabil
 await page.getByRole('tab', { name: 'Company' }).first().click();
 await page.getByRole('tab', { name: 'Status', exact: true }).click();
 check((await status()).includes('Away from you: current effects and wounds') && (await status()).includes('Harmful'), 'Status shows an away member and the shared effect cards');
+check((await status()).includes('Wounds') && (await status()).includes('Holds back 2 health'), 'Company Status shows wound mechanics apart from persistent bonuses (the Character window has no Effects tab) (90)');
 for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/static/css')).filter(n => /^theme-.*\.css$/.test(n))) {
     await page.evaluate(theme => new Promise(resolve => {
         const link = document.getElementById('theme-css');

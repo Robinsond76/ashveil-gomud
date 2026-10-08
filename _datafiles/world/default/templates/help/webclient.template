@@ -38,13 +38,14 @@ button in them just types a command for you.
   Below it, the tabs:
 
   <ansi fg="yellow">Character</ansi>   Overview (your name, class, level, stats, experience,
-              gold, an Iron badge, and your account blessings), Gear
+              gold, an Iron badge, and your account blessings as cards marked
+              Active, Next character or Locked), Gear
               (what you wear and carry, and its weight), Skills (each
               trained skill with what it does, then what your abilities
-              and company can do), Quests, Effects, and Pet when you
-              have one.
+              and company can do), Quests, and Pet when you have one.
+              Effects are on Company > Status.
   <ansi fg="yellow">Company</ansi>     Status (formation, where you click a member and then a cell to
-              move or swap them, and each member), Inventory (everyone's
+              move or swap them, and one full-width card a member), Inventory (everyone's
               gear, your horses, and the cargo), Camp, Chronicle (the
               company's deeds in sentences, newest first, with a filter by
               kind, and what the towns say of you; help chronicle and
@@ -168,8 +169,8 @@ Character Skills separates trained ranks, automatic combat abilities,
 field and camp capabilities, including disabled settings and conditions,
 and Company training: each companion's optional skills and training
 points, read only (train with company train).
-Character Effects shows your effects and wounds with their true duration
-and meaning. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
+Your own effects and wounds, with their true duration and meaning, are on
+your card in Company Status. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
 
 The Battle view uses current combat positions on narrow ground, with two active columns and any overflow marked Reserve. Setup continues to show your saved formation. See help battlefield.
 

@@ -53,6 +53,9 @@ type campPayload struct {
 	DutiesLocked bool      `json:"duties_locked"`
 	// Phase 56: the dishes the leader has learned, one line each.
 	Recipes []string `json:"recipes"`
+	// The same book as rows: kind (dish, remedy, hearth), ingredients with
+	// what is to hand, the rank a dish asks, and whether it can be made now.
+	RecipeBook []recipeRow `json:"recipe_book"`
 	// Camp music: who plays what and what the next song gives (omitted away
 	// from a camp, teacher and inn), and the inn's gig board (inns only).
 	Music *musicPayload `json:"music,omitempty"`
@@ -159,6 +162,14 @@ func campPayloadOf(s camping.CampState) campPayload {
 	if recipes == nil {
 		recipes = []string{}
 	}
+	book := make([]recipeRow, 0, len(s.RecipeBook))
+	for _, r := range s.RecipeBook {
+		needs := make([]recipeNeed, 0, len(r.Needs))
+		for _, n := range r.Needs {
+			needs = append(needs, recipeNeed{Name: n.Name, Count: n.Count, Have: n.Have})
+		}
+		book = append(book, recipeRow{Name: r.Name, Kind: r.Kind, For: r.For, Needs: needs, Skill: r.Skill, Level: r.Level, Ready: r.Ready})
+	}
 	var music *musicPayload
 	if s.Music.Known {
 		effects := s.Music.Effects
@@ -192,7 +203,7 @@ func campPayloadOf(s camping.CampState) campPayload {
 		spec := camping.TentOf(s.TentKind)
 		tentKind, tentName = string(spec.Kind), spec.Name
 	}
-	return campPayload{Music: music, Gig: gig, InnRooms: innRooms, Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	return campPayload{Music: music, Gig: gig, InnRooms: innRooms, Recipes: recipes, RecipeBook: book, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 
@@ -250,4 +261,20 @@ func alliedCampsOf(user *users.UserRecord, state func(leaderUserID, roomID int, 
 		out = append(out, alliedCamp{RoomID: s.RoomID, Leader: users.CharacterName(uid), FireLit: s.FireLit, Resting: s.Resting, Embers: s.Embers, Tent: s.Tent})
 	}
 	return out
+}
+
+type recipeNeed struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+	Have  int    `json:"have"`
+}
+
+type recipeRow struct {
+	Name  string       `json:"name"`
+	Kind  string       `json:"kind"`
+	For   string       `json:"for,omitempty"`
+	Needs []recipeNeed `json:"needs"`
+	Skill string       `json:"skill,omitempty"`
+	Level int          `json:"level,omitempty"`
+	Ready bool         `json:"ready"`
 }

@@ -265,3 +265,22 @@ func TestCampStateAndCapabilityListOnlyKnownDishes(t *testing.T) {
 	assert.Contains(t, view.Description, "thyme-roasted game requires")
 	assert.NotContains(t, view.Description, "hunter's stew", "an unlearned dish is not listed")
 }
+
+func TestRecipeRowsMarkWhatCanBeMadeNow(t *testing.T) {
+	w, cargo := discoveryWorld(t)
+	cargo.stacks[29] = 1
+	cargo.stacks[30018] = 1
+	rows := w.m.recipeRows(w.user)
+	require.Len(t, rows, 2, "the common dish and the common remedy at first")
+	assert.Equal(t, "dish", rows[0].Kind)
+	assert.True(t, rows[0].Ready, "one raw game meat is in the cargo")
+	assert.Equal(t, "remedy", rows[1].Kind)
+	assert.Equal(t, "chill", rows[1].For)
+	assert.False(t, rows[1].Ready, "the remedy wants 2 wild thyme and one is to hand")
+	require.NotEmpty(t, rows[1].Needs)
+	assert.Equal(t, 1, rows[1].Needs[0].Have)
+	assert.Equal(t, 2, rows[1].Needs[0].Count)
+	cargo.stacks[29] = 0
+	assert.False(t, w.m.recipeRows(w.user)[0].Ready, "no meat, not ready")
+	assert.Len(t, w.m.recipesLines(w.user), len(w.m.recipeRows(w.user)), "text lines and rows are the same book")
+}
