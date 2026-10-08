@@ -262,3 +262,19 @@ func TestMasteryDeedsAreCappedWithinTheLog(t *testing.T) {
 	assert.Equal(t, 35, l.Tally[Mastered], "the tally still counts every deed")
 	assert.Equal(t, 37, l.NextSeq)
 }
+
+// Phase 85 review: in a full log, beast lore never takes more than its cap,
+// so other deeds keep the rest of the 300 lines.
+func TestBeastLoreLeavesAFullLogToOtherDeeds(t *testing.T) {
+	var l Log
+	for i := 0; i < MaxEntries; i++ {
+		l.Add(Entry{Kind: Boss, Ref: fmt.Sprintf("mob:%d", i)})
+	}
+	for i := 0; i < 100; i++ {
+		l.Add(Entry{Kind: Mastered, Ref: fmt.Sprintf("mob:%d", 1000+i)})
+	}
+	require.Len(t, l.Entries, MaxEntries)
+	assert.Len(t, l.Query(Filter{Kinds: []Kind{Mastered}}), KindCaps[Mastered])
+	assert.Len(t, l.Query(Filter{Kinds: []Kind{Boss}}), MaxEntries-KindCaps[Mastered], "the other deeds keep the rest")
+	assert.Equal(t, 100, l.Tally[Mastered])
+}

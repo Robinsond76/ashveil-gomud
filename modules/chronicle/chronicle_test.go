@@ -2,6 +2,7 @@ package chronicle
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -269,4 +270,32 @@ func TestThePanelCarriesTheNewestDeedsTheTallyAndTheKindNames(t *testing.T) {
 	none := r.m.panelFor(99)
 	assert.Equal(t, 0, none.Total)
 	assert.NotNil(t, none.Entries, "an empty chronicle is an empty list, not null")
+}
+
+// Phase 85 review: beast lore and its cap survive a restart; a reloaded log
+// still drops its oldest lore line, never another deed, past the cap.
+func TestBeastLoreAndItsCapSurviveARestart(t *testing.T) {
+	r := newRig(t)
+	r.m.Record(7, chronicle.Entry{Kind: chronicle.Boss, Subject: "the Hollow King", Ref: "mob:9"})
+	limit := chronicle.KindCaps[chronicle.Mastered]
+	for i := 1; i <= limit; i++ {
+		r.m.Record(7, chronicle.Entry{Kind: chronicle.Mastered, Subject: "big rat", Ref: fmt.Sprintf("mob:%d", i)})
+	}
+
+	again := newRig(t)
+	again.store = r.store
+	again.m.store = r.store
+	again.m.load()
+	lore := chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Mastered}}
+	require.Len(t, again.m.Log(7).Query(lore), limit)
+	assert.Equal(t, limit, again.m.Log(7).Tally[chronicle.Mastered])
+
+	again.m.Record(7, chronicle.Entry{Kind: chronicle.Mastered, Subject: "wolf", Ref: "mob:999"})
+	l := again.m.Log(7)
+	got := l.Query(lore)
+	require.Len(t, got, limit, "the cap holds after a reload")
+	assert.Equal(t, "mob:999", got[0].Ref)
+	assert.Equal(t, "mob:2", got[len(got)-1].Ref, "the oldest lore line went")
+	assert.Len(t, l.Query(chronicle.Filter{Kinds: []chronicle.Kind{chronicle.Boss}}), 1, "the boss deed stays")
+	assert.Equal(t, limit+1, l.Tally[chronicle.Mastered])
 }

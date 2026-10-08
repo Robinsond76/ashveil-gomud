@@ -45,7 +45,8 @@ Each deed names who was involved, where it happened and how long ago.
   - It keeps the newest 300 deeds. The count at the bottom of
     <ansi fg="command">chronicle</ansi> never forgets: it includes the deeds that have scrolled off.
   - Beast lore is written once per kind, and only for kinds learned from now
-    on. The chronicle keeps the newest 30 of those lines, apart from the 300.
+    on. At most 30 of the 300 are beast lore (the newest 30 are kept), so
+    other deeds always have room for at least 270.
   - Times are real time. Nothing here moves the world's clock, and reading
     it costs nothing, even in a fight.
   - The chronicle only remembers. It gives no gold, experience or power.
