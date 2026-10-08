@@ -23,6 +23,14 @@ lines are said in answer to another companion's, and some mention another
 member, or you, by name. Talk of the stars, the moon or the night waits
 for nightfall on the world clock.
 
+Talk reads like a page of a story, not a log: sometimes the quote comes first,
+sometimes a small gesture does, sometimes the speaker's name sits in the
+middle of the line. A gesture fits the mood of the words, and a companion turns
+to another only when answering them. Two companions never say the same words in
+one go; the second agrees with a nod instead. When a
+choice of yours shifts a companion's loyalty (<ansi fg="command">help opinions</ansi>), the change
+sits quietly in grey at the end of the line.
+
 After a battle the talk follows how it went:
 
   a close call    someone was left at under a third of their health

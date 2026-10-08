@@ -54,7 +54,9 @@ both use.
 
   <ansi fg="command">recipes</ansi>
   Lists every dish and remedy you have learned and what it takes. The web client's
-  Company window shows the same list on its Camp tab. <ansi fg="command">look hearth</ansi> lists
+  Company window shows the same book on its Camp tab, grouped into dishes,
+  remedies and dishes learned at a hearth, with the ones you can make now
+  first; open one to see its ingredients and what you have of each. <ansi fg="command">look hearth</ansi> lists
   only the dishes you know.
 
   Characters made before recipe discovery arrived keep every dish and
