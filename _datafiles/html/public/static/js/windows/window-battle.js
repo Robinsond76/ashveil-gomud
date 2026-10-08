@@ -421,7 +421,9 @@
             u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
             u.skin = m.skin || '';                               // Phase 72a: the leader's chosen colours
             u.hair = m.hair || '';
-            u.className = m.class_name || '';
+            // A member with no advanced class is named by its archetype, so a
+            // companion with a given name ("Hugo of Dunmar") still shows what it is.
+            u.className = m.class_name || (u.klass ? u.klass.charAt(0).toUpperCase() + u.klass.slice(1) : '');
             // Phase 69: the weapon stance it fights in, named when its figure is tapped.
             u.stance = (m.stance && m.stance.ready !== false) ? m.stance.name : '';
             // Phase 82d: its combat tempo, named when its figure is tapped.

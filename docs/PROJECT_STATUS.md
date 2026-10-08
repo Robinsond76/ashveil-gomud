@@ -2690,6 +2690,8 @@ delegated to the lead. 33a–33e are complete.
 
 ## Recent work log
 
+- **Test-area recruits get random names (2026-10-08).** `testarea companion add [class] [level]` now names a person companion from the recruiters' generated-name lists (given name plus an occasional byname), instead of the template's generic name. The given name is never one already in the company, at a recruiter, online, or the leader's; creatures keep their species name. Decision: reuse the existing name lists rather than add new ones. Tests: `TestAdminRecruitsGetRandomUniqueNames`. **Review (PR #199, 2026-10-08):** played live in the web client at 1280 px and 360 px with three named recruits (Thea Pike, Ines Reyes, Hugo of Dunmar) against skeletons: `company status` and the Company panel still name each class, the turn strip uses the given name only, the formation grid wraps a two-word byname cleanly and battle lines read like a generated recruit's. Accepted: tapping a base-class figure on the battle screen no longer told you what it was (the old "Recruit Cleric" name had carried it); the caption now falls back to the archetype ("Hugo of Dunmar, Cleric"), `help battlescreen` says so, and `battle-check.mjs` covers it. Left: the vitals strip cuts a long name ("Hugo of Du…"), as it already does for generated recruits. Screens: `/mnt/project-files/screens/92-companion-names-*.png`.
+
 ### 88 time-of-day colors readable (2026-10-08)
 
 - **Why:** the night clock was xterm 19 (dark blue) on black, and some web
@@ -2708,7 +2710,6 @@ delegated to the lead. 33a–33e are complete.
   now 69 (6:1); the guard test covers the new aliases and base-16 colors.
   Left as is: reds at 124 (2.8:1, zone names, harmful spells) are dim but
   readable and carry meaning by hue.
-- **Test-area recruits get random names (2026-10-08).** `testarea companion add [class] [level]` now names a person companion from the recruiters' generated-name lists (given name plus an occasional byname), instead of the template's generic name. The given name is never one already in the company, at a recruiter, online, or the leader's; creatures keep their species name. Decision: reuse the existing name lists rather than add new ones. Tests: `TestAdminRecruitsGetRandomUniqueNames`.
 
 ### 38b faith routes design approved (2026-10-05)
 

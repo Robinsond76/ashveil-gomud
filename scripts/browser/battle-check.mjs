@@ -99,6 +99,15 @@ check(unitOf(s, 'companion:2').promoted === 'knight' && unitOf(s, 'leader').prom
   check(cap.includes(', Shield wall stance'), 'hovering a member names the weapon stance it fights in (69): ' + cap);
   await page.mouse.move(0, 0);
 }
+{
+  // A member with no advanced class is named by its archetype (random companion names).
+  const b = unitOf(s, 'companion:1').at;
+  const box = await page.locator('#battle-screen canvas').boundingBox();
+  await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
+  const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
+  check(cap.startsWith('Oswin, Cleric'), 'hovering a base-class member names its archetype: ' + cap);
+  await page.mouse.move(0, 0);
+}
 check(unitOf(s, 'leader').cell.row === 0 && unitOf(s, 'leader').cell.col === 1, 'the leader stands in their cell');
 check(unitOf(s, 'leader').at.x === 160 - 46 && unitOf(s, 'leader').at.y === 140, 'row 0 col 1 sits left of the line, middle lane');
 check(unitOf(s, 'm:1').at.x > 160 && unitOf(s, 'leader').at.x < 160, 'company left, enemy right');
