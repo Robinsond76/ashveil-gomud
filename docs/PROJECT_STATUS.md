@@ -2688,6 +2688,15 @@ delegated to the lead. 33a–33e are complete.
 
 ## Recent work log
 
+### 88 time-of-day colors readable (2026-10-08)
+
+- **Why:** the night clock was xterm 19 (dark blue) on black, and some web
+  client themes drew the date/time label below 4.5:1.
+- **Decided:** night becomes xterm 111 (light blue, keeps the night feel);
+  sunset/sunrise water art lightened; 11 theme `--t-gametime-*` values nudged
+  to at least 4.5:1 against the panel background. `TestTimeOfDayColorsReadableOnBlack`
+  guards the aliases. Before/after: `screens/88-time-colors-terminal-before-after.png`.
+
 ### 38b faith routes design approved (2026-10-05)
 
 - **Why:** the draft had four points the owner had not decided.
