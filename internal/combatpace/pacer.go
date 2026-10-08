@@ -114,6 +114,14 @@ func (p *Pacer) StartReport(userId int) {
 	p.report[userId] = struct{}{}
 }
 
+// EndReport stops StartReport: the player's lines held from now on take
+// their beats again (their next battle began in the same round).
+func (p *Pacer) EndReport(userId int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.report, userId)
+}
+
 // Marked reports whether a line is marked dramatic this round.
 func (p *Pacer) Marked(text string) bool {
 	p.mu.Lock()
