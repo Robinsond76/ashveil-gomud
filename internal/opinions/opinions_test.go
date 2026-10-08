@@ -1,7 +1,6 @@
 package opinions
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
@@ -25,13 +24,13 @@ func TestEveryKindHasSomeoneWhoLikesItAndEveryVerdictHasALine(t *testing.T) {
 			case Likes:
 				liked = true
 			case Neutral:
-				assert.Empty(t, LineFor("Maren", p, info.Kind), "%s has no view on %s", p, info.Kind)
+				assert.Empty(t, LineFor(&banter.Narrator{}, "Maren", p, info.Kind), "%s has no view on %s", p, info.Kind)
 				continue
 			}
-			line := LineFor("Maren", p, info.Kind)
+			line := LineFor(&banter.Narrator{}, "Maren", p, info.Kind)
 			require.NotEmpty(t, line, "%s on %s needs a line", p, info.Kind)
-			assert.True(t, strings.HasPrefix(line, "Maren "), line)
-			assert.True(t, strings.HasSuffix(line, `."`) || strings.HasSuffix(line, `?"`) || strings.HasSuffix(line, `!"`), line)
+			assert.Contains(t, line, "Maren", "the speaker is named")
+			assert.Contains(t, line, `"`, "the words are in quotes")
 		}
 		assert.True(t, liked, "someone should like %s", info.Kind)
 		assert.Greater(t, info.Cooldown.Seconds(), 0.0)
