@@ -36,17 +36,21 @@ func MemberTempo(leaderUserId int, key company.MemberKey) (tempo float64, ok boo
 	return roundTempo(tempoWithStance(caster{mobId: id}, &m.Character)), true
 }
 
-// tempoWithStance is the tempo the fight would use: the stance is applied
-// as fillTempo applies it (between battles it is read afresh), on a copy so
-// reading never changes the live character.
+// tempoWithStance is the tempo the fight would use: the member's chosen
+// stance is set on a copy (as the next battle's tempo fill will set it;
+// between battles it is read afresh), so reading never changes the live
+// character, and silently: applyStance announces a stance as a battle's
+// first round reads it, and this is read on every Company snapshot.
 func tempoWithStance(who caster, c *characters.Character) float64 {
 	cp := *c
+	rt := characters.ClassRT{}
 	if c.RT != nil {
-		rt := *c.RT
-		cp.RT = &rt
-		cp.RT.StanceRead = false
+		rt = *c.RT
 	}
-	applyStance(who, &cp)
+	cp.RT = &rt
+	if _, chosen, ok := chosenStance(who, c); ok {
+		cp.RT.Stance = chosen
+	}
 	return tempoRate(&cp)
 }
 

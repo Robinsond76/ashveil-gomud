@@ -17,19 +17,11 @@ import (
 
 // applyStance sets a fighter's battle stance from the store, or clears it.
 func applyStance(who caster, c *characters.Character) {
-	leader, key := who.userId, company.LeaderMemberKey
-	if who.mobId > 0 {
-		id, k, ok := company.LeaderAndKeyForInstance(who.mobId)
-		if !ok {
-			return
-		}
-		leader, key = id, k
-	}
 	if c.RT != nil && c.RT.StanceRead {
 		return // read once a battle: set between battles only
 	}
-	chosen := stance.For(leader, string(key))
-	if chosen == stance.None && (c.RT == nil || c.RT.Stance == stance.None) {
+	leader, chosen, ok := chosenStance(who, c)
+	if !ok {
 		return
 	}
 	was := c.RTState().Stance
@@ -47,4 +39,23 @@ func applyStance(who caster, c *characters.Character) {
 			u.SendText(fmt.Sprintf(`%s %s the <ansi fg="yellow">%s</ansi> stance: %s, but %s.`, name, verb, d.Name, d.Gain, d.Cost))
 		}
 	}
+}
+
+// chosenStance is the stance the store holds for the member, with the
+// leader it belongs to; ok is false when there is nothing to apply (not a
+// company member, or no stance chosen and none set).
+func chosenStance(who caster, c *characters.Character) (leader int, chosen stance.Stance, ok bool) {
+	leader, key := who.userId, company.LeaderMemberKey
+	if who.mobId > 0 {
+		id, k, found := company.LeaderAndKeyForInstance(who.mobId)
+		if !found {
+			return 0, stance.None, false
+		}
+		leader, key = id, k
+	}
+	chosen = stance.For(leader, string(key))
+	if chosen == stance.None && (c.RT == nil || c.RT.Stance == stance.None) {
+		return leader, stance.None, false
+	}
+	return leader, chosen, true
 }
