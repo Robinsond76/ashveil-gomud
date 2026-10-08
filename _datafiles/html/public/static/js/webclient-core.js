@@ -1848,7 +1848,12 @@ const Client = (() => {
         const hasRight = DockSlots.right && DockSlots.right.el && DockSlots.right.el.classList.contains('has-panels');
         // Phase 40i: the phone layout (mobile.js) shows one view at a time.
         const phone = document.body.classList.contains('mobile');
-        const fontSize = phone ? 13 : (hasLeft && hasRight) ? 16 : (hasLeft || hasRight) ? 18 : 20;
+        let fontSize = phone ? 13 : (hasLeft && hasRight) ? 16 : (hasLeft || hasRight) ? 18 : 20;
+        // Phase 82a: while the battle pane is open above the terminal, the
+        // battle lines come a size smaller (unless "Smaller text" is off).
+        if (document.body.classList.contains('battle-open') && document.body.dataset.battleText !== 'same') {
+            fontSize = { 20: 15, 18: 14, 16: 13, 13: 11 }[fontSize] || fontSize;
+        }
         if (term.options.fontSize !== fontSize) {
             term.options.fontSize = fontSize;
         }
@@ -2914,6 +2919,7 @@ const Client = (() => {
         tabs:    UiHelpers.tabs,
         onBattleEvents,
         dispatchBattleEvents: _dispatchBattleEvents, // for browser checks that feed the screen
+        resizeTerminal, // for browser checks that mount the terminal themselves (Phase 82a)
 
         // Functions called from HTML event handlers
         init,

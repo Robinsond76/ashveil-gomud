@@ -79,8 +79,9 @@ round, no flight. It is told so in the line, as in
 
 <ansi fg="yellow-bold">How long they last</ansi>
 
-Statuses count combat rounds (8 seconds each), not the game's 4-second
-rounds, and they all end when the fight does. A blow struck in a fight's
+Statuses count combat rounds (each as long as its actions take to play
+out, 3 seconds at the least), not the game's 4-second rounds, and they all
+end when the fight does. A blow struck in a fight's
 last round leaves no status: the fight is already over. A status that took damage
 reads <ansi fg="command">The first cutthroat bleeds. (1 damage, bleeding)</ansi>, and its end reads
 <ansi fg="command">The first cutthroat's bleeding stops.</ansi>. Damage from a status can bring

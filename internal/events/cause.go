@@ -25,11 +25,23 @@ import "sync/atomic"
 
 var (
 	currentCause atomic.Uint64
+	currentSlot  atomic.Int64
 	currentTyped atomic.Bool
 )
 
 // Cause is the combat round that caused the event being dispatched, or 0.
 func Cause() uint64 { return currentCause.Load() }
+
+// Slot is the round's turn slot that caused the event being dispatched
+// (Phase 82c: one fighter's turn, from 1), or 0 for the round's upkeep and
+// end, and outside combat. Like the cause, it is inherited by everything a
+// caused event's listeners queue in turn.
+func Slot() int { return int(currentSlot.Load()) }
+
+// SetSlot sets the turn slot that events queued from now on carry, within
+// WithCause: the round loop calls it as each fighter's turn begins and
+// with 0 when the turns are over.
+func SetSlot(slot int) { currentSlot.Store(int64(slot)) }
 
 // Typed reports whether the event being dispatched came from what a player
 // typed.
@@ -40,9 +52,11 @@ func Typed() bool { return currentTyped.Load() }
 // typed: a combat round is the game's doing.
 func WithCause(round uint64, fn func()) {
 	prevCause := currentCause.Swap(round)
+	prevSlot := currentSlot.Swap(0)
 	prevTyped := currentTyped.Swap(false)
 	defer func() {
 		currentCause.Store(prevCause)
+		currentSlot.Store(prevSlot)
 		currentTyped.Store(prevTyped)
 	}()
 	fn()
@@ -51,5 +65,5 @@ func WithCause(round uint64, fn func()) {
 // AddTyped queues what a player typed (the input worker's Input): it never
 // inherits a combat round, and what it causes is typed.
 func AddTyped(e Event, priority ...int) {
-	add(e, 0, true, priority...)
+	add(e, 0, 0, true, priority...)
 }

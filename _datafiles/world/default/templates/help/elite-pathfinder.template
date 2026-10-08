@@ -14,7 +14,8 @@ skill is a different page: <ansi fg="command">help pathfinder</ansi>.)
   35 Expose Weakness   an Opening Strike that hits leaves the target
                        exposed for 2 rounds
   40 Scouted ground    every ally's action meter starts the battle 10
-                       points higher
+                       points higher, and each acts a little earlier in
+                       the first round (<ansi fg="command">help tempo</ansi>)
   45 Vanish            once a battle, when struck below 30% health, it
                        has +20 Evasion for the rest of that round and
                        the next

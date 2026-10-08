@@ -161,6 +161,7 @@ func TestCritBreaksWindUp(t *testing.T) {
 
 	forceCrits(t)
 	b.ogreOn(ogre, 0)
+	b.actsFirst(b.aria.Character) // Phase 82b: her crit lands before the ogre's turn
 	b.aria.Character.SetAggro(0, ogre.InstanceId, characters.DefaultAttack)
 	swingsBefore := len(attacksBy(*stream, key(ogre)))
 	out := b.fight()

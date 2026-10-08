@@ -22,9 +22,9 @@ function check(ok, what) {
 const xss = '<img src=x onerror="window.__xss=1">';
 const need = (value, label, warn) => ({ value, label, warn });
 const company = {
-  leader: { key: 'leader', id: 0, name: 'Wren', status: 'present', level: 5, archetype: 'Ranger', class: 'warden', class_name: 'Warden', cell: { row: 0, col: 0 }, chemistry: null, strategy: { role: 'fighter', target: 'weakest' } },
+  leader: { key: 'leader', id: 0, name: 'Wren', status: 'present', level: 5, archetype: 'Ranger', class: 'warden', class_name: 'Warden', cell: { row: 0, col: 0 }, chemistry: null, strategy: { role: 'fighter', target: 'weakest' }, tempo: 1.25 },
   members: [
-    { key: 'companion:1', id: 1, name: 'Oswin', status: 'present', level: 3, archetype: 'Cleric', cell: { row: 1, col: 1 }, chemistry: 'Trusted', strategy: { role: 'healer', target: 'weakest' } },
+    { key: 'companion:1', id: 1, name: 'Oswin', status: 'present', level: 3, archetype: 'Cleric', cell: { row: 1, col: 1 }, chemistry: 'Trusted', strategy: { role: 'healer', target: 'weakest' }, tempo: 0.8 },
     { key: 'companion:2', id: 2, name: xss, status: 'present', level: 2, archetype: 'Warrior', cell: { row: 0, col: 1 }, chemistry: null, strategy: { role: 'fighter', target: 'leader' } },
     { key: 'companion:3', id: 3, name: 'Tamsin', status: 'awaiting', level: 2, archetype: 'Ranger', cell: null, chemistry: null, strategy: { role: 'fighter', target: 'weakest' } },
     { key: 'companion:4', id: 4, name: 'Ysolde', status: 'dead', level: 5, archetype: 'Wizard', cell: { row: 2, col: 1 }, chemistry: null, strategy: { role: 'caster', target: 'weakest' } },
@@ -184,9 +184,14 @@ check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opini
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
-check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, tempo 0.8, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
 check(await page.getByRole('listitem', { name: /Wren, level 5, Warden/ }).count() === 1
   && await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-rank').title) === 'Ranger line', 'a promoted member card names its class, its lineage on hover (40s5)');
+// Phase 82d: each member's combat tempo by its name; the Character tab shows the leader's.
+check(await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-tempo').textContent) === 'Tempo 1.25'
+  && await page.evaluate(() => document.querySelector('#party-panel [data-key="companion:1"] .party-member-tempo').textContent) === 'Tempo 0.8'
+  && !await page.evaluate(() => document.querySelector('#party-panel [data-key="companion:3"] .party-member-tempo')), 'member cards show the tempo of those here, none for one away');
+check(await page.evaluate(() => document.getElementById('cw-tempo').textContent) === '1.25', 'the Character tab shows the leader\'s tempo under the stats');
 check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
 // Phase 58: click a member in the formation drawing, then a place.
 {
@@ -247,7 +252,7 @@ check((await status()).includes('5/25') && await page.evaluate(() => document.ac
 await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].class = 'paladin'; g.members[0].class_name = 'Paladin'; g.members[0].tier = 'elite'; g.members[0].rank = 45; g.members[1].class = 'knight'; g.members[1].class_name = 'Knight'; g.members[1].tier = 'advanced'; g.members[1].rank = 25; g.members[1].promotion = 'waiting-gate'; g.leader.promotion = 'ready'; window.gmcp('Company', g); }, company);
 check((await status()).includes('\u2605 elite, rank 45') && (await status()).includes('advanced, rank 25'), 'a card shows the class, the elite badge and the rank');
 check((await status()).includes('Promotion ready') && (await status()).includes('Promotion waiting on alignment'), 'a card marks a promotion ready or waiting on alignment');
-check(await page.getByRole('listitem', { name: /Oswin, level 3, Paladin, elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Paladin, tempo 0.8, elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(c => window.gmcp('Company', c), company);
 
@@ -838,6 +843,9 @@ const battleFix = {
   company: [{ key: 'leader', target: 'm:412' }, { key: 'companion:1', target: 'm:412' }, { key: 'companion:2', target: 'm:413' }],
   others: [{ id: 'u:9', name: 'Brannoc' }],
   waiting: ['a pack of grey wolves'],
+  // Phase 82d: the round's turn order, with an unseen foe and an ally's member.
+  order: [{ id: 'm:412', slot: 1 }, { id: 'leader', slot: 2 }, { id: '?', slot: 3 }, { id: 'companion:1', slot: 4 }, { id: 'a:9:leader', slot: 5 }],
+  allies: [{ leader: 9, name: 'Brannoc', members: [{ id: 'a:9:leader', name: 'Brannoc' }] }],
 };
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Character' }).click();
@@ -881,6 +889,8 @@ await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
 
 const cbt = () => page.evaluate(() => document.getElementById('combat-body').textContent);
 check(await page.getByRole('heading', { name: 'Battle: a band of cutthroats' }).count() === 1, 'the Battle view replaces Setup');
+// Phase 82d: the round's turn order in words, for the accessible path.
+check((await page.evaluate(() => (document.querySelector('#combat-window .cbt-order') || {}).textContent)) === 'Turn order: the cutthroat captain, Wren, an unseen foe, Oswin, Brannoc', 'the Battle view lists the turn order in words, an unseen foe and an ally by name');
 check((await cbt()).includes('Withdrawing east (2 rounds remaining)'), 'ordered withdrawal appears in the battle view');
 const them = page.getByRole('group', { name: 'a band of cutthroats' });
 const usField = page.getByRole('group', { name: 'Your company' });

@@ -268,8 +268,9 @@ func TestEnemyChantBreaksAndRestarts(t *testing.T) {
 		if captain.Character.Aggro.Type != characters.SpellCast {
 			b.mobCasts(captain, fmt.Sprintf("mm #%d", tamsin.InstanceId))
 		}
-		// Only Aria strikes: the player's blows come before any mob's
-		// turn, so a break always precedes the captain's.
+		// Only Aria strikes, and first (Phase 82b: by speed, not by
+		// kind), so a break always precedes the captain's turn.
+		b.actsFirst(b.aria.Character)
 		b.aria.Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)
 		for id := 1; id <= 4; id++ {
 			b.companion(id).Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)

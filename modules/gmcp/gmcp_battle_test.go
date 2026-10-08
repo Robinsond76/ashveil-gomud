@@ -309,3 +309,24 @@ func TestBattlePayloadHealersFirst(t *testing.T) {
 		t.Fatal("healers_first is absent by default")
 	}
 }
+
+// Phase 82b: the latest round's turn order rides Company.Battle as refs
+// the screen already draws, with each slot's index.
+func TestBattlePayloadCarriesTheTurnOrder(t *testing.T) {
+	f := sampleBattle()
+	f.Order = []orderFact{{ID: "m:412", Slot: 1}, {ID: "leader", Slot: 2}, {ID: "?", Slot: 3}, {ID: "companion:2", Slot: 4}, {ID: "m:412", Slot: 5}}
+	raw, err := json.Marshal(buildBattle(f))
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(raw, &got))
+	order := got["order"].([]any)
+	require.Len(t, order, 5)
+	assert.Equal(t, map[string]any{"id": "m:412", "slot": 1.0}, order[0])
+	assert.Equal(t, map[string]any{"id": "?", "slot": 3.0}, order[2], "an unseen foe is one presence")
+	assert.Equal(t, map[string]any{"id": "m:412", "slot": 5.0}, order[4], "a fast fighter's second turn is listed again")
+
+	f.Order = nil
+	raw, err = json.Marshal(buildBattle(f))
+	require.NoError(t, err)
+	assert.NotContains(t, string(raw), "order", "omitted before the first round")
+}

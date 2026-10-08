@@ -185,6 +185,8 @@
             border-bottom: 1px solid var(--t-border);
         }
 
+        #cw-tempo-row { margin: 2px 0 4px; font-size: 0.9em; color: var(--t-text-secondary); }
+        #cw-tempo-row #cw-tempo { color: var(--t-text); font-weight: bold; }
         .cw-stat-cell {
             display: grid;
             grid-template-columns: auto 1fr auto;
@@ -650,7 +652,9 @@
                     '<span class="cw-point-badge-value" id="cw-tp">\u2014</span>' +
                 '</div>' +
             '</div>';
-        return '<div id="cw-stats-grid">' + cells + '</div>' + pointsRow;
+        // Phase 82d: the combat tempo those stats, burden and armor make.
+        const tempoRow = '<div id="cw-tempo-row" title="Combat tempo: turns a round, from Speed, burden, armor bulk and stance (help tempo)">Tempo <span id="cw-tempo">\u2014</span></div>';
+        return '<div id="cw-stats-grid">' + cells + '</div>' + tempoRow + pointsRow;
     }
 
     function createDOM() {
@@ -814,7 +818,17 @@
         if (tpBadge) { tpBadge.classList.toggle('has-points', tp > 0); }
     }
 
+    // updateTempo shows the leader's combat tempo from the Company snapshot
+    // (Phase 82d), the same number the Company panel shows each member.
+    function updateTempo() {
+        const node = document.getElementById('cw-tempo');
+        if (!node) { return; }
+        const leader = Client.GMCPStructs.Company && Client.GMCPStructs.Company.leader;
+        node.textContent = leader && typeof leader.tempo === 'number' ? String(leader.tempo) : '\u2014';
+    }
+
     function updateStats() {
+        updateTempo();
         const stats = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Stats;
         if (!stats) { return; }
 
@@ -1108,7 +1122,7 @@
             // A Company snapshot only changes the company training list;
             // of its extras, only Conditions (Effects) is shown here.
             if (namespace === 'Company') {
-                if (win.isOpen()) { updateCompanySkills(); }
+                if (win.isOpen()) { updateCompanySkills(); updateTempo(); }
                 return;
             }
             if (namespace.startsWith('Company.') && namespace !== 'Company.Conditions') { return; }

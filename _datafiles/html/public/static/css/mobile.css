@@ -17,7 +17,8 @@ body.mobile {
 /* ---- The stage: the terminal, with a dock laid over it when it is shown --- */
 body.mobile #terminal { padding-left: 4px; }
 body.mobile #menu-icon { display: none; }
-body.mobile:not([data-mview="game"]) #terminal { visibility: hidden; }
+body.mobile:not([data-mview="game"]) #terminal,
+body.mobile:not([data-mview="game"]) #battle-pane { visibility: hidden; }
 
 body.mobile #dock-left,
 body.mobile #dock-right {
@@ -153,19 +154,16 @@ body.mobile .ui-menu-item {
 body.mobile .map-controls button { min-width: 44px; min-height: 44px; font-size: 18px; }
 body.mobile #map-tooltip { display: none !important; }
 
-/* ---- Battle screen: the whole screen, big buttons ----------------------- */
-body.mobile #battle-screen {
-    inset: 0;
-    top: 0;
-    left: 0;
-    transform: none;
-    max-width: none;
-    border-radius: 0;
-    border: none;
+/* ---- Battle screen: the top of the Game view, big buttons (Phase 82a) ---- */
+body.mobile #battle-pane {
+    max-height: 55%;
     overflow-y: auto;
-    font-size: 0.9em;
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
 }
+body.mobile #battle-screen {
+    font-size: 0.9em;
+    padding: 6px 6px 6px;
+}
+body.mobile #battle-screen .bs-head-retreat { display: inline-block; }
 body.mobile #battle-screen .bs-head { flex-wrap: wrap; }
 body.mobile #battle-screen .bs-banners { flex-basis: 100%; order: 3; }
 body.mobile #battle-screen button,

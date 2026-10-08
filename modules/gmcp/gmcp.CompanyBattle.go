@@ -32,6 +32,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/morale"
@@ -78,6 +79,10 @@ type battleFacts struct {
 	Fare map[string]string
 	// Phase 39d: the Doll Masters' dolls standing in the player's company.
 	Dolls []battleDoll
+	// Phase 82b: the latest round's turn order, every fighter in the
+	// player's fights by the refs the screen draws ("?" for a foe the
+	// player can't make out), with its slot from 1.
+	Order []orderFact
 }
 
 // battleDoll is a Doll Master's doll standing in the battle (Phase 39d): its
@@ -225,6 +230,18 @@ type battleOther struct {
 	Name string `json:"name"`
 }
 
+// orderFact is one slot of the round's turn order (Phase 82b).
+type orderFact struct {
+	ID   string
+	Slot int
+}
+
+// battleOrderRef is a slot of the turn order as the payload lists it.
+type battleOrderRef struct {
+	ID   string `json:"id"`
+	Slot int    `json:"slot"`
+}
+
 type battlePayload struct {
 	Narrow      bool                  `json:"narrow,omitempty"`
 	Positions   map[string]battleCell `json:"positions,omitempty"`
@@ -265,6 +282,9 @@ type battlePayload struct {
 	// Phase 39d: the company's standing dolls (the Combat tab's fighters
 	// and the battle screen's units); omitted when there are none.
 	Dolls []battleDoll `json:"dolls,omitempty"`
+	// Phase 82b: the latest round's turn order (speed turns), omitted
+	// before the first round.
+	Order []battleOrderRef `json:"order,omitempty"`
 }
 
 // battleAlly is an allied company: its leader's ref ("a:<user>") and name,
@@ -374,7 +394,41 @@ func buildBattle(f battleFacts) any {
 			p.Company = append(p.Company, battleAim{Key: a.Key, Target: mobID(a.Target)})
 		}
 	}
+	for _, o := range f.Order {
+		p.Order = append(p.Order, battleOrderRef{ID: o.ID, Slot: o.Slot})
+	}
 	return p
+}
+
+// gatherOrder lists the latest round's turn order for the player (Phase
+// 82b) by the refs the battle screen draws: the player's own members by
+// key, allies by their ally refs, foes by instance, and a foe the player
+// can't make out as "?".
+func gatherOrder(user *users.UserRecord, hidden map[int]bool) []orderFact {
+	var out []orderFact
+	for _, s := range hooks.RoundTurnOrder(user.UserId) {
+		id := ""
+		switch {
+		case s.UserId == user.UserId:
+			id = string(company.LeaderMemberKey)
+		case s.UserId > 0:
+			id = allyMemberRef(s.UserId, string(company.LeaderMemberKey))
+		default:
+			if leaderId, key, ok := company.LeaderAndKeyForInstance(s.MobInstanceId); ok {
+				if leaderId == user.UserId {
+					id = string(key)
+				} else {
+					id = allyMemberRef(leaderId, string(key))
+				}
+			} else if hidden[s.MobInstanceId] {
+				id = "?"
+			} else {
+				id = mobID(s.MobInstanceId)
+			}
+		}
+		out = append(out, orderFact{ID: id, Slot: s.Slot})
+	}
+	return out
 }
 
 // battleExtra is the feed's Company.Battle message.
@@ -477,6 +531,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		ids = append(ids, id)
 	}
 	sort.Ints(ids)
+	hidden := map[int]bool{}
 	for _, id := range ids {
 		m := mobs.GetInstance(id)
 		label := ""
@@ -511,8 +566,10 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			battleSeen.note(user.UserId, fight, id, m.Character.HasBuffFlag("hidden"))
 		}
 		e.Seen = !battleSeen.hiddenLast(user.UserId, fight, id)
+		hidden[id] = e.Hidden
 		f.Enemies = append(f.Enemies, e)
 	}
+	f.Order = gatherOrder(user, hidden)
 
 	if a := user.Character.Aggro; a != nil && a.MobInstanceId > 0 {
 		f.Company = append(f.Company, aimFact{Key: string(company.LeaderMemberKey), Target: a.MobInstanceId})

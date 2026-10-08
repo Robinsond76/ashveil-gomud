@@ -242,6 +242,17 @@ func shadowstep(a actor, u *users.UserRecord, room *rooms.Room, foes map[int]boo
 }
 
 // endShadowsteps puts every reach back after a round's blows.
+// endShadowstep ends one fighter's shadowstep after its first turn (Phase 82b).
+func endShadowstep(who caster) {
+	if who.userId > 0 {
+		if u := users.GetByUserId(who.userId); u != nil && u.Character != nil && u.Character.RT != nil {
+			u.Character.RT.Stepping = false
+		}
+	} else if m := mobs.GetInstance(who.mobId); m != nil && m.Character.RT != nil {
+		m.Character.RT.Stepping = false
+	}
+}
+
 func endShadowsteps() {
 	for _, uid := range battle.Players() {
 		if u := users.GetByUserId(uid); u != nil && u.Character != nil {
