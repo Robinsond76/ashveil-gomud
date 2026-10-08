@@ -34,7 +34,7 @@ func HandlePlayerDrop(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	user.SendText(`<ansi fg="red">you drop to the ground!</ansi>`)
+	user.SendText(`<ansi fg="red">You drop to the ground.</ansi>`)
 
 	room := rooms.LoadRoom(evt.RoomId)
 	if room == nil {
@@ -42,7 +42,7 @@ func HandlePlayerDrop(e events.Event) events.ListenerReturn {
 	}
 
 	room.SendText(
-		fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="red">drops to the ground!</ansi>`, user.Character.Name),
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="red">drops to the ground.</ansi>`, user.Character.Name),
 		user.UserId)
 
 	// Loop through all mobs in the room. If any hate the player, try onPlayerDowned()

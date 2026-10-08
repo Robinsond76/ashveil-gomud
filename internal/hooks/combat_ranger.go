@@ -381,7 +381,7 @@ func huntDown(attacker, defender statusHolder, fx classes.Effects) {
 	rt.HuntedRound = combatRound.Load()
 	rt.HuntPenalty = fx.Int(classes.FleePenalty)
 	rt.HarrowPts = fx.Int(classes.Harrow)
-	if defender.char.Health < 1 {
+	if defender.char.Health < 1 || combat.IsBloodless(defender.char) {
 		return
 	}
 	bleeding := status.Live(defender.char, status.Bleeding)

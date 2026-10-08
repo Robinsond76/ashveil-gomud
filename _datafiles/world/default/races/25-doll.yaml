@@ -21,3 +21,6 @@ disabledslots: []
 # Phase 39d: a doll never breaks its nerve; it breaks only when its health is gone.
 neverbreak: true
 targeting: nearest
+
+# Phase 87: no blood, no living flesh (help narration).
+bloodless: true

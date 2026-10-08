@@ -1,0 +1,63 @@
+# Phase 87: what a blow does to a foe with no blood and no living flesh
+# (races marked bloodless: undead, golems, dolls, orbs, spirits). Used for
+# every weapon in place of its hit lines; its prepare, wait and miss lines
+# are still the weapon's own. Same voice as the weapon files: dark and
+# physical, no exclamation marks, write names bare.
+optionid: bloodless
+options:
+  weak:
+    together:
+      toattacker:
+      - 'Your <ansi fg="item">{itemname}</ansi> chips a shard from <ansi fg="{targettype}">{target}</ansi>.'
+      - 'Your <ansi fg="item">{itemname}</ansi> scrapes across <ansi fg="{targettype}">{target}</ansi>''s hollow frame.'
+      - 'You knock a loose piece off <ansi fg="{targettype}">{target}</ansi>.'
+      todefender:
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> chips a shard from you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> scrapes across your hollow frame.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> knocks a loose piece off you.'
+      toroom:
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> chips a shard from <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> scrapes across <ansi fg="{targettype}">{target}</ansi>''s hollow frame.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> knocks a loose piece off <ansi fg="{targettype}">{target}</ansi>.'
+  normal:
+    together:
+      toattacker:
+      - 'Your <ansi fg="item">{itemname}</ansi> cracks into <ansi fg="{targettype}">{target}</ansi>''s shoulder, and dust sifts from the break.'
+      - 'You strike <ansi fg="{targettype}">{target}</ansi> across the ribs, and something dry snaps.'
+      - 'Your <ansi fg="item">{itemname}</ansi> splits a seam in <ansi fg="{targettype}">{target}</ansi>''s side.'
+      todefender:
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> cracks into your shoulder, and dust sifts from the break.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes you across the ribs, and something dry snaps.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> splits a seam in your side.'
+      toroom:
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> cracks into <ansi fg="{targettype}">{target}</ansi>''s shoulder, and dust sifts from the break.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes <ansi fg="{targettype}">{target}</ansi> across the ribs, and something dry snaps.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> splits a seam in <ansi fg="{targettype}">{target}</ansi>''s side.'
+  heavy:
+    together:
+      toattacker:
+      - 'Your <ansi fg="item">{itemname}</ansi> smashes into <ansi fg="{targettype}">{target}</ansi>''s chest, and the frame buckles.'
+      - 'You drive <ansi fg="{targettype}">{target}</ansi> back with a blow that cracks it through.'
+      - 'Your <ansi fg="item">{itemname}</ansi> tears a long gap in <ansi fg="{targettype}">{target}</ansi>, and dust pours out.'
+      todefender:
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> smashes into your chest, and your frame buckles.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> drives you back with a blow that cracks you through.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> tears a long gap in you, and dust pours out.'
+      toroom:
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> smashes into <ansi fg="{targettype}">{target}</ansi>''s chest, and the frame buckles.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> drives <ansi fg="{targettype}">{target}</ansi> back with a blow that cracks it through.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> tears a long gap in <ansi fg="{targettype}">{target}</ansi>, and dust pours out.'
+  critical:
+    together:
+      toattacker:
+      - 'You step inside <ansi fg="{targettype}">{target}</ansi>''s guard and break <ansi fg="{targettype}">{target}</ansi> from shoulder to hip.'
+      - 'Your <ansi fg="item">{itemname}</ansi> shatters <ansi fg="{targettype}">{target}</ansi>''s guard and caves in its chest.'
+      - 'Your <ansi fg="item">{itemname}</ansi> crashes through <ansi fg="{targettype}">{target}</ansi>, and the pieces come apart.'
+      todefender:
+      - '<ansi fg="{sourcetype}">{source}</ansi> steps inside your guard and breaks you from shoulder to hip.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> shatters your guard and caves in your chest.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> crashes through you, and the pieces come apart.'
+      toroom:
+      - '<ansi fg="{sourcetype}">{source}</ansi> steps inside <ansi fg="{targettype}">{target}</ansi>''s guard and breaks <ansi fg="{targettype}">{target}</ansi> from shoulder to hip.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> shatters <ansi fg="{targettype}">{target}</ansi>''s guard and caves in its chest.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> crashes through <ansi fg="{targettype}">{target}</ansi>, and the pieces come apart.'

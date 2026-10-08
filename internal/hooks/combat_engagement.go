@@ -202,6 +202,33 @@ func attackType(a *characters.Aggro) characters.AggroType {
 	return characters.DefaultAttack
 }
 
+// retargetKeepingStrike aims c at a new foe after its old one fell mid-round
+// (Phase 87). A readied Opening Strike or Aimed Shot goes with it: the
+// shot is not lost with its target, and keeps its bonus.
+func retargetKeepingStrike(c *characters.Character, userId, mobInstanceId int) {
+	old := c.Aggro
+	if old != nil && old.Type == characters.BackStab && old.ExitName == `` {
+		bonus := old.StrikeBonus
+		c.SetAggro(userId, mobInstanceId, characters.DefaultAttack)
+		if c.Aggro != nil {
+			c.Aggro.Type, c.Aggro.StrikeBonus = characters.BackStab, bonus
+		}
+		return
+	}
+	c.SetAggro(userId, mobInstanceId, attackType(old))
+}
+
+// spendStrike marks a readied strike as loosed after the swing that killed
+// its target (Phase 87 review). The swing resolves on a copy of the
+// fighter, so the live aim still reads as readied; without this the kill's
+// turn onto the next foe would carry the spent shot on, and the turn's end
+// would call it never loosed and refund its wait.
+func spendStrike(c *characters.Character) {
+	if a := c.Aggro; a != nil && a.Type == characters.BackStab && a.ExitName == `` {
+		a.Type, a.StrikeBonus = characters.DefaultAttack, 0
+	}
+}
+
 // retargetable reports whether the upkeep may give a member a target: it
 // has none, or its current one is a plain attack.
 func retargetable(a *characters.Aggro) bool {

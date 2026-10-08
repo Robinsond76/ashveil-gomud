@@ -6,8 +6,8 @@ its own beat, so the fight reads like one: a blow, its answer, the next
 fighter's move. How long a beat is, is up to you:
 
   <ansi fg="command">set combatpace fast</ansi>     a turn every 0.6 seconds
-  <ansi fg="command">set combatpace normal</ansi>   a turn every second
-  <ansi fg="command">set combatpace slow</ansi>     a turn every 1.5 seconds
+  <ansi fg="command">set combatpace normal</ansi>   a turn every 1.5 seconds
+  <ansi fg="command">set combatpace slow</ansi>     a turn every 2.25 seconds
   <ansi fg="command">set combatpace off</ansi>      the whole round at once
 
 Normal is the default. If you play with a screen reader (<ansi fg="command">set</ansi> shows

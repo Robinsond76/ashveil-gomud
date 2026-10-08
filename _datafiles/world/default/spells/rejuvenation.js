@@ -5,7 +5,7 @@ WAIT_ROUNDS = 1; // rejuvenation.yaml's waitrounds
 
 // Phase 29c narration voice: mechanics in lowercase parentheses at the end.
 function chanting(rounds) {
-    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' turn)' : ' turns)');
 }
 
 function fill(sourceActor, text) {

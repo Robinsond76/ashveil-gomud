@@ -32,7 +32,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	}
 
 	if user.Character.Aggro != nil {
-		user.SendText("You can't do that! You are in combat!")
+		user.SendText("You can't do that. You are in combat.")
 		return true, nil
 	}
 

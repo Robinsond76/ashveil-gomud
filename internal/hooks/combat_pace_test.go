@@ -128,13 +128,13 @@ func TestPacedLinesReleaseOverTheRound(t *testing.T) {
 	if strings.Join(r.got, "|") != "one|Brin tells you, hello" {
 		t.Fatalf("chat was delayed: %v", r.got)
 	}
-	r.advance(800 * time.Millisecond)
+	r.advance(1000 * time.Millisecond)
 	if strings.Join(r.got, "|") != "one|Brin tells you, hello|two" {
-		t.Fatalf("after 0.85s got %v", r.got)
+		t.Fatalf("after 1.05s got %v", r.got)
 	}
-	r.advance(800 * time.Millisecond)
+	r.advance(1000 * time.Millisecond)
 	if strings.Join(r.got, "|") != "one|Brin tells you, hello|two|three" {
-		t.Fatalf("after 1.65s got %v", r.got)
+		t.Fatalf("after 2.05s got %v", r.got)
 	}
 }
 

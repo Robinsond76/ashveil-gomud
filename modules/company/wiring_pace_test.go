@@ -287,7 +287,7 @@ func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
 	events.ProcessEvents()
 	assert.Empty(t, sent, "nothing, the death included, goes out before the round's first turn")
 
-	for turn := 0; turn < 400; turn++ { // 20s: a round's lines one beat a turn, and the death after them
+	for turn := 0; turn < 900; turn++ { // 45s at the slower normal pace: a round's lines one beat a turn, and the death after them
 		now = now.Add(50 * time.Millisecond)
 		events.AddToQueue(events.NewTurn{})
 		events.ProcessEvents()

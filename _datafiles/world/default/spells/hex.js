@@ -12,7 +12,7 @@ WAIT_ROUNDS = 1; // hex.yaml's waitrounds
 // Phase 29c narration voice: mechanics in lowercase parentheses at the end.
 // Phase 30d1: a blow that draws blood breaks the chant (help interrupts).
 function chanting(rounds) {
-    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' turn)' : ' turns)');
 }
 
 /**

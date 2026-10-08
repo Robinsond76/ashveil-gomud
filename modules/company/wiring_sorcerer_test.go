@@ -32,7 +32,7 @@ func TestSorcererLoosesALanceAfterAChantAndPaysItsMana(t *testing.T) {
 	b.startWitchFight()
 	assert.Equal(t, 300-15, b.aria.Character.Mana, "the chant's mana is spent as it begins")
 	out := lanceRounds(b, 6)
-	assert.Contains(t, out, "chanting: Arcane Lance, 2 rounds")
+	assert.Contains(t, out, "chanting: Arcane Lance, 2 turns")
 	assert.Regexp(t, `You hurl the lance, and it drives into .* \(\d+ damage\)`, out)
 	assert.Positive(t, castEvents(*stream, combatstream.CastStart, "Aria"))
 }
@@ -123,6 +123,6 @@ func TestHighSorcererGatheredChantTrimsEveryOtherLance(t *testing.T) {
 	out := strings.Join(*b.messages, "\n") + lanceRounds(b, 8)
 	assert.Contains(t, out, "keeps chanting", "an untrimmed Lance still chants a second round")
 	assert.Contains(t, out, "(chanting: Arcane Lance)", "no round count on a chant Gathered chant may shorten")
-	assert.NotContains(t, out, "chanting: Arcane Lance, 2 rounds")
+	assert.NotContains(t, out, "chanting: Arcane Lance, 2 turns")
 	assert.Positive(t, b.aria.Character.RT.QuickCasts)
 }

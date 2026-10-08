@@ -90,7 +90,7 @@ func TestAWarriorCompanionTacklesInTheRealRound(t *testing.T) {
 	n := len(*stream)
 	out := b.fight()
 	round := since(*stream, n)
-	assert.Regexp(t, `Tamsin Reed tackles the .* to the ground\. \(knocked down\)`, out)
+	assert.Regexp(t, `Tamsin Reed tackles the .* to the ground\. \(knocked down: its next action is lost\)`, out)
 	tackles := abilityEvents(round, "Tamsin Reed")
 	require.Len(t, tackles, 1)
 	assert.Equal(t, "Tackle", tackles[0].Status)
@@ -236,7 +236,7 @@ func TestAPlayerUsesTheirOwnAbility(t *testing.T) {
 	out := b.fight()
 	round := since(*stream, n)
 	require.Len(t, abilityEvents(round, "Aria"), 1)
-	assert.Regexp(t, `You tackle the .* to the ground\. \(knocked down\)`, out)
+	assert.Regexp(t, `You tackle the .* to the ground\. \(knocked down: its next action is lost\)`, out)
 	assert.Empty(t, swingsBy(round, "Aria"), "her tackle was her turn")
 
 }
@@ -328,7 +328,7 @@ func TestATackleBreaksAWindUp(t *testing.T) {
 	b.ogreOn(ogre, 0)
 	b.aria.Character.SetAggro(0, ogre.InstanceId, characters.DefaultAttack)
 	out := b.fight()
-	assert.Regexp(t, `You tackle the hill ogre to the ground\. \(knocked down\)`, out)
+	assert.Regexp(t, `You tackle the hill ogre to the ground\. \(knocked down: its next action is lost\)`, out)
 	assert.Contains(t, out, "(Crushing Blow interrupted)")
 	broken := interruptsOf(*stream, key(ogre))
 	require.NotEmpty(t, broken)
@@ -486,7 +486,7 @@ func TestATackleAtLevel20KeepsTheFoeDownLonger(t *testing.T) {
 			tamsin.Character.Level = level // the level the tackle reads, nothing else
 			foe := mobs.GetInstance(aimOf(&tamsin.Character))
 			require.NotNil(t, foe)
-			require.Regexp(t, `Tamsin Reed tackles the .* to the ground\. \(knocked down\)`, b.fight())
+			require.Regexp(t, `Tamsin Reed tackles the .* to the ground\. \(knocked down: its next action is lost\)`, b.fight())
 			left = foe.Character.Buffs.TriggersLeft(status.KnockedDown)
 		})
 		return left

@@ -732,6 +732,7 @@ func actPlayer(evt events.NewRound, userId int, extra bool) (affectedPlayerIds [
 		if user.Character.Health <= 0 || defMob.Character.Health <= 0 {
 			defMob.Character.EndAggro()
 			events.AddToQueue(events.AggroChanged{MobInstanceId: defMob.InstanceId, RoomId: defMob.Character.RoomId})
+			spendStrike(user.Character) // Phase 87 review: this swing loosed it
 			if user.Character.Health <= 0 || !reassignPlayerTarget(user, uRoom) {
 				user.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
@@ -1341,6 +1342,7 @@ func actMob(evt events.NewRound, mobId int, extra bool) (affectedPlayerIds []int
 		}
 
 		if mob.Character.Health <= 0 || defMob.Character.Health <= 0 {
+			spendStrike(&mob.Character) // Phase 87 review: this swing loosed it
 			if mob.Character.Health <= 0 || !(reassignCompanionTarget(mob, mobRoom) || reassignEnemyTarget(mob, mobRoom)) {
 				mob.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})

@@ -351,7 +351,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		event.Outcome = combatstream.OutcomeSucceeded
 		emitCombat(event)
 		a.holder.say(fmt.Sprintf(`You tackle %s to the ground.`, target.tag()),
-			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down)`)
+			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down: its next action is lost)`)
 		abilityDown[foe.InstanceId] = true
 		// Phase 35b: from level 20 the knockdown lasts a round longer.
 		events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`, ExtraTriggers: strategy.TackleExtraRounds(a.char.Level) + a.char.ClassEffects().Int(classes.TackleHold)})
@@ -409,6 +409,7 @@ func endAbilityStrike(who caster) {
 		c = &m.Character
 	}
 	delete(abilityStrikes, who)
+	kind := abilityKind[who]
 	delete(abilityKind, who)
 	if c == nil {
 		return
@@ -418,6 +419,23 @@ func endAbilityStrike(who caster) {
 	}
 	if c.Aggro == nil || c.Aggro.Type != characters.BackStab {
 		return
+	}
+	// Phase 87: a strike still readied after the fighter's turn was never
+	// loosed (no foe left in reach, or the turn was lost): it costs no
+	// cooldown, and the log says so.
+	if kind != "" && c.Health > 0 {
+		delete(abilityReady, abilityKey{who: who, id: kind})
+		if kind == strategy.AimedShot {
+			var h statusHolder
+			if u := users.GetByUserId(who.userId); who.userId > 0 && u != nil {
+				h = userHolder(u)
+			} else if m := mobs.GetInstance(who.mobId); who.mobId > 0 && m != nil {
+				h = mobHolder(m)
+			}
+			if h.char != nil {
+				h.say("Your aim finds no target; the shot is held back.", "%s lowers the bow; the shot finds no target.", "")
+			}
+		}
 	}
 	c.Aggro.Type = characters.DefaultAttack
 	c.Aggro.StrikeBonus = 0 // a later plain backstab must not inherit it
