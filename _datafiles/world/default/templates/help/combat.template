@@ -16,7 +16,7 @@ and the rest) count combat rounds; other buffs and effects that last a
 number of rounds count the game's 4-second rounds.
 
 A round is decided at once, then played out to you one action at a time,
-a beat apiece (a second at the normal pace), and the next round begins
+a beat apiece (a second and a half at the normal pace), and the next round begins
 when the last one has played out, never sooner than 3 seconds after it
 began. So a round lasts as long as its actions need: a few seconds for two
 fighters, ten or so for ten. Choose the beat with <ansi fg="command">set combatpace fast</ansi>,

@@ -8,7 +8,7 @@ WAIT_ROUNDS = 1; // tend.yaml's waitrounds
 // the wound limit. It heals no health itself; heal does that, up to the
 // new limit. The dice match internal/wounds.DefaultRules.
 function chanting(rounds) {
-    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' turn)' : ' turns)');
 }
 
 /**

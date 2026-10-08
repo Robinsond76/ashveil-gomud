@@ -18,8 +18,8 @@ func TestShippedWeaponTextVoice(t *testing.T) {
 	_, thisFile, _, _ := runtime.Caller(0)
 	dir := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default", "combat-messages")
 	files, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
-	if err != nil || len(files) != 8 {
-		t.Fatalf("want the eight shipped weapon files, got %v (%v)", files, err)
+	if err != nil || len(files) != 9 {
+		t.Fatalf("want the eight weapon files and the bloodless one, got %v (%v)", files, err)
 	}
 	for _, path := range files {
 		data, err := os.ReadFile(path)

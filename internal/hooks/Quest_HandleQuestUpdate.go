@@ -101,7 +101,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 		// Gold reward?
 		if questInfo.Rewards.Gold > 0 {
-			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>!`, questInfo.Rewards.Gold))
+			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>.`, questInfo.Rewards.Gold))
 			questUser.Character.Gold += questInfo.Rewards.Gold
 
 			events.AddToQueue(events.EquipmentChange{
@@ -113,7 +113,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Item reward?
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
-			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi>!`, newItm.NameSimple()))
+			questUser.SendText(fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi>.`, newItm.NameSimple()))
 			questUser.Character.StoreItem(newItm)
 
 			iSpec := newItm.GetSpec()

@@ -70,6 +70,9 @@ func (w *WeaponAttackMessageGroup) Validate() error {
 
 	// Make sure all important options are present.
 	optionsToCheck := []Intensity{Prepare, Wait, Miss, Weak, Normal, Heavy, Critical}
+	if w.OptionId == Bloodless {
+		optionsToCheck = []Intensity{Weak, Normal, Heavy, Critical} // Phase 87: hits only
+	}
 	for _, option := range optionsToCheck {
 		if _, ok := w.Options[option]; !ok {
 			return fmt.Errorf("missing option[`%s`] for %s", option, w.OptionId)
@@ -123,4 +126,31 @@ func GetAttackMessage(subType ItemSubType, pctDamage int, crit bool) AttackOptio
 	}
 	// default to generic.
 	return GetAttackMessage(Generic, pctDamage, crit)
+}
+
+// Bloodless is the message group for blows on a foe with no blood or living
+// flesh (Phase 87): hit lines only, whatever the weapon.
+const Bloodless ItemSubType = "bloodless"
+
+// GetBloodlessAttackMessage picks a landed blow's pool for a bloodless foe,
+// by the same intensity rules as GetAttackMessage. ok is false when the
+// world has no such lines, and the weapon's own are used.
+func GetBloodlessAttackMessage(pctDamage int, crit bool) (AttackOptions, bool) {
+	group, found := attackMessages[Bloodless]
+	if !found {
+		return AttackOptions{}, false
+	}
+	var intensity Intensity
+	switch {
+	case crit:
+		intensity = Critical
+	case pctDamage >= 75:
+		intensity = Heavy
+	case pctDamage >= 30:
+		intensity = Normal
+	default:
+		intensity = Weak
+	}
+	opts, ok := group.Options[intensity]
+	return opts, ok
 }

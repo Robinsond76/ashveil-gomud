@@ -375,9 +375,9 @@ func restartChant(m *mobs.Mob) bool {
 	agg.RoundsWaiting = sp.WaitRounds + m.Character.ColdDelay()
 	agg.ColdDelayed, agg.ColdNotice = m.Character.ColdDelay() > 0, false
 	rounds := agg.RoundsWaiting + 1
-	plural := `rounds`
+	plural := `turns`
 	if rounds == 1 {
-		plural = `round`
+		plural = `turn`
 	}
 	if room := rooms.LoadRoom(m.Character.RoomId); room != nil {
 		room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s starts the chant again from the first word. (chanting: %s, %d %s)`,

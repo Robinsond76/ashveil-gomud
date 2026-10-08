@@ -37,11 +37,47 @@ func TestForRoundClampsTheWindow(t *testing.T) {
 	if got := Slow.ForRound(8 * time.Second).Window; got != 7200*time.Millisecond {
 		t.Fatalf("slow window in an 8s round = %v, want 7.2s", got)
 	}
-	if got := Normal.ForRound(8 * time.Second).Window; got != 6*time.Second {
-		t.Fatalf("normal window in an 8s round = %v, want 6s", got)
+	if got := Normal.ForRound(8 * time.Second).Window; got != 7200*time.Millisecond {
+		t.Fatalf("normal window in an 8s round = %v, want 7.2s", got)
 	}
 	if got := Normal.ForRound(4 * time.Second).Window; got != 3600*time.Millisecond {
 		t.Fatalf("normal window in a 4s round = %v, want 3.6s", got)
+	}
+}
+
+// fixedSpec is the fixed-cadence timing the pacer tests were written
+// against (a Gap of 800ms), independent of the shipped paces' values.
+func fixedSpec(round time.Duration) Spec {
+	s := Spec{Gap: 800 * time.Millisecond, Dramatic: 1400 * time.Millisecond, Quick: 250 * time.Millisecond, Window: 6 * time.Second}
+	if limit := round * 9 / 10; limit > 0 && s.Window > limit {
+		s.Window = limit
+	}
+	return s
+}
+
+// Phase 87: what was "slow" is the normal pace now, and slow is one and a
+// half times that; fast and off are as they were.
+func TestPhase87PacesAreSlower(t *testing.T) {
+	if got := Normal.Beats().Beat; got != 1500*time.Millisecond {
+		t.Errorf("normal beat = %v, want 1.5s", got)
+	}
+	if got := Slow.Beats().Beat; got != 2250*time.Millisecond {
+		t.Errorf("slow beat = %v, want 2.25s", got)
+	}
+	if got := Fast.Beats().Beat; got != 600*time.Millisecond {
+		t.Errorf("fast beat = %v, want 0.6s", got)
+	}
+	n, s := Normal.Beats(), Slow.Beats()
+	for name, pair := range map[string][2]time.Duration{
+		"follow": {n.Follow, s.Follow}, "extra": {n.Extra, s.Extra}, "tail": {n.Tail, s.Tail},
+		"gap": {Normal.Spec().Gap, Slow.Spec().Gap}, "dramatic": {Normal.Spec().Dramatic, Slow.Spec().Dramatic},
+	} {
+		if pair[1] != pair[0]*3/2 {
+			t.Errorf("slow %s = %v, want 1.5 x normal (%v)", name, pair[1], pair[0])
+		}
+	}
+	if Off.Spec() != (Spec{}) {
+		t.Error("off is untouched")
 	}
 }
 
@@ -60,7 +96,7 @@ func release(p *Pacer, until int) map[string]int {
 
 func TestLinesGoOutInOrderAtThePacesGap(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	for _, l := range []string{"a\n", "b\n", "c\n"} {
 		p.Hold(1, 2, 0, l, spec, at(0))
 	}
@@ -103,7 +139,7 @@ func TestGapsShrinkToFitTheWindow(t *testing.T) {
 func TestDramaticAndQuickBeats(t *testing.T) {
 	p := New()
 	p.Mark("The bandit howls.") // marks match without the trailing newline
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.Hold(1, 2, 0, "You strike the bandit. (critical hit, 9 damage)\n", spec, at(0))
 	p.Hold(1, 2, 0, "The bandit howls.\n", spec, at(0))
 	p.Hold(1, 2, 0, "The spell bursts.\n", spec, at(0))
@@ -129,7 +165,7 @@ func TestDramaticAndQuickBeats(t *testing.T) {
 
 func TestAnOlderRoundIsFlushedAheadOfANewOne(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.Hold(1, 2, 0, "old1", spec, at(0))
 	p.Hold(1, 2, 0, "old2", spec, at(0))
 	p.Due(at(0)) // old1 out
@@ -184,7 +220,7 @@ func TestFollowJoinsHeldLinesOnly(t *testing.T) {
 	if p.Follow(1, "alone") {
 		t.Fatal("Follow held a line for a player with nothing held")
 	}
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.Hold(1, 2, 0, "r1", spec, at(0))
 	p.Hold(1, 2, 0, "r2", spec, at(0))
 	if !p.Follow(1, "after") {
@@ -199,7 +235,7 @@ func TestFollowJoinsHeldLinesOnly(t *testing.T) {
 
 func TestAnOpenRoundIsBusyUntilDrained(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.StartRound(1, 2, 3)
 	for _, id := range []int{1, 2, 3} {
 		if !p.Busy(id) {
@@ -233,7 +269,7 @@ func TestAnOpenRoundIsBusyUntilDrained(t *testing.T) {
 
 func TestALateLineOfAnOlderRoundJoinsTheNewer(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.Hold(1, 4, 0, "n1", spec, at(0))
 	p.Hold(1, 4, 0, "n2", spec, at(0))
 	if flushed := p.Hold(1, 2, 0, "late", spec, at(0)); flushed != nil {
@@ -251,7 +287,7 @@ func TestALateLineOfAnOlderRoundJoinsTheNewer(t *testing.T) {
 // of a second (a regression: the scaling overflowed int64 nanoseconds).
 func TestABusyRoundStillFillsItsWindow(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	for i := 0; i < 30; i++ {
 		p.Hold(1, 2, 0, string(rune('A'+i)), spec, at(0))
 	}
@@ -272,7 +308,7 @@ func TestABusyRoundStillFillsItsWindow(t *testing.T) {
 
 func TestDataGoesOutWithTheNextTextLine(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.Hold(1, 2, 0, "line one", spec, at(0))
 	p.HoldData(1, 2, "d1", spec, at(0))
 	p.HoldData(1, 2, "d2", spec, at(0))
@@ -326,7 +362,7 @@ func TestDataAloneAndFlushedWithText(t *testing.T) {
 
 func TestOlderRoundDataIsFlushedAheadOfANewRound(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	p.Hold(1, 2, 0, "old", spec, at(0))
 	p.HoldData(1, 2, "od", spec, at(0))
 	flushed := p.HoldData(1, 4, "nd", spec, at(8000))
@@ -338,7 +374,7 @@ func TestOlderRoundDataIsFlushedAheadOfANewRound(t *testing.T) {
 
 func TestFollowDataWaitsOnlyBehindHeldEntries(t *testing.T) {
 	p := New()
-	spec := Normal.ForRound(8 * time.Second)
+	spec := fixedSpec(8 * time.Second)
 	if p.FollowData(1, "x") {
 		t.Fatal("nothing held: data goes out at once")
 	}

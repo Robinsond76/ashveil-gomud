@@ -95,14 +95,20 @@ func TestRender(t *testing.T) {
 	lines := Render(*skirmish(t), 7)
 	assert.Equal(t, []string{
 		"── The fighting is over ──",
+		"",
+		"The fight",
 		"Damage dealt   Company 16 · Enemies 8",
-		"Healing        Company 2",
 		"Most damage    Garrick Vane 9 · You 4 · Tamsin Reed 3",
 		"Highest hit    Garrick Vane 9 on bandit captain (critical)",
 		"Effects        dazed 2 · slowed 1",
 		"Kills          Garrick Vane 1",
+		"",
+		"What it cost",
+		"Healing        Company 2",
 		"Damage taken   Tamsin Reed 6 · You 2",
 		"Never landed   Tamsin Reed 1 missed",
+		"",
+		"How it ended",
 		"Enemies        bandit captain slain · bandit slinger fled",
 		"Company        You 12/14 · Garrick Vane 15/15 · Tamsin Reed fallen",
 	}, lines)
@@ -133,7 +139,11 @@ func TestRenderLeavesOutEmptyLines(t *testing.T) {
 	lines := Render(*sum, 99)
 	assert.Equal(t, []string{
 		"── The company is beaten ──",
+		"",
+		"The fight",
 		"Damage dealt   Company 0 · Enemies 0",
+		"",
+		"How it ended",
 		"Enemies        bandit captain still standing",
 		"Company        Aria -2/14",
 	}, lines, "another viewer reads the leader's name")

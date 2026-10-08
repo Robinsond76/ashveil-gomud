@@ -285,7 +285,7 @@ func TestEnemyChantBreaksAndRestarts(t *testing.T) {
 	assert.Equal(t, "Magic Missile", broken[0].Status)
 	assert.Contains(t, out, "The bandit captain's chant breaks off under the blow. (Magic Missile interrupted)")
 	// The company struck before his turn, so he starts again this round.
-	assert.Contains(t, out, "The bandit captain starts the chant again from the first word. (chanting: Magic Missile, 2 rounds)")
+	assert.Contains(t, out, "The bandit captain starts the chant again from the first word. (chanting: Magic Missile, 2 turns)")
 	assert.Len(t, castsBy(*stream, combatstream.CastStart, key(captain)), 1, "the restart is a cast start")
 	require.Equal(t, characters.SpellCast, captain.Character.Aggro.Type, "still chanting")
 	assert.Equal(t, 100-6, captain.Character.Mana, "the restart costs nothing")

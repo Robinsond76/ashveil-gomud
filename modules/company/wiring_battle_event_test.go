@@ -221,7 +221,9 @@ func combatRoundsToPlay(t *testing.T, b *brawl, now *time.Time) int {
 		n++
 		events.AddToQueue(events.NewRound{RoundNumber: round})
 		events.ProcessEvents()
-		for turn := 0; turn < 80; turn++ {
+		// Phase 87: at the slower paces a busy round outlasts 4 seconds, and
+		// the real clock waits for it to play out, so the helper does too.
+		for turn := 0; turn < 80 || turn < 600 && combatpace.Default().Busy(7); turn++ {
 			*now = now.Add(50 * time.Millisecond)
 			events.AddToQueue(events.NewTurn{})
 			events.ProcessEvents()

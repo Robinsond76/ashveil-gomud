@@ -640,8 +640,27 @@ func settleBattles() {
 		if room == nil {
 			continue
 		}
+		noteFinishingChants(u, room)
 		sd := loadSide(u, room)
 		sd.beginNext(sd.setParties(enemyparty.Parties(room), room, round), room, round)
+	}
+}
+
+// noteFinishingChants tells the room that a helpful chant begun in the
+// battle just ended goes on to its release (Phase 87): a heal the foe's fall
+// did not cut short lands after the summary, and says why.
+func noteFinishingChants(u *users.UserRecord, room *rooms.Room) {
+	for _, a := range sideActors(u, room) {
+		agg := a.char.Aggro
+		if a.char.Health < 1 || agg == nil || agg.Type != characters.SpellCast || harmful(agg.SpellInfo.SpellId) {
+			continue
+		}
+		sp := spells.GetSpell(agg.SpellInfo.SpellId)
+		if sp == nil {
+			continue
+		}
+		a.holder.say(fmt.Sprintf("The fight is over, but you finish your %s.", sp.Name),
+			"The fight is over, but %s finishes "+verbatim(sp.Name)+".", " (chant finishing)")
 	}
 }
 
@@ -765,3 +784,6 @@ func holdMobSpell(mob *mobs.Mob, info *characters.SpellAggroInfo) (held bool, wa
 	}
 	return true, waitOn
 }
+
+// NoteFinishingChantsForTest exposes noteFinishingChants to the wiring tests.
+func NoteFinishingChantsForTest(u *users.UserRecord, room *rooms.Room) { noteFinishingChants(u, room) }

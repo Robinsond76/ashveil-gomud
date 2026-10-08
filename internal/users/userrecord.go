@@ -198,15 +198,15 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 	grantXP, xpScale := u.Character.GrantXP(amt)
 
 	if xpScale != 100 {
-		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
+		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
 
-		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
+		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
 
 	} else {
 
-		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, source))
+		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, source))
 
-		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, source))
+		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, source))
 	}
 
 	events.AddToQueue(events.GainExperience{
@@ -256,7 +256,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 				u.Character.ExtraLives += int(c.LivesOnLevelUp)
 			}
 
-			u.EventLog.Add(`xp`, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now <ansi fg="magenta-bold">level %d</ansi>!`, u.Character.Name, u.Character.Level))
+			u.EventLog.Add(`xp`, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now <ansi fg="magenta-bold">level %d</ansi>.`, u.Character.Name, u.Character.Level))
 
 			levelUpEvent.LevelsGained += 1
 			levelUpEvent.StatsDelta.Strength.Value += statsDelta.Strength.Value

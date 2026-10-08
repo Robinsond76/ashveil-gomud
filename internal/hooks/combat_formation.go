@@ -607,7 +607,7 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 		return false
 	}
 	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
-	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
+	retargetKeepingStrike(user.Character, 0, newTargetId)
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 	user.SendText(turnsToward(`You`, mobTag(mobName(newTargetId))))
 	return true
@@ -638,7 +638,7 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 		return false
 	}
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
-	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
+	retargetKeepingStrike(&mob.Character, 0, newTargetId)
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newTargetId))))
 	return true
@@ -667,4 +667,10 @@ func fogReach(leader *users.UserRecord, room *rooms.Room, f company.Formation, k
 // FogReachForTest exposes fogReach to the wiring tests.
 func FogReachForTest(leader *users.UserRecord, room *rooms.Room, f company.Formation, key company.MemberKey, reach formationcombat.Reach) formationcombat.Reach {
 	return fogReach(leader, room, f, key, reach)
+}
+
+// ReassignCompanionTargetForTest exposes reassignCompanionTarget to the
+// wiring tests.
+func ReassignCompanionTargetForTest(mob *mobs.Mob, room *rooms.Room) bool {
+	return reassignCompanionTarget(mob, room)
 }
