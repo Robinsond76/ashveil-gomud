@@ -236,6 +236,19 @@ type CampState struct {
 	// InnRooms (Phase 75) are the rooms this inn lets, cheapest first;
 	// empty away from an inn or where the settlement refuses the company.
 	InnRooms []InnRoomRow
+	// Activities are the camp chores the company can do now, before it
+	// sleeps: sharpen, poison and cook, each with who does it and what it
+	// would use, or why it cannot be done. Empty away from the camp and
+	// while a rest runs.
+	Activities []ActivityRow
+}
+
+// ActivityRow is one camp chore for the Camp tab. Command is what the
+// button runs; Ready says the chore would do something now; Note says who
+// does it and what it uses, or why nothing can be done.
+type ActivityRow struct {
+	Key, Label, Command, Note string
+	Ready                     bool
 }
 
 // InnRoomRow is one room an inn offers, for the Camp tab.

@@ -1856,6 +1856,7 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		if user := m.userByID(leaderUserID); user != nil && user.Character != nil && user.Character.RoomId == camp.RoomID {
 			s.Duties = m.dutyRows(user, camp)
 			s.DutiesLocked = camp.Rest != nil && camp.Rest.State == camping.Resting
+			s.Activities = m.campActivities(user, camp)
 		}
 	}
 	// Camp music: the Music block at the camp, a teacher or an inn, and the

@@ -10,7 +10,10 @@ equipped. Your whetstones sharpen your whole company, you first, then your
 companions in order, until the uses run out. Blades that are still sharp
 cost nothing. Whetstones are sold at the markets.
 
-You can sharpen any time, except in the middle of a fight.
+You can sharpen any time, except in the middle of a fight or while your
+company rests: do it before you sleep. In the web client the Camp tab's
+"Before you sleep" list has a Sharpen button that says whose blades are
+dull, or that none are.
 
 <ansi fg="yellow">Usage:</ansi>
 

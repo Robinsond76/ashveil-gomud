@@ -60,6 +60,18 @@ type campPayload struct {
 	// Phase 75: the rooms an inn lets, cheapest first, priced for the
 	// company's standing there; the Camp tab's buttons run Command.
 	InnRooms []innRoomRow `json:"inn_rooms,omitempty"`
+	// Camp activities: the chores to do before the company sleeps.
+	Activities []activityRow `json:"activities,omitempty"`
+}
+
+// activityRow is one camp chore: its button runs Command; Note says who
+// does it and what it uses, or why it cannot be done now.
+type activityRow struct {
+	Key     string `json:"key"`
+	Label   string `json:"label"`
+	Command string `json:"command"`
+	Note    string `json:"note"`
+	Ready   bool   `json:"ready"`
 }
 
 // innRoomRow is one room of an inn for the Camp tab.
@@ -192,7 +204,11 @@ func campPayloadOf(s camping.CampState) campPayload {
 		spec := camping.TentOf(s.TentKind)
 		tentKind, tentName = string(spec.Kind), spec.Name
 	}
-	return campPayload{Music: music, Gig: gig, InnRooms: innRooms, Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	var activities []activityRow
+	for _, a := range s.Activities {
+		activities = append(activities, activityRow{Key: a.Key, Label: a.Label, Command: a.Command, Note: a.Note, Ready: a.Ready})
+	}
+	return campPayload{Activities: activities, Music: music, Gig: gig, InnRooms: innRooms, Recipes: recipes, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

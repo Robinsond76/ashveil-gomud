@@ -55,6 +55,16 @@ func TestCompanyCampPayload(t *testing.T) {
 	state = camping.CampState{Recipes: []string{"hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)"}}
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
 	assert.Equal(t, []any{"hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)"}, got["recipes"])
+	// Camp activities: the chores before sleeping, with their notes.
+	state = camping.CampState{HasCamp: true, Here: true, Activities: []camping.ActivityRow{
+		{Key: "sharpen", Label: "Sharpen", Command: "camp sharpen", Note: "No blades are dull enough to need the whetstone."},
+		{Key: "cook", Label: "Cook", Command: "camp cook", Note: "You cook a stew.", Ready: true},
+	}}
+	require.NoError(t, json.Unmarshal(extra.build(u), &got))
+	assert.Equal(t, []any{
+		map[string]any{"key": "sharpen", "label": "Sharpen", "command": "camp sharpen", "note": "No blades are dull enough to need the whetstone.", "ready": false},
+		map[string]any{"key": "cook", "label": "Cook", "command": "camp cook", "note": "You cook a stew.", "ready": true},
+	}, got["activities"])
 	state = camping.CampState{HasCamp: true, Here: true, FireLit: true, Resting: true, RestPercent: 25, RestSeconds: 45}
 
 	none := campExtra(func(int, int, []string) (camping.CampState, bool) { return camping.CampState{}, false }, nil)

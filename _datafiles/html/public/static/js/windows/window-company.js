@@ -159,6 +159,9 @@
         .cmp-btn[disabled] { opacity: 0.6; cursor: default; }
         .cmp-duty { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
         .cmp-duty-name { flex-basis: 100%; }
+        .cmp-activities .cmp-duty { flex-wrap: nowrap; align-items: flex-start; }
+        .cmp-activities .cmp-btn { flex: 0 0 5.5em; }
+        .cmp-activities .cmp-note { flex: 1 1 auto; font-style: normal; }
 
         .cmp-block {
             border: 1px solid var(--t-accent-dim);
@@ -1508,6 +1511,30 @@
         return block;
     }
 
+    // activitiesBlock is the camp's chores before the company sleeps
+    // (sharpen, poison, cook): a button each, enabled only when it would do
+    // something, with who does it and what it uses, or why it cannot.
+    function activitiesBlock(camp) {
+        const block = el('section', 'cmp-block cmp-activities');
+        block.setAttribute('aria-label', 'Camp activities');
+        block.appendChild(el('h4', null, 'Before you sleep'));
+        camp.activities.forEach(row => {
+            const line = el('div', 'cmp-duty');
+            line.setAttribute('role', 'group');
+            line.setAttribute('aria-label', row.label);
+            const b = el('button', 'cmp-btn', row.label);
+            b.type = 'button';
+            b.setAttribute('data-focus', 'activity|' + row.key);
+            b.title = row.note + ' (' + row.command + ')';
+            if (!row.ready) { b.disabled = true; }
+            b.addEventListener('click', () => send(row.command));
+            line.appendChild(b);
+            line.appendChild(el('span', 'cmp-note', row.note));
+            block.appendChild(line);
+        });
+        return block;
+    }
+
     // tentsBlock is the tent picker (Phase 52): one button per tent carried,
     // shown when there is a choice. The pitched tent is fixed for a running
     // rest, so the buttons are disabled then.
@@ -1713,6 +1740,11 @@
                     'Pay ' + r.price + ' gold for the company: Well Rested for ' + length + ' (' + r.command + ')'));
             });
             pad.appendChild(rooms);
+        }
+
+        // The chores to do before sleeping: sharpen, poison, cook.
+        if (camp.has_camp && camp.here && Array.isArray(camp.activities) && camp.activities.length) {
+            pad.appendChild(activitiesBlock(camp));
         }
 
         // Phase 51: who does what during the next rest, under the camp's
