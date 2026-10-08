@@ -126,6 +126,9 @@ type companyMember struct {
 	OrderCmds []string `json:"order_cmds,omitempty"`
 	// Stance is its weapon stance (Phase 69), omitted with none.
 	Stance *companyStance `json:"stance,omitempty"`
+	// Tempo is its combat tempo, turns a round as the next round would
+	// use it (Phase 82d), two decimals; omitted when it is not here.
+	Tempo *float64 `json:"tempo,omitempty"`
 	// StancesFit are the stance keys what it holds can use (Phase 78), so
 	// the stance menu offers only those; empty when none fit, omitted when
 	// its gear can't be read (a companion away).
@@ -290,6 +293,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	}
 	out.Stance = stanceOf(leaderUserID, m.Key)
 	out.StancesFit = stancesFit(leaderUserID, m.Key)
+	if t, ok := memberTempo(leaderUserID, m.Key); ok {
+		out.Tempo = &t
+	}
 	out.Music = camping.MusicLabelOf(leaderUserID, string(m.Key))
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).

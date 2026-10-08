@@ -1,11 +1,36 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tempo</ansi>
 
 Speed, your personal burden and your armor's bulk set how often you act in
-combat. Everyone
+combat, and when. Everyone
 gets one opening turn. After that a slow fighter sometimes skips a round;
 a fast fighter sometimes gets two turns. Formation and your target's Speed
 do not set your tempo. Cargo and horses never make your worn gear lighter
 (<ansi fg="command">help burden</ansi>).
+
+<ansi fg="yellow-bold">The turn order</ansi>
+
+Each combat round, every fighter in the battle, on both sides, takes its
+turn one at a time, fastest first: a fighter's first turn comes at 1
+divided by its tempo, so a tempo 1.5 fighter acts at 0.67, a tempo 1
+fighter at 1.0 and a tempo 0.6 fighter at 1.67. A fighter who has earned
+a second turn this round takes it at 2 divided by its tempo (1.33 for the
+fast one), so it comes after most first turns and before the slowest
+fighters' first. A foe felled before its turn never strikes; a chant
+broken by a faster fighter's blow never lands. Fighters at the same tempo
+go by raw Speed, then Perception, then chance, afresh each round.
+
+Whatever opens your action meter also moves your first turn earlier in
+the fight's first round: a Samurai's Iaijutsu (half a turn), a
+Pathfinder's Scouted ground and a Packlord's hound really do strike first.
+
+<ansi fg="yellow-bold">Where you see it</ansi>
+
+Each member's tempo shows in the web client's Company panel ("Tempo 1.2"
+by the name), on the Character panel under your stats, and when you hover
+your figure on the battle screen. During a fight the battle screen shows
+the round's turn order as a strip under the picture, the Combat tab's
+Battle view lists it in words, and the game text opens each round with a
+dim "Round N" line (<ansi fg="command">help battlescreen</ansi>). Foes' tempos are never shown.
 
 <ansi fg="yellow-bold">The action meter</ansi>
 

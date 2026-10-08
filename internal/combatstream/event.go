@@ -125,6 +125,7 @@ type Event struct {
 	Seq     uint64 // stamped by Emit, in emission order
 	Kind    Kind
 	Round   uint64
+	Slot    int    // the round's turn slot now acting, from 1 (Phase 82b); 0 outside a turn
 	FightID uint64 // 0 when the happening is not part of a tracked fight
 	PartyID string // the enemy party (Phase 11a) of the fight, if any
 	RoomId  int

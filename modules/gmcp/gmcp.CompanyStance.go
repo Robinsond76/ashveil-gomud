@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -70,3 +71,6 @@ func memberGear(leaderUserID int, key company.MemberKey) (stance.Gear, bool) {
 	}
 	return stance.Gear{}, false
 }
+
+// memberTempo reads a member's combat tempo (Phase 82d); tests replace it.
+var memberTempo = hooks.MemberTempo

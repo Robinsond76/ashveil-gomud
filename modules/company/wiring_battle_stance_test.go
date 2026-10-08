@@ -2,9 +2,13 @@ package company
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/stance"
@@ -87,4 +91,34 @@ func TestAStanceCannotBeChangedInABattle(t *testing.T) {
 	b.fight()
 	assert.Contains(t, b.cmd("stance", "tamsin off"), "battle")
 	assert.Equal(t, stance.Heavy, stance.For(7, "companion:1"))
+}
+
+// Phase 82d review: reading a member's tempo for the panels, which happens
+// on every Company snapshot, applies the chosen stance to the number but
+// never announces it or touches the member's battle state; the battle's
+// first round still says it once.
+func TestReadingTempoNeverAnnouncesTheStance(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.unplaced()
+	captain, _, _, _, _ := b.shapeBandits()
+	b.aria.Character.Equipment.Offhand = items.New(stanceTowerID)
+	t.Cleanup(hooks.UseTempoForTest(nil)) // the real calculation
+	before := combat.Tempo(b.aria.Character)
+	assert.Contains(t, b.cmd("stance", "me wall"), "You are now in the Shield wall stance")
+
+	heard := b.ariaHears()
+	for i := 0; i < 3; i++ {
+		got, ok := hooks.MemberTempo(7, company.LeaderMemberKey)
+		require.True(t, ok)
+		assert.InDelta(t, 0.70, got/before, 0.02, "the number counts the stance she will fight in")
+	}
+	events.ProcessEvents()
+	assert.Empty(t, *heard, "reading the tempo says nothing")
+	assert.Nil(t, b.aria.Character.RT, "and applies nothing to her before the battle")
+
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	b.toughen()
+	out := b.fight()
+	assert.Equal(t, 1, strings.Count(out, "You take the Shield wall stance"), "the battle's first round says it once")
 }

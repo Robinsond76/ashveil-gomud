@@ -3,7 +3,6 @@ package buffs
 import (
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -527,11 +526,10 @@ func TestCombatRoundsText(t *testing.T) {
 }
 
 func TestGetDurationsForCombatRoundBuffs(t *testing.T) {
-	every := max(int(configs.GetTimingConfig().CombatEveryRounds), 1)
 	spec := &BuffSpec{TriggerCount: 3, RoundInterval: 100000, CombatRounds: true}
 	left, total := GetDurations(&Buff{TriggersLeft: 2, TriggersInitial: 3}, spec)
-	assert.Equal(t, 2*every, left, "combat rounds, shown as game rounds")
-	assert.Equal(t, 3*every, total)
+	assert.Equal(t, 2, left, "battle rounds, as they are (Phase 82c)")
+	assert.Equal(t, 3, total)
 	left, _ = GetDurations(&Buff{TriggersLeft: 0, TriggersInitial: 3}, spec)
 	assert.Equal(t, 0, left)
 }

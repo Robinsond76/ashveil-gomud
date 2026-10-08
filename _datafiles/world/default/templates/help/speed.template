@@ -16,7 +16,8 @@ blows and is harder to pin down.
   and so does your skill over theirs (<ansi fg="command">help abilities</ansi>).
 * Speed, your own burden and your armor's bulk set your action tempo for
   every weapon type,
-  with at most {{ config "GamePlay.Combat.MaxTurnsPerRound" }} turns per combat round (<ansi fg="command">help tempo</ansi>).
+  with at most {{ config "GamePlay.Combat.MaxTurnsPerRound" }} turns per combat round, and your place in each
+  round's turn order: the faster you are, the earlier you act (<ansi fg="command">help tempo</ansi>).
 * Increases the number of your unarmed damage dice when fighting without a weapon.
 
 <ansi fg="yellow">Movement</ansi>
