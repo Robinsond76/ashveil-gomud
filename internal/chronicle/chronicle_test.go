@@ -230,3 +230,51 @@ func TestGroupAndBountyDeedsReadAndFilterByZone(t *testing.T) {
 	assert.Len(t, l.Query(Filter{Ref: "mob:1", Zone: "Dark Forest"}), 2, "a boss slain in another zone is not this zone's lair")
 	assert.Len(t, l.Query(Filter{Ref: "mob:1", Zone: "Dark Forest", AfterSeq: 1}), 1, "only deeds numbered after a point count")
 }
+
+func TestMasteryDeedsReadWithOrWithoutTheArticle(t *testing.T) {
+	assert.Equal(t, "The company learned the habits of the big rat at Old King's Road.", Prose(Entry{Kind: Mastered, Subject: "big rat", Place: "Old King's Road"}))
+	assert.Equal(t, "The company learned the habits of Rodric at the ford.", Prose(Entry{Kind: Mastered, Subject: "Rodric", Place: "the ford"}))
+	assert.Equal(t, "The company learned the habits of a creature.", Prose(Entry{Kind: Mastered}))
+	for _, w := range []string{"lore", "mastered", "mastery", "beasts", "beast"} {
+		k, ok := KindByWord(w)
+		assert.True(t, ok, w)
+		assert.Equal(t, Mastered, k, w)
+	}
+	assert.True(t, Mastered.Valid())
+}
+
+func TestMasteryDeedsAreCappedWithinTheLog(t *testing.T) {
+	var l Log
+	l.Add(Entry{Kind: Boss, Ref: "mob:1"})
+	for i := 1; i <= 35; i++ {
+		l.Add(Entry{Kind: Mastered, Ref: fmt.Sprintf("mob:%d", i)})
+		if i == 10 {
+			l.Add(Entry{Kind: Relic, Subject: "ring"})
+		}
+	}
+	got := l.Query(Filter{Kinds: []Kind{Mastered}})
+	require.Len(t, got, KindCaps[Mastered], "no more than the cap is kept")
+	assert.Equal(t, "mob:35", got[0].Ref, "the newest stays")
+	assert.Equal(t, "mob:6", got[len(got)-1].Ref, "the oldest five went first")
+	assert.Equal(t, 1, l.Tally[Boss])
+	assert.Len(t, l.Query(Filter{Kinds: []Kind{Boss}}), 1, "other kinds are left alone")
+	assert.Len(t, l.Query(Filter{Kinds: []Kind{Relic}}), 1)
+	assert.Equal(t, 35, l.Tally[Mastered], "the tally still counts every deed")
+	assert.Equal(t, 37, l.NextSeq)
+}
+
+// Phase 85 review: in a full log, beast lore never takes more than its cap,
+// so other deeds keep the rest of the 300 lines.
+func TestBeastLoreLeavesAFullLogToOtherDeeds(t *testing.T) {
+	var l Log
+	for i := 0; i < MaxEntries; i++ {
+		l.Add(Entry{Kind: Boss, Ref: fmt.Sprintf("mob:%d", i)})
+	}
+	for i := 0; i < 100; i++ {
+		l.Add(Entry{Kind: Mastered, Ref: fmt.Sprintf("mob:%d", 1000+i)})
+	}
+	require.Len(t, l.Entries, MaxEntries)
+	assert.Len(t, l.Query(Filter{Kinds: []Kind{Mastered}}), KindCaps[Mastered])
+	assert.Len(t, l.Query(Filter{Kinds: []Kind{Boss}}), MaxEntries-KindCaps[Mastered], "the other deeds keep the rest")
+	assert.Equal(t, 100, l.Tally[Mastered])
+}

@@ -54,7 +54,11 @@ heals: <ansi fg="command">orders [who] add foe healer then break</ansi>. A foe t
 (<ansi fg="command">help orders</ansi>). A wind-up is broken by a landed critical hit, a stagger, a
 knockdown or a stun (<ansi fg="command">help interrupts</ansi>).
 
+The kill that teaches you a kind's habits is written in your company's chronicle
+as a line of beast lore, once per kind (<ansi fg="command">chronicle lore</ansi>, <ansi fg="command">help chronicle</ansi>). It is a record
+only, and kinds you learned before it existed have no line.
+
 A creature's habits also say which enchanting trophies it may yield
 (<ansi fg="command">help enchanting</ansi>).
 
-See also: <ansi fg="command">help consider</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help orders</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help consider</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help orders</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help chronicle</ansi>.

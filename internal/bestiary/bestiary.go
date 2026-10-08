@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -497,6 +498,23 @@ func LearnedLine(name string, tier Tier) string {
 		Habits:   "you now know its habits and weaknesses",
 	}[tier]
 	return fmt.Sprintf(`<ansi fg="yellow-bold">Bestiary:</ansi> %s, %s (<ansi fg="command">bestiary %s</ansi>).`, name, what, strings.ToLower(name))
+}
+
+// MasteredDeed is the chronicle line for the kill that taught a company a
+// kind's habits (Phase 85), built from the creature's template. It is not ok
+// for a template that can't be known (none, or a practice foe).
+func MasteredDeed(mobID int, place string) (chronicle.Entry, bool) {
+	spec := mobs.GetMobSpec(mobs.MobId(mobID))
+	if spec == nil || spec.Practice {
+		return chronicle.Entry{}, false
+	}
+	return chronicle.Entry{
+		Kind:    chronicle.Mastered,
+		Subject: spec.Character.Name,
+		Ref:     fmt.Sprintf("mob:%d", mobID),
+		Zone:    spec.Zone,
+		Place:   place,
+	}, true
 }
 
 // article is "a" or "an" for the word that follows.

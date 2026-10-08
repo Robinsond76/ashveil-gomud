@@ -217,6 +217,13 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// encounter's boss shares its template's thresholds.
 			if tier := bestiary.TierOf(int(mob.MobId), before+1); tier > bestiary.TierOf(int(mob.MobId), before) {
 				user.SendText(bestiary.LearnedLine(mob.Character.Name, tier))
+				// Phase 85: learning a kind's habits is the company's deed,
+				// once per kind (the tally only grows).
+				if tier == bestiary.Habits {
+					if deed, ok := bestiary.MasteredDeed(int(mob.MobId), room.Title); ok {
+						chronicle.Record(uid, deed)
+					}
+				}
 			}
 			if mob.IsElite {
 				user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
