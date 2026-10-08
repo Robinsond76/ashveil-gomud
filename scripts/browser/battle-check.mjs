@@ -173,7 +173,7 @@ check(unitOf(s, 'm:5') && unitOf(s, 'm:5').cell.row === 1, 'a newcomer appears f
 
 // --- Buttons ---
 await page.evaluate(() => { window.sent.length = 0; });
-await page.click('#battle-screen button:text("Retreat")');
+await page.click('#battle-screen .bs-foot button:text("Retreat")');
 await page.click('#battle-screen button[data-focus="weakest"]');
 const sent = await page.evaluate(() => window.sent);
 check(sent[0] === 'retreat' && sent[1] === 'company tactics focus weakest', 'Retreat and focus send the dock\'s commands: ' + JSON.stringify(sent));

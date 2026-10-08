@@ -385,26 +385,33 @@ await gmcp('Company.Battle', battle);
 await page.waitForTimeout(400);
 check(await page.evaluate(() => BattleScreen.state().open), 'the battle screen opens by itself on a phone');
 const bs = await box('#battle-screen');
-check(bs && bs.x === 0 && bs.width === VW && bs.height >= 700, 'it takes the whole screen: ' + JSON.stringify(bs && { w: bs.width, h: Math.round(bs.height) }));
+// Phase 82a: the screen sits at the top of the Game view, the terminal below it.
+const termBox2 = await box('#terminal');
+const paneBox = await box('#battle-pane');
+check(bs && bs.x === 0 && bs.width === VW && bs.y < 80 && termBox2 && paneBox && termBox2.y >= paneBox.y + paneBox.height - 1, 'it sits at the top of the Game view, the width of the screen, the game text below: ' + JSON.stringify(bs && { y: Math.round(bs.y), w: bs.width, pane: Math.round(paneBox.height), term: Math.round(termBox2.y) }));
+check(await page.evaluate(() => Client.term.options.fontSize) === 11 && termBox2.height >= 120, 'the game text steps down to 11 px and keeps ' + Math.round(termBox2.height) + ' px');
 const cv = await box('#battle-screen canvas');
-check(cv && cv.width <= VW && cv.width >= VW - 30, 'the picture fits the width: ' + Math.round(cv.width));
+check(cv && cv.width === 320 && cv.x >= 0 && cv.x + cv.width <= VW, 'the picture is 1x and fits the width: ' + Math.round(cv.width));
 const foot = await page.evaluate(() => [...document.querySelectorAll('#battle-screen .bs-foot button')].map(b => {
   const r = b.getBoundingClientRect();
-  return { t: b.textContent, h: r.height, inside: r.left >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight };
+  return { t: b.textContent, h: r.height, inside: r.left >= 0 && r.right <= window.innerWidth };
 }));
-check(foot.length >= 5 && foot.every(b => b.h >= 44 && b.inside), 'Retreat, the focus buttons and Help are finger-sized and on screen: ' + foot.map(b => b.t + ':' + Math.round(b.h)).join(' '));
+check(foot.length >= 5 && foot.every(b => b.h >= 44 && b.inside), 'Retreat, the focus buttons and Help are finger-sized and fit the width (the pane scrolls to them): ' + foot.map(b => b.t + ':' + Math.round(b.h)).join(' '));
+// Phase 82a: the pane scrolls on a phone, so Retreat also sits in the head, in reach without scrolling.
+const headRetreat = await box('#battle-screen .bs-head-retreat');
+check(headRetreat && headRetreat.height >= 44 && headRetreat.y + headRetreat.height <= paneBox.y + paneBox.height, 'Retreat sits in the head, in reach without scrolling');
 await shot('battle');
 // On a phone an allied company is a pennant at the top of the picture; a tap on it watches that company.
 await page.evaluate(() => { document.getElementById('connect-button').style.display = 'none'; });
 check(await page.evaluate(() => BattleScreen.state().allies.list.length) === 1, 'the allied company is a pennant on a phone');
 const cb = await box('#battle-screen canvas');
-await page.touchscreen.tap(cb.x + 134 * cb.width / 320, cb.y + 31 * cb.height / 180);
+await page.locator('#battle-screen canvas').tap({ position: { x: 134 * cb.width / 320, y: 31 * cb.height / 180 } });
 await page.waitForTimeout(250);
 check(await page.evaluate(() => BattleScreen.state().watching) === 0, 'tapping the allied pennant watches that company');
 await page.waitForTimeout(300);
 await shot('battle-watching');
 check(await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent.includes('Watching')), 'the caption says whom you are watching');
-await page.locator('#battle-screen .bs-foot button', { hasText: 'Retreat' }).tap();
+await page.locator('#battle-screen .bs-head-retreat').tap();
 check((await sent()).includes('retreat'), 'Retreat is one tap, and still works while watching');
 await page.locator('#battle-screen .bs-foot button', { hasText: 'weakest' }).first().tap().catch(() => {});
 await clearSent();
@@ -414,10 +421,15 @@ const barTop = (await box('#touch-bar')).y;
 check(badge && badge.y + badge.height <= barTop && badge.y > 0, 'minimised, the badge sits clear of the bottom bars: ' + Math.round(badge.y + badge.height) + ' <= ' + Math.round(barTop));
 await shot('battle-badge');
 await page.locator('#battle-badge').tap();
+// Phase 82a: the pane lives in the Game view; a battle brings that view up, and Help keeps the pane open above the text it lands in.
+await gmcp('Company.Battle', {});
 await page.evaluate(() => Mobile.show('map'));
+await gmcp('Company.Battle', battle);
+await page.waitForTimeout(300);
+check(await page.evaluate(() => Mobile.view() === 'game' && BattleScreen.state().open), 'a battle opening brings the Game view up');
 await page.locator('#battle-screen .bs-foot button', { hasText: 'Help' }).tap();
-check((await sent()).includes('help battlescreen') && await page.evaluate(() => Mobile.view() === 'game' && getComputedStyle(document.getElementById('battle-screen')).display === 'none'),
-  'Help steps aside to the Game view, where its text lands');
+check((await sent()).includes('help battlescreen') && await page.evaluate(() => Mobile.view() === 'game' && BattleScreen.state().open),
+  'Help sends help battlescreen and keeps the pane open above the Game view, where its text lands');
 check(await page.evaluate(() => document.querySelector('#battle-screen .bs-focus-label').textContent) === 'Focus:', 'the focus buttons are named on a phone, where there is no hover');
 await gmcp('Company.Battle', {});
 

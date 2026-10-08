@@ -60,7 +60,8 @@ button in them just types a command for you.
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
               Battle view during a battle. A battle also opens as a
-              picture, the battle screen (help battlescreen).
+              picture, the battle screen, above the game text in the
+              middle of the page (help battlescreen).
   <ansi fg="yellow">Comm</ansi>        what's said around you; a number on the tab counts what
               arrived while you were looking elsewhere.
   <ansi fg="yellow">Bestiary</ansi>    the kinds of creature you have beaten, by zone; tap one for
