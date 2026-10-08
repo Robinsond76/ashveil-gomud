@@ -175,6 +175,10 @@ don't need to):
   alternate. Arms and cloak swing a little against the legs. A walk that
   only shifts the feet a pixel or two, or reuses one stride in every
   frame, reads as sliding on the map.
+- **Idle and walk are one drawing.** The game switches between them every
+  time a figure starts or stops, so they share the design (every piece of
+  gear and headgear), the scale and the top of the head. The idle may be
+  a little wider from its stance, but no more than about 10% bigger.
 - **Scale uniformly.** Never stretch or squash a figure, a weapon or a
   pose on one axis to fit a cell; it makes art pixels non-square. If a
   pose is too wide or a weapon too tall, redraw it (angle the weapon,
