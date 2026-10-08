@@ -409,6 +409,65 @@ Order: 82a and 82b may run in parallel (web client vs Go). 82c needs 82b.
 - Acceptance: at normal, no two actions of a battle arrive less than 0.6 s
   apart; at-level fight length in range; `make smoke` passes.
 
+#### 82c as built (2026-10-07, full autonomy): amendments and measurement
+
+- **One clock for the world, not one per cluster** (amends decision 4).
+  `DoCombat` is one pass over every fight with round-keyed state shared
+  across them (marks last `round <= MarkRound+1`, battle cries, openings,
+  `battle.StartRound`, the fight stream's round stamps), through some
+  thirty passes. Per-cluster rounds would mean per-cluster round numbers
+  through all of them for a case (two companies fighting apart at once)
+  the game rarely sees. So `BattleClock` (`internal/hooks/combat_clock.go`,
+  a `NewTurn` listener) resolves every fight whenever a player is in one,
+  and `CombatOnCadence` runs only while no player fights (mob against mob
+  stays on the 8 s cadence then). Two companies fighting apart share the
+  clock: each round waits for the slower playback of the two. The rounds
+  resolve exactly as before, under the game lock, so sims and tests that
+  call `DoCombat` are untouched.
+- **Each player reads at their own pace; the round waits for the slowest**
+  (amends decision 5's "a cluster's beat is the slowest chosen pace"). A
+  fast reader in a fight with a slow one sees fast beats and then a pause,
+  rather than slow beats; the round length is the same either way. Off
+  reads at once and the round still lasts the minimum (3 s, `MinRoundMs` in
+  the combat config) or the slowest reader's playback plus the tail.
+- **Rounds are numbered by a counter**, not by the game round the cadence
+  used to pass: the clock's rounds fall between game rounds, and the
+  battle screen's `fight_round` now counts 1, 2, 3 instead of stepping by
+  two. The counter is game-loop state and starts over with the process,
+  like the battles.
+- **Beats** are the design's table, as `Beat`/`Follow`/`Extra`/`Tail` in
+  the pacer's specs beside the by-line numbers the cadence still uses.
+  Lines carry the turn slot they came from (`events.Slot`, set by the turn
+  loop; inherited like the cause), so a turn's first line waits a beat and
+  its follow-ups a quarter of one. Nothing is squeezed: `Beats()` has no
+  window. The due time is computed on the turn after the round, once its
+  lines are held, from the pacer's `PlaybackEnd`.
+- **Game-round effects (decision 6), audited:** every status a fight
+  applies (bleeding, staggered, knockdown, armor broken, exposed, burning,
+  overloaded, stunned, hobbled, asleep, paralyzed, blighted, fogbound,
+  windchilled, the four weapon poisons) is already a combat-round buff and
+  ends with the fight. The one in-battle effect still on game rounds is the
+  stock **Poisoned** buff (13; a Nightblade's Envenom, a gryphon's venom,
+  the Miasma hex's mark): 1d8 every three game rounds, three times, by its
+  own script. Converting it would need a status spec with a fixed damage
+  model and would make it vanish at the fight's end. Left as is: in real
+  time it costs about the same whatever the round length, and the world's
+  content is temporary. Rule for new content: an in-battle effect is a
+  combat status. `GetDurations` now reports battle rounds for a
+  combat-round buff; `conditions` reads "N battle rounds left"; the GMCP
+  `Char` affects estimate seconds at the minimum round.
+- **Measured** (`TestPacedCombatThroughTheRealRound`, the brawl's five
+  against five with the company's health pinned, normal pace, fake clock):
+  7.0 s a round over 16 rounds, 111.6 s in all, about 9.5 lines a round.
+  At-level fights are about 4 rounds (#179) with fewer foes, so a band
+  fight is about 25-30 s at normal, inside the 25-45 s target; the
+  five-against-five ceiling of 90 s is a fight of twelve rounds or so,
+  which a real fight (no pinned health) does not reach. Not re-tuned.
+- Not done here: the web battle timeline's backlog collapse still assumes
+  an 8 s round (`ROUND_MS`); with beats the backlog stays short, so it is
+  harmless, and 82a/82d may read the clock's due time (`BattleClockDue`)
+  for a round timer.
+
 ### Phase 82d: turn order on screen and tempo shown
 
 - Battle screen strip (actor highlighted, acted dimmed, unseen foes merged),

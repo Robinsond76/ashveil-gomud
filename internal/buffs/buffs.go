@@ -1,7 +1,6 @@
 package buffs
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
@@ -353,15 +352,16 @@ func (bs *Buffs) Prune() (prunedBuffs []*Buff) {
 
 func GetDurations(buff *Buff, spec *BuffSpec) (roundsLeft int, totalRounds int) {
 
-	// Phase 30a: a combat-round buff's count is combat rounds, each several
-	// game rounds long, and game-round triggering never applies to it.
+	// Phase 30a: a combat-round buff's count is combat rounds, and
+	// game-round triggering never applies to it. Since Phase 82c a battle
+	// round lasts as long as its actions need, so the count is reported as
+	// battle rounds, not converted to game rounds.
 	if spec.CombatRounds {
-		every := max(int(configs.GetTimingConfig().CombatEveryRounds), 1)
 		initial := buff.TriggersInitial
 		if initial <= 0 {
 			initial = spec.TriggerCount
 		}
-		return max(buff.TriggersLeft, 0) * every, initial * every
+		return max(buff.TriggersLeft, 0), initial
 	}
 
 	if spec.RoundInterval <= 0 {
