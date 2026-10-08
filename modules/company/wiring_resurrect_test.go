@@ -160,9 +160,15 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 		require.True(t, ok)
 		mob := mobs.GetInstance(instanceID)
 		require.NotNil(t, mob)
-		_, err := mobcommands.Suicide("", mob, rooms.LoadRoom(mob.Character.RoomId))
+		roomID := mob.Character.RoomId
+		corpses := func() int { return len(rooms.LoadRoom(roomID).Corpses) }
+		before := corpses()
+		_, err := mobcommands.Suicide("", mob, rooms.LoadRoom(roomID))
 		require.NoError(t, err)
 		events.ProcessEvents()
+		// Phase 79: a fallen companion leaves no corpse to crumble to dust
+		// (other tests' dummies may have left theirs in this room).
+		assert.Equal(t, before, corpses(), "a companion's corpse")
 	}
 	newRound := func() {
 		events.AddToQueue(events.NewRound{RoundNumber: util.GetRoundCount()})

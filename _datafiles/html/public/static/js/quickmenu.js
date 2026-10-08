@@ -60,7 +60,7 @@
 
     // foes are the NPCs worth attacking: not your own company (charmed),
     // not a shopkeeper, and not one already down or giving up.
-    var NOT_FOES = ['charmed', 'shop', 'downed', 'surrendered'];
+    var NOT_FOES = ['charmed', 'companion', 'shop', 'downed', 'surrendered'];
     function foes(npcs) {
         return npcs.filter(function(c) {
             return !NOT_FOES.some(function(a) { return has(c.adjectives, a); });

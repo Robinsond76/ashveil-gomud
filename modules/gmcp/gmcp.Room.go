@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"strconv"
@@ -462,7 +463,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 			c := GMCPRoomModule_Payload_Contents_Character{
 				Id:         mob.ShorthandId(),
 				Name:       mob.Character.Name,
-				Adjectives: mob.Character.GetAdjectives(),
+				Adjectives: roomAdjectives(&mob.Character),
 				Aggro:      mob.Character.Aggro != nil,
 				Group:      groupOf[mIId],
 			}
@@ -801,4 +802,22 @@ type GMCPRoomModule_Payload_Sigil struct {
 	Owner   string `json:"owner"`
 	Mine    bool   `json:"mine"`
 	Expires int64  `json:"expires"`
+}
+
+// roomAdjectives is what the room panel tags a mob with. A company member
+// is "companion", not "charmed": the terminal already hides the engine's
+// charm tag for them (Phase 79).
+func roomAdjectives(c *characters.Character) []string {
+	adjectives := c.GetAdjectives()
+	if !c.IsCompanion() {
+		return adjectives
+	}
+	out := make([]string, 0, len(adjectives)+1)
+	out = append(out, "companion")
+	for _, adj := range adjectives {
+		if adj != "charmed" {
+			out = append(out, adj)
+		}
+	}
+	return out
 }
