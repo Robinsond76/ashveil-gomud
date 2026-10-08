@@ -50,6 +50,10 @@ func witchBrawl(t *testing.T, level int) *brawl {
 	hexes.Default.Reset()
 	t.Cleanup(hexes.Default.Reset)
 	t.Cleanup(scripting.UseHexRollForTest(func(int) int { return 0 }))
+	// Chants are timed to the round in these tests (Dread Whisper is given
+	// exactly its chant's rounds), so no blow may break one: a broken chant
+	// restarts with no morale check, as the Phase 83 shuffled run saw.
+	t.Cleanup(hooks.UseBreakRollForTest(func(n int) int { return n - 1 }))
 	// The game registers these (hooks.RegisterListeners).
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })

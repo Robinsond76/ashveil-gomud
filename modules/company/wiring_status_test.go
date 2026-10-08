@@ -261,6 +261,10 @@ func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	c := b.aria.Character
 	c.SpellBook["sparks"] = 5000
 	c.Stats.Mysticism.ValueAdj = 1000
+	// Five bandits are on her, and any blow may break a chant (about nine
+	// casts in ten did), so a run of 30 recasts could all be broken off.
+	// Interrupts are not under test here: no blow breaks this chant.
+	t.Cleanup(hooks.UseBreakRollForTest(func(n int) int { return n - 1 }))
 
 	// Every cast can fizzle (a roll of 100 fails even a 100% chance), and a
 	// companion's crit can leave another status on the cutthroat, so recast
