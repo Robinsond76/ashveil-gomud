@@ -83,7 +83,9 @@ func forceCrits(t *testing.T) {
 // noCrits makes every critical roll miss. alwaysLand zeroes only the base
 // crit chance; a class (a Deadeye's Eagle's eye) and an exposed foe add to it,
 // so a test that must not see a critical hit pins the percentile roll to its
-// top, which is a miss below a chance of 100. Other rolls stay random.
+// top, which is a miss below a chance of 100. That pins every other d100 too
+// (hit, dodge, poison, native ability rolls all read 99), so pair it with
+// alwaysLand, whose 100% to-hit still lands; rolls of other sizes stay random.
 func noCrits(t *testing.T) {
 	t.Helper()
 	t.Cleanup(util.UseRandForTest(func(n int) int {
