@@ -72,7 +72,7 @@ button in them just types a command for you.
 
 <ansi fg="yellow-bold">What the buttons and menus send</ansi>
 
-  Inventory: tap a member's slot, or click cargo gear, to compare or equip a living member; drag cargo onto a member.
+  Inventory: tabs (All, Equipment, Potions, Food & drink, Materials, Other) sort the cargo; click cargo gear to compare or equip a living member. Worn gear is under Character > Gear.
   Character > Gear: select a slot, choose a compatible cargo item, review
   Current → After and Equip item. Preview removal then Remove equipment
   returns the exact worn item to cargo. Unavailable choices explain why. Eat, drink and use items from
@@ -161,7 +161,7 @@ See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help compan
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
-Company Inventory shows shared cargo once, plus each member's gear slots (tap or drag to equip). Character Gear previews any member's changes.
+Company Inventory shows shared cargo once, sorted by tabs. Character Gear lists every member's worn gear and previews any member's changes.
 
 Company Status separates active effects, wounds and persistent bonuses.
 Character Skills separates trained ranks, automatic combat abilities,

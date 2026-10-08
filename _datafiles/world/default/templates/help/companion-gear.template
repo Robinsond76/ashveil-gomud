@@ -45,10 +45,10 @@ with <ansi fg="command">doll [member]</ansi> and mend them.
 
 <ansi fg="yellow-bold">In the browser</ansi>
 
-Company > Inventory lists every member's slots, empty ones too. Tap a slot to
-pick from the cargo items that fit it, or tap worn gear to take it off. On a
-computer you can also drag a cargo item onto a member's slot, and drag worn
-gear back onto the cargo. Character > Gear previews Current -> After for any
-member: choose who from the row of names at the top.
+Character > Gear lists every member's slots, empty ones too: choose who from
+the row of names at the top, select a slot, and pick from the cargo items that
+fit it, with Current -> After shown first. Company > Inventory no longer lists
+worn gear; its cargo tabs (Equipment among them) hold what is not worn, and
+tapping a cargo item offers Equip for each member.
 
 See also: <ansi fg="command">help equipment</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help cargo</ansi>, <ansi fg="command">help doll</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help shields</ansi>.

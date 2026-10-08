@@ -311,10 +311,12 @@ check(await page.evaluate(() => window.__xss === undefined) && (await invText())
 await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 
 // Review finding 3: an item's label is shown, its plain name used in commands.
-await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[0].worn[0].label = 'iron sword (sharp: 3)'; window.gmcp('Company.Inventory', x); }, inventory);
-check((await invText()).includes('iron sword (sharp: 3)'), 'the label, with its edge, as text');
-got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'sharp' }).click(); await page.getByText('remove iron sword', { exact: true }).click(); });
-check(JSON.stringify(got) === '["remove !1:sword"]', 'commands use the exact item reference');
+await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[0].carried[0].label = 'waterskin (cold: 3)'; window.gmcp('Company.Inventory', x); }, inventory);
+check((await invText()).includes('waterskin (cold: 3)'), 'the label, with its edge, as text');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'cold: 3' }).click(); await page.getByText('Put in cargo', { exact: true }).click(); });
+check(JSON.stringify(got) === '["cargo put !2:a"]', 'commands use the exact item reference');
+// Phase 89: worn gear is not in the inventory (it is in Character > Gear).
+check(!(await invText()).includes('iron sword') && !/Wearing/.test(await invText()), 'worn gear is not listed in the inventory');
 // Review findings 4 and 8: a menu from the keyboard; focus kept across updates.
 await page.locator('#company-inventory button.cmp-item', { hasText: 'seared meat x6' }).focus();
 await page.evaluate(() => { window.gmcp('Company.Vitals', { vitals: {}, rescue: {} }); });
@@ -348,55 +350,34 @@ check(JSON.stringify(got) === '["company equip #1 !8:glaive"]', 'equipment assig
 got = await sentNow(async () => { await page.locator('#company-inventory').getByRole('button', { name: 'Autoloot on', exact: true }).click(); });
 check(JSON.stringify(got) === '["autoloot on"]', 'autoloot is an explicit opt-in');
 
-// Phase 48: every member's equipment slots, tap-to-pick and drag-and-drop.
-sharedInventory.slots = [{ slot: 'weapon', label: 'Weapon' }, { slot: 'offhand', label: 'Offhand' }, { slot: 'body', label: 'Body' }, { slot: 'pack', label: 'Pack' }];
-sharedInventory.cargo.push({ ref: '!9:coat', name: 'quilted coat', grams: 900, count: 1, type: 'body', subtype: 'wearable' });
+// Phase 89: worn gear is not listed; category tabs sort the cargo.
+sharedInventory.cargo.push({ ref: '!9:coat', name: 'quilted coat', grams: 900, count: 1, type: 'body', subtype: 'wearable' },
+  { ref: '!11:tonic', name: 'red tonic', grams: 200, count: 2, type: 'potion', subtype: 'usable' },
+  { ref: '!12:ore', name: 'iron ore', grams: 500, count: 3, type: 'commodity', subtype: 'mundane' },
+  { ref: '!13:key', name: 'brass key', grams: 10, count: 1, type: 'key', subtype: 'mundane' });
 sharedInventory.members[1].worn = [{ ref: '!5:club', name: 'oak club', label: 'oak club', grams: 1200, count: 1, uses: 0, uses_max: 0, type: 'weapon', subtype: 'blunt', slot: 'weapon' }];
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
-const equipBox = page.locator('#company-inventory [aria-label="Brother Oswin equipment"]');
-check((await equipBox.textContent()).includes('Weapon') && (await equipBox.textContent()).includes('oak club') && (await equipBox.textContent()).includes('Body') && (await equipBox.textContent()).includes('empty'), 'shared inventory lists a companion\'s slots, filled and empty');
-check((await page.locator('#company-inventory [aria-label="Wren (you) equipment"]').textContent()).includes('iron sword'), 'your own slots are listed too');
-got = await sentNow(async () => { await equipBox.locator('button', { hasText: 'Body' }).click(); await page.getByText('Equip quilted coat', { exact: true }).click(); });
-check(JSON.stringify(got) === '["company equip #1 !9:coat body"]', 'tap an empty slot, pick a cargo item: equips the companion with an exact reference and slot');
-got = await sentNow(async () => { await equipBox.locator('button', { hasText: 'oak club' }).click(); await page.getByText('Remove to cargo', { exact: true }).click(); });
-check(JSON.stringify(got) === '["company remove #1 weapon"]', 'tap a worn slot: remove to cargo');
-// Drag and drop: a cargo item onto a member's slot, and worn gear onto the cargo.
-const dropData = async (from, to, payload) => page.evaluate(([f, t, p]) => {
-  const src = document.querySelector(f), dst = document.querySelector(t);
-  const dt = new DataTransfer();
-  dt.setData('application/x-ashveil-gear', JSON.stringify(p));
-  window.sent = [];
-  dst.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, bubbles: true, cancelable: true }));
-  dst.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
-  return window.sent;
-}, [from, to, payload]);
-const slotSel = '#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot:nth-child(1)';
-check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"] li:nth-child(3) .cmp-slot', { from: 'cargo', ref: '!9:coat', type: 'body' })) === '["company equip #1 !9:coat body"]', 'dropping a cargo item on a fitting slot equips it');
-check((await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"] li:nth-child(1) .cmp-slot', { from: 'cargo', ref: '!9:coat', type: 'body' })).length === 0, 'dropping a cargo item on a slot it does not fit does nothing');
-check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"]', { from: 'cargo', ref: '!9:coat', type: 'body' })) === '["company equip #1 !9:coat"]', 'dropping a cargo item on a member equips it where it fits');
-check(JSON.stringify(await dropData('x', '#company-inventory section[aria-label="Cargo"]', { from: 'worn', member: '#1', slot: 'weapon', ref: '!5:club' })) === '["company remove #1 weapon"]', 'dropping worn gear on the cargo takes it off');
-check(await page.locator('#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot[draggable=true]').count() === 1 && await page.locator('#company-inventory section[aria-label="Cargo"] .cmp-item[draggable=true]').count() > 0, 'worn gear and cargo items are draggable');
-if (outdir) { await page.locator('#company-inventory').screenshot({ path: path.join(outdir, 'companion-gear-company-panel.png') }); }
-// 38e review: a creature shows only the slots its body has, and only gear cut
-// for its species is offered to it (and to no one else).
-{
-  const withHound = JSON.parse(JSON.stringify(sharedInventory));
-  withHound.members.push({ key: 'companion:5', name: 'Brindle', available: true, grams: 0, worn: [], carried: [], closed: ['weapon', 'offhand'], species: 'hound' });
-  withHound.cargo.push({ ref: '!20500:harness', name: 'hound harness', grams: 900, count: 1, type: 'body', subtype: 'wearable', worn_by: ['hound'] });
-  await page.evaluate(i => window.gmcp('Company.Inventory', i), withHound);
-  const houndBox = page.locator('#company-inventory [aria-label="Brindle equipment"]');
-  const houndText = await houndBox.textContent();
-  check(!houndText.includes('Weapon') && !houndText.includes('Offhand') && houndText.includes('Body'), 'a hound lists only the slots its body has');
-  await houndBox.locator('button', { hasText: 'Body' }).click();
-  const houndMenu = await page.locator('body').textContent();
-  check(houndMenu.includes('Equip hound harness') && !houndMenu.includes('Equip quilted coat'), 'a hound is offered only gear cut for it');
-  await page.keyboard.press('Escape');
-  await equipBox.locator('button', { hasText: 'Body' }).click();
-  check(!(await page.locator('body').textContent()).includes('Equip hound harness'), 'a person is not offered gear cut for a creature');
-  await page.keyboard.press('Escape');
-  check((await dropData('x', '#company-inventory [aria-label="Brindle equipment"]', { from: 'cargo', ref: '!9:coat', type: 'body', worn_by: [] })).length === 0, 'dropping ordinary gear on a hound does nothing');
-}
+check(!(await invText()).includes('oak club') && !(await invText()).includes('iron sword') && await page.locator('#company-inventory [aria-label$="equipment"]').count() === 0, 'shared inventory lists no worn gear');
+check((await invText()).includes('Character \u203a Gear'), 'the inventory points to Character > Gear for worn gear');
+const tabNames = () => page.evaluate(() => [...document.querySelectorAll('#company-inventory .cmp-inv-tab')].map(b => b.textContent));
+check(JSON.stringify(await tabNames()) === JSON.stringify(['All', 'Equipment 2', 'Potions 2', 'Food & drink 8', 'Materials 3', 'Other 2']), 'tabs: All plus each non-empty category with its count: ' + JSON.stringify(await tabNames()));
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'All' && (await invText()).includes('pack horse') && (await invText()).includes('quilted coat') && (await invText()).includes('red tonic'), 'All is the current view: horses and every cargo item');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Equipment' }).click();
+check((await invText()).includes('quilted coat') && (await invText()).includes('steel glaive') && !(await invText()).includes('red tonic') && !(await invText()).includes('pack horse') && !(await invText()).includes('seared meat'), 'Equipment: only wearable and weapon cargo');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'quilted coat' }).click(); await page.getByText('Equip Brother Oswin', { exact: true }).click(); });
+check(JSON.stringify(got) === '["company equip #1 !9:coat"]', 'a filtered item keeps its menu and exact reference');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Potions' }).click();
+check((await invText()).includes('red tonic x2') && !(await invText()).includes('quilted coat'), 'Potions: only potions');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Other' }).click();
+check((await invText()).includes('brass key') && !(await invText()).includes('iron ore'), 'Other: what fits nowhere else');
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'Other 2', 'the chosen tab survives an update');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Materials' }).click();
+await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.cargo = x.cargo.filter(c => c.type !== 'commodity'); window.gmcp('Company.Inventory', x); }, sharedInventory);
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'All' && !(await tabNames()).some(t => t.startsWith('Materials')), 'an emptied tab disappears and the view returns to All');
+await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'All' }).click();
+if (outdir) { await page.locator('#company-inventory').screenshot({ path: path.join(outdir, 'inventory-tabs.png') }); }
 
 // Phase 34a: inherited black text is visible even under a dark theme.
 // Check primary load text and secondary labels in every shipped theme.
