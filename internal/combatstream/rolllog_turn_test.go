@@ -28,6 +28,10 @@ func TestRollLogNumbersRoundsWithinTheFight(t *testing.T) {
 	log.Add(7, Roll{Round: 1314500, FightID: 10, Source: src, Target: foe, Outcome: OutcomeMiss})
 	assert.Equal(t, "Round 1: Aria -> bandit, missed.", log.Recent(7, 1)[0].Describe(0)[0])
 
+	// A turn the stream set from the fight's first round is kept as is.
+	log.Add(7, Roll{Round: 1314520, FightID: 10, Turn: 11, Source: src, Target: foe, Outcome: OutcomeMiss})
+	assert.Equal(t, "Round 11: Aria -> bandit, missed.", log.Recent(7, 1)[0].Describe(0)[0])
+
 	// A roll never logged keeps the engine's number, as the tests build them.
 	assert.Equal(t, "Round 2: Aria -> bandit, missed.", Roll{Round: 2, Source: src, Target: foe}.Describe(0)[0])
 }

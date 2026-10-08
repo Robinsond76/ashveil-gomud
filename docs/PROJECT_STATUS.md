@@ -1804,6 +1804,7 @@ their dependencies and those decisions is the
 | 57 | Character panel tidy-up (Skills, Jobs, Gear, Overview, hover highlight) built, PR open | — | — |
 | 60–77 | Lessons from Pillars of Eternity: story events, battle orders, explained battle lines, company chronicle, companion opinions and bonds, bestiary, relic awakenings, towns that remember, weapon stances, errands, trophy enchanting, backgrounds, creeds, rites, inn tiers, bounties, Hardcore and blessings | [Pillars phases](plans/2026-10-07-pillars-phases.md) | See plan; 60–63 first |
 | 78 | Polish for phases 60-72: scene modal after restart, orders and stance menus, round heading crit, background line once, same-name duty picker, nameless placeholder | [Plan](plans/2026-10-07-phase-78-polish.md) | — |
+| 79 | Wider polish pass: web login after an early GMCP request, `why` rounds numbered within the fight, no corpse for a fallen companion, companion tag in the room panel, tab completion of real commands only, grouped `company` usage, Bonds tab, help audit of phases 60-77 | [Plan](plans/2026-10-07-phase-79-polish.md) | 78, 82a-82d |
 
 World building (zones for levels 1–15) now waits until the visual client
 milestone below is in place (owner, 2026-10-05). A small showcase area for

@@ -25,13 +25,13 @@ with a button to filter by kind. It fits a phone as it does the desktop.
   defeats      the company was beaten, and what became of it (<ansi fg="command">help defeat</ansi>)
   bosses       a boss, the master of a lair, was killed
   relics       a relic was found (<ansi fg="command">help relics</ansi>)
-  mercy        a beaten foe was spared (<ansi fg="command">help combat</ansi>)
-  executions   a beaten foe was put to death
+  mercy        a beaten foe was spared (<ansi fg="command">help mercy</ansi>)
+  executions   a beaten foe was put to death (<ansi fg="command">help mercy</ansi>)
   promotions   someone took a new class (<ansi fg="command">help classes</ansi>)
   stories      a scene on the road ended, and how (<ansi fg="command">help events</ansi>)
   awakenings   a relic woke a new power while it was worn (<ansi fg="command">help awakenings</ansi>)
   errands      a companion came home from an errand (<ansi fg="command">help errands</ansi>)
-  bands        a band you held a bounty on was broken, every foe down (<ansi fg="command">help bounties</ansi>)
+  groups       a band you held a bounty on was broken, every foe down (<ansi fg="command">help bounties</ansi>)
   bounties     a bounty was claimed at a board (<ansi fg="command">help bounties</ansi>)
   rites        the company held rites for a companion gone for good, or let it pass (<ansi fg="command">help rites</ansi>)
 

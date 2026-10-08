@@ -21,7 +21,7 @@ have not beaten, and what you know comes with you after a restart.
 A boss is met rarely, so it teaches faster: its tiers come at the <ansi fg="yellow">1st</ansi>, <ansi fg="yellow">2nd</ansi>
 and <ansi fg="yellow">3rd</ansi> kills. A kill counts for you when you or your
 companions hurt the foe and you are still standing, in the room, when it
-falls; whoever lands the last blow. Practice foes teach nothing, and
+falls, no matter who lands the last blow. Practice foes teach nothing, and
 neither does the Training zone.
 
 When a kill takes a kind to a new tier, the game says so:
@@ -33,8 +33,8 @@ When a kill takes a kind to a new tier, the game says so:
   <ansi fg="command">bestiary</ansi>          every kind you have beaten, by zone, with its tier
   <ansi fg="command">bestiary [name]</ansi>    one entry: what you know, and how many kills the next
                      tier takes (kinds of the same name from different zones
-                     are all shown; a name that is not in your bestiary is
-                     not answered)
+                     are all shown; a name you have not beaten is told as
+                     not in your bestiary)
   <ansi fg="command">bestiary [zone]</ansi>    only the kinds from that zone (a zone named in full wins;
                      otherwise a creature's name wins over a zone's)
 
@@ -57,4 +57,4 @@ knockdown or a stun (<ansi fg="command">help interrupts</ansi>).
 A creature's habits also say which enchanting trophies it may yield
 (<ansi fg="command">help enchanting</ansi>).
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help consider</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help orders</ansi>, <ansi fg="command">help combat</ansi>
+See also: <ansi fg="command">help consider</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help orders</ansi>, <ansi fg="command">help combat</ansi>.

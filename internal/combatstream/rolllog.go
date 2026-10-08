@@ -28,9 +28,11 @@ type Roll struct {
 	Strikes  []Strike
 	// Ours is true when a member of the company swung.
 	Ours bool
-	// Turn is the round's number within the fight, counted from the first
-	// round the log saw (Phase 79): the engine's Round is a server-wide
-	// counter that means nothing to a player. Zero when not yet logged.
+	// Turn is the round's number within the fight (Phase 79), as the text's
+	// "Round N" line counts them: the engine's Round is a server-wide
+	// counter that means nothing to a player. The stream sets it from the
+	// fight's first round; the log fills it in from the rounds it saw when
+	// it arrives unset.
 	Turn int
 }
 
@@ -60,13 +62,15 @@ func (l *RollLog) Add(leaderUserId int, r Roll) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	prev := l.rolls[leaderUserId]
-	switch {
-	case len(prev) == 0 || prev[len(prev)-1].FightID != r.FightID:
-		r.Turn = 1
-	case prev[len(prev)-1].Round == r.Round:
-		r.Turn = prev[len(prev)-1].Turn
-	default:
-		r.Turn = prev[len(prev)-1].Turn + 1
+	if r.Turn == 0 {
+		switch {
+		case len(prev) == 0 || prev[len(prev)-1].FightID != r.FightID:
+			r.Turn = 1
+		case prev[len(prev)-1].Round == r.Round:
+			r.Turn = prev[len(prev)-1].Turn
+		default:
+			r.Turn = prev[len(prev)-1].Turn + 1
+		}
 	}
 	rolls := append(prev, r)
 	if len(rolls) > RollLogCap {

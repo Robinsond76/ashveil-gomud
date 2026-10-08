@@ -23,7 +23,7 @@ func TestBountiesHelp(t *testing.T) {
 	assert.Contains(t, text, "bounty drop [number]")
 	assert.Contains(t, text, "A bounty never changes a foe")
 	assert.Contains(t, text, "Gold only")
-	assert.Contains(t, text, "20 gold for each level")
+	assert.Contains(t, text, "20 gold times the band")
 	assert.Contains(t, text, "6 gold per level")
 	assert.Contains(t, text, "up to five bounties")
 	assert.Contains(t, text, "every six hours")

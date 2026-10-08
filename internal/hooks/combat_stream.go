@@ -176,6 +176,11 @@ func recordRoll(e combatstream.Event) {
 		return
 	}
 	if roll, ok := combatstream.RollFor(e, ours); ok {
+		// Phase 79: number the round as the fight counts them, the same
+		// "Round N" the text opens each round with (82d).
+		if e.Round >= fi.StartRound && fi.StartRound > 0 {
+			roll.Turn = int(e.Round-fi.StartRound) + 1
+		}
 		combatstream.DefaultRollLog().Add(fi.LeaderUserId, roll)
 	}
 }

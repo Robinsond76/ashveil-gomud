@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
 )
 
@@ -36,18 +37,32 @@ var (
 	iacRE  = regexp.MustCompile(`(?s)\xff\xfa.*?\xff\xf0|\xff[\xfb-\xfe].`)
 )
 
-// mudClient is a telnet player: it keeps everything the server says, and
-// waits for patterns in what it has not consumed yet.
+// mudClient is a telnet or web player: it keeps everything the server says,
+// and waits for patterns in what it has not consumed yet.
 type mudClient struct {
 	t    *testing.T
 	name string
-	conn net.Conn
+	conn net.Conn        // a telnet player
+	ws   *websocket.Conn // or a web one
 
 	mu         sync.Mutex
 	pending    string // unconsumed, ANSI and telnet negotiation stripped
 	transcript strings.Builder
 	closed     bool
 	lastSend   time.Time
+}
+
+// dialWeb is a web-client player: the same reader over the /ws socket the
+// browser client uses, one text frame per line typed (Phase 79).
+func dialWeb(t *testing.T, name string, httpPort int) *mudClient {
+	t.Helper()
+	ws, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://127.0.0.1:%d/ws", httpPort), nil)
+	if err != nil {
+		t.Fatalf("%s: dial the websocket: %v", name, err)
+	}
+	m := &mudClient{t: t, name: name, ws: ws}
+	go m.readLoop()
+	return m
 }
 
 func dialMud(t *testing.T, name string, port int) *mudClient {
@@ -65,7 +80,15 @@ func dialMud(t *testing.T, name string, port int) *mudClient {
 func (m *mudClient) readLoop() {
 	buf := make([]byte, 64*1024)
 	for {
-		n, err := m.conn.Read(buf)
+		var n int
+		var err error
+		if m.ws != nil {
+			var frame []byte
+			_, frame, err = m.ws.ReadMessage()
+			n = copy(buf, frame)
+		} else {
+			n, err = m.conn.Read(buf)
+		}
 		if n > 0 {
 			text := string(iacRE.ReplaceAll(buf[:n], nil))
 			text = ansiRE.ReplaceAllString(text, "")
@@ -91,6 +114,13 @@ func (m *mudClient) send(line string) {
 		time.Sleep(wait)
 	}
 	m.lastSend = time.Now()
+	if m.ws != nil {
+		// The browser client sends each line as one text frame, no newline.
+		if err := m.ws.WriteMessage(websocket.TextMessage, []byte(line)); err != nil {
+			m.t.Fatalf("%s: send %q: %v", m.name, line, err)
+		}
+		return
+	}
 	if _, err := m.conn.Write([]byte(line + "\n")); err != nil {
 		m.t.Fatalf("%s: send %q: %v", m.name, line, err)
 	}
@@ -322,12 +352,13 @@ func (m *mudClient) createLooksAndStory() {
 
 // smokeServer is a real server process on a private copy of the world.
 type smokeServer struct {
-	t    *testing.T
-	bin  string
-	dir  string
-	port int
-	cmd  *exec.Cmd
-	log  string
+	t        *testing.T
+	bin      string
+	dir      string
+	port     int
+	httpPort int // the web client's port (Phase 79: the websocket login)
+	cmd      *exec.Cmd
+	log      string
 }
 
 func freePort(t *testing.T) int {
@@ -367,7 +398,7 @@ func newSmokeServerWith(t *testing.T, opts smokeOptions) *smokeServer {
 	} else {
 		dir = t.TempDir()
 	}
-	s := &smokeServer{t: t, dir: dir, port: freePort(t), bin: filepath.Join(dir, "gomud-server"), log: filepath.Join(dir, "server.log")}
+	s := &smokeServer{t: t, dir: dir, port: freePort(t), httpPort: freePort(t), bin: filepath.Join(dir, "gomud-server"), log: filepath.Join(dir, "server.log")}
 
 	if out, err := exec.Command("go", "build", "-o", s.bin, ".").CombinedOutput(); err != nil {
 		t.Fatalf("build the server: %v\n%s", err, out)
@@ -386,7 +417,7 @@ func newSmokeServerWith(t *testing.T, opts smokeOptions) *smokeServer {
 	if opts.patch != nil {
 		opts.patch(filepath.Join(dir, "_datafiles", "world", "default"))
 	}
-	overrides := fmt.Sprintf("Network:\n  TelnetPort: [%d]\n  LocalPort: 0\n  HttpPort: 0\n  HttpsPort: 0\n  SSHPort: 0\nTiming:\n  RoundSeconds: 2\n", s.port) + opts.extraConfig
+	overrides := fmt.Sprintf("Network:\n  TelnetPort: [%d]\n  LocalPort: 0\n  HttpPort: %d\n  HttpsPort: 0\n  SSHPort: 0\nTiming:\n  RoundSeconds: 2\n", s.port, s.httpPort) + opts.extraConfig
 	if err := os.WriteFile(filepath.Join(dir, "overrides.yaml"), []byte(overrides), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -722,6 +753,29 @@ func TestLiveSmoke(t *testing.T) {
 		p1.expect(`the smoke test was here`, 20*time.Second)
 		p2.send("quit")
 		p2.expect(`meditation`, 10*time.Second)
+	})
+
+	step("the web client logs in after an early GMCP request", func() {
+		// Phase 79: the web client's windows ask for their pages
+		// (!!GMCP(Char.Creation)) as soon as the socket is up, before the
+		// player has typed a username. Over a websocket that request used
+		// to be taken as the username and the login failed.
+		w := dialWeb(t, "web-smoker2", srv.httpPort)
+		w.expect(`username \(or "new"\)`, 20*time.Second)
+		w.send("!!GMCP(Char.Creation)")
+		w.send("smoker2")
+		w.expect(`password:`, 10*time.Second)
+		w.send("smokepass2")
+		out := w.expect(`Welcome to the Mud`, 30*time.Second)
+		for _, bad := range []string{"try again", "Invalid login"} {
+			if strings.Contains(out, bad) {
+				t.Errorf("the web login printed %q after an early GMCP request:\n%s", bad, out)
+			}
+		}
+		w.drain(2 * time.Second)
+		w.do("status", `More: company status`)
+		w.send("quit")
+		w.expect(`meditation`, 10*time.Second)
 	})
 
 	step("an existing character is offered looks and a story once", func() {
