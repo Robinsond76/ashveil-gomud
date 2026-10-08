@@ -2696,6 +2696,16 @@ delegated to the lead. 33a–33e are complete.
   sunset/sunrise water art lightened; 11 theme `--t-gametime-*` values nudged
   to at least 4.5:1 against the panel background. `TestTimeOfDayColorsReadableOnBlack`
   guards the aliases. Before/after: `screens/88-time-colors-terminal-before-after.png`.
+- **Review (2026-10-08):** live Chromium screenshots (no Firefox in the
+  review container) at night and day, desktop and 360px, in brooding,
+  midnight-ocean, parchment and mint-fresh: all readable
+  (`screens/88-time-colors-*.png`). Accepted and fixed: six more aliases
+  were as dark as the old night blue (`item-cursed` 54, `role-mod` 1,
+  `holy` 21, `item-nothing` 237, `md-hr1`/`md-hr2` 4), now 133/167/63/243/63;
+  emote text and `.:Title` panel headings used hard-coded xterm 20 (2:1),
+  now 69 (6:1); the guard test covers the new aliases and base-16 colors.
+  Left as is: reds at 124 (2.8:1, zone names, harmful spells) are dim but
+  readable and carry meaning by hue.
 
 ### 38b faith routes design approved (2026-10-05)
 
