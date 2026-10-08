@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -397,7 +398,7 @@ func goForText(c *characters.Character, target string, alreadyFighting bool) str
 		return fmt.Sprintf(`You turn toward %s.`, target)
 	}
 	if c.Equipment.Weapon.ItemId > 0 {
-		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, c.Equipment.Weapon.DisplayName(), target)
+		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, combat.WeaponNounOf(&c.Equipment.Weapon), target)
 	}
 	return fmt.Sprintf(`You go for %s.`, target)
 }

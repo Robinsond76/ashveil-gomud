@@ -206,7 +206,7 @@ func TestShieldBlocksInTheStrikeLoop(t *testing.T) {
 }
 
 // A weapon parries a melee strike when its chance is at least the dodge's,
-// and the line names the weapon; a lower parry leaves the dodge.
+// and the line names the kind of weapon ("axe" for the "test axe"); a lower parry leaves the dodge.
 func TestParryOrDodgeInTheStrikeLoop(t *testing.T) {
 	defenseSpecs(t)
 
@@ -215,8 +215,8 @@ func TestParryOrDodgeInTheStrikeLoop(t *testing.T) {
 	assert.Equal(t, []string{DefenseParried}, r.Defenses)
 	assert.Zero(t, r.DamageToTarget)
 	assert.Contains(t, strings.Join(r.MessagesToSource, "\n"), "turns your blow aside with their")
-	assert.Contains(t, strings.Join(r.MessagesToSource, "\n"), "test axe")
-	assert.Contains(t, strings.Join(r.MessagesToTarget, "\n"), "aside with your <ansi fg=\"item\">test axe")
+	assert.Contains(t, strings.Join(r.MessagesToSource, "\n"), "<ansi fg=\"item\">axe</ansi>")
+	assert.Contains(t, strings.Join(r.MessagesToTarget, "\n"), "aside with your <ansi fg=\"item\">axe</ansi>")
 
 	// A dagger's −5 puts its parry (95%) under the dodge (100%): the
 	// dodge is the one rolled.
