@@ -56,6 +56,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.NewTurn{}, AutoSave)
 	events.RegisterListener(events.NewTurn{}, PruneBuffs)
 	events.RegisterListener(events.NewTurn{}, ActionPoints)
+	events.RegisterListener(events.NewTurn{}, BattleClock) // Phase 82c: a player's fight runs on its own beat
 	events.RegisterListener(events.NewTurn{}, ReleasePacedCombat)
 	events.RegisterListener(events.UserSettingChanged{}, FlushPacedOnPaceChange)
 

@@ -54,6 +54,7 @@ const battleUnseen = "?"
 // omitted.
 type battleEvent struct {
 	Seq     uint64 `json:"seq"`
+	Slot    int    `json:"slot,omitempty"` // the round's turn slot acting (Phase 82b); 0 outside a turn
 	Kind    string `json:"kind"`
 	Src     string `json:"src,omitempty"`
 	Tgt     string `json:"tgt,omitempty"`
@@ -168,6 +169,7 @@ func buildBattleEvent(v battleViewer, e combatstream.Event, fi combatstream.Figh
 	}
 	be := battleEvent{
 		Seq:      e.Seq,
+		Slot:     e.Slot,
 		Kind:     string(e.Kind),
 		Src:      v.refID(e.Source),
 		Tgt:      v.refID(e.Target),

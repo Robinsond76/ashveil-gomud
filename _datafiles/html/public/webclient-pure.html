@@ -48,9 +48,27 @@
             background-color: #000000;
         }
 
+        /* Phase 82a: the middle column holds the battle pane above the terminal. */
+        #center {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #battle-pane {
+            display: none;
+            flex: 0 0 auto;
+            min-height: 0;
+        }
+
+        #battle-pane.open { display: block; }
+
         #terminal {
             flex: 1;
             min-width: 0;
+            min-height: 0;
             position: relative;
             padding-left: 20px;
         }
@@ -1290,8 +1308,11 @@
 
     <div id="main-container">
         <div id="dock-left"></div>
-        <div id="terminal">
-            <div id="menu-icon" onclick="toggleMenu()">&#9881;</div>
+        <div id="center">
+            <div id="battle-pane"></div>
+            <div id="terminal">
+                <div id="menu-icon" onclick="toggleMenu()">&#9881;</div>
+            </div>
         </div>
         <div id="dock-right"></div>
     </div>

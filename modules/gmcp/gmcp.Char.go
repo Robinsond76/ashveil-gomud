@@ -738,8 +738,16 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 			if !buff.PermaBuff {
 				roundsLeft, totalRounds := buffs.GetDurations(buff, buffSpec)
-				timeMax = c.RoundsToSeconds(totalRounds)
-				timeCur = c.RoundsToSeconds(roundsLeft)
+				if buffSpec.CombatRounds {
+					// Phase 82c: battle rounds have no fixed length; the
+					// seconds here are an estimate at the minimum round.
+					minRound := int(configs.GetCombatConfig().MinRoundMs) / 1000
+					roundsLeft, totalRounds = roundsLeft*minRound, totalRounds*minRound
+					timeMax, timeCur = totalRounds, roundsLeft
+				} else {
+					timeMax = c.RoundsToSeconds(totalRounds)
+					timeCur = c.RoundsToSeconds(roundsLeft)
+				}
 				if timeCur < 0 {
 					timeCur = 0
 				}

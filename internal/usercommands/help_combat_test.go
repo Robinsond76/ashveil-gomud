@@ -194,9 +194,9 @@ func TestCombatPaceHelp(t *testing.T) {
 	page = tagPattern.ReplaceAllString(page, "")
 	for _, want := range []string{
 		"set combatpace fast", "set combatpace normal", "set combatpace slow", "set combatpace off",
-		"0.4 seconds", "done in 6 seconds", "about 7 seconds",
+		"a turn every 0.6 seconds", "a turn every second", "a turn every 1.5 seconds",
 		"screen reader", "the default is off",
-		"every 8 seconds", "before the next begins",
+		"never sooner than 3 seconds", "ten fighters take ten beats", "waits for the slowest reader",
 		"pain reaction or a death line",
 		"Your prompt", "battle view",
 		"Nothing is lost",
@@ -208,9 +208,10 @@ func TestCombatPaceHelp(t *testing.T) {
 	combat, err := GetHelpContents("combat")
 	require.NoError(t, err)
 	combat = tagPattern.ReplaceAllString(combat, "")
-	for _, want := range []string{"every 8 seconds", "up to 8 seconds", "help combatpace", "set combatpace"} {
+	for _, want := range []string{"one action at a time", "never sooner than 3 seconds", "help combatpace", "set combatpace", "resolve every 8 seconds instead"} {
 		assert.Contains(t, combat, want)
 	}
+	assert.NotContains(t, combat, "every 8 seconds (two", "the fixed round length is gone from a player's fight")
 	assert.NotContains(t, combat, "a round is 4 seconds", "the old round length is gone")
 
 	set, err := GetHelpContents("set")
@@ -425,7 +426,7 @@ func TestBattleScreenHelp(t *testing.T) {
 	text, err := GetHelpContents("battlescreen")
 	require.NoError(t, err)
 	text = tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion", "watch that company at full size", "your band"} {
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion", "watch that company at full size", "your band", "Smaller text", "with the game text below it", "turn order", "appears twice", "Turn order: Wren", "names its tempo"} {
 		assert.Contains(t, text, want)
 	}
 	for _, hub := range []string{"combat", "webclient"} {
