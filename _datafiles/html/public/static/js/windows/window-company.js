@@ -1147,9 +1147,9 @@
         if (type === 'weapon' || sub === 'wearable') { items.push({ label: 'equip ' + i.name, cmd: 'equip ' + i.ref }); }
         if (sub === 'edible')    { items.push({ label: 'eat ' + i.name, cmd: 'eat ' + i.ref }); }
         if (sub === 'drinkable') { items.push({ label: 'drink ' + i.name, cmd: 'drink ' + i.ref }); }
-        items.push({ label: 'Put in cargo', cmd: 'cargo put ' + i.ref });
+        items.push({ label: 'Put in cargo', cmd: 'cargo put ' + i.ref, echo: 'cargo put ' + i.name });
         presentCompanions().forEach(m => {
-            items.push({ label: 'Give to ' + m.name, cmd: 'give ' + i.ref + ' ' + quoted(m.name) });
+            items.push({ label: 'Give to ' + m.name, cmd: 'give ' + i.ref + ' ' + quoted(m.name), echo: 'give ' + i.name + ' to ' + m.name });
         });
         return items;
     }
@@ -1159,18 +1159,18 @@
     }
 
     function sharedCargoMenu(i, inv) {
-        const menu = [{ label: 'Look', cmd: 'look ' + i.ref }];
+        const menu = [{ label: 'look ' + i.name, cmd: 'look ' + i.ref }];
         const wearable = i.type === 'weapon' || i.subtype === 'wearable';
         if (wearable) {
             inv.members.filter(m => m.key === 'leader' || m.available).forEach(m => {
                 const member = memberSelector(m.key);
-                menu.push({ label: 'Compare for ' + m.name, cmd: 'company compare ' + member + ' ' + i.ref });
-                menu.push({ label: 'Equip ' + m.name, cmd: 'company equip ' + member + ' ' + i.ref });
+                menu.push({ label: 'Compare for ' + m.name, cmd: 'company compare ' + member + ' ' + i.ref, echo: 'company compare ' + m.name + ' ' + i.name });
+                menu.push({ label: 'Equip ' + m.name, cmd: 'company equip ' + member + ' ' + i.ref, echo: 'company equip ' + m.name + ' ' + i.name });
             });
         }
-        if (i.subtype === 'edible') { menu.push({ label: 'Eat', cmd: 'eat ' + i.ref }); }
-        if (i.subtype === 'drinkable') { menu.push({ label: 'Drink', cmd: 'drink ' + i.ref }); }
-        if (i.subtype === 'usable') { menu.push({ label: 'Use', cmd: 'use ' + i.ref }); }
+        if (i.subtype === 'edible') { menu.push({ label: 'Eat', cmd: 'eat ' + i.ref, echo: 'eat ' + i.name }); }
+        if (i.subtype === 'drinkable') { menu.push({ label: 'Drink', cmd: 'drink ' + i.ref, echo: 'drink ' + i.name }); }
+        if (i.subtype === 'usable') { menu.push({ label: 'Use', cmd: 'use ' + i.ref, echo: 'use ' + i.name }); }
         return menu;
     }
 
@@ -1221,7 +1221,7 @@
     function horseMenu(h, yourItems) {
         const items = [];
         yourItems.filter(i => /saddle/i.test(i.name)).forEach(i => {
-            items.push({ label: 'Fit ' + label(i), cmd: 'mount saddle #' + h.id + ' ' + i.ref });
+            items.push({ label: 'Fit ' + label(i), cmd: 'mount saddle #' + h.id + ' ' + i.ref, echo: 'mount saddle ' + h.name + ' ' + i.name });
         });
         if (h.saddle) { items.push({ label: 'Unsaddle', cmd: 'mount unsaddle #' + h.id }); }
         // A released horse is gone for good: ask first.
@@ -1413,7 +1413,7 @@
         cargo.appendChild(ch);
         const cargoItems = filterItems(inv.cargo || []);
         cargo.appendChild(cargoItems.length
-            ? itemList(cargoItems, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }])
+            ? itemList(cargoItems, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref, echo: 'cargo take ' + i.name }])
             : el('div', 'cmp-note', invTab === 'all' ? 'empty' : 'nothing here'));
         pad.appendChild(cargo);
     }

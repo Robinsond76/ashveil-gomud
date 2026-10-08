@@ -897,7 +897,10 @@
             apply.className = 'gw-apply';
             apply.disabled = !candidate.allowed;
             apply.dataset.gearFocus = 'apply';
-            apply.addEventListener('click', () => Client.SendInput(candidate.command));
+            // The command names the item by raw id; the terminal shows its name.
+            const whose = editorMember === 'me' ? '' : ((members.find(mm => mm.ref === editorMember) || {}).name || '');
+            const echo = (selected.key.startsWith('remove:') ? 'remove ' : 'equip ') + (whose ? whose + ' ' : '') + candidate.label;
+            apply.addEventListener('click', () => Client.SendInput(candidate.command, 'company ' + echo));
         }
         if (focusKey) {
             const next = [...panel.querySelectorAll('[data-gear-focus]')].find(n => n.dataset.gearFocus === focusKey);

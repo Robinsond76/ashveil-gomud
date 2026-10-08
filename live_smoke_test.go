@@ -787,6 +787,15 @@ func TestLiveSmoke(t *testing.T) {
 		}
 		w.drain(2 * time.Second)
 		w.do("status", `More: company status`)
+		// A UI click on an item names it by its raw id; the terminal shows
+		// the label the client gave it, and the id stays out of it.
+		w.drain(time.Second)
+		w.send("!!ECHO(look at the smoke sword)look !40004:1-032b99fdf952200-01-00000000000000")
+		out = w.expect(`look at the smoke sword`, 10*time.Second)
+		out += w.drain(time.Second)
+		if strings.Contains(out, "!40004") || strings.Contains(out, "!!ECHO") {
+			t.Errorf("a clicked command echoed its raw form:\n%s", out)
+		}
 		w.send("quit")
 		w.expect(`meditation`, 10*time.Second)
 	})

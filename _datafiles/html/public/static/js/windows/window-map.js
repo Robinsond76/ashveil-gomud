@@ -1541,7 +1541,7 @@
                 var items = [];
                 if (id !== currentRoomId) {
                     var info = roomInfoStore.get(id);
-                    items.push({ label: 'Walk to ' + ((info && info.name) || ('room ' + id)), cmd: 'walkto ' + id });
+                    items.push({ label: 'Walk to ' + ((info && info.name) || ('room ' + id)), cmd: 'walkto ' + id, echo: info && info.name ? 'walkto ' + info.name : '' });
                 }
                 if (walkInfo) { items.push({ label: 'Stop walking', cmd: 'walkto stop' }); }
                 if (isAdmin) {

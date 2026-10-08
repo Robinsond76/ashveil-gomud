@@ -1257,6 +1257,12 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 			}
 		}
 
+		// A UI click arrives as "!!ECHO(label)command": run the command and
+		// let the echo handler show the label, not the raw form.
+		if userObject != nil && !connections.InputMasked(clientInput.ConnectionId) {
+			message = inputhandlers.NoteClickLine(message, sharedState)
+		}
+
 		clientInput.DataIn = message
 		clientInput.Buffer = message
 		clientInput.EnterPressed = true
