@@ -80,7 +80,7 @@ func conditionGroups(user *users.UserRecord, s companyview.Summary) []condGroup 
 		if spec.CombatRounds && !buff.PermaBuff && roundsLeft > 0 {
 			// Phase 82c: a battle round lasts as long as its actions need,
 			// so a combat status is counted, not timed.
-			row.left = fmt.Sprintf(`%d battle round%s left`, roundsLeft, map[bool]string{true: ``, false: `s`}[roundsLeft == 1])
+			row.left = fmt.Sprintf(`%d combat round%s left`, roundsLeft, map[bool]string{true: ``, false: `s`}[roundsLeft == 1])
 		}
 		group, _ := companyview.GroupOf(buff.BuffId)
 		switch {

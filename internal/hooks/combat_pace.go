@@ -157,6 +157,13 @@ func combatOnCadence(e events.Event, doCombat events.Listener) events.ListenerRe
 	if !ok || !configs.GetTimingConfig().CombatRoundDue(evt.RoundNumber) || playerFightLive() {
 		return events.Continue
 	}
+	// Phase 82c review: a fight's last round, resolved on the clock, may
+	// still be playing out when the fight is over and the cadence is due.
+	// Starting a round now would flush those lines at once (startPacedRound),
+	// so the cadence waits for them; mob-against-mob fights can wait a turn.
+	if combatpace.Default().Holding() {
+		return events.Continue
+	}
 	return resolveCombatRound(doCombat)
 }
 
