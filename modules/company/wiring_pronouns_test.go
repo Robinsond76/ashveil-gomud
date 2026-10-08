@@ -433,6 +433,7 @@ func TestSparksCombatPronouns(t *testing.T) {
 			}
 			c.SpellBook["sparks"] = 5000
 			c.Stats.Mysticism.ValueAdj = 1000
+			b.actsFirst(c) // Phase 82b: the chant ends before a foe's blow can break it
 			var transcript string
 			for attempt := 0; attempt < 30 && !strings.Contains(transcript, "flings open"); attempt++ {
 				b.toughen()

@@ -20,7 +20,8 @@ any of its routes.
 <ansi fg="yellow-bold">Ranks of the Samurai</ansi>
 
   Level 1   <ansi fg="yellow">Iaijutsu</ansi>  the Samurai starts every battle with half a turn on its action
-            meter, so it acts sooner (<ansi fg="command">help tempo</ansi>). Its first strike of the battle
+            meter, so it acts sooner and takes the first round's first
+            turn ahead of anyone at its tempo (<ansi fg="command">help tempo</ansi>). Its first strike of the battle
             deals 50% more damage with +10% critical chance. The strike is
             spent by that swing, hit or miss, and comes back with the next
             battle.

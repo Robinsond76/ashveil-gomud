@@ -28,31 +28,77 @@ const OptionKey = "combatpace"
 // Paces lists every pace, in the order help and `set` show them.
 var Paces = []Pace{Fast, Normal, Slow, Off}
 
-// Spec is a pace's timing.
+// Spec is a pace's timing. It paces one of two ways:
+//
+//   - by line (Beats false; the fixed-cadence fights of Phase 29f): Gap
+//     before an ordinary line, Dramatic before a critical hit's pain or
+//     death line, Quick before an indented follow-up, and the round's gaps
+//     squeezed to fit Window;
+//   - by action (Beats true; Phase 82c, a battle on its own clock): every
+//     fighter's turn is a beat. Beat waits before the first line of a new
+//     turn, Follow before each further line of the same turn, Extra is
+//     added before a pain or death line, and nothing is squeezed: the round
+//     lasts as long as its actions need. Tail is the pause the clock adds
+//     after the last line before the next round.
 type Spec struct {
-	Gap      time.Duration // before an ordinary line
-	Dramatic time.Duration // before a critical hit's pain or death line
-	Quick    time.Duration // before an indented follow-up line
-	Window   time.Duration // a round's lines never take longer than this
+	Gap      time.Duration // by line: before an ordinary line
+	Dramatic time.Duration // by line: before a critical hit's pain or death line
+	Quick    time.Duration // by line: before an indented follow-up line
+	Window   time.Duration // by line: a round's lines never take longer than this
+	Beats    bool          // pace by action
+	Beat     time.Duration // by action: before a turn's first line
+	Follow   time.Duration // by action: before a turn's later lines
+	Extra    time.Duration // by action: added before a pain or death line
+	Tail     time.Duration // by action: after the round's last line
 }
 
 var specs = map[Pace]Spec{
-	Fast:   {Gap: 400 * time.Millisecond, Dramatic: 800 * time.Millisecond, Quick: 150 * time.Millisecond, Window: 3 * time.Second},
-	Normal: {Gap: 800 * time.Millisecond, Dramatic: 1400 * time.Millisecond, Quick: 250 * time.Millisecond, Window: 6 * time.Second},
-	Slow:   {Gap: 1000 * time.Millisecond, Dramatic: 1800 * time.Millisecond, Quick: 300 * time.Millisecond, Window: 7500 * time.Millisecond},
+	Fast:   {Gap: 400 * time.Millisecond, Dramatic: 800 * time.Millisecond, Quick: 150 * time.Millisecond, Window: 3 * time.Second, Beat: 600 * time.Millisecond, Follow: 150 * time.Millisecond, Extra: 300 * time.Millisecond, Tail: 400 * time.Millisecond},
+	Normal: {Gap: 800 * time.Millisecond, Dramatic: 1400 * time.Millisecond, Quick: 250 * time.Millisecond, Window: 6 * time.Second, Beat: 1000 * time.Millisecond, Follow: 250 * time.Millisecond, Extra: 500 * time.Millisecond, Tail: 600 * time.Millisecond},
+	Slow:   {Gap: 1000 * time.Millisecond, Dramatic: 1800 * time.Millisecond, Quick: 300 * time.Millisecond, Window: 7500 * time.Millisecond, Beat: 1500 * time.Millisecond, Follow: 300 * time.Millisecond, Extra: 700 * time.Millisecond, Tail: 800 * time.Millisecond},
 }
 
 // Spec is the pace's timing. Off, or an unknown pace, is all zero.
 func (p Pace) Spec() Spec { return specs[p] }
 
-// ForRound is the pace's timing with its window clamped to 90% of a combat
-// round, so a round's lines never run into the next round.
+// ForRound is the pace's timing by line with its window clamped to 90% of a
+// combat round, so a round's lines never run into the next round.
 func (p Pace) ForRound(combatRound time.Duration) Spec {
 	s := p.Spec()
 	if limit := combatRound * 9 / 10; limit > 0 && s.Window > limit {
 		s.Window = limit
 	}
 	return s
+}
+
+// Beats is the pace's timing by action, for a battle on its own clock: no
+// window, since the next round waits for this one's lines.
+func (p Pace) Beats() Spec {
+	s := p.Spec()
+	s.Beats, s.Window = true, 0
+	return s
+}
+
+// Slowest is the slower of two paces for a shared clock; Off counts as
+// Normal, since its players read the round at once but the fight must
+// still be followable.
+func Slowest(a, b Pace) Pace {
+	rank := func(p Pace) int {
+		switch p {
+		case Fast:
+			return 1
+		case Slow:
+			return 3
+		}
+		return 2 // Normal, Off, unknown
+	}
+	if rank(b) > rank(a) {
+		return b
+	}
+	if a == Off {
+		return Normal
+	}
+	return a
 }
 
 // Parse reads a pace a player typed.
