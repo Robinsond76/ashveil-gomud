@@ -203,8 +203,8 @@
     --t-modal-term-cursor: var(--p-accent);
 
     /* ── Gametime ────────────────────────────────────────────── */
-    --t-gametime-time:   var(--p-accent-mid);
-    --t-gametime-date:   #3a8860;
+    --t-gametime-time:   #097247;
+    --t-gametime-date:   #2f6f4e;
     --t-gametime-label-bg: rgba(242, 250, 246, 0.88);
 
     /* ── Comm ────────────────────────────────────────────────── */

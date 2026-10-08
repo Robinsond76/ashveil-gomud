@@ -16,7 +16,7 @@ func buildSkillsPanel(user *users.UserRecord) string {
 	if err != nil {
 		layout = templates.NewPanelLayout("open", "single", 1, 1)
 		layout.AddPanelsToSlot(layout.AddSlot(), "skills")
-		layout.Panel("skills").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Skills</ansi> `).SetWidth(78)
+		layout.Panel("skills").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Skills</ansi> `).SetWidth(78)
 	}
 
 	if len(allSkills) == 0 {

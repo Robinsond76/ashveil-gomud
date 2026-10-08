@@ -10,7 +10,7 @@
  <ansi fg="red-bold">{{ .petName }} has grown weaker...</ansi>
  {{ .petName }} has fallen to <ansi fg="red-bold">level {{ .newLevel }}</ansi>.
 {{ end }}{{ if len .changes }}
- ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Ability Changes</ansi> ────────────────────────────────────────────────────────┐
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="69">Ability Changes</ansi> ────────────────────────────────────────────────────────┐
 {{ range .changes }}   <ansi fg="yellow">{{ .Label }}</ansi> {{ .OldVal }} <ansi fg="black-bold">→</ansi> {{ if $.levelUp }}<ansi fg="green-bold">{{ .NewVal }}</ansi>{{ else }}<ansi fg="red-bold">{{ .NewVal }}</ansi>{{ end }}
 {{ end }} └────────────────────────────────────────────────────────────────────────────┘
 {{ end }}
