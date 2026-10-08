@@ -134,7 +134,7 @@ function injectStyles(css) {
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
                 if (typeof item.fn === 'function') { item.fn(e); return; }
-                Client.SendInput(item.cmd, item.label);
+                Client.SendInput(item.cmd, item.echo, item.label);
             });
             entries.push(entry);
             menuEl.appendChild(entry);
@@ -1945,18 +1945,32 @@ const Client = (() => {
         }
     }
 
-    // A UI click is sent through here. A command that names an item by its
-    // raw id ("look !40004:1-032b...") would echo that id into the terminal,
-    // so it goes out as !!ECHO(label)command: the server runs the command
-    // and echoes only the label (nothing when none is given). Plain
-    // commands echo as typed.
+    // A UI click is sent through here. A command that names its target by
+    // id ("look !40004:1-032b...", "walkto 40017") would echo that id into
+    // the terminal, so a click can say what to show instead: echo is the
+    // readable command ("look waterskin"), label the menu entry's text, used
+    // when the command carries a raw item id and no echo is given. Such a
+    // line goes out as !!ECHO(shown)command: the server runs the command and
+    // echoes only what is shown (nothing for a raw id with neither). Typed
+    // commands and plain clicks echo as sent.
     const rawIdPattern = /(^|\s)![0-9]+:/;
 
-    function SendInput(str, label) {
-        if (typeof str === 'string' && rawIdPattern.test(str)) {
-            const shown = (typeof label === 'string') ? label.replace(/[()\r\n]/g, '').trim() : '';
-            sendData('!!ECHO(' + shown + ')' + str);
-            return;
+    function echoText(s) {
+        return (typeof s === 'string') ? s.replace(/[()\r\n]/g, '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function SendInput(str, echo, label) {
+        if (typeof str === 'string') {
+            const rawId = rawIdPattern.test(str);
+            const shown = echoText(echo) || (rawId ? echoText(label) : '');
+            if (shown && shown !== str) {
+                sendData('!!ECHO(' + shown + ')' + str);
+                return;
+            }
+            if (rawId) {
+                sendData('!!ECHO()' + str);
+                return;
+            }
         }
         sendData(str);
     }

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -127,4 +128,36 @@ func freshEvents(t testing.TB) {
 	t.Helper()
 	events.ClearQueueForTest()
 	t.Cleanup(events.ClearQueueForTest)
+}
+
+// TestLookAtSomethingOnTheFloor: the web client's Look menu names a floor
+// item by its id; look describes it instead of "Look at what???".
+func TestLookAtSomethingOnTheFloor(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
+	require.NoError(t, configs.ReloadConfig())
+	keywords.LoadAliases()
+
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 94921, Name: "floor lantern", NameSimple: "lantern", Type: items.Object, Description: "A dented brass lantern.", Weight: 1})
+	t.Cleanup(func() { items.RemoveTestItemSpec(94921) })
+
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	user := users.NewUserRecord(7, 1)
+	users.SetTestUser(user)
+	lantern := items.New(94921)
+	room := &rooms.Room{RoomId: 91003, Zone: "Deep", Items: []items.Item{lantern}}
+	room.SetTestOccupants([]int{7}, nil)
+
+	for _, target := range []string{lantern.ShorthandId(), "lantern"} {
+		messages := captureLookMessages(t)
+		handled, err := Look(target, user, room, events.CmdSecretly)
+		require.NoError(t, err)
+		assert.True(t, handled)
+		events.ProcessEvents()
+		out := strings.Join(*messages, "\n")
+		assert.Contains(t, out, "on the ground", target)
+		assert.Contains(t, out, "A dented brass lantern.", target)
+		assert.NotContains(t, out, "Look at what???", target)
+	}
 }

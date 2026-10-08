@@ -50,6 +50,17 @@ test('targets are named by id', () => {
   assert.ok(look.some(e => e.cmd === 'look north'));
 });
 
+test('a click on an id target echoes its name, not the id', () => {
+  const menu = QM.build({ room, places: [{ id: 5, name: 'Inn', legend: 'inn' }] });
+  assert.deepEqual(find(menu, 'Attack').sub().map(e => e.echo), ['attack Rat']);
+  assert.equal(find(find(menu, 'Get').sub(), 'a dagger').echo, 'get dagger');
+  assert.equal(find(find(menu, 'Look').sub(), 'a dagger').echo, 'look dagger');
+  assert.equal(find(find(menu, 'Services').sub(), 'Shop: Old Fisher').echo, 'list Old Fisher');
+  assert.equal(find(find(menu, 'Move').sub(), 'Walk to').sub()[0].echo, 'walkto Inn');
+  // A plain command echoes as typed.
+  assert.equal(find(find(menu, 'Get').sub(), 'Get everything here').echo, undefined);
+});
+
 test('exits show locked, and a walk list appears with places', () => {
   const move = find(QM.build({ room, places: [{ id: 5, name: 'Inn', legend: 'inn' }], walking: true }), 'Move').sub();
   assert.equal(find(move, 'east').hint, 'locked');
