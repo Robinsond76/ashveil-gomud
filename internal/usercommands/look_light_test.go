@@ -133,20 +133,18 @@ func freshEvents(t testing.TB) {
 // TestLookAtSomethingOnTheFloor: the web client's Look menu names a floor
 // item by its id; look describes it instead of "Look at what???".
 func TestLookAtSomethingOnTheFloor(t *testing.T) {
-	_, thisFile, _, _ := runtime.Caller(0)
-	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
-	require.NoError(t, configs.ReloadConfig())
-	keywords.LoadAliases()
-
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: 94921, Name: "floor lantern", NameSimple: "lantern", Type: items.Object, Description: "A dented brass lantern.", Weight: 1})
 	t.Cleanup(func() { items.RemoveTestItemSpec(94921) })
+	// A lit indoor room, so the hour of a test run never makes it dark.
+	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "testhall", Name: "Test Hall", Symbol: "H", Indoor: true, LitArea: true})
+	t.Cleanup(func() { rooms.RemoveTestBiome("testhall") })
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
 	user := users.NewUserRecord(7, 1)
 	users.SetTestUser(user)
 	lantern := items.New(94921)
-	room := &rooms.Room{RoomId: 91003, Zone: "Deep", Items: []items.Item{lantern}}
+	room := &rooms.Room{RoomId: 91003, Zone: "Deep", Biome: "testhall", Items: []items.Item{lantern}}
 	room.SetTestOccupants([]int{7}, nil)
 
 	for _, target := range []string{lantern.ShorthandId(), "lantern"} {
