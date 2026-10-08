@@ -86,8 +86,15 @@ change the company's focus.
 
 <ansi fg="yellow-bold">Opening and closing</ansi>
 
-  It opens by itself when a battle starts. <ansi fg="yellow">Minimise</ansi> shrinks it to a badge
-  in the corner; the battle goes on. Click the badge, or the Combat tab's
+  It opens by itself when a battle starts, at the top of the middle of the
+  page, with the game text below it: the picture above, the battle's lines
+  beneath, in the same column. The picture takes at most half the column,
+  drawn at the largest whole scale that fits, so the text keeps its lines.
+  While it is open the game text steps down a size, so the battle's lines
+  tuck in and the screen moves less; untick <ansi fg="yellow">Smaller text</ansi> to keep the
+  usual size. On a phone it sits at the top of the Game view.
+  <ansi fg="yellow">Minimise</ansi> shrinks it to a badge in the corner and gives the text the whole
+  column again; the battle goes on. Click the badge, or the Combat tab's
   <ansi fg="yellow">Battle screen</ansi> button, to bring it back.
   Untick <ansi fg="yellow">Open automatically</ansi> to keep it shut until you ask.
   When the fight ends it plays the last blow, shows the outcome for three
