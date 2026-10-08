@@ -102,10 +102,10 @@ func init() {
 	register(Class{ID: "druid", Name: "Druid", Lineage: "cleric", Tier: TierAdvanced, Gate: GateAny,
 		Role: "healing over time and nature's protection",
 		Ranks: []Rank{
-			teaches(rank(10, "Rejuvenation", "one ally heals over 3 rounds for 130% of a Minor Heal, at a Minor Heal's cost", Rejuvenation, 3, RejuvPct, 130), "rejuvenation"),
-			teaches(rank(15, "Barkskin", "one ally gains +10 armor for the battle", Barkskin, 10), "barkskin"),
-			rank(20, "Lasting growth", "Rejuvenation lasts 4 rounds (160%)", Rejuvenation, 4, RejuvPct, 160),
-			rank(25, "Thornhide", "a foe that strikes a Barkskinned ally takes 2 damage", Thornhide, 2),
+			teaches(rank(10, "Rejuvenation", "one ally heals over 3 rounds for 170% of a Minor Heal, at a Minor Heal's cost", Rejuvenation, 3, RejuvPct, 170), "rejuvenation"),
+			teaches(rank(15, "Barkskin", "one ally gains +25 armor for the battle", Barkskin, 25), "barkskin"),
+			rank(20, "Lasting growth", "Rejuvenation lasts 4 rounds (220%)", Rejuvenation, 4, RejuvPct, 220),
+			rank(25, "Thornhide", "a foe that strikes a Barkskinned ally takes 4 damage", Thornhide, 4),
 		}})
 	register(Class{ID: "elder-druid", Name: "Elder Druid", Lineage: "cleric", Tier: TierElite, Parent: "druid", Gate: GateAny,
 		Role: "heals whole rows at once",
@@ -188,11 +188,11 @@ func init() {
 	register(Class{ID: "nightblade", Name: "Nightblade", Lineage: "rogue", Tier: TierElite, Parent: "assassin", Gate: GateEvil,
 		Role: "a marked victim, finishing blows and poison",
 		Ranks: []Rank{
-			rank(30, "Death Mark", "its first target each battle is marked, left exposed for 2 rounds, and takes 40% more damage from it; when that foe falls, the mark passes to the most hurt foe in reach (exposed again)", DeathMark, 40),
-			rank(35, "Envenom", "its blows poison the target a quarter of the time", Envenom, 25),
+			rank(30, "Death Mark", "its first target each battle is marked, left exposed for 2 rounds, and takes 60% more damage from it; when that foe falls, the mark passes to the most hurt foe in reach (exposed again)", DeathMark, 60),
+			rank(35, "Envenom", "its blows poison the target a third of the time", Envenom, 35),
 			rank(40, "Keener finish", "Finisher works on a foe at or below 60% health", Finisher, 3),
 			rank(45, "Shadowstep", "once every 3 rounds it may strike the marked foe in the middle row as if it had extended reach; guardians can still intercept", Shadowstep, 3),
-			rank(50, "Hunting the mark", "+15% critical chance against the marked foe", DeathCrit, 15),
+			rank(50, "Hunting the mark", "+25% critical chance against the marked foe", DeathCrit, 25),
 			rank(55, "Killing Spree", "when it fells the marked foe, its action meter gains 50, once a round", Spree, 50),
 			rank(60, "Coup de Grace", "a blow that lands on a foe below 20% health fells it outright; against a boss it deals double damage instead", Coup, 20),
 		}})
@@ -279,9 +279,9 @@ func init() {
 	register(Class{ID: "arcanist", Name: "Arcanist", Lineage: "wizard", Tier: TierAdvanced, Gate: GateAny,
 		Role: "reliable damage and mana-efficient casting",
 		Ranks: []Rank{
-			rank(10, "Arcane focus", "spells deal 10% more damage", SpellPct, 10),
+			rank(10, "Arcane focus", "spells deal 15% more damage", SpellPct, 15),
 			rank(15, "Efficient casting", "spells cost 10% less mana", SpellCost, 10),
-			rank(20, "Sharper focus", "spells deal 15% more damage", SpellPct, 15),
+			rank(20, "Sharper focus", "spells deal 25% more damage", SpellPct, 25),
 			rank(25, "Steady chant", "blows break the Arcanist's chant 25% less often", ChantBreak, 25),
 		}})
 	register(Class{ID: "archmage", Name: "Archmage", Lineage: "wizard", Tier: TierElite, Parent: "arcanist", Gate: GateAny,
@@ -319,18 +319,18 @@ func init() {
 		Role: "costly magical burst: one heavy Arcane Lance at a time",
 		Ranks: []Rank{
 			teaches(rank(10, "Arcane Lance", "a heavy bolt at one foe, about twice a Magic Missile; chant 2 rounds, cost 15", Lance, 1, LanceCost, 15), "arcanelance"),
-			rank(15, "Gathered power", "the Lance deals 25% more damage", LancePct, 25),
-			rank(20, "Steady chant", "blows break the Sorcerer's chant 25% less often", ChantBreak, 25),
+			rank(15, "Gathered power", "the Lance deals 60% more damage", LancePct, 60),
+			rank(20, "Steady chant", "blows break the Sorcerer's chant 50% less often", ChantBreak, 50),
 			rank(25, "Cheaper lance", "the Lance costs 12", LanceCost, 12),
 		}})
 	register(Class{ID: "high-sorcerer", Name: "High Sorcerer", Lineage: "wizard", Tier: TierElite, Parent: "sorcerer", Gate: GateAny,
 		Role: "a Lance that strikes harder, sooner and twice, and a chant blows rarely break",
 		Ranks: []Rank{
-			rank(30, "High Lance", "the Lance deals 40% more damage", LancePct, 40),
+			rank(30, "High Lance", "the Lance deals 75% more damage", LancePct, 75),
 			rank(35, "Gathered chant", "every other Lance chants a round less", LanceTrim, 1),
-			rank(40, "Unbroken chant", "blows break its chant 50% less often", ChantBreak, 50),
+			rank(40, "Unbroken chant", "blows break its chant 75% less often", ChantBreak, 75),
 			rank(45, "Twin Lance", "the Lance also strikes a second foe for a quarter of its damage", LanceTwin, 25),
-			rank(50, "Searing lance", "the Lance deals 45% more damage in all", LancePct, 45),
+			rank(50, "Searing lance", "the Lance deals 90% more damage in all", LancePct, 90),
 			rank(55, "Bottomless well", "+20% maximum mana", ManaPct, 20),
 			rank(60, "Instant Lance", "once a battle, its first Lance needs no chant", LanceFree, 1),
 		}})

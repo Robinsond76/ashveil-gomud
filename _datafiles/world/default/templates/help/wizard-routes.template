@@ -12,17 +12,17 @@ to the elite class that continues its route (<ansi fg="command">help promotion</
   Elite: Archon (<ansi fg="command">help archon</ansi>)
 
 <ansi fg="yellow-bold">Arcanist</ansi> (neutral)  reliable damage and mana-efficient casting
-  10 Arcane focus     spells deal 10% more damage
+  10 Arcane focus     spells deal 15% more damage
   15 Efficient casting spells cost 10% less mana
-  20 Sharper focus    spells deal 15% more damage
+  20 Sharper focus    spells deal 25% more damage
   25 Steady chant     blows break its chant 25% less often
   Elite: Archmage (<ansi fg="command">help archmage</ansi>)
 
 <ansi fg="yellow-bold">Sorcerer</ansi> (neutral)  costly magical burst: one heavy Arcane Lance at a time
   10 Arcane Lance     a heavy bolt at one foe, about twice a Magic Missile
                       (chant 2 rounds, cost 15)
-  15 Gathered power   the Lance deals 25% more damage
-  20 Steady chant     blows break its chant 25% less often
+  15 Gathered power   the Lance deals 60% more damage
+  20 Steady chant     blows break its chant 50% less often
   25 Cheaper lance    the Lance costs 12
   Elite: High Sorcerer (<ansi fg="command">help high-sorcerer</ansi>)
 

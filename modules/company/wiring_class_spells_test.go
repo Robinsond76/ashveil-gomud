@@ -121,8 +121,8 @@ func TestDruidBarkskinsAnAllyAndStrikersTakeThorns(t *testing.T) {
 	for _, c := range []*characters.Character{b.aria.Character, &b.companion(1).Character, &b.companion(2).Character, &b.companion(3).Character, &b.companion(4).Character} {
 		if c.RT != nil && c.RT.Bark > 0 {
 			barked++
-			assert.Equal(t, 10, c.RT.Bark)
-			assert.Equal(t, 2, c.RT.Thorns, "Thornhide at 25")
+			assert.Equal(t, 25, c.RT.Bark)
+			assert.Equal(t, 4, c.RT.Thorns, "Thornhide at 25")
 		}
 	}
 	assert.Positive(t, barked)

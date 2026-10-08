@@ -19,14 +19,14 @@ fear. It is a construct, so it is kept differently from any other companion
 
 <ansi fg="yellow-bold">Ranks of the Stone Golem</ansi>
 
-  Level 1   <ansi fg="yellow">Stone body</ansi>  +30 armor, but it acts 15% less often and spells
+  Level 1   <ansi fg="yellow">Stone body</ansi>  +30 armor, but it acts 10% less often and spells
                        hit it 25% harder
   Level 1   <ansi fg="yellow">Anchor</ansi>      allies in its row take 10% less damage (auras do not
                        stack within a row; <ansi fg="command">help formation</ansi>)
   Level 10  <ansi fg="yellow">Granite</ansi>     its armor rises to +40 in all, and its fist lands
-                       2 harder
+                       3 harder
   Level 20  <ansi fg="yellow">Bedrock</ansi>     its row takes 15% less damage in all, and its fist
-                       lands 4 harder in all
+                       lands 5 harder in all
 
 It has no promotion and no talents. Healing spells still heal it, and a battle
 cannot give it a lasting wound (stone cracks, and repair closes the crack).

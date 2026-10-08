@@ -15,9 +15,9 @@ func init() {
 	)
 
 	registerBase("stone-golem",
-		rank(1, "Stone body", "its stone gives +30 armor, but it acts 15% less often and spells hit it 25% harder", Armor, 30, Slow, 15, SpellWeak, 25),
+		rank(1, "Stone body", "its stone gives +30 armor, but it acts 10% less often and spells hit it 25% harder", Armor, 30, Slow, 10, SpellWeak, 25),
 		rank(1, "Anchor", "allies in its row take 10% less damage (auras don't stack within a row)", AuraResolv, 10),
-		rank(10, "Granite", "its stone hardens to +40 armor in all, and its fist lands 2 harder", Armor, 40, Damage, 2),
-		rank(20, "Bedrock", "its row takes 15% less damage in all, and its fist lands 4 harder in all", AuraResolv, 15, Damage, 4),
+		rank(10, "Granite", "its stone hardens to +40 armor in all, and its fist lands 3 harder", Armor, 40, Damage, 3),
+		rank(20, "Bedrock", "its row takes 15% less damage in all, and its fist lands 5 harder in all", AuraResolv, 15, Damage, 5),
 	)
 }

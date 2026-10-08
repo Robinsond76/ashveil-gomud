@@ -49,6 +49,7 @@ review gate. The research write-up is in the project's shared files
 | 75 | Inn room tiers | S | — |
 | 76 | Bounty boards | M | 63 |
 | 77 | Hardcore (one life) and account blessings | M | 63 |
+| 81 | Class tuning: the classes no earlier phase tuned (see [plan](2026-10-07-phase-81-class-tuning.md)) | S | 38 |
 
 **Build order.** First wave (no dependencies, most value): 60, 61, 62 and
 63. Then 64, 66, 67, 68 and 69; then 65, 70, 71, 75 and 76; last 72, 73, 74

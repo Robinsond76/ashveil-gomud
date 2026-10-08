@@ -7,11 +7,11 @@ It keeps every rank of the Sorcerer (<ansi fg="command">help wizard-routes</ansi
 
 <ansi fg="yellow-bold">Ranks</ansi>
 
-  30 High Lance        the Lance deals 40% more damage in all
+  30 High Lance        the Lance deals 75% more damage in all
   35 Gathered chant    every other Lance chants a round less
-  40 Unbroken chant    blows break its chant 50% less often in all
+  40 Unbroken chant    blows break its chant 75% less often in all
   45 Twin Lance        the Lance also strikes a second foe for a quarter of its damage
-  50 Searing lance     the Lance deals 45% more damage in all
+  50 Searing lance     the Lance deals 90% more damage in all
   55 Bottomless well    +20% maximum mana
   60 Instant Lance     once a battle, its first Lance needs no chant
 
