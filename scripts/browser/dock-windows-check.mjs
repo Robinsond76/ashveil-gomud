@@ -430,6 +430,28 @@ check((await page.evaluate(() => document.getElementById('company-camp').textCon
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Camp gear: Bedrolls 2/3, Tent, Bells and trip lines.'), 'the camp gear line (40a4)');
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work'), 'no thieves warning without theft_risk (40a4)');
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '40a4-camp-gear.png') }); }
+
+// Camp activities: the chores before sleeping, each a button that is
+// enabled only when it would do something, with its note beside it.
+const chores = [
+  { key: 'sharpen', label: 'Sharpen', command: 'camp sharpen', ready: true, note: 'You hone the blades of Wren, Oswin, using 2 whetstone uses (8 uses left).' },
+  { key: 'poison', label: 'Poison', command: 'camp poison apply', ready: false, note: 'No poison is assigned. Set blades with camp poison assign <member|self> <main|off> <poison>.' },
+  { key: 'cook', label: 'Cook', command: 'camp cook', ready: false, note: 'Oswin cooks hunter\'s stew once the fire is lit.' },
+];
+await page.evaluate(c => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: false, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, activities: c }), chores);
+const choreState = await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-activities .cmp-btn')].map(b => b.textContent + (b.disabled ? ':off' : ':on')));
+check(JSON.stringify(choreState) === '["Sharpen:on","Poison:off","Cook:off"]', 'camp chores: Sharpen ready, Poison and Cook disabled with a reason');
+check((await page.evaluate(() => document.querySelector('#company-camp .cmp-activities').textContent)).includes('No poison is assigned'), 'a chore that cannot run says why');
+const choreSent = await sentNow(async () => { await page.locator('#company-camp .cmp-activities button', { hasText: 'Sharpen' }).click(); });
+check(JSON.stringify(choreSent) === '["camp sharpen"]', 'the Sharpen button sends camp sharpen');
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '91-camp-activities-desktop.png') }); }
+await page.setViewportSize({ width: 360, height: 780 });
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '91-camp-activities-360.png') }); }
+const overflow = await page.evaluate(() => { const c = document.getElementById('company-camp'); return c.scrollWidth > c.clientWidth + 1; });
+check(!overflow, 'camp chores do not overflow at 360px');
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(c => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 25, rest_seconds: 45, can_camp: false, inn: false, activities: [] }), []);
+check(await page.locator('#company-camp .cmp-activities').count() === 0, 'resting: the chores are gone');
 // Phase 43a: camp supplies carried, and what is set by for the next rest.
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: true, gear: ['Tent'], supplies: ['fortifying broth x2', 'warming draught x1', 'watch incense x1'], prepared: ['fortifying broth for Oswin', 'watch incense'], resting: false, rested: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Supplies: fortifying broth x2, warming draught x1, watch incense x1 (camp prepare).'), 'the camp supplies line (43a)');

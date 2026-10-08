@@ -852,6 +852,9 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room, words []s
 	if m.inBattle != nil && m.inBattle(user.UserId) {
 		return "You can't cook in the middle of a fight."
 	}
+	if m.restingNow(user.UserId) {
+		return "You can't cook while the company rests; do it before you sleep."
+	}
 	recipes := m.campSettings().Recipes
 	if len(recipes) == 0 {
 		return "There is nothing to cook over a campfire."
