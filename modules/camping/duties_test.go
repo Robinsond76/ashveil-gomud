@@ -469,3 +469,16 @@ func TestDutiesTellApartCompanionsOfOneName(t *testing.T) {
 	assert.Equal(t, "#2", state.Duties[2].Command)
 	assert.Equal(t, "me", state.Duties[0].Command)
 }
+
+// Tenders with nothing to tend say so once between them.
+func TestIdleTendersReportNothingToTendOnce(t *testing.T) {
+	d := newDutyWorld(t, 0)
+	d.duty(t, "bran", "tend")
+	d.duty(t, "mira", "tend")
+	d.rest(t)
+	messages := captureMessages(t)
+	d.finishAndGrant()
+	text := strings.Join(*messages, "\n")
+	assert.Equal(t, 1, strings.Count(text, "nothing to tend"))
+	assert.Contains(t, text, "Mira and Bran find nothing to tend")
+}

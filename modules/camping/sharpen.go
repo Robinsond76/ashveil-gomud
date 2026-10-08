@@ -238,6 +238,9 @@ func (m *CampingModule) sharpenOne(user *users.UserRecord) string {
 
 // sharpenPass is sharpen limited to the first limit members (0: everyone).
 func (m *CampingModule) sharpenPass(user *users.UserRecord, auto bool, limit int) string {
+	if !auto && m.restingNow(user.UserId) {
+		return "You can't sharpen blades while the company rests; do it before you sleep."
+	}
 	settings := m.sharpenSettings()
 	targets, fighting := m.sharpenTargets(user)
 	if fighting {
