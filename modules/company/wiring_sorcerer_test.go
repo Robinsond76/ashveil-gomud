@@ -27,6 +27,7 @@ func lanceRounds(b *brawl, rounds int) string {
 
 func TestSorcererLoosesALanceAfterAChantAndPaysItsMana(t *testing.T) {
 	b := eliteCaster(t, "sorcerer", 10, "arcanelance", "mm")
+	thinBandits(b, 3)
 	stream := b.listen()
 	b.startWitchFight()
 	assert.Equal(t, 300-15, b.aria.Character.Mana, "the chant's mana is spent as it begins")
@@ -39,6 +40,7 @@ func TestSorcererLoosesALanceAfterAChantAndPaysItsMana(t *testing.T) {
 func TestSorcererLanceHitsAboutTwiceAMagicMissile(t *testing.T) {
 	dmg := func(spell string) int {
 		b := eliteCaster(t, "sorcerer", 10, spell)
+		thinBandits(b, 3)
 		b.startWitchFight()
 		out := lanceRounds(b, 6)
 		re := regexp.MustCompile(`\((\d+) damage\)`)
@@ -106,6 +108,7 @@ func TestHighSorcererGatheredChantIsShorterThanTheSorcerers(t *testing.T) {
 
 func TestSorcererLanceCostsLessAtRank25(t *testing.T) {
 	b := eliteCaster(t, "sorcerer", 25, "arcanelance")
+	thinBandits(b, 3)
 	require.Equal(t, 300, b.aria.Character.Mana)
 	b.startWitchFight()
 	assert.Equal(t, 300-12, b.aria.Character.Mana)

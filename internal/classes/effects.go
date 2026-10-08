@@ -220,6 +220,7 @@ const (
 	LanceTrim = "lancetrim" // rounds off every Lance's chant
 	LanceTwin = "lancetwin" // percent of its damage a second foe takes from a Lance
 	LanceFree = "lancefree" // once a battle the first Lance needs no chant
+	LanceFoes = "lancefoes" // the most foes it looses a Lance at; against more it sparks the group (a High Sorcerer lifts it)
 
 	// The Doll Master's lineage (Phase 39d). The doll is a durable fighter
 	// in a cell of its own that acts on its Master's turn.

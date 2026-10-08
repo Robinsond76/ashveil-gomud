@@ -159,6 +159,8 @@ func strategyPass() {
 				Reserve: st.Reserve,
 				// Phase 61: a hold order keeps it from attack spells.
 				Hold: hold,
+				// Phase 84: a Sorcerer sparks a crowd instead of a Lance.
+				LanceFoes: a.char.ClassEffects().Int(classes.LanceFoes),
 				// Phase 38a: a hex goes only at a foe worth it.
 				CanHex: hexReady(a, foes),
 				// Phase 38c3: a Necromancer raises a foe that has fallen.

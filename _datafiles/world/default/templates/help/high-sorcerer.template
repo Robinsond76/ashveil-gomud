@@ -7,7 +7,8 @@ It keeps every rank of the Sorcerer (<ansi fg="command">help wizard-routes</ansi
 
 <ansi fg="yellow-bold">Ranks</ansi>
 
-  30 High Lance        the Lance deals 75% more damage in all
+  30 High Lance        the Lance deals 75% more damage in all, and is loosed
+                       whatever the number of foes
   35 Gathered chant    every other Lance chants a round less
   40 Unbroken chant    blows break its chant 75% less often in all
   45 Twin Lance        the Lance also strikes a second foe for a quarter of its damage
@@ -18,9 +19,11 @@ It keeps every rank of the Sorcerer (<ansi fg="command">help wizard-routes</ansi
 <ansi fg="yellow-bold">How it plays</ansi>
 
 Everything is automatic. A Sorcerer casts as any wizard does (<ansi fg="command">help strategy</ansi>),
-but it looses an Arcane Lance whenever it has the mana, and Magic Missile only
-when it has not. The Lance chants 2 rounds (every other one only 1 once it
-gathers its chant), and a broken chant wastes the costly Lance, so a Sorcerer
+but it looses an Arcane Lance whenever it has the mana, against any number of
+foes (the plain Sorcerer showers a crowd of four or more with sparks instead),
+and Magic Missile only when it has not. The Lance chants 2 rounds (every other
+one only 1 once it gathers its chant), and a broken chant wastes the costly
+Lance, so a Sorcerer
 is best shielded in the back row. The
 Instant Lance says so: (instant lance, no chant), and the Twin Lance's second
 bolt reads "A second lance of light strikes".
