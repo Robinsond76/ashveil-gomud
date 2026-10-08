@@ -1,6 +1,8 @@
 package usercommands
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -84,4 +86,47 @@ func TestAutoLootRequiresExplicitOptIn(t *testing.T) {
 	_, err = AutoLoot("off", u, nil, 0)
 	require.NoError(t, err)
 	assert.False(t, u.Character.AutoLoot)
+}
+
+// Looting says what was taken once per kind of corpse, not once per item.
+func TestLootCombinesTakenThingsIntoOneLine(t *testing.T) {
+	u := users.NewUserRecord(7, 1)
+	u.Character.CompanyCargo = true
+	for id, name := range map[int]string{989711: "wooden shield", 989712: "tattered pants", 989713: "leather cap"} {
+		spec := items.ItemSpec{ItemId: id, Name: name, Weight: 100}
+		items.SetTestItemSpec(&spec)
+		id := id
+		t.Cleanup(func() { items.RemoveTestItemSpec(id) })
+	}
+	start := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(start) })
+	util.SetRoundCount(500)
+	corpse := func(ids ...int) rooms.Corpse {
+		c := rooms.Corpse{MobId: 1, ClaimUserId: 7, BattleSpoils: true, RoundCreated: 500, Character: *characters.New(), Gold: 3}
+		c.Character.Name = "skeleton"
+		for _, id := range ids {
+			c.Items = append(c.Items, items.New(id))
+		}
+		return c
+	}
+	room := &rooms.Room{Corpses: []rooms.Corpse{corpse(989711, 989712), corpse(989711, 989713)}}
+	text := plainLootText(captureUserText(t, func() { _, err := Loot("", u, room, 0); require.NoError(t, err) }))
+	assert.Equal(t, 1, strings.Count(text, "You take"), text)
+	assert.Contains(t, text, "6 gold")
+	assert.Contains(t, text, "2 wooden shields")
+	assert.Contains(t, text, "the tattered pants")
+	assert.Contains(t, text, "the leather cap")
+	assert.Contains(t, text, "skeleton corpses")
+
+	// One corpse keeps the singular noun.
+	room = &rooms.Room{Corpses: []rooms.Corpse{corpse(989713)}}
+	text = plainLootText(captureUserText(t, func() { _, err := Get("all corpse", u, room, 0); require.NoError(t, err) }))
+	assert.Equal(t, 1, strings.Count(text, "You take"), text)
+	assert.Contains(t, text, "3 gold and the")
+	assert.Contains(t, text, "skeleton corpse")
+	assert.NotContains(t, text, "corpses")
+}
+
+func plainLootText(s string) string {
+	return regexp.MustCompile(`<[^>]*>`).ReplaceAllString(s, "")
 }

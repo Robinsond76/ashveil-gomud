@@ -23,6 +23,8 @@ func Loot(rest string, u *users.UserRecord, room *rooms.Room, flags events.Event
 		return Get("all "+rest, u, room, flags)
 	}
 	n := 0
+	tally := &lootTally{}
+	defer tally.flush(u, room)
 	for i := range room.Corpses {
 		c := &room.Corpses[i]
 		if onlyOwn && c.ClaimUserId != u.UserId {
@@ -34,7 +36,7 @@ func Loot(rest string, u *users.UserRecord, room *rooms.Room, flags events.Event
 		if !corpseLootable(c, u.UserId) {
 			continue
 		}
-		_, err := Get("all corpse#"+strconv.Itoa(i+1), u, room, flags)
+		_, err := getWithTally("all corpse#"+strconv.Itoa(i+1), u, room, flags, tally)
 		if err != nil {
 			return true, err
 		}
