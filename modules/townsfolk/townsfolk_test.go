@@ -113,6 +113,10 @@ const testLines = `
   flag: boss-slayers
   tags: [gossip]
   text: "And now {subject} too, {who}."
+- id: measure
+  kind: mastered
+  tags: [gossip]
+  text: "Heard {who} has the measure of {subject} now."
 - id: rain
   weather: [rain]
   tags: [gossip]
@@ -489,6 +493,18 @@ func TestATalkerMentionsADeedThroughTheRealIdleTurn(t *testing.T) {
 	require.NotEmpty(t, said)
 	assert.Equal(t, "sayto @41 Mara put down the Hollow King.", said[0])
 	assert.Equal(t, 2, r.m.state[41].Total)
+}
+
+// Phase 85: a mastery deed (the company's, naming nobody) is told with the
+// leader's name and the kind.
+func TestATalkerMentionsAMasteryDeed(t *testing.T) {
+	r := newRig(t)
+	townsfolk.SetProvider(r.m)
+	t.Cleanup(func() { townsfolk.SetProvider(nil) })
+	r.deed(7, chronicle.Entry{Kind: chronicle.Mastered, Subject: "big rat", Ref: "mob:12"})
+	sp, ok := r.say(gossip(), []int{7})
+	require.True(t, ok)
+	assert.Equal(t, "Heard Mara has the measure of big rat now.", sp.Text)
 }
 
 // A mob that is no talker never reaches the module.

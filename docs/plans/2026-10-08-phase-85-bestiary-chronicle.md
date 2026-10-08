@@ -106,3 +106,42 @@ company's study of its foes shows in its history and in what towns say.
   reputation by mastery.
 - A blessing for mastering many kinds (a later phase may add one; `Total`
   already counts them).
+
+## Build notes (2026-10-08)
+
+Built as designed; no design change. Small decisions:
+
+| Decision | Reason |
+| --- | --- |
+| The cap lives in `Log.dropOldestOver`, run before the `MaxEntries` trim, and counts only kept entries of the kind. | Keeps `Add` simple and leaves other kinds untouched; the tally is bumped after, so it still counts every deed. |
+| Prose adds "the" unless the name starts with a capital letter or already begins with an article (`theName`). | Covers proper names and templates such as "the Pale Wolf" without "the the". |
+| The deed is recorded inside the existing tier-up branch only when the new tier is `Habits`. | The tally only grows, so the crossing fires once; Training is already excluded there. |
+| The web filter needed no change: the Chronicle tab builds its buttons from the labels on the deeds present, so Beast lore appears once the first deed is kept. | Checked in `window-company.js` (`chronicleKinds`); the design said it builds from `chronicle.Kinds`, but the label arrives on each entry. |
+| The shipped test line reads "Heard {who} has the measure of {subject} now." and a common name reads without an article. | Test content only (temporary world); the replacement world writes its own. |
+| Help: lore line and 30-line note in `help chronicle`; a paragraph in `help bestiary`; a clause in the Combat tutorial's bestiary hint. | Per the design's acceptance list. |
+
+## Review (2026-10-08)
+
+Built to the design. Checked: the deed is written only in the tier-up branch when
+the new tier is habits, from the template (so an elite or encounter boss shares
+its kind's one line, and the 7th kill adds nothing); Training and practice foes
+write none; nothing is backfilled; the prose claims only that the habits were
+learned; the cap counts kept lore lines only and runs before the 300 trim.
+
+| Finding | Decision |
+| --- | --- |
+| `help chronicle` said the newest 30 lore lines are kept "apart from the 300", which reads as 330 lines; the 30 are inside the 300. | Fixed: "At most 30 of the 300 are beast lore ... other deeds always have room for at least 270." |
+| No test showed the cap protecting a full log, or surviving a reload. | Added `TestBeastLoreLeavesAFullLogToOtherDeeds` and `TestBeastLoreAndItsCapSurviveARestart`; removing the cap fails both and the build's cap test. |
+| The web filter shows Beast lore only once a lore deed exists, not always (the design said always). | Accepted: the tab builds its buttons from the kinds present, as for every other kind; an always-on button would filter to nothing. |
+| A capitalised common name (stock "Angel", "Demon") reads without "the". | Accepted, not changed: rare, and the world is temporary; the replacement world can name its kinds to suit. |
+
+Live check: on a local server an admin's 6th rat kill wrote "The company learned
+the habits of the rat at Town Square." to the web Chronicle tab and the towns
+panel's pending list; the 7th kill added none. Desktop and 360px read cleanly
+with no sideways scroll (`/mnt/project-files/screens/85-review-live-*.png`).
+
+Gates: generate, validate, `go test -race -timeout 30m ./...` (142 packages ok
+before merging phase 84; its packages and this phase's re-run after),
+`make smoke` (pass). Seen, not this phase's: `TestSparksOverloadsItsTargetsThroughARealCast`
+fails 3 of 60 under `-race` on master with and without phase 84; queued as a flake
+to root-cause (Aria never recasts after one interrupted chant in the failing run).

@@ -1461,6 +1461,31 @@ await page.setViewportSize({ width: 1280, height: 900 });
   check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: a reopened window shows the deeds at once');
 }
 
+// --- Phase 85: Beast lore in the Chronicle filter ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  const lore = {
+    total: 6,
+    tally: { boss: 1, mastered: 2, joined: 1 },
+    entries: [
+      { seq: 5, at: 1, ago: '5 minutes ago', kind: 'mastered', label: 'Beast lore', text: "The company learned the habits of the big rat at Old King's Road." },
+      { seq: 4, at: 1, ago: '1 hour ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King at the Throne Room.' },
+      { seq: 3, at: 1, ago: '2 hours ago', kind: 'mastered', label: 'Beast lore', text: 'The company learned the habits of Rodric at the ford.' },
+      { seq: 2, at: 1, ago: '3 days ago', kind: 'joined', label: 'Joined', text: 'Oswin joined the company at the Waymark Inn.' },
+    ],
+  };
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), lore);
+  await page.locator('#company-chronicle').getByRole('button', { name: 'Beast lore' }).click();
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 2, 'Chronicle: the Beast lore filter shows only the lore lines (85)');
+  check((await page.evaluate(() => document.getElementById('company-chronicle').textContent)).includes("learned the habits of the big rat"), 'Chronicle: the lore line reads in prose (85)');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-chronicle'); return p.scrollWidth <= p.clientWidth + 1; }), 'Beast lore fits a phone (85)');
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '85-chronicle-lore-360.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '85-chronicle-lore-desktop.png') }); }
+}
+
 // --- Phase 68: what the towns say, above the Chronicle ---
 {
   await page.getByRole('tab', { name: 'Company' }).first().click();

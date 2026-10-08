@@ -741,3 +741,21 @@ func TestBondsHelp(t *testing.T) {
 		assert.Contains(t, text, "bonds", "%s mentions bonds", hub)
 	}
 }
+
+// Phase 85: the chronicle and bestiary pages say that learning a kind's
+// habits is written down as beast lore.
+func TestBeastLoreHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	for topic, phrases := range map[string][]string{
+		"chronicle": {"chronicle lore", "habits", "newest 30"},
+		"bestiary":  {"chronicle lore", "kinds you learned before"},
+	} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		plain := tagPattern.ReplaceAllString(text, "")
+		for _, p := range phrases {
+			assert.Contains(t, plain, p, "help %s", topic)
+		}
+	}
+}
