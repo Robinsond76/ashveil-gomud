@@ -137,7 +137,8 @@ check((await rows()).includes('Attack') && await selected() === 'Attack', 'Esc g
 await page.keyboard.press('Enter');
 await page.keyboard.press('Enter');
 check(!(await menuOpen()), 'choosing a command closes the menu');
-check(JSON.stringify(await sent()) === JSON.stringify(['attack 12']), 'and sends attack by id: ' + JSON.stringify(await sent()));
+// The id goes to the server; the terminal echoes the name (!!ECHO).
+check(JSON.stringify(await sent()) === JSON.stringify(['!!ECHO(attack giant rat)attack 12']), 'and sends attack by id, echoing the name: ' + JSON.stringify(await sent()));
 
 // --- Back entry, number keys, Esc to close ---
 await clear();

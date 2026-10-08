@@ -55,7 +55,7 @@
     }
 
     function targets(verb, mobs) {
-        return mobs.map(function(c) { return { label: c.name, cmd: verb + ' ' + c.id }; });
+        return mobs.map(function(c) { return { label: c.name, cmd: verb + ' ' + c.id, echo: verb + ' ' + c.name }; });
     }
 
     // foes are the NPCs worth attacking: not your own company (charmed),
@@ -161,7 +161,7 @@
             label: 'Look', sub: function() {
                 var l = [{ label: 'Look around', cmd: 'look' }];
                 l = l.concat(targets('look', npcs), targets('look', players), items.map(function(i) {
-                    return { label: i.label || i.name, cmd: 'look ' + i.id };
+                    return { label: i.label || i.name, cmd: 'look ' + i.id, echo: 'look ' + i.name };
                 }), containers.map(function(c) { return { label: c.name, cmd: 'look ' + c.name }; }));
                 exits.forEach(function(e) { l.push({ label: 'Look ' + e.label, cmd: 'look ' + e.label }); });
                 return l;
@@ -193,7 +193,7 @@
                         m.push({
                             label: 'Walk to', sub: function() {
                                 return places.map(function(p) {
-                                    return { label: p.name, hint: p.legend || '', cmd: 'walkto ' + p.id };
+                                    return { label: p.name, hint: p.legend || '', cmd: 'walkto ' + p.id, echo: 'walkto ' + p.name };
                                 });
                             },
                         });
@@ -207,7 +207,7 @@
         var shops = npcs.filter(function(c) { return has(c.adjectives, 'shop'); });
         var details = room.details || [];
         var services = [];
-        shops.forEach(function(c) { services.push({ label: 'Shop: ' + c.name, cmd: 'list ' + c.id }); });
+        shops.forEach(function(c) { services.push({ label: 'Shop: ' + c.name, cmd: 'list ' + c.id, echo: 'list ' + c.name }); });
         // Phase 71: an enchanter works a hunted trophy into gear (help enchanting).
         if (npcs.some(function(c) { return has(c.adjectives, 'enchanter'); })) {
             services.push({ label: 'Enchant gear', hint: 'trophy into a weapon or armor', cmd: 'imbue' });
@@ -221,7 +221,7 @@
             label: 'Get', sub: function() {
                 var g = [];
                 if (items.length) { g.push({ label: 'Get everything here', cmd: 'get all' }); }
-                items.forEach(function(i) { g.push({ label: i.label || i.name, cmd: 'get ' + i.id }); });
+                items.forEach(function(i) { g.push({ label: i.label || i.name, cmd: 'get ' + i.id, echo: 'get ' + i.name }); });
                 g.push({ label: 'Loot the fallen', hint: 'after a battle', cmd: 'loot' });
                 return g;
             },
@@ -380,7 +380,7 @@
         if (e.sub) { push(e.label, e.sub()); return; }
         close();
         if (typeof e.fn === 'function') { e.fn(); return; }
-        if (e.cmd) { Client.SendInput(e.cmd); }
+        if (e.cmd) { Client.SendInput(e.cmd, e.echo, e.label); }
     }
 
     function open() {

@@ -501,6 +501,17 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
+	// Something lying on the floor: the web client's Look menu names it by
+	// its id (look !29:1-...), and a player can name it too.
+	if floorItem, ok := room.FindOnFloor(lookAt, false); ok {
+		user.SendText(``)
+		user.SendText(fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> on the ground:`, floorItem.DisplayName()))
+		user.SendText(``)
+		user.SendText(floorItem.GetLongDescriptionFor(user.Character.GetSkillLevel(`scribe`)))
+		user.SendText(``)
+		return true, nil
+	}
+
 	// Nothing found
 	user.SendText("Look at what???")
 

@@ -625,11 +625,11 @@
         const npcs = (room.Contents && room.Contents.Npcs) || [];
         setSection('npcs', npcs.map(function(c) {
             const menuItems = [
-                { label: 'look '   + c.name, cmd: 'look '   + c.id },
-                { label: 'attack ' + c.name, cmd: 'attack ' + c.id },
+                { label: 'look '   + c.name, cmd: 'look '   + c.id, echo: 'look ' + c.name },
+                { label: 'attack ' + c.name, cmd: 'attack ' + c.id, echo: 'attack ' + c.name },
             ];
             if (c.adjectives && c.adjectives.includes('shop')) {
-                menuItems.push({ label: 'list ' + c.name, cmd: 'list ' + c.id });
+                menuItems.push({ label: 'list ' + c.name, cmd: 'list ' + c.id, echo: 'list ' + c.name });
             }
             if (c.adjectives && c.adjectives.includes('enchanter')) {
                 menuItems.push({ label: 'imbue (enchant gear)', cmd: 'imbue' });
@@ -646,11 +646,11 @@
         const players = (room.Contents && room.Contents.Players) || [];
         setSection('players', players.map(function(c) {
             const menuItems = [
-                { label: 'look '   + c.name, cmd: 'look '   + c.id },
-                { label: 'attack ' + c.name, cmd: 'attack ' + c.id },
+                { label: 'look '   + c.name, cmd: 'look '   + c.id, echo: 'look ' + c.name },
+                { label: 'attack ' + c.name, cmd: 'attack ' + c.id, echo: 'attack ' + c.name },
             ];
             if (c.adjectives && c.adjectives.includes('shop')) {
-                menuItems.push({ label: 'list ' + c.name, cmd: 'list ' + c.id });
+                menuItems.push({ label: 'list ' + c.name, cmd: 'list ' + c.id, echo: 'list ' + c.name });
             }
             return makeRow(c.name, {
                 aggro: c.aggro,

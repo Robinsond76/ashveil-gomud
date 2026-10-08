@@ -134,7 +134,7 @@ function injectStyles(css) {
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
                 if (typeof item.fn === 'function') { item.fn(e); return; }
-                Client.SendInput(item.cmd);
+                Client.SendInput(item.cmd, item.echo, item.label);
             });
             entries.push(entry);
             menuEl.appendChild(entry);
@@ -1945,7 +1945,33 @@ const Client = (() => {
         }
     }
 
-    function SendInput(str) {
+    // A UI click is sent through here. A command that names its target by
+    // id ("look !40004:1-032b...", "walkto 40017") would echo that id into
+    // the terminal, so a click can say what to show instead: echo is the
+    // readable command ("look waterskin"), label the menu entry's text, used
+    // when the command carries a raw item id and no echo is given. Such a
+    // line goes out as !!ECHO(shown)command: the server runs the command and
+    // echoes only what is shown (nothing for a raw id with neither). Typed
+    // commands and plain clicks echo as sent.
+    const rawIdPattern = /(^|\s)![0-9]+:/;
+
+    function echoText(s) {
+        return (typeof s === 'string') ? s.replace(/[()\r\n]/g, '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function SendInput(str, echo, label) {
+        if (typeof str === 'string') {
+            const rawId = rawIdPattern.test(str);
+            const shown = echoText(echo) || (rawId ? echoText(label) : '');
+            if (shown && shown !== str) {
+                sendData('!!ECHO(' + shown + ')' + str);
+                return;
+            }
+            if (rawId) {
+                sendData('!!ECHO()' + str);
+                return;
+            }
+        }
         sendData(str);
     }
 

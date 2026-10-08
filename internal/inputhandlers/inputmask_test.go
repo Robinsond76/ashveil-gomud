@@ -3,6 +3,7 @@ package inputhandlers
 import (
 	"bytes"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -76,4 +77,36 @@ func TestEchoAndHistoryWhileMasked(t *testing.T) {
 
 func TestMaskEchoKeepsControlBytes(t *testing.T) {
 	assert.Equal(t, []byte("**\b*\r\n"), maskEcho([]byte("ab\b \r\n")))
+}
+
+// TestClickLineEchoesItsLabel: a UI click carries a readable label; the
+// command runs without its raw form (item ids) reaching the terminal.
+func TestClickLineEchoesItsLabel(t *testing.T) {
+	id, sent := maskedPipe(t)
+	in := &connections.ClientInput{ConnectionId: id, EnterPressed: true}
+	state := map[string]any{}
+
+	line := NoteClickLine([]byte("!!ECHO(look at Rusty Sword)look !40004:1-032b99fdf952200-01"), state)
+	assert.Equal(t, "look !40004:1-032b99fdf952200-01", string(line))
+	in.DataIn, in.Buffer = line, line
+	sent()
+	assert.True(t, EchoInputHandler(in, state))
+	assert.Equal(t, "look at Rusty Sword", strings.TrimSpace(sent()))
+
+	// The label is used once: the next typed line echoes as typed.
+	line = NoteClickLine([]byte("look"), state)
+	in.DataIn, in.Buffer = line, line
+	assert.True(t, EchoInputHandler(in, state))
+	assert.Equal(t, "look", strings.TrimSpace(sent()))
+
+	// An empty label hides the echo entirely.
+	line = NoteClickLine([]byte("!!ECHO()look !40004:1-0"), state)
+	assert.Equal(t, "look !40004:1-0", string(line))
+	in.DataIn, in.Buffer = line, line
+	assert.True(t, EchoInputHandler(in, state))
+	assert.Equal(t, "", sent())
+
+	// An unclosed marker is ordinary typed text.
+	line = NoteClickLine([]byte("!!ECHO(look"), state)
+	assert.Equal(t, "!!ECHO(look", string(line))
 }
