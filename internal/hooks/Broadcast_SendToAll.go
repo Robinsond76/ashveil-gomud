@@ -108,6 +108,8 @@ func releaseAmbient(userId int) {
 		return
 	}
 	if u := users.GetByUserId(userId); u != nil {
+		// News the battle held back follows the summary at once.
+		events.AddToQueue(events.CombatReport{UserId: userId})
 		for _, text := range held {
 			u.SendText(text)
 		}

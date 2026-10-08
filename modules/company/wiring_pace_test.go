@@ -11,6 +11,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -67,6 +69,7 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	}{
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
+		{events.CombatReport{}, hooks.CombatReport_Mark},
 		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
@@ -142,7 +145,12 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	// (0.6s) and at least 3s after the round before it.
 	require.GreaterOrEqual(t, len(*starts), 2, "the fight took more than one round")
 	perRound := make([][]time.Duration, len(*starts))
-	for _, l := range sent {
+	for i, l := range sent {
+		if i > summary {
+			// The summary goes out whole behind its heading, not a beat a line.
+			assert.Equal(t, sent[summary].at, l.at, "summary line %q came apart from its heading", l.text)
+			continue
+		}
 		r := 0
 		for r+1 < len(*starts) && l.at >= (*starts)[r+1] {
 			r++
@@ -496,4 +504,105 @@ func TestAnEmptyRoundIsNotWaitedOut(t *testing.T) {
 	assert.GreaterOrEqual(t, gaps[0], 3*time.Second, "the opening round, with everyone's turn, keeps the minimum: %v", rounds)
 	assert.LessOrEqual(t, gaps[1], 100*time.Millisecond, "the empty second round is followed at once: %v", rounds)
 	assert.GreaterOrEqual(t, gaps[2], 3*time.Second, "the third round, with turns again, keeps the minimum: %v", rounds)
+}
+
+// TestNextBattleAfterAReportIsPaced: when a battle is broken off at the top
+// of a round (its group walked away) and the next group's battle begins in
+// the same round, only the broken-off battle's report goes out at once; the
+// new battle's blows that round still come a beat apart.
+func TestNextBattleAfterAReportIsPaced(t *testing.T) {
+	b := newBrawl(t)
+	b.looseBandits()
+	start := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var sent []pacedLine
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 {
+			sent = append(sent, pacedLine{text: companyTagPattern.ReplaceAllString(text, ""), at: now.Sub(start)})
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.NewRound{}, hooks.CombatOnCadence},
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.CombatReport{}, hooks.CombatReport_Mark},
+		{events.NewTurn{}, hooks.BattleClock},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+		{events.NewRound{}, hooks.IdleMobs},
+	} {
+		freshEvents(t)
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+	b.aimAt("bandit captain")
+	var round uint64 = 1
+	play := func() {
+		hardTo(b.aria.Character, 1000)
+		for id := 1; id <= 4; id++ {
+			hardTo(&b.companion(id).Character, 1000)
+		}
+		for _, m := range b.livingBandits() {
+			hardTo(&m.Character, 1000)
+		}
+		round++
+		events.AddToQueue(events.NewRound{RoundNumber: round})
+		events.ProcessEvents()
+		for turn := 0; turn < 80 || turn < 600 && combatpace.Default().Busy(7); turn++ {
+			now = now.Add(50 * time.Millisecond)
+			events.AddToQueue(events.NewTurn{})
+			events.ProcessEvents()
+		}
+	}
+	for i := 0; i < 20; i++ {
+		if _, ok := battle.Current(7); ok {
+			break
+		}
+		play()
+	}
+	_, ok := battle.Current(7)
+	require.True(t, ok, "Aria's first battle began")
+	play()
+	first, ok := battle.Current(7)
+	require.True(t, ok, "Aria is in a battle")
+	// The first battle's group walks off the road; others wait their turn.
+	verge := rooms.LoadRoom(920102)
+	for id := range first.Enemies {
+		if m := mobs.GetInstance(id); m != nil {
+			b.road.RemoveMob(id)
+			m.Character.RoomId = verge.RoomId
+			m.Character.Aggro = nil
+			verge.AddMob(id)
+		}
+	}
+	sent = nil
+	play()
+	next, ok := battle.Current(7)
+	require.True(t, ok, "the next group's battle began")
+	require.NotEqual(t, first.FightID, next.FightID)
+
+	heading := -1
+	for i, l := range sent {
+		if strings.HasPrefix(strings.TrimSpace(l.text), "──") {
+			heading = i
+		}
+	}
+	require.GreaterOrEqual(t, heading, 0, "the broken-off battle sent its summary: %v", sent)
+	// The new battle's round, from its "Round 1" line: a beat a line.
+	begun := -1
+	for i := heading; i < len(sent); i++ {
+		if strings.Contains(sent[i].text, "Round 1") {
+			begun = i
+			break
+		}
+	}
+	require.Greater(t, begun, heading, "the next battle fought this round: %v", sent[heading:])
+	require.Greater(t, len(sent)-begun, 3, "the next battle's lines this round: %v", sent[begun:])
+	for i := begun + 1; i < len(sent); i++ {
+		assert.GreaterOrEqual(t, sent[i].at-sent[i-1].at, 200*time.Millisecond, "the next battle's lines came at once: %v", sent[heading:])
+	}
 }

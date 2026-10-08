@@ -560,6 +560,18 @@ type CombatPaceDrained struct {
 
 func (c CombatPaceDrained) Type() string { return `CombatPaceDrained` }
 
+// CombatReport marks, in a player's stream of combat lines, where the fight's
+// report begins: every line after it that the fight's end causes (the
+// summary, experience, news held back) goes out at once instead of a beat a
+// line. With Ends, it marks where the report stops instead: the player's
+// next battle began in the same round, and its lines take their beats.
+type CombatReport struct {
+	UserId int
+	Ends   bool
+}
+
+func (c CombatReport) Type() string { return `CombatReport` }
+
 // CombatData (Ashveil Phase 40e) is structured data about a combat
 // happening, for one player. It is queued as the happening is emitted so
 // that it is dispatched in order with the round's narration, which

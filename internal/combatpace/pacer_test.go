@@ -2,6 +2,7 @@ package combatpace
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -381,5 +382,44 @@ func TestFollowDataWaitsOnlyBehindHeldEntries(t *testing.T) {
 	p.Hold(1, 2, 0, "l1", spec, at(0))
 	if !p.FollowData(1, "x") {
 		t.Fatal("held lines: data follows them")
+	}
+}
+
+func TestReportLinesGoOutWithoutAWait(t *testing.T) {
+	p := New()
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	spec := Normal.ForRound(6 * time.Second)
+	p.Hold(1, 1, 1, "blow", spec, now)
+	p.Hold(1, 1, 1, "header", spec, now)
+	p.StartReport(1)
+	p.Hold(1, 1, 0, "row one", spec, now)
+	p.Follow(1, "row two")
+	out, _ := p.Due(now.Add(spec.Gap))
+	if len(out) != 4 || out[3].Text != "row two" {
+		t.Fatalf("report rows waited behind the header: %v", out)
+	}
+}
+
+func TestEndReportRestoresTheBeat(t *testing.T) {
+	p := New()
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	spec := Normal.Beats()
+	p.Hold(1, 1, 1, "blow", spec, now)
+	p.Hold(1, 1, 1, "header", spec, now)
+	p.StartReport(1)
+	p.Hold(1, 1, 1, "report", spec, now)
+	p.EndReport(1)
+	p.Hold(1, 1, 2, "next battle's blow", spec, now)
+	var got []string
+	for _, at := range []time.Duration{0, spec.Follow, spec.Follow + spec.Beat} {
+		out, _ := p.Due(now.Add(at))
+		var texts []string
+		for _, r := range out {
+			texts = append(texts, r.Text)
+		}
+		got = append(got, strings.Join(texts, "+"))
+	}
+	if want := "blow|header+report|next battle's blow"; strings.Join(got, "|") != want {
+		t.Fatalf("got %q, want %q: the next battle's blow takes its beat", strings.Join(got, "|"), want)
 	}
 }

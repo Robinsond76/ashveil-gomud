@@ -157,6 +157,9 @@ func assignPartyEnemyNames(userId int, p mobparty.Party) {
 // fight on the stream.
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
+	// A battle ended this round sent its report at once; this one's lines
+	// take their beats.
+	events.AddToQueue(events.CombatReport{UserId: sd.user.UserId, Ends: true})
 	// Phase 33i2: the group's coordination, fixed for the battle.
 	b.Coordination = int(enemyparty.Coordination(p))
 	battle.SetCoordination(sd.user.UserId, b.Coordination)

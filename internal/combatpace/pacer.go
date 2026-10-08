@@ -14,6 +14,7 @@ const (
 	Plain    Beat = iota // the pace's ordinary gap
 	Dramatic             // a critical hit's pain or death line
 	Quick                // an indented follow-up line
+	Instant              // no wait: a block that goes out whole (the battle summary)
 )
 
 // Release is a held entry now due, for its player: a line of text, or (when
@@ -55,13 +56,15 @@ type Pacer struct {
 	mu     sync.Mutex
 	queues map[int]*queue
 	marks  map[string]struct{}
+	// report are players whose later lines this round go out without a wait.
+	report map[int]struct{}
 	// open are players in a combat round whose lines haven't all gone out:
 	// from the round's start (before its lines are held) until they drain.
 	open map[int]struct{}
 }
 
 func New() *Pacer {
-	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, open: map[int]struct{}{}}
+	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, report: map[int]struct{}{}, open: map[int]struct{}{}}
 }
 
 var (
@@ -102,6 +105,23 @@ func (p *Pacer) Mark(texts ...string) {
 	}
 }
 
+// StartReport makes the player's lines held from now on in this round go
+// out with no wait of their own: the fight's report (its summary and what
+// the end of the fight causes) arrives whole instead of a beat a line.
+func (p *Pacer) StartReport(userId int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.report[userId] = struct{}{}
+}
+
+// EndReport stops StartReport: the player's lines held from now on take
+// their beats again (their next battle began in the same round).
+func (p *Pacer) EndReport(userId int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.report, userId)
+}
+
 // Marked reports whether a line is marked dramatic this round.
 func (p *Pacer) Marked(text string) bool {
 	p.mu.Lock()
@@ -118,6 +138,7 @@ func (p *Pacer) StartRound(userIds ...int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.marks = map[string]struct{}{}
+	p.report = map[int]struct{}{}
 	p.open = make(map[int]struct{}, len(userIds))
 	for _, id := range userIds {
 		p.open[id] = struct{}{}
@@ -158,6 +179,9 @@ func (p *Pacer) HoldData(userId int, round uint64, data any, spec Spec, now time
 }
 
 func (p *Pacer) holdLocked(userId int, round uint64, h held, spec Spec, now time.Time) (flushed []Release) {
+	if _, ok := p.report[userId]; ok && !h.isData {
+		h.beat = Instant
+	}
 	q := p.queues[userId]
 	if q != nil && round < q.round {
 		q.lines = append(q.lines, h)
@@ -185,7 +209,11 @@ func (p *Pacer) Follow(userId int, text string) bool {
 	if q == nil || q.next >= len(q.lines) {
 		return false
 	}
-	q.lines = append(q.lines, held{text: text, beat: p.beatOf(text), slot: q.lastSlot()})
+	h := held{text: text, beat: p.beatOf(text), slot: q.lastSlot()}
+	if _, ok := p.report[userId]; ok {
+		h.beat = Instant
+	}
+	q.lines = append(q.lines, h)
 	return true
 }
 
@@ -225,6 +253,9 @@ func (q *queue) remaining(userId int) []Release {
 // whether it opens a new turn (newSlot), with the extra before a pain or
 // death line.
 func (s Spec) gap(b Beat, newSlot bool) time.Duration {
+	if b == Instant {
+		return 0
+	}
 	if s.Beats {
 		d := s.Follow
 		if newSlot {
@@ -301,6 +332,7 @@ func (p *Pacer) Due(now time.Time) (out []Release, drained []int) {
 		if q.next >= len(q.lines) {
 			delete(p.queues, userId)
 			delete(p.open, userId)
+			delete(p.report, userId)
 			drained = append(drained, userId)
 		}
 	}
@@ -337,6 +369,7 @@ func (p *Pacer) Flush(userId int) (lines []Release, ended bool) {
 	defer p.mu.Unlock()
 	_, ended = p.open[userId]
 	delete(p.open, userId)
+	delete(p.report, userId)
 	if q := p.queues[userId]; q != nil {
 		delete(p.queues, userId)
 		lines = q.remaining(userId)
@@ -354,6 +387,7 @@ func (p *Pacer) FlushAll() (out []Release, drained []int) {
 		out = append(out, p.queues[userId].remaining(userId)...)
 		delete(p.queues, userId)
 		delete(p.open, userId)
+		delete(p.report, userId)
 		drained = append(drained, userId)
 	}
 	for userId := range p.open {
