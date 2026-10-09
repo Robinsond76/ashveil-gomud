@@ -35,7 +35,7 @@ turns a delivered sheet into the client's sheet layout.
 |---|---|---|
 | **Masters:** the agent's large originals (1–3 MB each, 200–400 MB in all) | The shared art folder: the Google Drive folder [**Ashveil Art Masters**](https://drive.google.com/drive/folders/1BgQaAZfopzUVc4mKYthn5ygdMqSapAza). It has one subfolder per phase (`A0` to `A10`), and inside each the layout mirrors `art/source/`: `A1/map/units/warrior.png` and so on. The folder is private; the owner shares it with the art agent. | **No.** Git would keep every version forever, and every clone would download them all. |
 | **Local staging:** `art/source/` in a checkout | A copy of the phase being imported. It's listed in `.gitignore`. | No |
-| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're what players download. E1's 101 map units take about 12 MB of stored blobs (git keeps one copy of the identical pair, so a checkout holds about 24 MB); E2's terrain and icons and E3's battle art will add more. |
+| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're what players download. E1's 101 map units take about 12 MB of stored blobs (git keeps one copy of the identical pair, so a checkout holds about 24 MB); E2's 164 terrain, landmark and icon files about 1.7 MB more; E3's battle art will add more. |
 
 Drive keeps earlier versions of a replaced file, so a regenerated sheet
 can be uploaded over the old one. To re-import at a different size later,

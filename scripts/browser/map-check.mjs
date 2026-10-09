@@ -357,6 +357,63 @@ s = await state(page);
 check(s.style === 'classic' && s.drawn.tiles === 0 && s.drawn.walls === 0 && s.drawn.fog === 0, 'classic draws no tiles, walls or fog: ' + JSON.stringify(s.drawn));
 await page.close();
 
+// --- E2: road and coast pieces, replace-style animation ---
+// The mixed harness: the road at (1,1) has no road neighbour (road-none), the
+// shore at (2,0) has water to the west (shore-w), and the water draws its
+// 4-frame replace sheet.
+page = await gotoMixed(null);
+s = await state(page);
+check(s.drawn.pieces[mid(1, 1)] === 'road-none' && s.drawn.pieces[mid(2, 0)] === 'shore-w',
+  'the road and shore draw the pieces their neighbours pick: ' + JSON.stringify(s.drawn.pieces));
+check(Object.keys(s.drawn.pieces).length === 2, 'only road and shore rooms draw pieces');
+await page.close();
+
+// A road network: (1,1) joins the road north of it; a wall (no exit) to the
+// east and a found secret passage to the west don't join; (2,1) and (1,0)
+// run on into the fog of unvisited exits; the shore at (1,2) has water on
+// three sides and the road to its north.
+const roads = { biomes: {}, rooms: [] };
+const rid = (x, y) => 300 + x + 4 * y;
+const rlayout = { '1,0': 'road', '0,1': 'road', '1,1': 'road', '2,1': 'road', '0,2': 'water', '1,2': 'shore', '2,2': 'water', '1,3': 'water' };
+const rexits = [['1,1', '1,0', ''], ['1,1', '0,1', 'secret'], ['1,1', '1,2', ''], ['0,2', '1,2', ''], ['1,2', '2,2', ''], ['1,2', '1,3', '']];
+const names = { '0,-1': 'north', '1,0': 'east', '0,1': 'south', '-1,0': 'west' };
+for (const [key, env] of Object.entries(rlayout)) {
+  const [x, y] = key.split(',').map(Number);
+  const exitsv2 = {};
+  rexits.forEach(([a, b, flag]) => {
+    const other = a === key ? b : (b === key ? a : null);
+    if (!other) { return; }
+    const [ox, oy] = other.split(',').map(Number);
+    exitsv2[names[(ox - x) + ',' + (oy - y)]] = { num: rid(ox, oy), dx: ox - x, dy: oy - y, dz: 0, details: flag ? [flag] : [] };
+  });
+  if (key === '2,1') { exitsv2.east = { num: 997, dx: 1, dy: 0, dz: 0 }; }
+  if (key === '1,0') { exitsv2.north = { num: 998, dx: 0, dy: -1, dz: 0 }; }
+  roads.rooms.push({ num: rid(x, y), area: 'Roads', coords: ['Roads', x, y, 0].join(','), environment: env, exitsv2, details: [] });
+}
+page = await open({ width: 1280, height: 900 });
+await gmcp(page, 'World.Map', roads);
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+await gmcp(page, 'Room', { Info: roads.rooms.find(r => r.num === rid(1, 1)) });
+await page.waitForFunction(() => Object.keys(window.MapView.state().drawn.pieces).length === 5, null, { timeout: 5000 }).catch(() => {});
+s = await state(page);
+const want = { [rid(1, 1)]: 'road-n', [rid(0, 1)]: 'road-none', [rid(2, 1)]: 'road-e', [rid(1, 0)]: 'road-ns', [rid(1, 2)]: 'shore-esw' };
+check(JSON.stringify(s.drawn.pieces) === JSON.stringify(want),
+  'roads join through exits only (not a wall or a secret passage) and run on into the fog; the coast faces its water: ' + JSON.stringify(s.drawn.pieces));
+for (let i = 0; i < 3; i++) { await page.locator('.map-controls button[title="Zoom in"]').click(); }
+await tick(page, 400);
+await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-roads.png') : '/tmp/e2-roads.png' });
+await page.close();
+
+// A missing piece falls back to the biome's own tile.
+page = await open({ width: 1280, height: 900 }, null, '**/map/terrain/road-none.png');
+await gmcp(page, 'World.Map', mixed);
+await gmcp(page, 'Room', { Info: mixed.rooms[5] });
+await tick(page, 500);
+s = await state(page);
+check(s.drawn.tiles === 7 && s.drawn.fallbacks === 0 && !(mid(1, 1) in s.drawn.pieces),
+  'a missing road piece draws the road biome tile instead: ' + JSON.stringify(s.drawn));
+await page.close();
+
 // A missing terrain image falls back to the colour square, without a page error.
 page = await open({ width: 1280, height: 900 }, null, '**/map/terrain/forest.png');
 await gmcp(page, 'World.Map', mixed);
@@ -379,7 +436,7 @@ await page.close();
 // Animated water cycles its frames.
 page = await gotoMixed(null);
 s = await state(page);
-check(s.drawn.animated >= 1, 'water and shore animate: ' + s.drawn.animated);
+check(s.drawn.animated === 1, 'the water animates (the shore, now a coast piece, does not): ' + s.drawn.animated);
 const w1 = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
 await tick(page, 600);
 const w2 = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());

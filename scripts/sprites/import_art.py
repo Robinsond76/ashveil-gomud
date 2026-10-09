@@ -168,13 +168,16 @@ def cut(src, n, cw, ch):
 
 
 def edge_dark(cell, band=4):
-    """How much darker a tile's edge band is than the whole tile (0 = not)."""
+    """How much darker a tile's edges are than the whole tile (0 = not).
+
+    A frame or vignette darkens all four edges, so this is the least dark
+    of the four bands; a texture whose stripes or rows happen to end dark
+    on two edges passes.
+    """
     lum = cell[..., :3].astype(np.float64) @ [0.299, 0.587, 0.114]
-    inner = lum[band:-band, band:-band].mean()
-    mask = np.ones(lum.shape, bool)
-    mask[band:-band, band:-band] = False
-    edge = lum[mask].mean()
-    return max(0.0, (inner - edge) / max(inner, 1.0))
+    whole = max(lum.mean(), 1.0)
+    edges = [lum[:band].mean(), lum[-band:].mean(), lum[:, :band].mean(), lum[:, -band:].mean()]
+    return max(0.0, (whole - max(edges)) / whole)
 
 
 def encode(img, budget):
@@ -197,8 +200,8 @@ def build(job, src_root):
     if job.exact:
         path = os.path.join(src_root, job.masters[0])
         im = Image.open(path).convert("RGBA")
-        if im.size != (1024, 1024):
-            raise ValueError(f"{job.masters[0]}: {im.size[0]}x{im.size[1]}, expected 1024x1024")
+        if im.width != im.height or im.width < job.exact[0]:
+            raise ValueError(f"{job.masters[0]}: {im.size[0]}x{im.size[1]}, expected a square of at least {job.exact[0]} px")
         arr = np.array(im)
         if job.opaque and arr[..., 3].min() < 255:
             raise ValueError(f"{job.masters[0]}: must be opaque")
