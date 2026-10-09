@@ -105,17 +105,30 @@ check(s.keys.join() === 'knight,warrior,adventurer' && s.spriteDrawn, 'class, th
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 check((await state(page)).keys.join() === 'warrior,adventurer', 'an unpromoted class is its lineage');
 
-// Phase 72a: the player's skin and hair colours (Char.Info) repaint the figure.
+// Phase 72a: the player's skin and hair colours (Char.Info) repaint 1x
+// palette art. Every class now has imported high-density art (E1), which the
+// palette swap cannot repaint, so the 1x hound sheet stands in to test the
+// repaint, and the warrior checks that high-density art is left as drawn.
 const plainSig = () => page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'hound', lineage: '' });
 await settle(page);
+check((await state(page)).art.density === 1, 'the hound keeps its 1x palette art');
 const untinted = await plainSig();
-await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', skin: '#5a3a28', hair: '#d8b868' });
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'hound', lineage: '', skin: '#5a3a28', hair: '#d8b868' });
 await page.waitForTimeout(150);
 s = await state(page);
 check(s.look && s.look.skin === '#5a3a28' && s.look.hair === '#d8b868', 'Char.Info skin and hair become the figure\'s look');
-check(await plainSig() !== untinted, 'the tinted figure is drawn differently');
-await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', skin: 'red', hair: '' });
+check(await plainSig() !== untinted && (await state(page)).art.tinted, 'the tinted 1x figure is drawn differently');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'hound', lineage: '', skin: 'red', hair: '' });
 check((await state(page)).look === null, 'a colour that is not #rrggbb is ignored');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+await settle(page); await page.waitForTimeout(150);
+s = await state(page);
+check(s.art && s.art.density === 4 && s.art.idleFrames === 2 && s.art.walkFrames === 6, 'the warrior draws its imported density-4 sheets (2 idle, 6 walk frames)');
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', skin: '#5a3a28', hair: '#d8b868' });
+await page.waitForTimeout(150);
+s = await state(page);
+check(s.look && s.art && s.art.density === 4 && !s.art.tinted, 'high-density art is drawn untinted (skin and hair masks come later)');
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 
 await moveTo(page, 2, 0); await tick(page, 60);
@@ -481,6 +494,30 @@ await tick(page, 300);
 s = await state(page);
 check(s.drawn.shaded === 0, 'with day/night off nothing is shaded');
 await page.close();
+
+// --- E1: high-density figures at whole and fractional pixel ratios ---
+for (const dpr of [1, 1.5, 2]) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 700 }, deviceScaleFactor: dpr });
+  page = await ctx.newPage();
+  page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
+  await page.goto(url);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await start(page);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'paladin', lineage: 'warrior' });
+  await settle(page); await page.waitForTimeout(200);
+  s = await state(page);
+  check(s.art && s.art.density === 4 && s.keys[0] === 'paladin', 'ratio ' + dpr + ': an elite draws its own density-4 art');
+  const canvasPx = await page.evaluate(() => { const c = document.getElementById('map-2d-canvas'); return [c.width, c.clientWidth]; });
+  check(Math.abs(canvasPx[0] - canvasPx[1] * dpr) <= 1, 'ratio ' + dpr + ': the canvas renders at device pixels ' + JSON.stringify(canvasPx));
+  // walk east across two rooms and catch a frame mid-step
+  await moveTo(page, 3, 1); await page.waitForTimeout(90);
+  check((await state(page)).walking, 'ratio ' + dpr + ': the figure walks');
+  await page.locator('#map-window').screenshot({ path: (shot ? shot.replace(/\.png$/, '') : '/tmp/e1-map') + '-dpr' + dpr + '-walk.png' });
+  await settle(page);
+  await page.locator('#map-window').screenshot({ path: (shot ? shot.replace(/\.png$/, '') : '/tmp/e1-map') + '-dpr' + dpr + '.png' });
+  await ctx.close();
+}
 
 await browser.close();
 server.close();

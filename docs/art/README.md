@@ -66,6 +66,7 @@ the owner signs off on the style anchors.
 | **A8b** | [A8b-advanced-neutral.md](A8b-advanced-neutral.md) | 24 advanced classes of the 8 neutral lineages, map and battle | 48 | E1, E3 |
 | **A9** | [A9-elite-built.md](A9-elite-built.md) | The 19 elite classes in the game today, map and battle | 38 | E1, E3 |
 | **A10** | [A10-elite-planned.md](A10-elite-planned.md) | The 24 planned elites, each made when its class is built | 48 | E1, E3 |
+| **A11** | [A11-look-masks.md](A11-look-masks.md) | Skin and hair masks for the 101 map-unit masters, so players' chosen looks recolour the new art | 202 | E1b |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),
 then the battle screen, and the advanced and elite classes come last.
@@ -80,6 +81,7 @@ folder until the matching step is merged.
 | Step | Work | Unblocks |
 |---|---|---|
 | **E1** | Land the spike as a phase. Density on map units, a high-DPI map canvas, `import_sheet.py` reading the A1 layout (2 idle and 6 walk columns per row). Make the tests' rules depend on density. Even out 1x pixel art on fractional pixel ratios. | A1, map half of A8–A10 |
+| **E1b** | Recolour the new map figures from the A11 masks: within each mask, map the art's own shading onto a ramp built from the player's chosen skin or hair colour (`SpriteTint`), keeping light and shadow. Until then high-density sheets are shown untinted (`SpriteTint.applies`). | A11 |
 | **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. Road auto-tiling: the map picks `road-<sides>` from the neighbors that are road and joined by an exit. Coast auto-tiling: `shore-<sides>` from the grid neighbors whose biome is `water`, exits or not. | A2–A5 |
 | **E3** | High-resolution battle screen. Today it draws a 320×180 canvas scaled by CSS. It must draw at device pixels, with density on units and backgrounds. | A6, A7, battle half of A8–A10 |
 | **E4** | Rewrite the sprite specification's craft and technical sections to point here. Contact sheets come from the imported art. | all, as phases land |

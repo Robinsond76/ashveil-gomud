@@ -113,3 +113,11 @@ test('canvasFor falls back to the stock image when the canvas cannot be read', (
   const cache = {};
   assert.equal(T.canvasFor(img, T.look('#52311d', ''), make, cache, 'cdn'), img);
 });
+
+test('only 1x palette art is repainted; high-density art is left as drawn (E1)', () => {
+  assert.equal(T.applies({ frame: [32, 32] }), true);
+  assert.equal(T.applies({ frame: [32, 32], density: 1 }), true);
+  assert.equal(T.applies({ frame: [128, 128], density: 4 }), false);
+  assert.equal(T.applies(null), false);
+  assert.equal(T.applies(undefined), false);
+});

@@ -597,6 +597,20 @@
             if (hi) { ctx.imageSmoothingQuality = 'high'; }
         }
 
+        // crispScale (E1): on a fractional pixel ratio (1.25, 1.5) 1x pixel
+        // art drawn at <mult> CSS px per art pixel would land on uneven
+        // device pixels. For 1x art it rounds the scale to a whole number of
+        // device pixels per art pixel; art drawn below one device pixel per
+        // art pixel (zoomed out) and high-density art keep their scale.
+        function crispScale(mult, density) {
+            var dev = mult * pixelRatio;
+            if (density > 1 || dev < 1) { return mult; }
+            return Math.round(dev) / pixelRatio;
+        }
+
+        // snap rounds a CSS coordinate to a whole device pixel.
+        function snap(v) { return Math.round(v * pixelRatio) / pixelRatio; }
+
         // A sheet with density N has frames N times the 1x size; it is
         // drawn at the same on-map size as 1x art (mult is per 1x pixel).
         function drawFrame(sheet, row, flip, cx, feetY, mult, now, startMs, alpha) {
@@ -604,9 +618,10 @@
             var r = Math.max(0, (info.rows || []).indexOf(row));
             var f = Sprites.frame(info, r, now, startMs);
             var d = info.density || 1;
-            var w = f.sw * mult / d, h = f.sh * mult / d;
-            var x = Math.round(cx - w / 2);
-            var y = Math.round(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
+            var m = crispScale(mult, d);
+            var w = f.sw * m / d, h = f.sh * m / d;
+            var x = snap(cx - w / 2);
+            var y = snap(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
             ctx.save();
             artSmoothing(info);
             ctx.globalAlpha = alpha;
@@ -627,10 +642,11 @@
             if (!a) { return false; }
             var f = Sprites.frame(a.info, 0, now, 0);
             var d = a.info.density || 1;
-            var w = f.sw * mult / d, h = f.sh * mult / d;
+            var m = crispScale(mult, d);
+            var w = f.sw * m / d, h = f.sh * m / d;
             ctx.save();
             artSmoothing(a.info);
-            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h);
+            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, snap(cx - w / 2), snap(cy - h / 2), w, h);
             ctx.restore();
             return true;
         }
@@ -1990,6 +2006,8 @@
             // state is for the browser checks (scripts/browser/map-check.mjs).
             state: function () {
                 var res = resolveSheet(chainKeys(identity.classid, identity.lineage), false);
+                var walkRes = resolveSheet(chainKeys(identity.classid, identity.lineage), true);
+                var lookRes = resolveSheet(chainKeys(identity.classid, identity.lineage), false, identity.look);
                 var pose = unit.x === null ? null : unitPose(performance.now());
                 return {
                     spriteDrawn: spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
@@ -2003,6 +2021,10 @@
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
+                    // E1: the drawn sheet's density and frame counts
+                    art: res ? { density: res.sheet.info.density || 1, idleFrames: res.sheet.info.frames,
+                                 walkFrames: walkRes && walkRes.walk ? walkRes.sheet.info.frames : 0,
+                                 tinted: !!(lookRes && lookRes.sheet.img && lookRes.sheet.img.tagName === 'CANVAS') } : null,
                     allies: Object.keys(partyHeartEase).map(function (n) {
                         var e = partyHeartEase[n];
                         return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,

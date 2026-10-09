@@ -31,6 +31,7 @@ type spriteMeta struct {
 	// apply only at density 1.
 	Density      int    `json:"density"`
 	FeetBaseline int    `json:"feet_baseline"`
+	FrameMs      int    `json:"frame_ms"`
 	Source       string `json:"source"`
 }
 
@@ -124,7 +125,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 	for _, r := range []string{"water", "forage", "herbs", "firewood", "shelter", "fishing", "game", "unknown", "depleted"} {
 		want = append(want, "map/resources/"+r+".png")
 	}
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer", "arbalist"}, promotedClasses...) {
+	for _, u := range append(append([]string{}, baseClasses...), promotedClasses...) {
 		want = append(want, "map/units/"+u+"/idle.png", "map/units/"+u+"/walk.png")
 	}
 	for _, rel := range want {
@@ -228,6 +229,59 @@ func TestMapUnitSpritesFollowAnchorRules(t *testing.T) {
 				// lifts a foot, so allow up to one 1x row higher.
 				if lowest >= 31*d || lowest < 29*d {
 					t.Errorf("%s frame %d: lowest opaque row %d, want %d..%d", rel, fr, lowest, 29*d, 31*d-1)
+				}
+			}
+		}
+	}
+}
+
+// baseClasses are the 15 base map figures of art phase A1.
+var baseClasses = []string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer", "arbalist"}
+
+// TestCommissionedMapUnitsAreImported (E1): every class with an approved
+// art-program master (A1, A8a, A8b, A9, A10) draws the imported density-4
+// sheets: 128 px frames, a 2-frame idle and the master's 6-frame walk, binary
+// alpha, and each file within the standards' 300 KB map-unit budget.
+func TestCommissionedMapUnitsAreImported(t *testing.T) {
+	dir := spriteDir(t)
+	m := loadSpriteManifest(t, dir)
+	classes := append(append([]string{}, baseClasses...), promotedClasses...)
+	if len(classes) != 101 {
+		t.Fatalf("expected 101 commissioned classes, have %d", len(classes))
+	}
+	for _, u := range classes {
+		for file, want := range map[string]struct{ frames, ms int }{"idle.png": {2, 500}, "walk.png": {6, 120}} {
+			rel := "map/units/" + u + "/" + file
+			meta, ok := m.Files[rel]
+			if !ok {
+				t.Errorf("manifest is missing %s", rel)
+				continue
+			}
+			if meta.Source != "imported" || meta.density() != 4 {
+				t.Errorf("%s: source %q density %d, want imported density 4", rel, meta.Source, meta.density())
+				continue
+			}
+			if meta.Frames != want.frames || meta.FrameMs != want.ms {
+				t.Errorf("%s: %d frames at %d ms, want %d at %d", rel, meta.Frames, meta.FrameMs, want.frames, want.ms)
+			}
+			if len(meta.Frame) != 2 || meta.Frame[0] != 128 || meta.Frame[1] != 128 || meta.FeetBaseline != 120 {
+				t.Errorf("%s: frame %v feet %d, want 128x128 feet 120", rel, meta.Frame, meta.FeetBaseline)
+			}
+			info, err := os.Stat(filepath.Join(dir, rel))
+			if err != nil {
+				t.Errorf("%s: %v", rel, err)
+				continue
+			}
+			if info.Size() > 300*1024 {
+				t.Errorf("%s is %d KB, over the 300 KB budget", rel, info.Size()/1024)
+			}
+			img := readSprite(t, dir, rel)
+			b := img.Bounds()
+			for y := b.Min.Y; y < b.Max.Y; y++ {
+				for x := b.Min.X; x < b.Max.X; x++ {
+					if _, _, _, a := img.At(x, y).RGBA(); a != 0 && a != 0xffff {
+						t.Fatalf("%s: partly transparent pixel at %d,%d", rel, x, y)
+					}
 				}
 			}
 		}

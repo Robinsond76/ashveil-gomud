@@ -182,10 +182,11 @@
 
     // tintedArt (Phase 72a) repaints a player's figure in their chosen skin
     // tone and hair colour (sprite-tint.js); the repainted canvas is made
-    // once per sheet and look. Companions and creatures have no look.
+    // once per sheet and look. Companions and creatures have no look, and
+    // high-density art is shown as drawn (SpriteTint.applies).
     const tintCache = {};
     function tintedArt(a, path, look) {
-        if (!a || !look || !window.SpriteTint) { return a; }
+        if (!a || !look || !window.SpriteTint || !window.SpriteTint.applies(a.info)) { return a; }
         const img = window.SpriteTint.canvasFor(a.img, look, (w, h) => {
             const c = document.createElement('canvas');
             c.width = w; c.height = h;

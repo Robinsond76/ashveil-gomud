@@ -24,7 +24,9 @@
  *   Sprites.tinted(path, look) -> Sprites.art(path) with the figure's skin and
  *                              hair repainted in look's colours (Phase 72a;
  *                              sprite-tint.js builds a look). With no look, or
- *                              before sprite-tint.js has loaded, it is art(path).
+ *                              before sprite-tint.js has loaded, it is art(path),
+ *                              and so is high-density art, which the palette
+ *                              swap cannot repaint (SpriteTint.applies).
  *                              The repainted canvas is made once per path and
  *                              look.
  *   Sprites.frame(info, rowIndex, now, startMs)
@@ -74,7 +76,7 @@ window.Sprites = (function () {
 
     function tinted(path, look) {
         var a = art(path);
-        if (!a || !look || !window.SpriteTint) { return a; }
+        if (!a || !look || !window.SpriteTint || !window.SpriteTint.applies(a.info)) { return a; }
         var canvas = window.SpriteTint.canvasFor(a.img, look, function (w, h) {
             var c = document.createElement('canvas');
             c.width = w; c.height = h;
