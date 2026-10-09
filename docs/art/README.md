@@ -35,7 +35,7 @@ turns a delivered sheet into the client's sheet layout.
 |---|---|---|
 | **Masters:** the agent's large originals (1–3 MB each, 200–400 MB in all) | The shared art folder: the Google Drive folder [**Ashveil Art Masters**](https://drive.google.com/drive/folders/1BgQaAZfopzUVc4mKYthn5ygdMqSapAza). It has one subfolder per phase (`A0` to `A10`), and inside each the layout mirrors `art/source/`: `A1/map/units/warrior.png` and so on. The folder is private; the owner shares it with the art agent. | **No.** Git would keep every version forever, and every clone would download them all. |
 | **Local staging:** `art/source/` in a checkout | A copy of the phase being imported. It's listed in `.gitignore`. | No |
-| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're what players download. E1's 101 map units take about 12 MB of stored blobs (git keeps one copy of the identical pair, so a checkout holds about 24 MB); E2's terrain and icons and E3's battle art will add more. |
+| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're what players download. E1's 101 map units take about 12 MB of stored blobs (git keeps one copy of the identical pair, so a checkout holds about 24 MB); E2's 164 terrain, landmark and icon files about 1.7 MB more; E3's battle art will add more. |
 
 Drive keeps earlier versions of a replaced file, so a regenerated sheet
 can be uploaded over the old one. To re-import at a different size later,
@@ -57,6 +57,7 @@ the owner signs off on the style anchors.
 | **A0** | [A0-style-anchors.md](A0-style-anchors.md) | Style anchors: lineup, sample tile, sample icons, mock scenes | 8 | none |
 | **A1** | [A1-base-class-map-units.md](A1-base-class-map-units.md) | Map sprites for the 15 base figures (6 classic lineages, 8 neutral lineages, the fallback) | 15 | E1 |
 | **A2** | [A2-terrain-tiles.md](A2-terrain-tiles.md) | 17 biomes × 3 variants, 16 road pieces, 16 coast pieces, 4 animated biomes, fog and unknown tiles | 101 | E2 |
+| **A2b** | [A2b-coast-inner-corners.md](A2b-coast-inner-corners.md) | 4 coast inside-corner overlays, so a lake's corners have no notch | 4 | E2b |
 | **A3** | [A3-landmarks.md](A3-landmarks.md) | 27 landmark overlays | 27 | E2 |
 | **A4** | [A4-map-icons-markers-camp.md](A4-map-icons-markers-camp.md) | Resource icons, map markers, camp pieces, app icons | 30 | E2 |
 | **A5** | [A5-ui-icons.md](A5-ui-icons.md) | Status, role, morale and condition icons; battle markers | 52 | E2 |
@@ -83,6 +84,7 @@ folder until the matching step is merged.
 | **E1** | Land the spike as a phase. Density on map units, a high-DPI map canvas, `import_sheet.py` reading the A1 layout (2 idle and 6 walk columns per row). Make the tests' rules depend on density. Even out 1x pixel art on fractional pixel ratios. | A1, map half of A8–A10 |
 | **E1b** | Recolour the new map figures from the A11 masks: within each mask, map the art's own shading onto a ramp built from the player's chosen skin or hair colour (`SpriteTint`), keeping light and shadow. Until then high-density sheets are shown untinted (`SpriteTint.applies`). | A11 |
 | **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. Road auto-tiling: the map picks `road-<sides>` from the neighbors that are road and joined by an exit. Coast auto-tiling: `shore-<sides>` from the grid neighbors whose biome is `water`, exits or not. | A2–A5 |
+| **E2b** | Draw the A2b inside-corner overlay on a shore piece in each corner whose diagonal neighbour is water (a lake cell or a water room) while the two sides beside it are not. | A2b |
 | **E3** | High-resolution battle screen. Today it draws a 320×180 canvas scaled by CSS. It must draw at device pixels, with density on units and backgrounds. | A6, A7, battle half of A8–A10 |
 | **E4** | Rewrite the sprite specification's craft and technical sections to point here. Contact sheets come from the imported art. | all, as phases land |
 

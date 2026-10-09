@@ -1,4 +1,1948 @@
 {
+ "app/favicon-32.png": {
+  "kind": "app-icon",
+  "set": "S1",
+  "size": [
+   32,
+   32
+  ],
+  "source": "imported"
+ },
+ "app/icon-192.png": {
+  "kind": "app-icon",
+  "set": "S1",
+  "size": [
+   192,
+   192
+  ],
+  "source": "imported"
+ },
+ "app/icon-512.png": {
+  "kind": "app-icon",
+  "set": "S1",
+  "size": [
+   512,
+   512
+  ],
+  "source": "imported"
+ },
+ "app/icon-maskable-512.png": {
+  "kind": "app-icon",
+  "maskable": true,
+  "safe_zone": 0.8,
+  "set": "S1",
+  "size": [
+   512,
+   512
+  ],
+  "source": "imported"
+ },
+ "battle/ui/acting-arrow.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   32,
+   32
+  ],
+  "frame_ms": 250,
+  "frames": 2,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   64,
+   32
+  ],
+  "source": "imported"
+ },
+ "battle/ui/cell-acting.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   64
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   512,
+   64
+  ],
+  "source": "imported"
+ },
+ "battle/ui/cell-targeted.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   64
+  ],
+  "frame_ms": 250,
+  "frames": 2,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   256,
+   64
+  ],
+  "source": "imported"
+ },
+ "battle/ui/cell.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   64
+  ],
+  "frames": 1,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   128,
+   64
+  ],
+  "source": "imported"
+ },
+ "battle/ui/fallen.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "battle/ui/hp-frame.png": {
+  "anchor": "top-left",
+  "density": 4,
+  "frame": [
+   128,
+   24
+  ],
+  "frames": 1,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   128,
+   24
+  ],
+  "source": "imported"
+ },
+ "battle/ui/surrendered.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "battle-ui",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/camp-rough-ally.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/camp/camp-rough.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/camp/embers.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 150,
+  "frames": 3,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   192,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/fire-lit.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 150,
+  "frames": 4,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   256,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/fire-unlit.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/inn-rest.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/resting.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 150,
+  "frames": 3,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   192,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/smoke.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 150,
+  "frames": 4,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   256,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/camp/tent-ally.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/camp/tent.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/alts.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/bank.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/boss-lair.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/bridge.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/caravan.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/cave-mouth.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/desert-ruin.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/dungeon-stair.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/gate.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/herbalist.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/hermit.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/inn.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/keep.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/lake-house.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/landmark.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/obelisk.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/pond.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/rocks.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/shaman.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/shop.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/smithy.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/temple.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/throne.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/townsquare.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/trainer.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/village.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/landmarks/wall.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "landmark",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/markers/ally-banner.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 250,
+  "frames": 2,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   128,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/markers/company-badge.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   48,
+   48
+  ],
+  "frames": 1,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   48,
+   48
+  ],
+  "source": "imported"
+ },
+ "map/markers/exit-down.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   32,
+   32
+  ],
+  "frames": 1,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   32,
+   32
+  ],
+  "source": "imported"
+ },
+ "map/markers/exit-up.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   32,
+   32
+  ],
+  "frames": 1,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   32,
+   32
+  ],
+  "source": "imported"
+ },
+ "map/markers/here-ring.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   512,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/markers/walk-dot.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   32,
+   32
+  ],
+  "frames": 1,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   32,
+   32
+  ],
+  "source": "imported"
+ },
+ "map/markers/walk-target.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 250,
+  "frames": 2,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   128,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/depleted.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/firewood.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/fishing.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/forage.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/game.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/herbs.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/shelter.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/unknown.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/resources/water.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "icon",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/terrain/cave.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/city.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/cliffs.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/default.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/desert-anim.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 250,
+  "frames": 4,
+  "kind": "terrain-anim",
+  "over": "desert.png",
+  "replace": true,
+  "set": "S2",
+  "size": [
+   512,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/desert.png": {
+  "animated_overlay": "desert-anim.png",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/dungeon.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/farmland.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/fog.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-state",
+  "overlay": true,
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/forest.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/fort.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/house.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/land.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/mountains.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/road-e.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "e",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-es.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "es",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-esw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "esw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-ew.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "ew",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-n.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "n",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-ne.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "ne",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-nes.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "nes",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-nesw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "nesw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-new.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "new",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-none.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "none",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-ns.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "ns",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-nsw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "nsw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-nw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "nw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-s.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "s",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-sw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "sw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/road-w.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "road",
+  "set": "S2",
+  "sides": "w",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-e.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "e",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-es.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "es",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-esw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "esw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-ew.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "ew",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-n.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "n",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-ne.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "ne",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-nes.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "nes",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-nesw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "nesw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-new.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "new",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-none.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "none",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-ns.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "ns",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-nsw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "nsw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-nw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "nw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-s.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "s",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-sw.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "sw",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/shore-w.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-piece",
+  "piece": "shore",
+  "set": "S2",
+  "sides": "w",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/slums.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/snow-anim.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 250,
+  "frames": 4,
+  "kind": "terrain-anim",
+  "over": "snow.png",
+  "replace": true,
+  "set": "S2",
+  "size": [
+   512,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/snow.png": {
+  "animated_overlay": "snow-anim.png",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/spiderweb.png": {
+  "animated_overlay": null,
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/swamp-anim.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 250,
+  "frames": 4,
+  "kind": "terrain-anim",
+  "over": "swamp.png",
+  "replace": true,
+  "set": "S2",
+  "size": [
+   512,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/swamp.png": {
+  "animated_overlay": "swamp-anim.png",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
+ "map/terrain/unknown.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 1,
+  "kind": "terrain-state",
+  "set": "S2",
+  "size": [
+   128,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/water-anim.png": {
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 250,
+  "frames": 4,
+  "kind": "terrain-anim",
+  "over": "water.png",
+  "replace": true,
+  "set": "S2",
+  "size": [
+   512,
+   128
+  ],
+  "source": "imported"
+ },
+ "map/terrain/water.png": {
+  "animated_overlay": "water-anim.png",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frames": 3,
+  "kind": "terrain",
+  "set": "S2",
+  "size": [
+   384,
+   128
+  ],
+  "source": "imported",
+  "variants": 3
+ },
  "map/units/adventurer/idle.png": {
   "anchor": "bottom-center",
   "density": 4,
@@ -4642,6 +6586,771 @@
   "size": [
    768,
    384
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/ambush.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/cluster.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/cold.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/dark.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/fatigue.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/flanked.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/conditions/narrow.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "conditions",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/morale/flee.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "morale",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/morale/hold.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "morale",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/morale/nerve.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "morale",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/morale/shaken.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "morale",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/morale/yield.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "morale",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/roles/caster.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "roles",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/roles/controller.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "roles",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/roles/fighter.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "roles",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/roles/guardian.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "roles",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/roles/healer.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "roles",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/armor-broken.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/asleep.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/bleeding.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/blighted.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/burning.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/chanting.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/cold.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/dread.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/exposed.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/hamstrung.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/hidden.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/hobbled.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/knocked-down.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/lit.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/overloaded.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/paralyzed.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/poisoned.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/regenerating.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/staggered.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/stunned.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/tackled.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/tracked.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/warded.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/weakened.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/winded.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/winding-up.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/wounded-lasting.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "ui/status/wounded-light.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "group": "status",
+  "kind": "ui-icon",
+  "set": "S3",
+  "size": [
+   64,
+   64
   ],
   "source": "imported"
  }

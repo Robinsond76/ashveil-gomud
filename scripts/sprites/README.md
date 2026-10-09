@@ -30,6 +30,15 @@ y 239, empty gutters), halves the cells to 128 px frames and writes
 `imported/imported.json`. `generate.py` copies the imported files over its own
 drawn output, so run `make sprites` afterwards. Requires Pillow and numpy.
 
+`import_art.py` imports the A2-A5 masters (terrain, road and coast pieces,
+landmarks, camp, markers, resource, interface and app icons, battle markers)
+from `art/source/` in one run: `python3 scripts/sprites/import_art.py`. A table
+in the script names every runtime file and its masters. Each master is shrunk by
+4 into a density-4 sheet (animated rows are cut into frames, with or without
+32 px gutters); app icons are written at their exact sizes. It refuses a missing
+master, a wrong size, a transparent terrain tile or a framed one, and a file
+over its budget after quantising.
+
 Add a new sprite by adding a drawer and a `write_*` call, then run `make sprites`;
 `go test ./scripts` checks sizes, the palette, hard edges, anchors and that the
 committed PNGs equal the generator output. Any file can be replaced by commissioned art with no code change,

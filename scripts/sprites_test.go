@@ -161,7 +161,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 				t.Errorf("%s: %dx%d is not %d frames x %d rows of %v", rel, b.Dx(), b.Dy(), meta.Frames, rows, meta.Frame)
 			}
 		}
-		if meta.density() > 1 {
+		if meta.density() > 1 || meta.Source == "imported" {
 			continue
 		}
 		// Hard edges (no partial alpha) and only master palette colors.
@@ -489,6 +489,9 @@ func TestBattleBackgroundsAreOpaqueAndQuietInGroundBand(t *testing.T) {
 }
 
 // Terrain tiles stay quiet: no outline color, few colors, a flat 2 px margin.
+// The rule is for the code-drawn 1x tiles; the commissioned tiles (E2) are
+// painted, approved art, checked for size here and for budgets in
+// TestCommissionedTerrainAndIconsAreImported.
 func TestTerrainTilesAreQuietWithFlatMargin(t *testing.T) {
 	dir := spriteDir(t)
 	m := loadSpriteManifest(t, dir)
@@ -500,8 +503,12 @@ func TestTerrainTilesAreQuietWithFlatMargin(t *testing.T) {
 		}
 		n++
 		img := readSprite(t, dir, rel)
-		if img.Bounds().Dx() != 96 || img.Bounds().Dy() != 32 {
-			t.Errorf("%s: want 3 variants of 32x32, got %v", rel, img.Bounds())
+		d := meta.density()
+		if img.Bounds().Dx() != 96*d || img.Bounds().Dy() != 32*d {
+			t.Errorf("%s: want 3 variants of %dx%d, got %v", rel, 32*d, 32*d, img.Bounds())
+		}
+		if d > 1 {
+			continue
 		}
 		for v := 0; v < 3; v++ {
 			all := map[uint32]int{}

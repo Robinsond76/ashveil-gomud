@@ -1,3 +1,48 @@
+**E2: high-resolution terrain, landmarks and icons (2026-10-09).** The approved A2–A5 art is in the game. `scripts/sprites/import_art.py` imports 164 files from the masters:
+- 17 biome sheets, 4 animations, 16 road and 16 coast pieces, fog and unknown;
+- 27 landmarks, camp pieces, markers, and resource, interface and app icons;
+- battle markers.
+
+Every master is shrunk by 4 into density-4 sheets (1x frames × 4); app icons are written at their exact sizes. The files total about 1.7 MB, and none needed quantising. The map changes:
+- roads pick `road-<sides>` from the roads they have exits to (not through a wall or a secret passage) and run on through exits that leave the map;
+- coasts pick `shore-<sides>` from neighbouring water;
+- water, swamp, snow and desert animate only on variant-1 rooms, each at its own phase, so regions keep their variety.
+
+The world has no water rooms, so lakes come from the map's shape (owner decision, "lakes from shape"). The empty middle of a walked ring of shore rooms, such as Frost Lake or Alderbrook's pond, is drawn as open water, shaded at night, and the coasts face it. Inside corners of a lake show a small notch until art phase A2b ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) and step E2b land. The interface icons and battle markers ship as files; the battle screen draws them in E3. `help worldmap` covers roads, coasts and lakes. Design: [e2 design](designs/2026-10-09-e2-hires-terrain-icons-design.md); plan: [e2 plan](plans/2026-10-09-e2-hires-terrain-icons.md).
+
+*Tests:*
+- `TestCommissionedTerrainAndIconsAreImported` (160 density-4 files and 4 app icons: frames, budgets, opacity, replace sheets, the hp-frame anchor);
+- `TestImportArt` (synthetic masters: gutters, sizes, refusals, quantising);
+- the density-aware terrain and palette rules;
+- `map-tiles` Node tests (pieces, lakes);
+- `map-check.mjs` E2 and lake sections:
+  - pieces through exits, walls, secret passages, fog and another zone;
+  - a missing piece's fallback;
+  - replace animation on variant 1 only;
+  - a lake that fills as its ring is walked, shaded at night, and none when an exit leads inside;
+- the `help worldmap` assertion.
+
+*First independent review:* 10 findings.
+1. Accepted: no water rooms exist, so every coast would be sand. The owner chose lakes from shape.
+2. Accepted: a road crossing a zone border dead-ended once the next zone was visited.
+3. Accepted: the replace animation repeated variant 1 everywhere. Fixed by animating variant-1 rooms only, at per-room phases; all edges were measured identical, so there are no seams.
+4. Accepted: the hp-frame anchor had changed.
+5. Accepted: this status entry was missing.
+6. Accepted: importer gaps (app icon budget, stray masters, an empty `--only`, quantising untested).
+7. Accepted: the doc wrongly said a loading piece draws nothing.
+8. Accepted: the replace behaviour was untested.
+9. Accepted: per-frame lookups, now cached per map change.
+10. Noted as a design point, unchanged: roads join only road rooms, as the brief says.
+
+*Second review, of the fixes:* 5 findings, all accepted.
+1. Lakes were not recomputed when a new room was added within a zone. `refreshTiling` now runs on every room change, with a walk-the-ring browser test.
+2. Rooms of other zones sit in the drawn set, so the zone-border road joined only by coincidence. An exit now runs on wherever its side's cell is empty, lakes use this zone's rooms only, and the test room moved off (0,0).
+3. The lake stand-in id striped the variants, and negative ids froze animation. Fixed with a hash and a non-negative phase.
+4. The help page was stale. It now covers lakes (open water, not walkable), roads into other regions, and motion "here and there".
+5. Optional items: the per-frame `onwardExits` call is now cached, and the doc's Marrowmere Fen claim is corrected. App icon importer refusal stays covered only by the shared budget path.
+
+Checks: `make generate`, `make validate`, `go test -race ./...`, `make js-lint`, `make js-test`, `map-check.mjs` and `mobile-check.mjs`. Next: E3 (high-resolution battle screen).
+
 **E1: high-resolution map figures (2026-10-09).** The 101 approved map-unit masters (A1, A8a, A8b, A9, A10) are now the map figures for every class that has one. `scripts/sprites/import_sheet.py` is now grid-only. It checks each master's layout (2272×832, feet on y 239, empty gutters), cuts the exact cells and halves them to 128 px frames. Each figure has a 2-frame idle and a 6-frame walk at density 4, with feet baseline 120. All 101 units take about 12 MB. Creatures (`hound`, `stone-golem`) keep their 1x art. *Player looks (owner decision: "masks, ship meanwhile"):* the 6-colour palette swap cannot recolour the new art, so `SpriteTint.applies` skips density > 1 sheets, and chosen skin and hair do not show on the new map figures yet. Battle sprites and the creation panel still use 1x art and keep showing looks, and `help appearance` says so. Art phase A11 ([A11-look-masks.md](art/A11-look-masks.md)) orders skin and hair masks. E1b will recolour the new art from those masks. The map also places figures and icons on whole device pixels. Design: [e1 design](designs/2026-10-09-e1-hires-map-figures-design.md); plan: [e1 plan](plans/2026-10-09-e1-hires-map-figures.md). *Tests:* `TestCommissionedMapUnitsAreImported` (101 classes: size, frames, timing, feet, ≤ 300 KB, binary alpha); `TestImportSheetGrid` (synthetic masters: a good sheet imports, a wrong feet row and a gutter pixel are refused); the Node `SpriteTint.applies` test; the help assertion; and `map-check.mjs`, which checks density-4 art, its walk and the absence of a tint, renders at device pixel ratios 1, 1.5 and 2, and tests the 1x tint against a served warrior fixture. *Independent review:* 10 findings, all accepted.
 1. The tint check used the hound, which has no skin or hair colours, so it passed only by animation chance. Fixed with a 1x warrior fixture served to the page.
 2–3. `crispScale` resized 1x companions and markers against the new figures. Removed; only position snapping remains.
