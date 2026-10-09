@@ -7,6 +7,8 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"slices"
 	"strconv"
 	"strings"
@@ -19,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rites"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
@@ -64,7 +67,7 @@ func (m *CompanyModule) allowanceSeconds() int {
 // allowanceDays reads ResurrectionAllowanceDays: a whole number of days,
 // at least 1, or the default.
 func allowanceDays(raw any) int {
-	if n, ok := configInt(raw); ok && n >= 1 {
+	if n, ok := modconfig.Int(raw); ok && n >= 1 {
 		return n
 	}
 	if raw != nil {
@@ -163,6 +166,7 @@ func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID int, evt 
 		m.startAnchor(leaderUserID)
 	}
 	m.banter.noteFall(leaderUserID, companionID) // Phase 49: mourned at the battle's end
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Fell, Members: []string{companionName(c)}, Keys: []string{string(domain.CompanionMemberKey(c.ID))}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
 	mudlog.Info("company: companion died", "leader", leaderUserID, "companion", companionID, "op", death.OpID, "allowance", allowance)
 	if err := m.save(); err != nil {
 		mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)
@@ -280,11 +284,16 @@ func (m *CompanyModule) expire(leaderUserID, companionID int) error {
 	if c.State != nil {
 		lost.Level = c.State.Level
 	}
+	// Phase 74: the company will want to mourn them; queued here so the
+	// expiry's save writes both.
+	rite := m.queueRite(leaderUserID, c, rites.Lost)
 	if err := m.dropCompanion(leaderUserID, record, c, &lost); err != nil {
+		m.unqueueRite(leaderUserID, rite)
 		return err
 	}
 	mudlog.Info("company: companion lost", "leader", leaderUserID, "companion", companionID, "op", lost.OpID)
-	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="red">%s is lost to you.</ansi> Their name is carved among your fallen.`, lost.Name))
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Lost, Members: []string{lost.Name}, Keys: []string{string(domain.CompanionMemberKey(c.ID))}, Ref: fmt.Sprintf("mob:%d", c.MobTemplateID)})
+	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="red">%s is lost to you.</ansi> Their name is carved among your fallen.`, lost.Name)+m.riteHint(leaderUserID, companionID))
 	return nil
 }
 

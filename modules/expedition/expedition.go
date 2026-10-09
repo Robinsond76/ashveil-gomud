@@ -10,12 +10,11 @@ package expedition
 
 import (
 	"embed"
-	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
+	"github.com/GoMudEngine/GoMud/internal/modtimer"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"math/rand"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -71,21 +71,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("expedition")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "expedition", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("expedition", registry)
+	return modstore.Save(s.plug, "expedition", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping malformed or unknown entries.
@@ -106,16 +96,12 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	return nil
 }
 
-// Timer is a cancellable scheduled callback.
-type Timer interface {
-	Stop() bool
-}
-
-// Scheduler schedules a one-shot callback after a delay. Tests inject a
-// deterministic implementation.
-type Scheduler interface {
-	AfterFunc(d time.Duration, f func()) Timer
-}
+// Timer and Scheduler are the shared one-shot timer seam; tests inject a
+// deterministic Scheduler.
+type (
+	Timer     = modtimer.Timer
+	Scheduler = modtimer.Scheduler
+)
 
 type realScheduler struct{}
 
@@ -123,10 +109,7 @@ type realScheduler struct{}
 // queues it (travelTimerDue), so a journey's checkpoints, arrival, and
 // ambush spawn touch the world on the loop, never on the timer's goroutine.
 func (realScheduler) AfterFunc(d time.Duration, f func()) Timer {
-	if d < 0 {
-		d = 0
-	}
-	return realTimer{timer: time.AfterFunc(d, func() { events.AddToQueue(travelTimerDue{run: f}) })}
+	return modtimer.Wrap(time.AfterFunc(modtimer.Clamp(d), func() { events.AddToQueue(travelTimerDue{run: f}) }))
 }
 
 // travelTimerDue carries a travel timer's callback onto the game loop.
@@ -159,10 +142,6 @@ func onJourneyArrived(e events.Event) events.ListenerReturn {
 	}
 	return events.Continue
 }
-
-type realTimer struct{ timer *time.Timer }
-
-func (r realTimer) Stop() bool { return r.timer.Stop() }
 
 // Mover relocates a user through GoMud's normal room-movement path.
 type Mover interface {
@@ -329,13 +308,7 @@ func init() {
 }
 
 func (m *ExpeditionModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("expedition: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("expedition: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("expedition", m.loadErr, m.store != nil)
 }
 
 // save acquires the module lock and persists the current registry.
@@ -414,13 +387,13 @@ func parseProfiles(raw any) map[string]expedition.TravelProfile {
 		return profiles
 	}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
 		name, _ := fields["name"].(string)
 		name = strings.TrimSpace(name)
-		duration, ok := parseDuration(fields["duration"])
+		duration, ok := modconfig.Duration(fields["duration"])
 		if !ok {
 			continue
 		}
@@ -454,21 +427,21 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 	if raw == nil {
 		return nil, true
 	}
-	fields := stringMap(raw)
+	fields := modconfig.Map(raw)
 	if fields == nil {
 		return nil, false
 	}
-	checkpoint := configInt(fields["checkpoint"])
+	checkpoint := modconfig.IntOr(fields["checkpoint"], 0)
 	if checkpoint < 1 || checkpoint >= expedition.CheckpointCount {
 		return nil, false
 	}
 	interruption := &expedition.InterruptionProfile{
-		Kind:        expedition.InterruptionKind(configString(fields["kind"])),
+		Kind:        expedition.InterruptionKind(modconfig.String(fields["kind"])),
 		Checkpoint:  uint8(checkpoint),
-		CombatMobID: configInt(fields["combatmobid"]),
+		CombatMobID: modconfig.IntOr(fields["combatmobid"], 0),
 	}
 	if interruption.CombatMobID == 0 {
-		interruption.CombatMobID = configInt(fields["combat_mob_id"])
+		interruption.CombatMobID = modconfig.IntOr(fields["combat_mob_id"], 0)
 	}
 	// Phase 33f2 review: a weighted table (12b) and an ambush's mob were
 	// documented but never read from config.
@@ -478,13 +451,13 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 			return nil, false
 		}
 		for _, entry := range list {
-			kf := stringMap(entry)
-			weight := configInt(kf["weight"])
+			kf := modconfig.Map(entry)
+			weight := modconfig.IntOr(kf["weight"], 0)
 			if kf == nil || weight <= 0 {
 				return nil, false
 			}
 			interruption.Kinds = append(interruption.Kinds, expedition.WeightedInterruptionKind{
-				Kind:   expedition.InterruptionKind(configString(kf["kind"])),
+				Kind:   expedition.InterruptionKind(modconfig.String(kf["kind"])),
 				Weight: uint(weight),
 			})
 		}
@@ -524,85 +497,16 @@ func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
-// stringMap normalizes the map types produced by YAML decoding and lowercases
-// keys so profile fields are matched case-insensitively.
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	default:
-		return nil
-	}
-}
-
-func parseDuration(raw any) (time.Duration, bool) {
-	switch value := raw.(type) {
-	case string:
-		trimmed := strings.TrimSpace(value)
-		if d, err := time.ParseDuration(trimmed); err == nil {
-			return d, true
-		}
-		if seconds, err := strconv.Atoi(trimmed); err == nil {
-			return time.Duration(seconds) * time.Second, true
-		}
-	case int:
-		return time.Duration(value) * time.Second, true
-	case int64:
-		return time.Duration(value) * time.Second, true
-	case float64:
-		return time.Duration(value * float64(time.Second)), true
-	}
-	return 0, false
-}
-
 func parseExertion(raw any) survival.Exertion {
-	fields := stringMap(raw)
+	fields := modconfig.Map(raw)
 	if fields == nil {
 		return survival.Exertion{}
 	}
 	return survival.Exertion{
-		Hunger:  configInt(fields["hunger"]),
-		Thirst:  configInt(fields["thirst"]),
-		Fatigue: configInt(fields["fatigue"]),
+		Hunger:  modconfig.IntOr(fields["hunger"], 0),
+		Thirst:  modconfig.IntOr(fields["thirst"], 0),
+		Fatigue: modconfig.IntOr(fields["fatigue"], 0),
 	}
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
-}
-
-func exertionZero(cost survival.Exertion) bool {
-	return cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0
 }
 
 // StartTravel implements expedition.StartProvider. It is called only for
@@ -964,34 +868,21 @@ func (m *ExpeditionModule) scheduleLocked(session expedition.TravelSession) {
 	}
 	remaining := m.nextBoundaryDelayLocked(session, profile)
 	leaderUserID := session.LeaderUserID
-	if m.timerGeneration == nil {
-		m.timerGeneration = map[int]uint64{}
-	}
-	m.timerGeneration[leaderUserID]++
-	generation := m.timerGeneration[leaderUserID]
-	m.stopTimerLocked(leaderUserID)
-	m.timers[leaderUserID] = m.scheduler.AfterFunc(remaining, func() {
+	m.timerGeneration = modtimer.Arm(m.timers, m.timerGeneration, leaderUserID, m.scheduler, remaining, func(generation uint64) {
 		m.onTimer(leaderUserID, generation)
 	})
 }
 
 func (m *ExpeditionModule) stopTimerLocked(leaderUserID int) {
-	if timer, ok := m.timers[leaderUserID]; ok {
-		timer.Stop()
-		delete(m.timers, leaderUserID)
-	}
+	modtimer.Stop(m.timers, leaderUserID)
 }
 
 func (m *ExpeditionModule) onTimer(leaderUserID int, generation uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.timerGeneration[leaderUserID] != generation {
+	if !modtimer.Claim(m.timers, m.timerGeneration, leaderUserID, generation) {
 		return
 	}
-	if _, ok := m.timers[leaderUserID]; !ok {
-		return
-	}
-	delete(m.timers, leaderUserID)
 	session, ok := m.sessions[leaderUserID]
 	if !ok || session.State != expedition.Traveling {
 		return
@@ -1248,11 +1139,7 @@ func (m *ExpeditionModule) statusTextLocked(leaderUserID int) string {
 	}
 	lines = append(lines, "Company:")
 	for _, member := range m.companyNeeds(leaderUserID) {
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			member.Name,
-			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
-			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+		lines = append(lines, survival.NeedsLine(member.Name, member.Needs))
 	}
 	return strings.Join(lines, "\n")
 }

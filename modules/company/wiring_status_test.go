@@ -80,7 +80,7 @@ func TestBleedingTicksStacksAndEndsThroughTheRealRound(t *testing.T) {
 	b.aimAt("bandit captain")
 	b.toughen() // the company must outlast the round, whatever the dice
 	captain := b.captain()
-	captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
+	hardTo(&captain.Character, 1000)
 	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
 	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
 	captain.Character.Health = 1000
@@ -235,7 +235,7 @@ func TestCritThroughTheRealRoundLeavesItsStatus(t *testing.T) {
 	b.aimAt("bandit captain")
 	b.toughen() // the company must outlast the round, whatever the dice
 	captain := b.captain()
-	captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
+	hardTo(&captain.Character, 1000)
 
 	out := b.fight()
 	// Phase 33i2: the crit's light wound is named after its status.
@@ -261,6 +261,10 @@ func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	c := b.aria.Character
 	c.SpellBook["sparks"] = 5000
 	c.Stats.Mysticism.ValueAdj = 1000
+	// Five bandits are on her, and any blow may break a chant (about nine
+	// casts in ten did), so a run of 30 recasts could all be broken off.
+	// Interrupts are not under test here: no blow breaks this chant.
+	t.Cleanup(hooks.UseBreakRollForTest(func(n int) int { return n - 1 }))
 
 	// Every cast can fizzle (a roll of 100 fails even a 100% chance), and a
 	// companion's crit can leave another status on the cutthroat, so recast
@@ -269,7 +273,7 @@ func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	var transcript string
 	for attempt := 0; attempt < 30 && !target.Character.HasBuff(status.Overloaded); attempt++ {
 		b.toughen()
-		target.Character.HealthMax.Value, target.Character.Health = 1000, 1000 // it must outlast the company
+		hardTo(&target.Character, 1000) // it must outlast the company
 		c.SetCast(0, characters.SpellAggroInfo{SpellId: "sparks", TargetMobInstanceIds: []int{cutthroat}})
 		transcript += b.fight() + "\n"
 	}

@@ -44,13 +44,13 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  padding: 6px 12px;
   border-bottom: 2px solid var(--t-border-accent);
 }
 
 .gomud-btn {
-  font-size: 1.5rem;
-  padding: 6px 10px;
+  font-size: 1.1rem;
+  padding: 4px 8px;
   color: var(--t-btn-hover-text);
   background-color: var(--t-accent-dim);
   box-shadow: 2px 2px 0px 0px var(--t-border-accent);
@@ -74,7 +74,7 @@ header {
   cursor: pointer;
   font-size: 1.2rem;
   line-height: 1;
-  padding: 6px 10px;
+  padding: 4px 9px;
   transition: color 0.15s, background 0.15s;
 }
 
@@ -89,78 +89,31 @@ header {
   gap: 10px;
 }
 
-/* ── Nav ──────────────────────────────────────────────────── */
-nav {
-  background-color: var(--t-bg-surface);
-  padding: 12px 0;
-  border-bottom: 1px solid var(--t-border);
-}
-
-.nav-container {
-  margin: 0 auto;
+/* ── Pages list (site navigation, inside the settings modal) ── */
+.site-pages-list {
   display: flex;
-  justify-content: center;
-  gap: 2rem;
-  font-size: 1.125rem;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
-.nav-container a {
+.site-pages-list a {
   color: var(--t-btn-text);
   background-color: var(--t-btn-bg);
   border: 1px solid var(--t-btn-border);
   box-shadow: 2px 2px 0px 0px var(--t-border);
-  text-decoration: none;
-  padding: 8px 16px;
+  padding: 10px 14px;
   border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
   line-height: 1.2;
   transition: background 0.15s, color 0.15s;
 }
 
-.nav-container a.selected {
+.site-pages-list a.selected,
+.site-pages-list a:hover {
   color: var(--t-btn-hover-text);
   background-color: var(--t-btn-hover-bg);
   border-color: var(--t-border-bright);
-}
-
-.nav-container a:hover {
-  color: var(--t-btn-hover-text);
-  background-color: var(--t-btn-hover-bg);
-}
-
-/* Mobile Navigation */
-.nav-toggle {
-  display: none;
-  flex-direction: column;
-  cursor: pointer;
-}
-
-.nav-toggle div {
-  width: 30px;
-  height: 4px;
-  background: var(--t-text);
-  margin: 5px;
-}
-
-@media (max-width: 768px) {
-  .nav-container {
-    display: none;
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-    padding: 12px 0;
-  }
-
-  .nav-container a {
-    display: block;
-    padding: 12px;
-  }
-
-  .nav-toggle {
-    display: flex;
-  }
 }
 
 /* ── Content Container ────────────────────────────────────── */
@@ -209,11 +162,12 @@ nav {
 /* ── Footer ───────────────────────────────────────────────── */
 footer {
   background-color: var(--t-bg-panel);
-  border-top: 2px solid var(--t-border-accent);
+  border-top: 1px solid var(--t-border-accent);
   text-align: center;
-  color: var(--t-text);
-  padding: 16px 0;
-  font-size: 0.875rem;
+  color: var(--t-text-secondary);
+  padding: 2px 0;
+  font-size: 0.5rem;
+  line-height: 1.4;
 }
 
 footer a {

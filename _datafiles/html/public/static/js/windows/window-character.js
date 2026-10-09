@@ -12,7 +12,7 @@
  *              (profession titles derived from skills) are not shown: a
  *              class names a character in Ashveil (Phase 57)
  *   Quests   - in-progress quest log, click to expand
- *   Effects  - active effects, wounds and persistent bonuses with durations
+ *   (Effects moved to Company > Status, which shows everyone's, yours included)
  *   Pet      - only while the player has a pet (window-pet.js)
  *
  * Other windows' scripts host their content here through
@@ -133,6 +133,28 @@
 
         #cw-char-name .cw-id-promo { color: var(--t-accent); }
 
+        #cw-char-name .cw-id-iron {
+            color: var(--t-accent);
+            font-weight: bold;
+            cursor: help;
+        }
+
+        /* Phase 77: blessings (small perks for later characters), last on
+           the Overview so experience and gold stay near the top */
+        #cw-blessings { order: 1; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; min-width: 0; }
+        #cw-blessings:empty { display: none; }
+        #cw-blessings .cw-bl-head { color: var(--t-text-secondary); font-weight: bold; margin-top: 6px; }
+        #cw-blessings .cw-bl-card { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; border: 1px solid var(--t-accent-dim); border-left: 3px solid var(--t-accent); border-radius: 3px; min-width: 0; overflow-wrap: anywhere; }
+        #cw-blessings .cw-bl-card.waiting { border-left-color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-card.todo { border-style: dashed; border-left-style: dashed; border-left-color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+        #cw-blessings .cw-bl-name { color: var(--t-accent); font-weight: bold; }
+        #cw-blessings .cw-bl-state { color: var(--t-text-secondary); font-size: 0.85em; white-space: nowrap; }
+        #cw-blessings .cw-bl-card.todo .cw-bl-name { color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-line { color: var(--t-text); }
+        #cw-blessings .cw-bl-card.todo .cw-bl-line { color: var(--t-text-secondary); }
+        #cw-blessings .cw-bl-note { color: var(--t-text-secondary); }
+
         #cw-char-name .cw-char-race {
             cursor: help;
             text-decoration: underline dotted;
@@ -170,6 +192,8 @@
             border-bottom: 1px solid var(--t-border);
         }
 
+        #cw-tempo-row { margin: 2px 0 4px; font-size: 0.9em; color: var(--t-text-secondary); }
+        #cw-tempo-row #cw-tempo { color: var(--t-text); font-weight: bold; }
         .cw-stat-cell {
             display: grid;
             grid-template-columns: auto 1fr auto;
@@ -275,41 +299,6 @@
             font-size: 0.75em;
             color: var(--t-text-secondary);
             display: none;
-        }
-
-        .cw-tt-name {
-            font-size: 0.85em;
-            font-weight: bold;
-            color: var(--t-text);
-            margin-bottom: 4px;
-            line-height: 1.3;
-        }
-
-        .cw-tt-divider {
-            border: none;
-            border-top: 1px solid var(--t-border-accent);
-            margin: 5px 0;
-        }
-
-        .cw-tt-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 8px;
-            line-height: 1.6;
-        }
-
-        .cw-tt-row-label {
-            color: var(--t-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            font-size: 0.88em;
-            flex-shrink: 0;
-        }
-
-        .cw-tt-row-value {
-            color: var(--t-text);
-            text-align: right;
         }
 
         /* ---- Quests tab ---- */
@@ -524,69 +513,14 @@
         @media (hover: hover) and (pointer: fine) {
             button.csk-card:hover { background: var(--t-bg-surface); border-color: var(--t-accent); }
         }
-
-        /* ---- Effects tab ---- */
-        #cw-effects {
-            padding: 4px 6px;
-            gap: 4px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            align-content: flex-start;
-        }
-
-        .cw-affect-empty {
-            grid-column: 1 / -1;
-            color: var(--t-text-secondary);
-            font-size: 0.76em;
-            font-style: italic;
-            text-align: center;
-            padding: 14px 0;
-        }
-
-        #cw-effects .cw-subhead, #cw-effects .cw-capability { grid-column: 1 / -1; }
     `);
 
     // -----------------------------------------------------------------------
     // Stat tooltip
     // -----------------------------------------------------------------------
-    let statTooltip   = null;
-    let statHideTimer = null;
-
-    function ensureStatTooltip() {
-        if (statTooltip) { return; }
-        statTooltip = document.createElement('div');
-        statTooltip.id = 'cw-stat-tooltip';
-        document.body.appendChild(statTooltip);
-    }
-
-    function showStatTooltip(el, html) {
-        ensureStatTooltip();
-        clearTimeout(statHideTimer);
-        statTooltip.innerHTML = html;
-        statTooltip.style.display = 'block';
-        _positionStatTooltip(el);
-    }
-
-    function _positionStatTooltip(el) {
-        if (!statTooltip) { return; }
-        const rect = el.getBoundingClientRect();
-        const ttW  = statTooltip.offsetWidth;
-        const ttH  = statTooltip.offsetHeight;
-        const vw   = window.innerWidth;
-        const vh   = window.innerHeight;
-        let left = rect.right + 8;
-        if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
-        left = Math.max(8, left);
-        let top = rect.top;
-        if (top + ttH > vh - 8) { top = vh - ttH - 8; }
-        statTooltip.style.left = left + 'px';
-        statTooltip.style.top  = Math.max(8, top) + 'px';
-    }
-
-    function hideStatTooltip() {
-        if (!statTooltip) { return; }
-        statHideTimer = setTimeout(() => { statTooltip.style.display = 'none'; }, 80);
-    }
+    const statTooltip = Client.tooltip('cw-stat-tooltip');
+    const showStatTooltip = (el, html) => statTooltip.show(html, el);
+    const hideStatTooltip = () => statTooltip.hide();
 
     // -----------------------------------------------------------------------
     // Tab switching
@@ -620,7 +554,7 @@
 
     // -----------------------------------------------------------------------
     // Hosted sub-tabs (Phase 32g): other windows' content, by order among
-    // the built-in tabs (Overview 0, Skills 2, Quests 3, Effects 4).
+    // the built-in tabs (Overview 0, Skills 2, Quests 3).
     // -----------------------------------------------------------------------
     const hosted   = [];   // { id, label, order, build, visible }
     const overview = [];   // build functions appended to Overview
@@ -705,7 +639,9 @@
                     '<span class="cw-point-badge-value" id="cw-tp">\u2014</span>' +
                 '</div>' +
             '</div>';
-        return '<div id="cw-stats-grid">' + cells + '</div>' + pointsRow;
+        // Phase 82d: the combat tempo those stats, burden and armor make.
+        const tempoRow = '<div id="cw-tempo-row" title="Combat tempo: turns a round, from Speed, burden, armor bulk and stance (help tempo)">Tempo <span id="cw-tempo">\u2014</span></div>';
+        return '<div id="cw-stats-grid">' + cells + '</div>' + tempoRow + pointsRow;
     }
 
     function createDOM() {
@@ -716,13 +652,13 @@
                 '<button class="cw-tab-btn active" data-panel="cw-overview" data-order="0">Overview</button>' +
                 '<button class="cw-tab-btn"        data-panel="cw-skills-tab" data-order="2">Skills</button>' +
                 '<button class="cw-tab-btn"        data-panel="cw-quests" data-order="3">Quests</button>' +
-                '<button class="cw-tab-btn"        data-panel="cw-effects" data-order="4">Effects</button>' +
             '</div>' +
 
             '<div class="cw-tab-panel active" id="cw-overview">' +
                 '<div id="cw-char-name">\u2014</div>' +
                 '<div id="cw-id-row"><span id="cw-char-level">Level \u2014</span><span id="cw-char-alignment"></span></div>' +
                 buildStatsGrid() +
+                '<div id="cw-blessings"></div>' +
             '</div>' +
 
             '<div class="cw-tab-panel" id="cw-quests">' +
@@ -737,10 +673,6 @@
                 '<div class="cw-sub" id="cw-capabilities"></div>' +
                 '<h4 class="cw-subhead">Company training</h4>' +
                 '<div class="cw-sub" id="cw-company-skills"></div>' +
-            '</div>' +
-
-            '<div class="cw-tab-panel" id="cw-effects">' +
-                '<div class="cw-affect-empty">No active effects</div>' +
             '</div>';
 
         document.body.appendChild(el);
@@ -818,7 +750,10 @@
             : '';
         const promo = info.promotion === 'ready' ? 'Promotion ready'
             : info.promotion === 'waiting-gate' ? 'Promotion waits on alignment' : '';
-        if (info.name) { node('div', 'cw-id-name', info.name, nameEl); }
+        // Before a character is named the server holds a "nameless-123456"
+        // placeholder; the panel shows no name rather than that.
+        const named = info.name && !/^nameless(-\d+)?$/i.test(info.name);
+        if (named) { node('div', 'cw-id-name', info.name, nameEl); }
         const subParts = [info.class, route].filter(Boolean);
         if (subParts.length || info.race) {
             const sub = node('div', 'cw-id-sub', subParts.join(' \u00b7 '), nameEl);
@@ -836,6 +771,10 @@
             }
         }
         if (promo) { node('div', 'cw-id-promo', promo, nameEl); }
+        if (info.hardcore) {
+            const iron = node('div', 'cw-id-iron', 'Iron character', nameEl);
+            iron.title = 'A defeat costs two levels and never ends in a rescue. Type help hardcore for details.';
+        }
 
         if (!nameEl.textContent) {
             nameEl.textContent = '\u2014';
@@ -861,7 +800,17 @@
         if (tpBadge) { tpBadge.classList.toggle('has-points', tp > 0); }
     }
 
+    // updateTempo shows the leader's combat tempo from the Company snapshot
+    // (Phase 82d), the same number the Company panel shows each member.
+    function updateTempo() {
+        const node = document.getElementById('cw-tempo');
+        if (!node) { return; }
+        const leader = Client.GMCPStructs.Company && Client.GMCPStructs.Company.leader;
+        node.textContent = leader && typeof leader.tempo === 'number' ? String(leader.tempo) : '\u2014';
+    }
+
     function updateStats() {
+        updateTempo();
         const stats = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Stats;
         if (!stats) { return; }
 
@@ -910,6 +859,7 @@
 
         const focusedSkill = panel.contains(document.activeElement) ? document.activeElement.dataset.skill : null;
         const sorted = [...skillList].sort((a, b) => skillTitle(a).localeCompare(skillTitle(b)));
+        keepScroll(panel);
         panel.innerHTML = '';
 
         sorted.forEach(function(skill) {
@@ -966,6 +916,7 @@
     function updateCapabilities() {
         const panel = document.getElementById('cw-capabilities');
         if (!panel) { return; }
+        keepScroll(panel);
         panel.textContent = '';
         const caps = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Capabilities;
         if (!caps) { node('div', 'csk-none', 'Current capabilities unavailable', panel); return; }
@@ -993,6 +944,7 @@
     function updateCompanySkills() {
         const panel = document.getElementById('cw-company-skills');
         if (!panel) { return; }
+        keepScroll(panel);
         panel.textContent = '';
         const company = Client.GMCPStructs.Company;
         const members = (company && Array.isArray(company.members)) ? company.members : [];
@@ -1019,6 +971,8 @@
         panel.querySelectorAll('.cq-item.expanded').forEach(el => {
             expanded.add(el.dataset.questName);
         });
+
+        keepScroll(panel);
 
         panel.innerHTML = '';
 
@@ -1058,48 +1012,59 @@
         });
     }
 
-    function _formatMods(mods) {
-        if (!mods || Object.keys(mods).length === 0) { return ''; }
-        return Object.entries(mods)
-            .map(([k, v]) => (v >= 0 ? '+' : '') + v + ' ' + k)
-            .join('  ');
-    }
+    // Phase 77: the account's blessings, from Char.Blessings: what this
+    // character carries, what waits for the next one, and what is left to
+    // earn. All text is set with textContent.
+    // blessingsData is the newest Char.Blessings payload, kept here as well
+    // as in GMCPStructs because a later full Char snapshot replaces the
+    // namespace's children there.
+    let blessingsData = null;
 
-    function updateEffects() {
-        const panel = document.getElementById('cw-effects');
-        if (!panel) { return; }
-        const all = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Conditions;
-        const state = all && all.leader;
-        panel.textContent = '';
-        if (state) {
-            [['effects', 'Active effects', 'effect'], ['wounds', 'Wounds', 'wound'], ['bonuses', 'Persistent bonuses', 'bonus']].forEach(group => {
-                capabilityText(panel, group[1], true);
-                const entries = state[group[0]] || [];
-                entries.forEach(c => panel.appendChild(CompanyData.condition(c, group[2])));
-                if (!entries.length) { capabilityText(panel, 'None'); }
+    function updateBlessings() {
+        const host = document.getElementById('cw-blessings');
+        if (!host) { return; }
+        host.textContent = '';
+        const data = blessingsData || (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Blessings);
+        if (!data) { return; }
+        // One card a blessing: its name and state (Active, Next character or
+        // Locked) on the first line, then what it does or what earns it.
+        const section = (title, rows, kind, state, line) => {
+            if (!Array.isArray(rows) || !rows.length) { return; }
+            node('div', 'cw-bl-head', title, host);
+            rows.forEach(r => {
+                const card = node('div', 'cw-bl-card ' + kind, '', host);
+                const top  = node('div', 'cw-bl-top', '', card);
+                node('span', 'cw-bl-name', String(r.name || ''), top);
+                node('span', 'cw-bl-state', state(r), top);
+                const text = line(r);
+                if (text.line) { node('div', 'cw-bl-line', text.line, card); }
+                if (text.note) { node('div', 'cw-bl-note', text.note, card); }
             });
-            return;
-        }
-        // Legacy Char.Affects remains usable without a Company provider.
-        const affects = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Affects) || {};
-        Object.keys(affects).sort().forEach(key => {
-            const c = affects[key];
-            capabilityText(panel, [(c.name || key) + ' — ' + (c.duration_max === -1 ? 'Persistent' : c.duration_left + ' seconds remaining') + '.',
-                CompanyData.sentence(c.description), _formatMods(c.affects || {})].filter(Boolean).join(' '));
+        };
+        const perk = r => ({ line: String(r.perk || '') });
+        section('Blessings carried', data.carried, 'active', () => 'Active', perk);
+        section('Earned, waiting for your next character', data.waiting, 'waiting', () => 'Next character', perk);
+        section('Blessings still to earn', data.next, 'todo', () => 'Locked', r => {
+            let note = '';
+            if (r.iron && !data.iron) { note = 'Iron characters only'; }
+            else if (r.need > 1) { note = (r.have || 0) + ' of ' + r.need; }
+            return { line: String(r.condition || ''), note };
         });
-        if (!Object.keys(affects).length) { capabilityText(panel, 'No active effects'); }
+        if (data.discount) {
+            node('div', 'cw-bl-note', 'Your blessings take ' + data.discount + '% off every recruit.', host);
+        }
     }
 
     function update() {
         win.open();
         if (!win.isOpen()) { return; }
         updateOverview();
+        updateBlessings();
         updateStats();
         updateQuests();
         updateSkills();
         updateCapabilities();
         updateCompanySkills();
-        updateEffects();
     }
 
     // -----------------------------------------------------------------------
@@ -1110,12 +1075,15 @@
         gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
             // A Company snapshot only changes the company training list;
-            // of its extras, only Conditions (Effects) is shown here.
+            // its extras (conditions included) are shown by the Company window.
             if (namespace === 'Company') {
-                if (win.isOpen()) { updateCompanySkills(); }
+                if (win.isOpen()) { updateCompanySkills(); updateTempo(); }
                 return;
             }
-            if (namespace.startsWith('Company.') && namespace !== 'Company.Conditions') { return; }
+            if (namespace.startsWith('Company.')) { return; }
+            if (namespace === 'Char.Blessings') {
+                blessingsData = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Blessings) || null;
+            }
             update();
         },
     });

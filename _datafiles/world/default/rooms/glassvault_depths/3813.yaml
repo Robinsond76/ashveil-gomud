@@ -1,0 +1,18 @@
+roomid: 3813
+zone: Glassvault Depths
+title: Echoing Vault
+description: Water drips from the roof into pools that never freeze. A crack in the crystal widens.
+biome: cave
+exits:
+  east:
+    roomid: 3814
+  south:
+    roomid: 3819
+  north:
+    roomid: 3806
+resources:
+- water
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

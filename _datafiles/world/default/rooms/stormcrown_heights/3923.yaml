@@ -1,0 +1,24 @@
+roomid: 3923
+zone: Stormcrown Heights
+title: The Storm Throne
+description: A wide shelf of black rock with a throne of ice and a crown of lightning above it.
+  Huge tracks lead up to it.
+biome: snow
+exits:
+  east:
+    roomid: 3924
+  west:
+    roomid: 3922
+  north:
+    roomid: 3916
+resources:
+- shelter
+maplegend: Keep
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: lair
+  chance: 40

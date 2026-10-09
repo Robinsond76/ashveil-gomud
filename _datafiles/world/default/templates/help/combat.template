@@ -5,23 +5,29 @@ help page, named in brackets.
 
 <ansi fg="yellow-bold">The round</ansi>
 
-Combat resolves once a combat round, every 8 seconds (two of the game's
-4-second rounds). Every fighter on both sides takes their turn each combat
-round: an attack, a round of a spell being cast, or waiting. A fight goes on
-until one side is dead or gone, or nobody is fighting any more. What you
-start mid-round, such as <ansi fg="command">flee</ansi> or a spell, waits for the next combat
-round, up to 8 seconds. Spell rounds, waits, and combat statuses (bleeding,
-staggered, and the rest) count combat rounds; other buffs and effects that
-last a number of rounds count the game's 4-second rounds.
+A battle runs in combat rounds. Every fighter on both sides takes their
+turn each round, one at a time and fastest first (<ansi fg="command">help tempo</ansi>): an
+attack, a round of a spell being cast, or waiting. A foe felled before its
+turn never strikes, and a fast fighter earns a second turn some rounds. A
+fight goes on until one side is dead or gone, or nobody is fighting any
+more. What you start mid-round, such as <ansi fg="command">flee</ansi> or a spell, waits for the
+next round. Spell rounds, waits, and combat statuses (bleeding, staggered,
+and the rest) count combat rounds; other buffs and effects that last a
+number of rounds count the game's 4-second rounds.
 
-The round is decided at once, but its lines are paced out to you over a
-few seconds, so you watch the fight unfold. Choose how fast with
-<ansi fg="command">set combatpace fast</ansi>, <ansi fg="command">normal</ansi>, <ansi fg="command">slow</ansi>, or <ansi fg="command">off</ansi> (<ansi fg="command">help combatpace</ansi>).
+A round is decided at once, then played out to you one action at a time,
+a beat apiece (a second and a half at the normal pace), and the next round begins
+when the last one has played out, never sooner than 3 seconds after it
+began. So a round lasts as long as its actions need: a few seconds for two
+fighters, ten or so for ten. Choose the beat with <ansi fg="command">set combatpace fast</ansi>,
+<ansi fg="command">normal</ansi>, <ansi fg="command">slow</ansi>, or <ansi fg="command">off</ansi> (<ansi fg="command">help combatpace</ansi>). Fights with no player in them
+(two bands of foes) resolve every 8 seconds instead.
 
 <ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help tactics</ansi><ansi fg="yellow-bold">)</ansi>
 
 Enemies come in named groups ("A band of ruffians (4)"), and you fight a
-whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. From
+whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. A group of three or
+more usually mixes kinds (two skeletons with an imp), except a pack of wolves or rats. From
 then on it plays out on its own, from how your company was set up.
 Only <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) takes you out: the company withdraws together.
 You can still order a new focus for the whole company (<ansi fg="command">company tactics focus [rule]</ansi>, once a round,
@@ -43,6 +49,12 @@ Once the battle starts:
   more (<ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>);
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
+- each member reads its battle orders first ("when an ally is below half
+  health, heal them"), and the log says "as ordered" when one fires
+  (<ansi fg="command">help orders</ansi>);
+- each member may fight in a weapon stance (heavy blows, shield wall, quick
+  draw, keen edge) that trades one strength for another, set beforehand
+  (<ansi fg="command">help stances</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
   always does, but a one-round heal such as Minor Heal only breaks to heavy
   force), on either side, and
@@ -97,11 +109,13 @@ target's, the likelier a telling blow (<ansi fg="command">help attack</ansi>).
 A coated blade (<ansi fg="command">help poisons</ansi>) may leave a poison on a foe it wounds. A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
 edge lasts.
 
-<ansi fg="yellow-bold">Falling (</ansi><ansi fg="command">help death</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help resurrect</ansi><ansi fg="yellow-bold">)</ansi>
+<ansi fg="yellow-bold">Falling (</ansi><ansi fg="command">help death</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help defeat</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help resurrect</ansi><ansi fg="yellow-bold">)</ansi>
 
-At 0 health you drop. At -10 you die: you lose a level and wake at the last
-city's church, with your living company. A companion who dies stays on your
-roster for a while, and can be raised at a church or a village shaman.
+At 0 health you drop. At -10 you die. Usually you wake in a defeat
+scenario with no level lost: rescued, captured, robbed or left for dead,
+by what beat you. Otherwise you lose a level and wake at the last city's
+church (two levels, for an Iron character: <ansi fg="command">help hardcore</ansi>). A companion who dies stays on your roster for a while, and can be
+raised at a church or a village shaman.
 
 <ansi fg="yellow-bold">Reading a fight (</ansi><ansi fg="command">help narration</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -139,14 +153,21 @@ back (<ansi fg="command">help mana</ansi>, <ansi fg="command">help draughts</ans
 When your company's fight ends, you see a summary. It shows the damage each
 side did, who did the most, the highest hit, each side's blocks, parries,
 and dodges, kills, how each enemy ended,
-and your company's health.
+and your company's health, and why it went as it did: who took the most
+damage and who never landed a blow. <ansi fg="command">why</ansi> explains any single blow
+(<ansi fg="command">help battlelog</ansi>), and what you have learned of each kind of foe is in
+your <ansi fg="command">bestiary</ansi> (<ansi fg="command">help bestiary</ansi>).
 
 <ansi fg="yellow-bold">Commands</ansi>
 
   <ansi fg="command">attack [group]</ansi>    start a fight with a group
   <ansi fg="command">scout [group]</ansi>     see how a group stands, and your chances
+  <ansi fg="command">why</ansi>               explain how the latest blows landed or missed
+  <ansi fg="command">bestiary</ansi>          what you have learned of each kind of foe you have beaten
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
+  <ansi fg="command">orders</ansi>            "when this, do that" rules for each member
+  <ansi fg="command">stance</ansi>            a weapon stance for each member: one strength for another
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
   <ansi fg="command">help guardian</ansi>     guardians and their guards
   <ansi fg="command">help battlescreen</ansi> the web client's battle picture
@@ -210,6 +231,7 @@ Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipm
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
 Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect battles: help battlefield and help ambush. A sigil laid in the room beforehand (cast sigil of [kind]) shapes one too: help sigils.
+How your company goes in matters too: hunger cuts the damage a member deals, thirst makes a member take more and fatigue cuts its hit chance, and a cooked meal gives a buff for a few battles: help survival and help cooking. A chill, gut-ache or fever costs a member damage or guard for a few battles, or until it is cured: help ailments.
 
 Speed, personal burden and armor bulk set your turns each round: <ansi fg="command">help tempo</ansi>.
 

@@ -11,9 +11,8 @@ package survival
 
 import (
 	"errors"
+	"fmt"
 	"sort"
-	"strconv"
-	"strings"
 	"sync"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -29,12 +28,26 @@ const LeaderMemberKey = domain.LeaderMemberKey
 // CompanionMemberKey returns the survival key for a companion ID.
 func CompanionMemberKey(id int) MemberKey { return domain.CompanionMemberKey(id) }
 
+// CompanionIDFromMemberKey is internal/company.CompanionIDFromMemberKey for
+// callers that only import this package.
+func CompanionIDFromMemberKey(key MemberKey) (int, bool) {
+	return domain.CompanionIDFromMemberKey(key)
+}
+
 // Needs are the individual, normalized survival values for one member. 100
 // means fully supplied or rested; 0 means depleted or exhausted.
 type Needs struct {
 	Hunger  int `yaml:"hunger"`
 	Thirst  int `yaml:"thirst"`
 	Fatigue int `yaml:"fatigue"`
+	// Phase 50: the cooked meal the member last ate (a Meal kind) and the
+	// battles its buff has left. Empty or 0 means no meal buff.
+	Meal        string `yaml:"meal,omitempty"`
+	MealBattles int    `yaml:"meal_battles,omitempty"`
+	// Phase 55: the battles each ailment has left (0 or absent: none).
+	Chill   int `yaml:"chill,omitempty"`
+	GutAche int `yaml:"gutache,omitempty"`
+	Fever   int `yaml:"fever,omitempty"`
 }
 
 // FullNeeds is the default state for a new or missing member record.
@@ -75,6 +88,12 @@ type Benefit struct {
 	Nutrition int
 	Hydration int
 	Fatigue   int
+	// Meal is a cooked meal's kind (Phase 50): eating it gives its buff,
+	// replacing any other. Empty for plain food and drink.
+	Meal string
+	// Ailment is an ailment's kind (Phase 55): eating raw game meat gives a
+	// Gut-ache. Empty for everything else.
+	Ailment string
 }
 
 // ProvisionResult describes the outcome of applying a Benefit to a member.
@@ -85,6 +104,8 @@ type ProvisionResult struct {
 	Hunger  Change
 	Thirst  Change
 	Fatigue Change
+	// Caught is the ailment the member newly caught (Phase 55), if any.
+	Caught string
 }
 
 // Crossed reports whether any need changed band.
@@ -143,13 +164,19 @@ func clamp(value int) int {
 	return value
 }
 
-// Normalize clamps every need into 0..100.
+// Normalize clamps every need into 0..100 and drops a meal buff that is
+// unknown or spent (a stored count is capped at its meal's length).
 func Normalize(needs Needs) Needs {
-	return Needs{
+	out := Needs{
 		Hunger:  clamp(needs.Hunger),
 		Thirst:  clamp(needs.Thirst),
 		Fatigue: clamp(needs.Fatigue),
 	}
+	if spec, ok := MealFor(needs.Meal); ok && needs.MealBattles > 0 {
+		out.Meal, out.MealBattles = needs.Meal, min(needs.MealBattles, spec.Battles)
+	}
+	normalizeAilments(needs, &out)
+	return out
 }
 
 // BandFor maps a need value to its threshold band.
@@ -169,6 +196,16 @@ func BandFor(value int) Band {
 }
 
 // HungerLabel renders the hunger-specific label for a value.
+// NeedsLine is the one-line status a company view prints for a member:
+// "  Name: Hunger 80 (fed), Thirst 60 (quenched), Fatigue 20 (rested)".
+func NeedsLine(name string, needs Needs) string {
+	return fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
+		name,
+		needs.Hunger, HungerLabel(needs.Hunger),
+		needs.Thirst, ThirstLabel(needs.Thirst),
+		needs.Fatigue, FatigueLabel(needs.Fatigue))
+}
+
 func HungerLabel(value int) string {
 	switch BandFor(value) {
 	case BandDepleted:
@@ -221,12 +258,8 @@ func ValidMemberKey(key MemberKey) bool {
 	if key == LeaderMemberKey {
 		return true
 	}
-	raw := string(key)
-	if !strings.HasPrefix(raw, "companion:") {
-		return false
-	}
-	id, err := strconv.Atoi(strings.TrimPrefix(raw, "companion:"))
-	return err == nil && id > 0
+	id, ok := domain.CompanionIDFromMemberKey(key)
+	return ok && id > 0
 }
 
 func validateMember(leaderUserID int, key MemberKey) error {
@@ -396,10 +429,7 @@ func (r *Registry) Members(leaderUserID int) []MemberKey {
 }
 
 func companionOrdinal(key MemberKey) int {
-	id, err := strconv.Atoi(strings.TrimPrefix(string(key), "companion:"))
-	if err != nil {
-		return 0
-	}
+	id, _ := domain.CompanionIDFromMemberKey(key)
 	return id
 }
 
@@ -487,6 +517,31 @@ func (r *Registry) ApplyRestRecovery(leaderUserID int, key MemberKey, fatigue in
 	}
 	after := before
 	after.Fatigue = clamp(before.Fatigue + fatigue)
+	if err := r.PutNeeds(leaderUserID, key, after); err != nil {
+		return Change{}, err
+	}
+	return changeFor(before.Fatigue, after.Fatigue), nil
+}
+
+// ApplyRestRecoveryCapped is ApplyRestRecovery for a member who did not
+// sleep (Phase 51: a watcher): fatigue rises no higher than ceiling, and a
+// member already above it keeps what they had.
+func (r *Registry) ApplyRestRecoveryCapped(leaderUserID int, key MemberKey, fatigue, ceiling int) (Change, error) {
+	if err := validateMember(leaderUserID, key); err != nil {
+		return Change{}, err
+	}
+	if fatigue <= 0 {
+		return Change{}, ErrInvalidAmount
+	}
+	before, ok := r.NeedsFor(leaderUserID, key)
+	if !ok {
+		return Change{}, ErrUnknownMember
+	}
+	after := before
+	after.Fatigue = clamp(before.Fatigue + fatigue)
+	if limit := max(before.Fatigue, ceiling); after.Fatigue > limit {
+		after.Fatigue = limit
+	}
 	if err := r.PutNeeds(leaderUserID, key, after); err != nil {
 		return Change{}, err
 	}
@@ -786,6 +841,29 @@ func ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue
 		return b.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
 	}
 	return s.ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)
+}
+
+// RestCapService is optionally implemented by the registered CompanyService
+// (Phase 51): a rest in which some members stayed up. ceilings maps a member
+// key to the fatigue that member cannot rise above.
+type RestCapService interface {
+	ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[MemberKey]int, ceilings map[MemberKey]int) ([]ExertionResult, error)
+}
+
+// ApplyCompanyRestRecoveryCapped is ApplyCompanyRestRecoveryBonus with a
+// fatigue ceiling for some members. A service without cap support falls
+// back to the bonus recovery.
+func ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[MemberKey]int, ceilings map[MemberKey]int) ([]ExertionResult, error) {
+	companyServiceMu.RLock()
+	s := companyService
+	companyServiceMu.RUnlock()
+	if s == nil {
+		return nil, ErrRestUnavailable
+	}
+	if c, ok := s.(RestCapService); ok && len(ceilings) > 0 {
+		return c.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, ceilings)
+	}
+	return ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
 }
 
 var (

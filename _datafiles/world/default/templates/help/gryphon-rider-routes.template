@@ -14,7 +14,7 @@ None of the three asks anything of your alignment, at level 10 or at level
                         dive: 50% in all)
   25 Steady wings       a Dive costs no Evasion
 
-  <ansi fg="yellow-bold">Gryphon Lord</ansi> (30, still to come): a Dive ready every other round.
+  <ansi fg="yellow-bold">Gryphon Lord</ansi> (30, <ansi fg="command">help gryphon-lord</ansi>): a Dive ready every other round.
 
 <ansi fg="yellow-bold">Skyscout</ansi>
 
@@ -25,7 +25,7 @@ None of the three asks anything of your alignment, at level 10 or at level
                         (<ansi fg="command">help statuses</ansi>)
   25 Far sight          Eagle eye gives +12 Perception
 
-  <ansi fg="yellow-bold">Falcon Marshal</ansi> (30, still to come): allies strike harder at the foe it dove on.
+  <ansi fg="yellow-bold">Falcon Marshal</ansi> (30, <ansi fg="command">help falcon-marshal</ansi>): allies strike harder at the foe it dove on.
 
 <ansi fg="yellow-bold">Wyvern Rider</ansi>
 
@@ -34,9 +34,9 @@ None of the three asks anything of your alignment, at level 10 or at level
   20 Stinging tail      +2 Attack
   25 Wyvern guile       +3 Evasion
 
-  <ansi fg="yellow-bold">Wyvern Lord</ansi> (30, still to come): poisoned foes it dives on take more damage.
+  <ansi fg="yellow-bold">Wyvern Lord</ansi> (30, <ansi fg="command">help wyvern-lord</ansi>): poisoned foes it dives on take more damage.
 
-Elite classes are named but not open yet; until they are, a Gryphon Rider
-keeps its advanced class's ranks. Routes are final.
+Elite classes are neutral and open to any alignment at level 30
+(<ansi fg="command">help elite</ansi>). Routes are final.
 
 See also: <ansi fg="command">help gryphon-rider</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help ambush</ansi>.

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -56,6 +57,7 @@ type larderItem struct {
 	Drinkable bool
 	Nutrition int
 	Hydration int
+	Meal      string // Phase 50: a cooked meal's buff kind
 	BuffIds   []int
 	Uses      int
 }
@@ -82,6 +84,11 @@ func larderEntry(spec items.ItemSpec) (larderItem, bool) {
 	if !edible && !drinkable {
 		return larderItem{}, false
 	}
+	// Phase 55: food that makes the eater ill (raw game meat) is a choice
+	// made by hand, never the company's meal.
+	if spec.Ailment != "" {
+		return larderItem{}, false
+	}
 	for _, id := range spec.BuffIds {
 		if !mealBuffs[id] {
 			return larderItem{}, false
@@ -89,7 +96,7 @@ func larderEntry(spec items.ItemSpec) (larderItem, bool) {
 	}
 	return larderItem{
 		ItemId: spec.ItemId, Name: spec.Name, Edible: edible, Drinkable: drinkable,
-		Nutrition: spec.Nutrition, Hydration: spec.Hydration, BuffIds: spec.BuffIds,
+		Nutrition: spec.Nutrition, Hydration: spec.Hydration, Meal: spec.Meal, BuffIds: spec.BuffIds,
 	}, true
 }
 
@@ -98,7 +105,8 @@ func larderEntry(spec items.ItemSpec) (larderItem, bool) {
 // member draws one use from the first source (cargo, their own pack, the
 // leader's pack) that has something suitable: the smallest item that
 // covers their need, else the largest. Food that also waters counts
-// toward thirst before anyone drinks.
+// toward thirst before anyone drinks. A member already on a meal buff eats
+// plain food when there is any, keeping its buff.
 func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) mealPlan {
 	larder = append([]larderItem(nil), larder...)
 	current := append([]survival.MemberNeeds(nil), needs...)
@@ -122,7 +130,15 @@ func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) 
 			if survival.BandFor(value(member.Needs)) == survival.BandFull {
 				continue
 			}
-			pick := pickFood(larder, member.Key, 100-value(member.Needs), drink)
+			// Phase 50 review: a member on a meal buff eats plain food when
+			// there is any, so the planner never swaps its buff for another.
+			pick := -1
+			if !drink && member.Needs.MealBattles > 0 {
+				pick = pickFood(larder, member.Key, 100-value(member.Needs), drink, true)
+			}
+			if pick < 0 {
+				pick = pickFood(larder, member.Key, 100-value(member.Needs), drink, false)
+			}
 			if pick < 0 {
 				if drink {
 					plan.Thirsty = append(plan.Thirsty, member.Name)
@@ -136,6 +152,9 @@ func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) 
 			benefit := mealBenefit(larder[pick], drink)
 			member.Needs.Hunger = min(100, member.Needs.Hunger+benefit.Nutrition)
 			member.Needs.Thirst = min(100, member.Needs.Thirst+benefit.Hydration)
+			if spec, ok := survival.MealFor(benefit.Meal); ok {
+				member.Needs.Meal, member.Needs.MealBattles = spec.Kind, spec.Battles
+			}
 		}
 	}
 	if kind != mealDrink {
@@ -148,11 +167,12 @@ func planMeal(needs []survival.MemberNeeds, larder []larderItem, kind mealKind) 
 }
 
 // pickFood is the larder index a member eats (or drinks) from, or -1.
-func pickFood(larder []larderItem, member survival.MemberKey, deficit int, drink bool) int {
+// plainOnly skips cooked meals (Phase 50).
+func pickFood(larder []larderItem, member survival.MemberKey, deficit int, drink, plainOnly bool) int {
 	for _, source := range []larderSource{fromCargo, fromOwnPack, fromLeaderPack} {
 		cover, largest := -1, -1
 		for i, food := range larder {
-			if food.Uses <= 0 || food.Source != source || (source == fromOwnPack && food.Owner != member) {
+			if food.Uses <= 0 || food.Source != source || (source == fromOwnPack && food.Owner != member) || (plainOnly && food.Meal != "") {
 				continue
 			}
 			amount := food.Nutrition
@@ -194,13 +214,13 @@ func mealBenefit(food larderItem, drink bool) survival.Benefit {
 	if drink {
 		return survival.Benefit{Hydration: food.Hydration}
 	}
-	return survival.Benefit{Nutrition: food.Nutrition, Hydration: food.Hydration}
+	return survival.Benefit{Nutrition: food.Nutrition, Hydration: food.Hydration, Meal: food.Meal}
 }
 
 // companionIDOf is a companion member key's id; false for the leader.
 func companionIDOf(key survival.MemberKey) (int, bool) {
-	id, err := strconv.Atoi(strings.TrimPrefix(string(key), "companion:"))
-	if err != nil || id <= 0 {
+	id, ok := survival.CompanionIDFromMemberKey(key)
+	if !ok || id <= 0 {
 		return 0, false
 	}
 	return id, true
@@ -381,6 +401,7 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 
 	lines := []string{}
 	ate, drank := false, false
+	sharedOwn := false // Phase 64: the leader's own pack fed a companion
 	for _, step := range plan.Steps {
 		food := larder[step.Food]
 		companionID, isCompanion := companionIDOf(step.Member.Key)
@@ -406,6 +427,9 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 		} else {
 			ate = true
 		}
+		if isCompanion && food.Source == fromLeaderPack && !user.Character.CompanyCargo { // the cargo is the company's, not the leader's to share
+			sharedOwn = true
+		}
 		if !isCompanion {
 			user.Character.CancelBuffsWithFlag("hidden")
 			flag := "food"
@@ -429,6 +453,13 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 	}
 	for _, name := range plan.Thirsty {
 		lines = append(lines, fmt.Sprintf("%s is still thirsty; there's nothing left to drink.", name))
+	}
+	if sharedOwn {
+		if said, err := m.Opinion(user.UserId, opinions.Choice{Kind: opinions.Share}); err != nil {
+			mudlog.Warn("company: share opinion", "leader", user.UserId, "error", err)
+		} else {
+			lines = append(lines, said...)
+		}
 	}
 	if len(lines) == 0 {
 		switch kind {
@@ -530,6 +561,9 @@ func mealLine(step mealStep, food larderItem, result survival.ProvisionResult, i
 	status := "Hunger: " + survival.HungerLabel(result.Needs.Hunger)
 	if step.Drink {
 		status = "Thirst: " + survival.ThirstLabel(result.Needs.Thirst)
+	} else if m, ok := survival.MealFor(food.Meal); ok {
+		// Phase 50: a cooked meal's battle buff.
+		status += fmt.Sprintf("; %s for %s: %s", m.Name, survival.BattlesLeft(m.Battles), m.Effect())
 	}
 	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> (%s). %s.`, subject, verb, food.Name, where, status)
 }

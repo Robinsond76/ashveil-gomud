@@ -14,6 +14,7 @@ const (
 	Plain    Beat = iota // the pace's ordinary gap
 	Dramatic             // a critical hit's pain or death line
 	Quick                // an indented follow-up line
+	Instant              // no wait: a block that goes out whole (the battle summary)
 )
 
 // Release is a held entry now due, for its player: a line of text, or (when
@@ -31,6 +32,7 @@ type Release struct {
 type held struct {
 	text   string
 	beat   Beat
+	slot   int // the fighter's turn the line belongs to (Phase 82c), 0 for upkeep
 	data   any
 	isData bool
 }
@@ -54,13 +56,15 @@ type Pacer struct {
 	mu     sync.Mutex
 	queues map[int]*queue
 	marks  map[string]struct{}
+	// report are players whose later lines this round go out without a wait.
+	report map[int]struct{}
 	// open are players in a combat round whose lines haven't all gone out:
 	// from the round's start (before its lines are held) until they drain.
 	open map[int]struct{}
 }
 
 func New() *Pacer {
-	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, open: map[int]struct{}{}}
+	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, report: map[int]struct{}{}, open: map[int]struct{}{}}
 }
 
 var (
@@ -101,6 +105,23 @@ func (p *Pacer) Mark(texts ...string) {
 	}
 }
 
+// StartReport makes the player's lines held from now on in this round go
+// out with no wait of their own: the fight's report (its summary and what
+// the end of the fight causes) arrives whole instead of a beat a line.
+func (p *Pacer) StartReport(userId int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.report[userId] = struct{}{}
+}
+
+// EndReport stops StartReport: the player's lines held from now on take
+// their beats again (their next battle began in the same round).
+func (p *Pacer) EndReport(userId int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.report, userId)
+}
+
 // Marked reports whether a line is marked dramatic this round.
 func (p *Pacer) Marked(text string) bool {
 	p.mu.Lock()
@@ -117,6 +138,7 @@ func (p *Pacer) StartRound(userIds ...int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.marks = map[string]struct{}{}
+	p.report = map[int]struct{}{}
 	p.open = make(map[int]struct{}, len(userIds))
 	for _, id := range userIds {
 		p.open[id] = struct{}{}
@@ -137,11 +159,13 @@ func (p *Pacer) beatOf(text string) Beat {
 // still held are returned first, for the caller to send at once: a round's
 // lines never run into the next round's. A late line of an older round (a
 // caused event requeued past the round's end) joins the newer round's
-// lines rather than cutting them short.
-func (p *Pacer) Hold(userId int, round uint64, text string, spec Spec, now time.Time) (flushed []Release) {
+// lines rather than cutting them short. slot is the fighter's turn the
+// line belongs to (0 for the round's upkeep), which paces by action under a
+// Beats spec.
+func (p *Pacer) Hold(userId int, round uint64, slot int, text string, spec Spec, now time.Time) (flushed []Release) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.holdLocked(userId, round, held{text: text, beat: p.beatOf(text)}, spec, now)
+	return p.holdLocked(userId, round, held{text: text, beat: p.beatOf(text), slot: slot}, spec, now)
 }
 
 // HoldData queues a data entry among a player's held lines, in order. It
@@ -155,6 +179,9 @@ func (p *Pacer) HoldData(userId int, round uint64, data any, spec Spec, now time
 }
 
 func (p *Pacer) holdLocked(userId int, round uint64, h held, spec Spec, now time.Time) (flushed []Release) {
+	if _, ok := p.report[userId]; ok && !h.isData {
+		h.beat = Instant
+	}
 	q := p.queues[userId]
 	if q != nil && round < q.round {
 		q.lines = append(q.lines, h)
@@ -182,8 +209,23 @@ func (p *Pacer) Follow(userId int, text string) bool {
 	if q == nil || q.next >= len(q.lines) {
 		return false
 	}
-	q.lines = append(q.lines, held{text: text, beat: p.beatOf(text)})
+	h := held{text: text, beat: p.beatOf(text), slot: q.lastSlot()}
+	if _, ok := p.report[userId]; ok {
+		h.beat = Instant
+	}
+	q.lines = append(q.lines, h)
 	return true
+}
+
+// lastSlot is the slot of the last text line held, so a line that follows
+// the round joins its last turn's beat.
+func (q *queue) lastSlot() int {
+	for i := len(q.lines) - 1; i >= 0; i-- {
+		if !q.lines[i].isData {
+			return q.lines[i].slot
+		}
+	}
+	return 0
 }
 
 // FollowData is Follow for a data entry.
@@ -207,7 +249,23 @@ func (q *queue) remaining(userId int) []Release {
 	return out
 }
 
-func (s Spec) gap(b Beat) time.Duration {
+// gap is the wait before a line: by line from its beat; by action from
+// whether it opens a new turn (newSlot), with the extra before a pain or
+// death line.
+func (s Spec) gap(b Beat, newSlot bool) time.Duration {
+	if b == Instant {
+		return 0
+	}
+	if s.Beats {
+		d := s.Follow
+		if newSlot {
+			d = s.Beat
+		}
+		if b == Dramatic {
+			d += s.Extra
+		}
+		return d
+	}
 	switch b {
 	case Dramatic:
 		return s.Dramatic
@@ -224,18 +282,20 @@ func (q *queue) offsets() []time.Duration {
 	out := make([]time.Duration, len(q.lines))
 	var total time.Duration
 	first := true
+	prevSlot := 0
 	for i, l := range q.lines {
 		if l.isData {
 			continue
 		}
 		if !first {
-			total += q.spec.gap(l.beat)
+			total += q.spec.gap(l.beat, l.slot != prevSlot)
 		}
 		first = false
+		prevSlot = l.slot
 		out[i] = total
 	}
 	scale := 1.0
-	if total > q.spec.Window && total > 0 {
+	if q.spec.Window > 0 && total > q.spec.Window && total > 0 {
 		// Scale in floating point: offset × window overflows int64
 		// nanoseconds once a round runs past a dozen seconds of gaps.
 		scale = float64(q.spec.Window) / float64(total)
@@ -272,6 +332,7 @@ func (p *Pacer) Due(now time.Time) (out []Release, drained []int) {
 		if q.next >= len(q.lines) {
 			delete(p.queues, userId)
 			delete(p.open, userId)
+			delete(p.report, userId)
 			drained = append(drained, userId)
 		}
 	}
@@ -308,6 +369,7 @@ func (p *Pacer) Flush(userId int) (lines []Release, ended bool) {
 	defer p.mu.Unlock()
 	_, ended = p.open[userId]
 	delete(p.open, userId)
+	delete(p.report, userId)
 	if q := p.queues[userId]; q != nil {
 		delete(p.queues, userId)
 		lines = q.remaining(userId)
@@ -325,6 +387,7 @@ func (p *Pacer) FlushAll() (out []Release, drained []int) {
 		out = append(out, p.queues[userId].remaining(userId)...)
 		delete(p.queues, userId)
 		delete(p.open, userId)
+		delete(p.report, userId)
 		drained = append(drained, userId)
 	}
 	for userId := range p.open {
@@ -333,6 +396,41 @@ func (p *Pacer) FlushAll() (out []Release, drained []int) {
 	}
 	sort.Ints(drained)
 	return out, drained
+}
+
+// PlaybackEnd is when the last held line of any player goes out, or the
+// zero time when nothing is held: the battle clock (Phase 82c) starts the
+// next round after it.
+func (p *Pacer) PlaybackEnd() time.Time {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	var end time.Time
+	for _, q := range p.queues {
+		offs := q.offsets()
+		for i := len(q.lines) - 1; i >= 0; i-- {
+			if !q.lines[i].isData {
+				if t := q.start.Add(offs[i]); t.After(end) {
+					end = t
+				}
+				break
+			}
+		}
+	}
+	return end
+}
+
+// Holding reports whether any player still has lines held: a round is still
+// playing out to someone. The fixed cadence (Phase 82c) waits for it, so a
+// fight's last round is never cut short by the next cadence round's flush.
+func (p *Pacer) Holding() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, q := range p.queues {
+		if q.next < len(q.lines) {
+			return true
+		}
+	}
+	return false
 }
 
 // Busy reports whether a player is in a combat round whose lines haven't

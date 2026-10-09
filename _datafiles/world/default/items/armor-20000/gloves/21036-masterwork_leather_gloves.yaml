@@ -1,0 +1,11 @@
+itemid: 21036
+name: masterwork leather gloves
+namesimple: gloves
+description: Supple leather reinforced at every seam by a master tanner. It is hand protection of the leather path.
+type: gloves
+subtype: wearable
+bulk: light
+tier: 4
+family: leather
+damagereduction: 2
+weight: 300

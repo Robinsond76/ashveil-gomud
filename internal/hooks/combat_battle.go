@@ -157,6 +157,9 @@ func assignPartyEnemyNames(userId int, p mobparty.Party) {
 // fight on the stream.
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
+	// A battle ended this round sent its report at once; this one's lines
+	// take their beats.
+	events.AddToQueue(events.CombatReport{UserId: sd.user.UserId, Ends: true})
 	// Phase 33i2: the group's coordination, fixed for the battle.
 	b.Coordination = int(enemyparty.Coordination(p))
 	battle.SetCoordination(sd.user.UserId, b.Coordination)
@@ -164,6 +167,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	// Phase 37: a summary lists only this fight's spoils, never a death's
 	// spoils noted outside any fight.
 	loot.TakeSpoils(sd.user.UserId)
+	combatstream.DefaultRollLog().Clear(sd.user.UserId) // Phase 62: `why` explains the latest fight
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
 	if len(p.Members) > 0 {
 		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {
@@ -175,6 +179,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	sd.captureGuards()
 	startMorale(b)
 	sd.startSigil(room, p.Members) // Phase 54: the sigil laid in this room
+	sd.startFare(room)             // Phase 50: needs and meal buffs
 	consumeAmbush(sd.user, p, room)
 	if enemyparty.Narrow(room) {
 		sd.user.SendText("The narrow ground folds both lines into two columns.")
@@ -320,6 +325,7 @@ func endBattle(userId int, outcome string) {
 	}
 	battle.End(userId)
 	finishMorale(b, outcome)
+	releaseAmbient(userId)
 	// Phase 35b: the company patches itself up, if the player is still
 	// out of battle when the event runs.
 	events.AddToQueue(events.BattleEnded{UserId: userId, Outcome: outcome})
@@ -638,8 +644,27 @@ func settleBattles() {
 		if room == nil {
 			continue
 		}
+		noteFinishingChants(u, room)
 		sd := loadSide(u, room)
 		sd.beginNext(sd.setParties(enemyparty.Parties(room), room, round), room, round)
+	}
+}
+
+// noteFinishingChants tells the room that a helpful chant begun in the
+// battle just ended goes on to its release (Phase 87): a heal the foe's fall
+// did not cut short lands after the summary, and says why.
+func noteFinishingChants(u *users.UserRecord, room *rooms.Room) {
+	for _, a := range sideActors(u, room) {
+		agg := a.char.Aggro
+		if a.char.Health < 1 || agg == nil || agg.Type != characters.SpellCast || harmful(agg.SpellInfo.SpellId) {
+			continue
+		}
+		sp := spells.GetSpell(agg.SpellInfo.SpellId)
+		if sp == nil {
+			continue
+		}
+		a.holder.say(fmt.Sprintf("The fight is over, but you finish your %s.", sp.Name),
+			"The fight is over, but %s finishes "+verbatim(sp.Name)+".", " (chant finishing)")
 	}
 }
 
@@ -763,3 +788,6 @@ func holdMobSpell(mob *mobs.Mob, info *characters.SpellAggroInfo) (held bool, wa
 	}
 	return true, waitOn
 }
+
+// NoteFinishingChantsForTest exposes noteFinishingChants to the wiring tests.
+func NoteFinishingChantsForTest(u *users.UserRecord, room *rooms.Room) { noteFinishingChants(u, room) }

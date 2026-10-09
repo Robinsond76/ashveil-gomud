@@ -1,0 +1,16 @@
+roomid: 3924
+zone: Stormcrown Heights
+title: High Snowfield
+description: A distant roar rolls down the mountain.
+biome: snow
+exits:
+  west:
+    roomid: 3923
+  north:
+    roomid: 3917
+resources:
+- water
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true

@@ -67,6 +67,7 @@ func cloneItem(i items.Item) items.Item {
 		i.Spec = &spec
 	}
 	i.Loot.Affixes = append([]items.RolledAffix(nil), i.Loot.Affixes...)
+	i.Awaken = append([]int(nil), i.Awaken...) // Phase 67
 	return i
 }
 
@@ -125,14 +126,6 @@ func (r *Registry) SetState(leaderUserID, companionID int, state MemberState) er
 func BestPackGrams(carried []items.Item) int {
 	_, grams := BestPack(carried)
 	return grams
-}
-
-// AddedGrams is what taking itm into carried adds to a company's load net
-// of the room it makes (32f review): its weight less any capacity it adds
-// by becoming the carrier's largest pack. It can be negative.
-func AddedGrams(carried []items.Item, itm items.Item) int {
-	gain := itm.CarryBonusGrams() - BestPackGrams(carried)
-	return itm.Weight() - max(0, gain)
 }
 
 // BestPack is the carried pack that counts, and its bonus; a zero item

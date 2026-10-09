@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/GoMudEngine/GoMud/internal/awakening"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/beasts"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
@@ -101,6 +104,11 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	mudlog.Debug(`Mob Death`, `name`, mob.Character.Name, `rest`, rest)
 
+	// Phase 79: a company member never leaves a corpse; the company keeps
+	// them until they are raised or lost (modules/company). Read before the
+	// charm is cleared below.
+	companion := mob.Character.IsCompanion()
+
 	// Make sure to clean up any charm stuff if it's being removed
 	if charmedUserId := mob.Character.RemoveCharm(); charmedUserId > 0 {
 		if charmedUser := users.GetByUserId(charmedUserId); charmedUser != nil {
@@ -193,8 +201,30 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			events.AddToQueue(events.AggroChanged{UserId: uid, RoomId: room.RoomId})
 		}
 		scripting.TryMobScriptEvent("onDie", mob.InstanceId, uid, "user", map[string]any{"attackerCount": len(contributors)})
+		if mob.Boss && mob.Character.Zone != `Training` {
+			// Phase 63: a boss's fall is the company's deed. An executed boss
+			// is slain too (the mercy answer adds the execution), so bounty
+			// and lair checks matching Boss + mob:<id> see every kill.
+			chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Boss, Subject: mob.Character.Name, Ref: fmt.Sprintf("mob:%d", mob.MobId), Place: room.Title, Zone: room.Zone})
+		}
 		if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
+			// Phase 67: a slain foe's race advances the relics the company wears.
+			awakening.Slain(uid, mob.Character.Race())
+			before := user.Character.KD.GetMobKills(int(mob.MobId))
 			user.Character.KD.AddMobKill(int(mob.MobId))
+			// Phase 66: a kind learned a tier further is said at once.
+			// By the template's boss flag, as the entry is built: an
+			// encounter's boss shares its template's thresholds.
+			if tier := bestiary.TierOf(int(mob.MobId), before+1); tier > bestiary.TierOf(int(mob.MobId), before) {
+				user.SendText(bestiary.LearnedLine(mob.Character.Name, tier))
+				// Phase 85: learning a kind's habits is the company's deed,
+				// once per kind (the tally only grows).
+				if tier == bestiary.Habits {
+					if deed, ok := bestiary.MasteredDeed(int(mob.MobId), room.Title); ok {
+						chronicle.Record(uid, deed)
+					}
+				}
+			}
 			if mob.IsElite {
 				user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
 			}
@@ -234,11 +264,12 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Shared kills use a fixed claim, not the first pickup command. A corpse is
 	// used even in worlds configured for floor drops, so gold/items cannot leak
 	// through an unowned floor path. The corpse owns the physical loot once.
-	claimCorpse := len(contributors) > 0 && !permaGear
+	// Phase 79: a company member never leaves a corpse; nothing of theirs
+	// is loot.
+	claimCorpse := len(contributors) > 0 && !permaGear && !companion
 	claimOwner := 0
 	if claimCorpse {
 		claimOwner = lootClaimant(mob, contributors)
-		room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, mobNameTag(mob), users.CharacterName(claimOwner)))
 	}
 
 	if !permaGear {
@@ -349,7 +380,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Remove from current room
 		room.RemoveMob(mob.InstanceId)
 
-		if bool(config.Death.CorpsesEnabled) || claimCorpse {
+		if (bool(config.Death.CorpsesEnabled) && !companion) || claimCorpse {
 			c := rooms.Corpse{
 				ClaimUserId:  claimOwner,
 				BattleSpoils: claimCorpse,
@@ -367,6 +398,10 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				c.Character.RemoveFromBody(item)
 			}
 			room.AddCorpse(c)
+			// Said only when the body holds something: an empty one has no loot to claim.
+			if claimCorpse && c.HasItems() {
+				room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, util.Article(mobNameTag(mob)), users.CharacterName(claimOwner)))
+			}
 		}
 		for _, c := range otherSpoils {
 			room.AddCorpse(c)
@@ -386,7 +421,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Remove from current room
 	room.RemoveMob(mob.InstanceId)
 
-	if config.Death.CorpsesEnabled {
+	if bool(config.Death.CorpsesEnabled) && !companion {
 		room.AddCorpse(rooms.Corpse{
 			MobId:        int(mob.MobId),
 			Character:    mob.Character,

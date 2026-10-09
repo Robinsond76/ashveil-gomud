@@ -1,0 +1,25 @@
+roomid: 3408
+zone: Cinder Hollow
+title: Scorched Ridge
+description: Charcoal burners abandoned the stacks here and bandits took their place. A smouldering
+  stump pops and spits sparks.
+biome: land
+exits:
+  east:
+    roomid: 3409
+  west:
+    roomid: 3407
+  south:
+    roomid: 3416
+  north:
+    roomid: 3402
+resources:
+- herbs
+- forage
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: hollow

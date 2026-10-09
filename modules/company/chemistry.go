@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"slices"
 	"strings"
 
@@ -66,7 +67,7 @@ func (m *CompanyModule) chemistryWorld() chemistryWorld {
 func parseChemistryConfig(get func(string) any) (rules domain.ChemistryRules, ok bool) {
 	rules = domain.DefaultChemistryRules()
 	read := func(key string, into *int, lo, hi int) {
-		if v, ok := configInt(get(key)); ok && v >= lo && v <= hi {
+		if v, ok := modconfig.Int(get(key)); ok && v >= lo && v <= hi {
 			*into = v
 		}
 	}

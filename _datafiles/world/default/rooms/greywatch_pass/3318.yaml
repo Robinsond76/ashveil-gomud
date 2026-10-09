@@ -1,0 +1,24 @@
+roomid: 3318
+zone: Greywatch Pass
+title: Watchers' Shelf
+description: A wide ledge under an overhang with an old fire pit. Enough room for a company to
+  camp out of the wind.
+biome: mountains
+tags:
+- camping
+exits:
+  east:
+    roomid: 3319
+  west:
+    roomid: 3317
+  south:
+    roomid: 3324
+  north:
+    roomid: 3311
+resources:
+- firewood
+- shelter
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true

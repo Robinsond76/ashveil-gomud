@@ -1,9 +1,11 @@
 package gmcp
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -65,6 +67,7 @@ func init() {
 	events.RegisterListener(events.PetItemChange{}, g.petItemChangeHandler)
 
 	events.RegisterListener(events.MobDeath{}, g.killsChangedHandler)
+	events.RegisterListener(events.BattleEnded{}, g.bestiaryChangedHandler) // Phase 66
 	events.RegisterListener(events.PlayerDeath{}, g.killsChangedHandler)
 
 }
@@ -124,6 +127,15 @@ func (g *GMCPCharModule) killsChangedHandler(e events.Event) events.ListenerRetu
 		})
 	}
 
+	return events.Continue
+}
+
+// bestiaryChangedHandler refreshes the bestiary when a battle ends: the
+// company's kills (a companion's included) are all counted by then.
+func (g *GMCPCharModule) bestiaryChangedHandler(e events.Event) events.ListenerReturn {
+	if evt, ok := e.(events.BattleEnded); ok && evt.UserId > 0 && bestiaryAsked(evt.UserId) {
+		events.AddToQueue(GMCPCharUpdate{UserId: evt.UserId, Identifier: `Char.Bestiary`})
+	}
 	return events.Continue
 }
 
@@ -514,13 +526,17 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 	if all || g.wantsGMCPPayload(`Char.Info`, gmcpModule) {
 		lineageID, classID := classKeys(user.UserId)
+		skin, hair := user.Character.LookColors()
 		payload.Info = &GMCPCharModule_Payload_Info{
 			Account:        user.Username,
 			Name:           user.Character.Name,
 			Class:          user.Character.ClassTitle(),
 			Lineage:        lineageID,
 			ClassID:        classID,
+			Skin:           skin,
+			Hair:           hair,
 			Race:           user.Character.Race(),
+			Hardcore:       user.Character.IsIron(),
 			Alignment:      user.Character.AlignmentName(),
 			Level:          user.Character.Level,
 			Role:           user.Role,
@@ -722,8 +738,16 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 			if !buff.PermaBuff {
 				roundsLeft, totalRounds := buffs.GetDurations(buff, buffSpec)
-				timeMax = c.RoundsToSeconds(totalRounds)
-				timeCur = c.RoundsToSeconds(roundsLeft)
+				if buffSpec.CombatRounds {
+					// Phase 82c: battle rounds have no fixed length; the
+					// seconds here are an estimate at the minimum round.
+					minRound := int(configs.GetCombatConfig().MinRoundMs) / 1000
+					roundsLeft, totalRounds = roundsLeft*minRound, totalRounds*minRound
+					timeMax, timeCur = totalRounds, roundsLeft
+				} else {
+					timeMax = c.RoundsToSeconds(totalRounds)
+					timeCur = c.RoundsToSeconds(roundsLeft)
+				}
 				if timeCur < 0 {
 					timeCur = 0
 				}
@@ -933,6 +957,14 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		}
 	}
 
+	// Phase 66: the bestiary is sent only when asked for or refreshed, never
+	// in the full Char payload.
+	if gmcpModule == `Char.Bestiary` {
+		bestiaryMark(user.UserId)
+		payload.Bestiary = bestiaryPayload(user)
+		return payload.Bestiary, `Char.Bestiary`
+	}
+
 	// If we reached this point and Char wasn't requested, we have a problem.
 	if !all {
 		mudlog.Error(`gmcp.Char`, `error`, `Bad module requested`, `module`, gmcpModule)
@@ -973,6 +1005,7 @@ type GMCPCharModule_Payload struct {
 	Skills       []GMCPCharModule_Payload_Skill           `json:"Skills,omitempty"`
 	Jobs         []GMCPCharModule_Payload_Job             `json:"Jobs,omitempty"`
 	Kills        *GMCPCharModule_Payload_Kills            `json:"Kills,omitempty"`
+	Bestiary     *GMCPCharModule_Payload_Bestiary         `json:"Bestiary,omitempty"`
 }
 
 // /////////////////
@@ -986,9 +1019,14 @@ type GMCPCharModule_Payload_Info struct {
 	// Lineage is the base archetype, ClassID the promoted class (the
 	// archetype until the character promotes). Empty before an archetype
 	// is chosen.
-	Lineage        string `json:"lineage,omitempty"`
-	ClassID        string `json:"classid,omitempty"`
+	Lineage string `json:"lineage,omitempty"`
+	ClassID string `json:"classid,omitempty"`
+	// Phase 72a: the skin tone and hair colour (#rrggbb) the player chose,
+	// painted on their map and battle sprites; omitted without looks.
+	Skin           string `json:"skin,omitempty"`
+	Hair           string `json:"hair,omitempty"`
 	Race           string `json:"race,omitempty"`
+	Hardcore       bool   `json:"hardcore,omitempty"` // Phase 77: the Iron option
 	Alignment      string `json:"alignment,omitempty"`
 	Level          int    `json:"level,omitempty"`
 	Role           string `json:"role"`
@@ -1086,6 +1124,10 @@ type GMCPCharModule_Payload_Inventory_Item struct {
 	Label        string `json:"label,omitempty"`
 	Rarity       string `json:"rarity,omitempty"`
 	Unidentified bool   `json:"unidentified,omitempty"`
+	// Phase 36d: an authored relic's signature (or its set and bonuses) in
+	// words, and its lore, for the gear window's tooltip.
+	Relic     []string `json:"relic,omitempty"`
+	RelicLore string   `json:"relic_lore,omitempty"`
 }
 
 func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
@@ -1110,6 +1152,17 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		d.Label = company.PlainLabel(itm)
 		d.Rarity = string(itm.RollRarity())
 		d.Unidentified = !itm.IsIdentified()
+	}
+	if d.Label == "" && itm.IsTrophyEnchanted() {
+		d.Label = company.PlainLabel(itm) // Phase 71 review: lists tag a plain enchanted piece too
+	}
+
+	if itmSpec.Relic != nil {
+		d.Relic = itm.RelicLines()
+		d.RelicLore = itmSpec.Relic.Lore
+		d.Rarity = string(itmSpec.Relic.Rarity())
+	} else if lines := itm.TrophyLines(); len(lines) > 0 {
+		d.Relic = lines // Phase 71: an enchanted plain item
 	}
 
 	if !itm.Uncursed && itmSpec.Cursed {
@@ -1154,20 +1207,20 @@ type GMCPCharModule_Payload_Stats struct {
 // Char.Vitals
 // /////////////////
 type GMCPCharModule_Payload_Vitals struct {
-	Hp    int `json:"hp,omitempty"`
-	HpMax int `json:"hp_max,omitempty"`
-	Sp    int `json:"sp,omitempty"`
-	SpMax int `json:"sp_max,omitempty"`
+	Hp    int `json:"hp"`
+	HpMax int `json:"hp_max"`
+	Sp    int `json:"sp"`
+	SpMax int `json:"sp_max"`
 }
 
 // /////////////////
 // Char.Worth
 // /////////////////
 type GMCPCharModule_Payload_Worth struct {
-	Gold int `json:"gold_carry,omitempty"`
-	Bank int `json:"gold_bank,omitempty"`
-	TNL  int `json:"tnl,omitempty"`
-	XP   int `json:"xp,omitempty"`
+	Gold int `json:"gold_carry"`
+	Bank int `json:"gold_bank"`
+	TNL  int `json:"tnl"`
+	XP   int `json:"xp"`
 }
 
 // /////////////////
@@ -1275,4 +1328,66 @@ func classKeys(userID int) (lineage, classID string) {
 		classID = c
 	}
 	return lineage, classID
+}
+
+// /////////////////
+// Char.Bestiary (Phase 66)
+// /////////////////
+type GMCPCharModule_Payload_Bestiary struct {
+	Entries []GMCPCharModule_Payload_BestiaryEntry `json:"entries"`
+}
+
+type GMCPCharModule_Payload_BestiaryEntry struct {
+	ID       int      `json:"id"`
+	Name     string   `json:"name"`
+	Zone     string   `json:"zone,omitempty"`
+	Level    int      `json:"level"`
+	Boss     bool     `json:"boss,omitempty"`
+	Kills    int      `json:"kills"`
+	Tier     int      `json:"tier"`
+	TierName string   `json:"tier_name"`
+	Progress string   `json:"progress"`
+	Lore     []string `json:"lore"`
+	Defences []string `json:"defences,omitempty"`
+	Habits   []string `json:"habits,omitempty"`
+}
+
+// bestiaryWatchers are the players whose client has asked for the
+// bestiary; only they are sent a refresh (its entries are the bulkiest
+// payload, and most clients never open the page).
+var (
+	bestiaryMu       sync.Mutex
+	bestiaryWatchers = map[int]bool{}
+)
+
+func bestiaryMark(userID int) {
+	bestiaryMu.Lock()
+	bestiaryWatchers[userID] = true
+	bestiaryMu.Unlock()
+}
+
+func bestiaryForget(userID int) {
+	bestiaryMu.Lock()
+	delete(bestiaryWatchers, userID)
+	bestiaryMu.Unlock()
+}
+
+func bestiaryAsked(userID int) bool {
+	bestiaryMu.Lock()
+	defer bestiaryMu.Unlock()
+	return bestiaryWatchers[userID]
+}
+
+// bestiaryPayload is every kind the leader has beaten, with the lines its
+// tier has earned (internal/bestiary): nothing of a kind never fought.
+func bestiaryPayload(user *users.UserRecord) *GMCPCharModule_Payload_Bestiary {
+	out := &GMCPCharModule_Payload_Bestiary{Entries: []GMCPCharModule_Payload_BestiaryEntry{}}
+	for _, e := range bestiary.Known(bestiary.KillsOf(user.Character)) {
+		out.Entries = append(out.Entries, GMCPCharModule_Payload_BestiaryEntry{
+			ID: e.MobID, Name: e.Name, Zone: e.Zone, Level: e.Level, Boss: e.Boss, Kills: e.Kills,
+			Tier: int(e.Tier), TierName: e.Tier.Name(), Progress: e.Progress(),
+			Lore: e.Lore, Defences: e.Defences, Habits: e.Habits,
+		})
+	}
+	return out
 }

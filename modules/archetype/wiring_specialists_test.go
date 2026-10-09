@@ -290,3 +290,26 @@ func TestKeenEyeRestsInBattle(t *testing.T) {
 	m.autoKeenEye(u, rooms.LoadRoom(97696), 97695)
 	assert.Empty(t, u.Character.KnownSecretExits)
 }
+
+// Phase 51: a member's own utility level, whether or not they are the
+// company's best and whatever the autoskill switch says (a rest duty is the
+// player's explicit choice).
+func TestMemberUtilityLevelReadsOneMembersOwnLevel(t *testing.T) {
+	m := wired(t, 100)
+	room := trapRoom(t, 97690)
+	u := trainee(t, 131, room.RoomId)
+	m.choose(u, "warrior", true)
+	bran := withCompanion(t, 131, 97931, room.RoomId, 10, "ranger")
+
+	best, ok := archetypes.BestSpecialist(131, archetypes.UtilityPathfinder)
+	require.True(t, ok)
+	assert.Equal(t, 2, archetypes.MemberUtilityLevel(131, 1, archetypes.UtilityPathfinder), "Bran's own level, the best's level")
+	assert.Equal(t, best.Level, archetypes.MemberUtilityLevel(131, 1, archetypes.UtilityPathfinder))
+	assert.GreaterOrEqual(t, archetypes.MemberUtilityLevel(131, 0, archetypes.UtilityPathfinder), 0, "the leader is companion 0")
+	assert.Zero(t, archetypes.MemberUtilityLevel(131, 9, archetypes.UtilityPathfinder), "no such companion")
+
+	m.setAutoskill(131, archetypes.UtilityPathfinder, false)
+	assert.Equal(t, 2, archetypes.MemberUtilityLevel(131, 1, archetypes.UtilityPathfinder), "a switched-off autoskill doesn't hide an explicit duty")
+	bran.Character.RoomId = 1
+	assert.Zero(t, archetypes.MemberUtilityLevel(131, 1, archetypes.UtilityPathfinder), "a companion away from the leader has none")
+}

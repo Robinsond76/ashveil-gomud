@@ -1,0 +1,25 @@
+roomid: 3115
+zone: Brindle Downs
+title: Windy Rise
+description: Wind combs the long grass flat and the sky feels very large. Old hoofprints are pressed
+  deep into the mud.
+biome: land
+exits:
+  east:
+    roomid: 3116
+  west:
+    roomid: 3114
+  south:
+    roomid: 3120
+  north:
+    roomid: 3108
+resources:
+- game
+- forage
+mapx: 2
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: downs

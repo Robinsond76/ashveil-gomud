@@ -272,13 +272,39 @@ func TestEliteWaitsForTheGateAndPromotesWhenItRecovers(t *testing.T) {
 	assert.Contains(t, w.cmd("class", ""), "a Hierarch (elite class)")
 }
 
+// Phase 39i review: the four neutral elites open through the real command,
+// with the promotion line naming the command that works, at any alignment.
+func TestNeutralElitesPromoteThroughTheClassCommand(t *testing.T) {
+	for _, c := range []struct{ lineage, from, to, name string }{
+		{"halberdier", "sweeper", "reaper", "Reaper"},
+		{"samurai", "kensai", "sword-saint", "Sword Saint"},
+		{"shaman", "earthspeaker", "mountain-speaker", "Mountain Speaker"},
+		{"dollmaster", "golemancer", "golem-lord", "Golem Lord"},
+		{"beasttamer", "dragon-tamer", "dragon-lord", "Dragon Lord"},
+		{"gryphon-rider", "skyscout", "falcon-marshal", "Falcon Marshal"},
+		{"alchemist", "apothecary", "panacean", "Panacean"},
+		{"arbalist", "sharpshooter", "deadeye", "Deadeye"},
+	} {
+		t.Run(c.to, func(t *testing.T) {
+			w, store := classBrawl(t, 30, -100)
+			w.withArchetypes(c.lineage)
+			store.state.Class = c.from
+			assert.Contains(t, w.cmd("class", ""), "Type class promote "+c.to+".")
+			assert.Contains(t, w.cmd("class", "promote "+c.to), "class promote self "+c.to+" confirm")
+			assert.Contains(t, w.cmd("class", "promote "+c.to+" confirm"), "You are now a "+c.name+".")
+			assert.Equal(t, c.to, store.state.Class)
+		})
+	}
+}
+
 // The rogue, ranger, wizard and witch elites arrive with 38c2 and 38c3.
 func TestPlannedEliteIsNotOpenYet(t *testing.T) {
+	defer classes.SetPlannedForTest("packlord", true)() // every elite is open (39i2): borrow one
 	w, store := classBrawl(t, 30, 100)
-	w.withArchetypes("samurai")
-	store.state.Class = "kensai"
-	assert.Contains(t, w.cmd("class", "promote sword-saint confirm"), "not open yet")
-	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Sword Saint")
+	w.withArchetypes("beasttamer")
+	store.state.Class = "houndmaster"
+	assert.Contains(t, w.cmd("class", "promote packlord confirm"), "not open yet")
+	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Packlord")
 }
 
 func TestUnpromotedHighLevelCharacterKeepsItsBase(t *testing.T) {

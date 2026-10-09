@@ -9,15 +9,15 @@ package survival
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -40,21 +40,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *domain.Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("survival")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *domain.NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "survival", func() domain.Registry { return *domain.NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry domain.Registry) error {
-	return s.plug.WriteStruct("survival", registry)
+	return modstore.Save(s.plug, "survival", registry)
 }
 
 // decodeRegistry parses stored bytes, normalizing values and dropping
@@ -160,16 +150,12 @@ func init() {
 	domain.SetLifecycle(m)
 	domain.SetCompanyService(m)
 	domain.SetMemberDrainService(m)
+	domain.SetMealService(m)
+	domain.SetAilmentService(m)
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("survival: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("survival: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("survival", m.loadErr, m.store != nil)
 }
 
 func (m *SurvivalModule) save() error {
@@ -447,6 +433,15 @@ var _ domain.RestBonusService = (*SurvivalModule)(nil)
 // recovery for some members (Phase 40a3: a bedroll's +25%). The ledger
 // keeps the base amount, so a retry of the same rest is still idempotent.
 func (m *SurvivalModule) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[domain.MemberKey]int) ([]domain.ExertionResult, error) {
+	return m.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, nil)
+}
+
+var _ domain.RestCapService = (*SurvivalModule)(nil)
+
+// ApplyCompanyRestRecoveryCapped is the bonus recovery with a fatigue
+// ceiling for some members (Phase 51: a watcher ends a rest no better than
+// Ready). The ledger keeps the base amount, so a retry is idempotent.
+func (m *SurvivalModule) ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[domain.MemberKey]int, ceilings map[domain.MemberKey]int) ([]domain.ExertionResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
@@ -479,7 +474,13 @@ func (m *SurvivalModule) ApplyCompanyRestRecoveryBonus(leaderUserID int, operati
 		if pct := bonusPct[ref.Key]; pct > 0 {
 			amount += (fatigue*pct + 50) / 100
 		}
-		change, err := m.registry.ApplyRestRecovery(leaderUserID, ref.Key, amount)
+		var change domain.Change
+		var err error
+		if ceiling, capped := ceilings[ref.Key]; capped {
+			change, err = m.registry.ApplyRestRecoveryCapped(leaderUserID, ref.Key, amount, ceiling)
+		} else {
+			change, err = m.registry.ApplyRestRecovery(leaderUserID, ref.Key, amount)
+		}
 		if err != nil {
 			m.registry = snapshot
 			return nil, err
@@ -668,8 +669,97 @@ func (m *SurvivalModule) applyBenefit(leaderUserID int, key domain.MemberKey, na
 		}
 		result.Fatigue = fatigue
 	}
+	// Phase 50: a cooked meal's buff, replacing any other.
+	if benefit.Meal != "" {
+		if err := m.registry.SetMeal(leaderUserID, key, benefit.Meal); err != nil {
+			return domain.ProvisionResult{}, err
+		}
+	}
+	// Phase 55: an ailment the food gives (raw game meat's Gut-ache).
+	if benefit.Ailment != "" {
+		caught, err := m.registry.CatchAilment(leaderUserID, key, benefit.Ailment)
+		if err != nil {
+			return domain.ProvisionResult{}, err
+		}
+		if caught {
+			result.Caught = benefit.Ailment
+		}
+	}
 	result.Needs = m.registry.MustNeedsFor(leaderUserID, key)
 	return result, nil
+}
+
+var _ domain.AilmentService = (*SurvivalModule)(nil)
+
+// CatchAilment implements domain.AilmentService (Phase 55). The member must
+// be on the roster and alive; the write is durable at once, like a meal's.
+func (m *SurvivalModule) CatchAilment(leaderUserID int, key domain.MemberKey, kind string) (bool, error) {
+	return m.changeAilment(leaderUserID, key, func() (bool, error) {
+		return m.registry.CatchAilment(leaderUserID, key, kind)
+	})
+}
+
+// CureAilment implements domain.AilmentService (Phase 55).
+func (m *SurvivalModule) CureAilment(leaderUserID int, key domain.MemberKey, kind string) (bool, error) {
+	return m.changeAilment(leaderUserID, key, func() (bool, error) {
+		return m.registry.CureAilment(leaderUserID, key, kind)
+	})
+}
+
+// FadeAilment implements domain.AilmentFader (camp music): it shortens a
+// member's ailment to battles left, durably at once.
+func (m *SurvivalModule) FadeAilment(leaderUserID int, key domain.MemberKey, kind string, battles int) (bool, error) {
+	return m.changeAilment(leaderUserID, key, func() (bool, error) {
+		return m.registry.FadeAilment(leaderUserID, key, kind, battles)
+	})
+}
+
+var _ domain.AilmentFader = (*SurvivalModule)(nil)
+
+func (m *SurvivalModule) changeAilment(leaderUserID int, key domain.MemberKey, change func() (bool, error)) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistenceAvailable(); err != nil {
+		return false, err
+	}
+	if leaderUserID <= 0 || !domain.ValidMemberKey(key) {
+		return false, domain.ErrInvalidMember
+	}
+	if ref, ok := currentRosterMember(leaderUserID, key); ok && (ref.Dead || ref.Needless) {
+		return false, nil
+	}
+	snapshot := m.registry.Clone()
+	if err := m.registry.Ensure(leaderUserID, key); err != nil {
+		m.registry = snapshot
+		return false, err
+	}
+	changed, err := change()
+	if err != nil {
+		m.registry = snapshot
+		return false, err
+	}
+	if changed {
+		if err := m.save(); err != nil {
+			m.registry = snapshot
+			return false, err
+		}
+	}
+	return changed, nil
+}
+
+// SpendMealBattle implements domain.MealService (Phase 50): one battle off
+// the meal buffs of the members that fought it. Like a drain it is written
+// with the next save; a battle lost to a crash is harmless.
+func (m *SurvivalModule) SpendMealBattle(leaderUserID int, keys []domain.MemberKey) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	if m.registry.SpendMealBattle(leaderUserID, keys) {
+		m.dirty = true
+	}
+	return nil
 }
 
 // resolveMember maps a selector to a current member. The leader is always
@@ -747,17 +837,15 @@ func parseCompanionSelector(selector string) (int, bool) {
 // matchCompanionName matches an exact name, then a single unambiguous
 // substring, against the current companion roster.
 func matchCompanionName(roster []domain.MemberRef, selector string) (domain.MemberKey, string, error) {
-	var partial []domain.MemberRef
+	companions := make([]domain.MemberRef, 0, len(roster))
 	for _, ref := range roster {
-		if ref.Key == domain.LeaderMemberKey {
-			continue
+		if ref.Key != domain.LeaderMemberKey {
+			companions = append(companions, ref)
 		}
-		if strings.EqualFold(ref.Name, selector) {
-			return ref.Key, ref.Name, nil
-		}
-		if ref.Name != "" && strings.Contains(strings.ToLower(ref.Name), selector) {
-			partial = append(partial, ref)
-		}
+	}
+	exact, partial := company.SplitNameMatches(companions, selector, func(ref domain.MemberRef) string { return ref.Name })
+	if len(exact) > 0 {
+		return exact[0].Key, exact[0].Name, nil
 	}
 	if len(partial) == 1 {
 		return partial[0].Key, partial[0].Name, nil
@@ -814,11 +902,11 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 		if !ok {
 			needs = domain.FullNeeds()
 		}
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			ref.Name,
-			needs.Hunger, domain.HungerLabel(needs.Hunger),
-			needs.Thirst, domain.ThirstLabel(needs.Thirst),
-			needs.Fatigue, domain.FatigueLabel(needs.Fatigue)))
+		lines = append(lines, domain.NeedsLine(ref.Name, needs))
+		// Phase 50: what those needs and a meal do in the next battle.
+		if sum := domain.ConditionFor(needs).Summary(needs.MealBattles); sum != "" {
+			lines = append(lines, "    In battle: "+sum)
+		}
 	}
 	return strings.Join(lines, "\n")
 }
@@ -874,7 +962,7 @@ func (m *SurvivalModule) displayName(key domain.MemberKey) string {
 	if key == domain.LeaderMemberKey {
 		return "leader"
 	}
-	if id, ok := parseCompanionSelector(strings.TrimPrefix(string(key), "companion:")); ok {
+	if id, ok := domain.CompanionIDFromMemberKey(key); ok && id > 0 {
 		return fmt.Sprintf("#%d", id)
 	}
 	return string(key)

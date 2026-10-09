@@ -27,7 +27,7 @@ change the company's focus.
   attacks and spells weaker)</ansi>. The Combat tab's Battle view shows it too.
 - Enemy health is shown in five steps, never as numbers: unhurt, scratched,
   wounded, badly wounded, near death. Hover or tap a figure to read its
-  name and health, and to see whom it strikes.
+  name, class and health, and to see whom it strikes.
 - A member who has been promoted (<ansi fg="command">help promotion</ansi>) is drawn as that
   class, a Paladin in white and brass rather than a plain warrior, and
   hovering names the class. The neutral lines have their own figures too:
@@ -39,9 +39,17 @@ change the company's focus.
   match a colour to its status without hovering.
   A bright mark means it is chanting a spell. A flash and a number show a blow, a heal,
   or a miss as it lands. A fallen figure lies down.
-- Under the picture, a line tells the latest blow in words ("Wren hits the
+- Under the picture, a strip shows the round's turn order (<ansi fg="command">help tempo</ansi>),
+  fastest first, as short name tags: the one acting now is bright, those
+  who have acted are dimmed, foes have a dashed edge, and a fast fighter
+  earning two turns appears twice. Hover a tag for the full name and turn.
+  Hovering one of your own figures also names its tempo, the turns a round
+  its Speed, burden, armor and stance give it.
+- Below that, a line tells the latest blow in words ("Wren hits the
   second wolf (6)"), and the title shows the round. Hovering a figure shows
-  its own name and health instead.
+  its own name and health instead. In the game text each round of your
+  fight opens with a dim "Round N" line, so the text alone shows where
+  rounds break.
 - In the dark, or against a foe you can't make out, you see one shadow
   instead of the enemy (<ansi fg="command">help light</ansi>). The shadow stands in a place no foe you
   can see holds.
@@ -86,8 +94,15 @@ change the company's focus.
 
 <ansi fg="yellow-bold">Opening and closing</ansi>
 
-  It opens by itself when a battle starts. <ansi fg="yellow">Minimise</ansi> shrinks it to a badge
-  in the corner; the battle goes on. Click the badge, or the Combat tab's
+  It opens by itself when a battle starts, at the top of the middle of the
+  page, with the game text below it: the picture above, the battle's lines
+  beneath, in the same column. The picture takes at most half the column,
+  drawn at the largest whole scale that fits, so the text keeps its lines.
+  While it is open the game text steps down a size, so the battle's lines
+  tuck in and the screen moves less; untick <ansi fg="yellow">Smaller text</ansi> to keep the
+  usual size. On a phone it sits at the top of the Game view.
+  <ansi fg="yellow">Minimise</ansi> shrinks it to a badge in the corner and gives the text the whole
+  column again; the battle goes on. Click the badge, or the Combat tab's
   <ansi fg="yellow">Battle screen</ansi> button, to bring it back.
   Untick <ansi fg="yellow">Open automatically</ansi> to keep it shut until you ask.
   When the fight ends it plays the last blow, shows the outcome for three
@@ -99,9 +114,11 @@ change the company's focus.
   (<ansi fg="command">help tactics</ansi>), as the Combat tab's do. <ansi fg="yellow">Help</ansi> opens this page.
 
 Screen readers: the picture is decorative. The Combat tab's Battle view
-and the story text carry everything, and are unchanged.
+and the story text carry everything: the Battle view lists the same turn
+order in words ("Turn order: Wren, the first wolf, ...").
 
-On a phone the picture fills the screen and allied companies show as pennants
-you tap to watch (<ansi fg="command">help mobile</ansi>).
+On a phone the screen sits at the top of the Game view, the picture at its
+smallest size, and allied companies show as pennants you tap to watch
+(<ansi fg="command">help mobile</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help formation</ansi>

@@ -28,7 +28,7 @@ func TestCreatureRanksCarryTheirEffects(t *testing.T) {
 	hound := EffectsForLineage("hound", "", 20, nil)
 	golem := EffectsForLineage("stone-golem", "", 20, nil)
 	assert.Equal(t, 35, hound.Int(Pounce), "Savage pursuit replaces Run down's 20")
-	assert.Equal(t, 15, golem.Int(Slow))
+	assert.Equal(t, 10, golem.Int(Slow))
 	assert.Equal(t, 25, golem.Int(SpellWeak))
 	assert.Equal(t, 40, golem.Int(Armor), "Granite replaces Stone body's 30")
 	assert.Equal(t, 15, golem.Int(AuraResolv), "Bedrock replaces Anchor's 10")
@@ -37,6 +37,6 @@ func TestCreatureRanksCarryTheirEffects(t *testing.T) {
 	// 38e review: the golem's fist grows with Granite and Bedrock, so it
 	// keeps pace with a warrior's blade late on.
 	assert.Equal(t, 0, EffectsForLineage("stone-golem", "", 9, nil).Int(Damage))
-	assert.Equal(t, 2, EffectsForLineage("stone-golem", "", 10, nil).Int(Damage))
-	assert.Equal(t, 4, golem.Int(Damage))
+	assert.Equal(t, 3, EffectsForLineage("stone-golem", "", 10, nil).Int(Damage))
+	assert.Equal(t, 5, golem.Int(Damage))
 }

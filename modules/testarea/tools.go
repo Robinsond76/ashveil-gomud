@@ -34,6 +34,7 @@ var tools = map[string]toolFunc{
 	"give":      toolGive,
 	"kit":       toolKit,
 	"items":     toolItems,
+	"catalog":   toolCatalog,
 	"weather":   toolWeather,
 }
 
@@ -160,11 +161,102 @@ var foeTypes = map[string]int{
 const (
 	maxFoes     = 6
 	defaultFoe  = "skeleton"
-	fightsUsage = "Usage: testarea fight <level> <size 2-6> [type ...]"
+	fightsUsage = "Usage: testarea fight <level> <count> <type> [<count> <type> ...]  or  testarea fight <level> <size 2-6> [type ...]"
 )
 
 func foeList() string {
 	return "Types: " + strings.Join(sortedKeys(foeTypes), ", ") + " (or a mob id). A boss type (ogre, ent, lich) leads the group as its boss; healers (chanter, shaman) tend the rest."
+}
+
+// foeID resolves a foe type word (a name or a mob id) to a mob id.
+func foeID(w string) (int, bool) {
+	if id, ok := foeTypes[strings.ToLower(w)]; ok {
+		return id, true
+	}
+	n, err := strconv.Atoi(w)
+	if err != nil || mobs.GetMobSpec(mobs.MobId(n)) == nil {
+		return 0, false
+	}
+	return n, true
+}
+
+// parseFoes reads what follows the level of `testarea fight` into the mob
+// ids of the group, in order. Two forms:
+//   - counted kinds: `2 imp 1 skeleton` is two imps and a skeleton (the
+//     form when the words after the level pair a number with a type and at
+//     least one type is a name);
+//   - the older `<size> [type ...]`: the types repeat in turn until the
+//     group has size foes (`3 skeleton imp` is skeleton, imp, skeleton).
+//
+// The error is the text to show the admin.
+func parseFoes(words []string) ([]int, string) {
+	if len(words) == 0 {
+		return nil, fightsUsage + "\n" + foeList()
+	}
+	if counted(words) {
+		var ids []int
+		for i := 0; i < len(words); i += 2 {
+			n, _ := strconv.Atoi(words[i])
+			id, ok := foeID(words[i+1])
+			if !ok {
+				return nil, fmt.Sprintf("There is no foe type %q.\n%s", words[i+1], foeList())
+			}
+			if n < 1 || len(ids)+n > maxFoes {
+				return nil, fmt.Sprintf("The group must be from 2 to %d foes.\n%s", maxFoes, fightsUsage)
+			}
+			for ; n > 0; n-- {
+				ids = append(ids, id)
+			}
+		}
+		if len(ids) < 2 {
+			return nil, fmt.Sprintf("The group must be from 2 to %d foes.\n%s", maxFoes, fightsUsage)
+		}
+		return ids, ""
+	}
+	size, err := strconv.Atoi(words[0])
+	if err != nil || size < 2 || size > maxFoes {
+		return nil, fmt.Sprintf("The size must be from 2 to %d.\n%s", maxFoes, fightsUsage)
+	}
+	typeWords := words[1:]
+	if len(typeWords) == 0 {
+		typeWords = []string{defaultFoe}
+	}
+	var types []int
+	for _, w := range typeWords {
+		id, ok := foeID(w)
+		if !ok {
+			return nil, fmt.Sprintf("There is no foe type %q.\n%s", w, foeList())
+		}
+		types = append(types, id)
+	}
+	ids := make([]int, size)
+	for i := range ids {
+		ids[i] = types[i%len(types)]
+	}
+	return ids, ""
+}
+
+// counted reports whether the words are count-and-type pairs naming at
+// least one type: an even number of words, a number first in each pair.
+func counted(words []string) bool {
+	if len(words)%2 != 0 {
+		return false
+	}
+	named := false
+	for i := 0; i < len(words); i += 2 {
+		if _, err := strconv.Atoi(words[i]); err != nil {
+			return false
+		}
+		if _, ok := foeTypes[strings.ToLower(words[i+1])]; ok {
+			named = true
+		}
+	}
+	return named
+}
+
+func isBossMob(id int) bool {
+	spec := mobs.GetMobSpec(mobs.MobId(id))
+	return spec != nil && spec.Boss
 }
 
 func toolFight(m *Module, user *users.UserRecord, args []string) string {
@@ -175,33 +267,19 @@ func toolFight(m *Module, user *users.UserRecord, args []string) string {
 	if err != nil {
 		return err.Error()
 	}
-	size, err := strconv.Atoi(args[1])
-	if err != nil || size < 2 || size > maxFoes {
-		return fmt.Sprintf("The size must be from 2 to %d.\n%s", maxFoes, fightsUsage)
+	ids, bad := parseFoes(args[1:])
+	if bad != "" {
+		return bad
 	}
-	typeWords := args[2:]
-	if len(typeWords) == 0 {
-		typeWords = []string{defaultFoe}
-	}
-	var ids []int
-	for _, w := range typeWords {
-		id, ok := foeTypes[strings.ToLower(w)]
-		if !ok {
-			n, convErr := strconv.Atoi(w)
-			if convErr != nil || mobs.GetMobSpec(mobs.MobId(n)) == nil {
-				return fmt.Sprintf("There is no foe type %q.\n%s", w, foeList())
-			}
-			id = n
-		}
-		ids = append(ids, id)
-	}
+	size := len(ids)
+	// A boss leads: its escorts are the foes after it.
+	sort.SliceStable(ids, func(i, j int) bool { return isBossMob(ids[i]) && !isBossMob(ids[j]) })
 	if actionpolicy.InBattle(user) {
 		return actionpolicy.BattleUnderWay
 	}
 	var foes []encounters.Foe
 	boss := false
-	for i := 0; i < size; i++ {
-		id := ids[i%len(ids)]
+	for _, id := range ids {
 		isBoss := false
 		if spec := mobs.GetMobSpec(mobs.MobId(id)); spec != nil && spec.Boss && !boss {
 			isBoss, boss = true, true
@@ -240,7 +318,7 @@ func toolHeal(m *Module, user *users.UserRecord, args []string) string {
 	c.Wounds = nil
 	c.RecalculateStats()
 	c.Health, c.Mana = c.HealthMax.Value, c.ManaMax.Value
-	return "You are fully restored. (Companions heal with " + cmd("company heal") + " or a camp rest.)"
+	return "You are fully restored. (" + cmd("healcompany") + " restores the whole company and raises the fallen.)"
 }
 
 // --- gold and gear ---------------------------------------------------------

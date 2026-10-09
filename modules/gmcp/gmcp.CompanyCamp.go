@@ -6,6 +6,7 @@ package gmcp
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -23,6 +24,12 @@ type campPayload struct {
 	Rested  bool   `json:"rested"`
 	Embers  bool   `json:"embers"`
 	Tent    bool   `json:"tent"`
+	// Phase 52: which tent is pitched (its name and effect), and the tents
+	// carried, for the picker.
+	TentKind string    `json:"tent_kind,omitempty"`
+	TentName string    `json:"tent_name,omitempty"`
+	TentNote string    `json:"tent_note,omitempty"`
+	Tents    []tentRow `json:"tents"`
 	// Phase 40a4: the camp gear the company carries, one label each.
 	Gear []string `json:"gear"`
 	// Phase 43a: camp supplies carried, and what is queued for the next rest.
@@ -40,6 +47,95 @@ type campPayload struct {
 	// Phase 49: the company's latest exchange (camp talk or after a
 	// battle), shown on the Camp tab; absent before the first.
 	Banter []banterLine `json:"banter,omitempty"`
+	// Phase 51: the rest duty of each member at the camp, and whether a
+	// running rest has fixed them.
+	Duties       []dutyRow `json:"duties"`
+	DutiesLocked bool      `json:"duties_locked"`
+	// Phase 56: the dishes the leader has learned, one line each.
+	Recipes []string `json:"recipes"`
+	// The same book as rows: kind (dish, remedy, hearth), ingredients with
+	// what is to hand, the rank a dish asks, and whether it can be made now.
+	RecipeBook []recipeRow `json:"recipe_book"`
+	// Camp music: who plays what and what the next song gives (omitted away
+	// from a camp, teacher and inn), and the inn's gig board (inns only).
+	Music *musicPayload `json:"music,omitempty"`
+	Gig   *gigPayload   `json:"gig,omitempty"`
+	// Phase 75: the rooms an inn lets, cheapest first, priced for the
+	// company's standing there; the Camp tab's buttons run Command.
+	InnRooms []innRoomRow `json:"inn_rooms,omitempty"`
+	// Camp activities: the chores to do before the company sleeps.
+	Activities []activityRow `json:"activities,omitempty"`
+}
+
+// activityRow is one camp chore: its button runs Command; Note says who
+// does it and what it uses, or why it cannot be done now.
+type activityRow struct {
+	Key     string `json:"key"`
+	Label   string `json:"label"`
+	Command string `json:"command"`
+	Note    string `json:"note"`
+	Ready   bool   `json:"ready"`
+}
+
+// innRoomRow is one room of an inn for the Camp tab.
+type innRoomRow struct {
+	Tier    string `json:"tier"`
+	Name    string `json:"name"`
+	Price   int    `json:"price"`
+	Minutes int    `json:"minutes"`
+	Command string `json:"command"`
+}
+
+// musicPayload is the Camp tab's Music block.
+type musicPayload struct {
+	Off     bool       `json:"off"`
+	Covered string     `json:"covered"`
+	Effects []string   `json:"effects"`
+	Cost    string     `json:"cost,omitempty"`
+	Players []musicRow `json:"players"`
+	Teacher bool       `json:"teacher"`
+	// TeachPrice is the teacher's fee for level 1 of a family.
+	TeachPrice int `json:"teach_price,omitempty"`
+}
+
+// musicRow is one member's Music.
+type musicRow struct {
+	Key        string `json:"key"`
+	Name       string `json:"name"`
+	Family     string `json:"family,omitempty"`
+	Level      int    `json:"level,omitempty"`
+	Label      string `json:"label,omitempty"`
+	Instrument string `json:"instrument,omitempty"`
+}
+
+// gigPayload is an inn's gig board for the company.
+type gigPayload struct {
+	Window   string `json:"window"`
+	Open     bool   `json:"open"`
+	Ready    bool   `json:"ready"`
+	Reason   string `json:"reason,omitempty"`
+	Families int    `json:"families"`
+	Pay      int    `json:"pay"`
+}
+
+// dutyRow is one member's rest duty for the Camp tab's picker. Command is
+// the word "camp duties" takes for the member.
+type dutyRow struct {
+	Key     string   `json:"key"`
+	Name    string   `json:"name"`
+	Command string   `json:"command"`
+	Duty    string   `json:"duty"`
+	Options []string `json:"options"`
+}
+
+// tentRow is one carried tent for the Camp tab's picker. Command is what
+// pitches it.
+type tentRow struct {
+	Kind    string `json:"kind"`
+	Name    string `json:"name"`
+	Effect  string `json:"effect"`
+	Pitched bool   `json:"pitched"`
+	Command string `json:"command"`
 }
 
 type banterLine struct {
@@ -70,7 +166,60 @@ func campPayloadOf(s camping.CampState) campPayload {
 	if prepared == nil {
 		prepared = []string{}
 	}
-	return campPayload{Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	duties := make([]dutyRow, 0, len(s.Duties))
+	for _, d := range s.Duties {
+		duties = append(duties, dutyRow{Key: d.Key, Name: d.Name, Command: d.Command, Duty: d.Duty, Options: d.Options})
+	}
+	recipes := s.Recipes
+	if recipes == nil {
+		recipes = []string{}
+	}
+	book := make([]recipeRow, 0, len(s.RecipeBook))
+	for _, r := range s.RecipeBook {
+		needs := make([]recipeNeed, 0, len(r.Needs))
+		for _, n := range r.Needs {
+			needs = append(needs, recipeNeed{Name: n.Name, Count: n.Count, Have: n.Have})
+		}
+		book = append(book, recipeRow{Name: r.Name, Kind: r.Kind, For: r.For, Needs: needs, Skill: r.Skill, Level: r.Level, Ready: r.Ready})
+	}
+	var music *musicPayload
+	if s.Music.Known {
+		effects := s.Music.Effects
+		if effects == nil {
+			effects = []string{}
+		}
+		music = &musicPayload{Off: s.Music.Off, Covered: s.Music.Covered, Effects: effects, Cost: s.Music.Cost, Teacher: s.Music.Teacher, TeachPrice: s.Music.TeachPrice, Players: []musicRow{}}
+		for _, r := range s.Music.Players {
+			music.Players = append(music.Players, musicRow{Key: r.Key, Name: r.Name, Family: r.Family, Level: r.Level, Label: r.Label, Instrument: r.Instrument})
+		}
+	}
+	var gig *gigPayload
+	if s.Gig != nil {
+		gig = &gigPayload{Window: s.Gig.Window, Open: s.Gig.Open, Ready: s.Gig.Ready, Reason: s.Gig.Reason, Families: s.Gig.Families, Pay: s.Gig.Pay}
+	}
+	var innRooms []innRoomRow
+	for _, r := range s.InnRooms {
+		command := "inn rest"
+		if r.Tier != camping.InnCommon {
+			command += " " + string(r.Tier)
+		}
+		name := strings.ToUpper(string(r.Tier)[:1]) + string(r.Tier)[1:]
+		innRooms = append(innRooms, innRoomRow{Tier: string(r.Tier), Name: name, Price: r.Price, Minutes: r.Minutes, Command: command})
+	}
+	tents := make([]tentRow, 0, len(s.Tents))
+	for _, t := range s.Tents {
+		tents = append(tents, tentRow{Kind: string(t.Kind), Name: t.Name, Effect: t.Effect, Pitched: t.Pitched, Command: "camp tent " + camping.TentOf(t.Kind).Short})
+	}
+	var tentKind, tentName string
+	if s.Tent {
+		spec := camping.TentOf(s.TentKind)
+		tentKind, tentName = string(spec.Kind), spec.Name
+	}
+	var activities []activityRow
+	for _, a := range s.Activities {
+		activities = append(activities, activityRow{Key: a.Key, Label: a.Label, Command: a.Command, Note: a.Note, Ready: a.Ready})
+	}
+	return campPayload{Activities: activities, Music: music, Gig: gig, InnRooms: innRooms, Recipes: recipes, RecipeBook: book, Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 
@@ -80,7 +229,7 @@ func campExtra(state func(leaderUserID, roomID int, tags []string) (camping.Camp
 	return companyExtra{module: "Company.Camp", build: func(user *users.UserRecord) []byte {
 		var tags []string
 		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-			tags = room.Tags
+			tags = room.GetTags()
 		}
 		s, ok := state(user.UserId, user.Character.RoomId, tags)
 		if !ok {
@@ -128,4 +277,20 @@ func alliedCampsOf(user *users.UserRecord, state func(leaderUserID, roomID int, 
 		out = append(out, alliedCamp{RoomID: s.RoomID, Leader: users.CharacterName(uid), FireLit: s.FireLit, Resting: s.Resting, Embers: s.Embers, Tent: s.Tent})
 	}
 	return out
+}
+
+type recipeNeed struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+	Have  int    `json:"have"`
+}
+
+type recipeRow struct {
+	Name  string       `json:"name"`
+	Kind  string       `json:"kind"`
+	For   string       `json:"for,omitempty"`
+	Needs []recipeNeed `json:"needs"`
+	Skill string       `json:"skill,omitempty"`
+	Level int          `json:"level,omitempty"`
+	Ready bool         `json:"ready"`
 }

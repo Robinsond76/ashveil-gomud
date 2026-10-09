@@ -119,7 +119,7 @@ func abilityPass() {
 		for _, a := range side {
 			// Phase 39a: a held brace lasts until its halberdier's next turn.
 			if a.char.RT != nil {
-				a.char.RT.Brace = false
+				a.char.RT.Brace, a.char.RT.BraceUsed = false, 0
 			}
 			if surprised(a.who.userId, a.who.mobId) {
 				continue
@@ -351,7 +351,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 		event.Outcome = combatstream.OutcomeSucceeded
 		emitCombat(event)
 		a.holder.say(fmt.Sprintf(`You tackle %s to the ground.`, target.tag()),
-			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down)`)
+			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down: its next action is lost)`)
 		abilityDown[foe.InstanceId] = true
 		// Phase 35b: from level 20 the knockdown lasts a round longer.
 		events.AddToQueue(events.Buff{MobInstanceId: foe.InstanceId, BuffId: status.KnockedDown, Source: `combat`, ExtraTriggers: strategy.TackleExtraRounds(a.char.Level) + a.char.ClassEffects().Int(classes.TackleHold)})
@@ -391,6 +391,58 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room, f
 
 // verbatim escapes text for a say template, so it prints as it is.
 func verbatim(s string) string { return strings.ReplaceAll(s, "%", "%%") }
+
+// endAbilityStrike ends one fighter's readied strike after its first turn
+// (Phase 82b: turns interleave, so each fighter's strike ends at its own
+// turn rather than between the old passes).
+func endAbilityStrike(who caster) {
+	if !abilityStrikes[who] {
+		delete(abilityKind, who)
+		return
+	}
+	var c *characters.Character
+	if who.userId > 0 {
+		if u := users.GetByUserId(who.userId); u != nil {
+			c = u.Character
+		}
+	} else if m := mobs.GetInstance(who.mobId); m != nil {
+		c = &m.Character
+	}
+	delete(abilityStrikes, who)
+	kind := abilityKind[who]
+	delete(abilityKind, who)
+	if c == nil {
+		return
+	}
+	if c.RT != nil {
+		c.RT.ShotNow = false
+	}
+	if c.Aggro == nil || c.Aggro.Type != characters.BackStab {
+		return
+	}
+	// Phase 87: a strike still readied after the fighter's turn was never
+	// loosed (no foe left in reach, or the turn was lost): it costs no
+	// cooldown, and the log says so.
+	if kind != "" && c.Health > 0 {
+		delete(abilityReady, abilityKey{who: who, id: kind})
+		if kind == strategy.AimedShot {
+			var h statusHolder
+			if u := users.GetByUserId(who.userId); who.userId > 0 && u != nil {
+				h = userHolder(u)
+			} else if m := mobs.GetInstance(who.mobId); who.mobId > 0 && m != nil {
+				h = mobHolder(m)
+			}
+			if h.char != nil {
+				h.say("Your aim finds no target; the shot is held back.", "%s lowers the bow; the shot finds no target.", "")
+			}
+		}
+	}
+	c.Aggro.Type = characters.DefaultAttack
+	c.Aggro.StrikeBonus = 0 // a later plain backstab must not inherit it
+	if c.Equipment.Weapon.GetSpec().Subtype == items.Shooting {
+		c.Aggro.Type = characters.Shooting
+	}
+}
 
 // endAbilityStrikes sets a readied strike that never landed (its foe fell
 // first, or its turn was lost) back to a plain attack, after the round's

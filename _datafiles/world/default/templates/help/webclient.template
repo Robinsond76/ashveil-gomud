@@ -8,6 +8,8 @@ button in them just types a command for you.
 
   <ansi fg="yellow">Time and Date</ansi>, then the <ansi fg="yellow">Map</ansi>, then the <ansi fg="yellow">Room</ansi> you stand in (its exits
   and who's here), and the <ansi fg="yellow">Tutorial</ansi> while you're taking the course.
+  The Time and Date sky also shows the weather where you are
+  (<ansi fg="command">help weather</ansi>).
 
   On the map, a small icon in a room's corner marks what it provides:
   fresh water, forage, shelter, and what you can gather. Hover for names;
@@ -35,26 +37,43 @@ button in them just types a command for you.
 
   Below it, the tabs:
 
-  <ansi fg="yellow">Character</ansi>   Overview (your name, class, level, stats, experience, and
-              gold), Gear (what you wear and carry, and its weight),
-              Skills (each trained skill with what it does, then what
-              your abilities and company can do), Quests, Effects, and
-              Pet when you have one.
-  <ansi fg="yellow">Company</ansi>     Status (formation and each member), Inventory (everyone's
-              gear, your horses, and the cargo), and Camp.
+  <ansi fg="yellow">Character</ansi>   Overview (your name, class, level, stats, experience,
+              gold, an Iron badge, and your account blessings as cards marked
+              Active, Next character or Locked), Gear
+              (what you wear and carry, and its weight), Skills (each
+              trained skill with what it does, then what your abilities
+              and company can do), Quests, and Pet when you have one.
+              Effects are on Company > Status.
+  <ansi fg="yellow">Company</ansi>     Status (formation, where you click a member and then a cell to
+              move or swap them, and one full-width card a member), Inventory (everyone's
+              gear, your horses, and the cargo), Camp, Chronicle (the
+              company's deeds in sentences, newest first, with a filter by
+              kind, and what the towns say of you; help chronicle and
+              help townsfolk), Opinions (what each companion likes,
+              dislikes and has lately said; help opinions), and Bonds
+              (how each pair of companions feels, with a bar for each;
+              help bonds), Errands (who is away and when they are
+              due, and a card to send each free companion; help errands),
+              Rites (who the company has lost and not yet mourned,
+              with a button to hold the rites at a camp or an inn; help
+              rites), and Bounties (the board you stand at, and the
+              bounties you hold, with their progress; help bounties).
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
               Battle view during a battle. A battle also opens as a
-              picture, the battle screen (help battlescreen).
+              picture, the battle screen, above the game text in the
+              middle of the page (help battlescreen).
   <ansi fg="yellow">Comm</ansi>        what's said around you; a number on the tab counts what
               arrived while you were looking elsewhere.
+  <ansi fg="yellow">Bestiary</ansi>    the kinds of creature you have beaten, by zone; tap one for
+              what you have learned of it (help bestiary).
 
   Turn on <ansi fg="yellow">Online</ansi> or <ansi fg="yellow">KillStats</ansi> in Settings and they join as <ansi fg="yellow">Who</ansi>
   and <ansi fg="yellow">Kills</ansi>.
 
 <ansi fg="yellow-bold">What the buttons and menus send</ansi>
 
-  Inventory: tap a member's slot, or click cargo gear, to compare or equip a living member; drag cargo onto a member.
+  Inventory: tabs (All, Equipment, Potions, Food & drink, Materials, Other) sort the cargo; click cargo gear to compare or equip a living member. Worn gear is under Character > Gear.
   Character > Gear: select a slot, choose a compatible cargo item, review
   Current → After and Equip item. Preview removal then Remove equipment
   returns the exact worn item to cargo. Unavailable choices explain why. Eat, drink and use items from
@@ -65,7 +84,10 @@ button in them just types a command for you.
   Camp: Make camp, Light fire, Rest, Break camp, and Inn appear only
   when they would work (<ansi fg="command">camp</ansi>, <ansi fg="command">inn</ansi>); Meal is always there.
   Under the buttons, "Around the fire" shows your companions' latest talk
-  (<ansi fg="command">help banter</ansi>).
+  (<ansi fg="command">help banter</ansi>). At your camp, Rest duties has a button for each duty
+  under each member: Sleep, Watch, Tend, Forage, Cook (and Brew for an Alchemist).
+  The pressed one is the member's duty; the buttons lock while a rest runs
+  (<ansi fg="command">help camp duties</ansi>).
 
   Click a stat, a skill, your race, or your points on the Character tab
   to open its help page; Escape closes it and puts you back where you
@@ -73,7 +95,10 @@ button in them just types a command for you.
   move, Enter chooses, and Escape closes it.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
-  or where they stand (<ansi fg="command">formation</ansi>). A guardian's menu picks whom it
+  or where they stand (<ansi fg="command">formation</ansi>). Under each row are the member's
+  battle orders, with an Orders button to add, remove or reorder them
+  (<ansi fg="command">help orders</ansi>), between battles, and their weapon stance, with a
+  Stance button to pick one (<ansi fg="command">help stances</ansi>). A guardian's menu picks whom it
   guards ("Guard: ..."), and its row says so, marked "(out of reach)" when
   it stands too far from its ward (<ansi fg="command">help guardian</ansi>); click Company tactics to set the
   focus or healing threshold (<ansi fg="command">company tactics</ansi>; the row appears once you
@@ -85,6 +110,8 @@ button in them just types a command for you.
   While you fight, the Combat tab shows the battle; when it ends, it goes
   back to Setup. If you're looking at another tab when a battle begins,
   a marker on the Combat tab tells you; it never switches tabs for you.
+  Under the battle, and after it, a "Last rounds" list keeps the company's
+  latest blows: open one to see why it landed or missed (<ansi fg="command">help battlelog</ansi>).
 
   The enemy group stands above, your company below (or just "You" when
   you fight alone), each front row nearest the middle, the way <ansi fg="command">scout</ansi>
@@ -135,14 +162,20 @@ See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help compan
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
-Company Inventory shows shared cargo once, plus each member's gear slots (tap or drag to equip). Character Gear previews any member's changes.
+Company Inventory shows shared cargo once, sorted by tabs. Character Gear lists every member's worn gear and previews any member's changes.
 
 Company Status separates active effects, wounds and persistent bonuses.
 Character Skills separates trained ranks, automatic combat abilities,
 field and camp capabilities, including disabled settings and conditions,
 and Company training: each companion's optional skills and training
 points, read only (train with company train).
-Character Effects shows your effects and wounds with their true duration
-and meaning. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
+Your own effects and wounds, with their true duration and meaning, are on
+your card in Company Status. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
 
 The Battle view uses current combat positions on narrow ground, with two active columns and any overflow marked Reserve. Setup continues to show your saved formation. See help battlefield.
+
+<ansi fg="yellow-bold">Keys</ansi>
+
+  With the command box empty, the arrow keys walk, and Enter opens a quick
+  menu of what you can do in this room: look, attack, move, get, gather,
+  company, and more (<ansi fg="command">help quickmenu</ansi>).

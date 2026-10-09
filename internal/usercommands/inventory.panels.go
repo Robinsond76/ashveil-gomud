@@ -45,6 +45,7 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 		// Ashveil (Phase 26a): the company's load and supplies lead.
 		sb.WriteString(companyLoadLines(user, summaryFor(user)))
 		sb.WriteString(layout.Render())
+		sb.WriteString(relicLines(c))
 		sb.WriteString(term.CRLFStr)
 
 		// Build the wrapped "Carrying:" line, matching the original template behaviour.
@@ -127,4 +128,41 @@ func showsUses(iSpec items.ItemSpec) bool {
 		(iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible ||
 			iSpec.Subtype == items.Usable || iSpec.Type == items.Lockpicks ||
 			iSpec.Type == items.Object)
+}
+
+// relicLines lists what the worn relics do (Phase 36d): each Legendary's
+// signature and each set's progress with the bonuses in force. Nothing for a
+// character in plain gear.
+func relicLines(c *characters.Character) string {
+	var lines []string
+	for _, slot := range characters.AllSlots() {
+		itm := c.Equipment.Get(slot)
+		if itm.IsDisabled() || itm.ItemId < 1 {
+			continue
+		}
+		if spec := itm.GetSpec(); spec.Relic != nil && !spec.Relic.IsSet() {
+			lines = append(lines, fmt.Sprintf(` <ansi fg="rarity-legendary">%s</ansi>: %s`, itm.Name(), itm.RelicLines()[0]))
+		}
+	}
+	_, sets := c.WornGear()
+	for _, text := range items.SetProgressText(sets) {
+		lines = append(lines, ` <ansi fg="rarity-set">`+strings.SplitN(text, "\n", 2)[0]+`</ansi>`)
+		if _, rest, ok := strings.Cut(text, "\n"); ok {
+			lines = append(lines, ` `+rest)
+		}
+	}
+	// Phase 67: each worn relic's awakenings, with the next one's count.
+	for _, slot := range characters.AllSlots() {
+		itm := c.Equipment.Get(slot)
+		if itm.IsDisabled() || itm.ItemId < 1 {
+			continue
+		}
+		if status := itm.AwakeningStatus(); status != "" {
+			lines = append(lines, fmt.Sprintf(` <ansi fg="yellow">%s</ansi>: %s`, itm.Name(), status))
+		}
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	return term.CRLFStr + ` <ansi fg="yellow">Relics worn:</ansi>` + term.CRLFStr + strings.Join(lines, term.CRLFStr) + term.CRLFStr
 }

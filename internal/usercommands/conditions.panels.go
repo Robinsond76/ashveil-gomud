@@ -15,7 +15,7 @@ func buildConditionsPanel(user *users.UserRecord) string {
 	if err != nil {
 		layout = templates.NewPanelLayout("open", "single", 1, 1)
 		layout.AddPanelsToSlot(layout.AddSlot(), "conditions")
-		layout.Panel("conditions").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Conditions</ansi> `).SetWidth(78)
+		layout.Panel("conditions").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Conditions</ansi> `).SetWidth(78)
 	}
 
 	// Ashveil (Phase 26a): conditions are grouped (conditions.ashveil.go).
@@ -40,7 +40,7 @@ func buildConditionsPanel(user *users.UserRecord) string {
 		if i > 0 {
 			panel.AddBlank()
 		}
-		panel.Add(``, ``, fmt.Sprintf(`<ansi fg="20">%s</ansi>`, g.title))
+		panel.Add(``, ``, fmt.Sprintf(`<ansi fg="69">%s</ansi>`, g.title))
 		for _, row := range g.rows {
 			var value string
 			switch {

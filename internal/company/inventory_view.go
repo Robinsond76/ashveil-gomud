@@ -35,10 +35,16 @@ type InventoryItem struct {
 	UsesMax int // the spec's uses; 0 or 1 for an item without uses
 	Type    string
 	Subtype string
+	// Goods is the item's trade category (trophy, material, valuable...),
+	// "" for none; the web client's inventory tabs sort by it (Phase 89).
+	Goods string
 	// WornBy names the creature species the item is cut for (Phase 38e).
 	WornBy []string
 	// Slot is the worn slot, "" for a carried item.
 	Slot string
+	// Relic is an authored relic's signature, or its set and bonuses, in
+	// words (Phase 36d review); nil for anything else.
+	Relic []string
 }
 
 // InventoryMember is one member's gear.
@@ -73,9 +79,10 @@ func ItemLabel(itm items.Item) string {
 func inventoryItem(itm items.Item, slot string) InventoryItem {
 	out := InventoryItem{Ref: itm.ShorthandId(), Name: itm.Name(), Label: PlainLabel(itm), Grams: itm.Weight(), Count: 1, Uses: itm.Uses, Slot: slot}
 	if spec := items.GetItemSpec(itm.ItemId); spec != nil {
-		out.UsesMax, out.Type, out.Subtype = spec.Uses, string(spec.Type), string(spec.Subtype)
+		out.UsesMax, out.Type, out.Subtype, out.Goods = spec.Uses, string(spec.Type), string(spec.Subtype), spec.Goods
 		out.WornBy = spec.WornBy
 	}
+	out.Relic = itm.RelicLines()
 	return out
 }
 

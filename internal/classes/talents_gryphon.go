@@ -9,4 +9,5 @@ var (
 
 func init() {
 	offer("gryphon-rider", tKeenEdge, tFootwork, tToughness, tSharpEye, tWingDrill)
+	offerElite("gryphon-rider", tIronHide, tVeteransEdge, tShadowFooting) // Phase 39i2
 }

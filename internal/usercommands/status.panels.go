@@ -69,6 +69,10 @@ func buildStatusPanel(user *users.UserRecord) string {
 		Add(`<ansi fg="yellow">Race:   </ansi>`, `<ansi fg="yellow">Rce:</ansi>`, fmt.Sprintf(`%s (%s)`, c.Race(), c.RaceSize()))
 	if ashveil {
 		addAshveilIdentity(layout.Panel("info"), summary)
+		// Ashveil Phase 77: the Iron badge.
+		if c.IsIron() {
+			addRow(layout.Panel("info"), `Mode:   `, `Mod:`, `<ansi fg="yellow-bold">Iron</ansi> <ansi fg="black-bold">(help hardcore)</ansi>`)
+		}
 	}
 	layout.Panel("info").
 		Add(`<ansi fg="yellow">Level:  </ansi>`, `<ansi fg="yellow">Lvl:</ansi>`, fmt.Sprintf(`%d`, c.Level)).
@@ -130,7 +134,7 @@ func buildStatusTrainPanel(user *users.UserRecord, highlighted string) string {
 	if err != nil {
 		layout = templates.NewPanelLayout("open", "single", 1, 2)
 		layout.AddPanelsToSlot(layout.AddSlot(), "train")
-		layout.Panel("train").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Base Value</ansi> `).SetWidth(42)
+		layout.Panel("train").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Base Value</ansi> `).SetWidth(42)
 	}
 	layout.Panel("train").SetLabelWidth(12)
 
@@ -171,13 +175,13 @@ func statusBonuses(user *users.UserRecord) (bool, error) {
 	var sb strings.Builder
 
 	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Stat Bonuses for </ansi><ansi fg="username">`)
+	sb.WriteString(` <ansi fg="black-bold">.:</ansi><ansi fg="69">Stat Bonuses for </ansi><ansi fg="username">`)
 	sb.WriteString(user.Character.Name)
 	sb.WriteString(`</ansi>`)
 	sb.WriteString(term.CRLFStr)
 
 	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Equipment Bonuses</ansi> ──────────────────────────────────────────────────────┐`)
+	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="69">Equipment Bonuses</ansi> ──────────────────────────────────────────────────────┐`)
 
 	equipFound := false
 	for _, slot := range characters.AllSlots() {
@@ -207,7 +211,7 @@ func statusBonuses(user *users.UserRecord) (bool, error) {
 
 	activeBuffs := user.Character.Buffs.GetBuffs()
 	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Buff Bonuses</ansi> ───────────────────────────────────────────────────────────┐`)
+	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="69">Buff Bonuses</ansi> ───────────────────────────────────────────────────────────┐`)
 
 	buffFound := false
 	for _, b := range activeBuffs {
@@ -232,7 +236,7 @@ func statusBonuses(user *users.UserRecord) (bool, error) {
 	sb.WriteString(` └────────────────────────────────────────────────────────────────────────────┘`)
 
 	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Pet Bonuses</ansi> ────────────────────────────────────────────────────────────┐`)
+	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="69">Pet Bonuses</ansi> ────────────────────────────────────────────────────────────┐`)
 
 	if user.Character.Pet.Exists() {
 		mods := user.Character.Pet.GetEffectiveStatMods()
@@ -256,7 +260,7 @@ func statusBonuses(user *users.UserRecord) (bool, error) {
 
 	// Phase 24: company chemistry is a hit bonus, not a buff or stat mod.
 	sb.WriteString(term.CRLFStr)
-	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Company Chemistry</ansi> ──────────────────────────────────────────────────────┐`)
+	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="69">Company Chemistry</ansi> ──────────────────────────────────────────────────────┐`)
 	sb.WriteString(term.CRLFStr)
 	sb.WriteString(`   ` + chemistryBonusLine(user.UserId))
 	sb.WriteString(term.CRLFStr)

@@ -30,7 +30,7 @@ const company = {
   leader: member('leader', 0, 'Wren', 'Ranger', { row: 0, col: 1 }, 'fighter'),
   members: [
     member('companion:1', 1, 'Oswin', 'Cleric', { row: 1, col: 0 }, 'healer'),
-    { ...member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'), class: 'knight', class_name: 'Knight' },
+    { ...member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'), class: 'knight', class_name: 'Knight', stance: { key: 'wall', name: 'Shield wall', ready: true } },
     member('companion:3', 3, 'Ysolde', 'Wizard', { row: 2, col: 2 }, 'caster'),
     member('companion:4', 4, 'Tamsin', 'Rogue', null, 'fighter'),
   ],
@@ -53,6 +53,8 @@ const battle = {
     enemy(4, 'a hulking brute', 2, 1, 'scratched', 'unknown-large', ''),
   ],
   company: [{ key: 'leader', target: 'm:2' }, { key: 'companion:2', target: 'm:1' }],
+  // Phase 82d: the round's turn order; the leader is fast enough to act twice.
+  order: [{ id: 'leader', slot: 1 }, { id: 'm:2', slot: 2 }, { id: 'companion:2', slot: 3 }, { id: 'm:1', slot: 4 }, { id: 'leader', slot: 5 }],
   focus: 'none', saved_focus: 'none', focus_ready: true,
   outlook: { risk: 'fair', close: true, text: 'It could go either way.' },
 };
@@ -94,6 +96,16 @@ check(unitOf(s, 'companion:2').promoted === 'knight' && unitOf(s, 'leader').prom
   await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
   const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
   check(cap.startsWith('Brant, Knight'), 'hovering a promoted member names its class: ' + cap);
+  check(cap.includes(', Shield wall stance'), 'hovering a member names the weapon stance it fights in (69): ' + cap);
+  await page.mouse.move(0, 0);
+}
+{
+  // A member with no advanced class is named by its archetype (random companion names).
+  const b = unitOf(s, 'companion:1').at;
+  const box = await page.locator('#battle-screen canvas').boundingBox();
+  await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
+  const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
+  check(cap.startsWith('Oswin, Cleric'), 'hovering a base-class member names its archetype: ' + cap);
   await page.mouse.move(0, 0);
 }
 check(unitOf(s, 'leader').cell.row === 0 && unitOf(s, 'leader').cell.col === 1, 'the leader stands in their cell');
@@ -109,6 +121,18 @@ check(unitOf(s, 'm:1').sprite === 'wolf-timber' && unitOf(s, 'm:4').sprite === '
 check(unitOf(s, 'companion:2').role === 'guardian', 'roles come from the company');
 check(await page.evaluate(() => document.querySelector('#battle-screen canvas').getAttribute('aria-hidden') === 'true'), 'the canvas is decorative');
 check((await page.evaluate(() => document.querySelector('#battle-screen .bs-title').textContent)).includes('a pack of timber wolves'), 'the title names the group');
+// Phase 82d: the round's turn order under the picture.
+{
+  const tags = await page.evaluate(() => Array.from(document.querySelectorAll('#battle-screen .bs-order .bs-turn')).map(t => t.textContent + (t.classList.contains('is-enemy') ? '!' : '') + (t.classList.contains('is-acting') ? '*' : '') + (t.classList.contains('is-done') ? '-' : '')));
+  check(JSON.stringify(tags) === JSON.stringify(['Wren', 'wolf 2!', 'Brant', 'wolf 1!', 'Wren']), 'the strip lists the order as short tags (a foe by its kind and number), foes dashed, a fast leader twice, nobody acting yet: ' + JSON.stringify(tags));
+  check((await page.evaluate(() => document.querySelector('#battle-screen .bs-order .bs-turn').title)) === 'Wren, turn 1', 'a tag names the fighter and its turn');
+  // With animations off a turn's event marks its slot at once.
+  await events({ fight: 1, round: 1, events: [{ seq: 1, kind: 'attack', src: 'm:2', tgt: 'leader', outcome: 'hit', damage: 3, weapon: 'claws', slot: 2 }] });
+  const after = await page.evaluate(() => Array.from(document.querySelectorAll('#battle-screen .bs-order .bs-turn')).map(t => (t.classList.contains('is-acting') ? '*' : '') + (t.classList.contains('is-done') ? '-' : '')));
+  check(JSON.stringify(after) === JSON.stringify(['-', '*', '', '', '']) && (await state()).acting === 2, 'the acting slot is bright and the one before it dimmed: ' + JSON.stringify(after));
+  await events({ fight: 1, round: 2, events: [{ seq: 2, kind: 'attack', src: 'leader', tgt: 'm:2', outcome: 'miss', weapon: 'slashing' }] });
+  check((await state()).acting === 0, 'a new round starts the strip afresh');
+}
 
 // --- Screenshot ---
 await events({ fight: 1, round: 1, events: [
@@ -172,7 +196,7 @@ check(unitOf(s, 'm:5') && unitOf(s, 'm:5').cell.row === 1, 'a newcomer appears f
 
 // --- Buttons ---
 await page.evaluate(() => { window.sent.length = 0; });
-await page.click('#battle-screen button:text("Retreat")');
+await page.click('#battle-screen .bs-foot button:text("Retreat")');
 await page.click('#battle-screen button[data-focus="weakest"]');
 const sent = await page.evaluate(() => window.sent);
 check(sent[0] === 'retreat' && sent[1] === 'company tactics focus weakest', 'Retreat and focus send the dock\'s commands: ' + JSON.stringify(sent));
@@ -255,6 +279,11 @@ await events({ fight: 2, round: 1, events: [{ seq: 35, kind: 'spell-hit', src: '
 await until(() => window.BattleScreen.state().lastBlow === 'Ysolde\'s Magic Missile strikes the first wolf (7)', 'the last-blow line names the spell');
 await events({ fight: 2, round: 1, events: [{ seq: 36, kind: 'spell-hit', src: '?', tgt: 'companion:3', spell: 'mm', spell_name: 'Magic Missile', damage: 2 }] });
 await until(() => window.BattleScreen.state().lastBlow === 'A spell strikes Ysolde (2)', 'an unseen caster\'s spell goes unnamed');
+// Phase 61: a battle order carried out reads "as ordered" in the log.
+await events({ fight: 2, round: 1, events: [{ seq: 37, kind: 'order-fired', src: 'companion:3', tgt: 'leader', status: 'heal' }] });
+await until(() => window.BattleScreen.state().lastBlow === 'Ysolde tends Wren, as ordered', 'an order carried out is said "as ordered"');
+await events({ fight: 2, round: 1, events: [{ seq: 38, kind: 'order-fired', src: 'companion:2', tgt: 'm:1', status: 'break' }] });
+await until(() => /turns on the first wolf, as ordered$/.test(window.BattleScreen.state().lastBlow), 'a break order names the foe it turns on');
 // A death plays out: the unit stands until its fall has played, then lies down.
 await events({ fight: 2, round: 2, events: [{ seq: 33, kind: 'death', tgt: 'm:3' }] });
 check(!unitOf(await state(), 'm:3').fallen, 'a death does not lay the unit down until its animation has played');

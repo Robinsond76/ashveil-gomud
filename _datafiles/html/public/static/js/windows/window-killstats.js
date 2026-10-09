@@ -265,16 +265,7 @@
     // Tab switching
     // -----------------------------------------------------------------------
     function makeTabSwitcher(root) {
-        const btns   = root.querySelectorAll('.ks-tab-btn');
-        const panels = root.querySelectorAll('.ks-tab-panel');
-        btns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                btns.forEach(function(b)   { b.classList.remove('active'); });
-                panels.forEach(function(p) { p.classList.remove('active'); });
-                btn.classList.add('active');
-                root.querySelector('#' + btn.dataset.panel).classList.add('active');
-            });
-        });
+        Client.tabs(root, { button: '.ks-tab-btn', panel: '.ks-tab-panel' });
     }
 
     // -----------------------------------------------------------------------
@@ -398,6 +389,7 @@
     }
 
     function renderList(listEl, mapObj, total) {
+        keepScroll(listEl);
         listEl.innerHTML = '';
 
         if (!mapObj || Object.keys(mapObj).length === 0) {
@@ -428,6 +420,7 @@
     }
 
     function renderMobList(listEl, mapObj, eliteMap, total) {
+        keepScroll(listEl);
         listEl.innerHTML = '';
 
         if (!mapObj || Object.keys(mapObj).length === 0) {
@@ -463,6 +456,7 @@
     }
 
     function renderPvpList(listEl, playersObj, total) {
+        keepScroll(listEl);
         listEl.innerHTML = '';
 
         if (!playersObj || Object.keys(playersObj).length === 0) {
@@ -550,7 +544,10 @@
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Char.Kills', 'Char'],
-        onGMCP() { update(); },
+        onGMCP(namespace) {
+            // Skip the other Char.* feeds (Vitals arrives constantly).
+            if (namespace === 'Char' || namespace.indexOf('Char.Kills') === 0) { update(); }
+        },
     });
 
 })();

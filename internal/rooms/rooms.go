@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/audio"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -198,6 +199,17 @@ func (r *Room) RemoveCorpse(c Corpse) bool {
 	return false
 }
 
+// playersInBattle lists the room's players who are in a battle right now.
+func (r *Room) playersInBattle() []int {
+	ids := []int{}
+	for _, uid := range r.GetPlayers() {
+		if _, ok := battle.Current(uid); ok {
+			ids = append(ids, uid)
+		}
+	}
+	return ids
+}
+
 func (r *Room) UpdateCorpses(roundNow uint64) {
 
 	c := configs.GetGamePlayConfig()
@@ -213,11 +225,14 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 		corpse.Update(roundNow, c.Death.CorpseDecayTime.String())
 		if corpse.Prunable {
 			removeIdx = append(removeIdx, idx)
+			// A corpse from an earlier fight decaying mid-battle would read as
+			// part of the current fight, so those in a battle are not told.
+			inBattle := r.playersInBattle()
 			if corpse.MobId > 0 {
-				r.SendText(fmt.Sprintf(`A <ansi fg="mob-corpse">%s corpse</ansi> crumbles to dust.`, corpse.Character.Name))
+				r.SendText(fmt.Sprintf(`A <ansi fg="mob-corpse">%s corpse</ansi> crumbles to dust.`, corpse.Character.Name), inBattle...)
 			}
 			if corpse.UserId > 0 {
-				r.SendText(fmt.Sprintf(`A <ansi fg="user-corpse">%s corpse</ansi> crumbles to dust.`, corpse.Character.Name))
+				r.SendText(fmt.Sprintf(`A <ansi fg="user-corpse">%s corpse</ansi> crumbles to dust.`, corpse.Character.Name), inBattle...)
 			}
 		}
 		r.Corpses[idx] = corpse

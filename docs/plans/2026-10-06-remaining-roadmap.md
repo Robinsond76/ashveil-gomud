@@ -39,7 +39,8 @@ cost merge order, not a dependency.
 | 38c | Elite promotions at 30, ranks 30–60, six lineages; three slices 38c1–38c3 ([plan](2026-10-06-phase-38c-elite-routes.md)) | 38b, 38c-d | After 38b |
 | 38d | Expanded class catalogue bundles, Sorcerer first | 38c | Later |
 | 38e | Creature recruits (Hound and Stone Golem pilot) | 38d, 39e | Later |
-| 39i | Elite ranks for the eight neutral lineages (new) | 38c, 39a–39h | Later |
+| 39i | Elite ranks for Halberdier, Samurai, Shaman and Doll Master, plus the balance items (**in review**) | 38c, 39a–39h | PR open |
+| 39i2 | Elite ranks for Beast Tamer, Gryphon Rider, Alchemist and Arbalist (new, split from 39i) | 39i | Merged (PR #122 via review PR) |
 | 36d | Tier 4–6 gear, Legendary signatures, Set bonuses (loot slice 5) | 36c, 38c | Later |
 | 40a2 | Gathering | 40a | After 40a |
 | 40a3 | Camp gear (already approved) | 40a2 | After 40a2 |
@@ -55,8 +56,8 @@ cost merge order, not a dependency.
 | 40g | Battle animation and effects | 40f, 40s4 | After 40f |
 | 40h | Promoted and neutral class art in the client | 40b, 40g, 40s5 | Later |
 | 40i | Touch layout and installable web app | 40d, 40f | Later |
-| **41** | **World building, levels 1–15, tile-ready** (new number) | 40d, 37b | Later |
-| **42** | **Zones 15–30+, elite content, tier 4–6 placement** (new) | 41, 38c, 36d | Later |
+| **41** | **World building, levels 1–15, tile-ready** (new number) | 40d, 37b | Built as the test-only world ([plan](2026-10-07-phase-41-42-test-world.md)) |
+| **42** | **Zones 15–30+, elite content, tier 4–6 placement** (new) | 41, 38c, 36d | Built with 41 (same plan) |
 | **43a** | **Camp consumables** (designed 2026-10-01, now scheduled) | 40a2 | After 40a2 |
 | **43b** | **Weapon poisons** (designed 2026-10-01, now scheduled) | 43a | After 43a |
 | **50** | **Condition carries into battle; meal buffs** ([Outward phases](2026-10-06-outward-survival-phases.md)) | 47 | After 47 |
@@ -131,6 +132,15 @@ The neutral classes design says their elite ranks ship with 38c+. 38c
 covers the six original lineages; 39i adds ranks 30–60 for the eight
 neutral lineages once all of them and 38c are in.
 
+39i split in two to fit one reviewable PR: **39i** ships the four earliest
+lineages (Halberdier, Samurai, Shaman, Doll Master; twelve elites) and the
+balance items; **39i2** ships the other four (Beast Tamer, Gryphon Rider,
+Alchemist, Arbalist; twelve elites, each still `Planned`), reusing 39i's
+pattern: seven-rank tables, elite talents offered through `offerElite`, a
+wiring test that fires each signature in a real round, a mirror sim
+(`TestPhase39iNeutralElites`, extend its lineage table), one help page per
+elite and the lineage routes page updated.
+
 ### 40a4 Camp theft
 
 The owner recorded camp theft as a future feature that gives bells and
@@ -164,6 +174,29 @@ story instead of a church respawn on defeat (53), set-up before a fight
 overlap check against 47, 49 and companion equipment, and each phase's
 acceptance are in the [phase plan](2026-10-06-outward-survival-phases.md).
 Build order: 50 and 54 first, then 51 and 53, then 52, 55 and 56.
+
+### 60–77 Lessons from Pillars of Eternity
+
+Added 2026-10-07 at the owner's request after a research thread on Pillars
+of Eternity and Deadfire. Story events (60), battle orders (61), battle
+lines that explain themselves (62), a company chronicle (63), companion
+opinions and bonds (64, 65), a bestiary (66), relic awakenings (67), towns
+that remember (68), weapon stances (69), errands (70), trophy enchanting
+(71), backgrounds (72), faith creeds (73), rites for the dead (74), inn room
+tiers (75), bounty boards (76), and Hardcore with account blessings (77).
+Scope, dependencies and acceptance are in the
+[phase plan](2026-10-07-pillars-phases.md). Build order: 60–63 first.
+
+**72a Looks and life story at creation** (added 2026-10-07 from the owner's
+Bannerlord idea): looks picked as bands and written as a description, a
+three-stage life story whose trade is phase 72's background, small stat
+effects, a web creation panel, skin and hair colour on sprites.
+[Spec](2026-10-07-phase-72a-character-creation.md). No unbuilt
+dependencies; phase 72 now depends on it.
+
+**80 Flaky tests** (added 2026-10-07, owner's full autonomy; 79 is the
+Fable polish pass): tests that fail at random under load, fixed at the root.
+[Findings](2026-10-07-phase-80-flaky-tests.md).
 
 ## Folded into existing phases
 

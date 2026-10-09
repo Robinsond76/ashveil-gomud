@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -72,7 +73,12 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 	a.holder.say(fmt.Sprintf(`You fold your wings and stoop on %s.`, mobHolder(foe).tag()),
 		`%s stoops from the sky on `+verbatim(mobHolder(foe).tag())+`.`, ` (dive)`)
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(target), Status: `Dive`})
-	r := extraBlow(a, target, room, 100+fx.Int(classes.DiveDmg))
+	pct := 100 + fx.Int(classes.DiveDmg)
+	// Phase 39i2: a Wyvern Lord's stoop is the worse for a poisoned foe.
+	if x := fx.Int(classes.DivePoisX); x > 0 && target.Character.HasBuff(buffPoisoned) {
+		pct += x
+	}
+	r := extraBlow(a, target, room, pct)
 	if !fx.Has(classes.DiveSteady) {
 		a.char.Aura.Evasion -= strategy.DiveEvasionCost
 	}
@@ -84,11 +90,31 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 		events.AddToQueue(events.Buff{MobInstanceId: target.InstanceId, BuffId: id, Source: `combat`})
 		a.holder.say(fmt.Sprintf(you, tag), others, suffix)
 	}
-	if fx.Has(classes.Talons) && !status.Live(&target.Character, status.Bleeding) {
+	if fx.Has(classes.Talons) && !combat.IsBloodless(&target.Character) && !status.Live(&target.Character, status.Bleeding) {
 		apply(status.Bleeding, `Your talons rake %s, and it bleeds.`, `%s's talons rake `+verbatim(tag)+`.`, ` (bleeding)`)
 	}
-	if fx.Has(classes.DiveDown) && !status.Live(&target.Character, status.KnockedDown) && lanceHeld(a.char) {
-		apply(status.KnockedDown, `The stoop knocks %s to the ground.`, `The stoop knocks `+verbatim(tag)+` to the ground.`, ` (knocked down)`)
+	if fx.Has(classes.DiveDown) && lanceHeld(a.char) {
+		if !status.Live(&target.Character, status.KnockedDown) {
+			apply(status.KnockedDown, `The stoop knocks %s to the ground.`, `The stoop knocks `+verbatim(tag)+` to the ground.`, ` (knocked down)`)
+			// Phase 39i2: a Gryphon Lord's landing shakes the foes beside it.
+			if fx.Has(classes.DiveQuake) {
+				for _, other := range foesBesideRow(target, room, nil) {
+					if status.Live(&other.Character, status.KnockedDown) {
+						continue
+					}
+					events.AddToQueue(events.Buff{MobInstanceId: other.InstanceId, BuffId: status.KnockedDown, Source: `combat`})
+					otag := mobHolder(other).tag()
+					a.holder.say(fmt.Sprintf(`The landing throws %s down as well.`, otag), `The landing throws `+verbatim(otag)+` down as well.`, ` (knocked down)`)
+					emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(other), Status: `Thunder landing`})
+				}
+			}
+		}
+	}
+	// Phase 39i2: a Falcon Marshal's Dive marks its foe for the whole company.
+	if n := fx.Int(classes.DiveMark); n > 0 {
+		lendMark(target.Character.RTState(), n)
+		a.holder.say(fmt.Sprintf(`You mark %s for your company.`, tag), `%s marks `+verbatim(tag)+` for the company.`, fmt.Sprintf(` (marked: +%d Attack for your allies, 2 rounds)`, n))
+		emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(target), Status: `Marshal's mark`, Outcome: combatstream.OutcomeSucceeded})
 	}
 	if fx.Has(classes.DiveExpo) && !status.Live(&target.Character, status.Exposed) {
 		apply(status.Exposed, `You mark %s, and it is left exposed.`, `%s marks `+verbatim(tag)+`, leaving it exposed.`, ` (exposed)`)
@@ -96,6 +122,20 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 	// The creatures that shrug off a coated blade shrug off venom too.
 	if fx.Has(classes.DivePois) && target.PoisonSusceptibility != items.PoisonImmune {
 		apply(buffPoisoned, `Your venom sinks into %s.`, `%s's venom sinks into `+verbatim(tag)+`.`, ` (poisoned)`)
+	}
+	// Phase 39i2: a Wyvern Lord's tail lashes the foe beside the one dived on.
+	if share := fx.Int(classes.DiveTail); share > 0 {
+		if other := foeBeside(target, room, nil); other != nil {
+			otag := mobHolder(other).tag()
+			a.holder.say(fmt.Sprintf(`Your wyvern's tail lashes %s.`, otag), `The wyvern's tail lashes `+verbatim(otag)+`.`, ` (tail lash)`)
+			emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(other), Status: `Lashing tail`})
+			// Half the Dive's own damage (review: it was half a plain blow).
+			tr := extraBlow(a, other, room, max(1, pct*share/100))
+			if tr.Hit && tr.DamageToTarget > 0 && other.Character.Health > 0 && fx.Has(classes.DivePois) && other.PoisonSusceptibility != items.PoisonImmune && !other.Character.HasBuff(buffPoisoned) {
+				events.AddToQueue(events.Buff{MobInstanceId: other.InstanceId, BuffId: buffPoisoned, Source: `combat`})
+				a.holder.say(fmt.Sprintf(`Your venom sinks into %s.`, otag), `%s's venom sinks into `+verbatim(otag)+`.`, ` (poisoned)`)
+			}
+		}
 	}
 }
 

@@ -1,0 +1,18 @@
+roomid: 3523
+zone: Thornreach Wood
+title: Old Thicket
+description: Something has rubbed bark off the nearest trunk, very high up.
+biome: forest
+exits:
+  east:
+    roomid: 3524
+  west:
+    roomid: 3522
+  north:
+    roomid: 3517
+resources:
+- shelter
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true

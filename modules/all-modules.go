@@ -7,7 +7,10 @@ package modules
 
 import (
 	_ "github.com/GoMudEngine/GoMud/modules/archetype"
+	_ "github.com/GoMudEngine/GoMud/modules/blessings"
+	_ "github.com/GoMudEngine/GoMud/modules/bounties"
 	_ "github.com/GoMudEngine/GoMud/modules/camping"
+	_ "github.com/GoMudEngine/GoMud/modules/chronicle"
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"
 	_ "github.com/GoMudEngine/GoMud/modules/company"
 	_ "github.com/GoMudEngine/GoMud/modules/death"
@@ -22,9 +25,11 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/market"
 	_ "github.com/GoMudEngine/GoMud/modules/mount"
 	_ "github.com/GoMudEngine/GoMud/modules/standing"
+	_ "github.com/GoMudEngine/GoMud/modules/storyevents"
 	_ "github.com/GoMudEngine/GoMud/modules/strategy"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
 	_ "github.com/GoMudEngine/GoMud/modules/testarea"
+	_ "github.com/GoMudEngine/GoMud/modules/townsfolk"
 	_ "github.com/GoMudEngine/GoMud/modules/tutorial"
 	_ "github.com/GoMudEngine/GoMud/modules/walking"
 	_ "github.com/GoMudEngine/GoMud/modules/walkto"

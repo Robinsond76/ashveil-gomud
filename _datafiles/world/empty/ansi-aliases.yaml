@@ -15,7 +15,7 @@ colors:
   nameprefix-pet: 10
   role: 8
   role-admin: 9
-  role-mod: 1
+  role-mod: 167
   role-user: 2
   role-guest: 8
   command: 6
@@ -62,7 +62,7 @@ colors:
   shop-pet-type: 215
   shop-enchantment: 147
   uses-left: 8 # Bright black
-  holy: 21
+  holy: 63
   good: 27
   virtuous: 39
   lawful: 51
@@ -71,10 +71,10 @@ colors:
   corrupt: 214
   evil: 202
   unholy: 196
-  item-nothing: 237 # darkish black
+  item-nothing: 243 # dim grey, still readable
   item-flags: 7 # light gray
   item-enchanted: 147
-  item-cursed: 54
+  item-cursed: 133
   item-bonus-damage: 49
   name-flags-wrapper: 240
   name-flag: 246
@@ -104,7 +104,7 @@ colors:
   mana-10: 245
   mana-0: 8
   suggested-text: 8
-  night: 19
+  night: 111
   day: 228
   day-dusk: 214
   enters-message: 8
@@ -150,5 +150,5 @@ colors:
   md-sp1: command
   md-bold: 9
   md-em: 208
-  md-hr1: 4
-  md-hr2: 4
+  md-hr1: 63
+  md-hr2: 63

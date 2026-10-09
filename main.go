@@ -14,7 +14,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/appearance"
 	"github.com/GoMudEngine/GoMud/internal/audio"
+	"github.com/GoMudEngine/GoMud/internal/blessings"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
@@ -31,6 +33,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/language"
+	"github.com/GoMudEngine/GoMud/internal/lifestory"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/migration"
 	"github.com/GoMudEngine/GoMud/internal/modmanager"
@@ -1159,6 +1162,12 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 
 	plugins.OnNetConnect(connDetails)
 
+	// Phase 79: the web client's windows ask for their GMCP pages
+	// (!!GMCP(Char.Creation) and the like) as soon as the socket is up,
+	// before anyone has logged in. The prefix handler must sit in front of
+	// the login prompts, as it does for telnet, or a request typed at the
+	// username prompt is taken as the username.
+	connDetails.AddInputHandler("TextPrefixHandler", inputhandlers.TextPrefixHandler)
 	loginHandler := inputhandlers.GetLoginPromptHandler()
 	connDetails.AddInputHandler("LoginPromptHandler", loginHandler)
 
@@ -1232,7 +1241,6 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 					}
 					userObject = loggedInUser
 					connDetails.RemoveInputHandler("LoginPromptHandler")
-					connDetails.AddInputHandler("TextPrefixHandler", inputhandlers.TextPrefixHandler)
 					connDetails.AddInputHandler("EchoInputHandler", inputhandlers.EchoInputHandler)
 					connDetails.AddInputHandler("HistoryInputHandler", inputhandlers.HistoryInputHandler)
 					if userObject.Role == users.RoleAdmin {
@@ -1247,6 +1255,12 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 				}
 				// Token valid but user not in memory; fall through to normal login handling.
 			}
+		}
+
+		// A UI click arrives as "!!ECHO(label)command": run the command and
+		// let the echo handler show the label, not the raw form.
+		if userObject != nil && !connections.InputMasked(clientInput.ConnectionId) {
+			message = inputhandlers.NoteClickLine(message, sharedState)
 		}
 
 		clientInput.DataIn = message
@@ -1313,7 +1327,6 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 			// Remove the prompt handler (it signaled completion by returning true)
 			connDetails.RemoveInputHandler("LoginPromptHandler")
 			// Replace it with a regular echo handler.
-			connDetails.AddInputHandler("TextPrefixHandler", inputhandlers.TextPrefixHandler)
 			connDetails.AddInputHandler("EchoInputHandler", inputhandlers.EchoInputHandler)
 			// Add admin command handler
 			connDetails.AddInputHandler("HistoryInputHandler", inputhandlers.HistoryInputHandler) // Put history tracking after login handling, since login handling aborts input until complete
@@ -1758,6 +1771,7 @@ func loadAllDataFiles(isReload bool) {
 	buffs.LoadFlagDataFiles() // Load buff flags before buffs so buff validation can check flags
 	buffs.LoadDataFiles()     // Load buffs before items for cost calculation reasons
 	items.LoadDataFiles()
+	items.LoadSetDataFiles()  // Phase 36d authored set bonuses
 	loot.LoadLootDataFiles()  // category tables reference item specs
 	loot.LoadAffixDataFiles() // Phase 36a gear affixes
 	races.LoadDataFiles()
@@ -1771,6 +1785,17 @@ func loadAllDataFiles(isReload bool) {
 	mutators.LoadDataFiles()
 	colorpatterns.LoadColorPatterns()
 	audio.LoadAudioConfig()
+	// Ashveil 72a: looks and life stories (a world without the files simply has none).
+	if err := appearance.Load(); err != nil {
+		mudlog.Error("LoadDataFiles", "looks", err)
+	}
+	if err := lifestory.Load(); err != nil {
+		mudlog.Error("LoadDataFiles", "lifestory", err)
+	}
+	// Ashveil 77: account blessings.
+	if err := blessings.Load(); err != nil {
+		mudlog.Error("LoadDataFiles", "blessings", err)
+	}
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.
 }
 

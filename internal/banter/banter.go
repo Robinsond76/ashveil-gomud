@@ -39,6 +39,9 @@ const (
 	CtxClose    = "close"    // a won battle that was a close call
 	CtxFall     = "fall"     // a won battle in which someone fell
 	CtxFlawless = "flawless" // a won battle nobody was hurt much in
+	CtxSong     = "song"     // the company plays at camp (camp music)
+	CtxFriend   = "friend"   // two companions who trust each other (Phase 65 bonds)
+	CtxRival    = "rival"    // two companions who can't stand each other
 )
 
 // Personalities are the temperaments a companion is rolled with.
@@ -47,14 +50,14 @@ var Personalities = []string{"stoic", "cheerful", "grim", "boastful", "wry", "de
 // Verbs is how each personality delivers a line.
 var verbs = map[string]string{
 	"stoic": "says", "cheerful": "laughs", "grim": "mutters",
-	"boastful": "boasts", "wry": "remarks", "devout": "murmurs",
+	"boastful": "says", "wry": "says", "devout": "murmurs",
 }
 
 // altVerbs vary a personality's delivery, so a cheerful companion does not
 // laugh at every line.
 var altVerbs = map[string][]string{
-	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"declares"},
-	"wry": {"quips"}, "devout": {"says quietly"},
+	"cheerful": {"grins"}, "grim": {"growls"}, "boastful": {"announces"},
+	"wry": {"quips"}, "devout": {"says"},
 }
 
 // verbFor is how a line is delivered: a question is asked; otherwise one
@@ -72,6 +75,10 @@ func verbFor(personality, lineID, text string) string {
 	h.Write([]byte(lineID))
 	return options[int(h.Sum32()%uint32(len(options)))]
 }
+
+// Verb is how a personality delivers a line (Phase 64 opinions): the one
+// verb that fits a spoken line, fixed per id so it always reads the same.
+func Verb(personality, id, text string) string { return verbFor(personality, id, text) }
 
 // Groups are archetype families a line may be tagged with instead of one
 // archetype.
@@ -188,6 +195,18 @@ type Said struct {
 	Text   string // the line, names filled in
 	Verb   string
 	LineID string
+	// Personality is the speaker's temperament; it picks the small
+	// gestures that open or break a line (prose.go).
+	Personality string
+	// Reply is set when the line answers the one said just before it, so
+	// it may be written as an answer (prose.go).
+	Reply bool
+	// Mood is MoodWarm or MoodSour for a line said in plain approval or
+	// displeasure (an opinion); grief over the fallen comes from Ctx.
+	Mood int
+	// Ctx is the context the line was drawn from (Phase 65: a friend or
+	// rival line moves the pair's bond).
+	Ctx string
 }
 
 // Pool is the loaded set of lines.
@@ -292,6 +311,10 @@ type Request struct {
 	// Recent is the line ids a member has said lately, by Member.ID, which
 	// are not repeated.
 	Recent map[int]map[string]bool
+	// Bond, when set, says how two members (by Member.ID) feel: 1 for
+	// friends, -1 for rivals, 0 otherwise (Phase 65). A pair of friends or
+	// rivals sometimes talks to each other about it, before anything else.
+	Bond func(a, b int) int
 }
 
 // matches reports whether m satisfies a line's required tags.
@@ -413,7 +436,14 @@ func (p *Pool) say(l Line, m Member, others []Member, rng Rand, req Request) Sai
 	text = strings.ReplaceAll(text, "{fallen}", req.Fallen)
 	text = strings.ReplaceAll(text, "{leader}", req.Leader)
 	text = strings.ReplaceAll(text, "{name}", m.callName(req.Members))
-	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verbFor(m.Personality, l.ID, text), LineID: l.ID}
+	return Said{Member: m.ID, Name: m.Name, Text: text, Verb: verbFor(m.Personality, l.ID, text), LineID: l.ID, Personality: m.Personality}
+}
+
+// sayIn is say, noting the context the line came from.
+func (p *Pool) sayIn(l Line, m Member, others []Member, rng Rand, req Request, ctx string) Said {
+	s := p.say(l, m, others, rng, req)
+	s.Ctx = ctx
+	return s
 }
 
 func without(ms []Member, id int) []Member {
@@ -444,8 +474,24 @@ func (p *Pool) Exchange(rng Rand, req Request) []Said {
 		size = 3
 	}
 	members = members[:size]
+	contexts := req.Contexts
+	if req.Bond != nil {
+		// Phase 65: friends and rivals talk about each other about half
+		// the time they are drawn together, as a pair.
+		var bondCtx string
+		switch req.Bond(members[0].ID, members[1].ID) {
+		case 1:
+			bondCtx = CtxFriend
+		case -1:
+			bondCtx = CtxRival
+		}
+		if bondCtx != "" && rng.Intn(2) == 0 {
+			members = members[:2]
+			contexts = append([]string{bondCtx}, contexts...)
+		}
+	}
 
-	for _, ctx := range req.Contexts {
+	for _, ctx := range contexts {
 		if said := p.exchangeIn(rng, req, members, ctx); len(said) >= 2 {
 			return said
 		}
@@ -463,7 +509,7 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 			continue
 		}
 		first := p.lines[line]
-		said := []Said{p.say(first, opener, others, rng, req)}
+		said := []Said{p.sayIn(first, opener, others, rng, req, ctx)}
 		// The others answer: with a reply when the opener has one they can
 		// say, otherwise with a line of their own.
 		last := first
@@ -471,16 +517,19 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 			rest := without(members, m.ID)
 			var cands []int
 			if replies := p.replies[last.ID]; len(replies) > 0 {
-				cands = p.repliesFor(m, req, last.ID, len(rest))
+				cands = p.unsaid(p.repliesFor(m, req, last.ID, len(rest)), said)
 			}
-			if len(cands) == 0 {
-				cands = p.usable(m, req, ctx, "", len(rest))
+			reply := len(cands) > 0
+			if !reply {
+				cands = p.unsaid(p.usable(m, req, ctx, "", len(rest)), said)
 			}
 			l, ok := p.pick(rng, m, req, cands)
 			if !ok {
 				continue
 			}
-			said = append(said, p.say(p.lines[l], m, rest, rng, req))
+			s := p.sayIn(p.lines[l], m, rest, rng, req, ctx)
+			s.Reply = reply
+			said = append(said, s)
 			last = p.lines[l]
 			if len(said) == 3 {
 				break
@@ -498,13 +547,33 @@ func (p *Pool) exchangeIn(rng Rand, req Request, members []Member, ctx string) [
 					cands = append(cands, c)
 				}
 			}
+			cands = p.unsaid(cands, said)
 			if l, ok := p.pick(rng, opener, req, cands); ok {
-				said = append(said, p.say(p.lines[l], opener, rest, rng, req))
+				said = append(said, p.sayIn(p.lines[l], opener, rest, rng, req, ctx))
 			}
 		}
 		return said
 	}
 	return nil
+}
+
+// unsaid drops the lines already spoken in this exchange, so two voices
+// never say the same thing at one fire.
+func (p *Pool) unsaid(cands []int, said []Said) []int {
+	var out []int
+	for _, c := range cands {
+		heard := false
+		for _, s := range said {
+			if s.LineID != "" && s.LineID == p.lines[c].ID {
+				heard = true
+				break
+			}
+		}
+		if !heard {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // repliesFor lists the lines speaker m can say answering prompt (a reply
@@ -521,17 +590,15 @@ func (p *Pool) repliesFor(m Member, req Request, prompt string, others int) []in
 	return out
 }
 
-// Format is an exchange as game text, one line per voice, each with the
-// speaker's name colored.
+// Format is an exchange as game text, one line per voice, written as
+// prose (see Narrator).
 func Format(said []Said) string {
-	var b strings.Builder
-	for i, s := range said {
-		if i > 0 {
-			b.WriteString("\n")
-		}
-		fmt.Fprintf(&b, `<ansi fg="cyan">%s</ansi> %s, "%s"`, s.Name, s.Verb, s.Text)
+	var n Narrator
+	lines := make([]string, 0, len(said))
+	for _, s := range said {
+		lines = append(lines, n.Line(s))
 	}
-	return b.String()
+	return strings.Join(lines, "\n")
 }
 
 // PersonalityFor is the personality used for a member that has none saved:

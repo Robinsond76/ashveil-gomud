@@ -6,10 +6,13 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -23,13 +26,29 @@ type pacedLine struct {
 	marked bool          // marked dramatic (a pain or death line)
 }
 
-// TestPacedCombatThroughTheRealRound (Phase 29f) fights the brawl to its end
-// through the registered entry points: CombatOnCadence on every game round,
-// Message_SendMessage delivering, and ReleasePacedCombat on every 50ms turn
-// of a fake clock. Aria is sent exactly the lines she would be told unpaced,
-// in the same order (so a companion's death notice follows its death line,
-// and the closing line and battle summary come last), spread over each
-// combat round and never past its end.
+// clockRoundStarts records when each combat round of the battle clock
+// resolved (since start), by subscribing to the fight stream.
+func clockRoundStarts(t *testing.T, now *time.Time, start time.Time) *[]time.Duration {
+	t.Helper()
+	starts := &[]time.Duration{}
+	var last uint64
+	unsub := combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if e.Round != last {
+			last = e.Round
+			*starts = append(*starts, now.Sub(start))
+		}
+	})
+	t.Cleanup(unsub)
+	return starts
+}
+
+// TestPacedCombatThroughTheRealRound (Phase 29f, on the battle clock since
+// 82c) fights the brawl to its end through the registered entry points:
+// BattleClock and ReleasePacedCombat on every 50ms turn of a fake clock,
+// Message_SendMessage delivering. Aria is sent exactly the lines she would
+// be told unpaced, in the same order (so a companion's death notice follows
+// its death line, and the closing line and battle summary come last), one
+// action per beat, and the next round waits for the last one's lines.
 func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	b := newBrawl(t)
 	heard := b.ariaHears() // the order she is told, before any pacing
@@ -50,6 +69,8 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	}{
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
+		{events.CombatReport{}, hooks.CombatReport_Mark},
+		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
 	} {
@@ -58,6 +79,7 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })
 	}
+	starts := clockRoundStarts(t, &now, start)
 
 	// A frail companion, so one falls and its death notice is paced too.
 	for _, mv := range []string{"move #1 1 1", "move #3 1 2", "move me 1 3", "move #2 2 2", "move #4 3 2"} {
@@ -68,27 +90,7 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	*heard = nil
 	sent = nil
 
-	// Game rounds every 4s, turns every 50ms; combat on every second round.
-	var round uint64 = 1
-	for i := 0; i < 400 && len(b.livingBandits()) > 0; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
-		round++
-		events.AddToQueue(events.NewRound{RoundNumber: round})
-		events.ProcessEvents()
-		for turn := 0; turn < 80; turn++ {
-			now = now.Add(50 * time.Millisecond)
-			events.AddToQueue(events.NewTurn{})
-			events.ProcessEvents()
-		}
-	}
-	require.Empty(t, b.livingBandits(), "the bandits fall")
-	// Let the last round's lines finish.
-	for turn := 0; turn < 200; turn++ {
-		now = now.Add(50 * time.Millisecond)
-		events.AddToQueue(events.NewTurn{})
-		events.ProcessEvents()
-	}
+	combatRoundsToPlay(t, b, &now)
 
 	var got []string
 	for _, l := range sent {
@@ -137,34 +139,53 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	}
 	assert.Positive(t, deaths, "death lines were seen")
 
-	// Timing: combat rounds start every 8s (rounds 2, 4, ... begin at
-	// 0s, 8s, ...). No line goes out more than 6s into its round, and a
-	// round's lines are spread out rather than sent at once.
-	perRound := map[int][]time.Duration{}
-	for _, l := range sent {
-		r := int(l.at / (8 * time.Second))
-		offset := l.at - time.Duration(r)*8*time.Second
-		perRound[r] = append(perRound[r], offset)
+	// Timing (Phase 82c): each round's lines come one beat a turn (1s at
+	// normal, 0.25s between a turn's own lines), a round is never squeezed,
+	// and the next round resolves only after the last line plus the tail
+	// (0.6s) and at least 3s after the round before it.
+	require.GreaterOrEqual(t, len(*starts), 2, "the fight took more than one round")
+	perRound := make([][]time.Duration, len(*starts))
+	for i, l := range sent {
+		if i > summary {
+			// The summary goes out whole behind its heading, not a beat a line.
+			assert.Equal(t, sent[summary].at, l.at, "summary line %q came apart from its heading", l.text)
+			continue
+		}
+		r := 0
+		for r+1 < len(*starts) && l.at >= (*starts)[r+1] {
+			r++
+		}
+		perRound[r] = append(perRound[r], l.at)
 	}
-	spread := false
+	beats := 0
 	for r, offs := range perRound {
-		for _, off := range offs {
-			assert.LessOrEqual(t, off, 6*time.Second+50*time.Millisecond, "round %d line at +%v overruns the window", r, off)
+		for i := 1; i < len(offs); i++ {
+			gap := offs[i] - offs[i-1]
+			// A line due as the round resolves goes out on the next
+			// 50ms turn, so a follow-up's 0.25s can read as 0.2s.
+			assert.GreaterOrEqual(t, gap, 200*time.Millisecond, "round %d: lines %d and %d came %v apart", r, i-1, i, gap)
+			if gap >= time.Second {
+				beats++
+			}
 		}
-		// A busy round (more lines than fit at 0.8s apart) fills its
-		// window rather than collapsing.
-		if len(offs) >= 9 {
-			spread = true
-			assert.GreaterOrEqual(t, offs[len(offs)-1]-offs[0], 5*time.Second, "round %d's %d lines were squeezed together", r, len(offs))
+		if r+1 < len(*starts) {
+			assert.GreaterOrEqual(t, (*starts)[r+1]-(*starts)[r], 3*time.Second, "round %d resolved sooner than the minimum round", r+1)
+			if len(offs) > 0 {
+				assert.GreaterOrEqual(t, (*starts)[r+1]-offs[len(offs)-1], 600*time.Millisecond, "round %d resolved before the last line's tail", r+1)
+			}
 		}
 	}
-	assert.True(t, spread, "some round was busy")
+	assert.Greater(t, beats, 3, "turns came a beat apart")
+	last := sent[len(sent)-1].at
+	t.Logf("FIGHTLEN | normal pace | %d rounds | %d lines | %.1fs | %.1fs a round", len(*starts), len(sent), last.Seconds(), last.Seconds()/float64(len(*starts)))
 }
 
-// TestCombatCadenceLeavesOtherRoundsAlone (Phase 29f): with combat on every
-// second round, every other round listener (here the company's drift and
-// chemistry clock, and a listener registered after combat) still runs every
-// round, and the world's round count is never touched by combat.
+// TestCombatCadenceLeavesOtherRoundsAlone (Phase 29f; 82c): every round
+// listener (here the company's drift and chemistry clock, and a listener
+// registered after combat) runs every game round, the world's round count
+// is never touched by combat, and a player's fight resolves on the battle
+// clock's turns, not on the game rounds, numbered by the combat round
+// counter.
 func TestCombatCadenceLeavesOtherRoundsAlone(t *testing.T) {
 	b := newBrawl(t)
 	t.Cleanup(combatpace.UseForTest(combatpace.New()))
@@ -178,6 +199,8 @@ func TestCombatCadenceLeavesOtherRoundsAlone(t *testing.T) {
 	freshEvents(t)
 	combat := events.RegisterListener(events.NewRound{}, hooks.CombatOnCadence)
 	t.Cleanup(func() { events.UnregisterListener(events.NewRound{}, combat) })
+	clock := events.RegisterListener(events.NewTurn{}, hooks.BattleClock)
+	t.Cleanup(func() { events.UnregisterListener(events.NewTurn{}, clock) })
 	after := 0
 	freshEvents(t)
 	counter := events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
@@ -203,7 +226,13 @@ func TestCombatCadenceLeavesOtherRoundsAlone(t *testing.T) {
 	assert.Equal(t, 6, after, "a listener after combat runs every round")
 	assert.Equal(t, driftBefore-6, module.registry.DriftIn, "the drift clock counts every game round")
 	assert.Equal(t, roundsBefore, util.GetRoundCount(), "combat never moves the round count")
-	assert.Equal(t, []uint64{102, 104, 106}, fought, "combat resolves only on every second round")
+	assert.Empty(t, fought, "a player's fight is not resolved on the game rounds")
+
+	// The clock resolves it on a turn, numbered from 1.
+	events.AddToQueue(events.NewTurn{})
+	events.ProcessEvents()
+	assert.Equal(t, []uint64{1}, fought, "the first turn resolves the first round")
+	assert.Equal(t, roundsBefore, util.GetRoundCount())
 }
 
 // TestPacedPlayerDeathStaysInOrder (Phase 29f review finding 2): a slain
@@ -231,6 +260,7 @@ func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.Broadcast{}, hooks.Broadcast_SendToAll},
 		{events.RoomChange{}, hooks.FlushPacedOnRoomChange},
+		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		// The world loop runs a player's queued commands.
 		{events.Input{}, func(e events.Event) events.ListenerReturn {
@@ -251,20 +281,21 @@ func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
 	b.aimAt("bandit captain")
 	sent = nil
 
-	// A real combat round, its lines held...
-	events.AddToQueue(events.NewRound{RoundNumber: 2})
+	// A real combat round (the clock's first, on the first turn), its
+	// lines held...
+	events.AddToQueue(events.NewTurn{})
 	events.ProcessEvents()
 	require.True(t, combatpace.Default().Busy(7))
 	// ...in which Aria is slain: DoCombat's handleAffected issues her
 	// "suicide" within the round.
-	events.WithCause(2, func() {
+	events.WithCause(1, func() {
 		b.aria.Character.Health = -10
 		b.aria.Command(`suicide`)
 	})
 	events.ProcessEvents()
 	assert.Empty(t, sent, "nothing, the death included, goes out before the round's first turn")
 
-	for turn := 0; turn < 160; turn++ {
+	for turn := 0; turn < 900; turn++ { // 45s at the slower normal pace: a round's lines one beat a turn, and the death after them
 		now = now.Add(50 * time.Millisecond)
 		events.AddToQueue(events.NewTurn{})
 		events.ProcessEvents()
@@ -277,11 +308,10 @@ func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
 		}
 	}
 	require.Greater(t, died, 2, "the death announcement comes after the round's lines: %v", sent)
-	// Paced like the rest: at least 0.8s after the line before it, or the
-	// whole round squeezed into its window.
-	assert.True(t, sent[died].at-sent[died-1].at >= 250*time.Millisecond || sent[died].at-sent[0].at >= 5*time.Second,
+	// Paced like the rest: at least a follow-up's beat after the line
+	// before it.
+	assert.GreaterOrEqual(t, sent[died].at-sent[died-1].at, 250*time.Millisecond,
 		"the death is paced like the round's other lines: %v after the line before it", sent[died].at-sent[died-1].at)
-	assert.LessOrEqual(t, sent[len(sent)-1].at-sent[0].at, 6*time.Second+50*time.Millisecond, "and the round still ends within its window")
 	for _, l := range sent[:died] {
 		assert.NotContains(t, l.text, "You lose", "no penalty line before the announcement")
 	}
@@ -309,6 +339,7 @@ func TestWalkingAwayFlushesHeldLines(t *testing.T) {
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.RoomChange{}, hooks.FlushPacedOnRoomChange},
+		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.Input{}, func(e events.Event) events.ListenerReturn {
 			if in, ok := e.(events.Input); ok && in.UserId > 0 && in.MobInstanceId == 0 {
@@ -327,7 +358,7 @@ func TestWalkingAwayFlushesHeldLines(t *testing.T) {
 	b.toughen()
 	b.aimAt("bandit captain")
 	sent = nil
-	events.AddToQueue(events.NewRound{RoundNumber: 2})
+	events.AddToQueue(events.NewTurn{}) // the clock resolves the round; its lines are held
 	events.ProcessEvents()
 	now = now.Add(50 * time.Millisecond)
 	events.AddToQueue(events.NewTurn{})
@@ -361,5 +392,217 @@ func TestWalkingAwayFlushesHeldLines(t *testing.T) {
 	assert.False(t, combatpace.Default().Busy(7), "nothing is held once she has gone")
 	for _, l := range sent[2:verge] {
 		assert.NotContains(t, l, "Verge", "held combat lines come before the new room")
+	}
+}
+
+// TestPaceOffStillKeepsTheMinimumRound (Phase 82c): a player whose pace is
+// off reads each round at once, but the fight still runs on the battle
+// clock, a round at least every MinRoundMs; and a clock that starts over
+// (a copyover, a restart) resolves its first round on the next turn.
+func TestPaceOffStillKeepsTheMinimumRound(t *testing.T) {
+	b := newBrawl(t)
+	b.aria.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
+	start := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var sentAt []time.Duration
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 {
+			sentAt = append(sentAt, now.Sub(start))
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.NewTurn{}, hooks.BattleClock},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+	} {
+		freshEvents(t)
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+	starts := clockRoundStarts(t, &now, start)
+	b.toughen()
+	b.aimAt("bandit captain")
+
+	for turn := 0; turn < 200 && len(*starts) < 3; turn++ { // 10s
+		b.toughen()
+		events.AddToQueue(events.NewTurn{})
+		events.ProcessEvents()
+		now = now.Add(50 * time.Millisecond)
+	}
+	require.GreaterOrEqual(t, len(*starts), 3, "rounds resolved on the clock")
+	assert.Equal(t, time.Duration(0), (*starts)[0], "the first round resolves on the first turn")
+	for i := 1; i < len(*starts); i++ {
+		gap := (*starts)[i] - (*starts)[i-1]
+		assert.GreaterOrEqual(t, gap, 3*time.Second, "round %d came %v after the one before", i+1, gap)
+		assert.Less(t, gap, 3*time.Second+200*time.Millisecond, "with nothing held, the round waits only the minimum")
+	}
+	// Her lines came as each round resolved, none held.
+	assert.False(t, combatpace.Default().Busy(7))
+	for _, at := range sentAt {
+		assert.Contains(t, *starts, at, "a line went out at a round's own moment")
+	}
+
+	// The clock starts over (a copyover): the next round is due at once.
+	before := len(*starts)
+	hooks.ResetBattleClockForTest()
+	events.AddToQueue(events.NewTurn{})
+	events.ProcessEvents()
+	assert.Equal(t, before+1, len(*starts), "a fresh clock resolves on its first turn")
+}
+
+// TestAnEmptyRoundIsNotWaitedOut (Phase 82d review): when every fighter is
+// slower than tempo 1, the round after the opening turn has no turns; the
+// clock does not hold the fight for the minimum round then but resolves the
+// next round on the next turn, while rounds with turns keep the minimum.
+func TestAnEmptyRoundIsNotWaitedOut(t *testing.T) {
+	b := newBrawl(t)
+	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 0.9 }))
+	b.aria.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
+	start := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var rounds []time.Duration // when Aria was told each "Round N"
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 && strings.Contains(text, "Round ") {
+			rounds = append(rounds, now.Sub(start))
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.NewTurn{}, hooks.BattleClock},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+	} {
+		freshEvents(t)
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+	b.toughen()
+	b.aimAt("bandit captain")
+
+	for turn := 0; turn < 200 && len(rounds) < 4; turn++ { // 10s
+		b.toughen()
+		events.AddToQueue(events.NewTurn{})
+		events.ProcessEvents()
+		now = now.Add(50 * time.Millisecond)
+	}
+	require.GreaterOrEqual(t, len(rounds), 4, "rounds resolved on the clock: %v", rounds)
+	gaps := make([]time.Duration, 0, 3)
+	for i := 1; i < 4; i++ {
+		gaps = append(gaps, rounds[i]-rounds[i-1])
+	}
+	assert.GreaterOrEqual(t, gaps[0], 3*time.Second, "the opening round, with everyone's turn, keeps the minimum: %v", rounds)
+	assert.LessOrEqual(t, gaps[1], 100*time.Millisecond, "the empty second round is followed at once: %v", rounds)
+	assert.GreaterOrEqual(t, gaps[2], 3*time.Second, "the third round, with turns again, keeps the minimum: %v", rounds)
+}
+
+// TestNextBattleAfterAReportIsPaced: when a battle is broken off at the top
+// of a round (its group walked away) and the next group's battle begins in
+// the same round, only the broken-off battle's report goes out at once; the
+// new battle's blows that round still come a beat apart.
+func TestNextBattleAfterAReportIsPaced(t *testing.T) {
+	b := newBrawl(t)
+	b.looseBandits()
+	start := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var sent []pacedLine
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 {
+			sent = append(sent, pacedLine{text: companyTagPattern.ReplaceAllString(text, ""), at: now.Sub(start)})
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.NewRound{}, hooks.CombatOnCadence},
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.CombatReport{}, hooks.CombatReport_Mark},
+		{events.NewTurn{}, hooks.BattleClock},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+		{events.NewRound{}, hooks.IdleMobs},
+	} {
+		freshEvents(t)
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+	b.aimAt("bandit captain")
+	var round uint64 = 1
+	play := func() {
+		hardTo(b.aria.Character, 1000)
+		for id := 1; id <= 4; id++ {
+			hardTo(&b.companion(id).Character, 1000)
+		}
+		for _, m := range b.livingBandits() {
+			hardTo(&m.Character, 1000)
+		}
+		round++
+		events.AddToQueue(events.NewRound{RoundNumber: round})
+		events.ProcessEvents()
+		for turn := 0; turn < 80 || turn < 600 && combatpace.Default().Busy(7); turn++ {
+			now = now.Add(50 * time.Millisecond)
+			events.AddToQueue(events.NewTurn{})
+			events.ProcessEvents()
+		}
+	}
+	for i := 0; i < 20; i++ {
+		if _, ok := battle.Current(7); ok {
+			break
+		}
+		play()
+	}
+	_, ok := battle.Current(7)
+	require.True(t, ok, "Aria's first battle began")
+	play()
+	first, ok := battle.Current(7)
+	require.True(t, ok, "Aria is in a battle")
+	// The first battle's group walks off the road; others wait their turn.
+	verge := rooms.LoadRoom(920102)
+	for id := range first.Enemies {
+		if m := mobs.GetInstance(id); m != nil {
+			b.road.RemoveMob(id)
+			m.Character.RoomId = verge.RoomId
+			m.Character.Aggro = nil
+			verge.AddMob(id)
+		}
+	}
+	sent = nil
+	play()
+	next, ok := battle.Current(7)
+	require.True(t, ok, "the next group's battle began")
+	require.NotEqual(t, first.FightID, next.FightID)
+
+	heading := -1
+	for i, l := range sent {
+		if strings.HasPrefix(strings.TrimSpace(l.text), "──") {
+			heading = i
+		}
+	}
+	require.GreaterOrEqual(t, heading, 0, "the broken-off battle sent its summary: %v", sent)
+	// The new battle's round, from its "Round 1" line: a beat a line.
+	begun := -1
+	for i := heading; i < len(sent); i++ {
+		if strings.Contains(sent[i].text, "Round 1") {
+			begun = i
+			break
+		}
+	}
+	require.Greater(t, begun, heading, "the next battle fought this round: %v", sent[heading:])
+	require.Greater(t, len(sent)-begun, 3, "the next battle's lines this round: %v", sent[begun:])
+	for i := begun + 1; i < len(sent); i++ {
+		assert.GreaterOrEqual(t, sent[i].at-sent[i-1].at, 200*time.Millisecond, "the next battle's lines came at once: %v", sent[heading:])
 	}
 }

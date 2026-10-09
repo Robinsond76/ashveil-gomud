@@ -9,4 +9,5 @@ var (
 
 func init() {
 	offer("arbalist", tKeenEdge, tFootwork, tToughness, tSharpEye, tHeavyBolts)
+	offerElite("arbalist", tLongDraw, tEagleEye, tQuickNock) // Phase 39i2
 }

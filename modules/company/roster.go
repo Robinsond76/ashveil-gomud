@@ -9,6 +9,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"math/rand"
 	"strings"
 	"time"
@@ -46,7 +47,7 @@ const (
 // RecruitTemplates' archetypes come from CompanionArchetypes.
 func parseRosterRules(get func(string) any, archetypeOf map[int]string) domain.RosterRules {
 	num := func(key string, def, lo, hi int) int {
-		if n, ok := configInt(get(key)); ok && n >= lo && n <= hi {
+		if n, ok := modconfig.Int(get(key)); ok && n >= lo && n <= hi {
 			return n
 		}
 		return def
@@ -62,9 +63,9 @@ func parseRosterRules(get func(string) any, archetypeOf map[int]string) domain.R
 		AlignmentMin:  num("RecruitAlignmentMin", defaultAlignmentMin, -100, 100),
 		AlignmentMax:  num("RecruitAlignmentMax", defaultAlignmentMax, -100, 100),
 		BynamePercent: num("RecruitBynamePercent", defaultBynamePercent, 0, 100),
-		GivenNames:    configStrings(get("RecruitGivenNames")),
-		Bynames:       configStrings(get("RecruitBynames")),
-		Traits:        configStrings(get("RecruitTraits")),
+		GivenNames:    modconfig.Strings(get("RecruitGivenNames")),
+		Bynames:       modconfig.Strings(get("RecruitBynames")),
+		Traits:        modconfig.Strings(get("RecruitTraits")),
 		// Phase 35c: some recruits arrive already trained.
 		SkilledPercent:    num("RecruitSkilledPercent", defaultSkilledPercent, 0, 100),
 		SkillRank2Percent: num("RecruitSkillRank2Percent", defaultSkillRank2Percent, 0, 100),
@@ -75,8 +76,8 @@ func parseRosterRules(get func(string) any, archetypeOf map[int]string) domain.R
 	rules.AlignmentMin = min(rules.AlignmentMin, rules.AlignmentMax)
 	list, _ := get("RecruitTemplates").([]any)
 	for _, entry := range list {
-		fields := lowerKeys(entry)
-		templateID, ok := configInt(fields["mobtemplateid"])
+		fields := modconfig.Map(entry)
+		templateID, ok := modconfig.Int(fields["mobtemplateid"])
 		if fields == nil || !ok || templateID <= 0 {
 			mudlog.Warn("company: recruit template without a mob template; skipped")
 			continue
@@ -88,11 +89,11 @@ func parseRosterRules(get func(string) any, archetypeOf map[int]string) domain.R
 		}
 		weight := 1
 		if raw, set := fields["weight"]; set {
-			if weight, ok = configInt(raw); !ok || weight < 0 {
+			if weight, ok = modconfig.Int(raw); !ok || weight < 0 {
 				weight = 0
 			}
 		}
-		percent, _ := configInt(fields["pricepercent"])
+		percent, _ := modconfig.Int(fields["pricepercent"])
 		rules.Archetypes = append(rules.Archetypes, domain.RosterArchetype{
 			Archetype: archetype, MobTemplateID: templateID, Weight: weight, PricePercent: max(percent, 0),
 		})
@@ -109,34 +110,15 @@ func parseArchetypeWeights(raw any, roomID int) map[string]int {
 	}
 	out := map[string]int{}
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		name, _ := fields["archetype"].(string)
 		name = strings.ToLower(strings.TrimSpace(name))
-		weight, ok := configInt(fields["weight"])
+		weight, ok := modconfig.Int(fields["weight"])
 		if name == "" || !ok || weight < 0 {
 			mudlog.Warn("company: recruiter archetype weight malformed; skipped", "roomid", roomID)
 			continue
 		}
 		out[name] = weight
-	}
-	return out
-}
-
-func configStrings(raw any) []string {
-	var out []string
-	switch v := raw.(type) {
-	case []string:
-		for _, s := range v {
-			if s = strings.TrimSpace(s); s != "" {
-				out = append(out, s)
-			}
-		}
-	case []any:
-		for _, x := range v {
-			if s, ok := x.(string); ok && strings.TrimSpace(s) != "" {
-				out = append(out, strings.TrimSpace(s))
-			}
-		}
 	}
 	return out
 }
@@ -354,13 +336,13 @@ func (m *CompanyModule) inspectAt(leaderUserID, roomID int, selector string) str
 	}
 	roster, _ := m.rosterFor(leaderUserID, rec)
 	if c, ok := findGenerated(roster, selector, false); ok {
-		return m.inspectGenerated(leaderUserID, c)
+		return m.inspectGenerated(leaderUserID, m.discounted(leaderUserID, c))
 	}
 	// The same resolution "company recruit" uses, so inspect and recruit
 	// always mean the same person.
 	if !m.summonableName(selector) {
 		if _, c := resolveCandidate(rec, roster, selector); c != nil {
-			return m.inspectGenerated(leaderUserID, *c)
+			return m.inspectGenerated(leaderUserID, m.discounted(leaderUserID, *c))
 		}
 	}
 	return m.inspect(leaderUserID, selector)

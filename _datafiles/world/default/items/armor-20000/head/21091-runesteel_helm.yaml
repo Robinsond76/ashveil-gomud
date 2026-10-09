@@ -1,0 +1,11 @@
+itemid: 21091
+name: runesteel helm
+namesimple: helm
+description: Runesteel plate, etched and fitted, the armor of a champion. It is headgear of the heavy path.
+type: head
+subtype: wearable
+bulk: heavy
+tier: 5
+family: heavy
+damagereduction: 10
+weight: 2000

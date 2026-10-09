@@ -59,6 +59,7 @@
     const H = 180;
     const SETTING_KEY = 'ashveil-battle-screen';
     const ANIM_KEY = 'ashveil-battle-animations';
+    const TEXT_KEY = 'ashveil-battle-text';  // Phase 82a: 'smaller' (the default) or 'same'
     const OUTCOME_MS = 3000;
     const FOCI = ['none', 'leader', 'casters', 'healers', 'nearest', 'weakest', 'strongest', 'wounded'];
 
@@ -79,7 +80,7 @@
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
     // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
-    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'unknown-large', drake: 'unknown-beast' };
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'war-bear', drake: 'drake-hatchling' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
@@ -100,19 +101,14 @@
     };
 
     injectStyles(`
+        /* Phase 82a: the screen docks in #battle-pane, above the terminal. */
         #battle-screen {
-            position: fixed;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9000;
-            max-width: calc(100vw - 8px);
+            position: relative;
+            width: 100%;
             box-sizing: border-box;
             padding: 4px 6px 6px;
             background: var(--t-bg-panel);
-            border: 1px solid var(--t-border-accent);
-            border-radius: 6px;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid var(--t-border-accent);
             color: var(--t-text);
             font-size: 0.8em;
             display: none;
@@ -124,6 +120,13 @@
         #battle-screen canvas { display: block; margin: 4px auto; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
         #battle-screen .bs-legend { min-height: 1.3em; display: flex; flex-wrap: wrap; gap: 2px 10px; justify-content: center; color: var(--t-text-secondary); font-size: 0.9em; }
         #battle-screen .bs-legend .bs-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 1px; vertical-align: baseline; }
+        /* Phase 82d: the round's turn order under the picture. */
+        #battle-screen .bs-order { min-height: 1.4em; display: flex; flex-wrap: wrap; gap: 2px 4px; justify-content: center; align-items: center; font-size: 0.9em; }
+        #battle-screen .bs-order .bs-order-label { color: var(--t-text-secondary); margin-right: 2px; }
+        #battle-screen .bs-turn { display: inline-block; max-width: 7em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 5px; border: 1px solid var(--t-accent-dim); border-radius: 3px; color: var(--t-text-secondary); }
+        #battle-screen .bs-turn.is-enemy { border-style: dashed; }
+        #battle-screen .bs-turn.is-done { opacity: 0.45; }
+        #battle-screen .bs-turn.is-acting { color: var(--t-text); border-color: var(--t-border-accent); font-weight: bold; opacity: 1; }
         #battle-screen .bs-last { min-height: 1.3em; text-align: center; font-style: italic; }
         #battle-screen .bs-caption { min-height: 1.3em; color: var(--t-text-secondary); text-align: center; }
         #battle-screen .bs-outcome { text-align: center; font-weight: bold; min-height: 1.3em; }
@@ -134,6 +137,7 @@
         }
         #battle-screen button[aria-pressed="true"] { border-color: var(--t-border-accent); font-weight: bold; }
         #battle-screen button:disabled { opacity: 0.5; cursor: default; }
+        #battle-screen .bs-head-retreat { display: none; }
         #battle-screen label { color: var(--t-text-secondary); }
         #battle-badge { position: fixed; right: 10px; bottom: 10px; z-index: 9000; display: none; padding: 4px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.7); }
         #battle-badge.show { display: block; }
@@ -176,6 +180,20 @@
         return img ? { img, info: manifest.files[path] } : null;
     }
 
+    // tintedArt (Phase 72a) repaints a player's figure in their chosen skin
+    // tone and hair colour (sprite-tint.js); the repainted canvas is made
+    // once per sheet and look. Companions and creatures have no look.
+    const tintCache = {};
+    function tintedArt(a, path, look) {
+        if (!a || !look || !window.SpriteTint) { return a; }
+        const img = window.SpriteTint.canvasFor(a.img, look, (w, h) => {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            return c;
+        }, tintCache, path);
+        return { img, info: a.info };
+    }
+
     // ---------------------------------------------------------------------
     // State
     // ---------------------------------------------------------------------
@@ -198,6 +216,7 @@
     let raf = 0;
     let zone = '';              // Room.Info.area, for a zone's own backdrop
     let roundNo = 0;            // the round of the latest events
+    let actingSlot = 0;         // Phase 82d: the turn-order slot now acting, 0 before the first
     let lastBlow = '';          // the latest happening, in words
     let sched = new TL.Scheduler();
     let paceHistory = [];       // how event batches arrived, to infer the pace of a server that sends none
@@ -217,6 +236,31 @@
     }
     let memorySetting = null;
     function currentSetting() { return memorySetting || setting(); }
+
+    // Phase 82a: while the pane is open the terminal's font steps down a
+    // size (webclient-core.js reads body[data-battle-text]); 'same' keeps it.
+    let memoryText = null;
+    function textSetting() {
+        if (memoryText) { return memoryText; }
+        try { return localStorage.getItem(TEXT_KEY) === 'same' ? 'same' : 'smaller'; } catch (err) { return 'smaller'; }
+    }
+    function saveText(v) {
+        try { localStorage.setItem(TEXT_KEY, v); } catch (err) { /* the choice lasts this page */ }
+        memoryText = v;
+        document.body.dataset.battleText = v;
+        window.dispatchEvent(new Event('resize'));
+    }
+
+    // paneOpen shows or hides the pane and lets the terminal below re-measure.
+    function paneOpen(on) {
+        const pane = document.getElementById('battle-pane');
+        if (pane) { pane.classList.toggle('open', on); }
+        // On a phone the pane lives in the Game view, so a battle brings it up.
+        if (on && window.Mobile && window.Mobile.active() && window.Mobile.view && window.Mobile.view() !== 'game') { window.Mobile.show('game'); }
+        document.body.classList.toggle('battle-open', on);
+        document.body.dataset.battleText = textSetting();
+        requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    }
 
     // battleAnimations: full, reduced or off. The default is reduced when
     // the system asks for reduced motion.
@@ -367,7 +411,7 @@
             const placed = battle && battle.positions ? battle.positions[m.key] : null;
             const cell = cellOf(placed) || cellOf(m.cell);
             // As the Combat tab: only members still in the fight stand.
-            if (!cell || m.status === 'awaiting' || m.status === 'fled' || m.status === 'separated') { return; }
+            if (!cell || m.status === 'awaiting' || m.status === 'fled' || m.status === 'separated' || m.status === 'errand') { return; }
             const u = unit(m.key);
             const v = data.vitals(m.key);
             u.side = 'company';
@@ -375,7 +419,15 @@
             u.klass = String(m.archetype || '').toLowerCase();
             u.sprite = u.klass || 'adventurer';
             u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
-            u.className = m.class_name || '';
+            u.skin = m.skin || '';                               // Phase 72a: the leader's chosen colours
+            u.hair = m.hair || '';
+            // A member with no advanced class is named by its archetype, so a
+            // companion with a given name ("Hugo of Dunmar") still shows what it is.
+            u.className = m.class_name || (u.klass ? u.klass.charAt(0).toUpperCase() + u.klass.slice(1) : '');
+            // Phase 69: the weapon stance it fights in, named when its figure is tapped.
+            u.stance = (m.stance && m.stance.ready !== false) ? m.stance.name : '';
+            // Phase 82d: its combat tempo, named when its figure is tapped.
+            u.tempo = typeof m.tempo === 'number' ? m.tempo : 0;
             // Phase 39g: an Alchemist's flasks left, named when its figure is tapped.
             u.flasks = (v.flasks_max > 0) ? v.flasks + ' of ' + v.flasks_max + ' flasks' : '';
             u.cell = cell;
@@ -413,6 +465,7 @@
                 u.side = 'enemy';
                 u.label = e.label || e.id;
                 u.sprite = e.sprite || 'unknown-humanoid';
+                u.known = Array.isArray(e.known) ? e.known.join(', ') : ''; // Phase 66: its bestiary habits
                 u.cell = cellOf(e.cell);
                 u.band = e.health || '';
                 u.frac = BANDS[e.health] !== undefined ? BANDS[e.health] : 1;
@@ -437,6 +490,8 @@
                     u.klass = String(m.class || '').toLowerCase();
                     u.sprite = u.klass || 'adventurer';
                     u.promoted = String(m.promoted || '').toLowerCase();
+                    u.skin = m.skin || '';
+                    u.hair = m.hair || '';
                     u.cell = cell;
                     u.band = m.health || '';
                     u.frac = BANDS[m.health] !== undefined ? BANDS[m.health] : 1;
@@ -483,6 +538,22 @@
         return u ? (u.id === 'leader' ? (u.label || 'You') : u.label) : '';
     }
 
+    // orderLine says a battle order carried out: member a, subject t, as the
+    // text lines say it ("You tend Oswin", "Oswin tends you").
+    function orderLine(status, a, t) {
+        const ORDERED = ', as ordered';
+        if (!a) { return ''; }
+        const you = a === 'You';
+        const v = (mine, theirs) => you ? mine : theirs;
+        const them = t === 'You' ? 'you' : t;
+        if (status === 'heal') { return t ? a + (a === t ? v(' look to your own wounds', ' looks to a wound of their own') : v(' tend ', ' tends ') + them) + ORDERED : ''; }
+        if (status === 'break') { return t ? a + v(' turn on ', ' turns on ') + them + ORDERED : ''; }
+        if (status === 'guard') { return t ? a + v(' move to guard ', ' moves to guard ') + them + ORDERED : ''; }
+        if (status === 'strongest') { return a + v(' put everything into your next spell', ' puts everything into the next spell') + ORDERED; }
+        if (status === 'hold') { return a + v(' hold back your mana', ' holds back mana') + ORDERED; }
+        return '';
+    }
+
     function narrate(e) {
         const a = nameOf(e.src), t = nameOf(e.tgt);
         const dmg = e.damage ? ' (' + e.damage + ')' : '';
@@ -510,7 +581,11 @@
         case 'death': return t ? t + ' falls' : '';
         case 'yield': return a ? a + ' yields' : '';
         case 'flee': return a ? a + ' flees' : '';
-        case 'guard-used': return a && t ? a + ' guards ' + t : '';
+        case 'guard-used': return a && t ? a + ' guards ' + t + (e.status === 'bond' ? ' for a friend' : '') : '';
+        // Phase 65: a rival who would have guarded and let the blow fall.
+        case 'guard-refused': return a && t ? a + ' lets the blow fall on ' + t + ' (rivals)' : '';
+        // Phase 61: a battle order carried out, said as the text lines say it.
+        case 'order-fired': return orderLine(e.status, a, t);
         // An ability names itself (a Sentinel's Overwatch, a Nightblade's Death Mark...).
         case 'ability': return a && e.status ? a + ': ' + e.status + (t && e.outcome !== 'failed' ? ' on ' + t : (e.outcome === 'failed' ? ' (failed)' : '')) : '';
         default: return '';
@@ -537,14 +612,15 @@
     function onEvents(body) {
         const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) })).filter(e => !landsOnNothing(e));
         // fight_round counts this fight's rounds; round is the server's counter.
-        if (body.fight_round) { roundNo = body.fight_round; paintChrome(); }
+        if (body.fight_round && body.fight_round !== roundNo) { roundNo = body.fight_round; actingSlot = 0; paintChrome(); }
         // The feed carries the player's pace; inference from how batches
         // arrive is only the fallback for a server that does not send it.
         if (body.pace && TL.BUDGETS[body.pace]) { feedPace = body.pace; }
         paceHistory.push({ at: Date.now(), n: evs.length });
         if (paceHistory.length > 8) { paceHistory.shift(); }
         if (motion() === 'off') {
-            evs.forEach(e => { const line = narrate(e); if (line) { lastBlow = line; } applyEvent(e); });
+            evs.forEach(e => { const line = narrate(e); if (line) { lastBlow = line; } if (e.slot) { actingSlot = e.slot; } applyEvent(e); });
+            paintOrder();
             paintCaption();
             draw();
             return;
@@ -584,6 +660,8 @@
             if (e) {
                 const line = narrate(e);
                 if (line) { h.steps[0].ops.push({ op: 'log', when: 'start', text: line }); }
+                // Phase 82d: the strip follows the turn as its happening plays.
+                if (e.slot) { h.steps[0].ops.push({ op: 'slot', when: 'start', slot: e.slot }); }
             }
             // The outcome shows when the fight's end plays, after the last
             // blow; the screen is ended (no more snapshots change it) now.
@@ -632,6 +710,7 @@
             units.delete(o.unit);
             break;
         case 'log': lastBlow = o.text; paintCaption(); break;
+        case 'slot': actingSlot = o.slot; paintOrder(); break;
         case 'outcome': outcomeQueued = false; beginOutcome(o.outcome, o.why); break;
         case 'react': react(o); break;
         default: break;
@@ -762,15 +841,24 @@
         outcomeQueued = false;
         lastBlow = '';
         roundNo = 0;
+        actingSlot = 0;
         userOpened = false;
         minimised = false;
         hide();
     }
 
     function isShown() { return !!overlay && overlay.classList.contains('open'); }
+    // paneShown: the pane is open and, on a phone, its Game view is the one up.
+    function paneShown() {
+        const pane = document.getElementById('battle-pane');
+        if (!pane || !pane.classList.contains('open')) { return false; }
+        if (window.Mobile && window.Mobile.active() && window.Mobile.view && window.Mobile.view() !== 'game') { return false; }
+        return true;
+    }
 
     function hide() {
         if (overlay) { overlay.classList.remove('open'); }
+        paneOpen(false);
         paintBadge();
     }
 
@@ -780,6 +868,7 @@
         minimised = false;
         userOpened = true;
         overlay.classList.add('open');
+        paneOpen(true);
         fit();
         paintChrome();
         draw();
@@ -801,7 +890,7 @@
     // DOM
     // ---------------------------------------------------------------------
 
-    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, retreatBtn, autoBox, animSelect, focusBtns = [];
+    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, orderNode, retreatBtn, autoBox, textBox, animSelect, focusBtns = [];
 
     function build() {
         if (overlay) { return; }
@@ -817,8 +906,15 @@
         min.type = 'button';
         min.title = 'Shrink the picture to a badge; the battle goes on';
         min.addEventListener('click', close);
+        // Phase 82a: on a phone the pane scrolls, so Retreat also sits in the
+        // head, always in reach (mobile.css shows it there).
+        const headRetreat = el('button', 'bs-head-retreat', 'Retreat');
+        headRetreat.type = 'button';
+        headRetreat.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
+        headRetreat.addEventListener('click', () => Client.SendInput('retreat'));
         head.appendChild(titleNode);
         head.appendChild(bannerNode);
+        head.appendChild(headRetreat);
         head.appendChild(min);
         overlay.appendChild(head);
 
@@ -837,6 +933,11 @@
         legendNode = el('div', 'bs-legend');
         legendNode.setAttribute('aria-hidden', 'true');
         overlay.appendChild(legendNode);
+        // Phase 82d: the round's turn order; the Combat tab lists it in words.
+        orderNode = el('div', 'bs-order');
+        orderNode.setAttribute('aria-hidden', 'true');
+        orderNode.title = 'This round\'s turn order, fastest first; a fast fighter may appear twice (help tempo)';
+        overlay.appendChild(orderNode);
         lastNode = el('div', 'bs-last');
         lastNode.setAttribute('aria-live', 'off');
         captionNode = el('div', 'bs-caption');
@@ -880,18 +981,30 @@
         label.appendChild(autoBox);
         label.appendChild(document.createTextNode(' Open automatically'));
         foot.appendChild(label);
+        // Phase 82a: the terminal's battle lines in a smaller font.
+        const textLabel = el('label');
+        textBox = document.createElement('input');
+        textBox.type = 'checkbox';
+        textBox.checked = textSetting() === 'smaller';
+        textBox.title = 'Battle text: the game text below steps down a size while this screen is open';
+        textBox.addEventListener('change', () => saveText(textBox.checked ? 'smaller' : 'same'));
+        textLabel.appendChild(textBox);
+        textLabel.appendChild(document.createTextNode(' Smaller text'));
+        foot.appendChild(textLabel);
         const help = el('button', null, 'Help');
         help.type = 'button';
         help.title = 'How to read the battle screen (help battlescreen)';
         help.addEventListener('click', () => {
             Client.SendInput('help battlescreen');
-            // Phase 40i: on a phone the help text lands in the Game view behind
-            // this screen, so step aside to it; the badge brings the battle back.
-            if (window.Mobile && window.Mobile.active()) { close(); window.Mobile.show('game'); }
+            // Phase 40i/82a: on a phone the help text lands in the Game view,
+            // where this pane sits above it, so bring that view up.
+            if (window.Mobile && window.Mobile.active()) { window.Mobile.show('game'); }
         });
         foot.appendChild(help);
         overlay.appendChild(foot);
-        document.body.appendChild(overlay);
+        // Phase 82a: into the pane above the terminal (the page and the
+        // harness have one); the body is the fallback.
+        (document.getElementById('battle-pane') || document.body).appendChild(overlay);
 
         badge = el('button', null, '⚔ Battle');
         badge.id = 'battle-badge';
@@ -903,26 +1016,19 @@
         window.addEventListener('resize', fit);
     }
 
-    // fit scales the canvas by a whole number to the room there is, down
-    // to the window's width on a phone.
+    // fit scales the canvas by a whole number (Phase 82a): the largest that
+    // fits the column's width and half its height, 1x at the least, so the
+    // pixel art stays crisp and the terminal below keeps its lines. At 1x
+    // the picture is 320 px wide, which fits a 360 px phone.
     function fit() {
         if (!canvas) { return; }
-        const room = Math.min((window.innerWidth - 28) / W, (window.innerHeight - 150) / H);
-        // Phase 40i: on a phone the picture takes the screen's whole width, at
-        // any scale (the pixel art stays crisp); the buttons below need the rest.
-        if (document.body.classList.contains('mobile')) {
-            const w = Math.max(160, Math.min(Math.floor(window.innerWidth - 12), Math.floor((window.innerHeight - 260) * W / H)));
-            canvas.style.width = w + 'px';
-            canvas.style.height = Math.round(w * H / W) + 'px';
-        } else if (room >= 1) {
-            const s = Math.min(4, Math.floor(room));
-            canvas.style.width = (W * s) + 'px';
-            canvas.style.height = (H * s) + 'px';
-        } else {
-            const w = Math.max(160, Math.floor(window.innerWidth - 28));
-            canvas.style.width = w + 'px';
-            canvas.style.height = Math.round(w * H / W) + 'px';
-        }
+        const pane = document.getElementById('battle-pane');
+        const column = pane && pane.parentElement ? pane.parentElement : document.body;
+        const width = (pane && pane.clientWidth ? pane.clientWidth : window.innerWidth) - 14;
+        const height = (column.clientHeight || window.innerHeight) / 2;
+        const s = Math.max(1, Math.min(4, Math.floor(Math.min(width / W, height / H))));
+        canvas.style.width = (W * s) + 'px';
+        canvas.style.height = (H * s) + 'px';
     }
 
     function paintChrome() {
@@ -936,12 +1042,15 @@
             if (battle.nerve === 'faltering') { banners.push('company faltering'); }
             // Phase 39c: a Shaman's weather over the battle.
             if (battle.weather && battle.weather.name) {
-                banners.push(battle.weather.name + ' (' + battle.weather.rounds + (battle.weather.rounds === 1 ? ' round' : ' rounds') + ': ' + battle.weather.effect + ')');
+                banners.push(battle.weather.name + ' (' + (battle.weather.endless ? 'the whole battle' : battle.weather.rounds + (battle.weather.rounds === 1 ? ' round' : ' rounds')) + ': ' + battle.weather.effect + ')');
             }
             // Phase 54: the sigil the company stands in.
             if (battle.sigil && battle.sigil.name) {
                 banners.push(battle.sigil.name + ' (' + battle.sigil.effect + ')');
             }
+            // Phase 50: members that went in hungry, parched or tired, or on a meal buff.
+            const fareNames = Object.keys(battle.fare || {}).map(k => { const u = units.get(k); return u ? u.label : ''; }).filter(Boolean);
+            if (fareNames.length) { banners.push('condition: ' + fareNames.join(', ')); }
             if ((battle.allies || []).length) { banners.push('allies: ' + battle.allies.map(a => a.name).join(', ')); }
             if (battle.waiting && battle.waiting.length) { banners.push('waiting: ' + battle.waiting.join(', ')); }
         }
@@ -953,9 +1062,47 @@
             b.disabled = !ready || typeof (battle && battle.focus) !== 'string';
         });
         retreatBtn.disabled = !battle || !!outcomeText;
+        const headRetreat = overlay.querySelector('.bs-head-retreat');
+        if (headRetreat) { headRetreat.disabled = retreatBtn.disabled; }
         autoBox.checked = currentSetting() === 'auto';
+        textBox.checked = textSetting() === 'smaller';
         animSelect.value = motion();
+        paintOrder();
         paintCaption();
+    }
+
+    // orderTag is a slot's short name tag: a member's first name; a foe's
+    // kind with its number ("the second wolf" is "wolf 2", "a hulking brute"
+    // is "brute"); the unseen a question mark.
+    const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+    function orderTag(id) {
+        if (id === '?') { return '?'; }
+        const u = units.get(id);
+        const words = String(u ? u.label : id).replace(/^(the|a|an) /i, '').split(' ').filter(Boolean);
+        if (!words.length) { return id; }
+        if (u && u.side !== 'enemy') { return words[0]; }
+        const n = ORDINALS.indexOf(words[0].toLowerCase());
+        if (n >= 0 && words.length > 1) { return words[words.length - 1] + ' ' + (n + 1); }
+        return words[words.length - 1];
+    }
+
+    // paintOrder draws the round's turn order (Phase 82d): the slot now
+    // acting bright, those already acted dim, the rest to come.
+    function paintOrder() {
+        if (!orderNode) { return; }
+        while (orderNode.firstChild) { orderNode.removeChild(orderNode.firstChild); }
+        const order = battle && !outcomeText && Array.isArray(battle.order) ? battle.order : [];
+        if (!order.length) { return; }
+        orderNode.appendChild(el('span', 'bs-order-label', 'Order:'));
+        order.forEach(o => {
+            const u = o.id === '?' ? null : units.get(o.id);
+            const tag = el('span', 'bs-turn', orderTag(o.id));
+            if (!u || u.side === 'enemy' || o.id === '?') { tag.classList.add('is-enemy'); }
+            if (o.slot === actingSlot) { tag.classList.add('is-acting'); }
+            else if (o.slot < actingSlot) { tag.classList.add('is-done'); }
+            tag.title = (u ? u.label : (o.id === '?' ? 'a foe you can\'t make out' : o.id)) + ', turn ' + o.slot + (u && u.tempo ? ', tempo ' + u.tempo : '');
+            orderNode.appendChild(tag);
+        });
     }
 
     function paintCaption() {
@@ -970,9 +1117,12 @@
         let text = u.label;
         if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'company' && u.flasks && !u.fallen) { text += ', ' + u.flasks; }
+        if (u.side === 'company' && u.stance && !u.fallen) { text += ', ' + u.stance + ' stance'; }
+        if (u.side === 'company' && u.tempo && !u.fallen) { text += ', tempo ' + u.tempo; }
         if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
         if (isShrunk(u) && u.side === 'ally') { text += ' (tap to watch)'; }
         if (u.side !== 'company' && u.band) { text += ', ' + u.band; }
+        if (u.side === 'enemy' && u.known) { text += ' (known: ' + u.known + ')'; }
         if (u.side !== 'enemy' && u.fallen) { text += ', fallen'; }
         if (u.side === 'company' && !u.fallen && battle && battle.nerve === 'faltering') { text += ', shaken'; }
         if (u.yielded) { text += ', surrendered'; }
@@ -982,6 +1132,8 @@
         if (u.side !== 'ally' && !u.fallen && u.statuses.size) {
             text += ', ' + Array.from(u.statuses).map(s => s.replace(/-/g, ' ')).join(', ');
         }
+        // Phase 50: the battle condition the member went in with.
+        if (u.side === 'company' && !u.fallen && battle && battle.fare && battle.fare[u.id]) { text += ', ' + battle.fare[u.id]; }
         const t = targetOf(u.id);
         if (t && units.get(t)) { text += ', striking ' + units.get(t).label; }
         captionNode.textContent = text;
@@ -1236,8 +1388,12 @@
         // (40s5) keeps to its class's sheets once its idle exists, so it never
         // flickers into the base class's poses.
         const key = u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
-        const posed = pose.anim ? art('battle/units/' + key + '/' + pose.anim + '.png') : null;
-        const sheet = posed || art('battle/units/' + key + '/idle.png');
+        const look = window.SpriteTint ? window.SpriteTint.look(u.skin, u.hair) : null;
+        const posedPath = pose.anim ? 'battle/units/' + key + '/' + pose.anim + '.png' : '';
+        const posedArt = posedPath ? art(posedPath) : null;
+        const sheetPath = posedArt ? posedPath : 'battle/units/' + key + '/idle.png';
+        const posed = posedArt ? tintedArt(posedArt, posedPath, look) : null;
+        const sheet = posed || tintedArt(art(sheetPath), sheetPath, look);
         if (sheet) {
             const fw = (sheet.info.frame || [64, 64])[0], fh = (sheet.info.frame || [64, 64])[1];
             const frames = sheet.info.frames || 1;
@@ -1697,6 +1853,7 @@
             feedPace = '';
             lastBlow = '';
             roundNo = 0;
+            actingSlot = 0;
             minimised = false;
             userOpened = false;
             watching = null;
@@ -1728,7 +1885,13 @@
         build();
         if (!isShown() && !minimised && (currentSetting() === 'auto' || userOpened)) {
             overlay.classList.add('open');
+            paneOpen(true);
             fit();
+        } else if (isShown() && !paneShown()) {
+            // A new battle while the last one's outcome still shows: the
+            // screen stays, and the pane (and on a phone the Game view)
+            // comes back up for it.
+            paneOpen(true);
         }
         paintChrome();
         draw();
@@ -1764,6 +1927,8 @@
         open,
         close,
         setMotion: saveMotion,
+        setText: saveText,
+        textSetting,
         watch,
         slot,
         // state is what a test reads: the units and where they stand.
@@ -1775,8 +1940,11 @@
                 biome,
                 zone,
                 round: roundNo,
+                acting: actingSlot,
+                order: battle && Array.isArray(battle.order) ? battle.order.map(o => o.id + ':' + o.slot) : [],
                 lastBlow,
                 motion: motion(),
+                text: textSetting(),
                 pace: feedPace,
                 nerve: battle && battle.nerve ? battle.nerve : '',
                 weather: battle && battle.weather ? battle.weather.kind : '',
@@ -1792,7 +1960,7 @@
                 legend: legendOf(Array.from(units.values()).filter(u => u.cell)),
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
-                    id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
+                    id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", skin: u.skin || '', hair: u.hair || '', cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
                     pose: u.cell ? poseOf(u, slotOf(u), Date.now()) : null,

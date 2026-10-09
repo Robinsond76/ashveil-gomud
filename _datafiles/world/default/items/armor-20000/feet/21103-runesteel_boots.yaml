@@ -1,0 +1,11 @@
+itemid: 21103
+name: runesteel boots
+namesimple: boots
+description: Runesteel plate, etched and fitted, the armor of a champion. It is footwear of the heavy path.
+type: feet
+subtype: wearable
+bulk: heavy
+tier: 5
+family: heavy
+damagereduction: 8
+weight: 1800

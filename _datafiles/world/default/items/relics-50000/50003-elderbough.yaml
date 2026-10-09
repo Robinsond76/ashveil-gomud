@@ -1,0 +1,38 @@
+itemid: 50003
+name: Elderbough
+namesimple: longbow
+description: 'A bow grown, not carved, from a single bough of an old heartwood, its grain running the length of the stave like a river.'
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: bow
+tier: 6
+family: bow
+damage:
+  diceroll: 1d12+3
+weight: 1100
+value: 1500
+relic:
+  signature: Windstep
+  effects: {rangedpct: 20, evasion: 6}
+  ilvl: 40
+  mob: 34
+  chance: 6
+  awakenings:
+    - name: "Heartwood Hunter"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 25
+      target: "woodland horrors"
+      effects: {rangedpct: 5}
+    - name: "Elder's Mark"
+      kind: lair
+      mob: 34
+      target: "the ent"
+      effects: {evasion: 4}
+    - name: "Summit Sight"
+      kind: place
+      zone: "Stormcrown Heights"
+      target: "Stormcrown Heights"
+      effects: {attack: 4}
+  lore: 'The ent shed it like a limb. Arrows loosed from it seem to find the way.'

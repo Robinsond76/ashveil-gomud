@@ -98,6 +98,20 @@ func SpendGuard(userId int, key string) (left int, ok bool) {
 	return g.Left, true
 }
 
+// SpendBondGuard spends one of the company's bond steps (Phase 65: a friend
+// stepping in for a friend) in the player's battle, at most max in all; ok
+// is false when there is no battle or the company has made its steps.
+func SpendBondGuard(userId, max int) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	b, found := battles[userId]
+	if !found || b.BondGuards >= max {
+		return false
+	}
+	b.BondGuards++
+	return true
+}
+
 // TickGuards counts one combat round toward every spent guard's return,
 // in every battle. Called once per combat round.
 func TickGuards() {

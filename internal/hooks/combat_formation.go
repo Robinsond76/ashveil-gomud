@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
@@ -17,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/stormcraft"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -183,7 +185,7 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 		return defMob, false, true
 	}
 	alive := aliveMapForCompany(leader, f)
-	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+	reach := fogReach(leader, mobRoom, f, defenderKey, combat.ResolveReach(&mob.Character, mob.Reach))
 
 	finalKey, legalOk := resolveAttackTarget(attackerCol, f, defenderKey, alive, reach, groundForMob(mob, leaderUserID))
 	if legalOk {
@@ -266,7 +268,7 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 	}
 
 	alive := aliveMapForCompany(defUser, f)
-	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+	reach := fogReach(defUser, mobRoom, f, company.LeaderMemberKey, combat.ResolveReach(&mob.Character, mob.Reach))
 
 	finalKey, legalOk := resolveAttackTarget(attackerCol, f, company.LeaderMemberKey, alive, reach, groundForMob(mob, defUser.UserId))
 	if legalOk {
@@ -605,8 +607,9 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 		return false
 	}
 	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
-	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
+	retargetKeepingStrike(user.Character, 0, newTargetId)
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+	fallenFirst(lostId)
 	user.SendText(turnsToward(`You`, mobTag(mobName(newTargetId))))
 	return true
 }
@@ -636,8 +639,50 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 		return false
 	}
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
-	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
+	retargetKeepingStrike(&mob.Character, 0, newTargetId)
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+	fallenFirst(lostId)
 	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newTargetId))))
 	return true
+}
+
+// fallenFirst says a lost target's fall before the "turns toward" line that
+// follows it. The round's own death notices come at its end, so without this
+// a fighter's kill and its next target read as one turn too many.
+func fallenFirst(lostId int) {
+	if m := mobs.GetInstance(lostId); m != nil && m.Character.Health < 1 &&
+		!m.Character.HasBuffFlag("revive-on-death") && !dolls.IsDoll(m) && !isBeastInstance(m.InstanceId) {
+		mobDeathNotice(m)
+	}
+}
+
+// fogReach is the reach a foe strikes the member at key with (Phase 39i): a
+// Veil Mother's Hidden ranks. While its Fog hangs over the battle, a foe with
+// extended reach can't strike a member of the company's back row; plain melee
+// never could, and a shooter's reach is untouched.
+func fogReach(leader *users.UserRecord, room *rooms.Room, f company.Formation, key company.MemberKey, reach formationcombat.Reach) formationcombat.Reach {
+	if reach != formationcombat.ReachExtended || room == nil {
+		return reach
+	}
+	row, _, placed := f.Find(key)
+	if !placed || row != company.FormationRows-1 || battle.WeatherOf(leader.UserId).Kind != stormcraft.Fog {
+		return reach
+	}
+	for _, h := range sideActors(leader, room) {
+		if h.char.ClassEffects().Has(classes.FogHides) {
+			return formationcombat.ReachNone
+		}
+	}
+	return reach
+}
+
+// FogReachForTest exposes fogReach to the wiring tests.
+func FogReachForTest(leader *users.UserRecord, room *rooms.Room, f company.Formation, key company.MemberKey, reach formationcombat.Reach) formationcombat.Reach {
+	return fogReach(leader, room, f, key, reach)
+}
+
+// ReassignCompanionTargetForTest exposes reassignCompanionTarget to the
+// wiring tests.
+func ReassignCompanionTargetForTest(mob *mobs.Mob, room *rooms.Room) bool {
+	return reassignCompanionTarget(mob, room)
 }

@@ -129,3 +129,31 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 - `relocate_test.go` (fakes) and `wiring_relocation_test.go` (brawl world: a real room script, the quest hook, logout/restart/login, the stray sweep, the fallen) cover it.
 
 Phase 49 banter (`banter.go`, pool in `internal/banter`): `Companion.Personality` is rolled in `enlist` (`rollPersonality`, set once; legacy companions derive one from their ID). `CampBanter`/`LastBanter` implement `company.BanterProvider` for `modules/camping` (rest start and end) and `modules/gmcp` (`Company.Camp.banter`); `onBattleEnded` works out `battleBanter` before the patch-up and says it after (only for a victory, never when a new battle has begun). Banter state (recent line ids, the latest exchange, known-dead set) is in memory only and dropped on purge. The leader never speaks. `set banter off` is the player option (`banter.OptionKey`). Chances come from the `Banter*Percent` config keys.
+
+## Opinions (Phase 64)
+
+`opinions.go` implements `company.OpinionProvider` and `OpinionViewer`. A choice arrives from its source through `company.Opinion`; companions react once per choice and once per cooldown, loyalty moves ±2 within 30..80, and a mercy choice leaves alone any companion alignment already moved. State lives on `Companion.Opinions` (last six reactions and when each kind was last spoken), so it saves, clones (`Registry.Get`) and purges with the company record. `OpinionPanel` feeds `opinions`, `company inspect` and the `Company.Opinions` GMCP extra; see `internal/opinions/AGENTS.md`.
+
+## Phase 65: bonds between companions (`bonds.go`)
+
+- `Record.Bonds` holds one `Bond` per pair of companions (ids `A < B`): a value -100..100, `Warned`, and `At` (when each source last moved the pair, in real unix seconds, the cooldown). `Registry.Put` prunes bonds of companions no longer in the record, so dismissal, desertion and expiry end them in the same save. Rules live in `internal/bonds`.
+- `applyBonds` is the one writer: it skips a change inside its source's cooldown or between anyone but two living, non-creature companions, saves once with rollback, announces a deepening tier and a rivalry's warning, and sends the less loyal of a warned pair at -100 away through `MoraleDesert` and `moraleDepartures`. Don't write `Bonds` anywhere else.
+- Sources: a camp rest (`CampBanter` with `CtxRested` calls `bondsCampRest` whether or not the leader has banter on), a won battle (`onBattleEnded` calls `bondsBattleWon`), banter friend/rival lines (`bondsFromTalk`, from `exchange`), the Phase 64 seam (`opinions.Observe(m.onOpinionBonds)`, registered in `init`), and combat's `company.BondEvent` (a rescue, a refused guard). `BondValue` reads the registry in place: combat calls it per guard decision.
+- `internal/hooks/combat_bonds.go` is the battle side (bond guard, refusal); its wiring tests are `wiring_bonds_test.go`. Balance cells: `ASHVEIL_BALANCE=1 go test ./modules/company -run TestPhase65BondsInTheMirror`.
+
+
+## Phase 70: errands (`errands.go`, `internal/errands`)
+
+- `Companion.Errand` (saved with the record) puts a companion off the map until it is due. `Companion.Away()` (separated or on an errand) is the "not present" test: use it, not `Separated()`, wherever a member must be present. `Separated()` is only the separation's own countdown (`tickSeparations`, `rejoin`).
+- `startErrand` saves the errand, then detaches the mob (a failed save changes nothing). `tickErrands` (from `onNewRound`) brings home due errands once the leader is online and free (`errandWorld.Free`, the same test as a separated companion): one company save clears them and writes any wound into `State.Wounds`, then `restoreForLeader`, then the leader is paid (`errandWorld.Pay`) and told and the chronicle deed recorded. Pay is after the save, so a crash can lose a reward but never double it.
+- The outcome is `errands.Resolve` of the errand's saved seed. An item is picked from `ErrandItemIds` only when its value is at most the errand's gold, and the rest of that gold is paid in coin; keep that pool to small gathered goods.
+- The formation is no gate (an unplaced companion still fights). `Record.SendAway` takes the companion out of the formation and saves its cell on the errand; `Record.BringBack` (return and recall) puts it back there when the cell is free. Drift and desertion skip a companion on an errand.
+- `errandWorld` is the unit-test seam (`errandSeam`); the wiring test is `wiring_errands_test.go` in the brawl world.
+- A new status for an away member must also be handled in `internal/assessment`, `modules/gmcp` (`statusName`, the battle feed) and the web windows (`errand`).
+
+Phase 74 rites (`rites.go`, `internal/rites`, `docs/plans/2026-10-07-phase-74-rites.md`):
+
+- A lost companion (`expire`) and a long-serving deserter (`removeCompanion`, every caller is a desertion) queue a `Record.Rites` occasion with `queueRite` *before* `dropCompanion`, so the departure's one save writes both; a failed drop takes it back (`unqueueRite`). Who was close is fixed then, because the bond ends with the companion. Dismissal queues nothing. Keep `wireRecord`/`decodeCompanies` in step with `Record`: a field missing there is written and never read back (phase 65's bonds were, until 74).
+- `OfferRites` (the `company.RitesProvider`, called by `modules/camping` at a camp rest's and an inn stay's start) lets pass any rite already offered and announces the rest. `rite hold|skip` need `camping.LeaderRest` (a camp or an inn stay) and no battle; tests replace that check with `riteSeam`.
+- Loyalty moves stay in `rites.Floor`..`rites.Ceiling` (the opinions clamp), and a rite never gives gold, experience or power.
+

@@ -1,6 +1,9 @@
 package strategy
 
-import "github.com/GoMudEngine/GoMud/internal/userstate"
+import (
+	"github.com/GoMudEngine/GoMud/internal/stance"
+	"github.com/GoMudEngine/GoMud/internal/userstate"
+)
 
 // stateContributor lets the admin test area snapshot a player's strategies
 // and company tactics.
@@ -25,6 +28,78 @@ func (c stateContributor) Restore(userID, _ int, data []byte) error {
 		return nil
 	}
 	err := c.maps().Apply(userID, data)
+	c.m.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	return c.m.save()
+}
+
+// ordersContributor snapshots a player's battle orders (Phase 61), apart
+// from strategies so older snapshots still restore.
+type ordersContributor struct{ m *StrategyModule }
+
+func (ordersContributor) Name() string { return "orders" }
+
+func (c ordersContributor) Capture(userID int) ([]byte, error) {
+	c.m.mu.Lock()
+	defer c.m.mu.Unlock()
+	return userstate.Maps{c.m.registry.Orders}.Capture(userID)
+}
+
+func (c ordersContributor) Restore(userID, _ int, data []byte) error {
+	c.m.mu.Lock()
+	if c.m.registry.Orders == nil {
+		c.m.mu.Unlock()
+		return nil
+	}
+	err := userstate.Maps{c.m.registry.Orders}.Apply(userID, data)
+	// A snapshot is checked as a saved file is (61 review).
+	for key, list := range c.m.registry.Orders[userID] {
+		if clean := cleanOrders(list); len(clean) == 0 {
+			delete(c.m.registry.Orders[userID], key)
+		} else {
+			c.m.registry.Orders[userID][key] = clean
+		}
+	}
+	if len(c.m.registry.Orders[userID]) == 0 {
+		delete(c.m.registry.Orders, userID)
+	}
+	c.m.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	return c.m.save()
+}
+
+// stanceContributor snapshots a player's weapon stances (Phase 69), apart
+// from the rest so older snapshots still restore.
+type stanceContributor struct{ m *StrategyModule }
+
+func (stanceContributor) Name() string { return "stances" }
+
+func (c stanceContributor) Capture(userID int) ([]byte, error) {
+	c.m.mu.Lock()
+	defer c.m.mu.Unlock()
+	return userstate.Maps{c.m.registry.Stances}.Capture(userID)
+}
+
+func (c stanceContributor) Restore(userID, _ int, data []byte) error {
+	c.m.mu.Lock()
+	if c.m.registry.Stances == nil {
+		c.m.mu.Unlock()
+		return nil
+	}
+	err := userstate.Maps{c.m.registry.Stances}.Apply(userID, data)
+	// A snapshot is checked as a saved file is.
+	for key, st := range c.m.registry.Stances[userID] {
+		if st == stance.None || !st.Valid() {
+			delete(c.m.registry.Stances[userID], key)
+		}
+	}
+	if len(c.m.registry.Stances[userID]) == 0 {
+		delete(c.m.registry.Stances, userID)
+	}
 	c.m.mu.Unlock()
 	if err != nil {
 		return err

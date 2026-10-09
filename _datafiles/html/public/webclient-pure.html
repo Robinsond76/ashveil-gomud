@@ -48,9 +48,27 @@
             background-color: #000000;
         }
 
+        /* Phase 82a: the middle column holds the battle pane above the terminal. */
+        #center {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #battle-pane {
+            display: none;
+            flex: 0 0 auto;
+            min-height: 0;
+        }
+
+        #battle-pane.open { display: block; }
+
         #terminal {
             flex: 1;
             min-width: 0;
+            min-height: 0;
             position: relative;
             padding-left: 20px;
         }
@@ -1253,21 +1271,28 @@
     <script src="{{ .ASSET_BASE_URL }}/static/js/xterm/xterm-addon-fit.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/mp3.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/fx.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/keep-scroll.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/vwin.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/webclient-core.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/company-data.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/sprite-tint.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/sprites.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/triggers.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/battle-timeline.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/battle-rounds.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-character.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-creation.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-battle.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-combat.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-comm.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-gametime.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-gear.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-bestiary.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-killstats.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-map.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-modal.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-armory.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-event.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-online.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-company.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-pet.js"></script>
@@ -1275,6 +1300,7 @@
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-status.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-tutorial.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/windows/window-vitals.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/quickmenu.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/mobile.js"></script>
 
 </head>
@@ -1282,8 +1308,11 @@
 
     <div id="main-container">
         <div id="dock-left"></div>
-        <div id="terminal">
-            <div id="menu-icon" onclick="toggleMenu()">&#9881;</div>
+        <div id="center">
+            <div id="battle-pane"></div>
+            <div id="terminal">
+                <div id="menu-icon" onclick="toggleMenu()">&#9881;</div>
+            </div>
         </div>
         <div id="dock-right"></div>
     </div>
@@ -1711,7 +1740,7 @@
     <button id="connect-button">Connect to {{ .CONFIG.Server.MudName }}</button>
 
     <div id="input-area">
-        <input type="text" id="command-input" placeholder="Enter command...">
+        <input type="text" id="command-input" name="mud-command" placeholder="Enter command..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
     </div>
 
     <script>

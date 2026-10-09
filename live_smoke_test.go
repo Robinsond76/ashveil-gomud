@@ -21,12 +21,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
 )
 
@@ -35,18 +38,32 @@ var (
 	iacRE  = regexp.MustCompile(`(?s)\xff\xfa.*?\xff\xf0|\xff[\xfb-\xfe].`)
 )
 
-// mudClient is a telnet player: it keeps everything the server says, and
-// waits for patterns in what it has not consumed yet.
+// mudClient is a telnet or web player: it keeps everything the server says,
+// and waits for patterns in what it has not consumed yet.
 type mudClient struct {
 	t    *testing.T
 	name string
-	conn net.Conn
+	conn net.Conn        // a telnet player
+	ws   *websocket.Conn // or a web one
 
 	mu         sync.Mutex
 	pending    string // unconsumed, ANSI and telnet negotiation stripped
 	transcript strings.Builder
 	closed     bool
 	lastSend   time.Time
+}
+
+// dialWeb is a web-client player: the same reader over the /ws socket the
+// browser client uses, one text frame per line typed (Phase 79).
+func dialWeb(t *testing.T, name string, httpPort int) *mudClient {
+	t.Helper()
+	ws, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://127.0.0.1:%d/ws", httpPort), nil)
+	if err != nil {
+		t.Fatalf("%s: dial the websocket: %v", name, err)
+	}
+	m := &mudClient{t: t, name: name, ws: ws}
+	go m.readLoop()
+	return m
 }
 
 func dialMud(t *testing.T, name string, port int) *mudClient {
@@ -64,7 +81,15 @@ func dialMud(t *testing.T, name string, port int) *mudClient {
 func (m *mudClient) readLoop() {
 	buf := make([]byte, 64*1024)
 	for {
-		n, err := m.conn.Read(buf)
+		var n int
+		var err error
+		if m.ws != nil {
+			var frame []byte
+			_, frame, err = m.ws.ReadMessage()
+			n = copy(buf, frame)
+		} else {
+			n, err = m.conn.Read(buf)
+		}
 		if n > 0 {
 			text := string(iacRE.ReplaceAll(buf[:n], nil))
 			text = ansiRE.ReplaceAllString(text, "")
@@ -90,6 +115,13 @@ func (m *mudClient) send(line string) {
 		time.Sleep(wait)
 	}
 	m.lastSend = time.Now()
+	if m.ws != nil {
+		// The browser client sends each line as one text frame, no newline.
+		if err := m.ws.WriteMessage(websocket.TextMessage, []byte(line)); err != nil {
+			m.t.Fatalf("%s: send %q: %v", m.name, line, err)
+		}
+		return
+	}
 	if _, err := m.conn.Write([]byte(line + "\n")); err != nil {
 		m.t.Fatalf("%s: send %q: %v", m.name, line, err)
 	}
@@ -262,7 +294,8 @@ func (m *mudClient) registerArriving(user, pass, character, archetypeName string
 	m.answer(`Choose the name `+character+`\? \[yes/no\]`, "yes", `Which archetype will you follow`)
 	// By name: the menu numbers shift whenever a lineage is added.
 	m.answer(`Which archetype will you follow`, strings.ToLower(archetypeName), `Become a `+archetypeName+`\?`)
-	m.answer(`Become a `+archetypeName+`\?`, "yes", `skip the tutorial\? \[yes/no\]`)
+	m.answer(`Become a `+archetypeName+`\?`, "yes", `How will others speak of you\?`)
+	m.createLooksAndStory()
 	if skipTutorial {
 		m.answer(`skip the tutorial\? \[yes/no\]`, "yes", arrival)
 	} else {
@@ -270,14 +303,63 @@ func (m *mudClient) registerArriving(user, pass, character, archetypeName string
 	}
 }
 
+// createLooksAndStory answers the looks and life-story steps (phase 72a)
+// with each list's first option and no line of its own, checks the summary,
+// confirms it, takes the standard (not Iron) option, and stops at the
+// tutorial question.
+func (m *mudClient) createLooksAndStory() {
+	m.t.Helper()
+	const (
+		question = `Answer with a number or a name\.`
+		ownLine  = `press Enter for none\.`
+		summary  = `Keep this character as described\?`
+		tutorial = `skip the tutorial\? \[yes/no\]`
+	)
+	sawSummary := false
+	for asked := 0; asked < 40; asked++ {
+		// Peek at whichever comes first without consuming the tutorial
+		// question, which the caller answers.
+		got, ok := m.match(question+`|`+ownLine+`|`+tutorial, 20*time.Second, false)
+		if !ok {
+			m.t.Fatalf("%s: no creation question or tutorial question. Unread output:\n%s", m.name, got)
+		}
+		switch {
+		case strings.HasSuffix(got, "[yes/no]"):
+			if !sawSummary {
+				m.t.Fatalf("%s: creation reached the tutorial without a summary:\n%s", m.name, got)
+			}
+			return
+		case strings.HasSuffix(got, "for none."):
+			m.expect(ownLine, time.Second)
+			m.send("")
+		// The question after the summary (phase 77's Iron option) echoes
+		// the summary's answer line, so only the first match is the summary.
+		case !sawSummary && regexp.MustCompile(summary).MatchString(got):
+			m.expect(question, time.Second)
+			for _, want := range []string{`You look like this`, `Your story`, `\+1 `} {
+				if !regexp.MustCompile(`(?i)` + want).MatchString(got) {
+					m.t.Errorf("%s: the creation summary lacks /%s/:\n%s", m.name, want, got)
+				}
+			}
+			sawSummary = true
+			m.send("confirm")
+		default:
+			m.expect(question, time.Second)
+			m.send("1")
+		}
+	}
+	m.t.Fatalf("%s: creation asked over 40 questions", m.name)
+}
+
 // smokeServer is a real server process on a private copy of the world.
 type smokeServer struct {
-	t    *testing.T
-	bin  string
-	dir  string
-	port int
-	cmd  *exec.Cmd
-	log  string
+	t        *testing.T
+	bin      string
+	dir      string
+	port     int
+	httpPort int // the web client's port (Phase 79: the websocket login)
+	cmd      *exec.Cmd
+	log      string
 }
 
 func freePort(t *testing.T) int {
@@ -317,7 +399,7 @@ func newSmokeServerWith(t *testing.T, opts smokeOptions) *smokeServer {
 	} else {
 		dir = t.TempDir()
 	}
-	s := &smokeServer{t: t, dir: dir, port: freePort(t), bin: filepath.Join(dir, "gomud-server"), log: filepath.Join(dir, "server.log")}
+	s := &smokeServer{t: t, dir: dir, port: freePort(t), httpPort: freePort(t), bin: filepath.Join(dir, "gomud-server"), log: filepath.Join(dir, "server.log")}
 
 	if out, err := exec.Command("go", "build", "-o", s.bin, ".").CombinedOutput(); err != nil {
 		t.Fatalf("build the server: %v\n%s", err, out)
@@ -336,7 +418,7 @@ func newSmokeServerWith(t *testing.T, opts smokeOptions) *smokeServer {
 	if opts.patch != nil {
 		opts.patch(filepath.Join(dir, "_datafiles", "world", "default"))
 	}
-	overrides := fmt.Sprintf("Network:\n  TelnetPort: [%d]\n  LocalPort: 0\n  HttpPort: 0\n  HttpsPort: 0\n  SSHPort: 0\nTiming:\n  RoundSeconds: 2\n", s.port) + opts.extraConfig
+	overrides := fmt.Sprintf("Network:\n  TelnetPort: [%d]\n  LocalPort: 0\n  HttpPort: %d\n  HttpsPort: 0\n  SSHPort: 0\nTiming:\n  RoundSeconds: 2\n", s.port, s.httpPort) + opts.extraConfig
 	if err := os.WriteFile(filepath.Join(dir, "overrides.yaml"), []byte(overrides), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -465,6 +547,7 @@ func helpTopics(t *testing.T) []string {
 			topics = append(topics, topic)
 		}
 	}
+	sort.Strings(topics) // map order is random; a failure should repeat
 	return topics
 }
 
@@ -480,7 +563,21 @@ func TestLiveSmoke(t *testing.T) {
 		t.Skip("live smoke playtest skipped in -short mode")
 	}
 
-	srv := newSmokeServer(t)
+	// An existing character from before phase 72a: the shipped admin, with
+	// a hashed password so login skips the forced password change.
+	srv := newSmokeServerWith(t, smokeOptions{patch: func(dataDir string) {
+		b, err := os.ReadFile(filepath.Join("_datafiles", "world", "default", "users", "1.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		legacy := strings.Replace(string(b), "password: password\n", "password: "+util.Hash("password")+"\n", 1)
+		if legacy == string(b) {
+			t.Fatal("the shipped admin's password line moved")
+		}
+		if err := os.WriteFile(filepath.Join(dataDir, "users", "1.yaml"), []byte(legacy), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}})
 	t.Cleanup(func() {
 		srv.kill()
 		if t.Failed() {
@@ -553,6 +650,8 @@ func TestLiveSmoke(t *testing.T) {
 		p1.do("east", `Tutorial, stage 6 of 8: Combat`)
 		p1.do("set combatpace off", `Combat pace`)
 		p1.do("formation move me 3 2", `Placed Torvald`)
+		// Phase 61: a battle order, set before the fight.
+		p1.do("orders oswin add ally 50 then heal", `Order 1 for Brother Oswin`)
 		scout := p1.do("scout squad", `Assessment:`)
 		if !strings.Contains(scout, "straw archer") {
 			t.Errorf("scout squad did not show the archer:\n%s", scout)
@@ -572,6 +671,8 @@ func TestLiveSmoke(t *testing.T) {
 		}
 		p1.expect(`Head east for the next lesson: Alignment`, 20*time.Second)
 		p1.drain(time.Second)
+		// Phase 62: `why` explains the fight's latest blows from the engine's roll.
+		p1.do("why", `Round \d+: .*\n.*(To hit: \d+ in 100, rolled \d+|No roll needed)`)
 
 		p1.doAfterBattle("east", `Tutorial, stage 7 of 8: Alignment`)
 		p1.do("company alignment", `Company alignment`)
@@ -613,6 +714,12 @@ func TestLiveSmoke(t *testing.T) {
 			// from before cannot end the read early.
 			p1.expect(regexp.QuoteMeta("help "+topic), 20*time.Second)
 			out := p1.expect(smokePrompt, 20*time.Second)
+			// A page may print an example prompt (keyring, lock, picklock
+			// do), which ends the read above early. Let the rest of the
+			// page arrive and drop it, or its text ("help keyring" in the
+			// lock pages) would satisfy the next topic's echo wait and
+			// leave that topic reading as empty.
+			out += p1.drain(30 * time.Millisecond)
 			if strings.Contains(out, "No help found") || len(strings.TrimSpace(out)) < 60 {
 				empty = append(empty, topic)
 			}
@@ -656,6 +763,54 @@ func TestLiveSmoke(t *testing.T) {
 		p2.expect(`meditation`, 10*time.Second)
 	})
 
+	step("the web client logs in after an early GMCP request", func() {
+		// Phase 79: the web client's windows ask for their pages
+		// (!!GMCP(Char.Creation)) as soon as the socket is up, before the
+		// player has typed a username. Over a websocket that request used
+		// to be taken as the username and the login failed.
+		w := dialWeb(t, "web-smoker2", srv.httpPort)
+		w.expect(`username \(or "new"\)`, 20*time.Second)
+		w.send("!!GMCP(Char.Creation)")
+		w.send("smoker2")
+		w.expect(`password:`, 10*time.Second)
+		w.send("smokepass2")
+		// The telnet player's quit may still be closing; take the seat.
+		out, _ := w.tryExpect(`Welcome to the Mud|Kick them\?`, 30*time.Second)
+		if strings.Contains(out, "Kick them?") {
+			w.send("y")
+			out += w.expect(`Welcome to the Mud`, 30*time.Second)
+		}
+		for _, bad := range []string{"try again", "Invalid login"} {
+			if strings.Contains(out, bad) {
+				t.Errorf("the web login printed %q after an early GMCP request:\n%s", bad, out)
+			}
+		}
+		w.drain(2 * time.Second)
+		w.do("status", `More: company status`)
+		// A UI click on an item names it by its raw id; the terminal shows
+		// the label the client gave it, and the id stays out of it.
+		w.drain(time.Second)
+		w.send("!!ECHO(look at the smoke sword)look !40004:1-032b99fdf952200-01-00000000000000")
+		out = w.expect(`look at the smoke sword`, 10*time.Second)
+		out += w.drain(time.Second)
+		if strings.Contains(out, "!40004") || strings.Contains(out, "!!ECHO") {
+			t.Errorf("a clicked command echoed its raw form:\n%s", out)
+		}
+		w.send("quit")
+		w.expect(`meditation`, 10*time.Second)
+	})
+
+	step("an existing character is offered looks and a story once", func() {
+		pa := dialMud(t, "legacy", srv.port)
+		pa.login("admin", "password")
+		pa.expect(`Write them now, or later\?`, 40*time.Second)
+		pa.send("later")
+		pa.expect(`You put it off`, 20*time.Second)
+		pa.drain(time.Second)
+		pa.send("quit")
+		pa.expect(`meditation`, 10*time.Second)
+	})
+
 	step("log out, restart the server and come back", func() {
 		p1.send("quit")
 		deadline := time.Now().Add(90 * time.Second)
@@ -680,12 +835,31 @@ func TestLiveSmoke(t *testing.T) {
 		if !strings.Contains(out, "Tamsin Reed(#1)") {
 			t.Errorf("the formation was lost across a restart:\n%s", out)
 		}
+		p1b.do("orders oswin", `1\. When an ally is below 50% health, heal that ally first\.`) // Phase 61: orders persist
+		p1b.do("chronicle joined", `Tamsin Reed joined the company`)                           // Phase 63: the chronicle persists
 		out = p1b.do("status", `More: company status`)
 		if !strings.Contains(out, "Torvald") {
 			t.Errorf("status after restart: %s", out)
 		}
 		if bad := "not recognized"; strings.Contains(p1b.text(), bad) {
 			t.Errorf("login after restart printed %q:\n%s", bad, snippetAround(p1b.text(), bad))
+		}
+		out = p1b.do("appearance", `changes your looks for free|haven't described yourself`)
+		if strings.Contains(out, "haven't described") {
+			t.Errorf("the chosen looks were lost across a restart:\n%s", out)
+		}
+		out = p1b.do("lifestory", `It gives you|hasn't been written`)
+		if strings.Contains(out, "hasn't been written") {
+			t.Errorf("the life story was lost across a restart:\n%s", out)
+		}
+
+		// The put-off offer is remembered across the restart.
+		pa := dialMud(t, "legacy-again", srv.port)
+		pa.login("admin", "password")
+		pa.expect(`Welcome to the Mud`, 30*time.Second)
+		pa.drain(6 * time.Second)
+		if strings.Contains(pa.text(), "Write them now, or later") {
+			t.Errorf("an existing character was offered the creation steps twice")
 		}
 	})
 }

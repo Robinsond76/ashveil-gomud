@@ -1,0 +1,23 @@
+roomid: 3618
+zone: Hollowweb Deep
+title: Burned Clearing
+description: A circle where webs were burned away long ago, still clear of silk. A company can
+  camp here with a bit of nerve.
+biome: forest
+tags:
+- camping
+exits:
+  east:
+    roomid: 3619
+  west:
+    roomid: 3617
+  north:
+    roomid: 3610
+resources:
+- firewood
+- shelter
+- forage
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true

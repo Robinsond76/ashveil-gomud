@@ -1,0 +1,18 @@
+roomid: 3413
+zone: Cinder Hollow
+title: Cinder Hearth Rise
+description: Charcoal burners abandoned the stacks here and bandits took their place. Crows pick
+  at something in the cinders.
+biome: land
+exits:
+  west:
+    roomid: 3412
+  east:
+    roomid: 3506
+resources:
+- herbs
+- firewood
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

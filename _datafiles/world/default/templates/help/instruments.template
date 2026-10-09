@@ -1,0 +1,38 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">instruments</ansi>
+
+A musician needs an instrument in the company's packs or cargo (not the
+voice). Four tiers add to a player's level to give a family's strength
+(<ansi fg="command">help music</ansi>):
+
+  <ansi fg="yellow">Crude</ansi> (1)        made at camp from gathered goods
+  <ansi fg="yellow">Common</ansi> (2)       bought in a market
+  <ansi fg="yellow">Fine</ansi> (3)         bought dear, or made from a common one and ashwood planks
+  <ansi fg="yellow">Masterwork</ansi> (4)   looted from a lair boss; each has one quirk
+
+<ansi fg="yellow-bold">The instruments</ansi>
+
+  Strings   gut-strung lyre, travelling lute, inlaid fiddle
+  Winds     bone flute, reed pipes, silver-keyed flute
+  Drums     hide drum, frame drum, tuned kettle drum
+  Voice     none needed
+
+  Masterworks: <ansi fg="yellow">Wren's rainfiddle</ansi> (strings; the rain does not dull it),
+  the <ansi fg="yellow">hollow king's horn</ansi> (winds; it is played so hushed it adds no raid
+  risk) and the <ansi fg="yellow">ent-heart drum</ansi> (drums; muffled, so it adds half the raid
+  risk). Each drops from its lair's boss now and then.
+
+<ansi fg="yellow-bold">Making them</ansi>
+
+  <ansi fg="command">music craft</ansi> at your camp lists what you can make.
+  A lyre is elk antlers and raw game meat; a bone flute, two boar tusks;
+  a hide drum, two wolf hides and elk antlers. A fine instrument is a common
+  one and two ashwood planks, once you have read its recipe page (pages are
+  left in remote places; <ansi fg="command">help recipes</ansi>).
+
+<ansi fg="yellow-bold">Selling</ansi>
+
+  Nothing bought or made is ever bought back: merchants take only a looted
+  masterwork, at its price. Crafting an instrument is for the song, not for
+  profit.
+
+See also: <ansi fg="command">help music</ansi>, <ansi fg="command">help gigs</ansi>, <ansi fg="command">help recipes</ansi>.

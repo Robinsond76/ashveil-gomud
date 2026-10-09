@@ -7,7 +7,11 @@ grouped so you can see what matters at a glance:
   <ansi fg="yellow">Weapon edges</ansi>  A sharpened blade, and how many strikes its edge
                 has left (<ansi fg="command">help sharpen</ansi>).
   <ansi fg="yellow">Survival</ansi>      Any need — hunger, thirst, fatigue — worth a
-                warning, and your warmth if it's uncomfortable.
+                warning, and your warmth if it's uncomfortable. An
+                "In battle" row says what your needs and a meal buff
+                do in the next fight (<ansi fg="command">help survival</ansi>, <ansi fg="command">help cooking</ansi>),
+                and any ailment gets a row of its own with its cure
+                (<ansi fg="command">help ailments</ansi>).
   <ansi fg="yellow">Company</ansi>       Your company's chemistry tier, if you've served
                 together long enough for one (<ansi fg="command">help chemistry</ansi>).
   <ansi fg="yellow">Other effects</ansi> Everything else affecting you, with time left
@@ -21,8 +25,8 @@ See also: <ansi fg="command">help status</ansi>, <ansi fg="command">help surviva
 
 
 In the web client, Company > Status shows each owned member's active
-effects and wounds separately from persistent bonuses. Character >
-Effects shows the same details for you. An effect known to hurt you
+effects and wounds separately from persistent bonuses, yours included
+(there is no separate Character Effects tab). An effect known to hurt you
 (a weakening modifier, bleeding, poison, lost actions and the like) is
 labelled Harmful; one known to help is labelled Helpful. Timed effects count
 down in the panel with a bar showing the time left; combat-round effects

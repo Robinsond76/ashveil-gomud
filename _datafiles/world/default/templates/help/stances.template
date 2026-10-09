@@ -1,0 +1,57 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">stances</ansi>
+
+A weapon stance is another way to use the weapon in a member's hands: it
+trades one strength for another. Each member of your company, you included,
+can take <ansi fg="yellow">one stance</ansi>, set beforehand like a strategy. A battle plays out on
+its own, so a stance cannot be changed once one begins.
+
+<ansi fg="yellow-bold">The four stances</ansi>
+
+  <ansi fg="command">heavy</ansi>   <ansi fg="yellow">Heavy blows</ansi> (great weapon). Blows land <ansi fg="yellow">30% harder</ansi>, but you are
+          <ansi fg="yellow">15 points less likely to hit</ansi>. Needs a two-handed weapon: a glaive,
+          war spear, great axe or club. A staff or a bow is not one.
+  <ansi fg="command">wall</ansi>    <ansi fg="yellow">Shield wall</ansi> (shield). <ansi fg="yellow">12 points more likely to block</ansi> a blow,
+          but <ansi fg="yellow">30% fewer turns</ansi> each round. Needs a shield in the offhand.
+  <ansi fg="command">quick</ansi>   <ansi fg="yellow">Quick draw</ansi> (bow). <ansi fg="yellow">25% more turns</ansi> each round, but each arrow
+          lands <ansi fg="yellow">15% lighter</ansi>. Needs a bow (not a crossbow).
+  <ansi fg="command">keen</ansi>    <ansi fg="yellow">Keen edge</ansi> (dagger). <ansi fg="yellow">10 points more likely to land a critical
+          hit</ansi>, but blows land <ansi fg="yellow">10% shallower</ansi>. Needs a dagger.
+
+These are trades, not gains. Against an even foe each deals about what the
+plain weapon does (the shield wall deals less, and takes less); the point is
+how it arrives. Heavy blows win fewer swings and hit big, a quick
+bow gets more chances at the first blood and at a chanter's spell, a keen
+dagger makes a lucky blow likelier, and a shield wall swings less to turn
+more blows aside. A wall also costs its wearer's own damage, so it suits a
+member whose job is to stand (a guardian, <ansi fg="command">help guardian</ansi>).
+
+A stance does nothing unless the member holds what it needs: put the weapon
+away or swap it and the stance sits idle, kept for when it is back. <ansi fg="command">stance</ansi>
+says so ("idle: needs a bow"). The stance goes by the main-hand weapon; a
+second weapon held for dual-wielding takes it only if it fits too (a pair of
+daggers are both keen). When a battle begins you are told each stance in
+force, and <ansi fg="command">why</ansi> (<ansi fg="command">help why</ansi>) names it again on every landed blow it changed.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">stance</ansi>                      everyone's stance, and what each could use
+  <ansi fg="command">stance [who]</ansi>                one member's, and the four stances
+  <ansi fg="command">stance [who] [name]</ansi>         set it: heavy, wall, quick or keen
+  <ansi fg="command">stance [name]</ansi>               set your own (<ansi fg="command">stance off</ansi> clears it)
+  <ansi fg="command">stance [who] off</ansi>            none
+
+[who] is <ansi fg="command">me</ansi>, or a companion by name (part of it will do) or number (<ansi fg="command">#2</ansi>).
+
+Stances are kept when you log out, and dropped for members who have left
+the company.
+<ansi fg="command">strategy [who] default</ansi> leaves a stance alone.
+
+In the web client, the Combat tab lists each member's stance under their
+orders, with a Stance button whose menu picks one (it offers only the stances the
+member's weapon and shield can use); the battle screen names it
+when you tap a figure (<ansi fg="command">help webclient</ansi>).
+
+A weapon stance is not the Mountain Speaker's Steady stance, which is a class
+power (<ansi fg="command">help mountain-speaker</ansi>).
+
+See also: <ansi fg="command">help orders</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help combat</ansi>.

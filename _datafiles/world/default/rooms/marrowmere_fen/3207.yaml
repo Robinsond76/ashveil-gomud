@@ -1,0 +1,22 @@
+roomid: 3207
+zone: Marrowmere Fen
+title: Black-water Mere Edge
+description: Frogs fall silent as you pass and the reeds close behind. A rotted punt lies half-sunk
+  in the mud.
+biome: shore
+exits:
+  east:
+    roomid: 3208
+  west:
+    roomid: 3206
+  south:
+    roomid: 3215
+  north:
+    roomid: 3201
+resources:
+- herbs
+- forage
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

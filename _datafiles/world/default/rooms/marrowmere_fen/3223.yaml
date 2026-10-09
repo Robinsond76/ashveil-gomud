@@ -1,0 +1,21 @@
+roomid: 3223
+zone: Marrowmere Fen
+title: Trapper's Cache
+description: A fen-trapper hung a waxed bundle from a willow branch here, out of reach of eels.
+  A greasy page is tucked in the bundle.
+spawninfo:
+- itemid: 30064
+  respawnrate: 1 real hour
+biome: shore
+exits:
+  east:
+    roomid: 3224
+  north:
+    roomid: 3218
+resources:
+- shelter
+maplegend: Hermit
+mapx: 4
+mapy: 3
+mapz: 0
+hascoordinates: true

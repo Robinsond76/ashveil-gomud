@@ -191,3 +191,80 @@ func TestAvailableDropsOnlyCoolingBosses(t *testing.T) {
 	assert.Len(t, table, 3, "the zone's own table is untouched")
 	assert.Len(t, Available(table, func(string) bool { return true }), 1, "ordinary groups never cool")
 }
+
+func TestOrdinaryFoesSoftenForACompanyAtOrAboveTheBandAndFadeUnderIt(t *testing.T) {
+	band := Band{Low: 10, High: 12}
+	assert.Equal(t, OrdinaryHPPercent, HPPercent(12, band))
+	assert.Equal(t, OrdinaryHPPercent, HPPercent(10, band), "the band's low end is meant for it")
+	assert.Equal(t, OrdinaryHPPercent, HPPercent(30, band), "an over-level company has it easy too")
+	prev := OrdinaryHPPercent
+	for gap := 1; gap <= UnderBandGap; gap++ {
+		got := HPPercent(band.Low-gap, band)
+		assert.Greater(t, got, prev, "each level under the band hardens the foes")
+		prev = got
+	}
+	assert.Equal(t, 100, HPPercent(band.Low-UnderBandGap, band), "full HP at the gap")
+	assert.Equal(t, 100, HPPercent(1, Band{Low: 20, High: 22}), "never past full")
+	assert.Equal(t, 0, Spread(100), "full-HP foes do not spread")
+	assert.Equal(t, 100, Spread(OrdinaryHPPercent), "a fully softened foe aims at random")
+	assert.Equal(t, 50, Spread(70), "halfway to full HP, half its re-aims are random")
+}
+
+// Phase 84: bands from HighBandLow up spawn ordinary foes softer; the lower
+// bands are untouched, and the under-band fade still climbs to full HP.
+func TestHighBandsSoftenOrdinaryFoesFurther(t *testing.T) {
+	assert.Equal(t, OrdinaryHPPercent, BandHPPercent(Band{Low: HighBandLow - 1, High: HighBandLow + 1}))
+	assert.Equal(t, OrdinaryHPPercent, BandHPPercent(Band{Low: 10, High: 12}))
+	high := Band{Low: HighBandLow, High: HighBandLow + 2}
+	assert.Equal(t, HighBandHPPercent, BandHPPercent(high))
+	assert.Equal(t, HighBandHPPercent, HPPercent(high.Low, high))
+	assert.Equal(t, HighBandHPPercent, HPPercent(high.High+5, high))
+	prev := HighBandHPPercent
+	for gap := 1; gap <= UnderBandGap; gap++ {
+		got := HPPercent(high.Low-gap, high)
+		assert.Greater(t, got, prev, "each level under the band hardens the foes")
+		prev = got
+	}
+	assert.Equal(t, 100, HPPercent(high.Low-UnderBandGap, high))
+	assert.Equal(t, 100, Spread(HighBandHPPercent), "a fully softened foe aims at random")
+}
+
+func TestSoftenLeavesABossAndItsEscortsAlone(t *testing.T) {
+	band := Band{Low: 8, High: 10}
+	foes := Soften(Plan(Composition{Boss: true, Members: []Member{{1, 1}, {2, 2}}}, band, func(int) int { return 0 }), 8, band)
+	for _, f := range foes {
+		assert.Zero(t, f.HPPercent, "boss and escorts spawn at full HP")
+	}
+	foes = Soften(Plan(Composition{Members: []Member{{1, 3}}}, band, func(int) int { return 0 }), 8, band)
+	for _, f := range foes {
+		assert.Equal(t, OrdinaryHPPercent, f.HPPercent)
+	}
+}
+
+func TestMixGivesOneKindGroupsASecondKind(t *testing.T) {
+	horde := Composition{ID: "horde", Weight: 1, Members: []Member{{MobID: 1, Count: 4}}}
+	patrol := Composition{ID: "patrol", Weight: 1, Members: []Member{{MobID: 1, Count: 3}}}
+	pair := Composition{ID: "pair", Weight: 1, Members: []Member{{MobID: 2, Count: 2}}}
+	healers := Composition{ID: "healers", Weight: 1, Members: []Member{{MobID: 4, Count: 1}, {MobID: 3, Count: 2}}}
+	boss := Composition{ID: "lair", Boss: true, Weight: 1, Members: []Member{{MobID: 5, Count: 1}, {MobID: 3, Count: 2}}}
+	table := []Composition{horde, patrol, pair, healers, boss}
+	first := func(int) int { return 0 }
+
+	got := Mix(horde, table, testMobs, first)
+	assert.Equal(t, []Member{{MobID: 1, Count: 2}, {MobID: 2, Count: 2}}, got.Members, "half the group is another kind from the table")
+	assert.Equal(t, horde.Size(), got.Size(), "the size, and so the difficulty, is unchanged")
+	assert.Equal(t, []Member{{MobID: 1, Count: 4}}, horde.Members, "the table's composition is not modified")
+
+	got = Mix(patrol, table, testMobs, func(n int) int { return n - 1 })
+	assert.Len(t, got.Members, 2)
+	assert.Equal(t, 3, got.Size())
+	assert.NotEqual(t, 4, got.Members[1].MobID, "never a healer")
+	assert.NotEqual(t, 5, got.Members[1].MobID, "never a boss or solitary template")
+
+	assert.Equal(t, pair, Mix(pair, table, testMobs, first), "a pair stays as it is")
+	assert.Equal(t, boss, Mix(boss, table, testMobs, first), "a boss group is as written")
+	packed := horde
+	packed.Pack = true
+	assert.Equal(t, packed, Mix(packed, table, testMobs, first), "a pack stays one kind")
+	assert.Equal(t, horde, Mix(horde, []Composition{horde, patrol}, testMobs, first), "a table with one kind has nothing to draw")
+}

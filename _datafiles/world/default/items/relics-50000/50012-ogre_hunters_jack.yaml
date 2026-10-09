@@ -1,0 +1,30 @@
+itemid: 50012
+name: "Ogre-hunter's Jack"
+namesimple: jack
+description: 'A padded jack stitched with ogre hide, patched where claws and clubs found it.'
+type: body
+subtype: wearable
+bulk: medium
+tier: 4
+family: medium
+damagereduction: 16
+weight: 4000
+value: 705
+relic:
+  set: ogrehunter
+  ilvl: 27
+  mob: 85
+  chance: 6
+  awakenings:
+    - name: "Hunter's Hide"
+      kind: slay
+      races: ["ogre", "goblin"]
+      count: 15
+      target: "ogres and goblins"
+      effects: {healthpct: 3}
+    - name: "Hunter's Road"
+      kind: place
+      zone: "Hollowweb Deep"
+      target: "Hollowweb Deep"
+      effects: {armor: 2}
+  lore: 'Those who hunt the forest ogre learn to wear what it cannot easily crush.'

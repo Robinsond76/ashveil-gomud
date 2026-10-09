@@ -6,6 +6,7 @@
 package encounters
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -31,6 +32,23 @@ const (
 	HealerShareMax     = 20  // percent of a table's weight a healer group may hold
 	RoomGroupLimit     = 4   // unresolved random groups one room holds
 	AbandonSeconds     = 120 // an ownerless group disappears after this long
+	// OrdinaryHPPercent is the share of its level's HP an ordinary group's
+	// foe spawns with for a company at the band's low end or above (owner,
+	// 2026-10-07: a company in a zone for its level should win quickly and
+	// cheaply). Bosses and their escorts keep full HP: a lair is the
+	// set-piece fight. A company under the band meets harder foes (see
+	// HPPercent).
+	OrdinaryHPPercent = 40
+	// HighBandLow is the band low end from which foes' damage has outgrown
+	// the company's endurance, and HighBandHPPercent is the softer share
+	// those bands' ordinary foes spawn with (Phase 84: a five-member company
+	// at levels 20-22 rested after a median 12 fights against the 15-20
+	// target, while 3-5 and 10-12 read 18 and 16).
+	HighBandLow       = 20
+	HighBandHPPercent = 30
+	// UnderBandGap is how many levels under the band's low end a company
+	// is before ordinary foes have their full HP again.
+	UnderBandGap = 5
 	// BossRespawnSeconds is how long a lair stays quiet for a company after
 	// it beats the boss (real time, saved: it never moves the world's clock).
 	BossRespawnSeconds = 30 * 60
@@ -45,11 +63,29 @@ type Member struct {
 // Composition is one weighted outcome of a table. For a boss composition
 // the first member is the boss (count 1) and the rest are its escorts.
 type Composition struct {
-	ID      string   `yaml:"id"`
-	Weight  int      `yaml:"weight"`
-	Text    string   `yaml:"text,omitempty"` // the line that opens the encounter
-	Boss    bool     `yaml:"boss,omitempty"`
+	ID     string `yaml:"id"`
+	Name   string `yaml:"name,omitempty"` // what a bounty board calls the group (Phase 76); the id, spaced, when empty
+	Weight int    `yaml:"weight"`
+	Text   string `yaml:"text,omitempty"` // the line that opens the encounter
+	Boss   bool   `yaml:"boss,omitempty"`
+	// Pack marks a deliberate single-kind group (a wolf pack, a swarm of
+	// rats) that Mix leaves as authored.
+	Pack    bool     `yaml:"pack,omitempty"`
 	Members []Member `yaml:"members"`
+}
+
+// Title is the composition's name for players: Name, else its id with the
+// dashes read as spaces and each word capitalised ("road-brigands" is "Road
+// Brigands").
+func (c Composition) Title() string {
+	if n := strings.TrimSpace(c.Name); n != "" {
+		return n
+	}
+	words := strings.FieldsFunc(c.ID, func(r rune) bool { return r == '-' || r == '_' || r == ' ' })
+	for i, w := range words {
+		words[i] = strings.ToUpper(w[:1]) + w[1:]
+	}
+	return strings.Join(words, " ")
 }
 
 // Size is how many foes the composition spawns.
@@ -293,6 +329,59 @@ type Foe struct {
 	Boss  bool // the one boss of a boss composition
 	// Escort is true for a boss's escorts.
 	Escort bool
+	// HPPercent is the share of full HP the foe spawns with (Soften); zero
+	// means full.
+	HPPercent int
+}
+
+// Mix gives an ordinary group of one kind a second kind (Phase 89: enemy
+// groups are not rows of the same creature). A composition of three or more
+// foes that is all one kind, is no boss group and is no deliberate Pack has
+// its back half (two of four, one of three) replaced by another kind drawn
+// by weight from the rest of its table: the kinds the zone's other
+// ordinary groups field, so the foes fit the zone and the band's levels.
+// Healers and solitary templates are never drawn in (the healer share and
+// four-foe rules stay as validated). A table with no other kind leaves the
+// composition as it is. The group keeps its size, so difficulty is
+// unchanged. The table's own slices are not modified.
+func Mix(c Composition, table []Composition, lookup Lookup, rng Rand) Composition {
+	if c.Boss || c.Pack || len(c.Members) != 1 || c.Size() < 3 {
+		return c
+	}
+	own := c.Members[0].MobID
+	type option struct{ mob, weight int }
+	var options []option
+	total := 0
+	for _, other := range table {
+		if other.Boss {
+			continue
+		}
+		for _, m := range other.Members {
+			t, ok := lookup(m.MobID)
+			if m.MobID == own || !ok || t.Healer || t.Solitary {
+				continue
+			}
+			w := max(other.Weight, 1) * m.Count
+			options = append(options, option{m.MobID, w})
+			total += w
+		}
+	}
+	if total == 0 {
+		return c
+	}
+	pick := rng(total)
+	alt := options[len(options)-1].mob
+	for _, o := range options {
+		if pick < o.weight {
+			alt = o.mob
+			break
+		}
+		pick -= o.weight
+	}
+	swap := c.Size() / 2
+	out := c
+	out.Members = []Member{{MobID: own, Count: c.Size() - swap}, {MobID: alt, Count: swap}}
+	return out
 }
 
 // Plan expands a composition into the foes to spawn and their levels from
@@ -318,6 +407,55 @@ func Plan(c Composition, band Band, rng Rand) []Foe {
 				f.Level = band.Low + rng(hi-band.Low+1)
 			}
 			foes = append(foes, f)
+		}
+	}
+	return foes
+}
+
+// HPPercent is the share of full HP an ordinary group's foe spawns with
+// against a company of the given level in the band: OrdinaryHPPercent at or
+// above the band's low end, rising evenly to full HP at UnderBandGap levels
+// under it. Difficulty comes only from a zone above the company's level
+// (owner, 2026-10-06), so the softness fades as the company falls short.
+func HPPercent(level int, b Band) int {
+	soft := BandHPPercent(b)
+	gap := b.Low - level
+	if gap <= 0 {
+		return soft
+	}
+	return min(100, soft+gap*(100-soft)/UnderBandGap)
+}
+
+// BandHPPercent is the share of full HP an ordinary group's foe spawns with
+// for a company the band is meant for: OrdinaryHPPercent, less in the high
+// bands (HighBandLow and up).
+func BandHPPercent(b Band) int {
+	if b.Low >= HighBandLow {
+		return HighBandHPPercent
+	}
+	return OrdinaryHPPercent
+}
+
+// Spread is the aim noise an ordinary foe with hpPercent of its HP gets:
+// the percent of its re-aims that take a random member it can reach instead
+// of its rule's pick. A fully softened foe (OrdinaryHPPercent) aims at random
+// every time, and the noise fades with the softness to none at full HP.
+// Without it every foe goes for the weakest member, so one member (the
+// leader, or a wizard left in the front row) takes nearly every blow and the
+// company rests after a handful of fights while the rest stand untouched.
+func Spread(hpPercent int) int {
+	if hpPercent <= 0 || hpPercent >= 100 {
+		return 0
+	}
+	return min(100, (100-hpPercent)*100/(100-OrdinaryHPPercent))
+}
+
+// Soften sets the HP share of an ordinary group's foes against a company
+// of the given level; a boss and its escorts keep full HP.
+func Soften(foes []Foe, level int, b Band) []Foe {
+	for i := range foes {
+		if !foes[i].Boss && !foes[i].Escort {
+			foes[i].HPPercent = HPPercent(level, b)
 		}
 	}
 	return foes
@@ -419,4 +557,40 @@ func Attempt(userID, roomID, bonusPct int) bool {
 	p := attemptProvider
 	attemptMu.RUnlock()
 	return p != nil && p.Attempt(userID, roomID, bonusPct)
+}
+
+// StartProvider is implemented by the encounters module (Phase 60): a story
+// event's battle outcome sets a named group of foes on the company through
+// the same spawn, cleanup and grace as a random encounter.
+type StartProvider interface {
+	// StartGroup spawns the foes in roomID against the leader and keeps
+	// them until they are beaten or abandoned. It is an error when the
+	// leader already has a group or the foes cannot be spawned.
+	StartGroup(userID, roomID int, foes []Foe) error
+}
+
+var (
+	startMu       sync.RWMutex
+	startProvider StartProvider
+)
+
+// SetStartProvider registers the module. nil clears it.
+func SetStartProvider(p StartProvider) {
+	startMu.Lock()
+	defer startMu.Unlock()
+	startProvider = p
+}
+
+// ErrNoStartProvider is returned by StartGroup when no module is loaded.
+var ErrNoStartProvider = errors.New("encounters: no module to start a group")
+
+// StartGroup starts a scripted group; ErrNoStartProvider without a module.
+func StartGroup(userID, roomID int, foes []Foe) error {
+	startMu.RLock()
+	p := startProvider
+	startMu.RUnlock()
+	if p == nil {
+		return ErrNoStartProvider
+	}
+	return p.StartGroup(userID, roomID, foes)
 }

@@ -8,7 +8,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 8,
+      "Damage": 13,
       "Amount": 0,
       "Crit": false
     },
@@ -93,7 +93,7 @@
       "Outcome": "",
       "Spell": "heal",
       "Damage": 0,
-      "Amount": 8,
+      "Amount": 13,
       "Crit": false
     },
     {
@@ -104,7 +104,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 8,
+      "Damage": 4,
       "Amount": 0,
       "Crit": false
     },
@@ -114,9 +114,9 @@
       "Source": "user-7",
       "Target": "bandit cutthroat-1",
       "Previous": "",
-      "Outcome": "hit",
+      "Outcome": "miss",
       "Spell": "",
-      "Damage": 13,
+      "Damage": 0,
       "Amount": 0,
       "Crit": false
     },
@@ -150,9 +150,9 @@
       "Source": "bandit cutthroat-1",
       "Target": "user-7",
       "Previous": "",
-      "Outcome": "hit",
+      "Outcome": "miss",
       "Spell": "",
-      "Damage": 4,
+      "Damage": 0,
       "Amount": 0,
       "Crit": false
     },
@@ -164,7 +164,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 5,
+      "Damage": 9,
       "Amount": 0,
       "Crit": false
     },
@@ -186,18 +186,6 @@
       "Source": "bandit cutthroat-1",
       "Target": "user-7",
       "Previous": "",
-      "Outcome": "hit",
-      "Spell": "",
-      "Damage": 7,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 5,
-      "Kind": "attack",
-      "Source": "user-7",
-      "Target": "bandit cutthroat-1",
-      "Previous": "",
       "Outcome": "miss",
       "Spell": "",
       "Damage": 0,
@@ -206,30 +194,6 @@
     },
     {
       "Round": 5,
-      "Kind": "cast-progress",
-      "Source": "bandit cutthroat-2",
-      "Target": "",
-      "Previous": "",
-      "Outcome": "",
-      "Spell": "mm",
-      "Damage": 0,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 6,
-      "Kind": "attack",
-      "Source": "bandit cutthroat-1",
-      "Target": "user-7",
-      "Previous": "",
-      "Outcome": "miss",
-      "Spell": "",
-      "Damage": 0,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 6,
       "Kind": "attack",
       "Source": "user-7",
       "Target": "bandit cutthroat-1",
@@ -241,6 +205,42 @@
       "Crit": false
     },
     {
+      "Round": 5,
+      "Kind": "cast-progress",
+      "Source": "bandit cutthroat-2",
+      "Target": "",
+      "Previous": "",
+      "Outcome": "",
+      "Spell": "mm",
+      "Damage": 0,
+      "Amount": 0,
+      "Crit": false
+    },
+    {
+      "Round": 6,
+      "Kind": "attack",
+      "Source": "bandit cutthroat-1",
+      "Target": "user-7",
+      "Previous": "",
+      "Outcome": "miss",
+      "Spell": "",
+      "Damage": 0,
+      "Amount": 0,
+      "Crit": false
+    },
+    {
+      "Round": 6,
+      "Kind": "attack",
+      "Source": "user-7",
+      "Target": "bandit cutthroat-1",
+      "Previous": "",
+      "Outcome": "hit",
+      "Spell": "",
+      "Damage": 9,
+      "Amount": 0,
+      "Crit": false
+    },
+    {
       "Round": 6,
       "Kind": "cast-progress",
       "Source": "bandit cutthroat-2",
@@ -270,9 +270,9 @@
       "Source": "user-7",
       "Target": "bandit cutthroat-1",
       "Previous": "",
-      "Outcome": "hit",
+      "Outcome": "miss",
       "Spell": "",
-      "Damage": 8,
+      "Damage": 0,
       "Amount": 0,
       "Crit": false
     },
@@ -308,7 +308,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 10,
+      "Damage": 11,
       "Amount": 0,
       "Crit": false
     },
@@ -342,9 +342,9 @@
       "Source": "user-7",
       "Target": "bandit cutthroat-1",
       "Previous": "",
-      "Outcome": "miss",
+      "Outcome": "hit",
       "Spell": "",
-      "Damage": 0,
+      "Damage": 8,
       "Amount": 0,
       "Crit": false
     },
@@ -363,26 +363,14 @@
     {
       "Round": 10,
       "Kind": "attack",
-      "Source": "bandit cutthroat-1",
-      "Target": "user-7",
-      "Previous": "",
-      "Outcome": "hit",
-      "Spell": "",
-      "Damage": 5,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 10,
-      "Kind": "attack",
       "Source": "user-7",
       "Target": "bandit cutthroat-1",
       "Previous": "",
-      "Outcome": "miss",
+      "Outcome": "crit",
       "Spell": "",
-      "Damage": 0,
+      "Damage": 17,
       "Amount": 0,
-      "Crit": false
+      "Crit": true
     },
     {
       "Round": 10,
@@ -397,31 +385,7 @@
       "Crit": false
     },
     {
-      "Round": 11,
-      "Kind": "attack",
-      "Source": "user-7",
-      "Target": "bandit cutthroat-1",
-      "Previous": "",
-      "Outcome": "hit",
-      "Spell": "",
-      "Damage": 8,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 11,
-      "Kind": "cast-progress",
-      "Source": "bandit cutthroat-2",
-      "Target": "",
-      "Previous": "",
-      "Outcome": "",
-      "Spell": "mm",
-      "Damage": 0,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 11,
+      "Round": 10,
       "Kind": "death",
       "Source": "user-7",
       "Target": "bandit cutthroat-1",
@@ -433,7 +397,7 @@
       "Crit": false
     },
     {
-      "Round": 11,
+      "Round": 10,
       "Kind": "target-change",
       "Source": "user-7",
       "Target": "bandit cutthroat-2",
@@ -445,6 +409,30 @@
       "Crit": false
     },
     {
+      "Round": 11,
+      "Kind": "attack",
+      "Source": "user-7",
+      "Target": "bandit cutthroat-2",
+      "Previous": "",
+      "Outcome": "hit",
+      "Spell": "",
+      "Damage": 10,
+      "Amount": 0,
+      "Crit": false
+    },
+    {
+      "Round": 11,
+      "Kind": "cast-progress",
+      "Source": "bandit cutthroat-2",
+      "Target": "",
+      "Previous": "",
+      "Outcome": "",
+      "Spell": "mm",
+      "Damage": 0,
+      "Amount": 0,
+      "Crit": false
+    },
+    {
       "Round": 12,
       "Kind": "attack",
       "Source": "user-7",
@@ -498,9 +486,9 @@
       "Source": "user-7",
       "Target": "bandit cutthroat-2",
       "Previous": "",
-      "Outcome": "miss",
+      "Outcome": "hit",
       "Spell": "",
-      "Damage": 0,
+      "Damage": 10,
       "Amount": 0,
       "Crit": false
     },
@@ -524,7 +512,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 13,
+      "Damage": 8,
       "Amount": 0,
       "Crit": false
     },
@@ -548,7 +536,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 10,
+      "Damage": 7,
       "Amount": 0,
       "Crit": false
     },
@@ -572,7 +560,7 @@
       "Previous": "",
       "Outcome": "hit",
       "Spell": "",
-      "Damage": 13,
+      "Damage": 7,
       "Amount": 0,
       "Crit": false
     },
@@ -589,19 +577,7 @@
       "Crit": false
     },
     {
-      "Round": 18,
-      "Kind": "attack",
-      "Source": "user-7",
-      "Target": "bandit cutthroat-2",
-      "Previous": "",
-      "Outcome": "crit",
-      "Spell": "",
-      "Damage": 12,
-      "Amount": 0,
-      "Crit": true
-    },
-    {
-      "Round": 18,
+      "Round": 17,
       "Kind": "death",
       "Source": "user-7",
       "Target": "bandit cutthroat-2",
@@ -613,7 +589,7 @@
       "Crit": false
     },
     {
-      "Round": 18,
+      "Round": 17,
       "Kind": "fight-end",
       "Source": "user-7",
       "Target": "",

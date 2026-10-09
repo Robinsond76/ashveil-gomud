@@ -10,3 +10,6 @@ tnlscale: 1
 damage:
   diceroll: 0d0
 disabledslots: ['weapon', 'offhand', 'neck', 'body', 'belt', 'gloves', 'ring', 'legs', 'feet']
+
+# Phase 87: no blood, no living flesh (help narration).
+bloodless: true

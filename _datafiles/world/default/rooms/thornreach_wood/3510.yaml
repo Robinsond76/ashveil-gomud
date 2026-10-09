@@ -1,0 +1,26 @@
+roomid: 3510
+zone: Thornreach Wood
+title: The Greenwood Rest
+description: A woodcutters' lodge hung with lanterns and ropes of dried herbs. The cook serves
+  venison and keeps the fire in all night.
+biome: city
+tags:
+- inn
+- indoor
+exits:
+  east:
+    roomid: 3511
+  west:
+    roomid: 3509
+  south:
+    roomid: 3518
+  north:
+    roomid: 3504
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

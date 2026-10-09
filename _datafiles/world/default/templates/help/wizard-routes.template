@@ -12,17 +12,18 @@ to the elite class that continues its route (<ansi fg="command">help promotion</
   Elite: Archon (<ansi fg="command">help archon</ansi>)
 
 <ansi fg="yellow-bold">Arcanist</ansi> (neutral)  reliable damage and mana-efficient casting
-  10 Arcane focus     spells deal 10% more damage
+  10 Arcane focus     spells deal 15% more damage
   15 Efficient casting spells cost 10% less mana
-  20 Sharper focus    spells deal 15% more damage
+  20 Sharper focus    spells deal 25% more damage
   25 Steady chant     blows break its chant 25% less often
   Elite: Archmage (<ansi fg="command">help archmage</ansi>)
 
 <ansi fg="yellow-bold">Sorcerer</ansi> (neutral)  costly magical burst: one heavy Arcane Lance at a time
   10 Arcane Lance     a heavy bolt at one foe, about twice a Magic Missile
-                      (chant 2 rounds, cost 15)
-  15 Gathered power   the Lance deals 25% more damage
-  20 Steady chant     blows break its chant 25% less often
+                      (chant 2 rounds, cost 15); used against three foes or
+                      fewer, against four or more it showers them with sparks
+  15 Gathered power   the Lance deals 60% more damage
+  20 Steady chant     blows break its chant 50% less often
   25 Cheaper lance    the Lance costs 12
   Elite: High Sorcerer (<ansi fg="command">help high-sorcerer</ansi>)
 
@@ -36,7 +37,9 @@ to the elite class that continues its route (<ansi fg="command">help promotion</
   Elite: Necromancer (<ansi fg="command">help necromancer</ansi>)
 
 A wizard's role is caster (<ansi fg="command">help strategy</ansi>): it casts on its own, a Theurgist
-wards the company first, and a Sorcerer looses its Lance first for as long as
-its mana lasts, then falls back to Magic Missile.
+wards the company first, and a Sorcerer looses its Lance first against three
+foes or fewer for as long as its mana lasts, then falls back to Magic Missile.
+Against four or more it showers them with sparks, as any wizard does, and
+goes back to the Lance as they fall.
 
 See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help strategy</ansi>.

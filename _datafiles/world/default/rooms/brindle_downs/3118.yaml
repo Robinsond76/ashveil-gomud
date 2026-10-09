@@ -1,0 +1,26 @@
+roomid: 3118
+zone: Brindle Downs
+title: Tussocky Drove Road
+description: Short turf rolls away in every direction, cropped by sheep. Old hoofprints are pressed
+  deep into the mud.
+biome: land
+exits:
+  east:
+    roomid: 3119
+  west:
+    roomid: 3117
+  north:
+    roomid: 3111
+resources:
+- firewood
+- forage
+mapx: 5
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: downs
+spawninfo:
+- itemid: 3221
+  respawnrate: 1 real hour

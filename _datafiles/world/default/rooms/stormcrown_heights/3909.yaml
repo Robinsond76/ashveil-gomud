@@ -1,0 +1,25 @@
+roomid: 3909
+zone: Stormcrown Heights
+title: The Highwatch Hearth
+description: A stone hut the height of a house, built into the mountain by a mercenary band. It
+  is warm inside and the stew is hot.
+biome: city
+tags:
+- inn
+- inn-private
+- indoor
+exits:
+  east:
+    roomid: 3910
+  west:
+    roomid: 3908
+  south:
+    roomid: 3917
+resources:
+- shelter
+maplegend: Inn
+mapsymbol: I
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,19 @@
+roomid: 3922
+zone: Stormcrown Heights
+title: Storm-struck Peak
+description: The cold bites through cloaks and breath freezes in the beard.
+biome: snow
+exits:
+  east:
+    roomid: 3923
+  west:
+    roomid: 3921
+  north:
+    roomid: 3915
+resources:
+- water
+- shelter
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true

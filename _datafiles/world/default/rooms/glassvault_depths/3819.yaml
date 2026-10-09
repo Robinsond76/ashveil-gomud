@@ -1,0 +1,17 @@
+roomid: 3819
+zone: Glassvault Depths
+title: Dripping Shaft
+description: Glassy crystals jut from the walls and throw back every light.
+biome: dungeon
+exits:
+  east:
+    roomid: 3820
+  north:
+    roomid: 3813
+resources:
+- shelter
+- firewood
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true

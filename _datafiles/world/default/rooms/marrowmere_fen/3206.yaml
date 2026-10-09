@@ -1,0 +1,20 @@
+roomid: 3206
+zone: Marrowmere Fen
+title: Heron Causeway
+description: Black water stands between tussocks of reed and sedge. Something large slides into
+  the water out of sight.
+biome: shore
+exits:
+  east:
+    roomid: 3207
+  south:
+    roomid: 3214
+  west:
+    roomid: 3113
+resources:
+- herbs
+- fishing
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

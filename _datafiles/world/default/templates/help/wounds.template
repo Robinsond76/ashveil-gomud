@@ -56,8 +56,12 @@ heal a wounded member only up to their limit.
   a surgeon's kit    packed for a camp rest (<ansi fg="command">help camp gear</ansi>), it has a healer
                      with mana left tend one lasting wound first; five uses
 
+A puncture that stays open through three battles festers into a fever
+(<ansi fg="command">help ailments</ansi>): -15% damage dealt for five battles, ended by a remedy
+made at camp. Treat the wound early and it never comes.
+
 Bandages and splints are sold in the markets of Dunmar and the Old Kings
 Road (<ansi fg="command">help market</ansi>). Death clears your wounds, and a companion raised
 by <ansi fg="command">resurrect</ansi> comes back with none, at half health (<ansi fg="command">help readiness</ansi>).
 
-See also: <ansi fg="command">help heal</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help health</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help ailments</ansi>, <ansi fg="command">help heal</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help health</ansi>, <ansi fg="command">help combat</ansi>.

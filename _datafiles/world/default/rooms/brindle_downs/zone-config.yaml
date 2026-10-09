@@ -1,0 +1,55 @@
+name: Brindle Downs
+roomid: 3106
+defaultbiome: land
+tileready: true
+encounters:
+  band:
+    low: 4
+    high: 6
+  entrychance: 15
+  tables:
+    downs:
+    - id: drover-brigands
+      weight: 30
+      text: Brigands step out of a gorse thicket, blades drawn.
+      members:
+      - mobid: 86
+        count: 3
+    - id: down-wolves
+      weight: 25
+      pack: true
+      text: Timber wolves slink out of the long grass.
+      members:
+      - mobid: 56
+        count: 3
+    - id: stray-dogs
+      weight: 15
+      pack: true
+      text: A pack of feral dogs charges across the down.
+      members:
+      - mobid: 31
+        count: 3
+    - id: poacher-line
+      weight: 15
+      text: Poachers rise from the grass, a shield wall of one.
+      members:
+      - mobid: 87
+        count: 2
+      - mobid: 89
+        count: 1
+    - id: brigand-gang
+      weight: 5
+      text: A big gang of brigands blocks the drove road.
+      members:
+      - mobid: 86
+        count: 4
+    - id: poacher-surgeon
+      weight: 10
+      text: Poachers close in, their bonesetter tying a bandage as they come.
+      members:
+      - mobid: 87
+        count: 1
+      - mobid: 88
+        count: 1
+      - mobid: 86
+        count: 1

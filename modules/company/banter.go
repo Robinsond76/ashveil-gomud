@@ -8,6 +8,7 @@ package company
 // `set banter off`.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"math/rand"
 	"sync"
 
@@ -30,6 +31,7 @@ const (
 	defaultBanterBattlePercent    = 33
 	defaultBanterCampStartPercent = 100
 	defaultBanterRestedPercent    = 50
+	defaultBanterSongPercent      = 60 // camp music: a song gets a comment more often than not
 	// A member at or under this share of its health at the battle's end
 	// makes it a close call; every member over the flawless share makes it
 	// a flawless win.
@@ -84,7 +86,7 @@ func (b *banterState) noteFall(leader, companionID int) {
 
 func (m *CompanyModule) banterPercent(key string, fallback int) int {
 	if m.plug != nil {
-		if n, ok := configInt(m.plug.Config.Get(key)); ok && n >= 0 && n <= 100 {
+		if n, ok := modconfig.Int(m.plug.Config.Get(key)); ok && n >= 0 && n <= 100 {
 			return n
 		}
 	}
@@ -138,7 +140,7 @@ func (m *CompanyModule) campMembers(leaderUserID int) []banter.Member {
 	}
 	var out []banter.Member
 	for _, c := range record.Companions {
-		if c.Dead() || c.Separated() || c.PendingReturn || creatures.Is(c.Archetype) { // 38e review: a hound or a golem doesn't talk
+		if c.Dead() || c.Away() || c.PendingReturn || creatures.Is(c.Archetype) { // 38e review: a hound or a golem doesn't talk
 			continue
 		}
 		out = append(out, m.banterMember(c))
@@ -147,7 +149,15 @@ func (m *CompanyModule) campMembers(leaderUserID int) []banter.Member {
 }
 
 // exchange runs one exchange for the leader, remembers it, and returns it.
+// Friends and rivals who talk about each other move their bond a point
+// (Phase 65).
 func (m *CompanyModule) exchange(user *users.UserRecord, members []banter.Member, contexts []string, fallen string, night bool) []banter.Said {
+	said := m.exchangeRaw(user, members, contexts, fallen, night)
+	m.bondsFromTalk(user.UserId, said)
+	return said
+}
+
+func (m *CompanyModule) exchangeRaw(user *users.UserRecord, members []banter.Member, contexts []string, fallen string, night bool) []banter.Said {
 	if len(members) < 2 {
 		return nil
 	}
@@ -169,7 +179,7 @@ func (m *CompanyModule) exchange(user *users.UserRecord, members []banter.Member
 		}
 		recent[id] = set
 	}
-	said := pool.Exchange(b.rng, banter.Request{Contexts: contexts, Members: members, Leader: user.Character.Name, Fallen: fallen, Night: night, Recent: recent})
+	said := pool.Exchange(b.rng, banter.Request{Contexts: contexts, Members: members, Leader: user.Character.Name, Fallen: fallen, Night: night, Recent: recent, Bond: m.bondSigns(user.UserId)})
 	if len(said) == 0 {
 		return nil
 	}
@@ -208,8 +218,13 @@ func (m *CompanyModule) CampBanter(leaderUserID int, context string) []banter.Sa
 		percent = m.banterPercent("BanterCampStartPercent", defaultBanterCampStartPercent)
 	case banter.CtxRested:
 		percent = m.banterPercent("BanterRestedPercent", defaultBanterRestedPercent)
+	case banter.CtxSong: // camp music: a comment on the song, at its own chance
+		percent = m.banterPercent("BanterSongPercent", defaultBanterSongPercent)
 	default:
 		return nil
+	}
+	if context == banter.CtxRested && m.persistenceAvailable() == nil {
+		m.bondsCampRest(leaderUserID) // Phase 65: a shared camp, whether or not they talk
 	}
 	user, on := banterEnabled(leaderUserID)
 	if !on || m.persistenceAvailable() != nil || !m.banter.roll(percent) {

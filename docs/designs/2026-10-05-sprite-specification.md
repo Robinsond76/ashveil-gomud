@@ -106,7 +106,7 @@ that seems to say otherwise.**
 
 ### Palette
 
-- One **master palette of at most 64 colors** is delivered in S0. Every
+- One **master palette of at most 67 colors** (64 in S0, plus the `hair` ramp from Phase 72a, which the web client repaints with `skin` for a player's looks) is delivered in S0. Every
   sprite uses only master palette colors.
 - **Class accent colors** (proposed; final in S0):
 

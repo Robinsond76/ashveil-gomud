@@ -18,6 +18,7 @@
   "dark acolyte trainer": "acolyte-dark",
   "demon": "demon",
   "doll": "doll",
+  "drake hatchling": "drake-hatchling",
   "echo bats": "bats-echo",
   "ent": "ent",
   "faerie folk": "faerie",
@@ -68,7 +69,8 @@
   "straw archer": "straw-archer",
   "straw footman": "straw-footman",
   "timber wolf": "wolf-timber",
-  "training dummy": "dummy-training"
+  "training dummy": "dummy-training",
+  "war bear": "war-bear"
  },
  "backgrounds": {
   "cave": "cave",

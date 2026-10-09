@@ -364,14 +364,18 @@
             row.appendChild(CompanyData.el('span', 'vitals-member-note', note));
             spoken.push(note);
         } else if (m.status === 'fled') {
- row.classList.add('is-away');
- row.appendChild(CompanyData.el('span', 'vitals-member-note', 'fled; returns after battle'));
- spoken.push('fled; returns after battle');
- } else if (m.status === 'separated') {
- row.classList.add('is-away');
- row.appendChild(CompanyData.el('span', 'vitals-member-note', 'separated; finding the way back'));
- spoken.push('separated; finding the way back');
- } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'fled; returns after battle'));
+            spoken.push('fled; returns after battle');
+        } else if (m.status === 'separated') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'separated; finding the way back'));
+            spoken.push('separated; finding the way back');
+        } else if (m.status === 'errand') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'away on an errand'));
+            spoken.push('away on an errand');
+        } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
             row.classList.add('is-away');
             row.appendChild(CompanyData.el('span', 'vitals-member-note', 'not with you'));
             spoken.push('not with you');
@@ -412,6 +416,7 @@
                 if (n && n.warn && n.label) { out.push(who + ': ' + n.label); }
             });
             if (v.warmth) { out.push(who + ': ' + v.warmth); }
+            (v.ailments || []).forEach(a => { out.push(who + ': ' + a.toLowerCase()); });
             if (typeof v.hp_limit === 'number') { out.push(who + ': wounded, limit ' + v.hp_limit); }
         });
         const load = data.company && data.company.load;
@@ -440,8 +445,6 @@
     // -----------------------------------------------------------------------
     VirtualWindows.register({
         window:       win,
-        // handleGMCP calls a handler once per matching level; the top names
-        // give one call per payload.
         gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
             if (namespace.indexOf('Company') === 0) {

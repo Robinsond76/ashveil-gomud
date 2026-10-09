@@ -1,0 +1,13 @@
+itemid: 10125
+name: runesteel mace
+namesimple: mace
+description: A mace of runesteel with a knobbed head, heavy with old craft.
+type: weapon
+hands: 1
+subtype: bludgeoning
+weaponclass: mace
+tier: 5
+family: mace
+damage:
+  diceroll: 1d8+3
+weight: 2000

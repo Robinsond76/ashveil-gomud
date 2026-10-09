@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/storyevents"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/walking"
@@ -31,7 +32,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	}
 
 	if user.Character.Aggro != nil {
-		user.SendText("You can't do that! You are in combat!")
+		user.SendText("You can't do that. You are in combat.")
 		return true, nil
 	}
 
@@ -49,6 +50,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 	// An active camp rest refuses ordinary movement and reports progress.
 	if blocked, message := camping.MovementBlocked(user.UserId); blocked {
+		user.SendText(message)
+		return true, nil
+	}
+
+	// A story event waiting for an answer holds the company where it is
+	// (Phase 60).
+	if blocked, message := storyevents.MovementBlocked(user.UserId); blocked {
 		user.SendText(message)
 		return true, nil
 	}

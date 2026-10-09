@@ -1,0 +1,16 @@
+roomid: 3222
+zone: Marrowmere Fen
+title: Black-water Backwater
+description: Frogs fall silent as you pass and the reeds close behind.
+biome: shore
+exits:
+  west:
+    roomid: 3221
+  north:
+    roomid: 3216
+resources:
+- water
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true

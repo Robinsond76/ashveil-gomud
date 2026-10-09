@@ -112,6 +112,60 @@ Markets:
         StartStock: 14
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      - ItemId: 3201 # travelling lute (camp music); played at camp, never resold
+        BasePrice: 40
+        MinPrice: 34
+        MaxPrice: 60
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 4
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 3204 # reed pipes (camp music); played at camp, never resold
+        BasePrice: 35
+        MinPrice: 30
+        MaxPrice: 55
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 4
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 3207 # frame drum (camp music); played at camp, never resold
+        BasePrice: 45
+        MinPrice: 38
+        MaxPrice: 70
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 3202 # inlaid fiddle (camp music); played at camp, never resold
+        BasePrice: 150
+        MinPrice: 130
+        MaxPrice: 230
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 3205 # silver-keyed flute (camp music); played at camp, never resold
+        BasePrice: 140
+        MinPrice: 120
+        MaxPrice: 220
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 3208 # tuned kettle drum (camp music); played at camp, never resold
+        BasePrice: 160
+        MinPrice: 140
+        MaxPrice: 240
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 43b: weapon poison vials, one dose each (help poisons).
       - ItemId: 280 # vial of bitterleaf (Phase 43b)
         BasePrice: 6
@@ -244,6 +298,33 @@ Markets:
         MaxStock: 6
         TargetStock: 3
         StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 300 # fur-lined tent (Phase 52)
+        BasePrice: 90
+        MinPrice: 60
+        MaxPrice: 180
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 301 # camouflaged tent (Phase 52)
+        BasePrice: 70
+        MinPrice: 45
+        MaxPrice: 140
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 302 # large pavilion tent (Phase 52)
+        BasePrice: 120
+        MinPrice: 80
+        MaxPrice: 240
+        MaxStock: 3
+        TargetStock: 1
+        StartStock: 1
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
       - ItemId: 47 # fire steel and tinder
@@ -559,6 +640,33 @@ Markets:
         MinPrice: 30
         MaxPrice: 96
         MaxStock: 3
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 300 # fur-lined tent (Phase 52)
+        BasePrice: 105
+        MinPrice: 70
+        MaxPrice: 210
+        MaxStock: 2
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 301 # camouflaged tent (Phase 52)
+        BasePrice: 82
+        MinPrice: 52
+        MaxPrice: 164
+        MaxStock: 2
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 302 # large pavilion tent (Phase 52)
+        BasePrice: 140
+        MinPrice: 92
+        MaxPrice: 280
+        MaxStock: 2
         TargetStock: 1
         StartStock: 1
         DriftStep: 1

@@ -106,5 +106,9 @@ func onlineName(u *users.UserRecord, name string) string {
 	if u.IsReplay() {
 		return name + ` (replaying the tutorial)`
 	}
+	// Ashveil Phase 77: the Iron badge.
+	if u.Character != nil && u.Character.IsIron() {
+		return name + ` (Iron)`
+	}
 	return name
 }

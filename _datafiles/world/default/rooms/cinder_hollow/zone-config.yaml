@@ -1,0 +1,57 @@
+name: Cinder Hollow
+roomid: 3406
+defaultbiome: land
+tileready: true
+encounters:
+  band:
+    low: 12
+    high: 14
+  entrychance: 15
+  tables:
+    hollow:
+    - id: ash-ruffians
+      weight: 30
+      text: Ruffians wade through the ash, cudgels raised.
+      members:
+      - mobid: 28
+        count: 3
+    - id: ash-leaders
+      weight: 20
+      text: A dangerous ruffian leads his band across the cinders.
+      members:
+      - mobid: 29
+        count: 1
+      - mobid: 28
+        count: 2
+    - id: ash-enforcers
+      weight: 20
+      text: An enforcer holds the track while ruffians flank.
+      members:
+      - mobid: 91
+        count: 1
+      - mobid: 28
+        count: 2
+    - id: ash-spiders
+      weight: 15
+      text: Spider warriors skitter out of the cinders.
+      members:
+      - mobid: 36
+        count: 2
+      - mobid: 35
+        count: 1
+    - id: ash-mob
+      weight: 8
+      text: A mob of ruffians pours out of the burnt stacks.
+      members:
+      - mobid: 28
+        count: 4
+    - id: ash-surgeon
+      weight: 15
+      text: Ruffians close in with a back-alley bonesetter in tow.
+      members:
+      - mobid: 28
+        count: 1
+      - mobid: 29
+        count: 1
+      - mobid: 90
+        count: 1

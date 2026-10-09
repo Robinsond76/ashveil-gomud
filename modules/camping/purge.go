@@ -2,6 +2,7 @@ package camping
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/modtimer"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
@@ -29,8 +30,10 @@ func (m *CampingModule) onUserPurged(e events.Event) events.ListenerReturn {
 func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	m.stopTimerLocked(leaderUserID)
 	m.stopInnTimerLocked(leaderUserID)
+	modtimer.Stop(m.gigTimers, leaderUserID)
 	delete(m.timerGeneration, leaderUserID)
 	delete(m.innTimerGeneration, leaderUserID)
+	delete(m.gigGeneration, leaderUserID)
 	_, camp := m.camps[leaderUserID]
 	_, applied := m.recoveryApplied[leaderUserID]
 	_, stay := m.stays[leaderUserID]
@@ -41,6 +44,14 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	_, sharpen := m.autoSharpen[leaderUserID]
 	_, poisonPlan := m.poisonPlans[leaderUserID]
 	_, rewards := m.campRewards[leaderUserID]
+	_, lastRewards := m.lastRewards[leaderUserID]
+	_, dutied := m.restedDuties[leaderUserID]
+	_, tented := m.restedTents[leaderUserID]
+	_, chose := m.tentChoices[leaderUserID]
+	_, musical := m.musicSkills[leaderUserID]
+	_, silenced := m.musicOff[leaderUserID]
+	_, sung := m.restedSongs[leaderUserID]
+	_, gigged := m.gigLogs[leaderUserID]
 	delete(m.camps, leaderUserID)
 	delete(m.recoveryApplied, leaderUserID)
 	delete(m.stays, leaderUserID)
@@ -52,6 +63,13 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	delete(m.poisonPlans, leaderUserID)
 	delete(m.campRewards, leaderUserID)
 	delete(m.lastRewards, leaderUserID)
+	delete(m.restedDuties, leaderUserID)
+	delete(m.restedTents, leaderUserID)
+	delete(m.tentChoices, leaderUserID)
+	delete(m.musicSkills, leaderUserID)
+	delete(m.musicOff, leaderUserID)
+	delete(m.restedSongs, leaderUserID)
+	delete(m.gigLogs, leaderUserID)
 	delete(m.raiders, leaderUserID)
-	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || poisonPlan || rewards
+	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || poisonPlan || rewards || lastRewards || dutied || tented || chose || musical || silenced || sung || gigged
 }

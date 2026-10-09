@@ -1,0 +1,68 @@
+name: Greywatch Pass
+roomid: 3306
+defaultbiome: mountains
+tileready: true
+encounters:
+  band:
+    low: 9
+    high: 11
+  entrychance: 15
+  tables:
+    pass:
+    - id: snow-wolves
+      weight: 25
+      pack: true
+      text: Grey wolves drop from the rocks and circle the company.
+      members:
+      - mobid: 55
+        count: 3
+    - id: goblin-hexers
+      weight: 20
+      text: Goblin hexers chant from a ledge, imps at their feet.
+      members:
+      - mobid: 70
+        count: 2
+      - mobid: 33
+        count: 1
+    - id: pass-raiders
+      weight: 20
+      text: Brigands rush the narrow path from both ends.
+      members:
+      - mobid: 86
+        count: 3
+    - id: goblin-war-band
+      weight: 8
+      text: A large goblin band swarms down the slope.
+      members:
+      - mobid: 33
+        count: 4
+    - id: pass-mending
+      weight: 15
+      text: Goblins burst from the rocks with a shaman humming at their back.
+      members:
+      - mobid: 70
+        count: 1
+      - mobid: 97
+        count: 1
+      - mobid: 33
+        count: 1
+    - id: wolf-and-hexer
+      weight: 12
+      text: A wolf pack lopes down the pass with a goblin riding at its head.
+      members:
+      - mobid: 55
+        count: 2
+      - mobid: 70
+        count: 1
+    lair:
+    - id: guardian-and-pack
+      weight: 100
+      text: The cairn shudders and an ice guardian steps out, wolves at its heels.
+      members:
+      - mobid: 52
+        count: 1
+      - mobid: 55
+        count: 2
+      - mobid: 70
+        count: 1
+      boss: true

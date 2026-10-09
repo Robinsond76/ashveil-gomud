@@ -33,7 +33,6 @@
     var QUICK = [
         { label: 'Look',      cmd: 'look',      title: 'Look around' },
         { label: 'Inventory', cmd: 'inventory', title: 'What you carry' },
-        { label: 'Status',    cmd: 'status',    title: 'Your status' },
         { label: 'Camp',      cmd: 'camp',      title: 'The camp: supplies, gear and rest' },
     ];
     var BAR_KEY = 'ashveil-touch-bar';
@@ -63,7 +62,7 @@
         return b;
     }
 
-    function send(cmd) { if (Client.SendInput) { Client.SendInput(cmd); } }
+    function send(cmd, echo) { if (Client.SendInput) { Client.SendInput(cmd, echo); } }
 
     // "Walk to..." lists the named places the map shows, nearest first, and
     // sends one ordinary walkto for the pick (Phase 40d's click-to-walk).
@@ -72,7 +71,7 @@
         var items = [];
         if (window.MapPlaces && MapPlaces.walking()) { items.push({ label: 'Stop walking', cmd: 'walkto stop' }); }
         places.forEach(function (p) {
-            items.push({ label: p.name + ' (' + p.legend + ')', cmd: 'walkto ' + p.id });
+            items.push({ label: p.name + ' (' + p.legend + ')', cmd: 'walkto ' + p.id, echo: 'walkto ' + p.name });
         });
         if (places.length === 0) {
             items.push({ label: 'No named places on this map yet. Tap a room on the Map instead (help walkto)', cmd: 'help walkto' });
@@ -106,7 +105,7 @@
             found.forEach(function (p) {
                 var b = button(p.name + (p.legend ? ' (' + p.legend + ')' : ''), 'Walk to ' + p.name, function () {
                     sheet.remove();
-                    send('walkto ' + p.id);
+                    send('walkto ' + p.id, 'walkto ' + p.name);
                 }, 'ws-item');
                 list.appendChild(b);
             });
@@ -158,6 +157,9 @@
         stopBtn = button('Stop', 'Stop walking (walkto stop)', function () { send('walkto stop'); }, 'mb-btn mb-stop');
         stopBtn.hidden = true;
         row.appendChild(stopBtn);
+        row.appendChild(button('Menu', 'Quick commands for this room (help quickmenu)', function () {
+            if (window.QuickMenu) { QuickMenu.open(); }
+        }, 'mb-btn mb-menu'));
         QUICK.forEach(function (c) {
             // These answer in the game text, so bring it to the front.
             row.appendChild(button(c.label, c.title, function () { send(c.cmd); show('game'); }));

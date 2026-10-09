@@ -14,9 +14,11 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mount"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -30,9 +32,12 @@ type inventoryItem struct {
 	UsesMax int    `json:"uses_max"`
 	Type    string `json:"type"`
 	Subtype string `json:"subtype"`
+	Goods   string `json:"goods,omitempty"` // trade category (Phase 89 tabs)
 	Slot    string `json:"slot,omitempty"`
 	// WornBy (Phase 38e): the creature species the item is cut for.
 	WornBy []string `json:"worn_by,omitempty"`
+	// Relic (36d review): a relic's signature or set bonuses, in words.
+	Relic []string `json:"relic,omitempty"`
 }
 
 type inventoryMember struct {
@@ -101,6 +106,33 @@ type inventoryPayload struct {
 	CompanionsKnown bool             `json:"companions_known"`
 	Horses          []inventoryHorse `json:"horses"`
 	Cargo           []inventoryItem  `json:"cargo"`
+	// Seized (Phase 53) is what a defeat's captors hold for the leader, and
+	// where; absent when nothing is held.
+	Seized *inventorySeized `json:"seized,omitempty"`
+}
+
+// inventorySeized is the pack and gold a capture holds (help defeat).
+type inventorySeized struct {
+	Items int    `json:"items"`
+	Gold  int    `json:"gold"`
+	Where string `json:"where"` // the capture room's title, plain
+	Here  bool   `json:"here"`  // the leader stands in it now
+}
+
+// seizedOf reads a leader's held goods; nil when none are held.
+func seizedOf(c *characters.Character) *inventorySeized {
+	gold := death.SeizedGold(c)
+	if len(c.Seized) == 0 && gold <= 0 {
+		return nil
+	}
+	out := &inventorySeized{Items: len(c.Seized), Gold: gold}
+	if roomID := death.SeizedRoom(c); roomID > 0 {
+		if room := rooms.LoadRoom(roomID); room != nil {
+			out.Where = room.Title
+		}
+		out.Here = c.RoomId == roomID
+	}
+	return out
 }
 
 // inventorySources are what the payload reads; natives unless a test
@@ -123,7 +155,7 @@ func nativeInventorySources() inventorySources {
 
 func inventoryItemOf(i company.InventoryItem) inventoryItem {
 	return inventoryItem{Ref: i.Ref, Name: i.Name, Label: i.Label, Grams: i.Grams, Count: i.Count, Uses: i.Uses, UsesMax: i.UsesMax,
-		Type: i.Type, Subtype: i.Subtype, Slot: i.Slot, WornBy: i.WornBy}
+		Type: i.Type, Subtype: i.Subtype, Goods: i.Goods, Slot: i.Slot, WornBy: i.WornBy, Relic: i.Relic}
 }
 
 func inventoryItems(in []company.InventoryItem) []inventoryItem {
@@ -146,7 +178,9 @@ func cargoItem(s encumbrance.CargoStack) inventoryItem {
 	out := inventoryItem{Ref: "!" + strconv.Itoa(s.ItemId), Name: itm.Name(), Label: company.PlainLabel(itm), Count: s.Count, Uses: s.Uses}
 	if spec := items.GetItemSpec(s.ItemId); spec != nil {
 		out.Grams, out.UsesMax, out.Type, out.Subtype = spec.Weight, spec.Uses, string(spec.Type), string(spec.Subtype)
+		out.Goods = spec.Goods
 		out.WornBy = spec.WornBy
+		out.Relic = itm.RelicLines()
 		if out.Uses == 0 {
 			out.Uses = spec.Uses // a full stack
 		}
@@ -163,7 +197,7 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 	for _, slot := range items.AllEquipSlots() {
 		slots = append(slots, inventorySlot{Slot: string(slot), Label: strings.TrimSuffix(characters.SlotLabel(slot), ":")})
 	}
-	p := inventoryPayload{Slots: slots, Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
+	p := inventoryPayload{Seized: seizedOf(user.Character), Slots: slots, Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
 	if load, ok := src.load(uid); ok {
 		p.Load = &inventoryLoad{TotalG: load.TotalGrams(), CapacityG: load.CapacityGrams, MemberCapacityG: load.MemberCapacityGrams,
 			MountCapacityG: load.MountCapacityGrams, CargoG: load.CargoGrams}

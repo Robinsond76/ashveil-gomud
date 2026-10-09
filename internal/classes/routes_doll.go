@@ -23,7 +23,16 @@ func init() {
 			rank(25, "Lacquered limbs", "each doll carries 4% armor of its own", DollArmor, 4),
 		}})
 	register(Class{ID: "grand-puppeteer", Name: "Grand Puppeteer", Lineage: "dollmaster", Tier: TierElite, Parent: "puppeteer", Gate: GateAny,
-		Role: "dolls with more health, and a strike that hits with both", Planned: true})
+		Role: "dolls with more health, and a third to drive",
+		Ranks: []Rank{
+			rank(30, "Grand dolls", "each doll has 65% of the health of a single doll", DollHPPct, 65),
+			rank(35, "Finer strings", "+2 Attack on each doll's blows", DollAttack, 4),
+			rank(40, "Heartwood", "each doll has 75% of the health of a single doll", DollHPPct, 75),
+			rank(45, "Deep lacquer", "each doll carries 8% armor of its own", DollArmor, 8),
+			rank(50, "Ironwood", "each doll has 85% of the health of a single doll", DollHPPct, 85),
+			rank(55, "Master carving", "+1 damage on each doll's blows", DollDamage, 1),
+			rank(60, "Third doll", "you drive a third doll; each doll has 70% of the health of a single doll, and Puppet Strike drives all three", DollCount, 2, DollHPPct, 70),
+		}})
 
 	register(Class{ID: "golemancer", Name: "Golemancer", Lineage: "dollmaster", Tier: TierAdvanced, Gate: GateAny,
 		Role: "one great golem: more health, its own armor, stronger strings",
@@ -34,7 +43,16 @@ func init() {
 			rank(25, "Unyielding", "the golem carries 25% armor of its own", DollArmor, 25),
 		}})
 	register(Class{ID: "golem-lord", Name: "Golem Lord", Lineage: "dollmaster", Tier: TierElite, Parent: "golemancer", Gate: GateAny,
-		Role: "a golem whose blows knock foes down", Planned: true})
+		Role: "a golem whose blows knock foes down, and that stands up twice",
+		Ranks: []Rank{
+			rank(30, "Hammering blows", "the golem's blows knock the foe down 20% of the time (a boss 10%)", DollKnock, 20),
+			rank(35, "Hammer fists", "+2 damage on the golem's blows", DollDamage, 3),
+			rank(40, "Granite heart", "the golem has 170% of the health of a single doll", DollHPPct, 170),
+			rank(45, "Deeper stone", "the golem carries 35% armor of its own", DollArmor, 35),
+			rank(50, "Ringing blows", "its blows knock the foe down 30% of the time (a boss 15%)", DollKnock, 30),
+			rank(55, "Practiced strings", "+4 Attack on the golem's blows", DollAttack, 4),
+			rank(60, "Rise again", "the golem stands back up a second time a battle, at half its health, on top of Emergency Splice", SplicePlus, 1),
+		}})
 
 	register(Class{ID: "marionettist", Name: "Marionettist", Lineage: "dollmaster", Tier: TierAdvanced, Gate: GateAny,
 		Role: "strings that snag more foes, sooner",
@@ -45,5 +63,14 @@ func init() {
 			rank(25, "Steady hands", "+2 damage on the doll's blows", DollDamage, 2),
 		}})
 	register(Class{ID: "string-sovereign", Name: "String Sovereign", Lineage: "dollmaster", Tier: TierElite, Parent: "marionettist", Gate: GateAny,
-		Role: "a tangled foe's next attack is weaker", Planned: true})
+		Role: "a tangled foe's next attack is weaker, and a Tangle that reaches three foes",
+		Ranks: []Rank{
+			rank(30, "Cut strings", "a foe you tangle has -15 Attack on its next attack", TangleWeak, 15),
+			rank(35, "Fine fingers", "+2 Attack on the doll's blows", DollAttack, 4),
+			rank(40, "Drawn taut", "Tangle pushes a foe's action meter back by 70", TanglePush, 20),
+			rank(45, "Sure hands", "+2 damage on the doll's blows", DollDamage, 4),
+			rank(50, "Deeper cut", "a tangled foe has -25 Attack on its next attack", TangleWeak, 25),
+			rank(55, "Master's fingers", "+2 Attack on the doll's blows", DollAttack, 6),
+			rank(60, "Sovereign strings", "Tangle snags three foes and pushes each back by 75", TangleFoes, 3, TanglePush, 25),
+		}})
 }

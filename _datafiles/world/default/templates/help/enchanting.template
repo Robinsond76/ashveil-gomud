@@ -1,0 +1,64 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">enchanting</ansi>
+
+Hunting pays in gear as well as gold. Creatures drop <ansi fg="yellow">enchanting trophies</ansi>
+(hearts, hides, chitin, ash) by the kind of creature they are, and an
+<ansi fg="yellow">enchanter</ansi> will work one into a weapon or piece of armor for a fee. The
+piece then gives the trophy's small effect for as long as it is worn, by you
+or by a companion. (The heavy hides and tusks sold at markets are trade
+goods, not these: <ansi fg="command">help goods</ansi>.)
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">imbue</ansi>
+  At an enchanter: lists the trophies you carry and what each would give.
+  Enchanters stand in towns; look for the <ansi fg="purple">enchanter</ansi> tag beside a name (the web
+  client's quick menu offers Enchant gear under Services).
+
+  <ansi fg="command">imbue [item] with [trophy]</ansi>
+  Works the trophy into the item, worn or carried. It costs 25 gold for each
+  tier of the piece (a Common piece is tier 1, a Masterwork tier 4), spends the
+  trophy and cannot be done in a battle. A companion's piece must be in your
+  pack first (<ansi fg="command">help companion-gear</ansi>).
+
+<ansi fg="yellow-bold">Which creature drops which trophy</ansi>
+
+  Beast hide     canines, beasts, rodents, hares, reptiles    +1% damage reduction
+  Brute's heart  ogres, trolls, goblins                       +1 damage on every landed blow
+  Chitin plate   giant spiders, insects                       +2 Evasion
+  Grave ash      the undead, ghostly spirits, demons          +3% spell damage
+  Hollow heart   eldritch horrors, trees, fungi               +2 Attack
+
+Each company that fights makes its own roll when a creature falls: about 1
+kill in 5 for a beast, brute or horror, 1 in 4 for the rest, twice that for
+an elite, and a boss always gives one. Foes in the training yard drop none.
+Once you have beaten a kind enough, <ansi fg="command">bestiary [name]</ansi> says which trophies it
+may yield (<ansi fg="command">help bestiary</ansi>).
+
+<ansi fg="yellow-bold">Rules</ansi>
+
+  - One trophy to a piece, and it is permanent. A second one is refused, so
+    pick the piece you will keep.
+  - Weapons and anything worn qualify; packs, trophies and quest items do not.
+  - A relic may be enchanted too, but its signature, awakenings and the
+    enchant together never pass what that effect may ever reach
+    (<ansi fg="command">help relics</ansi>); an enchant that would is trimmed.
+  - Every enchant is small, and one wearer's enchants do not stack: all of
+    them together give no more of an effect than one trophy of the best kind
+    (+2 Attack, +2 Evasion, +1 damage, +1% damage reduction, +3% spell
+    damage). Give each piece a different trophy, so a fully enchanted member
+    gains a little of several things.
+  - It follows the item into the pack and a companion's gear. Company cargo
+    refuses an enchanted piece, which would lose its enchant there.
+  - If a relic already holds all of what a trophy gives, the enchanter
+    refuses it, and you keep the trophy and your gold.
+  - <ansi fg="command">look</ansi> at a piece, or hover it in the gear window, to read its enchant. In a
+    battle, <ansi fg="command">why</ansi> names an enchant that raised a blow (<ansi fg="command">help why</ansi>).
+
+<ansi fg="yellow-bold">What it is worth</ansi>
+
+An enchant adds nothing to what a merchant pays for the piece. The fee and
+the trophy are spent for the power, not for resale, so an enchanted piece never
+sells for more than its parts and fee cost. A trophy itself is a drop and is
+worth a few coins.
+
+See also: <ansi fg="command">help bestiary</ansi>, <ansi fg="command">help relics</ansi>, <ansi fg="command">help goods</ansi>, <ansi fg="command">help salvage</ansi>, <ansi fg="command">help loot</ansi>.

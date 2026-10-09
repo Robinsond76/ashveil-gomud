@@ -94,7 +94,7 @@ func TestNarrationThroughTheRealRound(t *testing.T) {
 			if e.Crit {
 				key = "critical hit, " + key
 			}
-			if e.Quality != "" { // Phase 35d: the line names a glancing or telling blow
+			if e.Quality != "" && !(e.Crit && e.Quality == "glancing") { // Phase 87: a critical hit is never called glancing; Phase 35d: the line names a glancing or telling blow
 				key = e.Quality + ", " + key
 			}
 			hits[key]++
@@ -146,7 +146,9 @@ func TestCriticalHitNarration(t *testing.T) {
 				return e.Kind == combatstream.Attack && e.Crit && e.Damage > 0
 			})
 			if crit {
-				assert.Contains(t, strings.Join(lines, "\n"), "(critical hit, ")
+				// A crit can also be glancing or telling (Phase 35d), which
+				// the suffix names first: "(glancing, critical hit, 3 damage)".
+				assert.Regexp(t, `\((glancing, |telling, )?critical hit, `, strings.Join(lines, "\n"))
 			}
 		})
 		if crit {
@@ -186,8 +188,7 @@ func TestTwoPlayersOneGroupOneOpener(t *testing.T) {
 	shared := false
 	for i := 0; i < 200 && len(b.livingBandits()) > 0; i++ {
 		b.toughen()
-		brom.Character.HealthMax.Value = 1000
-		brom.Character.Health = 1000
+		hardTo(brom.Character, 1000)
 		b.fight()
 		aria, okA := battle.Current(7)
 		bromB, okB := battle.Current(8)

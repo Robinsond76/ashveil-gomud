@@ -1,0 +1,71 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">relics</ansi>
+
+Relics are hand-made gear that bosses carry: <ansi fg="rarity-legendary">Legendaries</ansi> and <ansi fg="rarity-set">Sets</ansi>. They are tier 4
+to 6 (<ansi fg="command">help equipmenttiers</ansi>), they have a name of their own, and they do
+something no ordinary piece does. Ordinary foes never drop them.
+
+<ansi fg="yellow-bold">Legendary</ansi>
+
+A named item with one fixed <ansi fg="yellow">signature</ansi> that works while it is worn, such as
+Ashen Reaper's Reaping (blows deal 20% more to a foe at or below half
+health) or the Grave-Pact Circlet's Grave Pact (once a battle a felling blow
+leaves its wearer at 1 health). The signature is known on sight: <ansi fg="command">look</ansi> at
+the item and it says what it does. A Legendary also rolls two ordinary
+affixes, which stay hidden until a Scribe reads it (<ansi fg="command">help identify</ansi>).
+
+<ansi fg="yellow-bold">Set</ansi>
+
+A small set, three pieces, from one boss. A piece alone is plain armor.
+Wear two pieces of one set and the set gives its first bonus; wear all three
+and it gives the second as well. A piece worn twice counts once. <ansi fg="command">look</ansi> at a
+piece to see its set and both bonuses.
+
+<ansi fg="yellow-bold">What the effects are</ansi>
+
+Signatures and set bonuses are the same effects a class has: more Attack or
+Evasion, a bonus on every blow, more damage to a wounded foe, a second wind,
+protection for the allies in the wearer's row, and so on. They add to what
+the wearer's class already gives and to the other relics worn, and they
+work for a companion exactly as for you. Every one is capped, so a relic is
+a strong choice, not a runaway one. They end the moment the piece comes off.
+<ansi fg="command">inventory</ansi> lists the relics you wear, each signature in words, and each set's
+progress with the bonuses in force.
+
+<ansi fg="yellow-bold">Awakenings</ansi>
+
+Each relic also has two or three awakenings: deeds, such as slaying a number of
+ogres, defeating a lair's master or reaching a zone, that wake a further small
+power once they are done while it is worn. <ansi fg="command">look</ansi> at a relic to see each one with
+its progress. See <ansi fg="command">help awakenings</ansi>.
+
+<ansi fg="yellow-bold">Enchants</ansi>
+
+A relic may also take a trophy from an enchanter, within the same caps. See
+<ansi fg="command">help enchanting</ansi>.
+
+<ansi fg="yellow-bold">Where they come from</ansi>
+
+Every relic belongs to one boss, and a Scribe of rank 4 can read which. Each
+company that beats the boss rolls once a kill for at most one of its relics.
+Each relic has a few percent, so a boss that carries several drops one more
+often: from about one kill in twelve to one in four. Allied companies each roll
+for themselves.
+
+<ansi fg="yellow-bold">Bad luck</ansi>
+
+A boss you keep beating without a relic owes you one: the 20th kill of the
+same boss since your last relic from it is certain to drop one. The count is
+kept for you across restarts, one for each boss, and starts over when a
+relic drops.
+
+<ansi fg="yellow-bold">Wearing and selling</ansi>
+
+A relic has a fixed item level, and needs a character 5 levels below it
+(<ansi fg="command">help itemlevel</ansi>). Its numbers are the item's own, whatever the quality of
+the day: relics do not roll quality. Hand one to a companion with
+<ansi fg="command">company equip</ansi>, or sell it: a merchant pays a quarter of its value at
+most, which is still the best price any find fetches (<ansi fg="command">help sell</ansi>). Some
+companions approve of a relic sold for coin and some disapprove (<ansi fg="command">help opinions</ansi>).
+
+See also: <ansi fg="command">help awakenings</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help equipmenttiers</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help encounters</ansi>, <ansi fg="command">help identify</ansi>,
+<ansi fg="command">help equipment</ansi>.

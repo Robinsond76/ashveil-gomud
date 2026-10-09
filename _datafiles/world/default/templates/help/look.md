@@ -16,5 +16,8 @@ The ~look~ command looks at things in the room around you.
   ~look sword#2~  
   This looks at the second *sword* in your backpack and gives you a description.
 
+  ~look lantern~  
+  Something lying on the ground can be looked at too, before you pick it up. Your own things come first: a lantern in your backpack is the one described.
+
   Sometimes there is text in a room description that warrants a closer look.  
   You can often look at these for more information about them.

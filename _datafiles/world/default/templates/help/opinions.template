@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">opinions</ansi>
+
+Your companions watch what you choose, and they have views. When you spare
+a beaten foe, pay for a bed, share your own bread or sell a relic, the
+companions with you may say what they think, in one line, and their
+loyalty moves a little.
+
+<ansi fg="yellow-bold">Reading what they think</ansi>
+
+  <ansi fg="command">opinions</ansi>             every companion: temperament, mood, what each likes and
+                      dislikes, and what each said lately
+  <ansi fg="command">opinions [member]</ansi>     one companion
+  <ansi fg="command">company inspect [member]</ansi>  one line of the same, with the rest of their record
+
+In the web client the Company window has an Opinions tab with the same
+cards. It fits a phone as it does the desktop. Reading it costs nothing,
+even in a fight.
+
+<ansi fg="yellow-bold">What they weigh</ansi>
+
+Each companion's temperament (stoic, cheerful, grim, boastful, wry or
+devout; <ansi fg="command">help banter</ansi>) likes some of these and dislikes others:
+
+  mercy to the beaten             you spared a surrendered foe (<ansi fg="command">help mercy</ansi>)
+  executing the beaten            you did not
+  a bed at an inn                 you paid for rooms (<ansi fg="command">help inn</ansi>)
+  a rough camp                    you rested in the wild (<ansi fg="command">help camp</ansi>)
+  sharing your own food           you fed or watered a companion from your own
+                                  pack, not the company's cargo (<ansi fg="command">help company meal</ansi>)
+  selling relics                  you sold a relic for coin, by <ansi fg="command">sell</ansi> or <ansi fg="command">sell junk</ansi>
+                                  (<ansi fg="command">help relics</ansi>)
+  kindness, greed, courage,       the spirit of a choice in a scene on the road
+  prudence, reverence, cunning    (<ansi fg="command">help events</ansi>)
+
+A temperament has a view on seven or eight of these and none on the rest.
+A devout companion likes mercy, kindness, reverence and sharing, and
+dislikes executions, selling relics, greed and lies. A grim one likes
+executions, a rough camp and caution, and dislikes mercy and soft beds.
+Read <ansi fg="command">opinions</ansi> for your own company.
+
+<ansi fg="yellow-bold">What it does</ansi>
+
+  - A companion who agrees gains 2 loyalty; one who disagrees loses 2.
+    Loyalty is what keeps a companion with you (<ansi fg="command">help alignment</ansi>).
+  - Opinions only nudge loyalty. Approval never lifts it above 80, and
+    disapproval never takes it below 30, so a companion is never driven off
+    or made to waver in a fight by your opinions alone.
+  - A companion speaks once for each choice, and again about the same kind
+    of choice only after a while: ten minutes for mercy and scenes, half an
+    hour for selling a relic, two hours for camps, inns and food. Repeating
+    a choice does not farm loyalty.
+  - Mercy already moves companions by their alignment (<ansi fg="command">help mercy</ansi>). One
+    that alignment moved does not speak twice; the others answer by
+    temperament.
+  - The company's creatures and constructs, the fallen and anyone away from
+    you do not weigh in.
+
+It gives no gold, experience or power, and it never moves the world's clock.
+
+Two companions who agree about a choice grow closer, and two who split over
+it grow apart (<ansi fg="command">help bonds</ansi>).
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help bonds</ansi>, <ansi fg="command">help banter</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help mercy</ansi>, <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help webclient</ansi>.

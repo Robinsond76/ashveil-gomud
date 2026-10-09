@@ -11,18 +11,17 @@ package mount
 
 import (
 	"embed"
-	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -83,19 +82,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	data, err := s.plug.ReadBytes("mount")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "mount", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("mount", registry)
+	return modstore.Save(s.plug, "mount", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping only entries keyed by an
@@ -190,13 +181,7 @@ func init() {
 var registered *MountModule
 
 func (m *MountModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("mount: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("mount: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("mount", m.loadErr, m.store != nil)
 }
 
 func (m *MountModule) save() error {
@@ -228,10 +213,10 @@ func (m *MountModule) load() {
 		m.mu.Lock()
 		m.specs = parseMountSpecs(m.plug.Config.Get("Mounts"))
 		m.stableTag = defaultStableTag
-		if tag := strings.TrimSpace(configString(m.plug.Config.Get("StableRoomTag"))); tag != "" {
+		if tag := strings.TrimSpace(modconfig.String(m.plug.Config.Get("StableRoomTag"))); tag != "" {
 			m.stableTag = tag
 		}
-		m.legacySaddle = configInt(m.plug.Config.Get("LegacySaddleItemId"))
+		m.legacySaddle = modconfig.IntOr(m.plug.Config.Get("LegacySaddleItemId"), 0)
 		m.mu.Unlock()
 	}
 	loaded := NewRegistry()
@@ -657,19 +642,19 @@ func parseMountSpecs(raw any) map[string]mount.MountSpec {
 		return specs
 	}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
 		spec := mount.MountSpec{
-			Type:                 strings.ToLower(strings.TrimSpace(configString(fields["type"]))),
-			Description:          configString(fields["description"]),
-			Kind:                 mount.Kind(strings.ToLower(strings.TrimSpace(configString(fields["kind"])))),
-			Price:                configInt(fields["price"]),
-			BareCapacityGrams:    int(configFloat(fields["barecapacitykg"]) * 1000),
-			SaddledCapacityGrams: int(configFloat(fields["saddledcapacitykg"]) * 1000),
-			TravelDurationPct:    configInt(fields["traveldurationpct"]),
-			FatiguePct:           configInt(fields["fatiguepct"]),
+			Type:                 strings.ToLower(strings.TrimSpace(modconfig.String(fields["type"]))),
+			Description:          modconfig.String(fields["description"]),
+			Kind:                 mount.Kind(strings.ToLower(strings.TrimSpace(modconfig.String(fields["kind"])))),
+			Price:                modconfig.IntOr(fields["price"], 0),
+			BareCapacityGrams:    int(modconfig.FloatOr(fields["barecapacitykg"], 0) * 1000),
+			SaddledCapacityGrams: int(modconfig.FloatOr(fields["saddledcapacitykg"], 0) * 1000),
+			TravelDurationPct:    modconfig.IntOr(fields["traveldurationpct"], 0),
+			FatiguePct:           modconfig.IntOr(fields["fatiguepct"], 0),
 		}
 		if err := spec.Validate(); err != nil {
 			mudlog.Warn("mount: invalid mount spec", "type", spec.Type, "error", err)
@@ -682,63 +667,4 @@ func parseMountSpecs(raw any) map[string]mount.MountSpec {
 		specs[spec.Type] = spec
 	}
 	return specs
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
-}
-
-func configFloat(raw any) float64 {
-	switch value := raw.(type) {
-	case float64:
-		return value
-	case int:
-		return float64(value)
-	case int64:
-		return float64(value)
-	case string:
-		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
-		if err == nil {
-			return f
-		}
-	}
-	return 0
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }

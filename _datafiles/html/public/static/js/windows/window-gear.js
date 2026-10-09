@@ -310,6 +310,29 @@
             line-height: 1.3;
         }
 
+        .gw-tt-name.r-uncommon { color: #5fd75f; }
+        .gw-tt-name.r-rare     { color: #5f87ff; }
+        .gw-tt-name.r-epic     { color: #af5fff; }
+        .gw-tt-name.r-legendary { color: #ff8700; }
+        .gw-tt-name.r-set      { color: #00afaf; }
+
+        .gw-tt-relic {
+            font-size: 0.75em;
+            line-height: 1.5;
+            color: var(--t-text);
+        }
+
+        /* Phase 67: a relic's awakenings, woken and asleep. */
+        .gw-tt-relic .gw-tt-awake { color: #ffd75f; }
+        .gw-tt-relic .gw-tt-sleep { color: var(--t-text-secondary); }
+        /* Phase 71: a trophy enchant, on a relic or a plain item. */
+        .gw-tt-relic .gw-tt-ench { color: #d787ff; }
+
+        .gw-tt-relic .gw-tt-relic-lore {
+            color: var(--t-text-secondary);
+            font-style: italic;
+        }
+
         .gw-tt-details {
             font-weight: normal;
             font-style: italic;
@@ -364,8 +387,7 @@
     // -----------------------------------------------------------------------
     // Tooltip
     // -----------------------------------------------------------------------
-    let tooltip   = null;
-    let hideTimer = null;
+    const tooltip = Client.tooltip('gw-item-tooltip');
     const rowItemData = new Map();
 
     function _itemHint(item) {
@@ -405,22 +427,13 @@
         return found ? found.grams : null;
     }
 
-    function ensureTooltip() {
-        if (tooltip) { return; }
-        tooltip = document.createElement('div');
-        tooltip.id = 'gw-item-tooltip';
-        document.body.appendChild(tooltip);
-    }
-
     function showTooltip(rowEl, item) {
-        ensureTooltip();
-        clearTimeout(hideTimer);
-
         const details     = (item.details && item.details.length > 0) ? item.details.join(', ') : null;
         const detailClass = item.details && item.details.includes('cursed') ? 'cursed'
                           : item.details && item.details.includes('quest')  ? 'quest' : '';
 
-        let html = '<div class="gw-tt-name">' + (item.label || item.name);
+        const rarityClass = item.rarity ? ' r-' + String(item.rarity).replace(/[^a-z]/g, '') : '';
+        let html = '<div class="gw-tt-name' + rarityClass + '">' + (item.label || item.name);
         if (details) {
             html += ' <span class="gw-tt-details ' + detailClass + '">(' + details + ')</span>';
         }
@@ -443,35 +456,31 @@
             });
         }
 
+        // Phase 36d: a Legendary's signature, or a set piece's set and its
+        // bonuses, as the server words them.
+        if (item.relic && item.relic.length > 0) {
+            const esc = function (v) {
+                return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            };
+            html += '<hr class="gw-tt-divider"><div class="gw-tt-relic">' +
+                item.relic.map(function (line) {
+                    const cls = line.indexOf('Awakened, ') === 0 ? ' class="gw-tt-awake"'
+                        : line.indexOf('Sleeping, ') === 0 ? ' class="gw-tt-sleep"'
+                        : line.indexOf('Enchanted with ') === 0 ? ' class="gw-tt-ench"' : '';
+                    return '<div' + cls + '>' + esc(line) + '</div>';
+                }).join('');
+            if (item.relic_lore) {
+                html += '<div class="gw-tt-relic-lore">' + esc(item.relic_lore) + '</div>';
+            }
+            html += '</div>';
+        }
+
         const hint = _itemHint(item);
         if (hint) {
             html += '<hr class="gw-tt-divider"><div class="gw-tt-hint">' + hint + '</div>';
         }
 
-        tooltip.innerHTML = html;
-        tooltip.style.display = 'block';
-        positionTooltip(rowEl);
-    }
-
-    function positionTooltip(rowEl) {
-        if (!tooltip) { return; }
-        const rect = rowEl.getBoundingClientRect();
-        const ttW  = tooltip.offsetWidth;
-        const ttH  = tooltip.offsetHeight;
-        const vw   = window.innerWidth;
-        const vh   = window.innerHeight;
-        let left = rect.right + 8;
-        if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
-        left = Math.max(8, left);
-        let top = rect.top;
-        if (top + ttH > vh - 8) { top = vh - ttH - 8; }
-        tooltip.style.left = left + 'px';
-        tooltip.style.top  = Math.max(8, top) + 'px';
-    }
-
-    function hideTooltip() {
-        if (!tooltip) { return; }
-        hideTimer = setTimeout(() => { tooltip.style.display = 'none'; }, 80);
+        tooltip.show(html, rowEl);
     }
 
     function attachTooltip(rowEl) {
@@ -479,9 +488,9 @@
             const item = rowItemData.get(rowEl);
             if (item) { showTooltip(rowEl, item); }
         });
-        rowEl.addEventListener('mouseleave', hideTooltip);
+        rowEl.addEventListener('mouseleave', () => tooltip.hide());
         rowEl.addEventListener('mousemove', () => {
-            if (tooltip && tooltip.style.display === 'block') { positionTooltip(rowEl); }
+            if (tooltip.isShown()) { tooltip.position(rowEl); }
         });
     }
 
@@ -521,16 +530,7 @@
     // Tab switching
     // -----------------------------------------------------------------------
     function makeTabSwitcher(root) {
-        const btns   = root.querySelectorAll('.gw-tab-btn');
-        const panels = root.querySelectorAll('.gw-tab-panel');
-        btns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                btns.forEach(b   => b.classList.remove('active'));
-                panels.forEach(p => p.classList.remove('active'));
-                btn.classList.add('active');
-                root.querySelector('#' + btn.dataset.panel).classList.add('active');
-            });
-        });
+        Client.tabs(root, { button: '.gw-tab-btn', panel: '.gw-tab-panel' });
     }
 
     // -----------------------------------------------------------------------
@@ -778,6 +778,7 @@
         if (!panel) { return; }
         const active = document.activeElement;
         const focusKey = active && panel.contains(active) && active.dataset.gearFocus;
+        keepScroll(panel);
         panel.replaceChildren();
         const tabs = document.querySelectorAll('#gear-window .gw-tab-btn');
         tabs[0].textContent = 'Equipment';
@@ -896,7 +897,10 @@
             apply.className = 'gw-apply';
             apply.disabled = !candidate.allowed;
             apply.dataset.gearFocus = 'apply';
-            apply.addEventListener('click', () => Client.SendInput(candidate.command));
+            // The command names the item by raw id; the terminal shows its name.
+            const whose = editorMember === 'me' ? '' : ((members.find(mm => mm.ref === editorMember) || {}).name || '');
+            const echo = (selected.key.startsWith('remove:') ? 'remove ' : 'equip ') + (whose ? whose + ' ' : '') + candidate.label;
+            apply.addEventListener('click', () => Client.SendInput(candidate.command, 'company ' + echo));
         }
         if (focusKey) {
             const next = [...panel.querySelectorAll('[data-gear-focus]')].find(n => n.dataset.gearFocus === focusKey);

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 
+	"github.com/GoMudEngine/GoMud/internal/appearance"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/lifestory"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -102,5 +104,24 @@ func HandleJoin(e events.Event) events.ListenerReturn {
 		}
 	}
 
+	offerCreation(user)
+
 	return events.Continue
+}
+
+// offerCreation (Ashveil Phase 72a) offers a character that has neither
+// looks nor a life story the creation steps, once: the `creation` command
+// asks, and marks the offer made whether the player writes them or puts
+// them off. It waits a moment so the login text is read first, and skips a
+// character still in the void (creation runs `start`'s own steps) or in a
+// fight.
+func offerCreation(user *users.UserRecord) {
+	c := user.Character
+	if c == nil || c.CreationOffered() || c.RoomId == -1 || c.Aggro != nil || user.HasPlaintextPassword() {
+		return
+	}
+	if (c.HasLooks() || !appearance.Available()) && (c.HasLifeStory() || !lifestory.Available()) {
+		return
+	}
+	user.Command(`creation`, 2)
 }

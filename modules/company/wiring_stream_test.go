@@ -30,18 +30,17 @@ func (b *brawl) listen() *[]combatstream.Event {
 // herself whenever she's idle. It returns everything the rounds sent.
 func (b *brawl) fightItOut(maxRounds int) string {
 	b.t.Helper()
-	b.aria.Character.HealthMax.Value = 1000
-	b.aria.Character.Health = 1000
+	hardTo(b.aria.Character, 1000)
 	var seen []string
 	for i := 0; i < maxRounds && len(b.livingBandits()) > 0; i++ {
-		b.aria.Character.HealthMax.Value = 1000
+		hardMaxTo(b.aria.Character, 1000)
 		// Her company may fall: alone, she turns on the next bandit by
 		// herself (Phase 32c).
 		seen = append(seen, b.fight())
 	}
 	require.Empty(b.t, b.livingBandits(), "the bandits fall")
 	// One more round: nothing further is reported for the ended fight.
-	b.aria.Character.HealthMax.Value = 1000
+	hardMaxTo(b.aria.Character, 1000)
 	seen = append(seen, b.fight())
 	return strings.Join(seen, "\n")
 }
@@ -190,6 +189,45 @@ func TestCombatEventStreamThroughTheRealRound(t *testing.T) {
 	assert.Equal(t, round, util.GetRoundCount())
 }
 
+// TestStrikesExplainTheRealRound (Phase 62): every blow between the sides
+// carries the strikes the engine rolled, their damage adds up to the
+// event's, `why` reads them back after the fight, and the summary says why
+// it went as it did.
+func TestStrikesExplainTheRealRound(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	s := b.sides()
+	b.aimAt("bandit captain")
+	seen := b.fightItOut(200)
+
+	attacks := 0
+	for _, e := range *got {
+		if e.Kind != combatstream.Attack || !s.across(e) {
+			continue
+		}
+		attacks++
+		require.NotEmpty(t, e.Strikes, "a weapon round records its strikes")
+		damage := 0
+		for _, st := range e.Strikes {
+			damage += st.Damage
+			if st.Roll >= 0 {
+				assert.Equal(t, st.Roll < st.Chance, st.Hit, "the roll decides the hit: %d against %d", st.Roll, st.Chance)
+			}
+		}
+		assert.Equal(t, e.Damage, damage, "the strikes' damage is the round's")
+	}
+	require.Positive(t, attacks)
+
+	rolls := combatstream.DefaultRollLog().Recent(7, 0)
+	require.NotEmpty(t, rolls, "the leader's roll log kept the fight's rounds")
+	assert.LessOrEqual(t, len(rolls), combatstream.RollLogCap)
+	why := b.cmd("why", "")
+	assert.Contains(t, why, "The last ")
+	assert.Contains(t, why, "To hit: ")
+
+	assert.Contains(t, seen, "Damage taken   ", "the summary says who took the most")
+}
+
 // TestBattleSummaryCanBeTurnedOff: `set battlesummary` turns the summary
 // off; the fight is still reported on the stream.
 func TestBattleSummaryCanBeTurnedOff(t *testing.T) {
@@ -223,8 +261,7 @@ func TestFleeBreaksTheFightOff(t *testing.T) {
 	var seen []string
 	fled := false
 	for i := 0; i < 40 && !fled; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		if b.aria.Character.RoomId == b.road.RoomId && (b.aria.Character.Aggro == nil || b.aria.Character.Aggro.Type != characters.Retreat) {
 			b.cmd("flee", "")
 		}
@@ -280,8 +317,7 @@ func TestInterceptedBlowFellsTheLeaderThatRound(t *testing.T) {
 	}
 	tamsin := b.companion(1)
 	for i := 0; i < 60; i++ {
-		captain.Character.HealthMax.Value = 1000
-		captain.Character.Health = 1000
+		hardTo(&captain.Character, 1000)
 		captain.Character.SetAggro(0, tamsin.InstanceId, characters.DefaultAttack)
 		b.aria.Character.Health = 1
 		b.aria.Character.Aggro = nil
@@ -323,8 +359,7 @@ func TestSpellEventsThroughTheRealRound(t *testing.T) {
 	breakDice(t, 99)
 	got := b.listen()
 	b.aimAt("bandit cutthroat")
-	b.aria.Character.HealthMax.Value = 1000
-	b.aria.Character.Health = 1000
+	hardTo(b.aria.Character, 1000)
 	// An owned spell never fizzles in battle (35b). Without these, an unowned
 	// spell rolled its success chance each try and could fail all of them
 	// beside the bandits' interrupts: the flaky "mm never went off".
@@ -334,7 +369,7 @@ func TestSpellEventsThroughTheRealRound(t *testing.T) {
 
 	cast := func(spellId string, users, mobIds []int) *combatstream.Event {
 		for i := 0; i < 100; i++ {
-			b.aria.Character.HealthMax.Value = 1000
+			hardMaxTo(b.aria.Character, 1000)
 			b.aria.Character.Health = 500
 			b.aria.Character.Aggro = &characters.Aggro{Type: characters.SpellCast, RoundsWaiting: 1,
 				SpellInfo: characters.SpellAggroInfo{SpellId: spellId, TargetUserIds: users, TargetMobInstanceIds: mobIds}}
@@ -383,8 +418,7 @@ func TestSpellEventsThroughTheRealRound(t *testing.T) {
 	living := b.livingBandits()
 	require.NotEmpty(t, living)
 	target := living[0]
-	target.Character.HealthMax.Value = 1000
-	target.Character.Health = 1000
+	hardTo(&target.Character, 1000)
 	complete = cast("mm", nil, []int{target.InstanceId})
 	var hit *combatstream.Event
 	for i := range *got {
@@ -396,7 +430,7 @@ func TestSpellEventsThroughTheRealRound(t *testing.T) {
 	require.NotNil(t, hit, "the spell's damage is reported")
 	assert.Positive(t, hit.Damage)
 	assert.NotZero(t, hit.FightID)
-	target.Character.HealthMax.Value = 10 // back to a bandit's toughness
+	hardMaxTo(&target.Character, 10) // back to a bandit's toughness
 	target.Character.Health = 5
 
 	// The fight's summary counts the spell with the blows.

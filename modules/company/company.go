@@ -4,9 +4,11 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -16,8 +18,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/rites"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -102,6 +107,8 @@ type wireRecord struct {
 	Claimed         []int                  `yaml:"claimed,omitempty"`
 	Service         []domain.Service       `yaml:"service,omitempty"`
 	Lost            []domain.LostCompanion `yaml:"lost,omitempty"`
+	Bonds           []domain.Bond          `yaml:"bonds,omitempty"`
+	Rites           []domain.Rite          `yaml:"rites,omitempty"`
 	Rosters         []domain.Roster        `yaml:"rosters,omitempty"`
 	AppliedOps      []string               `yaml:"applied_ops,omitempty"`
 }
@@ -121,7 +128,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderPackGranted: wr.LeaderPackGranted, FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
+		record := domain.Record{LeaderPackGranted: wr.LeaderPackGranted, FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Bonds: wr.Bonds, Rites: wr.Rites, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -138,20 +145,11 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *domain.Registry) error {
-	// ReadIntoStruct currently discards YAML decoding errors. Decode here so
-	// unreadable company data cannot become an empty, writable registry.
-	data, err := s.plug.ReadBytes("companies")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *domain.NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeCompanies(data, registry)
+	return modstore.Load(s.plug, "companies", func() domain.Registry { return *domain.NewRegistry() }, decodeCompanies, registry)
 }
+
 func (s pluginStore) Save(registry domain.Registry) error {
-	return s.plug.WriteStruct("companies", registry)
+	return modstore.Save(s.plug, "companies", registry)
 }
 
 type CompanyModule struct {
@@ -201,6 +199,12 @@ type CompanyModule struct {
 	// native check of where, and whether, a separated companion may rejoin.
 	strays     map[int]map[int]int
 	leaderFree func(leaderUserID int) (roomID int, free bool)
+	// Phase 70: errandSeam is nil for the running game's; errandRng is the
+	// game-loop source of an errand's seed.
+	errandSeam errandWorld
+	// Phase 74: riteSeam replaces the camp-or-inn check for unit tests.
+	riteSeam  func(user *users.UserRecord) string
+	errandRng *rand.Rand
 }
 
 // module is the registered instance, for wiring tests.
@@ -216,14 +220,23 @@ func init() {
 	m.saveUser = nativeSaveUser
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
-	m.plug.AddUserCommand("heal", m.healCommand, false, false)       // Phase 30b
-	m.plug.AddUserCommand("tactics", m.tacticsCommand, false, false) // Phase 30c: company tactics
-	m.plug.AddUserCommand("patch", m.patchUserCommand, false, false) // Phase 35b: company patch
-	m.plug.AddUserCommand("class", m.classCommand, false, false)     // Phase 38b: promotion
-	m.plug.AddUserCommand("talent", m.talentCommand, false, false)   // Phase 38b: talents
-	m.plug.AddUserCommand("doll", m.dollCommand, false, false)       // Phase 39d: a Doll Master's dolls
-	m.plug.AddUserCommand("beast", m.beastCommand, false, false)     // Phase 39e: a Beast Tamer's bonded beast
-	m.plug.AddUserCommand("brew", m.brewCommand, false, false)       // Phase 39g: an Alchemist's flasks
+	m.plug.AddUserCommand("heal", m.healCommand, false, false)        // Phase 30b
+	m.plug.AddUserCommand("tactics", m.tacticsCommand, false, false)  // Phase 30c: company tactics
+	m.plug.AddUserCommand("patch", m.patchUserCommand, false, false)  // Phase 35b: company patch
+	m.plug.AddUserCommand("class", m.classCommand, false, false)      // Phase 38b: promotion
+	m.plug.AddUserCommand("talent", m.talentCommand, false, false)    // Phase 38b: talents
+	m.plug.AddUserCommand("doll", m.dollCommand, false, false)        // Phase 39d: a Doll Master's dolls
+	m.plug.AddUserCommand("beast", m.beastCommand, false, false)      // Phase 39e: a Beast Tamer's bonded beast
+	m.plug.AddUserCommand("brew", m.brewCommand, false, false)        // Phase 39g: an Alchemist's flasks
+	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed while downed
+	m.plug.AddUserCommand("bonds", m.bondsCommand, true, false)       // Phase 65: read-only too
+	// Admin: heal and raise the whole company (usable while downed).
+	m.plug.AddUserCommand("healcompany", m.healCompanyCommand, true, true)
+	m.plug.AddUserCommand("errand", m.errandCommand, false, false) // Phase 70: send a benched companion away
+	m.plug.AddUserCommand("errands", m.errandCommand, false, false)
+	m.plug.AddUserCommand("rites", m.ritesCommand, true, false) // Phase 74: reading is allowed while downed
+	m.plug.AddUserCommand("rite", m.ritesCommand, false, false)
+	opinions.Observe(m.onOpinionBonds) // Phase 65: agreeing over a choice moves a bond
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.
@@ -260,7 +273,7 @@ func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 			Key:  survival.CompanionMemberKey(companion.ID),
 			Name: nameOf(companion, strconv.Itoa(companion.MobTemplateID)),
 			Dead: companion.Dead(),
-			Away: companion.Separated(),
+			Away: companion.Away(),
 			// Phase 38e: a construct needs no food, drink or rest.
 			Needless: creatures.KindOf(companion.Archetype) == creatures.Construct,
 		})
@@ -303,7 +316,13 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company fill | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill] | company patch | company repair [golem]"
+const companyUsage = "Usage: company [what], one of:\n" +
+	"  Hiring:   company recruit [candidate] | company inspect <mob-id-or-name> | company summon <mob-id-or-name> | company dismiss <member|all>\n" +
+	"  The band: company status | company tactics | company chemistry | company specialists | company opinions [member] | company bonds [member] | company alignment\n" +
+	"  Gear:     company gear <member> | company inventory | company patch | company repair [golem]\n" +
+	"  Needs:    company eat | company drink | company fill | company meal\n" +
+	"  Growth:   company archetype <member> <archetype> | company growth [member stat] | company train [member skill]\n" +
+	"See help company."
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -335,7 +354,7 @@ func (m *CompanyModule) allowedTemplates() map[int]struct{} {
 }
 
 func maxCompanionsFromConfig(raw any) int {
-	n, ok := configInt(raw)
+	n, ok := modconfig.Int(raw)
 	if !ok || n < 1 {
 		return domain.MaxCompanions
 	}
@@ -350,24 +369,6 @@ func (m *CompanyModule) maxCompanions() int {
 		return maxCompanionsFromConfig(m.plug.Config.Get("MaxCompanions"))
 	}
 	return domain.MaxCompanions
-}
-
-func configInt(raw any) (int, bool) {
-	switch v := raw.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
-	case float64:
-		return int(v), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		if err != nil {
-			return 0, false
-		}
-		return n, true
-	}
-	return 0, false
 }
 
 func (m *CompanyModule) instance(leaderUserID, companionID int) (int, bool) {
@@ -454,6 +455,12 @@ type generatedHire struct {
 }
 
 func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map[int]struct{}, claim bool, hire *generatedHire) (domain.Companion, error) {
+	return m.enlistNamed(leaderUserID, roomID, templateID, allowed, claim, hire, "")
+}
+
+// enlistNamed is enlist with a name given to a companion that has no
+// generated hire (the admin test area's); blank keeps the template's name.
+func (m *CompanyModule) enlistNamed(leaderUserID, roomID, templateID int, allowed map[int]struct{}, claim bool, hire *generatedHire, name string) (domain.Companion, error) {
 	reservedNextID, err := survival.NextReservedCompanionID(leaderUserID)
 	if err != nil {
 		return domain.Companion{}, err
@@ -480,6 +487,13 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	m.seedDisposition(leaderUserID, companion)
 	m.rollPersonality(leaderUserID, companion) // Phase 49
 	var spawnState *domain.MemberState
+	if hire == nil && name != "" {
+		companion.Name = name
+		if err := m.registry.SetIdentity(leaderUserID, companion.ID, companion.Identity()); err != nil {
+			restoreBefore()
+			return domain.Companion{}, err
+		}
+	}
 	if hire != nil {
 		g := hire.candidate
 		companion.Name, companion.Description = g.Name, g.Trait
@@ -561,6 +575,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		}
 	}
 	m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Joined, Members: []string{nameOf(companion, "A companion")}, Keys: []string{string(domain.CompanionMemberKey(companion.ID))}, Ref: fmt.Sprintf("mob:%d", templateID)})
 	return companion, nil
 }
 
@@ -649,6 +664,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		if c.PendingReturn {
 			state = "fled; awaiting battle settlement"
 		}
+		if c.OnErrand() {
+			state = m.errandState(*c.Errand)
+		}
 		if c.Separated() {
 			state = "separated; back in " + roundsText(c.Separation.RoundsLeft)
 			if c.Separation.RoundsLeft == 0 {
@@ -704,6 +722,7 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if err != nil {
 		return "", err
 	}
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: []string{companionName(companion)}, Keys: []string{string(domain.CompanionMemberKey(companion.ID))}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
 	text := fmt.Sprintf("Companion dismissed: %s (#%d).", name, companion.ID)
 	if line := gearReturnLine(leaderUserID, name, returned, gold); line != "" {
 		text += " " + line
@@ -715,7 +734,17 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 // Phase 21a desertion): survival state, the record, and the live mob. A
 // failed save restores record, the pre-removal record, and survival state.
 func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, companion domain.Companion) error {
-	return m.dropCompanion(leaderUserID, record, companion, nil)
+	// Phase 74: after long service, the company will want to mourn them; the
+	// occasion is queued here so the departure's save writes both.
+	rite := m.queueRite(leaderUserID, companion, rites.Left)
+	if err := m.dropCompanion(leaderUserID, record, companion, nil); err != nil {
+		m.unqueueRite(leaderUserID, rite)
+		return err
+	}
+	// Phase 63: every caller is a desertion (loyalty ran out); dismissal
+	// has its own path and its own deed.
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Deserted, Members: []string{companionName(companion)}, Keys: []string{string(domain.CompanionMemberKey(companion.ID))}, Ref: fmt.Sprintf("mob:%d", companion.MobTemplateID)})
+	return nil
 }
 
 // dropCompanion is removeCompanion; with lost (Phase 25b expiry), the
@@ -852,6 +881,12 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	if leader != nil && (len(returned) > 0 || gold > 0) {
 		m.finishGearReturn(leader)
 	}
+	var names, keys []string
+	for _, companion := range record.Companions {
+		names = append(names, companionName(companion))
+		keys = append(keys, string(domain.CompanionMemberKey(companion.ID)))
+	}
+	chronicle.Record(leaderUserID, chronicle.Entry{Kind: chronicle.Dismissed, Members: names, Keys: keys})
 	text := fmt.Sprintf("Dismissed %d companion(s).", count)
 	if line := gearReturnLine(leaderUserID, "The company", returned, gold); line != "" {
 		text += " " + line
@@ -870,15 +905,7 @@ func resolveCompanion(record domain.Record, selector string) (domain.Companion, 
 		}
 		return domain.Companion{}, false
 	}
-	var exact, partial []domain.Companion
-	for _, c := range record.Companions {
-		name := strings.ToLower(nameOf(c, ""))
-		if name == selector {
-			exact = append(exact, c)
-		} else if strings.Contains(name, selector) {
-			partial = append(partial, c)
-		}
-	}
+	exact, partial := domain.SplitNameMatches(record.Companions, selector, func(c domain.Companion) string { return nameOf(c, "") })
 	if len(exact) == 1 {
 		return exact[0], true
 	}
@@ -929,6 +956,10 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.alignmentView(user.UserId))
 	case "chemistry":
 		user.SendText(m.chemistryView(user.UserId))
+	case "opinions", "opinion": // Phase 64
+		user.SendText(m.opinionsView(user.UserId, strings.Join(args[1:], " ")))
+	case "bonds", "bond": // Phase 65
+		user.SendText(m.bondsView(user.UserId, strings.Join(args[1:], " ")))
 	case "specialists", "specialist":
 		// Phase 33f2: who in the company performs each expedition skill.
 		if text := archetypes.SpecialistsView(user.UserId); text != "" {
@@ -1011,7 +1042,7 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			}
 			continue
 		}
-		if companion.Dead() || companion.PendingReturn || companion.Separated() {
+		if companion.Dead() || companion.PendingReturn || companion.Away() {
 			continue // dead await resurrection; fled await settlement; the separated their way back (33h3)
 		}
 		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
@@ -1076,13 +1107,7 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 }
 
 func (m *CompanyModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("company: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("company: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("company", m.loadErr, m.store != nil)
 }
 
 func (m *CompanyModule) save() error {

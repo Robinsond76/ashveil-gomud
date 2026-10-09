@@ -1,0 +1,24 @@
+roomid: 3816
+zone: Glassvault Depths
+title: Hollow Passage
+description: The cave narrows into a gallery of smooth, glossy stone. A whisper that is not your
+  own voice echoes back.
+biome: cave
+exits:
+  east:
+    roomid: 3817
+  west:
+    roomid: 3815
+  south:
+    roomid: 3821
+  north:
+    roomid: 3809
+resources:
+- shelter
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: vault

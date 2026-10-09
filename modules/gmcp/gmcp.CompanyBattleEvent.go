@@ -54,6 +54,7 @@ const battleUnseen = "?"
 // omitted.
 type battleEvent struct {
 	Seq     uint64 `json:"seq"`
+	Slot    int    `json:"slot,omitempty"` // the round's turn slot acting (Phase 82b); 0 outside a turn
 	Kind    string `json:"kind"`
 	Src     string `json:"src,omitempty"`
 	Tgt     string `json:"tgt,omitempty"`
@@ -72,6 +73,11 @@ type battleEvent struct {
 	Status    string   `json:"status,omitempty"`
 	Rule      string   `json:"rule,omitempty"`
 	Defenses  []string `json:"defenses,omitempty"`
+	// Explain is the round's strikes in plain lines (Phase 62), the
+	// engine's own numbers: what the hit needed and rolled, the defence it
+	// met, armor, named modifiers. Only for the player's own company's
+	// rounds against a foe they can make out.
+	Explain []string `json:"explain,omitempty"`
 	// fight-start: who is in the fight (enemies only when seen).
 	Company []string `json:"company,omitempty"`
 	Enemies []string `json:"enemies,omitempty"`
@@ -163,13 +169,14 @@ func buildBattleEvent(v battleViewer, e combatstream.Event, fi combatstream.Figh
 	}
 	be := battleEvent{
 		Seq:      e.Seq,
+		Slot:     e.Slot,
 		Kind:     string(e.Kind),
 		Src:      v.refID(e.Source),
 		Tgt:      v.refID(e.Target),
 		Prev:     v.refID(e.Previous),
 		Outcome:  e.Outcome,
 		Damage:   e.Damage,
-		Crit:     e.Crit,
+		Crit:     e.Crit && (e.Kind != combatstream.Attack || combatstream.CritLanded(e.Strikes, e.Crit)),
 		Quality:  e.Quality,
 		Weapon:   e.WeaponType,
 		Spell:    e.SpellId,
@@ -178,6 +185,9 @@ func buildBattleEvent(v battleViewer, e combatstream.Event, fi combatstream.Figh
 		Status:   e.Status,
 		Rule:     e.Rule,
 		Defenses: e.Defenses,
+	}
+	if e.Kind == combatstream.Attack && v.allyLeader == 0 && !v.masked(e.Source) && !v.masked(e.Target) && (e.Source.LeaderUserId == v.userId || e.Target.LeaderUserId == v.userId || e.Source.UserId == v.userId || e.Target.UserId == v.userId) {
+		be.Explain = combatstream.Breakdown(e.Strikes)
 	}
 	if e.SpellId != "" {
 		if sp := spells.GetSpell(e.SpellId); sp != nil {
@@ -251,7 +261,7 @@ func isAllyRef(id string) bool { return strings.HasPrefix(id, "a:") || strings.H
 // company's fight is theirs, not ours) and the status a blow left on them.
 func scrubAlly(be battleEvent) battleEvent {
 	if isAllyRef(be.Tgt) {
-		be.Damage, be.Amount, be.HeldBack, be.Status = 0, 0, 0, ""
+		be.Damage, be.Amount, be.HeldBack, be.Status, be.Explain = 0, 0, 0, "", nil
 	}
 	return be
 }

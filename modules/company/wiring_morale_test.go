@@ -2,6 +2,7 @@ package company
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -77,10 +78,19 @@ func TestMoraleRoundYieldProtectionAndSpare(t *testing.T) {
 		_, inParty := enemyparty.PartyOf(b.road, id)
 		assert.False(t, inParty)
 	}
+	*b.messages = nil
 	hooks.MercyTick(events.NewTurn{})
+	events.ProcessEvents()
 	p := b.aria.GetPrompt()
 	require.NotNil(t, p)
-	assert.Contains(t, p.Questions[0].Question, "first cutthroat") // stable ordinal or bandit name below
+	// The kneeling is told once, in a line of its own; the prompt line
+	// (which adds "[yes/no]" itself) carries only the question.
+	told := companyTagPattern.ReplaceAllString(strings.Join(*b.messages, "\n"), "")
+	assert.Contains(t, told, "first cutthroat kneels, hands raised.")
+	assert.NotContains(t, told, "Spare")
+	assert.NotContains(t, told, "[yes/no]")
+	assert.True(t, strings.HasPrefix(p.Questions[0].Question, "Spare "))
+	assert.NotContains(t, p.Questions[0].Question, "[yes/no]")
 	token := p.Rest
 	before := b.aria.Character.Alignment
 	id := ids[0]
@@ -230,11 +240,11 @@ func TestNerveThroughRoundHesitationAndFlight(t *testing.T) {
 				r.Companions[i].Disposition = &domain.Disposition{Alignment: a, Loyalty: 20}
 			}
 			module.registry.Put(r)
-			b.aria.Character.HealthMax.Value = 100
+			hardMaxTo(b.aria.Character, 100)
 			b.aria.Character.Health = 20
 			for i := 1; i <= 4; i++ {
 				m := b.companion(i)
-				m.Character.HealthMax.Value = 100
+				hardMaxTo(&m.Character, 100)
 				m.Character.Health = 20
 			}
 			roll := 0
@@ -412,8 +422,7 @@ func TestSharedMoraleOwnerDepartureAndSameRoundTie(t *testing.T) {
 	b, other, _ := alliedBrawl(t)
 	forceBlows(t, false)
 	b.toughen()
-	other.Character.HealthMax.Value = 10000
-	other.Character.Health = 10000
+	hardTo(other.Character, 10000)
 	for _, m := range b.livingBandits() {
 		m.Temperament = "craven"
 	}
@@ -551,4 +560,21 @@ func TestOfflineMercyRecoveryPreservesLaterSession(t *testing.T) {
 	saved, err = users.LoadUserFile(7)
 	require.NoError(t, err)
 	assert.Equal(t, int(before)+5, int(saved.Character.Alignment))
+}
+
+// Phase 64 review: a mercy answer whose company save failed is retried after
+// the leader walks away, when the queue no longer names the foe. The retry
+// must not index the empty queue for the opinion's subject.
+func TestFailedMercyRetryAfterLeavingDoesNotPanic(t *testing.T) {
+	b, _ := yieldingBrawl(t)
+	failing := &failingStore{Store: module.store, err: errors.New("disk full")}
+	module.store = failing
+	t.Cleanup(func() { module.store = failing.Store })
+	hooks.MercyTick(events.NewTurn{})
+	p := b.aria.GetPrompt()
+	require.NotNil(t, p)
+	require.Error(t, morale.AnswerMercy(7, p.Rest, "no"))
+	hooks.MercyLeave(events.RoomChange{UserId: 7})
+	failing.err = nil
+	assert.NotPanics(t, func() { hooks.MercyTick(events.NewTurn{}) })
 }

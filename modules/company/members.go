@@ -27,7 +27,7 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 	}
 	out := make([]domain.MemberView, 0, len(record.Companions))
 	for _, c := range record.Companions {
-		view := domain.MemberView{ID: c.ID, Name: companionName(c), Archetype: c.Archetype, Class: c.Class, Alignment: m.companionAlignment(c), Level: companionLevelNumber(c), Status: domain.MemberAwaiting}
+		view := domain.MemberView{ID: c.ID, Name: companionName(c), Archetype: c.Archetype, Class: c.Class, Alignment: m.companionAlignment(c), Personality: personalityOf(c), Level: companionLevelNumber(c), Status: domain.MemberAwaiting}
 		view.Row, view.Col, view.Placed = record.Formation.Find(domain.CompanionMemberKey(c.ID))
 		if !view.Placed {
 			view.Row, view.Col = 0, 0
@@ -38,6 +38,8 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 		case c.Dead():
 			view.Status = domain.MemberDead
 			view.RescueSeconds = c.Death.Remaining
+		case c.OnErrand():
+			view.Status = domain.MemberErrand
 		case c.Separated():
 			view.Status = domain.MemberSeparated
 		default:
@@ -100,7 +102,7 @@ func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
 	total := 0
 	for _, c := range record.Companions {
 		// Phase 33h3: a separated companion's gear is away with it.
-		if c.Dead() || c.Separated() {
+		if c.Dead() || c.Away() {
 			continue
 		}
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
@@ -160,7 +162,7 @@ func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 		return out
 	}
 	for _, c := range record.Companions {
-		if c.Dead() || c.Separated() || creatures.Is(c.Archetype) { // Phase 38e: a creature carries nothing
+		if c.Dead() || c.Away() || creatures.Is(c.Archetype) { // Phase 38e: a creature carries nothing
 			continue
 		}
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {

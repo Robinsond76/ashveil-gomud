@@ -33,6 +33,7 @@ type Race struct {
 	HPPerLevel       float64 `yaml:"hpperlevel,omitempty"` // Enemy HP gain; zero uses the progression default.
 	Temperament      string  `yaml:"temperament,omitempty"`
 	NeverBreak       bool    `yaml:"neverbreak,omitempty"`
+	Bloodless        bool    `yaml:"bloodless,omitempty"` // Phase 87: no blood or living flesh; blows read as bone, cloth, or dust and bleed nothing.
 	RaceId           int
 	Name             string
 	Description      string

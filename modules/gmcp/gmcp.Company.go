@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -52,6 +53,12 @@ type companyVitals struct {
 	FlasksMax *int          `json:"flasks_max,omitempty"`
 	Needs     *companyNeeds `json:"needs"`
 	Warmth    *string       `json:"warmth"`
+	// Fare is the member's battle condition (Phase 50): what its needs and
+	// meal buff do in the next battle, omitted when nothing.
+	Fare string `json:"fare,omitempty"`
+	// Ailments names the member's ailments with battles left (Phase 55),
+	// omitted when none.
+	Ailments []string `json:"ailments,omitempty"`
 }
 
 type companyCell struct {
@@ -96,7 +103,11 @@ type companyMember struct {
 	Rank      int    `json:"rank,omitempty"`
 	Promotion string `json:"promotion,omitempty"`
 	// Lineage is its base archetype id (Phase 40c), for the map sprite.
-	Lineage   string       `json:"lineage,omitempty"`
+	Lineage string `json:"lineage,omitempty"`
+	// Skin and Hair are the leader's chosen colours (#rrggbb, Phase 72a),
+	// painted on its battle sprite; omitted for companions.
+	Skin      string       `json:"skin,omitempty"`
+	Hair      string       `json:"hair,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -106,6 +117,25 @@ type companyMember struct {
 	// for the leader, and Skills when it has none.
 	Skills         map[string]int `json:"skills,omitempty"`
 	TrainingPoints *int           `json:"training_points,omitempty"`
+	// Orders are its battle orders (Phase 61) in words, in the order they
+	// are read, with the same wording as the `orders` command; omitted with
+	// none.
+	Orders []string `json:"orders,omitempty"`
+	// OrderCmds are the same orders as `orders [who] add` reads them, one
+	// per entry of Orders, so the web menu can leave out one already set.
+	OrderCmds []string `json:"order_cmds,omitempty"`
+	// Stance is its weapon stance (Phase 69), omitted with none.
+	Stance *companyStance `json:"stance,omitempty"`
+	// Tempo is its combat tempo, turns a round as the next round would
+	// use it (Phase 82d), two decimals; omitted when it is not here.
+	Tempo *float64 `json:"tempo,omitempty"`
+	// StancesFit are the stance keys what it holds can use (Phase 78), so
+	// the stance menu offers only those; empty when none fit, omitted when
+	// its gear can't be read (a companion away).
+	StancesFit *[]string `json:"stances_fit,omitempty"`
+	// Music is its camp-music skill in words ("Strings 2 (3 songs to level
+	// 3)"), omitted with none.
+	Music string `json:"music,omitempty"`
 }
 
 type companyLoad struct {
@@ -192,6 +222,8 @@ func statusName(s company.MemberStatus) string {
 		return "fled"
 	case company.MemberSeparated:
 		return "separated"
+	case company.MemberErrand:
+		return "errand"
 	}
 	return "present"
 }
@@ -216,6 +248,8 @@ func vitalsOf(m companyview.Member) companyVitals {
 	if m.WarmthKnown {
 		v.Warmth = strPtr(m.Warmth)
 	}
+	v.Fare = m.Fare
+	v.Ailments = m.Ailments
 	return v
 }
 
@@ -230,6 +264,8 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	out.Class, out.ClassName = m.Class, m.ClassName
 	if !m.Leader {
 		out.Lineage = m.Lineage
+	} else if u := users.GetByUserId(leaderUserID); u != nil {
+		out.Skin, out.Hair = u.Character.LookColors()
 	}
 	if c, ok := classes.Get(m.Class); ok && m.Class != "" && out.ClassName == "" {
 		out.ClassName = c.Name
@@ -249,6 +285,18 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 			out.Skills = m.Skills
 		}
 	}
+	if list := orders.For(leaderUserID, string(m.Key)); len(list) > 0 {
+		out.Orders = orders.Lines(list)
+		for _, o := range list {
+			out.OrderCmds = append(out.OrderCmds, o.Command())
+		}
+	}
+	out.Stance = stanceOf(leaderUserID, m.Key)
+	out.StancesFit = stancesFit(leaderUserID, m.Key)
+	if t, ok := memberTempo(leaderUserID, m.Key); ok {
+		out.Tempo = &t
+	}
+	out.Music = camping.MusicLabelOf(leaderUserID, string(m.Key))
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).
 	if m.Status != company.MemberDead {
@@ -343,7 +391,7 @@ func newCompanyFeed() *companyFeed {
 		accepting: nativeAccepting,
 		gearOpen:  map[int]gearWatch{},
 	}
-	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle)}
+	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear, f.watchingGearMember), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle), opinionsExtra(), bondsExtra(), errandsExtra(), ritesExtra()}
 	return f
 }
 

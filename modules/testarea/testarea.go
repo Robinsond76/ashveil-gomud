@@ -6,7 +6,7 @@
 //
 // A trip is a Session: the whole user record plus every module's per-user
 // state (internal/userstate), saved the moment the trip starts. The rooms
-// (zones Test Area and Test Area Road, rooms 90001-90010) have no exit to
+// (zones Test Area and Test Area Road, rooms 90001-90015) have no exit to
 // the rest of the world, so no walk, route or journey leaves them.
 //
 // Nothing here advances the world's clock: weather is the zone's own, and
@@ -40,7 +40,7 @@ const (
 	HubRoom = 90001
 	// FirstRoom and LastRoom bound the test rooms' ids.
 	FirstRoom = 90001
-	LastRoom  = 90010
+	LastRoom  = 90015
 )
 
 // Zones are the test area's zones.
@@ -51,6 +51,7 @@ var roomNames = map[string]int{
 	"hub": 90001, "yard": 90002, "combat": 90002, "camp": 90003, "armory": 90004, "armoury": 90004,
 	"stable": 90005, "weather": 90006, "deck": 90006, "cellar": 90007, "dark": 90007,
 	"pass": 90008, "narrow": 90008, "thicket": 90009, "ambush": 90009, "road": 90010, "thieves": 90010,
+	"gorge": 90011, "stranger": 90012, "shrine": 90013, "ledge": 90014, "gossip": 90015, "town": 90015,
 }
 
 // roomList is what `testarea rooms` shows, in order.
@@ -65,10 +66,15 @@ var roomList = []struct {
 	{90009, "thicket", "combat with an ambush"},
 	{90003, "camp", "a quiet camp with water, firewood and gathering"},
 	{90010, "road", "a camp thieves and raiders always visit"},
-	{90004, "armory", "free gear: testarea kit, give, items"},
+	{90004, "armory", "free gear: testarea catalog, kit, give"},
 	{90005, "stable", "horses for sale"},
 	{90006, "weather", "weather controls for the zone"},
 	{90007, "cellar", "darkness, for light sources"},
+	{90011, "gorge", "story event: a gorge and a rope (help events)"},
+	{90012, "stranger", "story event: a wounded stranger at a fire"},
+	{90013, "shrine", "story event: a burned shrine"},
+	{90014, "ledge", "where the gorge scene leads; up climbs back"},
+	{90015, "gossip", "townsfolk who talk of your chronicle's deeds (help townsfolk)"},
 }
 
 // Module is the test area's state.
@@ -91,6 +97,9 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
+	events.RegisterListener(events.RoomChange{}, m.onEnterArmory)
+	events.RegisterListener(events.ItemOwnership{}, onItemDropped)
+	events.RegisterListener(events.NewRound{}, onNewRound)
 	death.SetWakeOverride(m.wakeRoom)
 	registered = m
 }
@@ -271,7 +280,7 @@ func (m *Module) enter(user *users.UserRecord, word string) string {
 		return fmt.Sprintf("There is no test room called %q. %s lists them.", word, cmd("testarea rooms"))
 	}
 	if rooms.LoadRoom(roomID) == nil {
-		return "This world has no test area: its rooms (90001-90010) are missing."
+		return "This world has no test area: its rooms (90001-90015) are missing."
 	}
 	if actionpolicy.InBattle(user) {
 		return actionpolicy.BattleUnderWay

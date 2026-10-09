@@ -7,7 +7,7 @@ WAIT_ROUNDS = 1; // lightning.yaml's waitrounds
 
 // Phase 29c narration voice: mechanics in lowercase parentheses at the end.
 function chanting(rounds) {
-    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' turn)' : ' turns)');
 }
 
 function fill(sourceActor, text) {
@@ -32,7 +32,9 @@ function onMagic(sourceActor, targetActors) {
     var sourceUserId = sourceActor.UserId();
     var rain = sourceActor.Weather() == 'rain';
     var chain = Math.max(0, sourceActor.ClassEffect('chain'));
-    for (var i = 0; i < targetActors.length && i < 2; i++) {
+    // Phase 39i: a Tempest Lord's Storm wall chains through the whole row it was aimed along.
+    var reach = sourceActor.ClassEffect('chainrow') > 0 ? targetActors.length : 2;
+    for (var i = 0; i < targetActors.length && i < reach; i++) {
         var foe = targetActors[i];
         var pct = i == 0 ? 100 : chain;
         if (pct <= 0) { break; }

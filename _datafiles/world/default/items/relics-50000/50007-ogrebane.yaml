@@ -1,0 +1,38 @@
+itemid: 50007
+name: Ogrebane
+namesimple: axe
+description: 'A heavy axe with an ogre-hide grip and a notch worn in the beard where something very large once bled.'
+type: weapon
+hands: 1
+subtype: cleaving
+weaponclass: axe
+tier: 4
+family: axe
+damage:
+  diceroll: 1d10+1
+weight: 1900
+value: 1175
+relic:
+  signature: Giantfelling
+  effects: {damage: 2, healthpct: 5}
+  ilvl: 27
+  mob: 85
+  chance: 5
+  awakenings:
+    - name: "Giant-Slayer"
+      kind: slay
+      races: ["ogre", "goblin"]
+      count: 15
+      target: "ogres and goblins"
+      effects: {damage: 1}
+    - name: "Head of the Hunt"
+      kind: lair
+      mob: 85
+      target: "the forest ogre"
+      effects: {healthpct: 3}
+    - name: "Hollow Hunter"
+      kind: place
+      zone: "Hollowweb Deep"
+      target: "Hollowweb Deep"
+      effects: {attack: 4}
+  lore: 'Forest folk say a good axe hates a big neck. This one has hated several.'

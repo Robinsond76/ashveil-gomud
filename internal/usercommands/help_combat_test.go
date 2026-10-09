@@ -2,10 +2,14 @@ package usercommands
 
 import (
 	"path/filepath"
+	"regexp"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/bonds"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +27,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace", "battlescreen"} {
+	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "battlelog", "resurrect", "narration", "combatpace", "battlescreen", "orders", "stances"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -36,9 +40,11 @@ func TestCombatHelpTopics(t *testing.T) {
 		"battle": "combat", "fighting": "combat",
 		"reach": "formation", "interception": "formation",
 		"target": "targeting", "whetstone": "sharpen", "darkness": "light",
-		"battlesummary": "battle-summary", "resurrection": "resurrect",
+		"battlesummary": "battle-summary", "why": "battlelog", "battle-log": "battlelog", "explain": "battlelog", "rolls": "battlelog", "resurrection": "resurrect",
 		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
 		"battle-screen": "battlescreen", "battle-map": "battlescreen",
+		"order": "orders", "battle-orders": "orders", "when-do": "orders",
+		"stance": "stances", "weapon-stance": "stances", "shield-wall": "stances", "heavy-blows": "stances",
 		"pace": "combatpace", "pacing": "combatpace", "combat-pace": "combatpace",
 	}
 	for alias, topic := range aliases {
@@ -188,9 +194,9 @@ func TestCombatPaceHelp(t *testing.T) {
 	page = tagPattern.ReplaceAllString(page, "")
 	for _, want := range []string{
 		"set combatpace fast", "set combatpace normal", "set combatpace slow", "set combatpace off",
-		"0.4 seconds", "done in 6 seconds", "about 7 seconds",
+		"a turn every 0.6 seconds", "a turn every 1.5 seconds", "a turn every 2.25 seconds",
 		"screen reader", "the default is off",
-		"every 8 seconds", "before the next begins",
+		"never sooner than 3 seconds", "ten fighters take ten beats", "waits for the slowest reader",
 		"pain reaction or a death line",
 		"Your prompt", "battle view",
 		"Nothing is lost",
@@ -202,9 +208,10 @@ func TestCombatPaceHelp(t *testing.T) {
 	combat, err := GetHelpContents("combat")
 	require.NoError(t, err)
 	combat = tagPattern.ReplaceAllString(combat, "")
-	for _, want := range []string{"every 8 seconds", "up to 8 seconds", "help combatpace", "set combatpace"} {
+	for _, want := range []string{"one action at a time", "never sooner than 3 seconds", "help combatpace", "set combatpace", "resolve every 8 seconds instead"} {
 		assert.Contains(t, combat, want)
 	}
+	assert.NotContains(t, combat, "every 8 seconds (two", "the fixed round length is gone from a player's fight")
 	assert.NotContains(t, combat, "a round is 4 seconds", "the old round length is gone")
 
 	set, err := GetHelpContents("set")
@@ -277,7 +284,7 @@ func TestFormationDefaultsHelp(t *testing.T) {
 	}
 	text, err = GetHelpContents("company-inventory")
 	require.NoError(t, err)
-	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "every member's equipment slots")
+	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Worn gear is not listed there")
 }
 
 // Phase 38a: the Witch and hexes pages render, are indexed (hexes under
@@ -419,7 +426,7 @@ func TestBattleScreenHelp(t *testing.T) {
 	text, err := GetHelpContents("battlescreen")
 	require.NoError(t, err)
 	text = tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion", "watch that company at full size", "your band"} {
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion", "watch that company at full size", "your band", "Smaller text", "with the game text below it", "turn order", "appears twice", "Turn order: Wren", "names its tempo"} {
 		assert.Contains(t, text, want)
 	}
 	for _, hub := range []string{"combat", "webclient"} {
@@ -492,4 +499,263 @@ func TestRogueRangerEliteHelp(t *testing.T) {
 		assert.Contains(t, plain, name)
 	}
 	assert.NotContains(t, plain, "Pathfinder, Swordmaster, Nightblade,\nSentinel", "no longer listed as still to come")
+}
+
+// Phase 61: help orders renders, names every condition and action the
+// orders package offers, and the hub pages point to it.
+func TestOrdersHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	text, err := GetHelpContents("orders")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Help for", "up to 3 orders", "as ordered", "ally [n]", "self [n]", "chanting", "boss", "first", "foe [kind]",
+		"heal", "break", "guard", "strongest", "hold", "orders [who] add [condition] then [action]", "orders [who] preset", "orders [who] clear"} {
+		assert.Contains(t, plain, want, "help orders mentions %s", want)
+	}
+	for _, topic := range []string{"combat", "strategy"} {
+		hub, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, hub, "help orders", "help %s links to help orders", topic)
+	}
+}
+
+// Phase 69: help stances renders, names every stance and its trade, and the
+// hub pages point to it.
+func TestStancesHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	text, err := GetHelpContents("stances")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, d := range stance.Defs {
+		assert.Contains(t, plain, d.Name, "help stances names %s", d.Key)
+		assert.Contains(t, plain, "stance [who] [name]")
+	}
+	for _, want := range []string{"Help for", "one stance", "30% harder", "15 points less likely to hit", "12 points more likely to block",
+		"30% fewer turns", "25% more turns", "15% lighter", "10 points more likely to land a critical", "10% shallower",
+		"stance [who] off", "idle: needs a bow", "Stance button"} {
+		assert.Contains(t, plain, want, "help stances mentions %s", want)
+	}
+	for _, topic := range []string{"combat", "strategy", "orders", "webclient"} {
+		hub, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, hub, "help stances", "help %s links to help stances", topic)
+	}
+}
+
+// Phase 60: help events renders, answers to its aliases, and is linked
+// from the adventure hub and the pages about the road and camp.
+func TestEventsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "events", "help index lists events under the road")
+
+	want, err := GetHelpContents("events")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{"Help for", "choose 2", "event", "(closed: needs a rogue)", "chancy", "Nothing here moves the world's clock"} {
+		assert.Contains(t, plain, phrase)
+	}
+	for _, alias := range []string{"event", "scene", "scenes", "story events", "choose"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help events", alias)
+	}
+	for _, hub := range []string{"adventure", "travel", "camp"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "help events", "%s links to help events", hub)
+	}
+}
+
+// Phase 63: help chronicle renders, answers to its aliases, is indexed on
+// the road, and is linked from the pages about the company, the web client
+// and scenes.
+func TestChronicleHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "chronicle", "help index lists chronicle under the road")
+
+	want, err := GetHelpContents("chronicle")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{"Help for", "chronicle boss", "chronicle all", "Chronicle tab", "newest 300 deeds", "executions", "promotions"} {
+		assert.Contains(t, plain, phrase)
+	}
+	for _, alias := range []string{"chronicles", "deeds", "company chronicle"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help chronicle", alias)
+	}
+	// GoMud's own history command keeps its page (review: an alias took it).
+	history, err := GetHelpContents("history")
+	require.NoError(t, err)
+	assert.NotEqual(t, want, history, "help history is the history command's page")
+	for _, hub := range []string{"adventure", "company", "events", "webclient"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "chronicle", "%s mentions the chronicle", hub)
+	}
+}
+
+// Phase 64: help opinions renders, answers to its aliases, is indexed on
+// the road, states the limits the code enforces, and is linked from the
+// pages whose choices companions react to.
+func TestOpinionsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "opinions", "help index lists opinions under the road")
+
+	want, err := GetHelpContents("opinions")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{
+		"Help for", "opinions [member]", "Opinions tab", "mercy to the beaten", "a rough camp", "selling relics",
+		"gains 2 loyalty", "above 80", "below 30", "farm",
+	} {
+		assert.Contains(t, plain, phrase)
+	}
+	// The numbers on the page are the code's.
+	assert.Equal(t, 2, opinions.Nudge)
+	assert.Equal(t, 80, opinions.Ceiling)
+	assert.Equal(t, 30, opinions.Floor)
+	for _, alias := range []string{"opinion", "company opinions", "companion opinions"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help opinions", alias)
+	}
+	for _, hub := range []string{"adventure", "company", "events", "webclient", "mercy", "banter", "camp", "inn", "relics", "company-meal"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "opinions", "%s mentions opinions", hub)
+	}
+}
+
+// Phase 68: help townsfolk renders, answers to its aliases, is indexed on
+// the road, states what the code enforces, and is linked from the pages
+// about deeds.
+func TestTownsfolkHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "townsfolk", "help index lists townsfolk under the road")
+
+	want, err := GetHelpContents("townsfolk")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{"Help for", "townsfolk", "renown", "Chronicle tab", "once per player", "Nobody changes a price", "90 days", "mark"} {
+		assert.Contains(t, plain, phrase)
+	}
+	assert.NotContains(t, plain, "{{")
+	for _, m := range regexp.MustCompile(`help ([a-z-]+)`).FindAllStringSubmatch(plain, -1) {
+		_, err := GetHelpContents(m[1])
+		assert.NoError(t, err, "help townsfolk points at help %s", m[1])
+	}
+	for _, alias := range []string{"renown", "town memory", "talk of the town", "townsfolk talk"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help townsfolk", alias)
+	}
+	for _, hub := range []string{"adventure", "chronicle", "company", "webclient"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "help townsfolk", "%s links to help townsfolk", hub)
+	}
+}
+
+// Phase 65: help bonds renders, answers to its aliases, is indexed on the
+// road, states the numbers the code enforces, and is linked from the pages
+// a bond touches.
+func TestBondsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var road []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "road" && !topic.AdminOnly {
+			road = append(road, topic.Command)
+		}
+	}
+	assert.Contains(t, road, "bonds", "help index lists bonds under the road")
+
+	want, err := GetHelpContents("bonds")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(want, "")
+	for _, phrase := range []string{
+		"Help for", "bonds [member]", "Bonds tab", "like kin", "can't stand", "will not guard the other",
+		"bond guard", "lets the blow fall", "-85", "-100", "-60", "50 at most", "never into a feud", "at 40%", "two such steps a battle",
+	} {
+		assert.Contains(t, plain, phrase)
+	}
+	// The numbers on the page are the code's.
+	assert.Equal(t, 25, bonds.FriendAt)
+	assert.Equal(t, 50, bonds.CloseAt)
+	assert.Equal(t, 75, bonds.KinAt)
+	assert.Equal(t, -25, bonds.WaryAt)
+	assert.Equal(t, -50, bonds.RivalAt)
+	assert.Equal(t, -85, bonds.WarnAt)
+	assert.Equal(t, -100, bonds.LeaveAt)
+	assert.Equal(t, -60, bonds.MendAt)
+	assert.Equal(t, 40, bonds.GuardBelowPct)
+	assert.Equal(t, 2, bonds.CompanyGuards)
+	assert.Equal(t, 3, bonds.RescueGain)
+	assert.Equal(t, 2, bonds.RefusalLoss)
+	assert.Equal(t, 1, bonds.Guards(bonds.FriendAt))
+	assert.Equal(t, 2, bonds.Guards(bonds.KinAt))
+	for _, alias := range []string{"bond", "company bonds", "companion bonds", "friendship", "rivalry"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help bonds", alias)
+	}
+	for _, hub := range []string{"adventure", "company", "opinions", "banter", "camp", "guardian", "webclient"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, text, "bonds", "%s mentions bonds", hub)
+	}
+}
+
+// Phase 85: the chronicle and bestiary pages say that learning a kind's
+// habits is written down as beast lore.
+func TestBeastLoreHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	for topic, phrases := range map[string][]string{
+		"chronicle": {"chronicle lore", "habits", "newest 30"},
+		"bestiary":  {"chronicle lore", "kinds you learned before"},
+	} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		plain := tagPattern.ReplaceAllString(text, "")
+		for _, p := range phrases {
+			assert.Contains(t, plain, p, "help %s", topic)
+		}
+	}
 }

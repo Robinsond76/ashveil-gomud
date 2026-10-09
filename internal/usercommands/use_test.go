@@ -3,7 +3,9 @@ package usercommands
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -55,6 +57,15 @@ func cook(cookingLevel int) *users.UserRecord {
 	if cookingLevel > 0 {
 		user.Character.Skills = map[string]int{"cooking": cookingLevel}
 	}
+	// A cook who knows the stew (Phase 56); newCook is one who knows nothing.
+	cookbook.Learn(user.Character, useTestStew)
+	return user
+}
+
+// newCook knows only the common dishes.
+func newCook(cookingLevel int) *users.UserRecord {
+	user := cook(cookingLevel)
+	user.Character.SetMiscData(cookbook.BookKey, "")
 	return user
 }
 
@@ -168,4 +179,96 @@ func TestLookContainerListsRecipesInOrderWithRequirement(t *testing.T) {
 	assert.Less(t, stewAt, teaAt, "lower output id listed first")
 	assert.Contains(t, out, "requires")
 	assert.Equal(t, 1, strings.Count(out, "requires"), "only the gated recipe shows a requirement")
+}
+
+// Phase 56: a hearth only cooks dishes the cook has learned; common
+// (Cooking 1 or ungated) dishes need no learning.
+func TestUseContainerCooksOnlyLearnedDishes(t *testing.T) {
+	setupUseTest(t)
+	recipes := map[int][]int{useTestStew: {useTestMeat, useTestMeat, useTestHerb}, useTestRoast: {useTestMeat}}
+	reqs := map[int]rooms.RecipeRequirement{
+		useTestStew:  {SkillId: "cooking", MinLevel: 3},
+		useTestRoast: {SkillId: "cooking", MinLevel: 1},
+	}
+
+	t.Run("an unlearned stew is not made even with the skill", func(t *testing.T) {
+		room := useTestRoom(map[int][]int{useTestStew: recipes[useTestStew]}, reqs, useTestMeat, useTestMeat, useTestHerb)
+		out := captureUserText(t, func() {
+			_, err := Use("hearth", newCook(3), room, 0)
+			require.NoError(t, err)
+		})
+		assert.Contains(t, out, "don't know a dish")
+		assert.Contains(t, out, "cook")
+		assert.ElementsMatch(t, []int{useTestMeat, useTestMeat, useTestHerb}, containerIds(room), "nothing consumed")
+	})
+
+	t.Run("a common dish needs no learning", func(t *testing.T) {
+		room := useTestRoom(recipes, reqs, useTestMeat)
+		_, err := Use("hearth", newCook(1), room, 0)
+		require.NoError(t, err)
+		assert.Equal(t, []int{useTestRoast}, containerIds(room))
+	})
+
+	t.Run("look lists only learned dishes and points at cook", func(t *testing.T) {
+		room := useTestRoom(map[int][]int{useTestStew: recipes[useTestStew]}, reqs)
+		room.Tags = []string{"lit"}
+		out := captureUserText(t, func() {
+			_, err := Look("hearth", newCook(3), room, 0)
+			require.NoError(t, err)
+		})
+		assert.NotContains(t, out, "requires", "the unlearned stew is hidden")
+		assert.Contains(t, out, "yet to be worked out")
+		learned := captureUserText(t, func() {
+			_, err := Look("hearth", cook(3), room, 0)
+			require.NoError(t, err)
+		})
+		assert.Contains(t, learned, "requires")
+	})
+}
+
+// 56 review: a crafting container that is not a hearth keeps working
+// without a recipe book, even for a gated recipe in another skill.
+func TestUseALoomNeedsNoRecipeBook(t *testing.T) {
+	setupUseTest(t)
+	skills.SetTestData([]*skills.Skill{{SkillId: "cooking", Name: "Cooking", MaxLevel: 4}, {SkillId: "tailoring", Name: "Tailoring", MaxLevel: 4}}, nil)
+	room := useTestRoom(map[int][]int{useTestStew: {useTestMeat}}, map[int]rooms.RecipeRequirement{useTestStew: {SkillId: "tailoring", MinLevel: 2}}, useTestMeat)
+	room.Containers = map[string]rooms.Container{"tattertail loom": room.Containers["hearth"]}
+	user := newCook(0)
+	user.Character.Skills = map[string]int{"tailoring": 2}
+	out := captureUserText(t, func() {
+		_, err := Use("loom", user, room, 0)
+		require.NoError(t, err)
+	})
+	assert.NotContains(t, out, "don't know a dish")
+	c := room.Containers["tattertail loom"]
+	require.Len(t, c.Items, 1, out)
+	assert.Equal(t, useTestStew, c.Items[0].ItemId)
+}
+
+// Review (camp music): reading a fine instrument's page writes its
+// pattern, apart from the recipe book, so an older character keeps every
+// dish and still has to find the page.
+func TestUsingAnInstrumentPageLearnsThePattern(t *testing.T) {
+	const fiddle, page = 9130, 9131
+	for _, spec := range []items.ItemSpec{
+		{ItemId: fiddle, Name: "inlaid fiddle", NameSimple: "fiddle", Type: items.Object, Instrument: "strings", InstrumentTier: 3},
+		{ItemId: page, Name: "recipe page for the inlaid fiddle", NameSimple: "page", Type: items.Object, Subtype: items.Usable, Uses: 1, Recipe: fiddle},
+	} {
+		spec := spec
+		items.SetTestItemSpec(&spec)
+		t.Cleanup(func() { items.RemoveTestItemSpec(spec.ItemId) })
+	}
+	freshEvents(t)
+	user := users.NewUserRecord(7, 1)
+	user.Character.Created = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	delete(user.Character.MiscData, cookbook.BookKey)
+	require.True(t, cookbook.Legacy(user.Character))
+	require.False(t, cookbook.KnowsPattern(user.Character, fiddle))
+	require.True(t, user.Character.StoreItem(items.New(page)))
+
+	handled, err := Use("page", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, cookbook.KnowsPattern(user.Character, fiddle))
+	assert.True(t, cookbook.Legacy(user.Character), "the old recipe book is untouched")
 }

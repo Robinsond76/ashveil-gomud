@@ -24,6 +24,7 @@ func RegisterListeners() {
 	// RoomChange Listeners
 	events.RegisterListener(events.RoomChange{}, LocationMusicChange)
 	events.RegisterListener(events.RoomChange{}, CleanupEphemeralRooms)
+	events.RegisterListener(events.RoomChange{}, RelicPlaceAwakening) // Phase 67
 	// Phase 29f: leaving the room by your own doing sends any held combat
 	// lines before the new room's text.
 	events.RegisterListener(events.RoomChange{}, FlushPacedOnRoomChange)
@@ -55,6 +56,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.NewTurn{}, AutoSave)
 	events.RegisterListener(events.NewTurn{}, PruneBuffs)
 	events.RegisterListener(events.NewTurn{}, ActionPoints)
+	events.RegisterListener(events.NewTurn{}, BattleClock) // Phase 82c: a player's fight runs on its own beat
 	events.RegisterListener(events.NewTurn{}, ReleasePacedCombat)
 	events.RegisterListener(events.UserSettingChanged{}, FlushPacedOnPaceChange)
 
@@ -95,6 +97,7 @@ func RegisterListeners() {
 	// Messages
 	events.RegisterListener(events.Message{}, Message_SendMessage)
 	events.RegisterListener(events.CombatData{}, CombatData_Hold)
+	events.RegisterListener(events.CombatReport{}, CombatReport_Mark)
 	// Prompt
 	events.RegisterListener(events.RedrawPrompt{}, RedrawPrompt_SendRedraw)
 

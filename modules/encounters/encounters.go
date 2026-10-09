@@ -20,16 +20,21 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/bounty"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/encounters"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -132,6 +137,7 @@ func init() {
 	walking.AddStepListener(m.onStep)
 	walking.AddArrivalListener(m.onArrival)
 	encounters.SetAttemptProvider(m)
+	encounters.SetStartProvider(m)
 	encounters.LairQuiet = m.LairQuiet
 }
 
@@ -314,7 +320,10 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	if !ok {
 		return false
 	}
-	enc, err := m.spawn(roomID, userID, encounters.Plan(comp, zone.Band, m.rng))
+	authored := comp
+	comp = encounters.Mix(comp, table, lookup, m.rng)
+	foes := encounters.Soften(encounters.Plan(comp, zone.Band, m.rng), companyview.LevelFor(users.GetByUserId(userID)), zone.Band)
+	enc, err := m.spawn(roomID, userID, foes)
 	if err != nil {
 		mudlog.Warn("encounters: spawn failed", "room", roomID, "composition", comp.ID, "error", err)
 		return false
@@ -324,8 +333,52 @@ func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	if text == "" {
 		text = defaultText
 	}
-	room.SendText(text)
+	room.SendText(text + mixedLine(authored, comp))
 	return true
+}
+
+// mixedLine is what an opening line gains when Mix gave a one-kind group a
+// second kind (89 review): the authored text names only the first kind, so
+// the newcomers are named after it (" A bone warden comes with them.").
+func mixedLine(authored, mixed encounters.Composition) string {
+	if len(authored.Members) != 1 || len(mixed.Members) != 2 {
+		return ""
+	}
+	m := mixed.Members[1]
+	spec := mobs.GetMobSpec(mobs.MobId(m.MobID))
+	if spec == nil || spec.Character.Name == "" {
+		return ""
+	}
+	name := spec.Character.Name
+	plural := strings.HasSuffix(name, "s") && !strings.HasSuffix(name, "ss") // "echo bats"
+	switch {
+	case m.Count == 1 && plural:
+		return " " + mobparty.Capitalize(name) + " come with them."
+	case m.Count == 1:
+		return " " + mobparty.Capitalize(mobparty.Article(name)+" "+name) + " comes with them."
+	case !plural:
+		name = mobparty.Plural(name)
+	}
+	return " " + mobparty.Capitalize(mobparty.CountWord(m.Count)+" "+name) + " come with them."
+}
+
+// StartGroup implements encounters.StartProvider (Phase 60): a story event
+// sets a named group on the leader. The group is tracked like a random one,
+// so it is cleaned up when abandoned and a battle's end starts the grace.
+func (m *EncountersModule) StartGroup(userID, roomID int, foes []encounters.Foe) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, r := range m.active {
+		if r.Owner == userID {
+			return errors.New("encounters: the company already faces a group")
+		}
+	}
+	enc, err := m.spawn(roomID, userID, foes)
+	if err != nil {
+		return err
+	}
+	m.active[enc.ID] = &record{Encounter: enc, comp: "event"}
+	return nil
 }
 
 // engagedLocked reports whether a foe in the room is already set on the user.
@@ -383,6 +436,7 @@ func (m *EncountersModule) settleLocked(battleJustEnded bool) {
 		r := m.active[id]
 		m.noteBossFallenLocked(r, now)
 		if r.standing() == 0 {
+			m.noteGroupBrokenLocked(r)
 			delete(m.active, id)
 			continue
 		}
@@ -480,6 +534,37 @@ func (m *EncountersModule) noteBossFallenLocked(r *record, now time.Time) {
 	for _, uid := range holders {
 		if user := users.GetByUserId(uid); user != nil {
 			user.SendText(`<ansi fg="yellow">The lair falls quiet. Its master will not rise here again for your company for about half an hour.</ansi>`)
+		}
+	}
+}
+
+// noteGroupBrokenLocked writes a won ordinary group into its leader's
+// chronicle while the leader holds a bounty on it (Phase 76: the board reads
+// it; every random fight would crowd the chronicle's 300 deeds and the
+// towns' newest 80 out of the deeds that matter). A boss's fall is already a
+// Boss deed from the mob's death, a story event's group has no table, and a
+// group cleared away (Remove) still has foes standing and never gets here.
+func (m *EncountersModule) noteGroupBrokenLocked(r *record) {
+	if r.Boss || r.comp == "" || r.comp == "event" || len(r.Foes) == 0 {
+		return
+	}
+	room := rooms.LoadRoom(r.RoomID)
+	if room == nil {
+		return
+	}
+	zone, ok := m.zoneTables(room.Zone)
+	if !ok {
+		return
+	}
+	for _, table := range zone.Tables {
+		for _, c := range table {
+			if c.ID == r.comp && !c.Boss {
+				if !bounty.Hunting(r.Owner, "group:"+c.ID, room.Zone) {
+					return
+				}
+				chronicle.Record(r.Owner, chronicle.Entry{Kind: chronicle.Group, Subject: c.Title(), Ref: "group:" + c.ID, Place: room.Title, Zone: room.Zone})
+				return
+			}
 		}
 	}
 }

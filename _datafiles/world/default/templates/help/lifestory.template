@@ -1,0 +1,51 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">lifestory</ansi>
+
+Where you came from. Three questions at creation, each with a short tale:
+your homeland, how you were brought up, and the trade you followed. They
+are written once and stay that way.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">lifestory</ansi>             tells your story and what it gave you
+  <ansi fg="command">lifestory choose</ansi>      writes it, if it is not written yet
+                        (<ansi fg="command">cancel</ansi> stops with nothing written)
+  <ansi fg="command">lifestory [player]</ansi>    who someone here is, at a glance
+
+<ansi fg="yellow-bold">What it gives</ansi>
+
+A small start, never a lasting edge:
+
+  Each answer gives +1 to a stat it names (your choice when it names
+  two), so the three answers give +3 in all, and no single stat gains
+  more than +2 from your story.
+  Your trade (your background) gives a keepsake for your pack, and
+  sometimes a first rung in a skill.
+
+The tale is read back in your own pronouns. Other players see only the
+three names, never the numbers.
+
+<ansi fg="yellow-bold">What it opens</ansi>
+
+Your trade is your background, and your homeland and upbringing count too.
+They never make you stronger in a fight, but the road notices them:
+
+  - A scene (<ansi fg="command">help events</ansi>) may offer a choice only someone with your
+    background can make: a soldier talks to a deserter as one of his own,
+    an acolyte knows the old words. A choice you cannot make shows as
+    <ansi fg="black-bold">(closed: needs a leader who was a soldier)</ansi>; one you can shows your
+    name and what opened it: <ansi fg="black-bold">(Mara, life story: a soldier)</ansi>.
+  - Townsfolk who have heard of your deeds (<ansi fg="command">help townsfolk</ansi>) may
+    mention it: a soldier who fells a beast hears about the drill.
+  - Only you carry a life story. Companions do not, so a background
+    choice is always yours to make, as the leader.
+
+<ansi fg="command">lifestory</ansi> shows yours.
+
+Characters made before life stories existed are asked once, when they next
+log in. Skip it and <ansi fg="command">creation</ansi> or <ansi fg="command">lifestory choose</ansi> asks again whenever you like.
+
+The last question of creation, after the story, is the Iron option
+(<ansi fg="command">help hardcore</ansi>); a new character also starts with the account's blessings
+(<ansi fg="command">help blessings</ansi>).
+
+See also: <ansi fg="command">help appearance</ansi>, <ansi fg="command">help stats</ansi>.

@@ -224,6 +224,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	void := &rooms.Room{RoomId: -1, Title: "The Void"}
 	create := func(u *users.UserRecord) {
 		t.Helper()
+		u.Character.MarkIronOffered() // these tests are about the tutorial, not the Iron question (Phase 77)
 		_, err := usercommands.Start("", u, void, 0)
 		require.NoError(t, err)
 		q := u.GetPrompt().GetNextQuestion()

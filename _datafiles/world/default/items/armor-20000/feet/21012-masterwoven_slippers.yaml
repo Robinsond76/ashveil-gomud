@@ -1,0 +1,11 @@
+itemid: 21012
+name: masterwoven slippers
+namesimple: slippers
+description: Fine woven cloth in many close layers, the work of a master weaver. It is footwear of the cloth path.
+type: feet
+subtype: wearable
+bulk: light
+tier: 4
+family: cloth
+damagereduction: 1
+weight: 300

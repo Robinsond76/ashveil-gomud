@@ -122,3 +122,22 @@ func TestCompanyCampAlliedOnly(t *testing.T) {
 	assert.Equal(t, 11, got.RoomID)
 	assert.Empty(t, got.AlliedCamps)
 }
+
+// Phase 77: Char.Info says when a character took the Iron option, and
+// leaves the key out for a standard one.
+func TestCharInfoCarriesTheIronOption(t *testing.T) {
+	u := users.NewUserRecord(94971, 0)
+	u.Character.Name = "Hero"
+	g := &GMCPCharModule{}
+	read := func() map[string]any {
+		info, _ := g.GetCharNode(u, "Char.Info")
+		raw, err := json.Marshal(info)
+		require.NoError(t, err)
+		var got map[string]any
+		require.NoError(t, json.Unmarshal(raw, &got))
+		return got
+	}
+	assert.NotContains(t, read(), "hardcore")
+	u.Character.SetIron(true)
+	assert.Equal(t, true, read()["hardcore"])
+}

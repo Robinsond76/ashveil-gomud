@@ -36,8 +36,7 @@ func TestPronounsAndOrdinalsThroughRealRound(t *testing.T) {
 	for round := 0; round < 30 && mobs.GetInstance(first) != nil; round++ {
 		b.toughen()
 		for _, foe := range b.livingBandits() {
-			foe.Character.HealthMax.Value = 1000
-			foe.Character.Health = 1000
+			hardTo(&foe.Character, 1000)
 		}
 		firstMob.Character.Health = 1
 		b.aria.Character.SetAggro(0, first, characters.DefaultAttack)
@@ -71,8 +70,7 @@ func TestPronounsAndOrdinalsThroughRealRound(t *testing.T) {
 	}
 	for round := 0; round < 30 && !swungSinceFirstFell(); round++ {
 		b.toughen()
-		secondMob.Character.HealthMax.Value = 1000
-		secondMob.Character.Health = 1000
+		hardTo(&secondMob.Character, 1000)
 		transcript += b.fight() + "\n"
 	}
 	require.True(t, swungSinceFirstFell(), "the second cutthroat fights on after the first falls")
@@ -161,8 +159,7 @@ func TestBattleNameGrowthReachesStream(t *testing.T) {
 	brom.Character.RaceId = 1
 	brom.Character.RoomId = b.road.RoomId
 	brom.Character.Validate()
-	brom.Character.HealthMax.Value = 1000
-	brom.Character.Health = 1000
+	hardTo(brom.Character, 1000)
 	users.SetTestUser(brom)
 	b.road.AddPlayer(8)
 	t.Cleanup(func() { b.road.RemovePlayer(8) })
@@ -201,7 +198,7 @@ func TestMinorHealCombatPronouns(t *testing.T) {
 		name, possessive string
 	}{{1, "Tamsin Reed", "her"}, {2, "Brother Oswin", "his"}} {
 		m := b.companion(tc.id)
-		m.Character.HealthMax.Value = 1000
+		hardMaxTo(&m.Character, 1000)
 		m.Character.Health = 900
 		m.Character.SpellBook["heal"] = 5000
 		var landed string
@@ -216,7 +213,7 @@ func TestMinorHealCombatPronouns(t *testing.T) {
 		assert.Positive(t, m.Character.Health)
 	}
 	b.aria.Character.Pronouns = "she"
-	b.aria.Character.HealthMax.Value = 1000
+	hardMaxTo(b.aria.Character, 1000)
 	b.aria.Character.Health = 900
 	b.aria.Character.SpellBook["heal"] = 5000
 	var landed string
@@ -283,8 +280,7 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 		for _, m := range b.livingBandits() {
 			m.Character.Aggro = nil
 			m.Character.Stats.Speed.ValueAdj = 0
-			m.Character.HealthMax.Value = 1000
-			m.Character.Health = 1000
+			hardTo(&m.Character, 1000)
 		}
 		first.Character.Stats.Speed.ValueAdj = 50 // the fastest pursuer
 		b.aria.Character.Stats.Speed.ValueAdj = 1
@@ -330,8 +326,7 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 		first := mobs.GetInstance(b.bandits["bandit cutthroat"][0])
 		require.NotNil(t, first)
 		for _, m := range b.livingBandits() {
-			m.Character.HealthMax.Value = 1000
-			m.Character.Health = 1000
+			hardTo(&m.Character, 1000)
 		}
 		shield := items.New(20004)
 		require.NotZero(t, shield.ItemId)
@@ -392,15 +387,22 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 		events.ProcessEvents()
 		fallback := companyTagPattern.ReplaceAllString(strings.Join(*b.messages, "\n"), "")
 		assert.Contains(t, fallback, "second cutthroat")
-		assert.NotContains(t, fallback, "bandit cutthroat")
+		// Phase 66's bestiary line names the kind on purpose; the death
+		// narration itself must still use the battle label.
+		var narration []string
+		for _, line := range strings.Split(fallback, "\n") {
+			if !strings.HasPrefix(line, "Bestiary:") {
+				narration = append(narration, line)
+			}
+		}
+		assert.NotContains(t, strings.Join(narration, "\n"), "bandit cutthroat")
 	})
 }
 
 func startNarrationBrawl(t *testing.T) *brawl {
 	b := newBrawl(t)
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value = 1000
-		m.Character.Health = 1000
+		hardTo(&m.Character, 1000)
 	}
 	b.aimAt("bandit cutthroat")
 	b.toughen()
@@ -425,6 +427,7 @@ func TestSparksCombatPronouns(t *testing.T) {
 			}
 			c.SpellBook["sparks"] = 5000
 			c.Stats.Mysticism.ValueAdj = 1000
+			b.actsFirst(c) // Phase 82b: the chant ends before a foe's blow can break it
 			var transcript string
 			for attempt := 0; attempt < 30 && !strings.Contains(transcript, "flings open"); attempt++ {
 				b.toughen()

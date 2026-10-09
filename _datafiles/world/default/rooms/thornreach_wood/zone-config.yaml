@@ -1,0 +1,70 @@
+name: Thornreach Wood
+roomid: 3506
+defaultbiome: forest
+tileready: true
+encounters:
+  band:
+    low: 15
+    high: 17
+  entrychance: 15
+  tables:
+    wood:
+    - id: thorn-wolves
+      weight: 25
+      text: Timber wolves run through the bramble in a pack.
+      members:
+      - mobid: 56
+        count: 1
+      - mobid: 56
+        count: 2
+    - id: thorn-spiders
+      weight: 20
+      text: Spider warriors drop out of the canopy.
+      members:
+      - mobid: 36
+        count: 2
+      - mobid: 35
+        count: 1
+    - id: thorn-hexers
+      weight: 20
+      text: Goblin hexers chant in the thorns, imps at their feet.
+      members:
+      - mobid: 70
+        count: 2
+      - mobid: 33
+        count: 1
+    - id: thorn-imps
+      weight: 15
+      text: Forest imps swarm out of the thicket.
+      members:
+      - mobid: 33
+        count: 3
+    - id: thorn-horde
+      weight: 8
+      pack: true
+      text: A big pack of wolves breaks cover, circling the company.
+      members:
+      - mobid: 56
+        count: 4
+    - id: thorn-mending
+      weight: 15
+      text: Goblins burst from the brush, a shaman humming over the wounded.
+      members:
+      - mobid: 70
+        count: 1
+      - mobid: 97
+        count: 1
+      - mobid: 33
+        count: 1
+    lair:
+    - id: alpha-and-pack
+      weight: 100
+      text: A huge grey wolf pads out of the hollow tree, its pack and a spider at its flanks.
+      members:
+      - mobid: 56
+        count: 1
+      - mobid: 56
+        count: 2
+      - mobid: 36
+        count: 1
+      boss: true

@@ -127,14 +127,18 @@ func loadCompanySide(leader *users.UserRecord, room *rooms.Room) (companySide, b
 }
 
 // engagedWith reports whether any living member of either side has a plain
-// attack on a member of the other.
+// attack on a member of the other. An attack on a mob that has just fallen
+// counts too (Phase 83): when the last target of everyone on both sides falls
+// in the same round, each aim is still on a body at the next round's upkeep,
+// and reading that as "no one is fighting" broke the battle off with foes
+// standing and opened it again as a second fight.
 func (s companySide) engagedWith(party mobparty.Party) bool {
 	members := partyMemberSet(party)
-	if s.leader.Character.Health > 0 && aggroOnMobIn(s.leader.Character.Aggro, members) {
+	if s.leader.Character.Health > 0 && (aggroOnMobIn(s.leader.Character.Aggro, members) || aimedAtTheFallen(s.leader.Character.Aggro)) {
 		return true
 	}
 	for _, instanceId := range s.companionIds {
-		if mob := mobs.GetInstance(instanceId); mob != nil && mob.Character.Health > 0 && aggroOnMobIn(mob.Character.Aggro, members) {
+		if mob := mobs.GetInstance(instanceId); mob != nil && mob.Character.Health > 0 && (aggroOnMobIn(mob.Character.Aggro, members) || aimedAtTheFallen(mob.Character.Aggro)) {
 			return true
 		}
 	}
@@ -143,11 +147,21 @@ func (s companySide) engagedWith(party mobparty.Party) bool {
 		if mob == nil || mob.Character.Health < 1 {
 			continue
 		}
-		if aggroOnCompany(mob.Character.Aggro, s.leader.UserId, s.companions) {
+		if aggroOnCompany(mob.Character.Aggro, s.leader.UserId, s.companions) || aimedAtTheFallen(mob.Character.Aggro) {
 			return true
 		}
 	}
 	return false
+}
+
+// aimedAtTheFallen reports whether a is a plain attack on a mob that has
+// fallen or been removed: its holder's fight is not over, only its target.
+func aimedAtTheFallen(a *characters.Aggro) bool {
+	if !plainAttack(a) || a.MobInstanceId <= 0 {
+		return false
+	}
+	m := mobs.GetInstance(a.MobInstanceId)
+	return m == nil || m.Character.Health < 1
 }
 
 func partyMemberSet(party mobparty.Party) map[int]bool {
@@ -186,6 +200,33 @@ func attackType(a *characters.Aggro) characters.AggroType {
 		return a.Type
 	}
 	return characters.DefaultAttack
+}
+
+// retargetKeepingStrike aims c at a new foe after its old one fell mid-round
+// (Phase 87). A readied Opening Strike or Aimed Shot goes with it: the
+// shot is not lost with its target, and keeps its bonus.
+func retargetKeepingStrike(c *characters.Character, userId, mobInstanceId int) {
+	old := c.Aggro
+	if old != nil && old.Type == characters.BackStab && old.ExitName == `` {
+		bonus := old.StrikeBonus
+		c.SetAggro(userId, mobInstanceId, characters.DefaultAttack)
+		if c.Aggro != nil {
+			c.Aggro.Type, c.Aggro.StrikeBonus = characters.BackStab, bonus
+		}
+		return
+	}
+	c.SetAggro(userId, mobInstanceId, attackType(old))
+}
+
+// spendStrike marks a readied strike as loosed after the swing that killed
+// its target (Phase 87 review). The swing resolves on a copy of the
+// fighter, so the live aim still reads as readied; without this the kill's
+// turn onto the next foe would carry the spent shot on, and the turn's end
+// would call it never loosed and refund its wait.
+func spendStrike(c *characters.Character) {
+	if a := c.Aggro; a != nil && a.Type == characters.BackStab && a.ExitName == `` {
+		a.Type, a.StrikeBonus = characters.DefaultAttack, 0
+	}
 }
 
 // retargetable reports whether the upkeep may give a member a target: it

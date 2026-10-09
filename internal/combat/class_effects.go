@@ -168,6 +168,10 @@ func attackRating(atk, def *characters.Character) int {
 	if rt := atk.RT; rt != nil && rt.Intim > 0 && def.RT != rt.IntimOwner {
 		rating -= rt.Intim
 	}
+	// Phase 39i: a foe a String Sovereign tangled strikes with its strings cut.
+	if atk.RT != nil && atk.RT.Cut > 0 {
+		rating -= atk.RT.Cut
+	}
 	// Phase 38c2: a Marksman's eye for the back row, and a ranger's Eagle Eye.
 	if fx := atk.ClassEffects(); fx != nil {
 		if def.RT != nil && def.RT.BackRow {

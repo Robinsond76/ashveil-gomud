@@ -31,7 +31,7 @@ func TestBalanceSpreadHasDistinctOpeningAims(t *testing.T) {
 	f.toughen()
 	for _, id := range f.enemies {
 		m := mobs.GetInstance(id)
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	first := map[string]string{}
 	combatstream.Default().Subscribe(func(e combatstream.Event) {
@@ -126,11 +126,11 @@ func TestBalanceFocusOpensOnActualWeakest(t *testing.T) {
 			for _, c := range f.members() {
 				require.NotNil(t, c.Aggro)
 				assert.Equal(t, target, c.Aggro.MobInstanceId)
-				c.HealthMax.Value, c.Health = 1000, 1000
+				hardTo(c, 1000)
 			}
 			for _, id := range f.enemies {
 				m := mobs.GetInstance(id)
-				m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+				hardTo(&m.Character, 1000)
 			}
 			first := map[string]int{}
 			combatstream.Default().Subscribe(func(e combatstream.Event) {
@@ -169,6 +169,7 @@ func TestBalanceEarnedTurnsSurviveAnEarlierKill(t *testing.T) {
 	b.saveTactics(strategy.Tactics{Focus: strategy.Weakest})
 	b.toughen()
 	b.hardenBandits()
+	b.actsFirst(b.aria.Character) // Phase 82b: her first blow, not a companion's, fells the opening foe
 	opening := b.bandits["bandit cutthroat"][0]
 	b.cmd("attack", fmt.Sprintf("#%d", opening))
 	for _, m := range b.livingBandits() {
@@ -213,7 +214,7 @@ func TestBalanceStrengthDamageThroughDoCombat(t *testing.T) {
 	target := mobs.GetInstance(c.Aggro.MobInstanceId)
 	target.Character.Equipment = characters.Worn{}
 	target.Character.Stats.Strength.ValueAdj = 12
-	target.Character.HealthMax.Value, target.Character.Health = 1000, 1000
+	hardTo(&target.Character, 1000)
 	var blows []combatstream.Event
 	combatstream.Default().Subscribe(func(e combatstream.Event) {
 		if e.Kind == combatstream.Attack && e.Source.UserId == 7 {
@@ -422,9 +423,10 @@ func TestBalanceEnemyEarnedTurnSurvivesAnEarlierKill(t *testing.T) {
 	}
 	require.NotNil(t, attacker, "a bandit fighting")
 	attacker.Character.SetAggro(0, fallen.InstanceId, characters.DefaultAttack)
+	b.actsFirst(b.aria.Character) // Phase 82b: her turn, the earlier blow, comes before the bandit's
 	seen := b.listen()
 	// The member falls to an earlier blow this round: after upkeep has
-	// kept the bandit's aim, during the player's pass (players act first).
+	// kept the bandit's aim, at the player's turn (she acts first).
 	felled := false
 	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
 		if !felled && e.Kind == combatstream.Attack && e.Source.UserId == 7 {
@@ -466,7 +468,7 @@ func TestBalanceMirrorClericIsACasterWhoCastsNothing(t *testing.T) {
 	f.toughen()
 	for _, id := range f.enemies {
 		m := mobs.GetInstance(id)
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 	f.step() // upkeep chooses the opening aims
 	oswin := f.companion(2).InstanceId

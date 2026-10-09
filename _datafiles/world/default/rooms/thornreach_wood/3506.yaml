@@ -1,0 +1,19 @@
+roomid: 3506
+zone: Thornreach Wood
+title: Mossy Walk
+description: Roots as thick as a man's waist cross the track. Something has rubbed bark off the
+  nearest trunk, very high up.
+biome: forest
+exits:
+  east:
+    roomid: 3507
+  south:
+    roomid: 3514
+  west:
+    roomid: 3413
+resources:
+- game
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

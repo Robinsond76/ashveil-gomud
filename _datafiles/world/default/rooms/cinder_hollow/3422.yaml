@@ -1,0 +1,22 @@
+roomid: 3422
+zone: Cinder Hollow
+title: Soot-dark Clearing
+description: Scorched earth steams faintly even after rain.
+biome: land
+exits:
+  east:
+    roomid: 3423
+  west:
+    roomid: 3421
+  north:
+    roomid: 3416
+resources:
+- herbs
+- game
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: hollow

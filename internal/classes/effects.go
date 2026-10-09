@@ -220,6 +220,7 @@ const (
 	LanceTrim = "lancetrim" // rounds off every Lance's chant
 	LanceTwin = "lancetwin" // percent of its damage a second foe takes from a Lance
 	LanceFree = "lancefree" // once a battle the first Lance needs no chant
+	LanceFoes = "lancefoes" // the most foes it looses a Lance at; against more it sparks the group (a High Sorcerer lifts it)
 
 	// The Doll Master's lineage (Phase 39d). The doll is a durable fighter
 	// in a cell of its own that acts on its Master's turn.
@@ -297,4 +298,60 @@ const (
 	ShredCap    = "shredcap"    // the most armor a foe loses that way
 	FirstLoaded = "firstloaded" // the first bolt of each battle needs no reload
 	BoltCD      = "boltcd"      // rounds off Piercing Bolt's cooldown (its reload is unchanged)
+)
+
+// The neutral elites (Phase 39i): the Halberdier, Samurai, Shaman and Doll
+// Master lineages' elite ranks.
+const (
+	// Halberdier.
+	SweepBehind = "sweepbehind" // percent of a blow's damage a Sweep also deals the foes in the row behind its target
+	ColumnGuard = "columnguard" // percent less damage allies in the holder's column take while it stands
+	BraceTwice  = "bracetwice"  // Brace answers the first two foes that strike into its column
+	ChargedArc  = "chargedarc"  // percent of a Charged Sweep's lightning that arcs to a foe in the next row
+	ChargedStun = "chargedstun" // a Charged Sweep's lightning can leave the foe it strikes paralyzed for a round
+	// Samurai.
+	IaiExtra    = "iaiextra"    // strikes beyond the first that carry Iaijutsu's edge
+	ZanshinFree = "zanshinfree" // Zanshin works every time the holder fells a foe, not once a round
+	LastStand   = "laststand"   // it cannot be knocked down while it is the last of its company standing
+	AuraAttack  = "auraattack"  // Attack allies in the holder's row gain while it stands
+	// Shaman.
+	RainEndless = "rainendless" // its Rain lasts the whole battle
+	ChainRow    = "chainrow"    // Lightning also strikes every other foe in its target's row
+	FogHides    = "foghides"    // while its Fog lasts, foes cannot reach its company's back row with extended reach
+	StoneRow    = "stonerow"    // Stoneskin covers a whole row
+	Tremor      = "tremor"      // percent chance each foe in the front row is knocked down when Stoneskin lands
+	// Doll Master.
+	DollKnock  = "dollknock"  // percent chance a doll's blow knocks the foe down
+	SplicePlus = "spliceplus" // a second Emergency Splice, standing the doll up at half its health
+	TangleWeak = "tangleweak" // Attack a tangled foe's next attack loses
+)
+
+// The remaining neutral elites (Phase 39i2): the Beast Tamer, Gryphon Rider,
+// Alchemist and Arbalist lineages' elite ranks.
+const (
+	// Beast Tamer.
+	BeastHunt     = "beasthunt"     // a bite that lands on a hobbled foe leaves it exposed
+	BeastHobbleAt = "beasthobbleat" // percent of its health a foe is hobbled below (50 when the beast hobbles)
+	BeastOpen     = "beastopen"     // action meter points the beast starts a battle with
+	BeastSwipe    = "beastswipe"    // percent of a blow's damage the foe beside the beast's target takes too
+	BeastRise     = "beastrise"     // the beast stands back up once a battle at this percent of its health
+	BreathBurn    = "breathburn"    // foes the drake's Breath strikes are left alight
+	BreathFoes    = "breathfoes"    // foes the drake's Breath strikes (3 when absent)
+	BreathFirst   = "breathfirst"   // the drake's first Breath comes at once, not after a full wait
+	// Gryphon Rider.
+	DiveQuake = "divequake" // a Dive that knocks its foe down knocks down the foes beside it
+	DiveMark  = "divemark"  // Attack every ally has against the foe a Dive lands on, for 2 rounds
+	DivePoisX = "divepoisx" // percent more damage a Dive deals a poisoned foe
+	DiveTail  = "divetail"  // percent of the Dive's damage a second foe takes from the wyvern's tail
+	// Alchemist.
+	ElixirSave = "elixirsave" // a blow that would fell an ally leaves it with this percent of its health
+	ElixirUses = "elixiruses" // times a battle the Elixir works
+	MutagenRow = "mutagenrow" // extra allies in its patient's row a Mutagen hardens too (5 covers the whole row)
+	// Arbalist.
+	BoltThrough    = "boltthrough"    // times a battle a Piercing Bolt passes through to the foe behind it
+	BoltThroughPct = "boltthroughpct" // percent of the bolt's damage the foe behind takes
+	ReloadCrit     = "reloadcrit"     // a critical bolt needs no winding
+	ReloadKill     = "reloadkill"     // a bolt that fells its foe needs no winding
+	ColumnShot     = "columnshot"     // times a battle a loaded Arbalist answers a foe that strikes its column
+	ColumnShotPct  = "columnshotpct"  // percent of a blow's damage that answer deals
 )

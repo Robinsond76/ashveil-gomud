@@ -1,0 +1,16 @@
+roomid: 3804
+zone: Glassvault Depths
+title: Crystal Fissure
+description: The cave narrows into a gallery of smooth, glossy stone. Cave moths drift around
+  a glowing fungus.
+biome: cave
+exits:
+  south:
+    roomid: 3810
+resources:
+- water
+- shelter
+mapx: 5
+mapy: 0
+mapz: 0
+hascoordinates: true

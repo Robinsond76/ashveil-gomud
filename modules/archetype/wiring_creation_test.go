@@ -2,6 +2,8 @@ package archetype
 
 import (
 	"errors"
+	"github.com/GoMudEngine/GoMud/internal/appearance"
+	"github.com/GoMudEngine/GoMud/internal/lifestory"
 	"strconv"
 	"testing"
 
@@ -23,12 +25,17 @@ const tutorialQuestion = `Would you like to skip the tutorial?`
 // `start` begins at the archetype step.
 func creating(t *testing.T, id int) *users.UserRecord {
 	t.Helper()
+	// These tests are about the archetype step; the looks and life story
+	// steps (Phase 72a) have their own tests in internal/usercommands.
+	t.Cleanup(appearance.Suspend())
+	t.Cleanup(lifestory.Suspend())
 	u := newUser(id)
 	u.Username = "acct" + u.Character.Name
 	u.Character.Name = "Aria"
 	u.Character.RaceId = 1
 	u.Character.Validate() // as start does after the race step: opens the slots
 	u.Character.RoomId = -1
+	u.Character.MarkIronOffered() // these tests are about the archetype step (Phase 77)
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(id) })
 	return u

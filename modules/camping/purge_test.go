@@ -2,6 +2,7 @@ package camping
 
 import (
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -47,4 +48,18 @@ func TestUserPurgedDropsCampingState(t *testing.T) {
 
 	m.onUserPurged(events.UserPurged{UserId: 7})
 	assert.Equal(t, 1, store.saveCalls, "nothing left to save")
+}
+
+// TestUserPurgedSavesWhenOnlyLastRewardsRemain: a leader whose only camping
+// state is a persisted reward cooldown is still written out after purge, so
+// the cooldown does not come back on restart.
+func TestUserPurgedSavesWhenOnlyLastRewardsRemain(t *testing.T) {
+	store := &fakeStore{}
+	m := &CampingModule{store: store, camps: map[int]camping.Camp{}, recoveryApplied: map[int]bool{}, timers: map[int]Timer{}, timerGeneration: map[int]uint64{}}
+	m.resetInnState()
+	m.lastRewards[7] = time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+
+	m.onUserPurged(events.UserPurged{UserId: 7})
+	assert.Equal(t, 1, store.saveCalls)
+	assert.Empty(t, store.saved.LastCampRewards)
 }

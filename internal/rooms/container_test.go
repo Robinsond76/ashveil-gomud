@@ -70,7 +70,7 @@ func TestSelectRecipe(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := containerWith(recipes, reqs, tt.contents...)
-			gotId, blocked := c.SelectRecipe(levels(tt.levels))
+			gotId, blocked := c.SelectRecipe(levels(tt.levels), nil)
 			assert.Equal(t, tt.wantId, gotId)
 			assert.Equal(t, tt.wantBlocked, blocked)
 		})
@@ -81,7 +81,7 @@ func TestSelectRecipe(t *testing.T) {
 			10: {SkillId: "cooking", MinLevel: 3},
 			20: {SkillId: "cooking", MinLevel: 2},
 		}, 1, 2)
-		gotId, blocked := c.SelectRecipe(levels(nil))
+		gotId, blocked := c.SelectRecipe(levels(nil), nil)
 		assert.Equal(t, 0, gotId)
 		assert.Equal(t, RecipeRequirement{SkillId: "cooking", MinLevel: 2}, blocked, "reports the easiest requirement")
 	})

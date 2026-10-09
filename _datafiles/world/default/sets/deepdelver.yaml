@@ -1,0 +1,8 @@
+setid: deepdelver
+name: "Deepdelver's Harness"
+lore: "The ones who went into the Mirror Caves wore armor made to be argued with by the dark."
+bonuses:
+  - pieces: 2
+    effects: {armor: 4}
+  - pieces: 3
+    effects: {auraresolv: 6, healthpct: 5}

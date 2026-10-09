@@ -1,0 +1,28 @@
+roomid: 3210
+zone: Marrowmere Fen
+title: Dry Hummock
+description: A rare knoll of dry ground in the fen, ringed with willow. Nobody has built here,
+  but the ground is firm enough to camp on.
+biome: shore
+tags:
+- camping
+exits:
+  east:
+    roomid: 3211
+  west:
+    roomid: 3209
+  south:
+    roomid: 3218
+  north:
+    roomid: 3204
+resources:
+- firewood
+- shelter
+- forage
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true
+spawninfo:
+- itemid: 3222
+  respawnrate: 1 real hour

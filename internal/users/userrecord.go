@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/creation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
@@ -197,15 +198,15 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 	grantXP, xpScale := u.Character.GrantXP(amt)
 
 	if xpScale != 100 {
-		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
+		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
 
-		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
+		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="yellow">(%d%% scale)</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, xpScale, source))
 
 	} else {
 
-		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, source))
+		u.SendText(fmt.Sprintf(`You gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, source))
 
-		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi>! <ansi fg="7">(%s)</ansi>`, grantXP, source))
+		u.EventLog.Add(`xp`, fmt.Sprintf(`Gained <ansi fg="yellow-bold">%d experience points</ansi> <ansi fg="7">(%s)</ansi>`, grantXP, source))
 	}
 
 	events.AddToQueue(events.GainExperience{
@@ -255,7 +256,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 				u.Character.ExtraLives += int(c.LivesOnLevelUp)
 			}
 
-			u.EventLog.Add(`xp`, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now <ansi fg="magenta-bold">level %d</ansi>!`, u.Character.Name, u.Character.Level))
+			u.EventLog.Add(`xp`, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now <ansi fg="magenta-bold">level %d</ansi>.`, u.Character.Name, u.Character.Level))
 
 			levelUpEvent.LevelsGained += 1
 			levelUpEvent.StatsDelta.Strength.Value += statsDelta.Strength.Value
@@ -641,6 +642,9 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 
 	// If no prompt found or it seems like a new prompt, create a new one and replace the old
 	u.activePrompt = prompt.New(command, rest)
+	// Ashveil 72a: a replaced creation prompt takes its web panel with it,
+	// or the panel's buttons would answer the new prompt.
+	creation.Clear(u.UserId)
 
 	return u.activePrompt, true
 }
@@ -652,6 +656,7 @@ func (u *UserRecord) GetPrompt() *prompt.Prompt {
 
 func (u *UserRecord) ClearPrompt() {
 	u.activePrompt = nil
+	creation.Clear(u.UserId)
 }
 
 // SyncInputMask (Ashveil 32h) masks the user's connection exactly while

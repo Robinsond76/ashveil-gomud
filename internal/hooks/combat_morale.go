@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -16,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/morale"
+	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
@@ -444,8 +446,10 @@ func MercyTick(e events.Event) events.ListenerReturn {
 		if room := rooms.LoadRoom(q.room); room == nil || room.VisibilityForUser(u) < 1 && !u.Character.HasBuffFlag("nightvision") || m.Character.HasBuffFlag("hidden") {
 			label = "a surrendered foe"
 		}
-		question := p.Ask(util.CapitalizeFirst(named(mobTag(label)))+" kneels, hands raised. Spare "+m.Character.CombatPronouns().Object+"? [yes/no]", []string{"yes", "no"})
-		u.SendText(question.Question)
+		// The prompt line adds "[yes/no]" itself; the kneeling is told once, as
+		// a line of its own, and the prompt carries only the question.
+		u.SendText(util.CapitalizeFirst(named(mobTag(label))) + " kneels, hands raised.")
+		p.Ask("Spare "+m.Character.CombatPronouns().Object+"?", []string{"yes", "no"})
 	}
 	return events.Continue
 }
@@ -495,7 +499,25 @@ func resolveMercy(uid int, q *mercyQueue) error {
 		if err != nil {
 			return err
 		}
-		q.lines = lines
+		// Phase 64: the witnesses' personalities answer too (those alignment
+		// already moved stay quiet; a retry repeats nothing).
+		kind := opinions.Execute
+		if q.spare {
+			kind = opinions.Spare
+		}
+		subject := ""
+		// The queue is emptied when a deciding leader walks away, and the
+		// staged answer is retried after; the foe may be gone by then.
+		if len(q.ids) > 0 {
+			if m := mobs.GetInstance(q.ids[0]); m != nil {
+				subject = m.Character.Name
+			}
+		}
+		said, err := company.Opinion(uid, opinions.Choice{Kind: kind, Op: "mercy:" + q.token, Witnesses: append([]int{}, q.witnesses...), Subject: subject})
+		if err != nil {
+			return err
+		}
+		q.lines = append(lines, said...)
 		q.reactionsSaved = true
 	}
 	if !q.alignmentSaved {
@@ -530,6 +552,12 @@ func resolveMercy(uid int, q *mercyQueue) error {
 				mobcommands.Suicide("mercy", m, r)
 			}
 		}
+		// Phase 63: the answer is the company's deed, whichever way it went.
+		deed := chronicle.Executed
+		if q.spare {
+			deed = chronicle.Spared
+		}
+		chronicle.Record(uid, chronicle.Entry{Kind: deed, Subject: m.Character.Name, Ref: fmt.Sprintf("mob:%d", m.MobId)})
 		combatstream.Default().Emit(combatstream.Event{Kind: combatstream.Mercy, FightID: q.fight, Source: userRef(u), Target: mobRef(m), RoomId: q.room, Outcome: outcome})
 	}
 	for _, line := range q.lines {

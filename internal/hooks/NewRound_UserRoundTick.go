@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -170,7 +171,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 				// Only do this every 15 rounds to keep spam down.
 				if evt.RoundNumber%15 == 0 {
 
-					if !user.DidTip(`status train`) && user.Character.StatPoints > 0 {
+					// Phase 87: never mid-battle; the tip waits for the fight's end.
+					if _, fighting := battle.Current(user.UserId); !fighting && !user.DidTip(`status train`) && user.Character.StatPoints > 0 {
 						user.SendText(`<ansi fg="alert-5">TIP:</ansi> <ansi fg="tip-text">Type <ansi fg="command">status train</ansi> to use the status points you've earned through leveling.</ansi>`)
 						user.SendText(``)
 					}

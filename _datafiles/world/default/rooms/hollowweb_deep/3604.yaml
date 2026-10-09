@@ -1,0 +1,17 @@
+roomid: 3604
+zone: Hollowweb Deep
+title: Silken Passage
+description: Pale cocoons dangle overhead and the ground is spun with threads. Dozens of tiny
+  eyes glint among the webs.
+biome: forest
+exits:
+  west:
+    roomid: 3603
+  south:
+    roomid: 3610
+resources:
+- firewood
+mapx: 4
+mapy: 0
+mapz: 0
+hascoordinates: true

@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -47,6 +48,9 @@ func (m *CompanyModule) onBattleEnded(e events.Event) events.ListenerReturn {
 	// Phase 49: comrades' talk reads the fight's toll, so it is worked out
 	// before the patch-up and said after it.
 	talk := m.battleBanter(user, evt.Outcome)
+	if evt.Outcome == combatstream.OutcomeVictory {
+		m.bondsBattleWon(user.UserId) // Phase 65: a battle won side by side
+	}
 	if _, inBattle := battle.Current(user.UserId); inBattle {
 		talk = "" // the next fight has begun
 	}

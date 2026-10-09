@@ -15,7 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/flasks"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/livecompanions"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -39,18 +39,12 @@ func (m *CampingModule) companions(leaderUserID int) (map[int]*characters.Charac
 	}
 	live := map[int]*characters.Character{}
 	var roster []int
-	for _, ref := range survival.CurrentRoster(leaderUserID) {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok || ref.Dead || ref.Away || ref.Needless {
-			continue // a dead (Phase 25b), separated (33h3) or construct (38e) companion earns no rest
-		}
-		roster = append(roster, companionID)
-		instanceID, ok := company.InstanceFor(leaderUserID, companionID)
-		if !ok {
-			continue
-		}
-		if mob := mobs.GetInstance(instanceID); mob != nil {
-			live[companionID] = &mob.Character
+	// A dead (Phase 25b), separated (33h3) or construct (38e) companion earns no rest.
+	companions, _ := livecompanions.Of(leaderUserID, livecompanions.SkipInactive)
+	for _, c := range companions {
+		roster = append(roster, c.CompanionID)
+		if c.Mob != nil {
+			live[c.CompanionID] = &c.Mob.Character
 		}
 	}
 	return live, roster
@@ -120,8 +114,15 @@ func (m *CampingModule) heldTier(c *characters.Character, s innSettings) camping
 // applyTier gives one member a tier for rounds, removing any lower tier
 // and never downgrading a higher one. It reports whether it granted.
 func (m *CampingModule) applyTier(c *characters.Character, tier camping.Tier, rounds int, s innSettings) bool {
-	grant, _ := camping.Decide(m.heldTier(c, s), tier)
+	held := m.heldTier(c, s)
+	grant, _ := camping.Decide(held, tier)
 	if !grant {
+		return false
+	}
+	// Phase 75: a cheaper room's shorter buff never cuts short a longer one
+	// still running (a suite's two hours, then a common room's thirty
+	// minutes).
+	if held == tier && m.buffRoundsLeft(c, s.tierBuff(tier)) > rounds {
 		return false
 	}
 	// Remove every lower tier held, not only the best one: a script or
@@ -151,6 +152,7 @@ func (m *CampingModule) onNewRound(e events.Event) events.ListenerReturn {
 	m.clearRaiders()     // Phase 33f3
 	m.grantCampRewards() // Phase 33f3
 	m.resolveCampTheft() // Phase 40a4
+	m.settleGigs()       // camp music: inn gigs
 	return events.Continue
 }
 
@@ -171,6 +173,14 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 	}
 	settings := m.innSettings()
+	// Phase 75: the room an owed stay was bought in sets its Well Rested's
+	// length.
+	stayTiers := map[int]camping.InnTier{}
+	for leaderUserID := range pending {
+		if stay, ok := m.stays[leaderUserID]; ok {
+			stayTiers[leaderUserID] = stay.Tier.Normalize()
+		}
+	}
 	m.mu.Unlock()
 	leaders := make([]int, 0, len(pending))
 	for leaderUserID := range pending {
@@ -185,20 +195,54 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 		tier := pending[leaderUserID]
 		now := m.clock().UTC()
-		duration := settings.tierDuration(tier)
+		// Phase 52: the tent the rest was slept in sets the buff: a large
+		// tent's is Well Rested, a camouflaged tent's is shorter. Only the
+		// buff changes; wounds, vitals and the rest's other rewards follow
+		// the camp rest (tier).
+		// Camp music: the song's ensemble upgrades the sleepers' buff as the
+		// large tent does (not stacking), and its strings stretch it.
+		var tentPtr *camping.Tent
+		if tent, ok := m.pendingTent(leaderUserID); ok && tier == camping.TierRested {
+			tentPtr = &tent
+		}
+		var songPtr *camping.Song
+		if song, ok := m.pendingSong(leaderUserID); ok && tier == camping.TierRested {
+			songPtr = &song
+		}
+		buffTier, duration := restBuffFor(settings, tier, tentPtr, songPtr)
+		innTier := camping.InnCommon
+		if tier == camping.TierWellRested {
+			innTier = stayTiers[leaderUserID].Normalize()
+			duration = settings.wellRestedFor(innTier)
+		}
 		rounds := camping.RoundsFor(duration, m.roundLength())
+		// Phase 51: a camp rest's Rested buff skips the members on a duty.
+		var onDuty map[string]bool
+		duties := m.pendingDuties(leaderUserID, tier)
+		if tier == camping.TierRested {
+			onDuty = restedExcluded(duties)
+		}
 		// Buffs are granted outside m.mu: character state belongs to the
 		// game loop, and nothing below calls back into camping.
-		granted := m.applyTier(user.Character, tier, rounds, settings)
+		granted := false
+		if !onDuty[string(survival.LeaderMemberKey)] {
+			granted = m.applyTier(user.Character, buffTier, rounds, settings)
+		}
 		live, roster := m.companions(leaderUserID)
 		for _, companionID := range sortedIDs(live) {
-			if m.applyTier(live[companionID], tier, rounds, settings) {
+			if onDuty[string(survival.CompanionMemberKey(companionID))] {
+				continue
+			}
+			if m.applyTier(live[companionID], buffTier, rounds, settings) {
 				granted = true
 			}
 		}
 		owed := map[int]camping.OwedGrant{}
 		for _, companionID := range roster {
-			owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(tier), Tier: tier, ExpiresAtUTC: now.Add(duration)}
+			if onDuty[string(survival.CompanionMemberKey(companionID))] {
+				continue
+			}
+			owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(buffTier), Tier: buffTier, ExpiresAtUTC: now.Add(duration)}
 		}
 		// A failed save retries next round, so only announce a saved grant,
 		// and only one that gave anybody anything.
@@ -206,8 +250,28 @@ func (m *CampingModule) grantPendingTiers() {
 		if !saved {
 			continue
 		}
-		if granted && tier == camping.TierWellRested {
+		if campRest {
+			// Camp music: the drums, the voice, and practice. Review: before
+			// the chill below, so the voice fades the ailments carried into
+			// the rest and never cures the chill caught by sleeping cold.
+			if songPtr != nil {
+				for _, line := range m.onSongGranted(user, live, *songPtr, rounds) {
+					user.SendText(line)
+				}
+			}
+			// Phase 55: a company that slept in the cold wakes with a chill.
+			for _, c := range survival.CatchChillIfFrozen(leaderUserID) {
+				user.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
+			}
+		}
+		if granted && buffTier == camping.TierWellRested && innTier != camping.InnCommon {
+			user.SendText(fmt.Sprintf("Your company feels well rested after a night in %s: Well Rested for %s.", innTier.Label(), wellRestedLength(duration)))
+		} else if granted && buffTier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
+		} else if tier == camping.TierWellRested && m.heldTier(user.Character, settings) == camping.TierWellRested {
+			// Phase 75 review: a cheaper room after a dearer one grants
+			// nothing new, so say why rather than stay silent.
+			user.SendText("Your company is still Well Rested from an earlier, longer stay.")
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}
@@ -276,7 +340,11 @@ func (m *CampingModule) grantPendingTiers() {
 			}
 			// Phase 39g: and refills an Alchemist's flask satchel from the
 			// leader's reagents.
-			for _, line := range brewRestFlasks(user, live) {
+			for _, line := range brewRestFlasks(user, live, m.restBrewers(user, duties)) {
+				user.SendText(line)
+			}
+			// Phase 51: and the members on a work duty do their work.
+			for _, line := range m.settleDuties(user, live, duties) {
 				user.SendText(line)
 			}
 		}
@@ -432,6 +500,14 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		delete(m.wellRestedPending, leaderUserID)
 	}
 	delete(m.restedPending, leaderUserID)
+	duties, hadDuties := m.restedDuties[leaderUserID]
+	tentKind, hadTent := m.restedTents[leaderUserID]
+	song, hadSong := m.restedSongs[leaderUserID]
+	if restedPending {
+		delete(m.restedDuties, leaderUserID)
+		delete(m.restedTents, leaderUserID)
+		delete(m.restedSongs, leaderUserID)
+	}
 	if wellPending && hadStay && !stay.Resting() {
 		delete(m.stays, leaderUserID)
 		delete(m.innRecoveryApplied, leaderUserID)
@@ -453,6 +529,15 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 		}
 		if restedPending {
 			m.restedPending[leaderUserID] = true
+		}
+		if hadDuties {
+			m.restedDuties[leaderUserID] = duties
+		}
+		if hadTent {
+			m.restedTents[leaderUserID] = tentKind
+		}
+		if hadSong {
+			m.restedSongs[leaderUserID] = song
 		}
 		if hadStay {
 			m.stays[leaderUserID] = stay
@@ -639,7 +724,7 @@ func mendRestDolls(user *users.UserRecord, live map[int]*characters.Character) [
 // brewRestFlasks refills the company's Alchemists' satchels at the end of a
 // camp rest (Phase 39g) from the leader's reagents, one a flask, the leader's
 // own first and then each live companion's by number.
-func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) []string {
+func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character, brewers map[*characters.Character]bool) []string {
 	type alchemist struct {
 		name string
 		char *characters.Character
@@ -661,6 +746,9 @@ func brewRestFlasks(user *users.UserRecord, live map[int]*characters.Character) 
 	if len(as) == 0 {
 		return nil
 	}
+	// Phase 51: the Alchemists on the brew duty are served first, so a
+	// short supply of reagents goes to them.
+	sort.SliceStable(as, func(i, j int) bool { return brewers[as[i].char] && !brewers[as[j].char] })
 	chars := make([]*characters.Character, len(as))
 	for i, a := range as {
 		chars[i] = a.char

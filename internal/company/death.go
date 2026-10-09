@@ -13,6 +13,9 @@ var (
 	// ErrMemberDead is returned for a dead companion where a living one is
 	// needed (placing it in the formation, or killing it twice).
 	ErrMemberDead = errors.New("companion is dead")
+	// ErrMemberAway is returned for a companion off on an errand (Phase 70)
+	// where one that is present is needed (placing it in the formation).
+	ErrMemberAway = errors.New("companion is away")
 	// ErrNotDead is returned when resurrecting or charging a living
 	// companion.
 	ErrNotDead = errors.New("companion is not dead")

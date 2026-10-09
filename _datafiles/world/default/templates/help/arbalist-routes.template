@@ -14,7 +14,7 @@ at level 30. All three shape the Piercing Bolt or the Arbalist's line
   20 Deep sunder        each bolt that lands takes 15 armor off the foe, up to 45
   25 Siege bolts        a Piercing Bolt deals 35% more damage (in all, not on top)
 
-  <ansi fg="yellow-bold">Siege Master</ansi> (30, still to come): a bolt that passes through to the foe behind.
+  <ansi fg="yellow-bold">Siege Master</ansi> (30, <ansi fg="command">help siege-master</ansi>): a bolt that passes through to the foe behind.
 
 <ansi fg="yellow-bold">Sharpshooter</ansi>
 
@@ -24,7 +24,7 @@ at level 30. All three shape the Piercing Bolt or the Arbalist's line
   20 Practiced loader   the first bolt of each battle needs no winding
   25 Dead eye           +4 Attack with a shooting weapon
 
-  <ansi fg="yellow-bold">Deadeye</ansi> (30, still to come): a crossbow that is ready again at once.
+  <ansi fg="yellow-bold">Deadeye</ansi> (30, <ansi fg="command">help deadeye</ansi>): a crossbow that is ready again at once.
 
 <ansi fg="yellow-bold">Warden of the Wall</ansi>
 
@@ -34,10 +34,10 @@ at level 30. All three shape the Piercing Bolt or the Arbalist's line
   20 Deeper pavise      the row's damage cut is 15%
   25 Wall's keeper      +8% maximum health
 
-  <ansi fg="yellow-bold">Bastion</ansi> (30, still to come): answers a foe that strikes its column with the
+  <ansi fg="yellow-bold">Bastion</ansi> (30, <ansi fg="command">help bastion</ansi>): answers a foe that strikes its column with the
   shot it was holding.
 
-Elite classes are named but not open yet; until they are, an Arbalist keeps
-its advanced class's ranks. Routes are final.
+Elite classes are neutral and open to any alignment at level 30
+(<ansi fg="command">help elite</ansi>). Routes are final.
 
 See also: <ansi fg="command">help arbalist</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help statuses</ansi>.

@@ -1,0 +1,23 @@
+roomid: 3402
+zone: Cinder Hollow
+title: Charred Burn
+description: Ash drifts across the ground in grey drifts and the trees are black stumps. Crows
+  pick at something in the cinders.
+biome: land
+exits:
+  east:
+    roomid: 3403
+  west:
+    roomid: 3401
+  south:
+    roomid: 3408
+resources:
+- herbs
+- game
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: hollow

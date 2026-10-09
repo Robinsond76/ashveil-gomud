@@ -65,3 +65,46 @@ func TestAppliedOpsSurviveTheRealDecoder(t *testing.T) {
 	require.True(t, ok)
 	assert.True(t, got.HasApplied("rest-1:vigil"))
 }
+
+// TestAdjustLoyaltyOnceMovesLoyaltyBothWays (Phase 60): a story event's
+// outcome raises or lowers the named living companions' loyalty within
+// 0..100, once per operation, durably; a failed save changes nothing.
+func TestAdjustLoyaltyOnceMovesLoyaltyBothWays(t *testing.T) {
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			withDisposition(domain.Companion{ID: 1, Name: "Bran", MobTemplateID: 58}, 0, 40),
+			withDisposition(domain.Companion{ID: 2, Name: "Cara", MobTemplateID: 58}, 0, 3),
+			withDisposition(domain.Companion{ID: 3, Name: "Dain", MobTemplateID: 58}, 0, 98),
+		}},
+	}}, &fakeRuntime{})
+	store := module.store.(*fakeStore)
+	loyalty := func(id int) int {
+		r, _ := module.registry.Get(7)
+		c, _ := findCompanion(r, id)
+		return c.Disposition.Loyalty
+	}
+
+	changed, err := module.AdjustLoyaltyOnce(7, "story:a:0:0", []int{1, 2}, -5)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Bran", "Cara"}, changed)
+	assert.Equal(t, 35, loyalty(1))
+	assert.Equal(t, 0, loyalty(2), "never below zero")
+	saved, _ := store.saved.Get(7)
+	assert.True(t, saved.HasApplied("story:a:0:0"))
+
+	changed, err = module.AdjustLoyaltyOnce(7, "story:a:0:0", []int{1}, -5)
+	require.NoError(t, err)
+	assert.Empty(t, changed)
+	assert.Equal(t, 35, loyalty(1), "never twice")
+
+	changed, err = module.AdjustLoyaltyOnce(7, "story:a:1:0", []int{1, 3}, 5)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Bran", "Dain"}, changed)
+	assert.Equal(t, 40, loyalty(1))
+	assert.Equal(t, 100, loyalty(3), "never above 100")
+
+	store.saveErr = assert.AnError
+	_, err = module.AdjustLoyaltyOnce(7, "story:a:2:0", []int{1}, 5)
+	assert.Error(t, err)
+	assert.Equal(t, 40, loyalty(1), "rolled back")
+}

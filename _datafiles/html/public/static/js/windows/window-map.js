@@ -257,20 +257,9 @@
     // Shared tooltip
     // =========================================================================
 
-    var tooltip          = null;
-    var tooltipHideTimer = null;
-
-    function ensureTooltip() {
-        if (tooltip) { return; }
-        tooltip = document.createElement('div');
-        tooltip.id = 'map-tooltip';
-        document.body.appendChild(tooltip);
-    }
+    var tooltip = Client.tooltip('map-tooltip');
 
     function showTooltip(mouseX, mouseY, info, canWalk) {
-        ensureTooltip();
-        clearTimeout(tooltipHideTimer);
-
         var html = '<div class="tt-name">' + (info.name || 'Unknown') + '</div>';
         var rows = [];
         var envDisplay = info.environment
@@ -342,32 +331,12 @@
                     '<span class="tt-value" style="color:#ff6666">\u2665 ' + partyHere.join(', ') + '</span></div>';
         }
 
-        tooltip.innerHTML     = html;
-        tooltip.style.display = 'block';
-        positionTooltip(mouseX, mouseY);
+        tooltip.show(html, { x: mouseX, y: mouseY });
     }
 
-    function positionTooltip(mouseX, mouseY) {
-        if (!tooltip) { return; }
-        var ttW  = tooltip.offsetWidth;
-        var ttH  = tooltip.offsetHeight;
-        var vw   = window.innerWidth;
-        var vh   = window.innerHeight;
-        var left = mouseX + 14;
-        if (left + ttW > vw - 8) { left = mouseX - ttW - 14; }
-        left = Math.max(8, left);
-        var top = mouseY - Math.floor(ttH / 2);
-        if (top + ttH > vh - 8) { top = vh - ttH - 8; }
-        top = Math.max(8, top);
-        tooltip.style.left = left + 'px';
-        tooltip.style.top  = top  + 'px';
-    }
+    function positionTooltip(mouseX, mouseY) { tooltip.position({ x: mouseX, y: mouseY }); }
 
-    function hideTooltip() {
-        tooltipHideTimer = setTimeout(function () {
-            if (tooltip) { tooltip.style.display = 'none'; }
-        }, 80);
-    }
+    function hideTooltip() { tooltip.hide(); }
 
     // =========================================================================
     // Styles
@@ -555,7 +524,7 @@
         var WALK_QUEUE_MAX  = 2;    // steps the sprite may trail the player before it snaps
         var FADE_MS         = 250;  // fade-in after a level (z) or zone change
         var ALLY_SCALE      = 0.75; // allied class sprites at 75% of the player's
-        var identity    = { classid: '', lineage: '' }; // Char.Info
+        var identity    = { classid: '', lineage: '', look: null }; // Char.Info (look: Phase 72a skin and hair colours)
         var companySize = 0;        // members with the leader, 0 when alone or unknown
         var campInfo    = null;     // Company.Camp
         var companions  = [];       // Phase 40c: present companions { key, lineage, classid }, drawn beside you
@@ -598,14 +567,16 @@
         // wanted image is still loading (nothing flashes in a worse sprite)
         // and when every image is missing or failed (the caller then draws
         // the classic marker).
-        function resolveSheet(keys, walking) {
+        // look (Phase 72a) repaints the figure's skin and hair in a player's
+        // chosen colours; companions and creatures keep their art.
+        function resolveSheet(keys, walking, look) {
             for (var i = 0; i < keys.length; i++) {
                 var idle = 'map/units/' + keys[i] + '/idle.png';
                 var walk = 'map/units/' + keys[i] + '/walk.png';
                 var st = Sprites.status(idle);
                 if (st === 'ready') {
-                    if (Sprites.status(walk) === 'ready' && walking) { return { sheet: Sprites.art(walk), walk: true }; }
-                    return { sheet: Sprites.art(idle), walk: false };
+                    if (Sprites.status(walk) === 'ready' && walking) { return { sheet: Sprites.tinted(walk, look), walk: true }; }
+                    return { sheet: Sprites.tinted(idle, look), walk: false };
                 }
                 if (st === 'loading') { return null; }
             }
@@ -794,7 +765,7 @@
         function drawUnit(now) {
             if (!spritesOn() || currentRoomId === null || unit.x === null) { return false; }
             var pose = unitPose(now);
-            var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking);
+            var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking, identity.look);
             if (!res) { return false; }
             var tile = getRoomSize() * zoomScale;
             var mult = spriteMult(tile);
@@ -838,7 +809,7 @@
         // the caller keeps the heart.
         function drawAllySprite(ease, gx, gy, moving, now) {
             if (!ease.classid && !ease.lineage) { return false; }
-            var res = resolveSheet(chainKeys(ease.classid, ease.lineage), moving);
+            var res = resolveSheet(chainKeys(ease.classid, ease.lineage), moving, ease.look);
             if (!res) { return false; }
             var p = gridToCanvas(gx, gy);
             var mult = spriteMult(getRoomSize() * zoomScale) * ALLY_SCALE;
@@ -1570,7 +1541,7 @@
                 var id   = roomAtPoint(e.clientX - rect.left, e.clientY - rect.top);
                 var info = id !== null ? roomInfoStore.get(id) : null;
                 canvas.style.cursor = (id !== null && id !== currentRoomId) ? 'pointer' : '';
-                if (info) { clearTimeout(tooltipHideTimer); showTooltip(e.clientX, e.clientY, info, id !== currentRoomId); }
+                if (info) { showTooltip(e.clientX, e.clientY, info, id !== currentRoomId); }
                 else      { hideTooltip(); }
             });
             canvas.addEventListener('mouseup', function (e) {
@@ -1592,7 +1563,7 @@
                 var items = [];
                 if (id !== currentRoomId) {
                     var info = roomInfoStore.get(id);
-                    items.push({ label: 'Walk to ' + ((info && info.name) || ('room ' + id)), cmd: 'walkto ' + id });
+                    items.push({ label: 'Walk to ' + ((info && info.name) || ('room ' + id)), cmd: 'walkto ' + id, echo: info && info.name ? 'walkto ' + info.name : '' });
                 }
                 if (walkInfo) { items.push({ label: 'Stop walking', cmd: 'walkto stop' }); }
                 if (isAdmin) {
@@ -1689,10 +1660,6 @@
 
             container = wrap;
             return wrap;
-        }
-
-        function onSettingsChanged() {
-            render();
         }
 
         function onActivate() {
@@ -1951,9 +1918,12 @@
             onRoomUpdate:        onRoomUpdate,
             setupResizeObserver: setupResizeObserver,
             getCurrentRoomId:    function () { return currentRoomId; },
-            setIdentity: function (classid, lineage) {
-                if (identity.classid === classid && identity.lineage === lineage) { return; }
-                identity.classid = classid; identity.lineage = lineage;
+            setIdentity: function (classid, lineage, skin, hair) {
+                var look = (window.SpriteTint && window.SpriteTint.look(skin, hair)) || null;
+                var lookKey = look ? look.skin + '|' + look.hair : '';
+                var oldKey = identity.look ? identity.look.skin + '|' + identity.look.hair : '';
+                if (identity.classid === classid && identity.lineage === lineage && lookKey === oldKey) { return; }
+                identity.classid = classid; identity.lineage = lineage; identity.look = look;
                 render();
             },
             setCompanySize: function (n) { if (n !== companySize) { companySize = n; render(); } },
@@ -2032,6 +2002,7 @@
                     walk: walkInfo, night: nightLevel(),
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
+                    look: identity.look,
                     allies: Object.keys(partyHeartEase).map(function (n) {
                         var e = partyHeartEase[n];
                         return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,
@@ -2076,6 +2047,7 @@
                         aggro:     pos.aggro,
                         lineage:   pos.lineage,
                         classid:   pos.classid,
+                        look:      pos.look || null,
                         startTime: now,
                     };
                     var f = faceOf(pos.x - fromGx, pos.y - fromGy, existing ? { face: existing.face, flip: existing.flip } : null);
@@ -2187,7 +2159,8 @@
             var v = vitals[name];
             if (!v.hascoordinates) { return; }
             partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro,
-                                           lineage: v.lineage || '', classid: v.classid || '' };
+                                           lineage: v.lineage || '', classid: v.classid || '',
+                                           look: (window.SpriteTint && window.SpriteTint.look(v.skin, v.hair)) || null };
         });
         view2d.setPartyPositions(partyMemberPositions);
     }
@@ -2197,7 +2170,7 @@
     function updateIdentity() {
         var c = Client.GMCPStructs.Char;
         var info = c && c.Info;
-        view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '');
+        view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '', info && info.skin, info && info.hair);
     }
 
     // Phase 40d: the planned walk (Walkto) and the game's time of day.
@@ -2274,7 +2247,7 @@
 
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals', 'Char', 'Company', 'Walkto', 'Gametime'],
+        gmcpHandlers: ['Room', 'World', 'Party', 'Char', 'Company', 'Walkto', 'Gametime'],
         onGMCP: function (namespace) {
             if (namespace === 'Char.Info' || namespace === 'Char') {
                 updateIdentity();

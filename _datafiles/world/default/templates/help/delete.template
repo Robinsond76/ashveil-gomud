@@ -33,6 +33,10 @@ is fine.
 Three wrong passwords in a row, here or in <ansi fg="command">password</ansi>, lock both
 commands until you next log in.
 
+Your account blessings stay with the login, so the new character starts with
+every blessing your earlier characters earned (<ansi fg="command">help blessings</ansi>). The
+Iron option is part of the character: a new one asks again (<ansi fg="command">help hardcore</ansi>).
+
 This can't be undone.
 
 See also: <ansi fg="command">help password</ansi>, <ansi fg="command">help quit</ansi>.

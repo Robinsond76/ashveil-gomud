@@ -146,4 +146,20 @@ Sent on login and updated whenever a mob or player kill or death is recorded.
   <ansi fg="cyan">pvp.players</ansi>         <ansi fg="blue-bold">object</ansi>(<ansi fg="green">string</ansi>-><ansi fg="blue-bold">object</ansi>)  - Per-player kill entries keyed by character name
   <ansi fg="cyan">pvp.players[n].count</ansi> <ansi fg="yellow">number</ansi>  - Number of times that player was killed
 
+<ansi fg="yellow-bold">Char.Bestiary</ansi>
+Sent when requested (<ansi fg="command">!!GMCP(Char.Bestiary)</ansi>) and refreshed when a battle ends. Not part of the full Char payload.
+
+  <ansi fg="cyan">entries</ansi>               <ansi fg="magenta">array</ansi>   - Every kind of creature the leader has beaten, by zone then name
+  <ansi fg="cyan">entries[n].id</ansi>         <ansi fg="yellow">number</ansi>  - The creature template id
+  <ansi fg="cyan">entries[n].name</ansi>       <ansi fg="green">string</ansi>  - Its name
+  <ansi fg="cyan">entries[n].zone</ansi>       <ansi fg="green">string</ansi>  - Where it lives (omitted when none)
+  <ansi fg="cyan">entries[n].level</ansi>      <ansi fg="yellow">number</ansi>  - Its level
+  <ansi fg="cyan">entries[n].kills</ansi>      <ansi fg="yellow">number</ansi>  - Times the leader's company has beaten it
+  <ansi fg="cyan">entries[n].tier</ansi>       <ansi fg="yellow">number</ansi>  - 1 lore, 2 defences, 3 habits
+  <ansi fg="cyan">entries[n].tier_name</ansi>  <ansi fg="green">string</ansi>  - The tier in words
+  <ansi fg="cyan">entries[n].progress</ansi>   <ansi fg="green">string</ansi>  - What the next tier takes
+  <ansi fg="cyan">entries[n].lore</ansi>       <ansi fg="magenta">array</ansi>   - Lines known from the first kill
+  <ansi fg="cyan">entries[n].defences</ansi>   <ansi fg="magenta">array</ansi>   - Lines known from the defences tier (omitted before it)
+  <ansi fg="cyan">entries[n].habits</ansi>     <ansi fg="magenta">array</ansi>   - Lines known from the habits tier (omitted before it)
+
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help gmcp</ansi>, <ansi fg="command">help gmcp-room</ansi>, <ansi fg="command">help gmcp-party</ansi>

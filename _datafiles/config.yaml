@@ -18,7 +18,7 @@
 #   This means you must tab out values that belong under a namespace.
 #   For example: MudName is tabbed out two spaces from Server
 #   Alternatively, you can specify it using a dot-syntax in your overrides file:
-#   Server.MudName: "GoMud"
+#   Server.MudName: "Ashveil"
 #
 ################################################################################
 
@@ -33,7 +33,7 @@ Server:
   # - MudName -
   #   Display name of the MUD.
   #   This will be used a few places by default (such as the web pages).
-  MudName: "GoMud"
+  MudName: "Ashveil"
   # - Seed -
   #   The seed used for certain types of content generation
   #   To prevent certain secrets or content from being spoiled, you can set this
@@ -413,6 +413,9 @@ GamePlay:
     TempoSpeedRef: 2
     TempoSpeedSpan: 20
     MaxTurnsPerRound: 2
+    # A battle round lasts as long as its actions' beats need (set combatpace),
+    # never less than this many milliseconds.
+    MinRoundMs: 3000
   # PVP Restrictions
   PVP:
     # - Enabled -
@@ -431,6 +434,16 @@ GamePlay:
   # - MobConverseChance -
   #   Chance in 100 that the mob will attempt to converse when idle.
   MobConverseChance: 3
+  # - MobChatterCooldownRounds -
+  #   Rounds an idle mob waits between says and emotes (and before starting a
+  #   conversation). 60 rounds is about 4 minutes at 4-second rounds.
+  #   Set to 0 for no limit.
+  MobChatterCooldownRounds: 60
+  # - MobChatterMemoryRounds -
+  #   Rounds before a player can hear the same idle line from the same kind of
+  #   mob again; until then the mob stays quiet instead. 900 rounds is about an
+  #   hour. Set to 0 for no limit.
+  MobChatterMemoryRounds: 900
   # - AlignmentDecayRounds -
   #   How many rounds between each alignment decay step toward neutral.
   #   Set to 0 to disable alignment decay entirely.

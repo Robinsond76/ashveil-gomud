@@ -1,0 +1,17 @@
+roomid: 3201
+zone: Marrowmere Fen
+title: Sodden Fen Track
+description: Black water stands between tussocks of reed and sedge. A heron stands motionless
+  on one leg.
+biome: shore
+exits:
+  east:
+    roomid: 3202
+  south:
+    roomid: 3207
+resources:
+- herbs
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

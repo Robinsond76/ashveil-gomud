@@ -50,6 +50,10 @@ func witchBrawl(t *testing.T, level int) *brawl {
 	hexes.Default.Reset()
 	t.Cleanup(hexes.Default.Reset)
 	t.Cleanup(scripting.UseHexRollForTest(func(int) int { return 0 }))
+	// Chants are timed to the round in these tests (Dread Whisper is given
+	// exactly its chant's rounds), so no blow may break one: a broken chant
+	// restarts with no morale check, as the Phase 83 shuffled run saw.
+	t.Cleanup(hooks.UseBreakRollForTest(func(n int) int { return n - 1 }))
 	// The game registers these (hooks.RegisterListeners).
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
@@ -395,10 +399,11 @@ func TestBlightHalvesHealingItsHolderReceives(t *testing.T) {
 	b := witchBrawl(t, 1)
 	c := b.aria.Character
 	require.NoError(t, c.AddBuff(status.Blighted, false)) // (it recalculates, so before the health is set)
-	c.HealthMax.Value, c.Health = 1000, 100
+	hardTo(c, 1000)
+	c.Health = 100
 	assert.Equal(t, 5, c.ApplyHealthChange(10), "halved while blighted")
 	c.RemoveBuff(status.Blighted)
-	c.HealthMax.Value = 1000
+	hardMaxTo(c, 1000)
 	assert.Equal(t, 10, c.ApplyHealthChange(10), "whole once it lifts")
 	assert.Equal(t, -10, c.ApplyHealthChange(-10), "damage is not")
 }

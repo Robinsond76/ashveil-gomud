@@ -1,0 +1,36 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">hardcore</ansi>
+
+Hardcore, called <ansi fg="yellow-bold">Iron</ansi> in the game, is an option you take once, when you make a
+character. It makes a defeat cost more. It does not make the world harder:
+foes are exactly as strong as they are for everyone, and a zone's level is
+still the only thing that sets a fight's difficulty.
+
+<ansi fg="yellow-bold">Choosing it</ansi>
+
+The last question of character creation asks <ansi fg="command">Take the Iron option?</ansi>
+(<ansi fg="command">standard</ansi> or <ansi fg="command">Iron</ansi>), and asks again to confirm Iron. In the web client the
+creation panel shows the same question. The choice is for the character's
+whole life: it can't be taken later and can't be put down. To try the
+other way, make a new character (<ansi fg="command">help delete</ansi>).
+
+<ansi fg="yellow-bold">What changes</ansi>
+
+  - A defeat of your leader costs <ansi fg="yellow">two levels</ansi> instead of one (a character at
+    level 2 falls to level 1; level 1 stays level 1). Earning the levels
+    back gives no training points a second time, as with any defeat.
+  - A defeat never ends in a rescue, a capture or a robbery
+    (<ansi fg="command">help defeat</ansi>): you always wake at the last city's church, with the
+    living companions who were with you, as <ansi fg="command">help death</ansi> describes.
+  - Fallen companions follow the usual rules (<ansi fg="command">help resurrect</ansi>).
+  - Nothing else changes: not your foes, your gold, your experience, or
+    the clock.
+
+<ansi fg="yellow-bold">What you get</ansi>
+
+  - The <ansi fg="yellow-bold">Iron</ansi> badge: <ansi fg="command">online</ansi> shows <ansi fg="itemname">(Iron)</ansi> after your name, your
+    <ansi fg="command">status</ansi> sheet has a Mode row, and the web client's Character
+    window shows an Iron badge.
+  - A few extra account blessings that only an Iron character can earn,
+    small perks for your later characters (<ansi fg="command">help blessings</ansi>).
+
+See also: <ansi fg="command">help blessings</ansi>, <ansi fg="command">help death</ansi>, <ansi fg="command">help defeat</ansi>, <ansi fg="command">help delete</ansi>.

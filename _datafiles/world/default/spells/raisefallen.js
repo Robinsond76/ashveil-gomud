@@ -4,7 +4,7 @@ SPELL_NAME = 'Raise the Fallen';
 WAIT_ROUNDS = 1; // raisefallen.yaml's waitrounds
 
 function chanting(rounds) {
-    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' turn)' : ' turns)');
 }
 
 function fill(sourceActor, text) {

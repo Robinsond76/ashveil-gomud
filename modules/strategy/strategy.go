@@ -9,16 +9,19 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/orders"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	domain "github.com/GoMudEngine/GoMud/internal/strategy"
 	"gopkg.in/yaml.v2"
 )
@@ -33,11 +36,17 @@ type Registry struct {
 	// Tactics is each player's company tactics (Phase 30c) that differ
 	// from the defaults.
 	Tactics map[int]domain.Tactics `yaml:"tactics,omitempty"`
+	// Orders is each player's battle orders (Phase 61): user id -> member
+	// key -> up to orders.MaxOrders rules, in the order they are read.
+	Orders map[int]map[string][]orders.Order `yaml:"orders,omitempty"`
+	// Stances is each player's weapon stances (Phase 69): user id -> member
+	// key -> the stance chosen (kept even while the member lacks its weapon).
+	Stances map[int]map[string]stance.Stance `yaml:"stances,omitempty"`
 }
 
 // NewRegistry is an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Players: map[int]map[string]domain.Strategy{}, Tactics: map[int]domain.Tactics{}}
+	return &Registry{Players: map[int]map[string]domain.Strategy{}, Tactics: map[int]domain.Tactics{}, Orders: map[int]map[string][]orders.Order{}, Stances: map[int]map[string]stance.Stance{}}
 }
 
 // Clone is a deep copy.
@@ -54,6 +63,22 @@ func (r Registry) Clone() Registry {
 	for id, t := range r.Tactics {
 		out.Tactics[id] = t
 	}
+	out.Orders = make(map[int]map[string][]orders.Order, len(r.Orders))
+	for id, members := range r.Orders {
+		m := make(map[string][]orders.Order, len(members))
+		for k, v := range members {
+			m[k] = append([]orders.Order(nil), v...)
+		}
+		out.Orders[id] = m
+	}
+	out.Stances = make(map[int]map[string]stance.Stance, len(r.Stances))
+	for id, members := range r.Stances {
+		m := make(map[string]stance.Stance, len(members))
+		for k, v := range members {
+			m[k] = v
+		}
+		out.Stances[id] = m
+	}
 	return out
 }
 
@@ -66,19 +91,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	data, err := s.plug.ReadBytes("strategy")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "strategy", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("strategy", registry)
+	return modstore.Save(s.plug, "strategy", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping entries with a bad user id,
@@ -120,8 +137,55 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			loaded.Tactics[id] = clean
 		}
 	}
+	// Phase 61: orders that don't read, or that are over the limit, are
+	// dropped (logged), the rest kept.
+	for id, members := range wire.Orders {
+		if id <= 0 {
+			continue
+		}
+		for key, list := range members {
+			clean := cleanOrders(list)
+			if strings.TrimSpace(key) == "" || len(clean) != len(list) {
+				mudlog.Warn("strategy: dropped stored orders", "user", id, "member", key, "stored", len(list), "kept", len(clean))
+			}
+			if strings.TrimSpace(key) == "" || len(clean) == 0 {
+				continue
+			}
+			if loaded.Orders[id] == nil {
+				loaded.Orders[id] = map[string][]orders.Order{}
+			}
+			loaded.Orders[id][key] = clean
+		}
+	}
+	// Phase 69: a stance that isn't one is dropped (logged), the rest kept.
+	for id, members := range wire.Stances {
+		if id <= 0 {
+			continue
+		}
+		for key, st := range members {
+			if strings.TrimSpace(key) == "" || st == stance.None || !st.Valid() {
+				mudlog.Warn("strategy: dropped a stored stance", "user", id, "member", key, "stance", st)
+				continue
+			}
+			if loaded.Stances[id] == nil {
+				loaded.Stances[id] = map[string]stance.Stance{}
+			}
+			loaded.Stances[id][key] = st
+		}
+	}
 	*registry = *loaded
 	return nil
+}
+
+// cleanOrders keeps the stored orders that are valid, up to the limit.
+func cleanOrders(list []orders.Order) []orders.Order {
+	var out []orders.Order
+	for _, o := range list {
+		if o.Validate() == nil && len(out) < orders.MaxOrders {
+			out = append(out, o)
+		}
+	}
+	return out
 }
 
 func cleanTactics(t domain.Tactics) (domain.Tactics, bool) {
@@ -233,6 +297,12 @@ func init() {
 	userstate.Register(stateContributor{m})
 	domain.SetProvider(m)
 	domain.SetTacticsProvider(m)
+	orders.SetProvider(m)
+	m.plug.AddUserCommand("orders", m.ordersCommand, true, false)
+	userstate.Register(ordersContributor{m})
+	stance.SetProvider(m)
+	m.plug.AddUserCommand("stance", m.stanceCommand, true, false)
+	userstate.Register(stanceContributor{m})
 	module = m
 }
 
@@ -273,7 +343,7 @@ func parseAutoSpells(raw any, exists func(string) bool) []domain.Spell {
 	}
 	var out []domain.Spell
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
@@ -286,26 +356,6 @@ func parseAutoSpells(raw any, exists func(string) bool) []domain.Spell {
 		out = append(out, domain.Spell{ID: id, Use: use})
 	}
 	return out
-}
-
-func lowerKeys(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			out[strings.ToLower(k)] = v
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			if name, ok := k.(string); ok {
-				out[strings.ToLower(name)] = v
-			}
-		}
-		return out
-	}
-	return nil
 }
 
 func (m *StrategyModule) persistenceAvailableLocked() error {
@@ -346,6 +396,51 @@ func (m *StrategyModule) StoredTactics(userID int) domain.Tactics {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.registry.Tactics[userID]
+}
+
+// StoredOrders implements orders.Provider.
+func (m *StrategyModule) StoredOrders(userID int, key string) []orders.Order {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]orders.Order(nil), m.registry.Orders[userID][key]...)
+}
+
+// setOrders stores a member's orders (none clears them) and saves, rolling
+// back if the save fails.
+func (m *StrategyModule) setOrders(userID int, key string, list []orders.Order) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistenceAvailableLocked(); err != nil {
+		return err
+	}
+	before, had := m.registry.Orders[userID][key]
+	m.putOrders(userID, key, list)
+	if err := m.store.Save(m.registry.Clone()); err != nil {
+		if had {
+			m.putOrders(userID, key, before)
+		} else {
+			m.putOrders(userID, key, nil)
+		}
+		return fmt.Errorf("the orders couldn't be saved; please try again: %w", err)
+	}
+	return nil
+}
+
+func (m *StrategyModule) putOrders(userID int, key string, list []orders.Order) {
+	if len(list) == 0 {
+		delete(m.registry.Orders[userID], key)
+		if len(m.registry.Orders[userID]) == 0 {
+			delete(m.registry.Orders, userID)
+		}
+		return
+	}
+	if m.registry.Orders == nil {
+		m.registry.Orders = map[int]map[string][]orders.Order{}
+	}
+	if m.registry.Orders[userID] == nil {
+		m.registry.Orders[userID] = map[string][]orders.Order{}
+	}
+	m.registry.Orders[userID][key] = append([]orders.Order(nil), list...)
 }
 
 // SetTactics implements domain.TacticsProvider: it stores the player's
@@ -437,6 +532,26 @@ func (m *StrategyModule) prune(userID int, keep map[string]bool) {
 	if changed && len(m.registry.Players[userID]) == 0 {
 		delete(m.registry.Players, userID)
 	}
+	// Phase 61: orders for a member no longer on the record go too.
+	for key := range m.registry.Orders[userID] {
+		if !keep[key] {
+			delete(m.registry.Orders[userID], key)
+			changed = true
+		}
+	}
+	if len(m.registry.Orders[userID]) == 0 {
+		delete(m.registry.Orders, userID)
+	}
+	// Phase 69: so do stances.
+	for key := range m.registry.Stances[userID] {
+		if !keep[key] {
+			delete(m.registry.Stances[userID], key)
+			changed = true
+		}
+	}
+	if len(m.registry.Stances[userID]) == 0 {
+		delete(m.registry.Stances, userID)
+	}
 	m.mu.Unlock()
 	if changed {
 		if err := m.save(); err != nil {
@@ -454,9 +569,13 @@ func (m *StrategyModule) onUserPurged(e events.Event) events.ListenerReturn {
 	m.mu.Lock()
 	_, had := m.registry.Players[evt.UserId]
 	_, hadTactics := m.registry.Tactics[evt.UserId]
-	had = had || hadTactics
+	_, hadOrders := m.registry.Orders[evt.UserId]
+	_, hadStances := m.registry.Stances[evt.UserId]
+	had = had || hadTactics || hadOrders || hadStances
+	delete(m.registry.Stances, evt.UserId)
 	delete(m.registry.Players, evt.UserId)
 	delete(m.registry.Tactics, evt.UserId)
+	delete(m.registry.Orders, evt.UserId)
 	m.mu.Unlock()
 	if had {
 		if err := m.save(); err != nil {

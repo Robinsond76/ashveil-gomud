@@ -22,9 +22,9 @@ function check(ok, what) {
 const xss = '<img src=x onerror="window.__xss=1">';
 const need = (value, label, warn) => ({ value, label, warn });
 const company = {
-  leader: { key: 'leader', id: 0, name: 'Wren', status: 'present', level: 5, archetype: 'Ranger', class: 'warden', class_name: 'Warden', cell: { row: 0, col: 0 }, chemistry: null, strategy: { role: 'fighter', target: 'weakest' } },
+  leader: { key: 'leader', id: 0, name: 'Wren', status: 'present', level: 5, archetype: 'Ranger', class: 'warden', class_name: 'Warden', cell: { row: 0, col: 0 }, chemistry: null, strategy: { role: 'fighter', target: 'weakest' }, tempo: 1.25 },
   members: [
-    { key: 'companion:1', id: 1, name: 'Oswin', status: 'present', level: 3, archetype: 'Cleric', cell: { row: 1, col: 1 }, chemistry: 'Trusted', strategy: { role: 'healer', target: 'weakest' } },
+    { key: 'companion:1', id: 1, name: 'Oswin', status: 'present', level: 3, archetype: 'Cleric', cell: { row: 1, col: 1 }, chemistry: 'Trusted', strategy: { role: 'healer', target: 'weakest' }, tempo: 0.8 },
     { key: 'companion:2', id: 2, name: xss, status: 'present', level: 2, archetype: 'Warrior', cell: { row: 0, col: 1 }, chemistry: null, strategy: { role: 'fighter', target: 'leader' } },
     { key: 'companion:3', id: 3, name: 'Tamsin', status: 'awaiting', level: 2, archetype: 'Ranger', cell: null, chemistry: null, strategy: { role: 'fighter', target: 'weakest' } },
     { key: 'companion:4', id: 4, name: 'Ysolde', status: 'dead', level: 5, archetype: 'Wizard', cell: { row: 2, col: 1 }, chemistry: null, strategy: { role: 'caster', target: 'weakest' } },
@@ -104,7 +104,7 @@ await page.evaluate(() => {
 });
 const subtabs = () => page.evaluate(() => [...document.querySelectorAll('#character-window .cw-tab-btn')]
   .filter(b => !b.hidden).map(b => b.textContent));
-check(JSON.stringify(await subtabs()) === JSON.stringify(['Overview', 'Gear', 'Skills', 'Quests', 'Effects']), 'Character sub-tabs in order; no Pet without a pet');
+check(JSON.stringify(await subtabs()) === JSON.stringify(['Overview', 'Gear', 'Skills', 'Quests']), 'Character sub-tabs in order; no Pet without a pet');
 check(await page.evaluate(() => ['Worth', 'Gear', 'Pet', 'Party'].every(id => !VirtualWindows.getWindows().some(w => w._id === id))), 'Worth, Gear, Pet, and Party are no longer windows of their own');
 const overview = await page.evaluate(() => document.getElementById('cw-overview').textContent);
 check(overview.includes('Wren') && overview.includes('40 / 100') && overview.includes('300'), 'Overview carries Worth (XP, gold, bank)');
@@ -113,6 +113,31 @@ await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'range
 check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Marksman (elite), rank 50'), 'the character window shows the class, tier and rank');
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 30, route: 'Warden', tier: 'advanced', rank: 25, promotion: 'waiting-gate' }));
 check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Promotion waits on alignment'), 'and a promotion waiting on alignment');
+// Phase 77: the Iron badge and the Blessings section on the Overview.
+{
+  await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 5, hardcore: true }));
+  check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Iron character'), 'an Iron character shows the badge (77)');
+  await page.evaluate(x => window.gmcp('Char.Blessings', {
+    iron: true, discount: 5,
+    carried: [{ id: 'company-keeper', name: 'Company keeper', perk: 'recruits cost 5% less' }],
+    waiting: [{ id: 'road-tested', name: x, perk: 'start with 2 x fortifying broth' }],
+    next: [
+      { id: 'old-hand', name: 'Old hand', condition: 'slay 5 bosses', perk: 'start with 2 x warming draught', need: 5, have: 2 },
+      { id: 'iron-oath', name: 'Iron oath', condition: 'take a class promotion as an Iron character', perk: 'recruits cost 5% less', iron: true, need: 1 },
+    ],
+  }), xss);
+  const bl = () => page.evaluate(() => document.getElementById('cw-blessings').textContent);
+  let text = await bl();
+  check(text.includes('Blessings carried') && text.includes('Company keeper') && text.includes('recruits cost 5% less') && text.includes('Active') && text.includes('Next character') && text.includes('Locked') && text.includes('slay 5 bosses') && text.includes('2 of 5') && text.includes('5% off every recruit'), 'the Overview lists carried, waiting and still-to-earn blessings as cards (77): ' + text);
+  check(await page.evaluate(() => !window.__xss && !document.querySelector('#cw-blessings img')), 'blessing text is never read as HTML (77)');
+  await page.evaluate(() => window.gmcp('Char', { Info: { name: 'Wren', class: 'ranger', race: 'Human', level: 5, hardcore: true } }));
+  check((await bl()).includes('Company keeper'), 'a full Char snapshot keeps the blessings (77)');
+  if (outdir) { await page.locator('#cw-overview').screenshot({ path: path.join(outdir, '77-blessings-desk.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('cw-blessings'); return p.scrollWidth <= p.clientWidth + 1 && p.getBoundingClientRect().right <= window.innerWidth + 1; }), 'the blessings fit a phone (77)');
+  if (outdir) { await page.locator('#cw-overview').screenshot({ path: path.join(outdir, '77-blessings-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+}
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 5 }));
 await page.getByRole('tab', { name: 'Gear' }).click();
 check(await page.evaluate(() => document.getElementById('gw-bp-count').textContent) === 'You 2.5 kg \u00b7 company 46.0 / 50.0 kg', 'Gear header: your weight and the company\'s load against capacity');
@@ -155,14 +180,67 @@ check(await page.evaluate(() => document.querySelector('#character-window .cw-ta
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Company' }).first().click();
 const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
-check(JSON.stringify(csubs) === '["Status","Inventory","Camp"]', 'Company sub-tabs: Status, Inventory, Camp');
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp","Chronicle","Opinions","Bonds","Errands","Rites","Bounties"]', 'Company sub-tabs: Status, Inventory, Camp, Chronicle, Opinions, Bonds, Errands, Rites, Bounties');
 const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
-check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, tempo 0.8, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
 check(await page.getByRole('listitem', { name: /Wren, level 5, Warden/ }).count() === 1
   && await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-rank').title) === 'Ranger line', 'a promoted member card names its class, its lineage on hover (40s5)');
+// Phase 82d: each member's combat tempo by its name; the Character tab shows the leader's.
+check(await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-tempo').textContent) === 'Tempo 1.25'
+  && await page.evaluate(() => document.querySelector('#party-panel [data-key="companion:1"] .party-member-tempo').textContent) === 'Tempo 0.8'
+  && !await page.evaluate(() => document.querySelector('#party-panel [data-key="companion:3"] .party-member-tempo')), 'member cards show the tempo of those here, none for one away');
+check(await page.evaluate(() => document.getElementById('cw-tempo').textContent) === '1.25', 'the Character tab shows the leader\'s tempo under the stats');
 check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
+// Phase 58: click a member in the formation drawing, then a place.
+{
+  const sentFm = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  const fmHelp = () => page.locator('.fm-help').textContent();
+  check((await fmHelp()).includes('Click a member, then a place'), 'formation: a hint says how to move');
+  let moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Move Oswin to row 3, column 3' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation move #1 3 3"]', 'formation: pick a member, then an empty cell, sends formation move');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Wren/ }).click();
+    await page.getByRole('button', { name: 'Swap Wren with Oswin' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation swap me #1"]', 'formation: pick a member, then another, swaps them');
+  await page.getByRole('button', { name: /^Move Wren/ }).click();
+  check((await fmHelp()).includes('Moving Wren') && await page.locator('td.is-moving').count() === 1, 'formation: the picked member is marked, with instructions');
+  await page.keyboard.press('Escape');
+  check((await fmHelp()).includes('cancelled') && await page.locator('td.is-moving').count() === 0, 'formation: Escape puts the member back down');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Wren/ }).focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Move Wren to row 2, column 1' }).focus();
+    await page.keyboard.press('Enter');
+  });
+  check(JSON.stringify(moved) === '["formation move me 2 1"]', 'formation: works from the keyboard');
+  moved = await sentFm(async () => { await page.getByRole('button', { name: 'Ysolde' }).click(); });
+  check(moved.length === 0 && (await fmHelp()).includes('fallen'), 'formation: a fallen member is refused with a message, nothing sent');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+    await page.getByRole('button', { name: 'Swap Tamsin with Oswin' }).click();
+  });
+  check(moved.length === 0 && (await fmHelp()).includes('Pick an empty cell to place Tamsin'), 'formation: an unplaced member is not swapped with a placed one (the server refuses that)');
+  moved = await sentFm(async () => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+  });
+  check(moved.length === 0 && await page.locator('.fm-unplaced .fm-cell.is-moving').count() === 1 && (await fmHelp()).includes('Moving Tamsin'), 'formation: with a placed member picked up, an unplaced one is picked up instead of swapped');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: 'Move Tamsin to row 1, column 3' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation move #3 1 3"]', 'formation: an unplaced member can be placed');
+  await page.evaluate(() => { const c = Client.GMCPStructs.Company; c.Battle = { enemies: [{ name: 'x' }] }; });
+  moved = await sentFm(async () => { await page.getByRole('button', { name: /^Move Oswin/ }).click(); });
+  check(moved.length === 0 && (await fmHelp()).includes('battle is under way'), 'formation: in a battle a click is refused with a message, nothing sent');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+}
 await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader', owner_user_id: 7, online: true, follow: false, support: true, autoattack: false }, { Name: '<b>Tamsin</b>', Position: 'member', owner_user_id: 8, online: false, follow: false, support: false, autoattack: false }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
 check((await status()).includes('Travelling with') && (await status()).includes('<b>Tamsin</b>') && await page.locator('#party-panel b').count() === 0, 'a human party under Travelling with, names as text');
 check((await status()).includes('each owner commands their own company') && (await status()).includes('(offline)'), 'alliance authority and offline status appear');
@@ -174,7 +252,7 @@ check((await status()).includes('5/25') && await page.evaluate(() => document.ac
 await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].class = 'paladin'; g.members[0].class_name = 'Paladin'; g.members[0].tier = 'elite'; g.members[0].rank = 45; g.members[1].class = 'knight'; g.members[1].class_name = 'Knight'; g.members[1].tier = 'advanced'; g.members[1].rank = 25; g.members[1].promotion = 'waiting-gate'; g.leader.promotion = 'ready'; window.gmcp('Company', g); }, company);
 check((await status()).includes('\u2605 elite, rank 45') && (await status()).includes('advanced, rank 25'), 'a card shows the class, the elite badge and the rank');
 check((await status()).includes('Promotion ready') && (await status()).includes('Promotion waiting on alignment'), 'a card marks a promotion ready or waiting on alignment');
-check(await page.getByRole('listitem', { name: /Oswin, level 3, Paladin, elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Paladin, tempo 0.8, elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(c => window.gmcp('Company', c), company);
 
@@ -233,10 +311,12 @@ check(await page.evaluate(() => window.__xss === undefined) && (await invText())
 await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 
 // Review finding 3: an item's label is shown, its plain name used in commands.
-await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[0].worn[0].label = 'iron sword (sharp: 3)'; window.gmcp('Company.Inventory', x); }, inventory);
-check((await invText()).includes('iron sword (sharp: 3)'), 'the label, with its edge, as text');
-got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'sharp' }).click(); await page.getByText('remove iron sword', { exact: true }).click(); });
-check(JSON.stringify(got) === '["remove !1:sword"]', 'commands use the exact item reference');
+await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[0].carried[0].label = 'waterskin (cold: 3)'; window.gmcp('Company.Inventory', x); }, inventory);
+check((await invText()).includes('waterskin (cold: 3)'), 'the label, with its edge, as text');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'cold: 3' }).click(); await page.getByText('Put in cargo', { exact: true }).click(); });
+check(JSON.stringify(got) === '["cargo put !2:a"]', 'commands use the exact item reference');
+// Phase 89: worn gear is not in the inventory (it is in Character > Gear).
+check(!(await invText()).includes('iron sword') && !/Wearing/.test(await invText()), 'worn gear is not listed in the inventory');
 // Review findings 4 and 8: a menu from the keyboard; focus kept across updates.
 await page.locator('#company-inventory button.cmp-item', { hasText: 'seared meat x6' }).focus();
 await page.evaluate(() => { window.gmcp('Company.Vitals', { vitals: {}, rescue: {} }); });
@@ -270,55 +350,39 @@ check(JSON.stringify(got) === '["company equip #1 !8:glaive"]', 'equipment assig
 got = await sentNow(async () => { await page.locator('#company-inventory').getByRole('button', { name: 'Autoloot on', exact: true }).click(); });
 check(JSON.stringify(got) === '["autoloot on"]', 'autoloot is an explicit opt-in');
 
-// Phase 48: every member's equipment slots, tap-to-pick and drag-and-drop.
-sharedInventory.slots = [{ slot: 'weapon', label: 'Weapon' }, { slot: 'offhand', label: 'Offhand' }, { slot: 'body', label: 'Body' }, { slot: 'pack', label: 'Pack' }];
-sharedInventory.cargo.push({ ref: '!9:coat', name: 'quilted coat', grams: 900, count: 1, type: 'body', subtype: 'wearable' });
+// Phase 89: worn gear is not listed; category tabs sort the cargo.
+sharedInventory.cargo.push({ ref: '!9:coat', name: 'quilted coat', grams: 900, count: 1, type: 'body', subtype: 'wearable' },
+  { ref: '!11:tonic', name: 'red tonic', grams: 200, count: 2, type: 'potion', subtype: 'usable' },
+  { ref: '!12:ore', name: 'iron ore', grams: 500, count: 3, type: 'commodity', subtype: 'mundane' },
+  { ref: '!13:key', name: 'brass key', grams: 10, count: 1, type: 'key', subtype: 'mundane' },
+  // 89 review: trade goods sort by their trade category.
+  { ref: '!14:garnet', name: 'garnet', grams: 20, count: 1, type: 'gemstone', subtype: 'mundane', goods: 'valuable' },
+  { ref: '!15:fish', name: 'raw fish', grams: 300, count: 1, type: 'commodity', subtype: 'mundane', goods: 'provision' });
 sharedInventory.members[1].worn = [{ ref: '!5:club', name: 'oak club', label: 'oak club', grams: 1200, count: 1, uses: 0, uses_max: 0, type: 'weapon', subtype: 'blunt', slot: 'weapon' }];
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
-const equipBox = page.locator('#company-inventory [aria-label="Brother Oswin equipment"]');
-check((await equipBox.textContent()).includes('Weapon') && (await equipBox.textContent()).includes('oak club') && (await equipBox.textContent()).includes('Body') && (await equipBox.textContent()).includes('empty'), 'shared inventory lists a companion\'s slots, filled and empty');
-check((await page.locator('#company-inventory [aria-label="Wren (you) equipment"]').textContent()).includes('iron sword'), 'your own slots are listed too');
-got = await sentNow(async () => { await equipBox.locator('button', { hasText: 'Body' }).click(); await page.getByText('Equip quilted coat', { exact: true }).click(); });
-check(JSON.stringify(got) === '["company equip #1 !9:coat body"]', 'tap an empty slot, pick a cargo item: equips the companion with an exact reference and slot');
-got = await sentNow(async () => { await equipBox.locator('button', { hasText: 'oak club' }).click(); await page.getByText('Remove to cargo', { exact: true }).click(); });
-check(JSON.stringify(got) === '["company remove #1 weapon"]', 'tap a worn slot: remove to cargo');
-// Drag and drop: a cargo item onto a member's slot, and worn gear onto the cargo.
-const dropData = async (from, to, payload) => page.evaluate(([f, t, p]) => {
-  const src = document.querySelector(f), dst = document.querySelector(t);
-  const dt = new DataTransfer();
-  dt.setData('application/x-ashveil-gear', JSON.stringify(p));
-  window.sent = [];
-  dst.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, bubbles: true, cancelable: true }));
-  dst.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
-  return window.sent;
-}, [from, to, payload]);
-const slotSel = '#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot:nth-child(1)';
-check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"] li:nth-child(3) .cmp-slot', { from: 'cargo', ref: '!9:coat', type: 'body' })) === '["company equip #1 !9:coat body"]', 'dropping a cargo item on a fitting slot equips it');
-check((await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"] li:nth-child(1) .cmp-slot', { from: 'cargo', ref: '!9:coat', type: 'body' })).length === 0, 'dropping a cargo item on a slot it does not fit does nothing');
-check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"]', { from: 'cargo', ref: '!9:coat', type: 'body' })) === '["company equip #1 !9:coat"]', 'dropping a cargo item on a member equips it where it fits');
-check(JSON.stringify(await dropData('x', '#company-inventory section[aria-label="Cargo"]', { from: 'worn', member: '#1', slot: 'weapon', ref: '!5:club' })) === '["company remove #1 weapon"]', 'dropping worn gear on the cargo takes it off');
-check(await page.locator('#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot[draggable=true]').count() === 1 && await page.locator('#company-inventory section[aria-label="Cargo"] .cmp-item[draggable=true]').count() > 0, 'worn gear and cargo items are draggable');
-if (outdir) { await page.locator('#company-inventory').screenshot({ path: path.join(outdir, 'companion-gear-company-panel.png') }); }
-// 38e review: a creature shows only the slots its body has, and only gear cut
-// for its species is offered to it (and to no one else).
-{
-  const withHound = JSON.parse(JSON.stringify(sharedInventory));
-  withHound.members.push({ key: 'companion:5', name: 'Brindle', available: true, grams: 0, worn: [], carried: [], closed: ['weapon', 'offhand'], species: 'hound' });
-  withHound.cargo.push({ ref: '!20500:harness', name: 'hound harness', grams: 900, count: 1, type: 'body', subtype: 'wearable', worn_by: ['hound'] });
-  await page.evaluate(i => window.gmcp('Company.Inventory', i), withHound);
-  const houndBox = page.locator('#company-inventory [aria-label="Brindle equipment"]');
-  const houndText = await houndBox.textContent();
-  check(!houndText.includes('Weapon') && !houndText.includes('Offhand') && houndText.includes('Body'), 'a hound lists only the slots its body has');
-  await houndBox.locator('button', { hasText: 'Body' }).click();
-  const houndMenu = await page.locator('body').textContent();
-  check(houndMenu.includes('Equip hound harness') && !houndMenu.includes('Equip quilted coat'), 'a hound is offered only gear cut for it');
-  await page.keyboard.press('Escape');
-  await equipBox.locator('button', { hasText: 'Body' }).click();
-  check(!(await page.locator('body').textContent()).includes('Equip hound harness'), 'a person is not offered gear cut for a creature');
-  await page.keyboard.press('Escape');
-  check((await dropData('x', '#company-inventory [aria-label="Brindle equipment"]', { from: 'cargo', ref: '!9:coat', type: 'body', worn_by: [] })).length === 0, 'dropping ordinary gear on a hound does nothing');
-}
+check(!(await invText()).includes('oak club') && !(await invText()).includes('iron sword') && await page.locator('#company-inventory [aria-label$="equipment"]').count() === 0, 'shared inventory lists no worn gear');
+check((await invText()).includes('Character \u203a Gear'), 'the inventory points to Character > Gear for worn gear');
+const tabNames = () => page.evaluate(() => [...document.querySelectorAll('#company-inventory .cmp-inv-tab')].map(b => b.textContent));
+check(JSON.stringify(await tabNames()) === JSON.stringify(['All', 'Equipment 2', 'Potions 2', 'Food & drink 9', 'Materials 3', 'Other 3']), 'tabs: All plus each non-empty category with its count: ' + JSON.stringify(await tabNames()));
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'All' && (await invText()).includes('pack horse') && (await invText()).includes('quilted coat') && (await invText()).includes('red tonic'), 'All is the current view: horses and every cargo item');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Equipment' }).click();
+check((await invText()).includes('quilted coat') && (await invText()).includes('steel glaive') && !(await invText()).includes('red tonic') && !(await invText()).includes('pack horse') && !(await invText()).includes('seared meat'), 'Equipment: only wearable and weapon cargo');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'quilted coat' }).click(); await page.getByText('Equip Brother Oswin', { exact: true }).click(); });
+check(JSON.stringify(got) === '["company equip #1 !9:coat"]', 'a filtered item keeps its menu and exact reference');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Food & drink' }).click();
+check((await invText()).includes('raw fish') && !(await invText()).includes('iron ore'), 'Food & drink: provisions among the food');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Potions' }).click();
+check((await invText()).includes('red tonic x2') && !(await invText()).includes('quilted coat'), 'Potions: only potions');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Other' }).click();
+check((await invText()).includes('brass key') && (await invText()).includes('garnet') && !(await invText()).includes('iron ore'), 'Other: what fits nowhere else, valuables included');
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'Other 3', 'the chosen tab survives an update');
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'Materials' }).click();
+await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.cargo = x.cargo.filter(c => c.type !== 'commodity'); window.gmcp('Company.Inventory', x); }, sharedInventory);
+check(await page.locator('#company-inventory .cmp-inv-tab[aria-pressed=true]').textContent() === 'All' && !(await tabNames()).some(t => t.startsWith('Materials')), 'an emptied tab disappears and the view returns to All');
+await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+await page.locator('#company-inventory .cmp-inv-tab', { hasText: 'All' }).click();
+if (outdir) { await page.locator('#company-inventory').screenshot({ path: path.join(outdir, 'inventory-tabs.png') }); }
 
 // Phase 34a: inherited black text is visible even under a dark theme.
 // Check primary load text and secondary labels in every shipped theme.
@@ -366,6 +430,28 @@ check((await page.evaluate(() => document.getElementById('company-camp').textCon
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Camp gear: Bedrolls 2/3, Tent, Bells and trip lines.'), 'the camp gear line (40a4)');
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work'), 'no thieves warning without theft_risk (40a4)');
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '40a4-camp-gear.png') }); }
+
+// Camp activities: the chores before sleeping, each a button that is
+// enabled only when it would do something, with its note beside it.
+const chores = [
+  { key: 'sharpen', label: 'Sharpen', command: 'camp sharpen', ready: true, note: 'You hone blades for yourself and Oswin, using 2 whetstone uses (8 uses left).' },
+  { key: 'poison', label: 'Poison', command: 'camp poison apply', ready: false, note: 'No poison is assigned. Set blades with camp poison assign <member|self> <main|off> <poison>.' },
+  { key: 'cook', label: 'Cook', command: 'camp cook', ready: false, note: 'Oswin cooks hunter\'s stew once the fire is lit.' },
+];
+await page.evaluate(c => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: false, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, activities: c }), chores);
+const choreState = await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-activities .cmp-btn')].map(b => b.textContent + (b.disabled ? ':off' : ':on')));
+check(JSON.stringify(choreState) === '["Sharpen:on","Poison:off","Cook:off"]', 'camp chores: Sharpen ready, Poison and Cook disabled with a reason');
+check((await page.evaluate(() => document.querySelector('#company-camp .cmp-activities').textContent)).includes('No poison is assigned'), 'a chore that cannot run says why');
+const choreSent = await sentNow(async () => { await page.locator('#company-camp .cmp-activities button', { hasText: 'Sharpen' }).click(); });
+check(JSON.stringify(choreSent) === '["camp sharpen"]', 'the Sharpen button sends camp sharpen');
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '91-camp-activities-desktop.png') }); }
+await page.setViewportSize({ width: 360, height: 780 });
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '91-camp-activities-360.png') }); }
+const overflow = await page.evaluate(() => { const c = document.getElementById('company-camp'); return c.scrollWidth > c.clientWidth + 1; });
+check(!overflow, 'camp chores do not overflow at 360px');
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(c => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 25, rest_seconds: 45, can_camp: false, inn: false, activities: [] }), []);
+check(await page.locator('#company-camp .cmp-activities').count() === 0, 'resting: the chores are gone');
 // Phase 43a: camp supplies carried, and what is set by for the next rest.
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: true, gear: ['Tent'], supplies: ['fortifying broth x2', 'warming draught x1', 'watch incense x1'], prepared: ['fortifying broth for Oswin', 'watch incense'], resting: false, rested: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Supplies: fortifying broth x2, warming draught x1, watch incense x1 (camp prepare).'), 'the camp supplies line (43a)');
@@ -382,6 +468,175 @@ await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: tr
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '49-camp-banter.png') }); }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Around the fire'), 'no banter block before any talk (49)');
+// Phase 55: who is ailing, and one press to make the remedies.
+{
+  const ill = JSON.parse(JSON.stringify(company));
+  ill.vitals.leader.ailments = ['Chill (3 battles)'];
+  ill.vitals['companion:1'].ailments = ['Fever (5 battles)'];
+  await page.evaluate(c => window.gmcp('Company', c), ill);
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+  const text = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(text.includes('Ailing: You: Chill (3 battles); Oswin: Fever (5 battles).'), 'the Ailing line names each ailing member (55)');
+  const got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).click(); });
+  check(JSON.stringify(got) === '["camp prepare remedy all"]', 'Make remedies sends camp prepare remedy all (55)');
+  check((await strip()).includes('You: chill (3 battles)'), 'the vitals strip warns of an ailment (55)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '55-camp-ailing.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 10, rest_seconds: 60, can_camp: false, inn: false }));
+  check(await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).count() === 0, 'no Make remedies while resting (55)');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+  check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Ailing'), 'no Ailing line when everyone is well (55)');
+}
+// Phase 51: the rest duty picker, a row per member at the camp.
+{
+  const opts = ['sleep', 'watch', 'tend', 'forage', 'cook'];
+  const duties = [
+    { key: 'leader', name: 'Wren', command: 'me', duty: 'sleep', options: opts },
+    { key: 'companion:1', name: 'Brother Oswin', command: 'Brother Oswin', duty: 'watch', options: opts },
+    { key: 'companion:5', name: 'Mira', command: 'Mira', duty: 'brew', options: [...opts, 'brew'] },
+  ];
+  const campWith = (locked) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: locked, rest_percent: 0, rest_seconds: 30, can_camp: false, inn: false, duties, duties_locked: locked });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(false));
+  const rows = await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty')].map(r => ({
+    name: r.querySelector('.cmp-duty-name').textContent,
+    pressed: [...r.querySelectorAll('button[aria-pressed="true"]')].map(b => b.textContent),
+    count: r.querySelectorAll('button').length,
+  })));
+  check(rows.length === 3 && rows[0].name === 'Wren (you)' && rows[1].pressed.join() === 'Watch' && rows[2].pressed.join() === 'Brew' && rows[2].count === 6 && rows[0].count === 5, 'duty rows: one per member, the duty pressed, Brew only for an Alchemist (51)');
+  got = await sentNow(async () => { await page.getByRole('group', { name: 'Brother Oswin duty' }).getByRole('button', { name: 'Cook' }).click(); });
+  check(JSON.stringify(got) === '["camp duties Brother Oswin cook"]', 'a duty button sends camp duties (51)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '51-camp-duties.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the duty picker fits a phone (51)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '51-camp-duties-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(true));
+  check(await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty button')].every(b => b.disabled)) && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('fixed for this rest'), 'duties lock while resting (51)');
+}
+// Camp music: the Music row and the inn's gig notice on the Camp tab.
+{
+  const music = {
+    off: false, covered: '2 of 4',
+    players: [
+      { key: 'leader', name: 'Wren', label: 'Strings 2', family: 'strings', instrument: 'travelling lute' },
+      { key: 'companion:1', name: 'Brother Oswin', label: 'Voice 1', family: 'voice' },
+      { key: 'companion:5', name: 'Mira' },
+    ],
+    effects: ['Strings (strength 4): Rested and Well Rested last 20% longer', 'Voice (strength 2): ailments fade 10% faster'],
+    cost: 'The song carries: raiders and thieves are 20% more likely to come.',
+    teacher: true, teach_price: 25,
+  };
+  const gig = { window: '19:00 to 21:00', ready: true, families: 2, pay: 38 };
+  const campWith = (m, g) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true, music: m, gig: g });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(music, gig));
+  const text = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(text.includes('Wren (you): Strings 2, on the travelling lute') && text.includes('Brother Oswin: Voice 1, sings') && text.includes('Mira: no music yet') && text.includes('Families covered: 2 of 4'), 'the Music row lists each member and the families covered (music)');
+  check(text.includes('Rested and Well Rested last 20% longer'), 'the Music row shows the next song\'s effects (music)');
+  check(text.includes('raiders and thieves are 20% more likely'), 'the Music row shows the song\'s raid cost (music review)');
+  check(text.includes('A music teacher is here: music learn [family] [member] costs 25 gold'), 'the Music row names the teacher and fee (music review)');
+  let got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Song off' }).click(); });
+  check(JSON.stringify(got) === '["camp music off"]', 'Song off sends camp music off (music)');
+  got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Play a gig' }).click(); });
+  check(JSON.stringify(got) === '["inn gig"]', 'Play a gig sends inn gig (music)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, 'music-camp.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the Music row fits a phone (music)');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ ...music, off: true }, { window: '19:00 to 21:00', ready: false, reason: 'Your company played for pay not long ago.', families: 2, pay: 38 }));
+  const off = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(off.includes('The camp song is off.') && off.includes('played for pay not long ago') && !off.includes('Play a gig'), 'an off song and a refused gig read plainly (music)');
+  check(await page.locator('#company-camp').getByRole('button', { name: 'Song on' }).count() === 1, 'Song on appears when the song is off (music)');
+}
+// Phase 75: a button per inn room, hidden while the company rests.
+{
+  const innRooms = [
+    { tier: 'common', name: 'Common', price: 25, minutes: 30, command: 'inn rest' },
+    { tier: 'private', name: 'Private', price: 75, minutes: 60, command: 'inn rest private' },
+    { tier: 'suite', name: 'Suite', price: 200, minutes: 120, command: 'inn rest suite' },
+  ];
+  const campI = (resting) => ({ has_camp: false, here: false, room: '', fire_lit: false, resting, rest_percent: 0, rest_seconds: resting ? 30 : 0, can_camp: false, inn: true, inn_rooms: innRooms });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campI(false));
+  const names = await page.locator('#company-camp [aria-label="Inn rooms"] .cmp-btn').allTextContents();
+  check(JSON.stringify(names) === '["Common room, 25 gold","Private room, 75 gold","Suite room, 200 gold"]', 'a button per inn room with its price (75)');
+  const got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Suite room, 200 gold' }).click(); });
+  check(JSON.stringify(got) === '["inn rest suite"]', 'the suite button sends inn rest suite (75)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '75-camp-inn-rooms.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the inn room buttons fit a phone (75)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '75-camp-inn-rooms-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campI(true));
+  check(await page.locator('#company-camp [aria-label="Inn rooms"]').count() === 0, 'no room buttons while resting (75)');
+}
+// Phase 56: the recipe book, folded under the camp's buttons.
+{
+  const recipes = ['seared game meat: 1 raw game meat (cooking 1)', 'grilled fish: 1 raw fish (cooking 1)', "hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)", 'thyme tea (remedy for chill): 2 wild thyme'];
+  const campR = { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, gear: ['Tent'], recipes };
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campR);
+  const bookState = () => page.evaluate(() => { const d = document.querySelector('#company-camp details.cmp-recipes'); return d ? { open: d.open, summary: d.querySelector('summary').textContent, items: d.querySelectorAll('li').length } : null; });
+  let st = await bookState();
+  check(st && !st.open && st.summary === 'Recipe book (4)' && st.items === 4, 'the recipe book is folded with its count (56)');
+  check(await page.evaluate(() => { const b = [...document.querySelectorAll('#company-camp .cmp-btn')].find(x => x.textContent === 'Rest'); const d = document.querySelector('#company-camp details.cmp-recipes'); return !!b && !!d && (b.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0; }), 'the book sits below the camp buttons (56)');
+  await page.locator('#company-camp details.cmp-recipes > summary').click();
+  await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, rest_seconds: 1 });
+  st = await bookState();
+  check(st && st.open, 'an unfolded book stays open across a refresh (56)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '56-camp-recipes.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the recipe book fits a phone (56)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '56-camp-recipes-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  // Phase 90: the structured book groups by kind, ready dishes first, ingredients unfold.
+  const recipe_book = [
+    { name: "hunter's stew", kind: 'dish', needs: [{ name: 'raw game meat', count: 2, have: 1 }, { name: 'wild thyme', count: 1, have: 1 }], skill: 'cooking', level: 3, ready: false },
+    { name: 'seared game meat', kind: 'dish', needs: [{ name: 'raw game meat', count: 1, have: 1 }], skill: 'cooking', level: 1, ready: true },
+    { name: 'thyme tea', kind: 'remedy', for: 'chill', needs: [{ name: 'wild thyme', count: 2, have: 1 }], ready: false },
+    { name: 'fire-baked bread', kind: 'hearth', needs: [], ready: false },
+  ];
+  await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, recipe_book });
+  const book = await page.evaluate(() => {
+    const d = document.querySelector('#company-camp details.cmp-recipes');
+    return { groups: [...d.querySelectorAll('.cmp-rb-group')].map(g => g.textContent), names: [...d.querySelectorAll('.cmp-rb-name')].map(n => n.textContent), states: [...d.querySelectorAll('.cmp-rb-state')].map(n => n.textContent), short: d.querySelectorAll('li.is-short').length };
+  });
+  check(JSON.stringify(book.groups) === JSON.stringify(['Dishes', 'Remedies', 'Learned at a hearth']), 'the book is grouped by kind (90)');
+  check(book.names[0] === 'seared game meat' && book.states[0] === 'Can make now' && book.states[1] === 'Missing ingredients' && book.names[2] === 'thyme tea (for chill)' && book.states[3] === 'At a hearth', 'ready dishes come first and each says whether it can be made (90): ' + JSON.stringify(book));
+  check(book.short === 2, 'ingredients the company lacks are marked (90)');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the grouped book fits a phone (90)');
+  if (outdir) {
+    await page.locator('#company-camp details.cmp-recipes details.cmp-recipe').first().locator('summary').click();
+    await page.locator('#company-camp').screenshot({ path: path.join(outdir, '90-panels-recipes-360.png') });
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('#company-camp details.cmp-recipes > summary').click();
+  await page.evaluate(c => window.gmcp('Company.Camp', c), { ...campR, recipes: [] });
+  check(await bookState() === null, 'no book with no recipes (56)');
+}
+// Phase 52: the pitched tent, and a picker when more than one tent is carried.
+{
+  const tents = [
+    { kind: 'canvas', name: 'oiled canvas tent', effect: 'shelter', pitched: false, command: 'camp tent canvas' },
+    { kind: 'large', name: 'large pavilion tent', effect: 'everyone wakes Well Rested', pitched: true, command: 'camp tent large' },
+  ];
+  const campWith = (extra) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, tent: true, tent_kind: 'large', tent_name: 'large pavilion tent', tent_note: 'everyone wakes Well Rested', tents, gear: ['Large tent'], ...extra });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({}));
+  check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('A large pavilion tent is pitched here: everyone wakes Well Rested.'), 'the pitched tent is named with its effect (52)');
+  const picks = await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].map(b => ({ text: b.textContent, pressed: b.getAttribute('aria-pressed') })));
+  check(picks.length === 2 && picks[1].text === 'Large pavilion tent' && picks[1].pressed === 'true' && picks[0].pressed === 'false', 'a button per tent carried, the pitched one pressed (52)');
+  got = await sentNow(async () => { await page.getByRole('group', { name: 'Tent choice' }).getByRole('button', { name: 'Oiled canvas tent' }).click(); });
+  check(JSON.stringify(got) === '["camp tent canvas"]', 'a tent button sends camp tent (52)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '52-camp-tents.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the tent picker fits a phone (52)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '52-camp-tents-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ resting: true, rest_seconds: 20 }));
+  check(await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].every(b => b.disabled)), 'the tent is fixed while resting (52)');
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tents: [tents[1]] }));
+  check(await page.evaluate(() => document.querySelectorAll('#company-camp [aria-label="Tent choice"]').length) === 0, 'no picker with one tent carried (52)');
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tent_kind: 'canvas', tent_name: 'oiled canvas tent', tent_note: 'shelter' }));
+  check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('An oiled canvas tent is pitched here'), 'a tent name starting with a vowel takes "An" (52 review)');
+}
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work this road'), 'no bells on a thieves road: the warning (40a4)');
@@ -469,6 +724,100 @@ check(JSON.stringify(got) === '["scout"]', 'Scout appears with an enemy group he
 await page.evaluate(() => { const c = JSON.parse(JSON.stringify(Client.GMCPStructs.Company)); c.members[1].name = '<img src=x onerror="window.__xss2=1">'; window.gmcp('Company', c); });
 check(await page.evaluate(() => window.__xss2 === undefined) && (await combat()).includes('<img'), 'markup in a name renders as text');
 
+// --- Phase 61: battle orders under each member's row ---
+await page.evaluate(c => window.gmcp('Company', c), company);
+check(await page.getByRole('button', { name: 'Orders: none' }).count() === 4, 'orders: a button for each member who has not fallen');
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].orders = ['When an ally is below 50% health, heal that ally first.', 'When a foe is chanting, turn on the chanter to break its chant.'];
+  window.gmcp('Company', g);
+}, company);
+check((await page.locator('#combat-window .cbt-orders[data-key="companion:1"] ol li').allTextContents()).join('|') === 'When an ally is below 50% health, heal that ally first.|When a foe is chanting, turn on the chanter to break its chant.', 'orders: listed in order, in the commands\' words');
+check(await page.getByRole('button', { name: 'Orders (2)' }).count() === 1, 'orders: the button counts them');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Add: Ally below 25%: guard them').click(); });
+check(JSON.stringify(got) === '["orders #1 add ally 25 then guard"]', 'orders: add one from the menu');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Remove order 1').click(); });
+check(JSON.stringify(got) === '["orders #1 remove 1"]', 'orders: remove one');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Read order 2 sooner').click(); });
+check(JSON.stringify(got) === '["orders #1 up 2"]', 'orders: read one sooner');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders (2)' }).click(); await page.getByText('Clear all orders').click(); });
+check(JSON.stringify(got) === '["orders #1 clear"]', 'orders: clear them');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Orders: none' }).first().click(); await page.getByText('Starting set for the class').click(); });
+check(JSON.stringify(got) === '["orders me preset"]', 'orders: the class starting set (yourself is "me")');
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].orders = ['When an ally is below 50% health, heal that ally first.', 'When a foe is chanting, turn on the chanter to break its chant.', 'When a boss stands among the foes, cast its strongest attack, whatever its reserve.'];
+  window.gmcp('Company', g);
+}, company);
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, '61-combat-orders.png') }); }
+await page.setViewportSize({ width: 360, height: 800 });
+check(await page.evaluate(() => { const p = document.getElementById('combat-window'); return p.scrollWidth <= p.clientWidth + 1; }), 'orders: three long orders fit a phone (61 review)');
+await page.getByRole('button', { name: 'Orders (3)' }).click();
+check(await page.evaluate(() => { const m = [...document.querySelectorAll('body > div')].pop().getBoundingClientRect(); return m.left >= 0 && m.right <= window.innerWidth + 1; }), 'orders: the menu fits a phone (61 review)');
+if (outdir) { await page.screenshot({ path: path.join(outdir, '61-combat-orders-phone.png') }); }
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.getByRole('button', { name: 'Orders (3)' }).click();
+const full = await page.evaluate(() => [...[...document.querySelectorAll('body > div')].pop().children].map(c => c.textContent));
+check(!full.some(l => l.startsWith('Add: ')) && full.includes('Remove order 3'), 'orders: with three, none can be added, any can be removed');
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => window.gmcp('Company', c), company);
+
+// --- Phase 69: weapon stances under each member's orders ---
+check(await page.getByRole('button', { name: 'Stance: none' }).count() === 4, 'stance: a button for each member who has not fallen');
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].stance = { key: 'heavy', name: 'Heavy blows', gain: 'blows land 30% harder', cost: '15 points less likely to hit', needs: 'a two-handed weapon (not a staff or a bow)', ready: true };
+  g.members[1].stance = { key: 'quick', name: 'Quick draw', gain: '25% more turns each round', cost: 'arrows land 15% lighter', needs: 'a bow', ready: false };
+  window.gmcp('Company', g);
+}, company);
+check((await page.locator('#combat-window .cbt-stance[data-key="companion:1"] .cbt-stance-line').textContent()) === 'Stance: Heavy blows (ready)', 'stance: named, with whether the gear fits');
+check((await page.locator('#combat-window .cbt-stance[data-key="companion:2"] .cbt-stance-line').textContent()) === 'Stance: Quick draw (idle: needs a bow)', 'stance: an idle one says what it needs');
+check((await page.locator('#combat-window .cbt-stance[data-key="companion:1"] .cbt-stance-line').getAttribute('title')) === 'Heavy blows: blows land 30% harder, but 15 points less likely to hit.', 'stance: the trade is in the tooltip');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: Heavy blows' }).click(); await page.getByText('Shield wall (shield)').click(); });
+check(JSON.stringify(got) === '["stance #1 wall"]', 'stance: pick one from the menu');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: Heavy blows' }).click(); await page.getByText('No stance').click(); });
+check(JSON.stringify(got) === '["stance #1 off"]', 'stance: take it off');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Stance: none' }).first().click(); await page.getByText('Keen edge (dagger)').click(); });
+check(JSON.stringify(got) === '["stance me keen"]', 'stance: yourself is "me"');
+// Phase 78: the stance menu offers only what the member's gear can use, and
+// the orders menu leaves out an order already set.
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => {
+  const g = JSON.parse(JSON.stringify(c));
+  g.members[0].stance = { key: 'heavy', name: 'Heavy blows', gain: 'blows land 30% harder', cost: '15 points less likely to hit', needs: 'a two-handed weapon (not a staff or a bow)', ready: true };
+  g.members[0].stances_fit = ['heavy', 'wall'];
+  g.members[0].orders = ['When an ally is below 50% health, heal that ally first.'];
+  g.members[0].order_cmds = ['ally 50 then heal'];
+  g.leader.stances_fit = [];
+  window.gmcp('Company', g);
+}, company);
+await page.getByRole('button', { name: 'Stance: Heavy blows' }).click();
+let menu = await page.evaluate(() => [...document.querySelectorAll('[role=menu] [role=menuitem], [role=menu] button')].map(b => b.textContent));
+check(menu.some(l => l.startsWith('Shield wall')) && !menu.some(l => l.startsWith('Keen edge') || l.startsWith('Quick draw')) && menu.includes('No stance'), 'stance: the menu lists only the stances the gear can use (78): ' + menu.join('|'));
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+check(await page.locator('#combat-window .cbt-stance[data-key="leader"] .cbt-stance-btn').count() === 0 && (await page.locator('#combat-window .cbt-stance[data-key="leader"] .cbt-stance-line').textContent()).startsWith('Stance: none'), 'stance: nothing fits, so a line says what is needed, not a button to an empty menu (78)');
+await page.getByRole('button', { name: 'Orders (1)' }).click();
+menu = await page.evaluate(() => [...document.querySelectorAll('[role=menu] [role=menuitem], [role=menu] button')].map(b => b.textContent));
+check(!menu.includes('Add: Ally below 50%: heal them') && menu.includes('Add: Ally below 25%: heal them'), 'orders: the menu leaves out an order already set (78)');
+if (outdir) { await page.screenshot({ path: path.join(outdir, '78-combat-menus.png') }); }
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.setViewportSize({ width: 360, height: 800 });
+check(await page.evaluate(() => { const p = document.getElementById('combat-window'); const l = p.querySelector('.cbt-stance-line'); return p.scrollWidth <= p.clientWidth + 1 && !!l && l.getBoundingClientRect().right <= p.getBoundingClientRect().right + 1; }), 'stance: the needs line fits a phone (78 review)');
+await page.getByRole('button', { name: 'Stance: Heavy blows' }).click();
+check(await page.evaluate(() => { const m = [...document.querySelectorAll('body > div')].pop().getBoundingClientRect(); return m.left >= 0 && m.right <= window.innerWidth + 1; }), 'stance: the filtered menu fits a phone (78 review)');
+if (outdir) { await page.screenshot({ path: path.join(outdir, '78-combat-menus-phone.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => window.gmcp('Company', c), company);
+
 // --- Task 12: the Comm and Who tabs ---
 await page.getByRole('tab', { name: 'Combat' }).click();
 await page.evaluate(() => { window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Hello' }); window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Again' }); });
@@ -478,12 +827,37 @@ check(await page.getByRole('tab', { name: 'Comm' }).count() === 1 && await page.
 await page.evaluate(() => window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Seen' }));
 check(await page.evaluate(() => document.querySelector('.dock-tabgroup-badge:not([hidden])') === null), 'no count while Comm shows');
 const dockTabs = () => page.evaluate(() => [...document.querySelectorAll('#dock-right [role=tab].dock-tabgroup-tab')].map(t => t.textContent));
-check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm"]', 'the dock\'s tabs: Character, Company, Combat, Comm');
+check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Bestiary"]', 'the dock\'s tabs: Character, Company, Combat, Comm, Bestiary');
 await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'Online').reopen());
-check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Who"]', 'Who appears when Online is enabled');
+check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Bestiary","Who"]', 'Who appears when Online is enabled');
 await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'KillStats').reopen());
 check((await dockTabs()).includes('Kills'), 'Kills appears when Kill Stats is enabled');
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'dock-full.png') }); }
+
+// --- Phase 66: the Bestiary tab ---
+const bestiaryFix = { entries: [
+  { id: 7, name: 'hollow wolf', zone: 'Dark Forest', level: 4, kills: 3, tier: 2, tier_name: 'defences', progress: '3 more kills to learn its habits', lore: ['A wolf of level 4, found in Dark Forest.', '<img src=x onerror="window.__xssb=1">'], defences: ['Armor turns aside about 10% of each blow.'] },
+  { id: 85, name: 'forest ogre', zone: 'Dark Forest', level: 22, boss: true, kills: 3, tier: 3, tier_name: 'habits', progress: 'everything is known', lore: ['A large ogre.'], defences: ['Resists hexes.'], habits: ['Winds up Crushing Blow now and then.'] },
+  { id: 1, name: 'rat', zone: '', level: 1, kills: 1, tier: 1, tier_name: 'lore', progress: '2 more kills to learn its defences', lore: ['A rat.'] },
+] };
+await page.getByRole('tab', { name: 'Bestiary' }).click();
+await page.evaluate(b => window.gmcp('Char.Bestiary', b), bestiaryFix);
+check(await page.evaluate(() => document.querySelectorAll('#bs-window details').length) === 3, 'bestiary: an entry for each kind');
+check(await page.evaluate(() => [...document.querySelectorAll('#bs-window .bs-zone')].map(z => z.textContent).join('|')) === 'Dark Forest|Elsewhere', 'bestiary: grouped by zone, none as Elsewhere');
+check(await page.evaluate(() => window.__xssb === undefined), 'bestiary: text is not run as markup');
+// Wait for the async toggle event, which records the entry as open.
+await page.evaluate(() => new Promise(r => { const d = document.querySelector('#bs-window details'); d.addEventListener('toggle', () => r(), { once: true }); d.open = true; }));
+check(await page.evaluate(() => document.querySelector('#bs-window details .bs-body').textContent.includes('Defences') && !document.querySelector('#bs-window details .bs-body').textContent.includes('Habits')), 'bestiary: only the lines the tier has earned');
+await page.evaluate(b => window.gmcp('Char.Bestiary', b), bestiaryFix);
+check(await page.evaluate(() => document.querySelector('#bs-window details').open), 'bestiary: an open entry stays open across a refresh');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'bestiary-desk.png') }); }
+await page.setViewportSize({ width: 360, height: 740 });
+check(await page.evaluate(() => { const p = document.getElementById('bs-window'); return p.scrollWidth <= p.clientWidth + 1; }), 'bestiary: fits a 360px viewport');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'bestiary-phone.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => window.gmcp('Char.Bestiary', { entries: [] }));
+check(await page.evaluate(() => document.querySelector('#bs-window .bs-empty') !== null), 'bestiary: an empty one says how to fill it');
+await page.getByRole('tab', { name: 'Character' }).click();
 
 // --- Phase 32g2: the Battle view ---
 const battleFix = {
@@ -499,10 +873,18 @@ const battleFix = {
   company: [{ key: 'leader', target: 'm:412' }, { key: 'companion:1', target: 'm:412' }, { key: 'companion:2', target: 'm:413' }],
   others: [{ id: 'u:9', name: 'Brannoc' }],
   waiting: ['a pack of grey wolves'],
+  // Phase 82d: the round's turn order, with an unseen foe and an ally's member.
+  order: [{ id: 'm:412', slot: 1 }, { id: 'leader', slot: 2 }, { id: '?', slot: 3 }, { id: 'companion:1', slot: 4 }, { id: 'a:9:leader', slot: 5 }],
+  allies: [{ leader: 9, name: 'Brannoc', members: [{ id: 'a:9:leader', name: 'Brannoc' }] }],
 };
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Character' }).click();
 await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+// Phase 66: habits the bestiary knows of a foe show in the Battle view.
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.enemies[0].known = ['heals its allies', 'casts spells']; window.gmcp('Company.Battle', x); }, battleFix);
+check(await page.evaluate(() => { const n = document.querySelector('#combat-window .cbt-bestiary'); return n && n.textContent === 'Bestiary: the cutthroat captain heals its allies, casts spells'; }), 'Battle names the habits the bestiary knows');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+check(await page.locator('#combat-window .cbt-bestiary').count() === 0, 'Battle says nothing of a foe not yet learned');
 // Phase 30f: effective combat cells and reserve presentation are separate
 // from the saved Setup formation.
 await page.evaluate(b => {
@@ -537,6 +919,8 @@ await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
 
 const cbt = () => page.evaluate(() => document.getElementById('combat-body').textContent);
 check(await page.getByRole('heading', { name: 'Battle: a band of cutthroats' }).count() === 1, 'the Battle view replaces Setup');
+// Phase 82d: the round's turn order in words, for the accessible path.
+check((await page.evaluate(() => (document.querySelector('#combat-window .cbt-order') || {}).textContent)) === 'Turn order: the cutthroat captain, Wren, an unseen foe, Oswin, Brannoc', 'the Battle view lists the turn order in words, an unseen foe and an ally by name');
 check((await cbt()).includes('Withdrawing east (2 rounds remaining)'), 'ordered withdrawal appears in the battle view');
 const them = page.getByRole('group', { name: 'a band of cutthroats' });
 const usField = page.getByRole('group', { name: 'Your company' });
@@ -624,6 +1008,14 @@ check(kept.heading && kept.said === '' && kept.focus === 'm:412' && kept.open, '
 check(await page.getByRole('button', { name: /^Oswin, fallen/ }).count() === 1, 'and shows the companion fallen');
 await page.evaluate(b => window.gmcp('Company.Battle', b), next);
 check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === '', 'the battle sent again after it: nothing announced');
+// Phase 61: in a battle orders are listed, with no button to change them.
+await page.evaluate(c => { const x = JSON.parse(JSON.stringify(c)); x.members[1].orders = ['When a foe is chanting, turn on the chanter to break its chant.']; window.gmcp('Company', x); }, company);
+check(await page.locator('#combat-window .cbt-orders-btn').count() === 0, 'orders: no edit button during a battle');
+check((await cbt()).includes('turn on the chanter to break its chant'), 'orders: still listed during a battle');
+// Phase 69: a stance in force is listed in a battle, with no button.
+await page.evaluate(c => { const x = JSON.parse(JSON.stringify(c)); x.members[1].stance = { key: 'wall', name: 'Shield wall', gain: 'g', cost: 'c', needs: 'a shield', ready: true }; window.gmcp('Company', x); }, company);
+check(await page.locator('#combat-window .cbt-stance-btn').count() === 0, 'stance: no change button during a battle');
+check((await cbt()).includes('Stance: Shield wall (ready)'), 'stance: still listed during a battle');
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(b => window.gmcp('Company.Battle', b), next);
 
@@ -679,10 +1071,35 @@ await page.setViewportSize({ width: 1280, height: 900 });
 await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
 if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle.png') }); }
 
+// Phase 62: the company's explained rounds, under the battle, kept after it.
+await page.evaluate(() => Client.dispatchBattleEvents({ fight: 7, round: 40, fight_round: 3, events: [
+  { seq: 1, kind: 'attack', src: 'leader', tgt: 'm:412', outcome: 'hit', damage: 5, explain: ['To hit: 60 in 100, rolled 12 (it landed).', 'Damage: 6 before armor, armor 2 took 1, 5 got through.'] },
+  { seq: 2, kind: 'attack', src: 'm:412', tgt: 'leader', outcome: 'miss', explain: ['To hit: 38 in 100, rolled 80 (it missed).'] },
+  { seq: 3, kind: 'attack', src: 'leader', tgt: 'm:412', outcome: 'hit', damage: 4 },
+] }));
+await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))); // one redraw a frame
+check(await page.locator('#combat-window .cbt-rounds').count() === 1, 'Combat: a Last rounds list appears under the battle');
+check(await page.locator('#combat-window .cbt-rounds li').count() === 2, 'Combat: only the explained rounds are listed (the unexplained one is not)');
+check((await page.locator('#combat-window .cbt-rounds li').first().textContent()).includes('missed'), 'Combat: newest first');
+await page.locator('#combat-window .cbt-rounds > summary').click();
+await page.locator('#combat-window .cbt-rounds li summary').nth(1).click();
+check((await cbt()).includes('Damage: 6 before armor, armor 2 took 1, 5 got through.'), 'Combat: a round opens into the engine\'s breakdown');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+check(await page.locator('#combat-window .cbt-rounds[open]').count() === 1 && await page.locator('#combat-window .cbt-rounds li details[open]').count() === 1, 'Combat: open rounds stay open across a rebuild');
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle-rounds.png') }); }
+await page.setViewportSize({ width: 360, height: 800 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = '280px'; });
+await page.waitForTimeout(50);
+check(await page.evaluate(() => { const p = document.getElementById('combat-window'); return p.scrollWidth - p.clientWidth <= 0; }), 'Combat: the explained rounds do not overflow at 280px');
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle-rounds-narrow.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
+
 // The end: back to Setup.
 await page.evaluate(() => window.gmcp('Company.Battle', {}));
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1 && await page.getByRole('heading', { name: /^Battle/ }).count() === 0, '{} returns to Setup');
 check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'The battle is over.', 'the live region: the battle is over');
+check(await page.locator('#combat-window .cbt-rounds li').count() === 2, 'Combat: the explained rounds stay in Setup after the battle');
 
 // Alone: the player is "You", with their lines.
 await page.evaluate(() => window.gmcp('Company', {}));
@@ -866,10 +1283,9 @@ await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0]
 check((await skillsText()).includes('Company training') && (await skillsText()).includes('Cooking rank 2') && (await skillsText()).includes('3 training points') && (await skillsText()).includes('No optional skills') && (await skillsText()).includes('1 training point'), 'Skills lists the companions\' optional skills and training points (35c)');
 check(await page.locator('#cw-company-skills img').count() === 0 && await page.locator('#cw-company-skills button').count() === 0 && !(await page.evaluate(() => window.__xss35c)), 'company training text is plain and has no train button');
 check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'company training fits a narrow viewport');
-await page.getByRole('tab', { name: 'Effects', exact: true }).click();
-check((await page.locator('#cw-effects').textContent()).includes('Wounds') && (await page.locator('#cw-effects').textContent()).includes('Holds back 3 health'), 'Character Effects includes wound mechanics apart from persistent bonuses');
-await page.evaluate(markup => window.gmcp('Char.Affects', {test: {name: markup, description: markup, duration_max: 30, duration_left: 20}}), xss);
-check(await page.locator('#cw-effects img').count() === 0, 'Character Effects never interprets server labels as HTML');
+// Effects live in Company > Status, for the leader and every member (the Character window has no Effects tab).
+await page.getByRole('tab', { name: 'Company' }).first().click();
+await page.getByRole('tab', { name: 'Status', exact: true }).click();
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'phase34d-effects-narrow.png') }); }
 await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -880,11 +1296,11 @@ conditions.leader.effects = [{ name: 'Slowed', description: 'Moves slowly.', dur
   { name: 'Sleepy', description: 'Drowsing.', duration: 'Until removed' }];
 conditions['companion:1'].state = 'away-live';
 await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
-const effectsText = () => page.locator('#cw-effects').textContent();
+const effectsText = () => page.locator('#party-panel .company-member.is-leader').textContent();
 check((await effectsText()).includes('Harmful') && (await effectsText()).includes('Helpful'), 'effects say Harmful or Helpful in words, not colour alone');
-check(await page.locator('#cw-effects .cmp-condition', { hasText: 'Sleepy' }).locator('.cmp-condition-tag').count() === 0, 'an effect neither known to harm nor help has no tag');
+check(await page.locator('#party-panel .cmp-condition', { hasText: 'Sleepy' }).locator('.cmp-condition-tag').count() === 0, 'an effect neither known to harm nor help has no tag');
 check(!/\.\./.test(await effectsText()), 'effect text never doubles a full stop');
-const meter = page.locator('#cw-effects [role=meter]');
+const meter = page.locator('#party-panel .cmp-condition [role=meter]');
 check(await meter.count() === 1 && await meter.getAttribute('aria-valuemax') === '60', 'a timed effect has a duration meter');
 const leftBefore = await meter.getAttribute('aria-valuenow');
 await page.waitForTimeout(3200);
@@ -894,6 +1310,7 @@ check(!/\.\./.test(await page.locator('#cw-skills-tab').textContent()), 'capabil
 await page.getByRole('tab', { name: 'Company' }).first().click();
 await page.getByRole('tab', { name: 'Status', exact: true }).click();
 check((await status()).includes('Away from you: current effects and wounds') && (await status()).includes('Harmful'), 'Status shows an away member and the shared effect cards');
+check((await status()).includes('Wounds') && (await status()).includes('Holds back 2 health'), 'Company Status shows wound mechanics apart from persistent bonuses (the Character window has no Effects tab) (90)');
 for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/static/css')).filter(n => /^theme-.*\.css$/.test(n))) {
     await page.evaluate(theme => new Promise(resolve => {
         const link = document.getElementById('theme-css');
@@ -937,6 +1354,22 @@ check(await page.evaluate(() => {
 }), 'Skills text is in the compact Company scale, not the dock\'s full size');
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
 check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[["Help","track"]]', 'clicking a skill asks for its help page');
+// The test area's armory catalog: a screen with search, type chips and Take.
+await page.evaluate(() => { window.sent = []; window.gmcp('Armory', { filter: '', items: [
+  { id: 11, name: 'Iron Sword', type: 'weapon', subtype: 'sword', tier: 1 },
+  { id: 12, name: '<img src=x onerror="window.__xss=1">', type: 'weapon', subtype: 'staff', tier: 2 },
+  { id: 13, name: 'Leather Cap', type: 'head', family: 'leather', tier: 1 }] }); });
+check(await page.locator('#armory .arm-row').count() === 3, 'the armory catalog lists every item');
+check(await page.evaluate(() => !window.__xss && document.querySelector('#armory input').autocomplete === 'off'), 'the catalog sets names as text and keeps the browser from offering saved passwords');
+await page.locator('#armory .arm-chip', { hasText: 'head' }).click();
+check(await page.locator('#armory .arm-row').count() === 1, 'a type chip narrows the catalog');
+await page.locator('#armory .arm-chip', { hasText: 'All' }).click();
+await page.locator('#armory input').fill('sword');
+check(await page.locator('#armory .arm-row').count() === 1, 'typing filters the catalog');
+await page.locator('#armory .arm-count').selectOption('5');
+await page.getByRole('button', { name: 'Take Iron Sword' }).click();
+check(JSON.stringify(await page.evaluate(() => window.sent)) === '["testarea give 11 5"]', 'Take sends testarea give with the id and count');
+await page.keyboard.press('Escape');
 // The Help screen: it takes focus from the control that opened it, nothing behind it keeps a hover, and Escape returns focus.
 await page.evaluate(() => { document.dispatchEvent(new Event('DOMContentLoaded')); });
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).focus();
@@ -1008,6 +1441,308 @@ for (const name of ['Overview', 'Gear', 'Skills']) {
   check(await page.evaluate(() => [...document.querySelectorAll('#character-window .cw-tab-panel.active')].every(p => p.scrollWidth <= p.clientWidth + 1)), name + ' fits a 360px viewport (57)');
 }
 await page.setViewportSize({ width: 1280, height: 900 });
+
+// --- Phase 63: the Chronicle sub-tab ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const chronicle = {
+    total: 9,
+    tally: { joined: 2, boss: 1, relic: 1, fell: 1 },
+    entries: [
+      { seq: 5, at: 1, ago: '2 hours ago', kind: 'relic', label: 'Relics', text: 'The company found the Pale Crown on the Hollow King at the Throne Room.' },
+      { seq: 4, at: 1, ago: '2 hours ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King at the Throne Room.' },
+      { seq: 3, at: 1, ago: '1 day ago', kind: 'fell', label: 'Fallen', text: xss + ' fell to a wolf.' },
+      { seq: 2, at: 1, ago: '3 days ago', kind: 'joined', label: 'Joined', text: 'Oswin joined the company at the Waymark Inn.' },
+    ],
+  };
+  const chron = () => page.evaluate(() => document.getElementById('company-chronicle').textContent);
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), chronicle);
+  check((await chron()).includes('9 deeds recorded') && (await chron()).includes('The company slew the Hollow King'), 'Chronicle: the deeds in prose');
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: one row a deed');
+  check((await chron()).includes('The newest 4 are shown'), 'Chronicle: says when older deeds are only in the command');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-chronicle img')), 'Chronicle: server text is text, never markup');
+  await page.locator('#company-chronicle').getByRole('button', { name: 'Bosses' }).click();
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 1, 'Chronicle: the filter narrows to a kind');
+  check(await page.locator('#company-chronicle').getByRole('button', { name: 'Bosses' }).getAttribute('aria-pressed') === 'true', 'Chronicle: the filter button shows it is pressed');
+  await page.locator('#company-chronicle').getByRole('button', { name: 'All', exact: true }).click();
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: All shows every deed again');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-chronicle'); return p.scrollWidth <= p.clientWidth + 1; }), 'Chronicle fits a phone');
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '63-chronicle-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '63-chronicle.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Chronicle', { total: 0, tally: {}, entries: [] }));
+  check((await chron()).includes('Nothing is written yet'), 'Chronicle: an empty record says so');
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), { ...chronicle, total: 4 });
+  check(!(await chron()).includes('are shown'), 'Chronicle: no "newest" note when every deed is shown');
+  // Closed and opened again (the dock's close, as the window menu does it),
+  // the tab shows the deeds it already holds without waiting for a new one.
+  await page.evaluate(() => {
+    const w = VirtualWindows.getWindows().find(v => v._id === 'Company');
+    if (w._win === 'docked') { w._removeDocked(); }
+    if (w._contentEl && w._contentEl.parentNode) { w._contentEl.parentNode.removeChild(w._contentEl); }
+    w._win = false;
+    w.reopen();
+  });
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  await page.waitForTimeout(50);
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 4, 'Chronicle: a reopened window shows the deeds at once');
+}
+
+// --- Phase 85: Beast lore in the Chronicle filter ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  const lore = {
+    total: 6,
+    tally: { boss: 1, mastered: 2, joined: 1 },
+    entries: [
+      { seq: 5, at: 1, ago: '5 minutes ago', kind: 'mastered', label: 'Beast lore', text: "The company learned the habits of the big rat at Old King's Road." },
+      { seq: 4, at: 1, ago: '1 hour ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King at the Throne Room.' },
+      { seq: 3, at: 1, ago: '2 hours ago', kind: 'mastered', label: 'Beast lore', text: 'The company learned the habits of Rodric at the ford.' },
+      { seq: 2, at: 1, ago: '3 days ago', kind: 'joined', label: 'Joined', text: 'Oswin joined the company at the Waymark Inn.' },
+    ],
+  };
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), lore);
+  await page.locator('#company-chronicle').getByRole('button', { name: 'Beast lore' }).click();
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 2, 'Chronicle: the Beast lore filter shows only the lore lines (85)');
+  check((await page.evaluate(() => document.getElementById('company-chronicle').textContent)).includes("learned the habits of the big rat"), 'Chronicle: the lore line reads in prose (85)');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-chronicle'); return p.scrollWidth <= p.clientWidth + 1; }), 'Beast lore fits a phone (85)');
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '85-chronicle-lore-360.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '85-chronicle-lore-desktop.png') }); }
+}
+
+// --- Phase 68: what the towns say, above the Chronicle ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  await page.getByRole('tab', { name: 'Chronicle', exact: true }).click();
+  const chronicle68 = { total: 1, tally: { boss: 1 }, entries: [{ seq: 1, at: 1, ago: '1 hour ago', kind: 'boss', label: 'Bosses', text: 'The company slew the Hollow King' }] };
+  await page.evaluate(c => window.gmcp('Company.Chronicle', c), chronicle68);
+  const town = () => page.evaluate(() => document.getElementById('company-chronicle').textContent);
+  await page.evaluate(() => window.gmcp('Company.Townsfolk', { total: 0, told: [], fresh: [], marks: [] }));
+  check((await town()).includes('Nobody has spoken of the company yet'), 'Townsfolk: an empty memory says so');
+  await page.evaluate(x => window.gmcp('Company.Townsfolk', {
+    total: 1,
+    told: [{ ago: '2 minutes ago', text: 'Word is Wren put down the Hollow King. ' + x }],
+    fresh: [{ ago: '1 hour ago', kind: 'relic', text: 'Wren found the Ember Crown' }],
+    marks: ['boss-slayers'],
+  }), xss);
+  check((await town()).includes('What the towns say of you') && (await town()).includes('Word is Wren put down the Hollow King.'), 'Townsfolk: what a talker said');
+  check((await town()).includes('not yet spoken of') && (await town()).includes('Wren found the Ember Crown'), 'Townsfolk: deeds the towns may yet speak of');
+  check((await town()).includes('Marks the towns carry of you: boss-slayers.'), 'Townsfolk: the marks left');
+  check(await page.locator('#company-chronicle .cmp-chron-item').count() === 1, 'Townsfolk: the chronicle rows are unchanged');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-chronicle img')), 'Townsfolk: server text is text, never markup');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-chronicle'); return p.scrollWidth <= p.clientWidth + 1; }), 'Townsfolk fits a phone');
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '68-townsfolk-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-chronicle').screenshot({ path: path.join(outdir, '68-townsfolk.png') }); }
+}
+
+// --- Phase 64: the Opinions sub-tab ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const opn = {
+    spared: 3, executed: 1,
+    members: [
+      { key: 'companion:1', id: 1, name: 'Oswin', personality: 'devout', loyalty: 74, mood: 'loyal',
+        likes: ['mercy to the beaten', 'kindness at a cost'], dislikes: ['executing the beaten'],
+        notes: [{ kind: 'spare', label: 'mercy to the beaten', verdict: 1, ago: '2 hours ago', subject: 'the Hollow Bandit' }],
+        deeds: ['Oswin joined the company at the Waymark Inn.'] },
+      { key: 'companion:2', id: 2, name: xss, personality: 'grim', loyalty: 31, mood: 'wavering',
+        likes: ['a rough camp'], dislikes: ['mercy to the beaten'],
+        notes: [{ kind: 'spare', label: 'mercy to the beaten', verdict: -1, ago: '2 hours ago', subject: '' }], deeds: [] },
+    ],
+  };
+  const opnText = () => page.evaluate(() => document.getElementById('company-opinions').textContent);
+  await page.getByRole('tab', { name: 'Opinions', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Opinions', c), opn);
+  check(await page.locator('#company-opinions .cmp-opn-card').count() === 2, 'Opinions: a card for each companion');
+  check((await opnText()).includes('Oswin') && (await opnText()).includes('Likes: mercy to the beaten, kindness at a cost.'), 'Opinions: what they like, in words');
+  check((await opnText()).includes('Approved of mercy to the beaten, 2 hours ago (the Hollow Bandit).') && (await opnText()).includes('Disliked mercy to the beaten'), 'Opinions: what they lately said');
+  check((await opnText()).includes('spare 3 and execute 1'), 'Opinions: the company\'s mercy counts');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-opinions img')), 'Opinions: server text is text, never markup');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-opinions'); return p.scrollWidth <= p.clientWidth + 1; }), 'Opinions fit a phone');
+  if (outdir) { await page.locator('#company-opinions').screenshot({ path: path.join(outdir, '64-opinions-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-opinions').screenshot({ path: path.join(outdir, '64-opinions.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Opinions', { spared: 0, executed: 0, members: [] }));
+  check((await opnText()).includes('No companions hold opinions yet'), 'Opinions: an empty company says so');
+}
+
+// --- Phase 65: the Bonds sub-tab ---
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const bnd = {
+    pairs: [
+      { a: 1, b: 3, a_name: 'Oswin', b_name: 'Tamsin', value: 62, tier: 2, phrase: 'Oswin and Tamsin are close',
+        effect: 'Each steps in once a battle for the other when hurt (at 40% health or less).', warned: false },
+      { a: 2, b: 3, a_name: xss, b_name: 'Tamsin', value: -88, tier: -3, phrase: xss + ' and Tamsin cannot bear each other',
+        effect: "Won't guard each other. One of them will leave if this goes on.", warned: true },
+      { a: 1, b: 2, a_name: 'Oswin', b_name: xss, value: 4, tier: 0, phrase: 'Oswin and ' + xss + ' are still getting to know each other', effect: '', warned: false },
+    ],
+    members: [
+      { id: 1, name: 'Oswin', feelings: [{ id: 3, name: 'Tamsin', words: 'is close to Tamsin', tier: 2 }, { id: 2, name: xss, words: 'is still getting to know ' + xss, tier: 0 }] },
+      { id: 3, name: 'Tamsin', feelings: [{ id: 1, name: 'Oswin', words: 'is close to Oswin', tier: 2 }] },
+    ],
+  };
+  const bndText = () => page.evaluate(() => document.getElementById('company-bonds').textContent);
+  await page.getByRole('tab', { name: 'Bonds', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Bonds', c), bnd);
+  check(await page.locator('#company-bonds .cmp-bond-card').count() === 3, 'Bonds: a card for each pair');
+  check((await bndText()).includes('Oswin and Tamsin are close (bond +62)'), 'Bonds: the pair in words, with its number');
+  check((await bndText()).includes('Each steps in once a battle for the other when hurt'), 'Bonds: what a friendship does');
+  check((await bndText()).includes('One of them will leave if this goes on.'), 'Bonds: a warned rivalry says so');
+  check((await bndText()).includes('Oswin is close to Tamsin'), 'Bonds: each companion\'s view');
+  check(await page.locator('#company-bonds .cmp-bond-card[data-feel="rival"]').count() === 1, 'Bonds: a rivalry is marked');
+  check(await page.evaluate(() => window.__xss !== 1 && !document.querySelector('#company-bonds img')), 'Bonds: server text is text, never markup');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-bonds'); return p.scrollWidth <= p.clientWidth + 1; }), 'Bonds fit a phone');
+  if (outdir) { await page.locator('#company-bonds').screenshot({ path: path.join(outdir, '65-bonds-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-bonds').screenshot({ path: path.join(outdir, '65-bonds.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Bonds', { pairs: [], members: [] }));
+  check((await bndText()).includes('Bonds form between companions'), 'Bonds: an empty company says so');
+}
+
+// Phase 70: the Errands tab.
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const nowSec = Math.floor(Date.now() / 1000);
+  const lengths = [{ length: 'short', label: 'half an hour', seconds: 1800 }, { length: 'medium', label: 'two hours', seconds: 7200 }, { length: 'long', label: 'eight hours', seconds: 28800 }];
+  const err = {
+    now: nowSec, here: true, where: 'You can send companions from here.', zone: 'Brindle Downs', band: '7-9',
+    rows: [
+      { id: 1, name: 'Oswin', level: 8, state: 'busy', why: 'Oswin stands in your formation.' },
+      { id: 2, name: xss, level: 8, state: 'away', kind: 'hunt', kind_label: 'a hunt', length: 'medium', zone: 'Brindle Downs', returns_at: nowSec + 5400, remaining: 5400 },
+      { id: 3, name: 'Tamsin', level: 7, state: 'ready' },
+      { id: 4, name: 'Ysolde', level: 8, state: 'away', kind: 'scout', kind_label: 'a scouting job', returns_at: nowSec - 30, due: true, waiting: 'waiting for you to be out of any fight, journey or rest' },
+    ],
+    options: [
+      { kind: 'escort', label: 'an escort job', blurb: 'down the road: steady pay, and no danger', lengths },
+      { kind: 'hunt', label: 'a hunt', blurb: 'off the road: better spoils, and a wound\'s risk', lengths },
+    ],
+    recent: ['Tamsin came back from an escort job at Brindle Downs with 32 gold.'],
+  };
+  const errText = () => page.evaluate(() => document.getElementById('company-errands').textContent);
+  await page.getByRole('tab', { name: 'Errands', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Errands', c), err);
+  check(await page.locator('#company-errands .cmp-err-card').count() === 4, 'Errands: a card for each companion');
+  check((await errText()).includes('Away on a hunt in Brindle Downs; back in 2 hours.') || (await errText()).includes('back in 90 minutes'), 'Errands: an away companion shows its countdown');
+  check((await errText()).includes('due back, waiting for you to be out of any fight'), 'Errands: a due errand says what it waits for');
+  check((await errText()).includes('Oswin stands in your formation.'), 'Errands: a companion who cannot go says why');
+  check((await errText()).includes('Tamsin came back from an escort job'), 'Errands: the latest deeds are shown');
+  check(await page.evaluate(() => window.__xss === undefined), 'Errands: a name is text, not markup');
+  const sentErr = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  let cmds = await sentErr(() => page.locator('#company-errands .cmp-err-card').nth(2).getByRole('button', { name: 'Send' }).click());
+  check(JSON.stringify(cmds) === JSON.stringify(['errand send #3 escort short']), 'Errands: Send sends the chosen errand by number (' + JSON.stringify(cmds) + ')');
+  await page.locator('#company-errands .cmp-err-card').nth(2).locator('select').first().selectOption('hunt');
+  await page.locator('#company-errands .cmp-err-card').nth(2).locator('select').nth(1).selectOption('long');
+  cmds = await sentErr(() => page.locator('#company-errands .cmp-err-card').nth(2).getByRole('button', { name: 'Send' }).click());
+  check(JSON.stringify(cmds) === JSON.stringify(['errand send #3 hunt long']), 'Errands: the picked job and length are sent (' + JSON.stringify(cmds) + ')');
+  await page.evaluate(c => window.gmcp('Company.Errands', c), err);
+  check(await page.locator('#company-errands .cmp-err-card').nth(2).locator('select').first().inputValue() === 'hunt', 'Errands: a pick survives a refresh');
+  cmds = await sentErr(() => page.locator('#company-errands .cmp-err-card').nth(1).getByRole('button', { name: 'Call back' }).click());
+  check(JSON.stringify(cmds) === JSON.stringify(['errand recall #2']), 'Errands: Call back sends the recall');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-errands'); return p.scrollWidth <= p.clientWidth + 1; }), 'Errands fit a phone');
+  if (outdir) { await page.locator('#company-errands').screenshot({ path: path.join(outdir, '70-errands-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-errands').screenshot({ path: path.join(outdir, '70-errands.png') }); }
+  await page.evaluate(c => window.gmcp('Company.Errands', c), { ...err, here: false, where: 'Companions can be sent from an inn. Find one in a town.' });
+  check((await errText()).includes('Free to send, from an inn.'), 'Errands: away from an inn a free companion cannot be sent');
+  check(await page.locator('#company-errands').getByRole('button', { name: 'Send' }).count() === 0, 'Errands: no Send button away from an inn');
+  await page.evaluate(() => window.gmcp('Company.Errands', { rows: [], options: [], recent: [] }));
+  check((await errText()).includes('Recruit one first'), 'Errands: an empty company says so');
+}
+
+// Phase 74: the Rites tab.
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const rites = {
+    here: true, where: 'You can hold rites here.',
+    rows: [
+      { id: 4, name: 'Ysolde', level: 8, cause: 'lost for good', close: ['Oswin', 'Tamsin'], offered: true },
+      { id: 5, name: xss, level: 6, cause: 'left the company', close: [], offered: false },
+    ],
+  };
+  const ritText = () => page.evaluate(() => document.getElementById('company-rites').textContent);
+  await page.getByRole('tab', { name: 'Rites', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Rites', c), rites);
+  check(await page.locator('#company-rites .cmp-rite-card').count() === 2, 'Rites: a card for each companion waiting');
+  check((await ritText()).includes('Ysolde (level 8, lost for good)') && (await ritText()).includes('Oswin, Tamsin trusted them.'), 'Rites: who they were and who trusted them');
+  check((await ritText()).includes('this passes at your next camp or inn'), 'Rites: an offered rite says it will pass');
+  check(await page.evaluate(() => window.__xss === undefined && !document.querySelector('#company-rites img')), 'Rites: a name is text, not markup');
+  const sentRite = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  let rcmds = await sentRite(() => page.locator('#company-rites .cmp-rite-card').first().getByRole('button', { name: 'Hold rites' }).click());
+  check(JSON.stringify(rcmds) === JSON.stringify(['rite hold #4']), 'Rites: Hold rites sends the rite by number (' + JSON.stringify(rcmds) + ')');
+  rcmds = await sentRite(() => page.locator('#company-rites .cmp-rite-card').first().getByRole('button', { name: 'Let pass' }).click());
+  check(JSON.stringify(rcmds) === JSON.stringify(['rite skip #4']), 'Rites: Let pass sends the skip');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-rites'); return p.scrollWidth <= p.clientWidth + 1; }), 'Rites fit a phone');
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); return getComputedStyle(b).overflowX === 'auto' && b.scrollWidth > 0; }), 'The sub-tab bar scrolls when nine tabs outgrow a phone');
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); b.scrollLeft = 0; b.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); return b.scrollLeft > 0; }), 'A mouse wheel scrolls the sub-tab bar sideways');
+  await page.evaluate(() => { document.querySelector('.cmp-tab-btn[data-panel="company-rites"]').click(); });
+  check(await page.evaluate(() => { const b = document.querySelector('.cmp-tab-bar'); const t = document.querySelector('.cmp-tab-btn.active'); const r = t.getBoundingClientRect(), br = b.getBoundingClientRect(); return r.left >= br.left - 1 && r.right <= br.right + 1; }), 'The chosen sub-tab is scrolled into view on a phone');
+  if (outdir) { await page.locator('#company-rites').screenshot({ path: path.join(outdir, '74-rites-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-rites').screenshot({ path: path.join(outdir, '74-rites.png') }); }
+  await page.evaluate(c => window.gmcp('Company.Rites', c), { ...rites, here: false, where: 'Rites are held at a camp or an inn: make camp (camp) or take a room (inn) first. See help rites.' });
+  check(await page.locator('#company-rites').getByRole('button', { name: 'Hold rites' }).count() === 0, 'Rites: no Hold button away from a camp or inn');
+  check((await ritText()).includes('Rites are held at a camp or an inn'), 'Rites: away from a fire it says where to hold them');
+  await page.evaluate(() => window.gmcp('Company.Rites', { here: false, where: '', rows: [] }));
+  check((await ritText()).includes('No one is waiting to be mourned'), 'Rites: an empty list says so');
+}
+
+// Phase 76: the Bounties tab.
+{
+  await page.getByRole('tab', { name: 'Company' }).first().click();
+  const bounties = {
+    now: 1800000000, at_board: true, board: 'Alderbrook Green', band: '2-4', rotates: 5400, max: 3,
+    postings: [
+      { n: 1, kind: 'boss', name: 'Old Grue', zone: 'Dark Forest', band: '5-7', rating: 'fair', count: 1, reward: 120, taken: false, done: false },
+      { n: 2, kind: 'group', name: xss, zone: 'Alderbrook', band: '2-4', rating: 'easy', count: 3, reward: 54, taken: true, done: false },
+      { n: 3, kind: 'group', name: 'Stray Dogs', zone: 'Alderbrook', band: '2-4', rating: 'easy', count: 3, reward: 54, taken: false, done: true },
+    ],
+    held: [
+      { n: 1, kind: 'group', name: xss, zone: 'Alderbrook', have: 3, count: 3, reward: 54, left: 7200, ready: true },
+      { n: 2, kind: 'boss', name: 'Old Grue', zone: 'Dark Forest', have: 0, count: 1, reward: 120, left: 3600, ready: false },
+    ],
+  };
+  const bntText = () => page.evaluate(() => document.getElementById('company-bounties').textContent);
+  await page.getByRole('tab', { name: 'Bounties', exact: true }).click();
+  await page.evaluate(c => window.gmcp('Company.Bounties', c), bounties);
+  check(await page.locator('#company-bounties .cmp-rite-card').count() === 5, 'Bounties: a card for each held bounty and posting');
+  check((await bntText()).includes('Held bounties (2 of 3)') && (await bntText()).includes('The board at Alderbrook Green (level 2-4)'), 'Bounties: the held count and the board');
+  check((await bntText()).includes('Old Grue') && (await bntText()).includes('Slay the master of the lair in Dark Forest') && (await bntText()).includes('fair for you'), 'Bounties: the target, zone and rating');
+  check((await bntText()).includes('Proof found: ready to claim.') && (await bntText()).includes('0 of 1 done'), 'Bounties: progress and readiness');
+  check(await page.evaluate(() => window.__xss === undefined && !document.querySelector('#company-bounties img')), 'Bounties: a name is text, not markup');
+  const sentB = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  let bcmds = await sentB(() => page.locator('#company-bounties .cmp-rite-card').nth(0).getByRole('button', { name: 'Claim' }).click());
+  check(JSON.stringify(bcmds) === JSON.stringify(['bounty claim 1']), 'Bounties: Claim sends the claim (' + JSON.stringify(bcmds) + ')');
+  check(await page.locator('#company-bounties .cmp-rite-card').nth(1).getByRole('button', { name: 'Claim' }).isDisabled(), 'Bounties: Claim is off until proof is found');
+  bcmds = await sentB(() => page.locator('#company-bounties .cmp-rite-card').nth(1).getByRole('button', { name: 'Drop' }).click());
+  check(JSON.stringify(bcmds) === JSON.stringify(['bounty drop 2']), 'Bounties: Drop sends the drop');
+  bcmds = await sentB(() => page.locator('#company-bounties .cmp-rite-card').nth(2).getByRole('button', { name: 'Take', exact: true }).click());
+  check(JSON.stringify(bcmds) === JSON.stringify(['bounty take 1']), 'Bounties: Take sends the posting number');
+  check(await page.locator('#company-bounties').getByRole('button', { name: 'Taken' }).isDisabled() && await page.locator('#company-bounties').getByRole('button', { name: 'Settled' }).isDisabled(), 'Bounties: a taken or settled posting cannot be taken');
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-bounties'); return p.scrollWidth <= p.clientWidth + 1; }), 'Bounties fit a phone');
+  if (outdir) { await page.locator('#company-bounties').screenshot({ path: path.join(outdir, '76-bounties-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  if (outdir) { await page.locator('#company-bounties').screenshot({ path: path.join(outdir, '76-bounties.png') }); }
+  await page.evaluate(c => window.gmcp('Company.Bounties', c), { ...bounties, held: [...bounties.held, { n: 3, kind: 'group', name: 'Wolves', zone: 'Brindle Downs', have: 1, count: 3, reward: 90, left: 100, ready: false }] });
+  check(await page.locator('#company-bounties').getByRole('button', { name: 'Take', exact: true }).count() === 1 && await page.locator('#company-bounties').getByRole('button', { name: 'Take', exact: true }).isDisabled(), 'Bounties: a full hand cannot take another');
+  await page.evaluate(c => window.gmcp('Company.Bounties', c), { ...bounties, at_board: false, postings: [] });
+  check((await bntText()).includes('No bounty board here') && await page.locator('#company-bounties').getByRole('button', { name: 'Claim' }).count() === 0, 'Bounties: away from a board nothing can be taken or claimed');
+  await page.evaluate(() => window.gmcp('Company.Bounties', { at_board: false, postings: [], held: [], max: 3 }));
+  check((await bntText()).includes('Your company holds none'), 'Bounties: an empty list says so');
+}
 
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }

@@ -70,6 +70,9 @@ func (w *WeaponAttackMessageGroup) Validate() error {
 
 	// Make sure all important options are present.
 	optionsToCheck := []Intensity{Prepare, Wait, Miss, Weak, Normal, Heavy, Critical}
+	if w.OptionId == Bloodless {
+		optionsToCheck = []Intensity{Weak, Normal, Heavy, Critical} // Phase 87: hits only
+	}
 	for _, option := range optionsToCheck {
 		if _, ok := w.Options[option]; !ok {
 			return fmt.Errorf("missing option[`%s`] for %s", option, w.OptionId)
@@ -99,14 +102,21 @@ func GetPreAttackMessage(subType ItemSubType, messageType Intensity) AttackOptio
 // GetAttackMessage picks a strike's pool. Phase 29c: only a real critical
 // hit draws the critical pool; any other roll, even one over 100% (a
 // sharpened top roll), caps at heavy.
+// A landed blow's lines are Weak below NormalAttackPct of the weapon's top
+// damage, Normal below HeavyAttackPct, and Heavy from there.
+const (
+	NormalAttackPct = 30
+	HeavyAttackPct  = 75
+)
+
 func GetAttackMessage(subType ItemSubType, pctDamage int, crit bool) AttackOptions {
 
 	var intensity Intensity
 	if crit {
 		intensity = Critical
-	} else if pctDamage >= 75 {
+	} else if pctDamage >= HeavyAttackPct {
 		intensity = Heavy
-	} else if pctDamage >= 30 {
+	} else if pctDamage >= NormalAttackPct {
 		intensity = Normal
 	} else if pctDamage >= 1 {
 		intensity = Weak
@@ -123,4 +133,31 @@ func GetAttackMessage(subType ItemSubType, pctDamage int, crit bool) AttackOptio
 	}
 	// default to generic.
 	return GetAttackMessage(Generic, pctDamage, crit)
+}
+
+// Bloodless is the message group for blows on a foe with no blood or living
+// flesh (Phase 87): hit lines only, whatever the weapon.
+const Bloodless ItemSubType = "bloodless"
+
+// GetBloodlessAttackMessage picks a landed blow's pool for a bloodless foe,
+// by the same intensity rules as GetAttackMessage. ok is false when the
+// world has no such lines, and the weapon's own are used.
+func GetBloodlessAttackMessage(pctDamage int, crit bool) (AttackOptions, bool) {
+	group, found := attackMessages[Bloodless]
+	if !found {
+		return AttackOptions{}, false
+	}
+	var intensity Intensity
+	switch {
+	case crit:
+		intensity = Critical
+	case pctDamage >= HeavyAttackPct:
+		intensity = Heavy
+	case pctDamage >= NormalAttackPct:
+		intensity = Normal
+	default:
+		intensity = Weak
+	}
+	opts, ok := group.Options[intensity]
+	return opts, ok
 }

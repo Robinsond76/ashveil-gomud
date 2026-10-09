@@ -36,7 +36,7 @@ func TestBurdenLowersDodgeThroughTheRound(t *testing.T) {
 	keepStanding := func() {
 		b.toughen()
 		for _, m := range bandits {
-			m.Character.HealthMax.Value, m.Character.Health = 100000, 100000
+			hardTo(&m.Character, 100000)
 		}
 	}
 	// blowsOnBandits tallies the company's strikes on bandits since

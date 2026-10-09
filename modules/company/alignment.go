@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"sort"
 	"strconv"
 	"strings"
@@ -90,7 +91,7 @@ func (m *CompanyModule) alignmentWorld() alignmentWorld {
 func parseAlignmentConfig(get func(string) any) (domain.AlignmentRules, int) {
 	rules := domain.DefaultAlignmentRules()
 	read := func(key string, into *int, lo, hi int) {
-		if v, ok := configInt(get(key)); ok && v >= lo && v <= hi {
+		if v, ok := modconfig.Int(get(key)); ok && v >= lo && v <= hi {
 			*into = v
 		}
 	}
@@ -234,6 +235,8 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	// Phase 33h3: separate strays, then count the separated home.
 	m.sweepStrays()
 	m.tickSeparations()
+	// Phase 70: bring home the errands that are due.
+	m.tickErrands()
 	_, every := m.alignmentConfig()
 	if m.registry.DriftIn <= 0 || m.registry.DriftIn > every {
 		m.registry.DriftIn = every
@@ -268,6 +271,9 @@ func (m *CompanyModule) driftTick() {
 		var members []domain.MemberAlignment
 		for _, c := range record.Companions {
 			if c.Dead() || c.MoraleDesert || bound(c) { // Phase 38e: a construct is bound, not loyal: it neither drifts nor sways
+				continue
+			}
+			if c.OnErrand() { // Phase 70 review: away on an errand, it neither drifts nor deserts
 				continue
 			}
 			loyalty := domain.MaxLoyalty
@@ -329,7 +335,7 @@ func (m *CompanyModule) driftTick() {
 			mudlog.Error("company: desertion", "leader", d.leaderUserID, "companion", d.companionID, "error", err)
 			continue
 		}
-		world.Tell(d.leaderUserID, fmt.Sprintf("%s has lost faith in your company and deserts.", label))
+		world.Tell(d.leaderUserID, fmt.Sprintf("%s has lost faith in your company and deserts.", label)+m.riteHint(d.leaderUserID, d.companionID))
 	}
 }
 

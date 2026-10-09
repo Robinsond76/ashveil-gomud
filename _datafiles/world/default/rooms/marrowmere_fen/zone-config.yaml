@@ -1,0 +1,55 @@
+name: Marrowmere Fen
+roomid: 3206
+defaultbiome: shore
+tileready: true
+encounters:
+  band:
+    low: 6
+    high: 8
+  entrychance: 15
+  tables:
+    fen:
+    - id: fen-crocs
+      weight: 25
+      text: A crocodile breaks the surface, and another follows.
+      members:
+      - mobid: 60
+        count: 2
+      - mobid: 87
+        count: 1
+    - id: croc-trio
+      weight: 20
+      text: The reeds part on huge crocodiles.
+      members:
+      - mobid: 60
+        count: 3
+    - id: fen-poachers
+      weight: 20
+      text: Poachers wade out of the mist with spears.
+      members:
+      - mobid: 87
+        count: 2
+      - mobid: 89
+        count: 1
+    - id: fen-imps
+      weight: 15
+      text: Marsh imps cackle and throw handfuls of mud.
+      members:
+      - mobid: 33
+        count: 3
+    - id: fen-hatchlings
+      weight: 15
+      text: Spiders drop from the reed thatch onto the causeway.
+      members:
+      - mobid: 35
+        count: 3
+    - id: fen-surgeon
+      weight: 12
+      text: A poacher band wades in, their bonesetter close behind.
+      members:
+      - mobid: 87
+        count: 1
+      - mobid: 88
+        count: 1
+      - mobid: 60
+        count: 1

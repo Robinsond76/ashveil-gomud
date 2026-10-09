@@ -1,0 +1,25 @@
+roomid: 3508
+zone: Thornreach Wood
+title: Tangled Glade
+description: Thorn and bramble close in on both sides of the narrow ride. Fresh claw marks score
+  a nearby oak.
+biome: forest
+exits:
+  east:
+    roomid: 3509
+  west:
+    roomid: 3507
+  south:
+    roomid: 3516
+  north:
+    roomid: 3502
+resources:
+- forage
+- game
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: wood

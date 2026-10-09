@@ -16,6 +16,7 @@ package gmcp
 
 import (
 	"encoding/json"
+	"github.com/GoMudEngine/GoMud/internal/bestiary"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/stormcraft"
@@ -31,6 +32,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/morale"
@@ -73,8 +75,14 @@ type battleFacts struct {
 	Weather *battleWeather
 	// Phase 54: the sigil the company stands in, if any.
 	Sigil *battleSigil
+	// Phase 50: the battle condition each member began in, by member key.
+	Fare map[string]string
 	// Phase 39d: the Doll Masters' dolls standing in the player's company.
 	Dolls []battleDoll
+	// Phase 82b: the latest round's turn order, every fighter in the
+	// player's fights by the refs the screen draws ("?" for a foe the
+	// player can't make out), with its slot from 1.
+	Order []orderFact
 }
 
 // battleDoll is a Doll Master's doll standing in the battle (Phase 39d): its
@@ -99,7 +107,10 @@ type battleWeather struct {
 	Kind   string `json:"kind"`
 	Name   string `json:"name"`
 	Rounds int    `json:"rounds"`
-	Effect string `json:"effect"`
+	// Endless is a weather that lasts the whole battle (a Tempest Lord's
+	// Rain): the screens say so instead of counting rounds.
+	Endless bool   `json:"endless,omitempty"`
+	Effect  string `json:"effect"`
 }
 
 // battleSigil is the sigil a battle was fought in (Phase 54): its kind
@@ -124,6 +135,7 @@ type allyMemberFact struct {
 	Key               string
 	Name, Class       string
 	Promoted          string // the promoted class id (40s5 art key), if any
+	Skin, Hair        string // a leading player's chosen colours (Phase 72a)
 	Row, Col          int
 	Health, HealthMax int
 	Down              bool
@@ -165,6 +177,7 @@ type enemyFact struct {
 	Reach             bool   // the player can strike it from their cell
 	Sprite            string // Phase 40f: its battle-screen sprite key
 	Target            targetFact
+	Known             []string // Phase 66: its habits, as the leader's bestiary knows them
 }
 
 // targetFact is whom an enemy strikes: a company member (Key) or someone
@@ -197,6 +210,9 @@ type battleEnemy struct {
 	// Phase 40f: the battle screen's sprite key (the mob's own, else its
 	// race's unknown-* silhouette).
 	Sprite string `json:"sprite,omitempty"`
+	// Phase 66: what the leader's bestiary knows of its habits ("heals its
+	// allies"); nothing for a kind not yet learned that far.
+	Known []string `json:"known,omitempty"`
 }
 
 type battleFallen struct {
@@ -212,6 +228,18 @@ type battleAim struct {
 type battleOther struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+// orderFact is one slot of the round's turn order (Phase 82b).
+type orderFact struct {
+	ID   string
+	Slot int
+}
+
+// battleOrderRef is a slot of the turn order as the payload lists it.
+type battleOrderRef struct {
+	ID   string `json:"id"`
+	Slot int    `json:"slot"`
 }
 
 type battlePayload struct {
@@ -248,9 +276,15 @@ type battlePayload struct {
 	// Phase 54: the sigil the company stands in (the battle screen's banner
 	// and the Battle view's note); omitted without one.
 	Sigil *battleSigil `json:"sigil,omitempty"`
+	// Phase 50: each member's battle condition (hungry, parched, a meal
+	// buff), by member key, as the battle began; omitted when none.
+	Fare map[string]string `json:"fare,omitempty"`
 	// Phase 39d: the company's standing dolls (the Combat tab's fighters
 	// and the battle screen's units); omitted when there are none.
 	Dolls []battleDoll `json:"dolls,omitempty"`
+	// Phase 82b: the latest round's turn order (speed turns), omitted
+	// before the first round.
+	Order []battleOrderRef `json:"order,omitempty"`
 }
 
 // battleAlly is an allied company: its leader's ref ("a:<user>") and name,
@@ -268,10 +302,13 @@ type battleAllyMember struct {
 	Class string `json:"class,omitempty"`
 	// Promoted is the member's promoted class id, the art the battle
 	// screen draws first (as Company members' `class`).
-	Promoted string     `json:"promoted,omitempty"`
-	Cell     battleCell `json:"cell"`
-	Health   string     `json:"health"`
-	Down     bool       `json:"down,omitempty"`
+	Promoted string `json:"promoted,omitempty"`
+	// Skin and Hair are an allied leader's chosen colours (#rrggbb).
+	Skin   string     `json:"skin,omitempty"`
+	Hair   string     `json:"hair,omitempty"`
+	Cell   battleCell `json:"cell"`
+	Health string     `json:"health"`
+	Down   bool       `json:"down,omitempty"`
 }
 
 // allyRef is an allied company's leader ref, and allyMemberRef a member's.
@@ -294,9 +331,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Fare: f.Fare}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Dolls: f.Dolls}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Fare: f.Fare, Dolls: f.Dolls}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -306,7 +343,7 @@ func buildBattle(f battleFacts) any {
 	for _, a := range f.Allies {
 		ba := battleAlly{ID: allyRef(a.Leader), Name: a.Name, Members: []battleAllyMember{}}
 		for _, m := range a.Members {
-			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class, Promoted: m.Promoted,
+			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class, Promoted: m.Promoted, Skin: m.Skin, Hair: m.Hair,
 				Cell: battleCell{Row: m.Row, Col: m.Col}, Health: enemyparty.HealthWord(m.Health, m.HealthMax), Down: m.Down})
 		}
 		p.Allies = append(p.Allies, ba)
@@ -331,7 +368,7 @@ func buildBattle(f battleFacts) any {
 		}
 		listed[e.Id] = true
 		be := battleEnemy{ID: mobID(e.Id), Label: e.Label, Cell: battleCell{Row: e.Row, Col: e.Col},
-			Health: enemyparty.HealthWord(e.Health, e.HealthMax), Sprite: e.Sprite}
+			Health: enemyparty.HealthWord(e.Health, e.HealthMax), Sprite: e.Sprite, Known: e.Known}
 		if f.Placed {
 			reach := e.Reach
 			be.Reach = &reach
@@ -357,7 +394,41 @@ func buildBattle(f battleFacts) any {
 			p.Company = append(p.Company, battleAim{Key: a.Key, Target: mobID(a.Target)})
 		}
 	}
+	for _, o := range f.Order {
+		p.Order = append(p.Order, battleOrderRef{ID: o.ID, Slot: o.Slot})
+	}
 	return p
+}
+
+// gatherOrder lists the latest round's turn order for the player (Phase
+// 82b) by the refs the battle screen draws: the player's own members by
+// key, allies by their ally refs, foes by instance, and a foe the player
+// can't make out as "?".
+func gatherOrder(user *users.UserRecord, hidden map[int]bool) []orderFact {
+	var out []orderFact
+	for _, s := range hooks.RoundTurnOrder(user.UserId) {
+		id := ""
+		switch {
+		case s.UserId == user.UserId:
+			id = string(company.LeaderMemberKey)
+		case s.UserId > 0:
+			id = allyMemberRef(s.UserId, string(company.LeaderMemberKey))
+		default:
+			if leaderId, key, ok := company.LeaderAndKeyForInstance(s.MobInstanceId); ok {
+				if leaderId == user.UserId {
+					id = string(key)
+				} else {
+					id = allyMemberRef(leaderId, string(key))
+				}
+			} else if hidden[s.MobInstanceId] {
+				id = "?"
+			} else {
+				id = mobID(s.MobInstanceId)
+			}
+		}
+		out = append(out, orderFact{ID: id, Slot: s.Slot})
+	}
+	return out
 }
 
 // battleExtra is the feed's Company.Battle message.
@@ -405,6 +476,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	f.Guards = gatherGuards(user, room)
 	f.Weather = weatherFact(b.Weather)
 	f.Sigil = sigilFact(b)
+	f.Fare = battle.FareOf(user.UserId)
 	f.Faltering = companyFaltering(b)
 	f.Allies = gatherAllies(user, b)
 	f.Dolls = gatherDolls(user.UserId, room.RoomId)
@@ -459,6 +531,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		ids = append(ids, id)
 	}
 	sort.Ints(ids)
+	hidden := map[int]bool{}
 	for _, id := range ids {
 		m := mobs.GetInstance(id)
 		label := ""
@@ -484,14 +557,19 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
 			e.Reach = f.Placed && enemyparty.Legal(room, user.UserId, col, group.Party.Formation, key, alive, reach)
 			e.Target = targetOf(user.UserId, room.RoomId, m)
+			if !e.Hidden {
+				e.Known = bestiary.NotesFor(bestiary.KillsOf(user.Character), int(m.MobId))
+			}
 			battleSeen.note(user.UserId, fight, id, e.Hidden)
 		} else if m != nil {
 			// A body not yet taken away, or one that walked off.
 			battleSeen.note(user.UserId, fight, id, m.Character.HasBuffFlag("hidden"))
 		}
 		e.Seen = !battleSeen.hiddenLast(user.UserId, fight, id)
+		hidden[id] = e.Hidden
 		f.Enemies = append(f.Enemies, e)
 	}
+	f.Order = gatherOrder(user, hidden)
 
 	if a := user.Character.Aggro; a != nil && a.MobInstanceId > 0 {
 		f.Company = append(f.Company, aimFact{Key: string(company.LeaderMemberKey), Target: a.MobInstanceId})
@@ -794,15 +872,19 @@ func gatherAllies(user *users.UserRecord, b battle.Battle) []allyFact {
 		fact := allyFact{Leader: au.UserId, Name: au.Character.Name}
 		add := func(m companyview.Member) {
 			cell, ok := cells[string(m.Key)]
-			if !ok || m.Status == company.MemberAwaiting || m.Status == company.MemberFled || m.Status == company.MemberSeparated {
+			if !ok || m.Status == company.MemberAwaiting || m.Status == company.MemberFled || m.Status == company.MemberSeparated || m.Status == company.MemberErrand {
 				return
 			}
 			class := ""
 			if !m.Leader || m.ArchetypeKnown {
 				class = strings.ToLower(m.Archetype)
 			}
-			fact.Members = append(fact.Members, allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Promoted: m.Class, Row: cell.Row, Col: cell.Col,
-				Health: m.HP, HealthMax: m.HPMax, Down: m.Status == company.MemberDead || (m.HasHP && m.HP < 1)})
+			member := allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Promoted: m.Class, Row: cell.Row, Col: cell.Col,
+				Health: m.HP, HealthMax: m.HPMax, Down: m.Status == company.MemberDead || (m.HasHP && m.HP < 1)}
+			if m.Leader {
+				member.Skin, member.Hair = au.Character.LookColors()
+			}
+			fact.Members = append(fact.Members, member)
 		}
 		add(sum.Leader)
 		for _, m := range sum.Companions {
@@ -821,7 +903,7 @@ func weatherFact(w battle.Weather) *battleWeather {
 	if w.Kind == stormcraft.None || w.Left < 1 {
 		return nil
 	}
-	return &battleWeather{Kind: string(w.Kind), Name: w.Kind.Name(), Rounds: max(1, w.Left-1), Effect: w.Kind.Effect()}
+	return &battleWeather{Kind: string(w.Kind), Name: w.Kind.Name(), Rounds: max(1, w.Left-1), Endless: w.Left > stormcraft.EndlessRounds/2, Effect: w.Kind.Effect()}
 }
 
 // sigilFact is the sigil the battle began in, for the feed: nil without one.

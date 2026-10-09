@@ -1,0 +1,14 @@
+itemid: 10164
+name: masterwork battle staff
+namesimple: staff
+description: A banded hardwood staff, shod and capped in steel by a master, as quick to turn a blade as to break a skull.
+type: weapon
+hands: 2
+subtype: bludgeoning
+weaponclass: staff
+tier: 4
+family: staff
+parry: 8
+damage:
+  diceroll: 1d8+2
+weight: 2100

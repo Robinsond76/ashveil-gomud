@@ -355,3 +355,50 @@ func TestAlchemistDefaultsToHealer(t *testing.T) {
 		t.Error("an Alchemist is a healer by default")
 	}
 }
+
+// Phase 61 review: a hold order keeps every attack spell back, Lightning
+// included (which the mana reserve does not), but not a summon.
+func TestDecideHoldKeepsAttackSpellsButNotASummon(t *testing.T) {
+	list := []Spell{{ID: "lightning", Use: UseStorm, Cost: 12}, {ID: "mm", Use: UseAttack, Cost: 6}, {ID: "callhost", Use: UseSummon, Cost: 10}}
+	s := Situation{Role: Caster, Mana: 40, MaxMana: 40, Knows: known("lightning", "mm"), Spells: list, Foes: 1, Summoned: true, Hold: true}
+	if a := Decide(s); a.Kind != Swing {
+		t.Errorf("hold: %+v", a)
+	}
+	s.Hold = false
+	if a := Decide(s); a.Kind != Storm {
+		t.Errorf("no hold: %+v", a)
+	}
+	s.Hold, s.Summoned, s.Foes, s.Knows = true, false, 3, known("lightning", "callhost")
+	if a := Decide(s); a.Kind != Summon {
+		t.Errorf("hold with a summon to call: %+v", a)
+	}
+}
+
+// Phase 84: a Sorcerer looses its Lance at its LanceFoes foes or fewer and
+// showers a bigger group with sparks; a limit of 0 (a High Sorcerer) never
+// gives the Lance up.
+func TestSorcererSparksACrowdAndLancesAFew(t *testing.T) {
+	list := append(testSpells(), Spell{ID: "arcanelance", Use: UseBurst, Cost: 15})
+	sit := Situation{Role: Caster, Mana: 100, MaxMana: 100, Spells: list, Knows: func(string) bool { return true }, LanceFoes: 3}
+	for foes := 1; foes <= 6; foes++ {
+		sit.Foes = foes
+		act := Decide(sit)
+		want, kind := "arcanelance", Attack
+		if foes > 3 {
+			want, kind = "sparks", AttackAll
+		}
+		if act.Spell != want || act.Kind != kind {
+			t.Errorf("%d foes: Decide = %+v, want %s", foes, act, want)
+		}
+	}
+	sit.Foes, sit.LanceFoes = 6, 0
+	if act := Decide(sit); act.Spell != "arcanelance" {
+		t.Errorf("no limit, 6 foes: %+v, want the Lance", act)
+	}
+	// Out of mana for sparks against a crowd, it still has Magic Missile,
+	// not the Lance (which would cost more).
+	sit.Foes, sit.LanceFoes, sit.Mana = 4, 3, 7
+	if act := Decide(sit); act.Spell != "mm" {
+		t.Errorf("crowd, 7 mana: %+v, want Magic Missile", act)
+	}
+}

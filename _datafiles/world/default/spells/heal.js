@@ -6,11 +6,11 @@ function healRoll(sourceActor) {
 }
 
 SPELL_NAME = 'Minor Heal';
-WAIT_ROUNDS = 2; // heal.yaml's waitrounds
+WAIT_ROUNDS = 1; // heal.yaml's waitrounds
 
 // Phase 29c narration voice: mechanics in lowercase parentheses at the end.
 function chanting(rounds) {
-    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' turn)' : ' turns)');
 }
 
 /**

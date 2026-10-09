@@ -29,7 +29,6 @@
     --t-bg-panel:        #eef2f7;
     --t-bg-surface:      #dde8f8;
     --t-bg-surface-alt:  #cdd8ee;
-    --t-bg-input:        var(--p-bg-dark);
     --t-bg-hover:        #c8d8f0;
     --t-bg-selected:     #b0c8ee;
     --t-bg-row:          #e8eef4;
@@ -62,7 +61,6 @@
     --t-btn-border:      #93c5fd;
     --t-btn-hover-bg:    var(--p-accent);
     --t-btn-hover-text:  #ffffff;
-    --t-btn-accent:      var(--p-accent);
 
     /* ── Inputs ──────────────────────────────────────────────── */
     --t-input-bg:        var(--p-bg-dark);
@@ -78,7 +76,6 @@
     --t-toggle-off:      var(--p-neutral);
     --t-toggle-on:       var(--p-accent);
     --t-slider-track:    var(--p-neutral);
-    --t-slider-thumb:    var(--p-accent);
     --t-slider-border:   #60a5fa;
 
     /* ── Dock ────────────────────────────────────────────────── */
@@ -173,11 +170,7 @@
     --t-aggro-text:      #dc2626;
 
     /* ── Debuff ──────────────────────────────────────────────── */
-    --t-debuff-text:     #ef4444;
-    --t-debuff-secondary:#f87171;
     --t-debuff-border:   #fecaca;
-    --t-debuff-bg:       #fef2f2;
-    --t-debuff-perm:     #dc2626;
 
     /* ── Gear badges ─────────────────────────────────────────── */
     --t-cursed-text:          #dc2626;
@@ -209,7 +202,7 @@
     --t-modal-term-cursor: #60a5fa;
 
     /* ── Gametime ────────────────────────────────────────────── */
-    --t-gametime-time:     #b45309;
+    --t-gametime-time:     #a54c08;
     --t-gametime-date:     var(--p-text-sub);
     --t-gametime-label-bg: rgba(255, 255, 255, 0.7);
 
@@ -228,12 +221,6 @@
     --t-party-location:      var(--p-text-sub);
 
     /* ── Map UI ──────────────────────────────────────────────── */
-    --t-map-tab-bg:          #eef2f7;
-    --t-map-tab-border:      #c4d0e0;
-    --t-map-tab-text:        #6a7e98;
-    --t-map-tab-hover:       var(--p-text-sub);
-    --t-map-tab-active-text: var(--p-text);
-    --t-map-tab-active-border:var(--p-accent);
     --t-map-controls-bg:     rgba(255, 255, 255, 0.8);
     --t-map-controls-hover:  rgba(240, 244, 250, 0.95);
     --t-map-controls-text:   var(--p-text-sub);

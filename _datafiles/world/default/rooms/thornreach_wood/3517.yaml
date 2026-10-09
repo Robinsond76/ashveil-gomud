@@ -1,0 +1,21 @@
+roomid: 3517
+zone: Thornreach Wood
+title: Hushed Walk
+description: Moss muffles every sound and the air smells of loam. A bird calls once and does not
+  call again.
+biome: forest
+exits:
+  east:
+    roomid: 3518
+  west:
+    roomid: 3516
+  south:
+    roomid: 3523
+  north:
+    roomid: 3509
+resources:
+- forage
+mapx: 3
+mapy: 2
+mapz: 0
+hascoordinates: true

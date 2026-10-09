@@ -158,17 +158,9 @@ func ambiguousCompanion(record domain.Record, selector string) (int, bool) {
 	if _, err := strconv.Atoi(strings.TrimPrefix(selector, "#")); err == nil {
 		return 0, false
 	}
-	exact, partial := 0, 0
-	for _, c := range record.Companions {
-		name := strings.ToLower(nameOf(c, ""))
-		if name == selector {
-			exact++
-		} else if strings.Contains(name, selector) {
-			partial++
-		}
-	}
-	if exact > 1 || (exact == 0 && partial > 1) {
-		return exact + partial, true
+	exact, partial := domain.SplitNameMatches(record.Companions, selector, func(c domain.Companion) string { return nameOf(c, "") })
+	if len(exact) > 1 || (len(exact) == 0 && len(partial) > 1) {
+		return len(exact) + len(partial), true
 	}
 	return 0, false
 }
@@ -267,7 +259,7 @@ func trainPlace(leaderUserID int, room *rooms.Room, skill string, rank int) (str
 		}
 	}
 	if rank <= campTrainMaxRank && room != nil {
-		if s, ok := camping.CampStateOf(leaderUserID, room.RoomId, room.Tags); ok && s.HasCamp && s.Here {
+		if s, ok := camping.CampStateOf(leaderUserID, room.RoomId, room.GetTags()); ok && s.HasCamp && s.Here {
 			return "your camp", true
 		}
 	}
@@ -323,6 +315,8 @@ func (m *CompanyModule) trainSkill(user *users.UserRecord, room *rooms.Room, rec
 	switch {
 	case c.Dead():
 		return fmt.Sprintf("%s has fallen and can't train until raised.", name)
+	case c.OnErrand():
+		return fmt.Sprintf("%s is away on an errand and can't train until they return.", name)
 	case c.Separated():
 		return fmt.Sprintf("%s is separated from the company and can't train until they rejoin.", name)
 	}
@@ -434,5 +428,11 @@ func (m *CompanyModule) inspectMember(leaderUserID int, selector string, exact b
 		lines = append(lines, "Optional skills: "+strings.Join(trained, ", ")+".")
 	}
 	lines = append(lines, "Training: "+pointsLabel(m.trainingPoints(leaderUserID, c))+". See company train.")
+	if line := m.opinionLine(leaderUserID, c.ID); line != "" { // Phase 64
+		lines = append(lines, line)
+	}
+	if line := m.bondLine(leaderUserID, c.ID); line != "" { // Phase 65
+		lines = append(lines, line)
+	}
 	return strings.Join(lines, "\n"), true
 }

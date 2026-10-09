@@ -31,6 +31,28 @@ type Wound struct {
 	Place  string `yaml:"place"`           // text only: "arm", "scalp"
 	Points int    `yaml:"points"`          // health held back
 	Light  bool   `yaml:"light,omitempty"` // closes at fight end
+	// Battles is how many battles a lasting puncture has stayed open
+	// (Phase 55); three of them fester into a fever.
+	Battles int `yaml:"battles,omitempty"`
+}
+
+// Festering counts one more battle on every lasting puncture wound in ws
+// and reports whether any has now stayed open for limit battles; those
+// counters start over. Treating or tending a wound (Close, Treat) also
+// starts its count over, so only a wound left untreated festers.
+func Festering(ws []Wound, limit int) bool {
+	festered := false
+	for i := range ws {
+		if ws[i].Kind != Puncture || ws[i].Light || ws[i].Points <= 0 {
+			continue
+		}
+		ws[i].Battles++
+		if ws[i].Battles >= limit {
+			ws[i].Battles = 0
+			festered = true
+		}
+	}
+	return festered
 }
 
 // Roll picks a whole number in [0, n).
@@ -116,6 +138,17 @@ func EasyCrit(w Wound, damage, healthAfter, maxHealth int) (Wound, bool) {
 // Bled is the light wound a bleed of stacks leaves when it runs its course.
 func Bled(stacks int, roll Roll) Wound {
 	return Wound{Kind: Cut, Place: place(Cut, roll), Points: max(1, stacks), Light: true}
+}
+
+// Beaten is the lasting wound a defeat leaves (Phase 53): pct percent of
+// max health, at least 1, of a kind picked by roll.
+func Beaten(maxHealth, pct int, roll Roll) Wound {
+	kinds := []Kind{Cut, Puncture, Fracture}
+	k := kinds[0]
+	if roll != nil {
+		k = kinds[max(0, min(roll(len(kinds)), len(kinds)-1))]
+	}
+	return Wound{Kind: k, Place: place(k, roll), Points: max(1, maxHealth*max(pct, 0)/100)}
 }
 
 // Total is the health all ws hold back.
@@ -204,6 +237,7 @@ func closeWhere(ws []Wound, points int, want func(Kind) bool) ([]Wound, Wound, i
 	was := out[i]
 	closed := min(points, was.Points)
 	out[i].Points -= closed
+	out[i].Battles = 0 // Phase 55: a treated puncture starts its fever count over
 	if out[i].Points <= 0 {
 		out = append(out[:i], out[i+1:]...)
 	}

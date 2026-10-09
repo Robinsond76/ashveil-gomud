@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -184,7 +185,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if attackMobInstanceId == 0 && attackPlayerId == 0 {
-		user.SendText("You attack the darkness!")
+		user.SendText("You attack the darkness.")
 		return true, nil
 	}
 
@@ -204,7 +205,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if m != nil {
 			if m.Character.IsCharmed(user.UserId) {
-				user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend!`, m.Character.Name))
+				user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend.`, m.Character.Name))
 				return true, nil
 			}
 
@@ -304,7 +305,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 				if partyInfo.IsMember(attackPlayerId) {
-					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
+					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party.`, p.Character.Name))
 					return true, nil
 				}
 			}
@@ -397,7 +398,7 @@ func goForText(c *characters.Character, target string, alreadyFighting bool) str
 		return fmt.Sprintf(`You turn toward %s.`, target)
 	}
 	if c.Equipment.Weapon.ItemId > 0 {
-		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, c.Equipment.Weapon.DisplayName(), target)
+		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, combat.WeaponNounOf(&c.Equipment.Weapon), target)
 	}
 	return fmt.Sprintf(`You go for %s.`, target)
 }

@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">gryphon-lord</ansi>
+
+The Gryphon Lord is the neutral elite of the Gryphon Knight (Gryphon Rider
+route; no alignment asked). Its Dive is ready every other round and hits far
+harder, and at the top rank a landing that knocks the foe down shakes the
+foes beside it too.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Lord's stoop       Dive is ready every other round (cooldown 2)
+  35 Lord's plate       +8 armor in all
+  40 Mountain stoop     a Dive deals 75% more damage
+  45 Gryphon's vigor    +10% maximum health
+  50 Avalanche          a Dive deals 100% more damage
+  55 Sky lord           +4 Attack
+  60 Thunder landing    a Dive that knocks its foe down also knocks down the
+                        foes beside it
+
+It needs the Gryphon Knight first (<ansi fg="command">help gryphon-rider-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] gryphon-lord confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Gryphon Rider talents (levels 35, 45, 55): Iron Hide (+5 Armor),
+Veteran's Edge (+3 Attack), Shadow Footing (+5 Evasion). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help gryphon-rider-routes</ansi>, <ansi fg="command">help gryphon-rider</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

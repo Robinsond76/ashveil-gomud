@@ -207,47 +207,56 @@ type AttackMessages map[ItemSubType]AttackEffects
 
 // The blueprint for an item
 type ItemSpec struct {
-	ItemId          int
-	Value           int
-	Tier            int         `yaml:"tier,omitempty"`            // Phase 36a: material and power budget 1-6; 0 means unset (tier 1)
-	Uses            int         `yaml:"uses,omitempty"`            // How many uses it starts with
-	Refillable      string      `yaml:"refillable,omitempty"`      // Phase 40a: what it can be refilled with ("water"), back to Uses, at a room with that resource
-	EmptyItemId     int         `yaml:"emptyitemid,omitempty"`     // Phase 43a: what is left when its last use is spent (an empty waterskin), instead of nothing
-	FilledItemId    int         `yaml:"filleditemid,omitempty"`    // Phase 43a: on a refillable empty container, the full item a fill turns it into
-	BuffIds         []int       `yaml:"buffids,omitempty"`         // What buffs it can apply (if used)
-	WornBuffIds     []int       `yaml:"wornbuffids,omitempty"`     // BuffId's that are applied while worn, and expired when removed.
-	DamageReduction int         `yaml:"damagereduction,omitempty"` // % of damage it reduces when it blocks attacks
-	WaitRounds      int         `yaml:"waitrounds,omitempty"`      // How many extra rounds each combat requires
-	Hands           WeaponHands `yaml:"hands"`                     // How many hands it takes to wield
-	Name            string
-	DisplayName     string `yaml:"displayname,omitempty"` // Name that is typically displayed to the user
-	NameSimple      string // A simpler name for the item, for example "Golden Battleaxe" should be "Battleaxe" or "Axe" for simple
-	Description     string
-	QuestToken      string `yaml:"questtoken,omitempty"` // Grants this quest if given/picked up
-	Type            ItemType
-	Subtype         ItemSubType
-	Damage          Damage
-	Element         Element           `yaml:"element,omitempty"`
-	StatMods        statmods.StatMods `yaml:"statmods,omitempty"`    // What stats it modifies when equipped
-	BreakChance     uint8             `yaml:"breakchance,omitempty"` // Chance in 100 that the item will break when used, or when the character is hit with it equipped, or if it is in the characters inventory during an explosion, etc.
-	Cursed          bool              `yaml:"cursed,omitempty"`      // Can't be removed once equipped
-	KeyLockId       string            `yaml:"keylockid,omitempty"`   // Example: `778-north` - If it's a key, what lock does it open? roomid-exitname etc.
-	Nutrition       int               `yaml:"nutrition,omitempty"`   // Survival hunger benefit when eaten; zero keeps ordinary food behavior
-	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
-	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
-	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
-	Sling           bool              `yaml:"sling,omitempty"`       // cold delays this weapon, never inferred from its name
-	Parry           int               `yaml:"parry,omitempty"`       // Added to the subtype's parry modifier, in percent (Phase 30g2: a staff +5)
-	WarmthBonus     int               `yaml:"warmthbonus,omitempty"` // Phase 36a: affix warmth added on top of Warmth (or the slot default)
-	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
-	CarryBonus      int               `yaml:"carrybonus,omitempty"`  // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
-	Saddle          SaddleKind        `yaml:"saddle,omitempty"`      // A saddle's kind (Phase 32f): fits a horse of the same kind
-	Bulk            string            `yaml:"bulk,omitempty"`        // Armor bulk (Phase 35a2): light, medium or heavy; defaulted from weight at load
-	ShieldSize      string            `yaml:"shieldsize,omitempty"`  // A shield's size (Phase 35a2): buckler, shield or tower; defaulted to shield
-	WeaponClass     string            `yaml:"weaponclass,omitempty"` // A weapon's class (Phase 35a2), e.g. mace, staff, rod, club, improvised
-	Family          string            `yaml:"family,omitempty"`      // Phase 36b: catalog family, e.g. glaive, leather, kite shield; shown on look, never inferred from the name
-	Goods           string            `yaml:"goods,omitempty"`       // Phase 36b: trade goods category (trophy, salvage, material, valuable, provision, curio)
-	WornBy          []string          `yaml:"wornby,omitempty"`      // Phase 38e: creature species (archetype ids) this gear is cut for; only they wear it, and they wear nothing else
+	ItemId           int
+	Value            int
+	Tier             int         `yaml:"tier,omitempty"`            // Phase 36a: material and power budget 1-6; 0 means unset (tier 1)
+	Uses             int         `yaml:"uses,omitempty"`            // How many uses it starts with
+	Refillable       string      `yaml:"refillable,omitempty"`      // Phase 40a: what it can be refilled with ("water"), back to Uses, at a room with that resource
+	EmptyItemId      int         `yaml:"emptyitemid,omitempty"`     // Phase 43a: what is left when its last use is spent (an empty waterskin), instead of nothing
+	FilledItemId     int         `yaml:"filleditemid,omitempty"`    // Phase 43a: on a refillable empty container, the full item a fill turns it into
+	BuffIds          []int       `yaml:"buffids,omitempty"`         // What buffs it can apply (if used)
+	WornBuffIds      []int       `yaml:"wornbuffids,omitempty"`     // BuffId's that are applied while worn, and expired when removed.
+	DamageReduction  int         `yaml:"damagereduction,omitempty"` // % of damage it reduces when it blocks attacks
+	WaitRounds       int         `yaml:"waitrounds,omitempty"`      // How many extra rounds each combat requires
+	Hands            WeaponHands `yaml:"hands"`                     // How many hands it takes to wield
+	Name             string
+	DisplayName      string `yaml:"displayname,omitempty"` // Name that is typically displayed to the user
+	NameSimple       string // A simpler name for the item, for example "Golden Battleaxe" should be "Battleaxe" or "Axe" for simple
+	Description      string
+	QuestToken       string `yaml:"questtoken,omitempty"` // Grants this quest if given/picked up
+	Type             ItemType
+	Subtype          ItemSubType
+	Damage           Damage
+	Element          Element           `yaml:"element,omitempty"`
+	StatMods         statmods.StatMods `yaml:"statmods,omitempty"`         // What stats it modifies when equipped
+	BreakChance      uint8             `yaml:"breakchance,omitempty"`      // Chance in 100 that the item will break when used, or when the character is hit with it equipped, or if it is in the characters inventory during an explosion, etc.
+	Cursed           bool              `yaml:"cursed,omitempty"`           // Can't be removed once equipped
+	KeyLockId        string            `yaml:"keylockid,omitempty"`        // Example: `778-north` - If it's a key, what lock does it open? roomid-exitname etc.
+	Nutrition        int               `yaml:"nutrition,omitempty"`        // Survival hunger benefit when eaten; zero keeps ordinary food behavior
+	Hydration        int               `yaml:"hydration,omitempty"`        // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
+	Recipe           int               `yaml:"recipe,omitempty"`           // Phase 56: a recipe page teaches this dish (an item ID) when used; never resold
+	Meal             string            `yaml:"meal,omitempty"`             // Phase 50: a cooked meal's buff kind (survival.MealKinds), given when eaten
+	Instrument       string            `yaml:"instrument,omitempty"`       // Camp music: the family it plays (strings, winds or drums)
+	InstrumentMob    int               `yaml:"instrumentmob,omitempty"`    // Camp music: the boss whose kill may drop this masterwork
+	InstrumentChance int               `yaml:"instrumentchance,omitempty"` // Camp music: percent chance per boss kill by one company
+	InstrumentTier   int               `yaml:"instrumenttier,omitempty"`   // Camp music: 1 crude, 2 common, 3 fine, 4 masterwork; only a masterwork may be resold
+	Ailment          string            `yaml:"ailment,omitempty"`          // Phase 55: an ailment kind (survival.AilmentKinds) eating this gives (raw game meat's Gut-ache)
+	Weight           int               `yaml:"weight,omitempty"`           // Encumbrance weight in grams; zero means unweighted (no load contribution)
+	Reach            bool              `yaml:"reach,omitempty"`            // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
+	Sling            bool              `yaml:"sling,omitempty"`            // cold delays this weapon, never inferred from its name
+	Parry            int               `yaml:"parry,omitempty"`            // Added to the subtype's parry modifier, in percent (Phase 30g2: a staff +5)
+	WarmthBonus      int               `yaml:"warmthbonus,omitempty"`      // Phase 36a: affix warmth added on top of Warmth (or the slot default)
+	Warmth           int               `yaml:"warmth,omitempty"`           // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
+	CarryBonus       int               `yaml:"carrybonus,omitempty"`       // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
+	Saddle           SaddleKind        `yaml:"saddle,omitempty"`           // A saddle's kind (Phase 32f): fits a horse of the same kind
+	Bulk             string            `yaml:"bulk,omitempty"`             // Armor bulk (Phase 35a2): light, medium or heavy; defaulted from weight at load
+	ShieldSize       string            `yaml:"shieldsize,omitempty"`       // A shield's size (Phase 35a2): buckler, shield or tower; defaulted to shield
+	WeaponClass      string            `yaml:"weaponclass,omitempty"`      // A weapon's class (Phase 35a2), e.g. mace, staff, rod, club, improvised
+	Family           string            `yaml:"family,omitempty"`           // Phase 36b: catalog family, e.g. glaive, leather, kite shield; shown on look, never inferred from the name
+	Goods            string            `yaml:"goods,omitempty"`            // Phase 36b: trade goods category (trophy, salvage, material, valuable, provision, curio)
+	WornBy           []string          `yaml:"wornby,omitempty"`           // Phase 38e: creature species (archetype ids) this gear is cut for; only they wear it, and they wear nothing else
+	Relic            *RelicSpec        `yaml:"relic,omitempty"`            // Phase 36d: an authored Legendary or Set piece: its signature or set, item level and boss
+	Trophy           *TrophySpec       `yaml:"trophy,omitempty"`           // Phase 71: a creature part an enchanter works into gear
 }
 
 // Trade goods categories (Phase 36b). Goods are sold, not worn: they make
@@ -564,7 +573,9 @@ func (i *ItemSpec) AutoCalculateValue() {
 }
 
 func (i *ItemSpec) ItemFolder(baseonly ...bool) string {
-	if i.ItemId >= 40000 {
+	if i.ItemId >= 50000 && i.ItemId < 60000 {
+		return `relics-50000`
+	} else if i.ItemId >= 40000 {
 		return ``
 	} else if i.ItemId >= 30000 {
 		return `consumables-30000`
@@ -650,6 +661,18 @@ func (i *ItemSpec) Validate() error {
 		}
 	}
 
+	if i.Relic != nil {
+		if err := i.Relic.validate(i); err != nil {
+			return fmt.Errorf("relic: %w", err)
+		}
+	}
+
+	if i.Trophy != nil {
+		if err := i.Trophy.validate(i); err != nil {
+			return fmt.Errorf("trophy: %w", err)
+		}
+	}
+
 	if i.CarryBonus < 0 || (i.Type == Pack && (i.CarryBonus <= 0 || i.Subtype != Wearable || len(i.StatMods) > 0 || len(i.WornBuffIds) > 0 || i.DamageReduction != 0)) {
 		return fmt.Errorf("pack must be wearable with positive capacity and no combat modifiers")
 	}
@@ -660,6 +683,29 @@ func (i *ItemSpec) Validate() error {
 
 	if i.Hydration < 0 {
 		return fmt.Errorf("item hydration cannot be negative")
+	}
+
+	switch i.Instrument {
+	case "":
+		if i.InstrumentTier != 0 {
+			return fmt.Errorf("instrument tier needs an instrument family")
+		}
+	case "strings", "winds", "drums":
+		if i.InstrumentTier < 1 || i.InstrumentTier > 4 {
+			return fmt.Errorf("instrument tier must be 1 to 4")
+		}
+		if (i.InstrumentMob != 0 || i.InstrumentChance != 0) && (i.InstrumentTier != MasterworkInstrumentTier || i.InstrumentMob < 1 || i.InstrumentChance < 1 || i.InstrumentChance > 100) {
+			return fmt.Errorf("only a masterwork instrument has a boss, and a chance of 1 to 100")
+		}
+	default:
+		return fmt.Errorf("unknown instrument family %q", i.Instrument)
+	}
+	if i.Instrument == "" && (i.InstrumentMob != 0 || i.InstrumentChance != 0) {
+		return fmt.Errorf("instrument boss needs an instrument family")
+	}
+
+	if i.Recipe < 0 || (i.Recipe > 0 && i.Subtype != Usable) {
+		return fmt.Errorf("recipe page must be usable and name a dish")
 	}
 
 	if i.Type == Weapon {

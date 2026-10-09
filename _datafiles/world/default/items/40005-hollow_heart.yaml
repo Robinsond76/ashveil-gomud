@@ -1,0 +1,12 @@
+itemid: 40005
+name: hollow heart
+namesimple: heart
+description: 'A cold knot of something that was never quite alive, taken from a creature of the deep woods and darker places. An enchanter can work it into gear.'
+type: commodity
+weight: 150
+value: 12
+trophy:
+  part: heart
+  races: ["eldritch horror", "tree", "fungus"]
+  chance: 20
+  effects: {attack: 2}

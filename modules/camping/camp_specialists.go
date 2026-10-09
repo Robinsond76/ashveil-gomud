@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"sort"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -49,8 +51,11 @@ type campRecipe struct {
 
 // campSettings is 33f3's configuration.
 type campSettings struct {
-	Raids              map[string]campRaid
-	WatchPctPerLevel   int
+	Raids            map[string]campRaid
+	WatchPctPerLevel int
+	// WatcherBasePct (Phase 51) is the least a member on the watch duty
+	// adds to the chance of spotting raiders, whatever their eye.
+	WatcherBasePct     int
 	RaidEarliestPct    int
 	RaidLatestPct      int
 	VigilCap           int
@@ -71,6 +76,7 @@ func defaultCampSettings() campSettings {
 	return campSettings{
 		Raids:              map[string]campRaid{},
 		WatchPctPerLevel:   25,
+		WatcherBasePct:     20,
 		RaidEarliestPct:    30,
 		RaidLatestPct:      70,
 		VigilCap:           60,
@@ -109,7 +115,7 @@ func fieldsOf(raw any) map[string]any {
 func intsOf(raw any) []int {
 	var out []int
 	for _, v := range listOf(raw) {
-		if n, ok := configInt(v); ok && n > 0 {
+		if n, ok := modconfig.Int(v); ok && n > 0 {
 			out = append(out, n)
 		}
 	}
@@ -124,9 +130,9 @@ func parseCampSettings(get func(string) any) campSettings {
 	}
 	for _, entry := range listOf(get("CampRaids")) {
 		f := fieldsOf(entry)
-		zone := configString(f["zone"])
-		mobID, okM := configInt(f["mobid"])
-		chance, okC := configInt(f["chancepct"])
+		zone := modconfig.String(f["zone"])
+		mobID, okM := modconfig.Int(f["mobid"])
+		chance, okC := modconfig.Int(f["chancepct"])
 		if zone == "" || !okM || mobID <= 0 || !okC || chance < 0 || chance > 100 {
 			mudlog.Warn("camping: CampRaids entry skipped", "entry", entry)
 			continue
@@ -135,8 +141,8 @@ func parseCampSettings(get func(string) any) campSettings {
 	}
 	for _, entry := range listOf(get("CampTheft")) {
 		f := fieldsOf(entry)
-		zone := configString(f["zone"])
-		chance, okC := configInt(f["chancepct"])
+		zone := modconfig.String(f["zone"])
+		chance, okC := modconfig.Int(f["chancepct"])
 		if zone == "" || !okC || chance < 0 || chance > 100 {
 			mudlog.Warn("camping: CampTheft entry skipped", "entry", entry)
 			continue
@@ -144,11 +150,12 @@ func parseCampSettings(get func(string) any) campSettings {
 		s.Thefts[zone] = chance
 	}
 	pct := func(key string, into *int, lo, hi int) {
-		if n, ok := configInt(get(key)); ok && n >= lo && n <= hi {
+		if n, ok := modconfig.Int(get(key)); ok && n >= lo && n <= hi {
 			*into = n
 		}
 	}
 	pct("WatchPctPerLevel", &s.WatchPctPerLevel, 0, 100)
+	pct("WatcherBasePct", &s.WatcherBasePct, 0, 100)
 	pct("RaidEarliestPct", &s.RaidEarliestPct, 0, 100)
 	pct("RaidLatestPct", &s.RaidLatestPct, 0, 100)
 	if s.RaidLatestPct < s.RaidEarliestPct {
@@ -159,19 +166,17 @@ func parseCampSettings(get func(string) any) campSettings {
 	pct("VigilCap", &s.VigilCap, 0, company.MaxLoyalty)
 	pct("ForageBase", &s.ForageBase, 0, 10)
 	pct("ForageLevelsPerOne", &s.ForageLevelsPerOne, 1, 10)
-	if raw := configString(get("CampRewardCooldown")); raw != "" {
-		if d, err := time.ParseDuration(raw); err == nil && d >= 0 {
-			s.RewardCooldown = d
-		}
+	if d, ok := modconfig.Duration(get("CampRewardCooldown")); ok {
+		s.RewardCooldown = d
 	}
 	for _, entry := range listOf(get("Forage")) {
 		f := fieldsOf(entry)
-		zone := configString(f["zone"])
+		zone := modconfig.String(f["zone"])
 		var finds []forageFind
 		for _, it := range listOf(f["items"]) {
 			fi := fieldsOf(it)
-			id, okI := configInt(fi["itemid"])
-			w, okW := configInt(fi["weight"])
+			id, okI := modconfig.Int(fi["itemid"])
+			w, okW := modconfig.Int(fi["weight"])
 			if okI && id > 0 && okW && w > 0 {
 				finds = append(finds, forageFind{ItemID: id, Weight: w})
 			}
@@ -184,14 +189,14 @@ func parseCampSettings(get func(string) any) campSettings {
 	}
 	for _, entry := range listOf(get("CampRecipes")) {
 		f := fieldsOf(entry)
-		out, okO := configInt(f["output"])
+		out, okO := modconfig.Int(f["output"])
 		inputs := intsOf(f["inputs"])
-		level, _ := configInt(f["minlevel"])
+		level, _ := modconfig.Int(f["minlevel"])
 		if !okO || out <= 0 || len(inputs) == 0 {
 			mudlog.Warn("camping: CampRecipes entry skipped", "entry", entry)
 			continue
 		}
-		s.Recipes = append(s.Recipes, campRecipe{Output: out, Inputs: inputs, Skill: strings.ToLower(configString(f["skill"])), MinLevel: level})
+		s.Recipes = append(s.Recipes, campRecipe{Output: out, Inputs: inputs, Skill: strings.ToLower(modconfig.String(f["skill"])), MinLevel: level})
 	}
 	return s
 }
@@ -212,11 +217,12 @@ func (m *CampingModule) rollPct() int {
 }
 
 // planRaidLocked (rest start) rolls whether raiders come to a camp in this
-// zone and when, as a share of the rest.
-func (m *CampingModule) planRaidLocked(room *rooms.Room, started time.Time) *camping.Raid {
+// zone and when, as a share of the rest. tentPct (Phase 52) scales the
+// chance for the pitched tent; 100 changes nothing.
+func (m *CampingModule) planRaidLocked(room *rooms.Room, started time.Time, tentPct int) *camping.Raid {
 	cfg := m.campSettings()
 	raid, ok := cfg.Raids[room.Zone]
-	if !ok || raid.ChancePct <= 0 || m.rollPct() >= raid.ChancePct {
+	if !ok || raid.ChancePct <= 0 || m.rollPct() >= camping.ScaleChance(raid.ChancePct, tentPct) {
 		return nil
 	}
 	span := cfg.RaidLatestPct - cfg.RaidEarliestPct
@@ -255,11 +261,13 @@ func (m *CampingModule) fireDueRaids() {
 	due := map[int]int{} // leader -> camp room
 	strung := map[int]bool{}
 	incense := map[int]bool{}
+	dutied := map[int]map[string]string{}
 	for leaderUserID, camp := range m.camps {
 		if camp.Rest != nil && camp.Rest.RaidDue(now) {
 			due[leaderUserID] = camp.RoomID
 			strung[leaderUserID] = camp.Rest.Bells
 			incense[leaderUserID] = camp.Rest.Incense
+			dutied[leaderUserID] = camp.Rest.Duties
 		}
 	}
 	m.mu.Unlock()
@@ -287,6 +295,11 @@ func (m *CampingModule) fireDueRaids() {
 		watchPct := 0
 		if hasWatch {
 			watchPct = archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
+		}
+		// Phase 51: every member on the watch duty adds their own chance
+		// (a member who is also the specialist counts once, by their duty).
+		if present {
+			watch, hasWatch, watchPct = m.addDutyWatchers(leader, dutied[leaderUserID], watch, hasWatch, watchPct)
 		}
 		bells := strung[leaderUserID]
 		chance := spotChance(hasWatch, watchPct, bells)
@@ -438,6 +451,10 @@ func (m *CampingModule) liveRaiders(r raiders) []int {
 type campReward struct {
 	Op     string `yaml:"op"`
 	RoomID int    `yaml:"room_id"`
+	// Foragers (Phase 51) are the member keys on the forage duty, comma
+	// separated (a string so a reward stays comparable); each forages once
+	// under the same cooldown as the automatic forage.
+	Foragers string `yaml:"foragers,omitempty"`
 }
 
 // grantCampRewards applies each owed camp reward (game loop) once the
@@ -476,6 +493,16 @@ func (m *CampingModule) grantCampRewards() {
 			if text != "" {
 				lines = append(lines, text)
 			}
+			if reward.Foragers != "" {
+				text, err := m.dutyForage(leader, room, reward)
+				if err != nil {
+					mudlog.Warn("camping: duty forage", "leader", leaderUserID, "error", err)
+					continue
+				}
+				if text != "" {
+					lines = append(lines, text)
+				}
+			}
 			text, err = m.vigil(leader, reward.RoomID, reward.Op+":vigil")
 			if err != nil {
 				mudlog.Warn("camping: vigil", "leader", leaderUserID, "error", err)
@@ -485,17 +512,25 @@ func (m *CampingModule) grantCampRewards() {
 				lines = append(lines, text)
 			}
 		}
+		settled := false
 		m.mu.Lock()
 		if current, ok := m.campRewards[leaderUserID]; ok && current == reward {
 			delete(m.campRewards, leaderUserID)
+			settled = true
 			if err := m.saveLocked(); err != nil {
 				m.campRewards[leaderUserID] = reward
+				settled = false
 				mudlog.Error("camping: camp rewards save", "leader", leaderUserID, "error", err)
 			}
 		}
 		m.mu.Unlock()
 		for _, line := range lines {
 			leader.SendText(line)
+		}
+		// Phase 60: a finished rest may open a story event at the camp, once:
+		// a reward still owed after a failed save is settled again later.
+		if settled && leader.Character.RoomId == reward.RoomID {
+			camping.RestEnded(leaderUserID, reward.RoomID)
 		}
 	}
 }
@@ -506,13 +541,67 @@ func (m *CampingModule) forage(leader *users.UserRecord, room *rooms.Room, op st
 	if room == nil || m.specialist == nil {
 		return "", nil
 	}
+	sp, ok := m.specialist(leader.UserId, archetypes.UtilityForage, room.RoomId)
+	if !ok {
+		return "", nil
+	}
+	return m.forageFor(leader, room, op, sp)
+}
+
+// dutyForage (Phase 51) is each member on the forage duty finding food at
+// the end of the rest, from the same zone table and cooldown as the
+// automatic forage. The company's best forager forages anyway, so the duty
+// adds nothing for them (51 review: no double forage).
+func (m *CampingModule) dutyForage(leader *users.UserRecord, room *rooms.Room, reward campReward) (string, error) {
+	if room == nil {
+		return "", nil
+	}
+	var lines []string
+	targets, _ := m.prepTargets(leader)
+	here := map[string]bool{}
+	for _, t := range targets {
+		if t.char != nil && t.char.Health > 0 {
+			here[t.key] = true
+		}
+	}
+	var auto archetypes.Specialist
+	hasAuto := false
+	if m.specialist != nil {
+		auto, hasAuto = m.specialist(leader.UserId, archetypes.UtilityForage, room.RoomId)
+	}
+	for i, key := range strings.Split(reward.Foragers, ",") {
+		if !here[key] {
+			continue // gone from the camp or down: no forage
+		}
+		if hasAuto && isSpecialist(auto, key, m.dutyNames(leader.UserId)[key]) {
+			continue // already foraged as the company's forager
+		}
+		name := leader.Character.Name
+		isLeader := key == string(survival.LeaderMemberKey)
+		if !isLeader {
+			name = m.dutyNames(leader.UserId)[key]
+			if name == "" {
+				name = "A companion"
+			}
+		}
+		sp := archetypes.Specialist{Name: name, IsLeader: isLeader, Level: m.utilityLevel(leader.UserId, key, archetypes.UtilityForage)}
+		text, err := m.forageFor(leader, room, fmt.Sprintf("%s:dutyforage:%d", reward.Op, i), sp)
+		if err != nil {
+			return "", err
+		}
+		if text != "" {
+			lines = append(lines, text)
+		}
+	}
+	return strings.Join(lines, "\n"), nil
+}
+
+// forageFor is one forager's finds: 1 + level/2 items from the zone's
+// table, as many as the company can carry, into its cargo.
+func (m *CampingModule) forageFor(leader *users.UserRecord, room *rooms.Room, op string, sp archetypes.Specialist) (string, error) {
 	cfg := m.campSettings()
 	table := cfg.Forage[room.Zone]
 	if len(table) == 0 {
-		return "", nil
-	}
-	sp, ok := m.specialist(leader.UserId, archetypes.UtilityForage, room.RoomId)
-	if !ok {
 		return "", nil
 	}
 	count := cfg.ForageBase + sp.Level/cfg.ForageLevelsPerOne
@@ -700,6 +789,8 @@ func nativeCompanionCooks(leaderUserID int, recipes []campRecipe) []campCook {
 // selectCampRecipe is shared by the command and the capability read model.
 // It neither consumes ingredients nor chooses a recipe the cook's ranks forbid.
 func selectCampRecipe(user *users.UserRecord, cook campCook, recipes []campRecipe) (chosen, blocked *campRecipe) {
+	// Phase 56: only dishes the leader has learned cook without trying.
+	recipes = knownCampRecipes(user, recipes)
 	// The ingredients to hand: pack items, then cargo stacks.
 	have := map[int]int{}
 	if !user.Character.CompanyCargo {
@@ -745,7 +836,7 @@ func selectCampRecipe(user *users.UserRecord, cook campCook, recipes []campRecip
 // recipe their Cooking allows from
 // ingredients in their pack and the company cargo (the pack first). The
 // dish goes into the cargo (into the pack when there is no cargo).
-func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
+func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room, words []string) string {
 	if user == nil || room == nil {
 		return "You can't cook here."
 	}
@@ -761,18 +852,41 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	if m.inBattle != nil && m.inBattle(user.UserId) {
 		return "You can't cook in the middle of a fight."
 	}
+	if m.restingNow(user.UserId) {
+		return "You can't cook while the company rests; do it before you sleep."
+	}
 	recipes := m.campSettings().Recipes
 	if len(recipes) == 0 {
 		return "There is nothing to cook over a campfire."
 	}
-	cook := m.bestCook(user, recipes)
+	if len(words) > 0 {
+		return m.experiment(user, room, m.bestCook(user, recipes), words) // Phase 56
+	}
+	return m.cookDish(user, room, m.bestCook(user, recipes))
+}
+
+// cookDish has cook turn the first recipe their Cooking allows into a dish
+// from the pack and cargo (the camp cook command, and Phase 51's cook duty
+// at the rest's end, which needs no lit fire: the rest was the fire).
+func (m *CampingModule) cookDish(user *users.UserRecord, room *rooms.Room, cook campCook) string {
+	if room == nil {
+		return "You can't cook here."
+	}
+	recipes := m.campSettings().Recipes
 	chosen, blocked := selectCampRecipe(user, cook, recipes)
 	if chosen == nil {
 		if blocked != nil {
 			return fmt.Sprintf("You have the makings of %s, but it needs %s %d, and %s.", itemName(blocked.Output), blocked.Skill, blocked.MinLevel, bestRankText(cook, blocked.Skill))
 		}
-		return "You have nothing to cook: see help cooking for what each dish needs."
+		return "You have nothing to cook with what you know: try a new combination with cook (help recipes), or see help cooking."
 	}
+	text, _ := m.cookRecipe(user, room, cook, chosen, "over the campfire", "")
+	return text
+}
+
+// cookRecipe cooks one chosen recipe from the pack and cargo. learned is a
+// sentence appended when the dish was just worked out (Phase 56).
+func (m *CampingModule) cookRecipe(user *users.UserRecord, room *rooms.Room, cook campCook, chosen *campRecipe, where, learned string) (string, bool) {
 	// Plan where each ingredient comes from: the pack first, then cargo.
 	var fromPack []items.Item
 	fromCargo := map[int]int{}
@@ -798,7 +912,7 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	// Phase 40a3: an iron cookpot stretches a multi-ingredient dish into
 	// one extra portion.
 	portions := 1
-	pot := len(chosen.Inputs) > 1 && m.gearCount(user.UserId, cookpotItemID) > 0
+	pot := len(chosen.Inputs) > 1 && chosen.Output != items.MakeshiftMealItemId && m.gearCount(user.UserId, cookpotItemID) > 0
 	if pot {
 		portions = 2
 	}
@@ -808,11 +922,11 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 		dishGrams = spec.Weight * portions
 	}
 	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, dishGrams-inputGrams); refuse {
-		return text
+		return text, false
 	}
-	potNote := ""
+	potNote := learned
 	if pot {
-		potNote = " The iron cookpot stretches it into a second portion."
+		potNote = " The iron cookpot stretches it into a second portion." + learned
 	}
 	if user.Character.CompanyCargo {
 		dishes := make([]items.Item, 0, portions)
@@ -820,9 +934,9 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 			dishes = append(dishes, items.New(chosen.Output))
 		}
 		if err := encumbrance.TransformCargo(user.UserId, fromPack, dishes); err != nil {
-			return "The ingredients couldn't be saved; nothing was cooked."
+			return "The ingredients couldn't be saved; nothing was cooked.", false
 		}
-		return fmt.Sprintf("%s %s %s over the campfire; it goes into company cargo.%s", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output), potNote)
+		return fmt.Sprintf("%s %s %s %s; it goes into company cargo.%s", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output), where, potNote), true
 	}
 	// Take from the cargo first, putting back what was taken if any of it
 	// fails, so a failed save never eats ingredients (33f3 review).
@@ -835,7 +949,7 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 					mudlog.Error("camping: cook restore", "leader", user.UserId, "error", err)
 				}
 			}
-			return "The ingredients couldn't be gathered right now."
+			return "The ingredients couldn't be gathered right now.", false
 		}
 		withdrawn = append(withdrawn, encumbrance.CargoStack{ItemId: id, Count: fromCargo[id]})
 	}
@@ -854,11 +968,11 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 			dropped++
 		}
 		if stored == 0 {
-			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire and %s it down by the fire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, cook.verb("set", "sets"), potNote)
+			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> %s and %s it down by the fire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, where, cook.verb("set", "sets"), potNote), true
 		}
-		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, potNote)
+		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> %s.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, where, potNote), true
 	}
-	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, potNote)
+	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> %s; it goes into the company's cargo.%s`, cook.subject(), cook.verb("cook", "cooks"), dish, where, potNote), true
 }
 
 // bestRankText names the best rank present in a skill: "the best in your

@@ -18,12 +18,14 @@ encounters:
     woodland:
       - id: wolf-pack
         weight: 35
+        pack: true
         text: Gray shapes slip between the trunks, and a pack of timber wolves closes around your company.
         members:
           - mobid: 56
             count: 3
       - id: wolf-pack-large
         weight: 10
+        pack: true
         text: A big pack of timber wolves breaks cover, circling your company.
         members:
           - mobid: 56

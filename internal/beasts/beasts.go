@@ -80,6 +80,15 @@ type Gifts struct {
 	Hobble      bool
 	Guards      int
 	BreathEvery int // rounds between Breaths, 0 for none
+	// Phase 39i2: the elite routes' gifts.
+	HobbleAt    int
+	Hunt        bool
+	Open        int
+	Swipe       int
+	Rise        int
+	BreathBurn  bool
+	BreathFoes  int
+	BreathFirst bool
 }
 
 // KindOf is the beast a Tamer's route raises.
@@ -117,15 +126,26 @@ func GiftsFor(fx classes.Effects) Gifts {
 	}
 	mult += fx.Int(classes.BeastHPBonus)
 	g := Gifts{
-		Kind:   kind,
-		MobID:  WolfMobID,
-		HPMult: mult,
-		Dice:   1,
-		Sides:  BiteSides,
-		Attack: fx.Int(classes.BeastAttack),
-		Damage: fx.Int(classes.BeastDamage),
-		Hobble: fx.Has(classes.BeastHobble),
-		Guards: fx.Int(classes.BeastGuards),
+		Kind:        kind,
+		MobID:       WolfMobID,
+		HPMult:      mult,
+		Dice:        1,
+		Sides:       BiteSides,
+		Attack:      fx.Int(classes.BeastAttack),
+		Damage:      fx.Int(classes.BeastDamage),
+		Hobble:      fx.Has(classes.BeastHobble),
+		Guards:      fx.Int(classes.BeastGuards),
+		HobbleAt:    HobbleBelow,
+		Hunt:        fx.Has(classes.BeastHunt),
+		Open:        fx.Int(classes.BeastOpen),
+		Swipe:       fx.Int(classes.BeastSwipe),
+		Rise:        fx.Int(classes.BeastRise),
+		BreathBurn:  fx.Has(classes.BreathBurn),
+		BreathFoes:  fx.Int(classes.BreathFoes),
+		BreathFirst: fx.Has(classes.BreathFirst),
+	}
+	if v := fx.Int(classes.BeastHobbleAt); v > 0 {
+		g.HobbleAt = v
 	}
 	switch kind {
 	case Warhound:
@@ -263,6 +283,8 @@ func Spawn(t Tamer) (*mobs.Mob, error) {
 		Kind: g.Kind, OwnerKey: string(t.Key), HPPct: g.HPPctAt(t.Char.Level),
 		Dice: g.Dice, Sides: g.Sides, Bonus: BiteBonus(t.Char.Level), TempoPct: TempoPct, Damage: g.Damage,
 		Hobble: g.Hobble, Guards: g.Guards, BreathEvery: g.BreathEvery,
+		HobbleAt: g.HobbleAt, Hunt: g.Hunt, Open: g.Open, Swipe: g.Swipe, Rise: g.Rise,
+		BreathBurn: g.BreathBurn, BreathFoes: g.BreathFoes, BreathFirst: g.BreathFirst,
 	}
 	if t.Key == company.LeaderMemberKey {
 		info.OwnerUser = t.Leader

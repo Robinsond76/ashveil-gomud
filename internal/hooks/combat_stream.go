@@ -9,8 +9,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -28,6 +30,7 @@ const BattleSummarySetting = `battlesummary`
 
 func emitCombat(e combatstream.Event) (combatstream.Event, bool) {
 	e.Round = combatRound.Load()
+	e.Slot = CurrentTurnSlot()
 	return combatstream.Default().Emit(e)
 }
 
@@ -97,6 +100,7 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		Target:     target,
 		Outcome:    outcome,
 		Defenses:   r.Defenses,
+		Strikes:    r.Strikes,
 		Damage:     r.DamageToTarget,
 		Crit:       r.Hit && r.Crit,
 		Quality:    blowQuality(r),
@@ -142,8 +146,57 @@ func blowQuality(r combat.AttackResult) string {
 
 func emitAttack(source, target combatstream.Ref, roomId int, attacker *characters.Character, r combat.AttackResult) {
 	for _, e := range attackEvents(source, target, roomId, attacker, r) {
-		emitCombat(e)
+		if stamped, ok := emitCombat(e); ok {
+			recordRoll(stamped)
+		}
 	}
+}
+
+// recordRoll keeps an attack round's strikes in its fight leader's roll
+// log (Phase 62), for `why` to explain.
+func recordRoll(e combatstream.Event) {
+	if e.Kind != combatstream.Attack || e.FightID == 0 {
+		return
+	}
+	fi, ok := combatstream.Default().Fight(e.FightID)
+	if !ok || fi.LeaderUserId <= 0 {
+		return
+	}
+	ours, theirs := false, false
+	for _, r := range fi.Company {
+		ours = ours || r.Key() == e.Source.Key()
+		theirs = theirs || r.Key() == e.Target.Key()
+	}
+	// Review: only the company's own rounds, and never against a foe the
+	// leader can't make out: its armor and chances would give it away
+	// (the web feed's rule too).
+	if !ours && !theirs {
+		return
+	}
+	if leader := users.GetByUserId(fi.LeaderUserId); leader != nil && (unseenBy(leader, e.RoomId, e.Source) || unseenBy(leader, e.RoomId, e.Target)) {
+		return
+	}
+	if roll, ok := combatstream.RollFor(e, ours); ok {
+		// Phase 79: number the round as the fight counts them, the same
+		// "Round N" the text opens each round with (82d).
+		if e.Round >= fi.StartRound && fi.StartRound > 0 {
+			roll.Turn = int(e.Round-fi.StartRound) + 1
+		}
+		combatstream.DefaultRollLog().Add(fi.LeaderUserId, roll)
+	}
+}
+
+// unseenBy reports whether a fighter is an enemy the player can't make out:
+// any foe in a room too dark for them, or a hidden one.
+func unseenBy(user *users.UserRecord, roomId int, r combatstream.Ref) bool {
+	if r.MobInstanceId <= 0 || r.LeaderUserId > 0 || user.Character == nil {
+		return false
+	}
+	if room := rooms.LoadRoom(roomId); room != nil && room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
+		return true
+	}
+	m := mobs.GetInstance(r.MobInstanceId)
+	return m != nil && m.Character.HasBuffFlag("hidden")
 }
 
 func emitTargetChange(source, previous, next combatstream.Ref, roomId int) {
@@ -362,12 +415,36 @@ func (fs fightSides) end(outcome string) {
 		return
 	}
 	sum.Spoils = loot.TakeSpoils(fs.leader.UserId) // Phase 37: read once, shown or not
+	sum.Sigil = sigilNote(fs.info.LeaderUserId)
 	if on := fs.leader.GetConfigOption(BattleSummarySetting); on != nil {
 		if enabled, isBool := on.(bool); isBool && !enabled {
 			return
 		}
 	}
-	for _, line := range combatstream.Render(*sum, fs.leader.UserId) {
-		fs.leader.SendText(line)
+	lines := combatstream.Render(*sum, fs.leader.UserId)
+	sendReport(fs.leader, lines)
+}
+
+// sendReport sends a block of lines printed after a fight: the first line
+// takes its turn behind the fight's last blows, and everything after it,
+// this block and the experience and notes the fight's end causes, follows at
+// once whatever the combat pace. A report is not a blow to be played out.
+func sendReport(u *users.UserRecord, lines []string) {
+	for i, line := range lines {
+		u.SendText(line)
+		if i == 0 {
+			events.AddToQueue(events.CombatReport{UserId: u.UserId})
+		}
 	}
+}
+
+// sigilNote names the sigil the leader's battle began under, for the
+// summary (Phase 62): "fire sigil: fire spells 25% stronger ...". Empty when
+// the battle had none.
+func sigilNote(leaderUserId int) string {
+	kind := battle.SigilOf(leaderUserId)
+	if kind.Name() == "" {
+		return ""
+	}
+	return kind.Name() + " held: " + kind.Effect()
 }

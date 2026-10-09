@@ -12,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/orders"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -543,4 +545,99 @@ func TestCompanyVitalsFlasks(t *testing.T) {
 	f.update(7, s)
 	require.Len(t, *out, 2)
 	assert.Equal(t, "Company.Vitals", (*out)[1].module)
+}
+
+type fakeOrders map[string][]orders.Order
+
+func (f fakeOrders) StoredOrders(_ int, key string) []orders.Order { return f[key] }
+
+// Phase 61: a member's battle orders ride its entry in words, and a change
+// resends the snapshot; a member with none carries no field.
+func TestCompanyPayloadBattleOrders(t *testing.T) {
+	orders.SetProvider(fakeOrders{"companion:1": {{When: orders.AllyHurt, Pct: 50, Do: orders.Heal}, {When: orders.Chanting, Do: orders.Break}}})
+	t.Cleanup(func() { orders.SetProvider(nil) })
+	s := sampleCompany()
+	got := companyJSON(t, s)
+	assert.Equal(t, []any{
+		"When an ally is below 50% health, heal that ally first.",
+		"When a foe is chanting, turn on the chanter to break its chant.",
+	}, got["members"].([]any)[0].(map[string]any)["orders"])
+	assert.Equal(t, []any{"ally 50 then heal", "chanting then break"}, got["members"].([]any)[0].(map[string]any)["order_cmds"])
+	assert.NotContains(t, got["leader"].(map[string]any), "orders")
+	assert.NotContains(t, got["members"].([]any)[1].(map[string]any), "orders")
+
+	f, out := testFeed()
+	f.update(7, s)
+	orders.SetProvider(fakeOrders{})
+	f.update(7, s)
+	require.Len(t, *out, 2, "taking the orders off resends the snapshot")
+}
+
+type fakeStances map[string]stance.Stance
+
+func (f fakeStances) StoredStance(_ int, key string) stance.Stance { return f[key] }
+
+// Phase 69: a member's weapon stance rides its entry with the trade in
+// words; a member with none carries no field, and a change resends.
+func TestCompanyPayloadWeaponStance(t *testing.T) {
+	stance.SetProvider(fakeStances{"companion:1": stance.Heavy})
+	t.Cleanup(func() { stance.SetProvider(nil) })
+	s := sampleCompany()
+	got := companyJSON(t, s)
+	st := got["members"].([]any)[0].(map[string]any)["stance"].(map[string]any)
+	assert.Equal(t, "heavy", st["key"])
+	assert.Equal(t, "Heavy blows", st["name"])
+	assert.Equal(t, "blows land 30% harder", st["gain"])
+	assert.Equal(t, "15 points less likely to hit", st["cost"])
+	assert.Contains(t, st["needs"], "two-handed")
+	assert.NotContains(t, st, "ready", "a member not here to check says nothing of its gear")
+	assert.NotContains(t, got["leader"].(map[string]any), "stance")
+	assert.NotContains(t, got["members"].([]any)[1].(map[string]any), "stance")
+
+	f, out := testFeed()
+	f.update(7, s)
+	stance.SetProvider(fakeStances{})
+	f.update(7, s)
+	require.Len(t, *out, 2, "taking the stance off resends the snapshot")
+}
+
+// Phase 78: the stance menu offers only what a member's gear can use. The
+// leader's gear is always known (empty hands fit nothing, said as []); a
+// companion away has no readable gear and no field, so the menu offers all.
+func TestCompanyStancesFitGear(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	u := users.NewUserRecord(7, 71)
+	users.SetTestUser(u)
+
+	fit := stancesFit(7, company.LeaderMemberKey)
+	require.NotNil(t, fit)
+	assert.Empty(t, *fit)
+	raw, err := json.Marshal(companyMember{StancesFit: fit})
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), `"stances_fit":[]`)
+
+	assert.Nil(t, stancesFit(7, company.MemberKey("companion:1")), "a companion not out has no readable gear")
+}
+
+// Phase 82d: each member's combat tempo rides its entry, two decimals, so
+// the panels can show it; a member not here to read carries none.
+func TestCompanyPayloadTempo(t *testing.T) {
+	prev := memberTempo
+	memberTempo = func(_ int, key company.MemberKey) (float64, bool) {
+		switch key {
+		case company.LeaderMemberKey:
+			return 1.25, true
+		case company.CompanionMemberKey(1):
+			return 0.8, true
+		}
+		return 0, false
+	}
+	t.Cleanup(func() { memberTempo = prev })
+	got := companyJSON(t, sampleCompany())
+	assert.Equal(t, 1.25, got["leader"].(map[string]any)["tempo"])
+	members := got["members"].([]any)
+	assert.Equal(t, 0.8, members[0].(map[string]any)["tempo"])
+	assert.NotContains(t, members[1].(map[string]any), "tempo", "an awaiting companion has no tempo to show")
+	assert.NotContains(t, members[2].(map[string]any), "tempo", "nor a dead one")
 }

@@ -1,0 +1,64 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">events</ansi>
+
+Now and then the road stops your company: a rope over a gorge, a
+stranger at a fire, a burned shrine. A scene opens as a page of text
+with numbered choices. Answer it, and what you chose happens.
+
+<ansi fg="yellow-bold">When a scene opens</ansi>
+
+  - You walk into a place that has one (a ruin, a lair's door, a spot on
+    the road), or a journey ends in a zone that does.
+  - You finish a camp rest, and the camp has a visitor.
+  - Each scene comes once for your company, or again after a long wait if
+    it is the kind that returns (those never pay gold, items or goodwill).
+    It is remembered through a restart (the web client shows it again
+    once you are back in; <ansi fg="command">event</ansi> brings it up any time), and a scene you
+    answered and then left behind is over.
+  - Never in a fight, on a journey, or while you rest, and you cannot
+    answer one during a fight or a rest either.
+
+<ansi fg="yellow-bold">Answering</ansi>
+
+  <ansi fg="command">choose 2</ansi>    take the second choice
+  <ansi fg="command">event</ansi>       read the waiting page again
+
+Your company stays where it is until you answer, and a page you leave
+waiting is still there after you log out. Every page has a way out.
+In the web client the page opens on its own screen: click a choice or
+press its number key. Close the screen and type <ansi fg="command">event</ansi> to bring it back.
+
+<ansi fg="yellow-bold">Who does it</ansi>
+
+A choice may need a skill, a class, a temperament, a good or evil heart
+or a certain level. The best member present who qualifies takes it, and
+the page names them: <ansi fg="black-bold">(Sera, chancy)</ansi>. A choice nobody qualifies for shows
+as <ansi fg="black-bold">(closed: needs a rogue)</ansi>; recruit differently and it opens. A choice
+that asks for nothing is yours, as the leader.
+
+Your life story counts too: a choice may need a background, such as a
+former soldier or an acolyte, and only you carry one. One your past opens
+shows as <ansi fg="black-bold">(Mara, life story: a soldier)</ansi>; one it does not shows as
+<ansi fg="black-bold">(closed: needs a leader who was a soldier)</ansi>, and stays closed, since a
+life story is set once (<ansi fg="command">help lifestory</ansi>).
+
+Some choices are risky. The page says so in words: a small risk, chancy,
+a long shot. The better the member does it (their skill, or their level),
+the safer it is.
+
+<ansi fg="yellow-bold">What can happen</ansi>
+
+  - Wounds and ailments, for the one who took the risk or for everyone.
+  - Hunger, thirst or tiredness.
+  - Supplies, items and gold gained or lost.
+  - Companions thinking better or worse of you (<ansi fg="command">help alignment</ansi>).
+    A choice that is plainly kind, greedy, bold, careful, reverent or
+    sly is noticed by the companions with you, who each say what they
+    think of it (<ansi fg="command">help opinions</ansi>).
+  - A fight with a named group.
+  - Being carried to another place, or a mark the company keeps, which
+    can change what later scenes offer.
+
+Nothing here moves the world's clock, and the gains are small: a scene is
+a choice with a cost, not a place to farm.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help wounds</ansi>, <ansi fg="command">help ailments</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help chronicle</ansi> (how a scene's end is written down).

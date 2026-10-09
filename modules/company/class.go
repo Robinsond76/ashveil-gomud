@@ -15,6 +15,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
@@ -530,6 +531,8 @@ func (m *CompanyModule) classGate(user *users.UserRecord, s classSubject) string
 	switch {
 	case c.Dead():
 		return fmt.Sprintf("%s has fallen and must be raised first.", name)
+	case c.OnErrand():
+		return fmt.Sprintf("%s is away on an errand and must return first.", name)
 	case c.Separated():
 		return fmt.Sprintf("%s is separated from the company and must rejoin first.", name)
 	}
@@ -590,6 +593,13 @@ func (m *CompanyModule) promote(user *users.UserRecord, room *rooms.Room, rest [
 		mudlog.Warn("company: promote", "leader", user.UserId, "error", cerr)
 		return "Your records couldn't be saved; nothing changed. Please try again."
 	}
+	promoted, key := s.name, string(domain.LeaderMemberKey)
+	if s.player {
+		promoted = user.Character.Name
+	} else {
+		key = string(domain.CompanionMemberKey(s.c.ID))
+	}
+	chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Promoted, Members: []string{promoted}, Keys: []string{key}, Subject: chosen.Name, Ref: "class:" + chosen.ID})
 	text := fmt.Sprintf("%s %s now a %s.", s.label(), s.are(), chosen.Name)
 	if s.player {
 		text = fmt.Sprintf("You are now a %s.", chosen.Name)

@@ -268,3 +268,32 @@ func TestUseCompanionItemLiveRecordsGear(t *testing.T) {
 	record, _ := module.registry.Get(7)
 	assert.Equal(t, 1, record.Companions[0].State.Items[0].Uses, "the record follows the live mob")
 }
+
+// TestPlanMealKeepsAMealBuff (Phase 50 review): a member on a meal buff eats
+// plain food when there is any, so company meal never swaps a Hearty stew
+// for a Strong slab; with only meals left it still eats.
+func TestPlanMealKeepsAMealBuff(t *testing.T) {
+	slab := food(fromCargo, "", "slab", 40, 0, 5)
+	slab.Meal = "seared"
+	larder := []larderItem{slab, food(fromOwnPack, tamsin, "bread", 30, 0, 5)}
+	fed := member(tamsin, "Tamsin", 60, 100)
+	fed.Needs.Meal, fed.Needs.MealBattles = "stew", 3
+	plan := planMeal([]survival.MemberNeeds{fed, member(you, "Dain", 60, 100)}, larder, mealEat)
+	assert.Equal(t, map[string]string{"Tamsin": "bread;", "Dain": "slab;"}, eaten(plan, larder),
+		"Tamsin keeps Hearty on plain bread; Dain, unbuffed, gets the slab")
+
+	plan = planMeal([]survival.MemberNeeds{fed}, []larderItem{slab}, mealEat)
+	assert.Equal(t, map[string]string{"Tamsin": "slab;"}, eaten(plan, []larderItem{slab}), "with only a meal, being fed wins")
+}
+
+// TestCompanionIDOfRequiresTheCompanionPrefix: a bare "5" or the leader key
+// is not a companion key; only "companion:<id>" with a positive id is.
+func TestCompanionIDOfRequiresTheCompanionPrefix(t *testing.T) {
+	id, ok := companionIDOf(survival.CompanionMemberKey(5))
+	assert.True(t, ok)
+	assert.Equal(t, 5, id)
+	for _, key := range []survival.MemberKey{"5", survival.LeaderMemberKey, "companion:0", "companion:x", "mob:5"} {
+		_, ok := companionIDOf(key)
+		assert.False(t, ok, "%q", key)
+	}
+}

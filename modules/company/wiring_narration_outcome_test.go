@@ -3,7 +3,6 @@ package company
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,7 +31,6 @@ type narrationMechanic struct {
 // b9729809 (before Phase 29d). Names, sequence/fight IDs, and fresh runtime
 // instance IDs are excluded; attacks, casts, rewards and endings remain.
 func TestNarrationPreservesCombatOutcome(t *testing.T) {
-	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
 	// Recaptured for Phase 35d: the blow-quality roll draws a die per landed
 	// blow, so every later roll moves. Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
@@ -79,7 +77,7 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 		return roles[ref.MobInstanceId]
 	}
 	seen := b.listen()
-	rand.Seed(29)
+	seedDice(t, 29) // after the setup, as the golden was captured
 	b.aimAt("bandit cutthroat")
 	b.aria.Character.ManaMax.Value = 100
 	b.aria.Character.Mana = 97

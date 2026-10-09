@@ -1,0 +1,17 @@
+roomid: 3501
+zone: Thornreach Wood
+title: Darkling Dell
+description: Ancient trees lean over the path and the light is green and dim. A ring of toadstools
+  grows in the leaf mould.
+biome: forest
+exits:
+  east:
+    roomid: 3502
+  south:
+    roomid: 3507
+resources:
+- shelter
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

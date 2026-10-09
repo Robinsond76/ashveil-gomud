@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,9 @@ func TestCampStateOf(t *testing.T) {
 
 	s, ok := m.CampStateOf(7, 100, []string{"camping"})
 	require.True(t, ok)
-	assert.Equal(t, camping.CampState{CanCamp: true}, s)
+	assert.Equal(t, camping.CampState{CanCamp: true, Recipes: s.Recipes, RecipeBook: s.RecipeBook}, s)
+	assert.Len(t, s.Recipes, 1, "the common chill remedy is in every book")
+	assert.Len(t, s.RecipeBook, 1)
 	s, _ = m.CampStateOf(7, 100, nil)
 	assert.False(t, s.CanCamp, "nowhere to camp here")
 
@@ -55,4 +58,26 @@ func TestCampStateRested(t *testing.T) {
 	s, _ := m.CampStateOf(7, 100, nil)
 	assert.True(t, s.Rested)
 	assert.False(t, s.Resting)
+}
+
+// TestRoomTagMatchingIsCaseInsensitiveEverywhere: making camp, the Camp tab's
+// CanCamp flag and the inn all judge a room by the same rule, so a room
+// tagged "Camping" or "INN" works for every path, not just the inn's.
+func TestRoomTagMatchingIsCaseInsensitiveEverywhere(t *testing.T) {
+	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	m := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, func() time.Time { return now })
+	user := campUser(t, 7, 100)
+
+	assert.True(t, roomEligible(&rooms.Room{RoomId: 100, Tags: []string{"Camping"}}, m.roomTag()))
+	assert.False(t, roomEligible(nil, m.roomTag()))
+
+	s, _ := m.CampStateOf(7, 100, []string{"CAMPING"})
+	assert.True(t, s.CanCamp)
+	s, _ = m.CampStateOf(7, 100, []string{"Inn"})
+	assert.True(t, s.Inn)
+
+	msg := m.establish(user, &rooms.Room{RoomId: 100, Title: "A Clearing", Tags: []string{"Camping"}})
+	assert.NotEqual(t, "There is nowhere here to make camp.", msg)
+	_, ok := m.camps[7]
+	assert.True(t, ok, "camp made in a room whose tag differs only by case")
 }

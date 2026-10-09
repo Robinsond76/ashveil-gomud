@@ -2,10 +2,13 @@ package characters
 
 import (
 	"slices"
+	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/hexes"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 )
 
 // Phase 38b: a character's class (the advanced or elite route promoted into
@@ -36,6 +39,65 @@ func (c *Character) ClassState() (string, []string) {
 // its route's ranks reached and the talents it has earned. Nil for a
 // character with neither.
 func (c *Character) ClassEffects() classes.Effects {
+	own := c.classOwnEffects()
+	if c == nil {
+		return own
+	}
+	key, gear := c.wornGear()
+	if key == "" {
+		return own
+	}
+	// Phase 36d: worn relics add their signature and set bonuses on top.
+	// classOwnEffects and wornGear drop mergedFx whenever either side is
+	// remade, so the merge is redone only then.
+	if c.mergedFx == nil {
+		c.mergedFx = classes.WithGear(own, gear)
+	}
+	return c.mergedFx
+}
+
+// WornGear is what the character's worn relics grant (Phase 36d): the
+// gear effects and each set's progress. Empty for a character in plain gear.
+func (c *Character) WornGear() (map[string]int, []items.ActiveSet) {
+	key, fx := c.wornGear()
+	if key == "" {
+		return nil, nil
+	}
+	return fx, c.gearSets
+}
+
+// wornGear returns a key naming the relics worn ("" when none) and the
+// effects they grant, recomputed only when the relics worn change.
+func (c *Character) wornGear() (string, map[string]int) {
+	key := ""
+	for _, slot := range AllSlots() {
+		if slot == items.Pack {
+			continue
+		}
+		if it := c.Equipment.Get(slot); it.ItemId > 0 && (items.IsRelicItem(it.ItemId) || it.Trophy > 0) {
+			// Phase 67: a waking relic changes the key; Phase 71: so does an enchant.
+			key += strconv.Itoa(it.ItemId) + ":" + strconv.Itoa(it.AwakenedMask()) + ":" + strconv.Itoa(it.Trophy) + ","
+		}
+	}
+	if key == "" {
+		c.gearKey = ""
+		return "", nil
+	}
+	if key != c.gearKey {
+		var worn []items.Item
+		for _, slot := range AllSlots() {
+			if slot != items.Pack {
+				worn = append(worn, *c.Equipment.Get(slot))
+			}
+		}
+		c.gearFx, c.gearSets = items.GearEffects(worn)
+		c.gearKey = key
+		c.mergedFx = nil
+	}
+	return key, c.gearFx
+}
+
+func (c *Character) classOwnEffects() classes.Effects {
 	class, talents := c.ClassState()
 	// Phase 39b: a neutral lineage's base ranks (the Samurai's Iaijutsu)
 	// count from level 1, before any promotion.
@@ -46,12 +108,16 @@ func (c *Character) ClassEffects() classes.Effects {
 		}
 	}
 	if class == "" && len(talents) == 0 && lineage == "" {
+		if c != nil && c.fxValid {
+			c.fxValid, c.mergedFx = false, nil // 36d review: no class now, so no merge on the old one
+		}
 		return nil
 	}
 	if c.fxValid && c.fxClass == class && c.fxLineage == lineage && c.fxLevel == c.Level && slices.Equal(c.fxTalents, talents) {
 		return c.fx
 	}
 	c.fx = classes.EffectsForLineage(lineage, class, c.Level, talents)
+	c.mergedFx = nil // 36d review: the gear merge sits on top of the old map
 	c.fxClass, c.fxLineage, c.fxLevel, c.fxTalents, c.fxValid = class, lineage, c.Level, slices.Clone(talents), true
 	return c.fx
 }
@@ -136,7 +202,17 @@ type ClassAura struct {
 // it is saved, and a fight's end clears all of it but the Lay on Hands
 // uses, which come back with rest.
 type ClassRT struct {
+	// Stance is the weapon stance (Phase 69) the member fights this battle
+	// in, set each round from the store; its effect needs the right gear.
+	Stance stance.Stance
+	// StanceRead is set once the battle has read the stance from the store,
+	// so nothing written there mid-battle changes it.
+	StanceRead    bool
 	Ward, WardCap int // blows a ward absorbs, and the most it takes from each
+	// Phase 50: the battle condition the member began this battle in, from
+	// its needs and meal buff: percent on the damage it deals, and percent
+	// less damage it takes (negative: more, from thirst).
+	FareDamage, FareGuard int
 	// WardSigil marks a ward a ward sigil gave (Phase 54 review): a caster's
 	// own ward replaces it, and healers do not count it as warded.
 	WardSigil    bool
@@ -154,6 +230,7 @@ type ClassRT struct {
 	Summon       *SummonInfo // set on a summoned creature
 	Doll         *DollInfo   // set on a Doll Master's doll (Phase 39d)
 	Beast        *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
+	HobbledBy    *ClassRT    // on a foe: the beast whose bite last hobbled it (39i2 Pack hunt)
 	Bless        int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.
@@ -168,21 +245,30 @@ type ClassRT struct {
 	// resolved (a Sweep's 90%, a held blow's 125%) and is cleared at once.
 	Brace   bool
 	BlowPct int
+	// BraceUsed counts the held blows a brace has answered (a Linebreaker's
+	// Twin brace holds for two).
+	BraceUsed int
 	// The Samurai's lineage (Phase 39b).
-	IaiSpent     bool   // the first strike of the battle has been made
+	IaiSpent     bool   // the first strike of the battle has been made (every strike Iaijutsu covers, for a Sword Saint)
+	IaiStrikes   int    // strikes that carried Iaijutsu's edge this battle (a Sword Saint's Twin draw)
 	Quiet        int    // rounds in a row no blow has landed on it (Focus)
 	Struck       bool   // a blow landed on it since the round began
 	QuietStarted bool   // the first round's Focus count has begun
 	ZanshinRound uint64 // the combat round Zanshin last gave its turn back
 	Bodyguards   int    // Bodyguard steps spent this battle
+	BondGuards   int    // bond steps spent this battle: a friend stepped in for a friend (Phase 65)
+	BondRefused  bool   // a rival's refusal to guard has been told this battle (Phase 65)
 	SidePeak     int    // the most of its side standing this battle (Vengeance)
+	Alone        bool   // it is the last of its company standing (a Kenshi's Last stand)
 	EliteRT             // Phase 38c2: the rogue and ranger elites
 	// The Doll Master's lineage (Phase 39d): Guard String uses spent, the
 	// Emergency Splice spent this battle, and the Master's next turn owed to
 	// it.
-	DollGuards int
-	Spliced    bool
-	SpliceTurn bool
+	DollGuards   int
+	Spliced      bool
+	SpliceTurn   bool
+	SplicedAgain bool // a Golem Lord's Rise again has been spent (Phase 39i)
+	Cut          int  // on a foe: the Attack its next attack loses to a String Sovereign's Cut strings
 	// The Arbalist's lineage (Phase 39h): a bolt just loosed leaves its next
 	// turn to the winding (Reload); BoltFired is the first bolt of the battle
 	// spent; AimStruck is a blow landing on the holder since its last bolt
@@ -194,6 +280,17 @@ type ClassRT struct {
 	AimStruck  bool
 	BlowPierce int
 	Shred      int
+	// Phase 39i2: the Siege Master's Ballista bolts passed through this
+	// battle, and the Bastion's Covering shots loosed.
+	Through  int
+	ColShots int
+	// Phase 39i2: a Panacean's Elixir. On the Panacean: how many times it has
+	// worked this battle, how many it may, and the percent of an ally's health
+	// it leaves. On every ally of its side: the Panacean covering it.
+	ElixirSpent int
+	ElixirMax   int
+	ElixirPct   int
+	ElixirBy    *ClassRT
 	// The Beast Tamer's lineage (Phase 39e): the Attack Sic gives its beast
 	// this round, the Evasion Pack Sense gives the Tamer while the beast
 	// stands, and the Rally heals spent this battle.
@@ -337,12 +434,23 @@ func (c *Character) GuardFall(dmg, room int, warded bool) (int, string) {
 		c.RT.Saved = "bargain"
 		return max(0, room-1), c.RT.Saved
 	}
+	// Phase 39i2: a Panacean's Elixir keeps a falling ally on its feet.
+	if by := c.RT.ElixirBy; by != nil && by.ElixirSpent < by.ElixirMax {
+		by.ElixirSpent++
+		c.RT.Saved = "elixir"
+		return max(0, room-1), c.RT.Saved
+	}
 	return dmg, ""
 }
 
 // ShieldBlow spends a Divine Shield on a blow, once a battle.
 func (c *Character) ShieldBlow() bool {
-	if c.RT == nil || c.RT.ShieldUsed || !c.ClassEffects().Has(classes.DivineShield) {
+	if !c.ClassEffects().Has(classes.DivineShield) {
+		return false
+	}
+	// 36d review: a relic gives a classless wearer the shield, and it may be
+	// struck before it has acted (and so before it has runtime state).
+	if rt := c.RTState(); rt.ShieldUsed {
 		return false
 	}
 	c.RT.ShieldUsed = true

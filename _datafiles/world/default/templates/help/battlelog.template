@@ -1,0 +1,66 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">battlelog</ansi>
+
+A battle plays out on its own, so when it goes badly the way to do better
+next time is to see why. Every weapon blow your company throws or takes
+keeps the engine's own roll, and <ansi fg="command">why</ansi> reads it back in plain words.
+
+<ansi fg="yellow-bold">What a blow's breakdown says</ansi>
+
+  <ansi fg="command">1. Round 3: Aria -> the cutthroat captain, hit for 5.</ansi>
+  <ansi fg="command">   To hit: 60 in 100, rolled 12 (it landed). Skill and speed gave 55, +5 from company chemistry.</ansi>
+  <ansi fg="command">   Defence: 25 in 100 to turn it aside, and it was not.</ansi>
+  <ansi fg="command">   A telling blow.</ansi>
+  <ansi fg="command">   Damage: 7 before armor, armor 30 took 2, 5 got through.</ansi>
+
+- <ansi fg="yellow">To hit</ansi> is the chance in 100 the blow was rolled at, and the roll, from 1 to
+  100 (a roll at or under the chance lands). It names what moved the chance off what skill and
+  speed gave: darkness or a second weapon, and company chemistry (<ansi fg="command">help evasion</ansi>,
+  <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help light</ansi>).
+- <ansi fg="yellow">Then it was blocked, parried or dodged</ansi> names the one defence the blow met
+  and its chance in 100 (<ansi fg="command">help defense</ansi>). A defended blow does no damage.
+- <ansi fg="yellow">A glancing or telling blow</ansi> and <ansi fg="yellow">a critical hit</ansi> are said when they
+  applied; a solid blow is the norm and goes unsaid (<ansi fg="command">help narration</ansi>).
+- <ansi fg="yellow">Damage</ansi> is the blow before armor, the armor it met and what that took, and
+  what got through. Armor takes a random share of each blow, up to its rating
+  in percent: armor 30 takes up to 29% of it. A blow armor took whole does no
+  damage. A ward, aura or divine shield that took some says so on its own line.
+- Named modifiers add a line each when they acted: a sharpened edge, a
+  readied strike, Iaijutsu, a wind-up's multiplier, a piercing blow that
+  ignored part of the armor, a ward or aura that took some, a coup de grace,
+  class effects, leadroot poison, and hunger, thirst or a meal.
+- A round with several blows (two weapons, a fast fighter) lists each as
+  <ansi fg="yellow">Strike 1</ansi>, <ansi fg="yellow">Strike 2</ansi>. A blow that needed no roll says why: a Marksman's
+  perfect shot, or a body with nothing to hurt with. A Swordmaster's Perfect
+  Parry turns its blow without a roll, and says so. A pet's bite has a line
+  of its own: what it did after armor. A chance pushed past the
+  limits on any chance to hit says what it was held to.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">why</ansi>            explain the last three rounds, newest first
+  <ansi fg="command">why list</ansi>       number the recent rounds, one line each
+  <ansi fg="command">why [number]</ansi>   explain one of them in full
+
+It covers the latest fight (the log is cleared when the next begins, and
+keeps the last 40 rounds), the rounds your own company fought, yours
+and the foe's. Rounds are numbered as the fight counts them, from 1, the
+same as the dim <ansi fg="yellow">Round</ansi> line that opens each round in the text. Rounds against a foe you can't make out (in the dark, or
+hidden) are left out: their armor and chances would give it away. The log
+lives only while the server runs; a restart clears it. It works during a fight or after one, costs nothing, and
+changes nothing. Spells and abilities are not explained here: their lines
+say what they did.
+
+<ansi fg="yellow-bold">In the web client</ansi>
+
+The Combat tab keeps a <ansi fg="yellow">Last rounds</ansi> list, under the battle and after it.
+Each round is one line ("Round 3: the cutthroat captain → Wren: missed");
+open it for the same breakdown. It keeps the last twelve of the latest fight.
+
+<ansi fg="yellow-bold">After the fight</ansi>
+
+The battle summary also says why the fight went as it did
+(<ansi fg="command">help battle-summary</ansi>): who took the most damage, which members never
+landed a blow and what became of their swings, the class abilities the
+company used, and the sigil that held over the battle.
+
+See also: <ansi fg="command">help narration</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help battle-summary</ansi>, <ansi fg="command">help combat</ansi>.

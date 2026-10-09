@@ -63,6 +63,12 @@ type Character struct {
 	fxLevel   int
 	fxTalents []string
 	fxValid   bool
+	// Phase 36d: what worn relics add on top of fx, cached against the
+	// relic ids worn and the fx map it was added to.
+	gearKey  string
+	gearFx   map[string]int
+	gearSets []items.ActiveSet
+	mergedFx classes.Effects
 	// Aura is what allies' class auras give this character this round
 	// (Phase 38b); the combat round sets it and nothing saves it.
 	Aura ClassAura `yaml:"-"`
@@ -111,6 +117,7 @@ type Character struct {
 	Charmed             *CharmInfo                     `yaml:"-"`                          // If they are charmed, this is the info
 	CharmedMobs         []int                          `yaml:"-"`                          // If they have charmed anyone, this is the list of mob instance ids
 	Items               []items.Item                   `yaml:"items,omitempty"`            // The items the character is holding
+	Seized              []items.Item                   `yaml:"seized,omitempty"`           // Ashveil (Phase 53): the pack a defeat's captors hold until it is reclaimed; saved with Items so a restart never loses or doubles it
 	Buffs               buffs.Buffs                    `yaml:"buffs,omitempty"`            // The buffs the character has active
 	Equipment           Worn                           `yaml:"equipment,omitempty"`        // The equipment the character is wearing
 	TNLScale            float32                        `yaml:"-"`                          // The experience scale of the character. Don't write to yaml since is dynamically calculated.
@@ -126,6 +133,10 @@ type Character struct {
 	KeyRing             map[string]string              `yaml:"keyring,omitempty"`          // key is the lock id, value is the sequence
 	KD                  KDStats                        `yaml:"kd,omitempty"`               // Kill/Death stats
 	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`         // Any random other data that needs to be stored
+	Looks               map[string]string              `yaml:"looks,omitempty"`            // Ashveil 72a: the player's picks from looks.yaml (trait id to option id, plus the free line)
+	LifeStory           map[string]string              `yaml:"lifestory,omitempty"`        // Ashveil 72a: the player's life story picks (stage id to option id, and the stat each +1 went to)
+	Hardcore            bool                           `yaml:"hardcore,omitempty"`         // Ashveil 77: the Iron option chosen at creation (a harder defeat), fixed for the character's life
+	Blessings           []string                       `yaml:"blessings,omitempty"`        // Ashveil 77: the account blessings this character was given at creation
 	ExtraLives          int                            `yaml:"extralives,omitempty"`       // How many lives remain. If enabled, players can perma-die if they die at zero
 	Pet                 pets.Pet                       `yaml:"pet,omitempty"`              // Do they have a pet?
 	Created             time.Time                      `yaml:"created"`                    // When this character was created
@@ -180,12 +191,15 @@ func New() *Character {
 		Items:          []items.Item{},
 		Buffs:          buffs.New(),
 		Equipment:      Worn{},
-		MiscData:       make(map[string]any),
-		roomHistory:    make([]int, 0, 10),
-		KeyRing:        make(map[string]string),
-		Created:        time.Now(),
-		PlayerDamage:   map[int]int{},
-		Timers:         map[string]gametime.RoundTimer{},
+		// Phase 56 review: an empty recipe book (cookbook.BookKey) marks a
+		// character made after recipe discovery; a saved character without
+		// the key predates it and keeps every dish (cookbook.Legacy).
+		MiscData:     map[string]any{"recipebook": ""},
+		roomHistory:  make([]int, 0, 10),
+		KeyRing:      make(map[string]string),
+		Created:      time.Now(),
+		PlayerDamage: map[int]int{},
+		Timers:       map[string]gametime.RoundTimer{},
 	}
 }
 
@@ -1715,7 +1729,7 @@ func (c *Character) StatMod(statName string) int {
 	if !c.Pet.IsMissing() {
 		petMod = c.Pet.StatMod(statName)
 	}
-	return c.Equipment.StatMod(statName) + c.Buffs.StatMod(statName) + petMod
+	return c.Equipment.StatMod(statName) + c.Buffs.StatMod(statName) + petMod + c.lifeStoryStatMod(statName)
 }
 
 // returns true if something has changed.

@@ -28,12 +28,18 @@ round count; a rest takes real time, not game time.
   A camp is part of the room: <ansi fg="command">look</ansi> shows it to everyone
   there, a cold fire pit until the fire is lit and bedrolls around a
   crackling campfire after, glowing embers once it has burned down, and
-  an oiled canvas tent when one is pitched. Someone else's camp is shown with its
+  the tent when one is pitched (an oiled canvas tent, a fur-lined tent...). Someone else's camp is shown with its
   leader's name. It goes when the camp is struck.
 
   <ansi fg="command">camp status</ansi>
   Shows your camp, whether the fire is lit, how a rest is progressing,
-  and your company's current needs.
+  and your company's current needs, with each member's rest duty once you
+  have set any.
+
+  <ansi fg="command">camp duties</ansi>
+  Lets members work through the next rest instead of sleeping: keep watch,
+  tend the company's wounds and blades, forage, cook or brew (<ansi fg="command">help camp duties</ansi>).
+  Everyone sleeps by default, and the rest is unchanged unless you set a duty.
 
 <ansi fg="yellow-bold">Resting</ansi>
 
@@ -46,7 +52,7 @@ round count; a rest takes real time, not game time.
   When the rest finishes, every current company member's Fatigue rises
   by 20 (less if bad weather is spoiling the rest, see below), and you
   and every companion with you gain the <ansi fg="yellow">Rested</ansi> buff for 15 minutes of
-  real time. Rested cuts your walking strain. If anyone already has the
+  real time (not anyone you gave a rest duty: <ansi fg="command">help camp duties</ansi>). Rested cuts your walking strain. If anyone already has the
   better <ansi fg="yellow">Well Rested</ansi> buff from an inn stay (<ansi fg="command">help inn</ansi>), the camp rest
   still restores their Fatigue but doesn't touch that buff — Well Rested
   always wins, and a camp rest never replaces it with the lesser Rested.
@@ -70,10 +76,12 @@ round count; a rest takes real time, not game time.
   scaled down (never increased) by how bad conditions are where you've
   camped, so the same rest recovers less in a storm than under clear
   skies. In a shelter room (<ansi fg="command">help resources</ansi>) the penalty is halved: recovery
-  moves halfway from the weather's figure toward a full rest; so does a tent.
+  moves halfway from the weather's figure toward a full rest; so does a tent
+  (a fur-lined tent shuts the weather out altogether).
   After a rest the fire is embers, so another rest costs another bundle.
   Camp gear improves a rest: bedrolls add a quarter more Fatigue for each
-  member who has one, a tent shelters the company, bells and trip lines
+  member who has one, a tent shelters the company (and trades something
+  for something: <ansi fg="command">camp tent</ansi>), bells and trip lines
   warn of raiders and keep thieves out, and a field surgeon's kit treats a
   wound (<ansi fg="command">help camp gear</ansi>). The rest report lists the gear in use.
   On dangerous roads a camp without bells may be robbed while it sleeps; you
@@ -90,6 +98,17 @@ round count; a rest takes real time, not game time.
   <ansi fg="command">sharpen auto on</ansi>, which sharpens automatically whenever a camp rest
   ends.
 
+  <ansi fg="yellow-bold">Before you sleep</ansi>
+  Sharpening, poisoning and cooking are camp chores: do them before the
+  rest begins. In the web client the Camp tab lists them under "Before you
+  sleep", each with a button, who does it, and what it uses; a chore with
+  nothing to do says why, such as "No blades are dull enough to need the
+  whetstone." Fortifying broth and watch incense join the list when you
+  carry them (camp prepare broth all, camp prepare incense). Once the
+  company sleeps the chores close; sharpen, camp cook and camp poison
+  apply refuse until the rest ends. Poison and sharpening work anywhere
+  you stand still; cooking needs a lit fire.
+
   When a camp rest finishes, gear you are wearing reveals what it is, and
   your best Scribe reads the unidentified gear the company carries
   (<ansi fg="command">help identify</ansi>).
@@ -103,15 +122,19 @@ round count; a rest takes real time, not game time.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 
-  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">recipes</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp tent</ansi> [<ansi fg="command">canvas</ansi>|<ansi fg="command">fur</ansi>|<ansi fg="command">camouflaged</ansi>|<ansi fg="command">large</ansi>|<ansi fg="command">clear</ansi>]
+  <ansi fg="command">camp duties</ansi> [member|all] [<ansi fg="command">sleep</ansi>|<ansi fg="command">watch</ansi>|<ansi fg="command">tend</ansi>|<ansi fg="command">forage</ansi>|<ansi fg="command">cook</ansi>|<ansi fg="command">brew</ansi>] | <ansi fg="command">camp duties clear</ansi>
   <ansi fg="command">camp poison</ansi> [<ansi fg="command">assign</ansi>|<ansi fg="command">unassign</ansi>|<ansi fg="command">preview</ansi>|<ansi fg="command">apply</ansi>]
   <ansi fg="command">camp sharpen</ansi> [<ansi fg="command">status</ansi> | <ansi fg="command">auto on</ansi>|<ansi fg="command">off</ansi>]
+  <ansi fg="command">camp music</ansi> [<ansi fg="command">on</ansi>|<ansi fg="command">off</ansi>]
 
 <ansi fg="yellow-bold">Cooking, raids, and camp specialists</ansi>
 
-  <ansi fg="command">camp cook</ansi>
-  With your camp's fire lit, cook a meal from what your pack and the
-  company cargo hold (<ansi fg="command">help cooking</ansi>).
+  <ansi fg="command">camp cook</ansi> [ingredient ...]
+  With your camp's fire lit, cook a dish you know from what your pack and
+  the company cargo hold, or name ingredients to try a new mix
+  (<ansi fg="command">help cooking</ansi>, <ansi fg="command">help recipes</ansi>).
 
   <ansi fg="command">camp supplies</ansi>, <ansi fg="command">camp prepare</ansi> [supply] [member]
   Fortifying broth, a warming draught, a cooling salve, or watch incense,
@@ -121,6 +144,11 @@ Camping in the wilds isn't always safe: raiders may come during a rest
 (<ansi fg="command">help campwatch</ansi>). A finished rest that raiders didn't spoil also
 brings a ranger's forage (<ansi fg="command">help forage</ansi>) and a cleric's vigil
 (<ansi fg="command">help vigil</ansi>).
+
+Musicians can play a song as a rest begins: longer Rested, more Fatigue, a
+quicker first battle, faster recovery from ailments, at the price of a
+likelier raid (<ansi fg="command">help music</ansi>, <ansi fg="command">help instruments</ansi>, <ansi fg="command">camp music on</ansi>|<ansi fg="command">off</ansi>).
+At an inn the same company can play for pay (<ansi fg="command">help gigs</ansi>).
 
 Your companions talk as a rest begins and ends, and the web client's Camp tab
 shows their latest words (<ansi fg="command">help banter</ansi>).
@@ -132,7 +160,7 @@ The web client's map also marks your camp as a tent on its tile, with its
 fire and a sleeping mark while you rest. The camps of your own party show
 as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
 
-See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help poisons</ansi>, <ansi fg="command">help survival</ansi>,
-<ansi fg="command">help weather</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help banter</ansi>.
+See also: <ansi fg="command">help music</ansi>, <ansi fg="command">help instruments</ansi>, <ansi fg="command">help gigs</ansi>, <ansi fg="command">help camp duties</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help poisons</ansi>, <ansi fg="command">help survival</ansi>,
+<ansi fg="command">help weather</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help banter</ansi>, <ansi fg="command">help events</ansi>, <ansi fg="command">help opinions</ansi> (what your companions think of a rough camp), <ansi fg="command">help bonds</ansi> (a rest together draws companions closer, or not).
 
 A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

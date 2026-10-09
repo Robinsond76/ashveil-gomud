@@ -107,10 +107,14 @@ the one thing you can change in a battle.
 The word guard makes a guardian; to go for the foe striking your most
 hurt, use <ansi fg="command">defend</ansi> (or protect).
 
+Orders sit on top of a strategy: up to 3 "when this, do that" rules for each
+member (heal an ally below half health, break a chant, guard a hurt ally...),
+read each round before the role and target rule (<ansi fg="command">help orders</ansi>).
+
 Set strategies before a battle: during one they can be read but not
 changed (only the company focus can be called: <ansi fg="command">help tactics</ansi>). Strategies are kept when you log out.
 
 In the web client, the Combat tab shows how everyone fights; click a
 member to change it (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help abilities</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help mana</ansi>.
+See also: <ansi fg="command">help orders</ansi>, <ansi fg="command">help stances</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help mana</ansi>.

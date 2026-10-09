@@ -1,0 +1,22 @@
+roomid: 3914
+zone: Stormcrown Heights
+title: High Ice Shelf
+description: Ice crusts the rock and the path is a thread of footprints. Old climbers' ropes hang
+  frozen from a crag.
+biome: cliffs
+exits:
+  east:
+    roomid: 3915
+  west:
+    roomid: 3913
+  south:
+    roomid: 3921
+  north:
+    roomid: 3906
+resources:
+- firewood
+- game
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

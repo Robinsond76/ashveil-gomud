@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -216,7 +217,13 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 			sort.Ints(recipeIds)
 
+			hidden := 0
 			for _, finalItemId := range recipeIds {
+				// Phase 56: only dishes the viewer has learned are listed.
+				if container.IsHearth(containerName) && !cookbook.Knows(user.Character, HearthRecipe(container, finalItemId)) {
+					hidden++
+					continue
+				}
 				recipeList := container.Recipes[finalItemId]
 
 				neededItems := map[int]int{}
@@ -246,6 +253,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					user.SendText(fmt.Sprintf(`        <ansi fg="%s">[%d/%d]</ansi> <ansi fg="itemname">%s</ansi>`, colorClass, totalContained, qtyNeeded, tmpItem.DisplayName()))
 				}
 
+			}
+
+			if hidden > 0 {
+				user.SendText(``)
+				user.SendText(`    <ansi fg="8">Other dishes are yet to be worked out: <ansi fg="command">cook</ansi> a combination to try one (<ansi fg="command">help recipes</ansi>).</ansi>`)
 			}
 
 		}
@@ -486,6 +498,17 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Phase 32a: a candidate on a recruiter's notice.
 	if text, ok := company.LookCandidate(user.UserId, room.RoomId, rest); ok {
 		user.SendText(text)
+		return true, nil
+	}
+
+	// Something lying on the floor: the web client's Look menu names it by
+	// its id (look !29:1-...), and a player can name it too.
+	if floorItem, ok := room.FindOnFloor(lookAt, false); ok {
+		user.SendText(``)
+		user.SendText(fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> on the ground:`, floorItem.DisplayName()))
+		user.SendText(``)
+		user.SendText(floorItem.GetLongDescriptionFor(user.Character.GetSkillLevel(`scribe`)))
+		user.SendText(``)
 		return true, nil
 	}
 

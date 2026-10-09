@@ -1,0 +1,17 @@
+roomid: 3722
+zone: Ashen Barrows
+title: Cold Crypt
+description: Cracked flagstones cover the floor and the dust has been disturbed.
+biome: dungeon
+exits:
+  west:
+    roomid: 3721
+  north:
+    roomid: 3716
+resources:
+- firewood
+- shelter
+mapx: 2
+mapy: 3
+mapz: 0
+hascoordinates: true

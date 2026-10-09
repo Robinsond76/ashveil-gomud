@@ -33,6 +33,15 @@
  *   - A company member's click opens Setup's menu. The Combat tab shows a
  *     marker while a battle runs and another tab is showing.
  *
+ * Phase 62, battle lines that explain themselves:
+ *
+ *   - Under either view, "Last rounds" lists the latest fight's weapon
+ *     rounds of the company's own (newest first, kept after the fight ends,
+ *     12 at most), each a one-line heading that opens into the engine's own
+ *     roll in plain lines (battle-rounds.js; Company.Battle.Event's
+ *     `explain`): what the hit needed and rolled, the defence it met, armor
+ *     and named modifiers. `why` says the same in the log.
+ *
  * Phase 30c, company tactics:
  *
  *   - The Battle view's focus buttons (none and the seven focus rules), the
@@ -59,6 +68,23 @@
  *     number). None in the dark.
  *   - Phase 33i2: under it, how the group fights together and the roles it
  *     shows (the outlook's coordination), as scout says it.
+ *
+ * Phase 61, battle orders:
+ *
+ *   - Under each member's row in Setup, their battle orders in the words the
+ *     `orders` command uses (Company's members[].orders), read in order
+ *     each round before the member's strategy, and an "Orders" button whose
+ *     menu sends orders <who> add <condition> then <action>, remove <n>,
+ *     up <n>, preset and clear. Orders are set between battles: in a battle
+ *     they are listed, with no button.
+ *
+ * Phase 69, weapon stances:
+ *
+ *   - Under each member's orders, their weapon stance (Company's
+ *     members[].stance: name, whether the member holds what it needs, and
+ *     the trade in the tooltip) and a "Stance" button whose menu sends
+ *     stance <who> <key> or off. Stances are set between battles: in a
+ *     battle a set stance is listed, with no button.
  *
  * Every name is set with textContent, never innerHTML.
  *
@@ -150,6 +176,12 @@
         .cbt-member .cbt-how { color: var(--t-text-secondary); white-space: nowrap; }
         .cbt-member.is-fallen { opacity: 0.6; border-style: dashed; }
 
+        .cbt-orders { margin: 1px 0 3px 10px; font-size: 0.92em; color: var(--t-text-secondary); display: flex; flex-direction: column; gap: 2px; }
+        .cbt-orders ol { margin: 0; padding-left: 1.4em; }
+        .cbt-orders .cbt-btn { align-self: flex-start; }
+        .cbt-stance { margin: 1px 0 3px 10px; font-size: 0.92em; color: var(--t-text-secondary); display: flex; flex-direction: column; gap: 2px; }
+        .cbt-stance .cbt-btn { align-self: flex-start; }
+
         .cbt-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 
         .cbt-btn {
@@ -224,6 +256,12 @@
         .cbt-focus .cbt-btn { padding: 2px 6px; }
         .cbt-focus .cbt-btn[aria-pressed="true"] { background: var(--t-accent-dim); color: var(--t-text-white); font-weight: bold; }
         .cbt-focus .cbt-btn:disabled { opacity: 0.55; cursor: default; }
+        .cbt-rounds { margin-top: 6px; }
+        .cbt-rounds > summary { cursor: pointer; color: var(--t-text-secondary); }
+        .cbt-rounds ul { list-style: none; margin: 4px 0 0; padding: 0; }
+        .cbt-rounds li { margin: 0 0 2px; overflow-wrap: anywhere; }
+        .cbt-rounds li summary { cursor: pointer; }
+        .cbt-rounds .cbt-why { margin: 2px 0 4px 1em; color: var(--t-text-secondary); font-size: 0.9em; }
         .cbt-setup > summary { cursor: pointer; color: var(--t-text-secondary); }
         .cbt-setup[open] > summary { margin-bottom: 4px; }
     `);
@@ -244,6 +282,41 @@
         root.appendChild(body);
         document.body.appendChild(root);
         return root;
+    }
+
+    // Phase 62: the explained rounds of the latest fight, kept after it ends.
+    const rounds = window.BattleRounds ? window.BattleRounds.create(12) : null;
+    let roundsOpen = false;
+    const roundsOpenIds = new Set();
+
+    // rememberRounds reads which rounds are open before a rebuild drops them.
+    function rememberRounds(root) {
+        const d = root.querySelector('details.cbt-rounds');
+        if (!d) { return; }
+        roundsOpen = d.open;
+        roundsOpenIds.clear();
+        d.querySelectorAll('li details[open]').forEach(n => roundsOpenIds.add(Number(n.getAttribute('data-round'))));
+    }
+
+    function renderRounds(root) {
+        const list = rounds ? rounds.list() : [];
+        if (!list.length) { return; }
+        const d = el('details', 'cbt-rounds');
+        d.open = roundsOpen;
+        d.appendChild(el('summary', null, 'Last rounds: why each blow went as it did (' + list.length + ')'));
+        const ul = el('ul');
+        list.forEach(r => {
+            const li = el('li');
+            const inner = el('details');
+            inner.open = roundsOpenIds.has(r.id);
+            inner.setAttribute('data-round', r.id);
+            inner.appendChild(el('summary', null, (r.round ? 'Round ' + r.round + ': ' : '') + r.head));
+            r.lines.forEach(line => inner.appendChild(el('div', 'cbt-why', line)));
+            li.appendChild(inner);
+            ul.appendChild(li);
+        });
+        d.appendChild(ul);
+        root.appendChild(d);
     }
 
     const win = new VirtualWindow('Combat', {
@@ -302,6 +375,128 @@
         }
         if (s.reserve) { parts.push('keeps ' + s.reserve + '% mana'); }
         return parts.join(', ');
+    }
+
+    // MAX_ORDERS is the most orders a member carries; ORDER_ADDS are the
+    // orders the menu offers, as `orders <who> add` reads them, each with
+    // its short label (the command checks every one).
+    const MAX_ORDERS = 3;
+    const ORDER_ADDS = [
+        ['ally 25 then heal', 'Ally below 25%: heal them'],
+        ['ally 50 then heal', 'Ally below 50%: heal them'],
+        ['ally 75 then heal', 'Ally below 75%: heal them'],
+        ['self 50 then heal', 'Me below 50%: heal myself'],
+        ['ally 25 then guard', 'Ally below 25%: guard them'],
+        ['ally 50 then guard', 'Ally below 50%: guard them'],
+        ['ally 75 then guard', 'Ally below 75%: guard them'],
+        ['chanting then break', 'A foe chants: break it'],
+        ['foe healer then break', 'A healer stands: turn on it'],
+        ['foe caster then break', 'A caster stands: turn on it'],
+        ['boss then break', 'A boss stands: turn on it'],
+        ['boss then strongest', 'A boss stands: cast my strongest'],
+        ['first then strongest', 'Battle opens: cast my strongest'],
+        ['first then hold', 'Battle opens: hold my mana'],
+    ];
+
+    // ordersMenu is a member's orders menu: take one off, read one sooner,
+    // add one of the offered, the class's starting set, or clear them all.
+    function ordersMenu(m, list) {
+        const w = who(m);
+        const items = [];
+        list.forEach((line, i) => {
+            items.push({ label: 'Remove order ' + (i + 1), cmd: 'orders ' + w + ' remove ' + (i + 1) });
+            if (i > 0) { items.push({ label: 'Read order ' + (i + 1) + ' sooner', cmd: 'orders ' + w + ' up ' + (i + 1) }); }
+        });
+        if (list.length < MAX_ORDERS) {
+            // An order already set is left out: the command refuses a repeat.
+            const set = Array.isArray(m.order_cmds) ? m.order_cmds : [];
+            ORDER_ADDS.filter(a => set.indexOf(a[0]) < 0).forEach(a => items.push({ label: 'Add: ' + a[1], cmd: 'orders ' + w + ' add ' + a[0] }));
+        }
+        items.push({ label: 'Starting set for the class', cmd: 'orders ' + w + ' preset' });
+        if (list.length) { items.push({ label: 'Clear all orders', cmd: 'orders ' + w + ' clear' }); }
+        return items;
+    }
+
+    // ordersBlock is the orders under a member's row: the list, and the
+    // button that edits it between battles.
+    function ordersBlock(m, inBattle) {
+        const list = Array.isArray(m.orders) ? m.orders : [];
+        if (m.status === 'dead' || (inBattle && !list.length)) { return null; }
+        const box = el('div', 'cbt-orders');
+        box.setAttribute('data-key', m.key);
+        if (list.length) {
+            const ol = el('ol');
+            ol.setAttribute('aria-label', 'Orders for ' + m.name + ', read in this order each round');
+            list.forEach(line => ol.appendChild(el('li', null, line)));
+            box.appendChild(ol);
+        }
+        if (!inBattle) {
+            const b = el('button', 'cbt-btn cbt-orders-btn', list.length ? 'Orders (' + list.length + ')' : 'Orders: none');
+            b.type = 'button';
+            b.setAttribute('aria-haspopup', 'menu');
+            b.title = 'Battle orders for ' + m.name + ': when this happens, do that (help orders)';
+            b.addEventListener('click', e => uiMenu(e, ordersMenu(m, list)));
+            box.appendChild(b);
+        }
+        return box;
+    }
+
+    // STANCES are the weapon stances the menu offers, as `stance <who> <key>`
+    // reads them: key, name, the family it is for.
+    const STANCES = [
+        ['heavy', 'Heavy blows', 'great weapon'],
+        ['wall', 'Shield wall', 'shield'],
+        ['quick', 'Quick draw', 'bow'],
+        ['keen', 'Keen edge', 'dagger'],
+    ];
+
+    // stanceMenu is a member's stance menu: pick one, or none.
+    function stanceMenu(m) {
+        const w = who(m);
+        const cur = m.stance && m.stance.key;
+        const items = [];
+        // Only the stances what the member holds can use (stances_fit); all
+        // four when its gear can't be read.
+        const fit = Array.isArray(m.stances_fit) ? m.stances_fit : null;
+        STANCES.filter(st => st[0] !== cur && (!fit || fit.indexOf(st[0]) >= 0)).forEach(st => {
+            items.push({ label: st[1] + ' (' + st[2] + ')', cmd: 'stance ' + w + ' ' + st[0] });
+        });
+        if (cur) { items.push({ label: 'No stance', cmd: 'stance ' + w + ' off' }); }
+        return items;
+    }
+
+    // stanceBlock is the weapon stance under a member's row (Phase 69): what
+    // it is, whether the member holds what it needs, and the button that
+    // changes it between battles.
+    function stanceBlock(m, inBattle) {
+        const st = m.stance;
+        if (m.status === 'dead' || (inBattle && !st)) { return null; }
+        const box = el('div', 'cbt-stance');
+        box.setAttribute('data-key', m.key);
+        if (st) {
+            let text = 'Stance: ' + st.name;
+            if (st.ready === true) { text += ' (ready)'; }
+            if (st.ready === false) { text += ' (idle: needs ' + st.needs + ')'; }
+            const line = el('div', 'cbt-stance-line', text);
+            line.title = st.name + ': ' + st.gain + ', but ' + st.cost + '.';
+            box.appendChild(line);
+        }
+        if (!inBattle) {
+            if (stanceMenu(m).length) {
+                const b = el('button', 'cbt-btn cbt-stance-btn', st ? 'Stance: ' + st.name : 'Stance: none');
+                b.type = 'button';
+                b.setAttribute('aria-haspopup', 'menu');
+                b.title = 'Weapon stance for ' + m.name + ': trade one strength for another (help stances)';
+                b.addEventListener('click', e => uiMenu(e, stanceMenu(m)));
+                box.appendChild(b);
+            } else if (!st) {
+                // Nothing held fits a stance: no button to a menu of nothing.
+                const line = el('div', 'cbt-stance-line', 'Stance: none (needs a great weapon, shield, bow or dagger)');
+                line.title = 'Hold a two-handed weapon, a shield, a bow or a dagger to take a stance (help stances)';
+                box.appendChild(line);
+            }
+        }
+        return box;
     }
 
     function howText(m, members) {
@@ -402,7 +597,7 @@
         }
         const members = data.members.filter(m => m && m.key);
         root.appendChild(grid(members));
-        root.appendChild(el('div', 'cbt-note', 'A battle plays out on its own, by how you set it up here. Click a member to change it.'));
+        root.appendChild(el('div', 'cbt-note', 'A battle plays out on its own, by how you set it up here. Click a member to change it; orders say what each does when something happens.'));
         const list = el('ul', 'cbt-members');
         list.setAttribute('aria-label', 'How your company fights');
         members.forEach(m => {
@@ -417,6 +612,10 @@
             b.setAttribute('aria-label', m.name + (m.key === 'leader' ? ' (you)' : '') + (how ? ': ' + how : ''));
             b.addEventListener('click', e => uiMenu(e, memberMenu(m, members)));
             li.appendChild(b);
+            const orders = ordersBlock(m, inBattle);
+            if (orders) { li.appendChild(orders); }
+            const stance = stanceBlock(m, inBattle);
+            if (stance) { li.appendChild(stance); }
             list.appendChild(li);
         });
         root.appendChild(list);
@@ -509,7 +708,7 @@
     // alone, as "You", without a company).
     function ourFighters(data) {
         if (!data.company) { return [{ key: 'leader', name: 'You', cell: null, status: 'present' }]; }
-        return data.members.filter(m => m && m.key && m.status !== 'awaiting' && m.status !== 'fled' && m.status !== 'separated');
+        return data.members.filter(m => m && m.key && m.status !== 'awaiting' && m.status !== 'fled' && m.status !== 'separated' && m.status !== 'errand');
     }
 
     function fighterButton(id, cls, name, sub, spoken) {
@@ -575,6 +774,19 @@
         return d ? d.name : '';
     }
 
+    // orderName names a turn-order slot: a fighter of either side, an
+    // ally's member by name, or a foe the player can't make out.
+    function orderName(id, battle, data) {
+        if (id === '?') { return 'an unseen foe'; }
+        const own = nameOf(id, battle, data);
+        if (own) { return own; }
+        for (const al of (battle.allies || [])) {
+            const m = (al.members || []).find(x => x.id === id);
+            if (m) { return m.name || id; }
+        }
+        return id;
+    }
+
     // dollOwner names a doll's Master: "your" or a companion's name with 's.
     function dollOwner(d, data) {
         if (d.master === 'leader') { return 'your'; }
@@ -604,11 +816,18 @@
         }
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
+        // Phase 82d: the round's turn order in words, fastest first (help tempo).
+        if (Array.isArray(battle.order) && battle.order.length) {
+            const names = battle.order.map(o => orderName(o.id, battle, data));
+            const note = el('div', 'cbt-note cbt-order', 'Turn order: ' + names.join(', '));
+            note.title = 'Who acts when this round, by tempo; a fast fighter may act twice (help tempo)';
+            root.appendChild(note);
+        }
         // Phase 39c: a Shaman's weather over the battle (help shaman).
         if (battle.weather && battle.weather.name) {
             const w = battle.weather;
             const note = el('div', 'cbt-note cbt-weather',
-                'Weather: ' + w.name + ', ' + w.rounds + (w.rounds === 1 ? ' round' : ' rounds') + ' (' + w.effect + ')');
+                'Weather: ' + w.name + ', ' + (w.endless ? 'the whole battle' : w.rounds + (w.rounds === 1 ? ' round' : ' rounds')) + ' (' + w.effect + ')');
             note.title = 'A Shaman\'s weather, this battle only (help shaman)';
             root.appendChild(note);
         }
@@ -619,6 +838,13 @@
             note.title = 'Laid before the fight with cast sigil of [kind] (help sigils)';
             root.appendChild(note);
         }
+        // Phase 50: each member's battle condition as the battle began (help survival).
+        const fare = battle.fare || {};
+        Object.keys(fare).forEach(key => {
+            const note = el('div', 'cbt-note cbt-fare', 'Condition: ' + (nameOf(key, battle, data) || key) + ', ' + fare[key]);
+            note.title = 'Set as the battle began from needs and a meal buff (help survival, help cooking)';
+            root.appendChild(note);
+        });
         if (battle.outlook && battle.outlook.text) {
             const outlook = el('div', 'cbt-note cbt-outlook cbt-risk-' + String(battle.outlook.risk || '').replace(/[^a-z]/g, ''),
                 'Outlook: ' + battle.outlook.text);
@@ -629,6 +855,15 @@
                 coord.title = 'How the enemy fights together (help coordination)';
                 root.appendChild(coord);
             }
+        }
+
+        // Phase 66: what the bestiary knows of the foes' habits (help bestiary).
+        const knownFoes = battle.dark ? [] : battle.enemies.filter(e => Array.isArray(e.known) && e.known.length);
+        if (knownFoes.length) {
+            const note = el('div', 'cbt-note cbt-bestiary',
+                'Bestiary: ' + knownFoes.map(e => e.label + ' ' + e.known.join(', ')).join('; '));
+            note.title = 'Habits you have learned by beating this kind (help bestiary)';
+            root.appendChild(note);
         }
 
         lines = [];
@@ -650,7 +885,8 @@
             sub.appendChild(el('span', 'cbt-h-' + String(e.health).replace(/ /g, '-'), e.health));
             if (e.reach) { sub.appendChild(el('span', 'cbt-reach', ' •')); }
             const spoken = e.label + ', ' + e.health + (e.reach ? ', within your reach' : '') +
-                (e.target ? ', striking ' + (e.target === 'leader' ? 'you' : nameOf(e.target, battle, data)) : '');
+                (e.target ? ', striking ' + (e.target === 'leader' ? 'you' : nameOf(e.target, battle, data)) : '') +
+                (e.known && e.known.length ? ', known: ' + e.known.join(', ') : '');
             if (e.target) { lines.push({ from: e.id, to: e.target, us: false }); }
             return { cell: e.cell, node: fighterButton(e.id, 'is-enemy', e.label, sub, spoken) };
         });
@@ -755,6 +991,7 @@
         if (!lines.length) { list.appendChild(el('li', null, 'No one is striking anyone this moment.')); }
         root.appendChild(list);
 
+        renderRounds(root);
         const setup = el('details', 'cbt-setup');
         setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
         renderSetup(setup, data, true);
@@ -875,6 +1112,9 @@
         const focusedFid = (inside && focused.getAttribute('data-fid')) || null;
         const setupOpen = !!root.querySelector('details.cbt-setup[open]');
 
+        keepScroll(root);
+        rememberRounds(root);
+
         root.textContent = '';
         if (battle) {
             renderBattle(root, battle, data);
@@ -884,6 +1124,7 @@
             pinned = null;
             if (arenaObserver) { arenaObserver.disconnect(); arenaObserver = null; }
             renderSetup(root, data);
+            renderRounds(root);
         }
 
         const esc = v => (window.CSS && CSS.escape ? CSS.escape(v) : v);
@@ -893,6 +1134,32 @@
     }
 
     window.addEventListener('resize', () => requestAnimationFrame(drawLines));
+
+    // Phase 62: names are read as each round arrives, while the battle that
+    // names them is still the current one.
+    // Names seen while the battle was live are kept, so the last blows,
+    // paced behind the narration past the battle's end, keep theirs; a new
+    // fight starts them afresh (Phase 62 review).
+    const roundNames = new Map();
+    let roundNamesFight = null;
+    let roundsPending = false;
+    Client.onBattleEvents(msg => {
+        if (!rounds) { return; }
+        if (msg && msg.fight !== roundNamesFight) { roundNames.clear(); roundNamesFight = msg.fight; }
+        const battle = currentBattle();
+        const data = CompanyData.read();
+        const name = id => {
+            if (id === 'me') { return 'you'; }
+            const n = battle ? nameOf(id, battle, data) : '';
+            if (n) { roundNames.set(id, n); return n; }
+            return roundNames.get(id) || '';
+        };
+        // One redraw a frame, however many rounds arrive in it.
+        if (rounds.add(msg, name) && !roundsPending) {
+            roundsPending = true;
+            requestAnimationFrame(() => { roundsPending = false; update(); });
+        }
+    });
 
     VirtualWindows.register({
         window:       win,

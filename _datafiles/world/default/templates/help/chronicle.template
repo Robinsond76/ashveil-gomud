@@ -1,0 +1,56 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">chronicle</ansi>
+
+Your company keeps a chronicle: a running record of the deeds it is known
+for, written down as they happen and read back in plain sentences, newest
+first. It is the company's own story of what it did.
+
+<ansi fg="yellow-bold">Reading it</ansi>
+
+  <ansi fg="command">chronicle</ansi>           the newest 12 deeds, and a count of every deed ever
+  <ansi fg="command">chronicle 2</ansi>         the next page
+  <ansi fg="command">chronicle boss</ansi>      only one kind (see the list below; <ansi fg="command">chronicle lore</ansi> for beast lore); add a page number to turn it
+  <ansi fg="command">chronicle all</ansi>       every deed kept, with <ansi fg="command">chronicle all relics</ansi> for one kind
+
+In the web client the Company window has a Chronicle tab: the same deeds,
+with a button to filter by kind. It fits a phone as it does the desktop.
+
+<ansi fg="yellow-bold">What is written down</ansi>
+
+  joined       someone signed on (<ansi fg="command">help company</ansi>)
+  dismissed    someone was sent away
+  deserted     someone lost faith and left (<ansi fg="command">help alignment</ansi>)
+  fallen       a member died: you, or a companion (<ansi fg="command">help death</ansi>)
+  raised       a fallen companion was raised
+  lost         a fallen companion was not raised in time
+  defeats      the company was beaten, and what became of it (<ansi fg="command">help defeat</ansi>)
+  bosses       a boss, the master of a lair, was killed
+  relics       a relic was found (<ansi fg="command">help relics</ansi>)
+  mercy        a beaten foe was spared (<ansi fg="command">help mercy</ansi>)
+  executions   a beaten foe was put to death (<ansi fg="command">help mercy</ansi>)
+  promotions   someone took a new class (<ansi fg="command">help classes</ansi>)
+  stories      a scene on the road ended, and how (<ansi fg="command">help events</ansi>)
+  awakenings   a relic woke a new power while it was worn (<ansi fg="command">help awakenings</ansi>)
+  errands      a companion came home from an errand (<ansi fg="command">help errands</ansi>)
+  groups       a band you held a bounty on was broken, every foe down (<ansi fg="command">help bounties</ansi>)
+  bounties     a bounty was claimed at a board (<ansi fg="command">help bounties</ansi>)
+  rites        the company held rites for a companion gone for good, or let it pass (<ansi fg="command">help rites</ansi>)
+  lore         the company learned a creature's habits (the 6th kill of a kind, the 3rd of a boss) (<ansi fg="command">help bestiary</ansi>)
+
+Each deed names who was involved, where it happened and how long ago.
+
+<ansi fg="yellow-bold">What to know</ansi>
+
+  - It belongs to the company, which is its leader: it is kept through a
+    restart and a copyover, and goes only when the character is deleted.
+  - It keeps the newest 300 deeds. The count at the bottom of
+    <ansi fg="command">chronicle</ansi> never forgets: it includes the deeds that have scrolled off.
+  - Beast lore is written once per kind, and only for kinds learned from now
+    on. At most 30 of the 300 are beast lore (the newest 30 are kept), so
+    other deeds always have room for at least 270.
+  - Times are real time. Nothing here moves the world's clock, and reading
+    it costs nothing, even in a fight.
+  - The chronicle only remembers. It gives no gold, experience or power.
+
+Townsfolk speak of these deeds, once each (<ansi fg="command">help townsfolk</ansi>).
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help events</ansi>, <ansi fg="command">help webclient</ansi>.

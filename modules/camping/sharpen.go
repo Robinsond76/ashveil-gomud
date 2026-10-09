@@ -226,6 +226,21 @@ func spendWhetstones(user *users.UserRecord, stones []int, n int) []items.Item {
 // sharpen runs one pass. Auto mode (a camp rest's end) is silent when it
 // has nothing to do.
 func (m *CampingModule) sharpen(user *users.UserRecord, auto bool) string {
+	return m.sharpenPass(user, auto, 0)
+}
+
+// sharpenOne (Phase 51, the tend duty) sharpens the blades of one member
+// who needs it, spending one whetstone use; "" when no blade needs it, the
+// company is fighting, or there is no whetstone.
+func (m *CampingModule) sharpenOne(user *users.UserRecord) string {
+	return m.sharpenPass(user, true, 1)
+}
+
+// sharpenPass is sharpen limited to the first limit members (0: everyone).
+func (m *CampingModule) sharpenPass(user *users.UserRecord, auto bool, limit int) string {
+	if !auto && m.restingNow(user.UserId) {
+		return "You can't sharpen blades while the company rests; do it before you sleep."
+	}
 	settings := m.sharpenSettings()
 	targets, fighting := m.sharpenTargets(user)
 	if fighting {
@@ -235,6 +250,9 @@ func (m *CampingModule) sharpen(user *users.UserRecord, auto bool) string {
 		return "You can't sharpen blades in the middle of a fight."
 	}
 	stones, uses := whetstones(user.Character, settings.WhetstoneItemId)
+	if limit > 0 {
+		uses = min(uses, limit)
+	}
 	members := make([]camping.SharpenMember, len(targets))
 	byID := map[int]sharpenTarget{}
 	for i, t := range targets {
@@ -270,12 +288,15 @@ func (m *CampingModule) sharpen(user *users.UserRecord, auto bool) string {
 		}
 	}
 	spent := spendWhetstones(user, stones, plan.UsesSpent)
+	if limit > 0 {
+		return fmt.Sprintf("a whetstone puts a fresh edge on %s's blades.", strings.Join(plan.Names(camping.Sharpened), ", "))
+	}
 
 	lines := []string{fmt.Sprintf("You work a whetstone along your company's blades. Sharpened: %s.", strings.Join(plan.Names(camping.Sharpened), ", "))}
 	if hasSmith && strikes > settings.SharpenedStrikes {
 		lines = append(lines, fmt.Sprintf("%s %s the edges: they hold for %d strikes instead of %d.", smith.Subject(), smith.Verb("hone", "hones"), strikes, settings.SharpenedStrikes))
 	}
-	if names := plan.Names(camping.LeftOut); len(names) > 0 {
+	if names := plan.Names(camping.LeftOut); len(names) > 0 && limit == 0 {
 		lines = append(lines, fmt.Sprintf("The whetstone ran out before %s.", strings.Join(names, ", ")))
 	}
 	lines = append(lines, otherOutcomes(plan)...)

@@ -16,10 +16,10 @@ blood. All three heal on their own in battle; their strategy role stays healer
 
 <ansi fg="yellow-bold">Druid (neutral)</ansi>
 
-  10 Rejuvenation       heals one ally over 3 rounds, 130% of a Minor Heal
-  15 Barkskin           one ally gains +10 armor for the battle
-  20 Lasting growth     Rejuvenation lasts 4 rounds (160%)
-  25 Thornhide          a foe that strikes a Barkskinned ally takes 2 damage
+  10 Rejuvenation       heals one ally over 3 rounds, 170% of a Minor Heal
+  15 Barkskin           one ally gains +25 armor for the battle
+  20 Lasting growth     Rejuvenation lasts 4 rounds (220%)
+  25 Thornhide          a foe that strikes a Barkskinned ally takes 4 damage
 
   <ansi fg="yellow-bold">Elder Druid</ansi> (30): Grove (Rejuvenation on a whole row at 100%, half
   of it healed at once; chant 1), Nature's patience, Deep grove (130%),

@@ -65,7 +65,14 @@ type Item struct {
 	Loot Rolled `yaml:"loot,omitempty"`
 	// Phase 36c: the player marked this item as junk for `sell junk`. A
 	// plain value, so it follows the item wherever it goes.
-	Junk          bool           `yaml:"junk,omitempty"`
+	Junk bool `yaml:"junk,omitempty"`
+	// Phase 67: a relic's awakening progress, one count per awakening in
+	// its spec. Replaced whole on each change, never edited in place.
+	Awaken []int `yaml:"awaken,omitempty"`
+	// Phase 71: the trophy (an item id) an enchanter worked into this item.
+	// It adds the trophy's gear effects while the item is worn and changes
+	// nothing else: not the spec, the value or the roll.
+	Trophy        int            `yaml:"trophy,omitempty"`
 	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
@@ -283,6 +290,13 @@ func (i *Item) GetLongDescriptionFor(scribeRank int) string {
 
 	}
 
+	if iSpec.Relic != nil {
+		longDesc.WriteString("\n")
+		longDesc.WriteString(i.RelicDescription())
+	} else if lines := i.TrophyLines(); len(lines) > 0 {
+		longDesc.WriteString("\n")
+		longDesc.WriteString(strings.Join(lines, "\n"))
+	}
 	if i.IsRolled() {
 		longDesc.WriteString("\n")
 		longDesc.WriteString(i.RolledDescription(scribeRank))
@@ -337,6 +351,10 @@ func (i *Item) EdgeLabel() string {
 	}
 	if coat := i.CoatLabel(time.Now()); coat != `` {
 		parts = append(parts, coat)
+	}
+	// Phase 71: a trophy enchant is told apart from a plain copy in lists.
+	if spec := i.TrophySpecOf(); spec != nil {
+		parts = append(parts, fmt.Sprintf(`<ansi fg="magenta">(enchanted: %s)</ansi>`, spec.Name))
 	}
 	return strings.Join(parts, ` `)
 }

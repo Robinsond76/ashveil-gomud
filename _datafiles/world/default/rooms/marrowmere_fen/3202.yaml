@@ -1,0 +1,23 @@
+roomid: 3202
+zone: Marrowmere Fen
+title: Brackish Mere Edge
+description: Frogs fall silent as you pass and the reeds close behind. Marsh lights flicker over
+  the far reeds.
+biome: shore
+exits:
+  east:
+    roomid: 3203
+  west:
+    roomid: 3201
+  south:
+    roomid: 3208
+resources:
+- herbs
+- forage
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: fen

@@ -112,6 +112,9 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		defender.say(spec.EndYou, spec.EndOther, ` (woken by the blow)`)
 		emitCombat(combatstream.Event{Kind: combatstream.StatusExpired, RoomId: defender.roomId, Target: defender.ref, BuffId: spec.Id, Status: spec.Word})
 	}
+	if rt := attacker.char.RT; rt != nil && rt.Cut > 0 {
+		rt.Cut = 0 // Phase 39i: the cut strings weakened this one attack
+	}
 	samuraiBlow(attacker, defender, r)   // Phase 39b
 	arbalistBlow(defender, r)            // Phase 39h
 	beastBlow(attacker, defender, r)     // Phase 39e
@@ -140,8 +143,9 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	}
 	thornsBlow(attacker, defender, r)
 	oathBlow(attacker, defender, r)
-	hookBlow(attacker, defender, r) // Phase 39a
-	braceBlow(attacker, defender)   // Phase 39a
+	hookBlow(attacker, defender, r)   // Phase 39a
+	braceBlow(attacker, defender)     // Phase 39a
+	bastionAnswer(attacker, defender) // Phase 39i2
 	if r.CritLanded && attacker.char.ClassEffects().Has(classes.TerrorCrit) && defender.char.Health >= 1 && !status.Live(defender.char, status.Staggered) {
 		ev := events.Buff{BuffId: status.Staggered, Source: `combat`}
 		if defender.user != nil {
@@ -371,9 +375,9 @@ func restartChant(m *mobs.Mob) bool {
 	agg.RoundsWaiting = sp.WaitRounds + m.Character.ColdDelay()
 	agg.ColdDelayed, agg.ColdNotice = m.Character.ColdDelay() > 0, false
 	rounds := agg.RoundsWaiting + 1
-	plural := `rounds`
+	plural := `turns`
 	if rounds == 1 {
-		plural = `round`
+		plural = `turn`
 	}
 	if room := rooms.LoadRoom(m.Character.RoomId); room != nil {
 		room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s starts the chant again from the first word. (chanting: %s, %d %s)`,

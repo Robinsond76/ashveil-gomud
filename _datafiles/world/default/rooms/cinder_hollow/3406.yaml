@@ -1,0 +1,18 @@
+roomid: 3406
+zone: Cinder Hollow
+title: Soot-dark Track
+description: Scorched earth steams faintly even after rain. Fresh bootprints cross the ash.
+biome: land
+exits:
+  east:
+    roomid: 3407
+  south:
+    roomid: 3414
+  west:
+    roomid: 3313
+resources:
+- game
+mapx: 0
+mapy: 1
+mapz: 0
+hascoordinates: true

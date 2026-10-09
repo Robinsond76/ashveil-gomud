@@ -1,0 +1,20 @@
+roomid: 90015
+zone: Test Area
+title: Gossip Corner
+description: >-
+  A lamplit corner of the square, where a stout townsman leans on a painted signboard and watches everyone who passes. He speaks of what a company has done, once per deed, if the chronicle holds any: try testarea fight to win a boss, or story scenes to leave a deed, then wait here. Between deeds he talks of the weather and the hour. Type townsfolk to see what has been told.
+biome: city
+tags:
+  - lit
+exits:
+  northeast:
+    roomid: 90001
+spawninfo:
+  - mobid: 90301
+    message: A stout townsman wanders up to the signboard.
+    levelmod: 0
+    respawnrate: 5 real minutes
+mapx: -1
+mapy: 1
+mapz: 0
+hascoordinates: true

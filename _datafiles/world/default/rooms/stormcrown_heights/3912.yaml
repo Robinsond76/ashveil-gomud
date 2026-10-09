@@ -1,0 +1,17 @@
+roomid: 3912
+zone: Stormcrown Heights
+title: Howling Snowfield
+description: The cold bites through cloaks and breath freezes in the beard. A shattered banner
+  lies under the ice.
+biome: snow
+exits:
+  west:
+    roomid: 3911
+  south:
+    roomid: 3920
+resources:
+- water
+mapx: 7
+mapy: 1
+mapz: 0
+hascoordinates: true

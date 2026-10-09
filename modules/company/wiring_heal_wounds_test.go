@@ -1,6 +1,7 @@
 package company
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"regexp"
 	"strconv"
 	"testing"
@@ -51,7 +52,8 @@ func TestHealWoundsIsRefusedInAFight(t *testing.T) {
 func TestHealListsWithoutChangingAnything(t *testing.T) {
 	b := newBrawl(t)
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 30
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 30
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 40}}
 	out := b.cmd("heal", "")
 	assert.Contains(t, out, "Tamsin Reed: 30/100 (wound limit 60); a broken arm (holds back 40)")
@@ -71,7 +73,8 @@ func TestHealWoundsClericThenItems(t *testing.T) {
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 20, 8
 	tamsin := b.companion(1)
-	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 30
+	hardTo(&tamsin.Character, 100)
+	tamsin.Character.Health = 30
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 40}}
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 
@@ -121,8 +124,17 @@ func TestHealWoundsPhysician(t *testing.T) {
 	assert.Len(t, tamsin.Character.Wounds, 1)
 	assert.Nil(t, b.aria.GetPrompt())
 
+	events.ProcessEvents() // drain what earlier steps queued
+	gold := []int{}
+	listener := events.RegisterListener(events.EquipmentChange{}, func(e events.Event) events.ListenerReturn {
+		gold = append(gold, e.(events.EquipmentChange).GoldChange)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.EquipmentChange{}, listener) })
 	b.cmd("heal", "wounds")
 	out = b.answer("yes")
+	events.ProcessEvents()
+	assert.Equal(t, []int{-30}, gold, "the Worth panel refreshes on the physician's fee")
 	assert.Contains(t, out, "You pay 30 gold.")
 	assert.Contains(t, out, "(2 wounds healed)")
 	assert.Equal(t, 70, b.aria.Character.Gold)
@@ -193,7 +205,8 @@ func TestHealWoundsALeaderClericHealsToTheLimit(t *testing.T) {
 	c.SpellBook["tend"] = 1
 	c.Level = 20 // the heal's level bonus outweighs any dice roll
 	c.ManaMax.Value, c.Mana = 40, 40
-	c.HealthMax.Value, c.Health = 100, 50
+	hardTo(c, 100)
+	c.Health = 50
 	c.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "hand", Points: 2}}
 	out := b.cmd("heal", "wounds")
 	assert.Contains(t, out, "You tend your own cut hand, and it draws closed.")

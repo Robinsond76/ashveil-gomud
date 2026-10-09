@@ -1,0 +1,17 @@
+roomid: 3623
+zone: Hollowweb Deep
+title: Sticky Run
+description: The air is still and cold, and the trees are wrapped in silk.
+biome: forest
+exits:
+  west:
+    roomid: 3622
+  north:
+    roomid: 3617
+resources:
+- firewood
+- herbs
+mapx: 3
+mapy: 3
+mapz: 0
+hascoordinates: true

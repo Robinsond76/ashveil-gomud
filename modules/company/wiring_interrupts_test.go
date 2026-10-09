@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,6 +78,22 @@ func forceCrits(t *testing.T) {
 	gameplay := configs.GetGamePlayConfig()
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 100, 100
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+}
+
+// noCrits makes every critical roll miss. alwaysLand zeroes only the base
+// crit chance; a class (a Deadeye's Eagle's eye) and an exposed foe add to it,
+// so a test that must not see a critical hit pins the percentile roll to its
+// top, which is a miss below a chance of 100. That pins every other d100 too
+// (hit, dodge, poison, native ability rolls all read 99), so pair it with
+// alwaysLand, whose 100% to-hit still lands; rolls of other sizes stay random.
+func noCrits(t *testing.T) {
+	t.Helper()
+	t.Cleanup(util.UseRandForTest(func(n int) int {
+		if n == 100 {
+			return 99
+		}
+		return rand.Intn(n)
+	}))
 }
 
 // noCounters makes every counter roll fail, so a test about chants is not
@@ -252,8 +270,9 @@ func TestEnemyChantBreaksAndRestarts(t *testing.T) {
 		if captain.Character.Aggro.Type != characters.SpellCast {
 			b.mobCasts(captain, fmt.Sprintf("mm #%d", tamsin.InstanceId))
 		}
-		// Only Aria strikes: the player's blows come before any mob's
-		// turn, so a break always precedes the captain's.
+		// Only Aria strikes, and first (Phase 82b: by speed, not by
+		// kind), so a break always precedes the captain's turn.
+		b.actsFirst(b.aria.Character)
 		b.aria.Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)
 		for id := 1; id <= 4; id++ {
 			b.companion(id).Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)
@@ -266,7 +285,7 @@ func TestEnemyChantBreaksAndRestarts(t *testing.T) {
 	assert.Equal(t, "Magic Missile", broken[0].Status)
 	assert.Contains(t, out, "The bandit captain's chant breaks off under the blow. (Magic Missile interrupted)")
 	// The company struck before his turn, so he starts again this round.
-	assert.Contains(t, out, "The bandit captain starts the chant again from the first word. (chanting: Magic Missile, 2 rounds)")
+	assert.Contains(t, out, "The bandit captain starts the chant again from the first word. (chanting: Magic Missile, 2 turns)")
 	assert.Len(t, castsBy(*stream, combatstream.CastStart, key(captain)), 1, "the restart is a cast start")
 	require.Equal(t, characters.SpellCast, captain.Character.Aggro.Type, "still chanting")
 	assert.Equal(t, 100-6, captain.Character.Mana, "the restart costs nothing")
@@ -609,7 +628,7 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	forceCrits(t) // Phase 35d: only heavy force breaks a one-round heal
 	breakDice(t, 0)
 	for try := 0; try < 8 && len(interruptsOf(*stream, "u:8")) == 0; try++ {
-		brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
+		hardTo(brom.Character, 1000)
 		b.toughen()
 		brom.Character.SetCast(3, characters.SpellAggroInfo{SpellId: "heal", TargetUserIds: []int{8}})
 		b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
@@ -621,7 +640,7 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	brom.Character.Equipment.Offhand = items.New(20019)
-	brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
+	hardTo(brom.Character, 1000)
 	b.toughen()
 	b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
 	b.fight()

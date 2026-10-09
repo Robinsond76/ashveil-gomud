@@ -135,7 +135,7 @@ func TestFireSigilStrengthensFireSpellsAndLeavesTheFoeBurning(t *testing.T) {
 		var transcript string
 		for attempt := 0; attempt < 30 && !until(target); attempt++ {
 			b.toughen()
-			target.Character.HealthMax.Value, target.Character.Health = 1000, 1000
+			hardTo(&target.Character, 1000)
 			c.SetCast(0, characters.SpellAggroInfo{SpellId: "sparks", TargetMobInstanceIds: []int{cutthroat}})
 			transcript += b.fight() + "\n"
 		}
@@ -271,7 +271,7 @@ func TestACompanionsFireSpellBurnsUnderTheFireSigil(t *testing.T) {
 	ysolde := b.companion(4)
 	for attempt := 0; attempt < 30 && !foe.Character.HasBuff(status.Burning); attempt++ {
 		b.toughen()
-		foe.Character.HealthMax.Value, foe.Character.Health = 1000, 1000
+		hardTo(&foe.Character, 1000)
 		ysolde.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "sparks", TargetMobInstanceIds: []int{foe.InstanceId}})
 		b.fight()
 	}

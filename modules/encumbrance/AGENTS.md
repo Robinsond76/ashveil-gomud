@@ -20,7 +20,7 @@ rules.
   `Load.TotalGrams()`, so add any new part there.
 - **One weight limit** (32f): anything that adds weight from outside the
   company checks `encumbrance.WouldExceed`/`TooMuchToCarry` first, on the
-  game loop, with `company.AddedGrams` (a pack counts the room it makes):
+  game loop, with `encumbrance.AddedGrams` (a pack counts the room it makes):
   `get`, `buy`, `market buy`, `give` from outside, and a
   companion mob's pickup. Moving things within the company (cargo
   put/take, `give` to your own companion or pet, saddles) and anything that

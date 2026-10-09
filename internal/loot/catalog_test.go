@@ -28,7 +28,7 @@ func shippedCatalog(t *testing.T) []items.ItemSpec {
 		spec := items.ItemSpec{}
 		require.NoError(t, yaml.Unmarshal(data, &spec))
 		require.NoError(t, spec.Validate(), path)
-		if (spec.ItemId >= 10100 && spec.ItemId < 10200) || (spec.ItemId >= 20100 && spec.ItemId < 20400) {
+		if (spec.ItemId >= 10100 && spec.ItemId < 10200) || (spec.ItemId >= 20100 && spec.ItemId < 20400) || (spec.ItemId >= 21000 && spec.ItemId < 21200) {
 			out = append(out, spec)
 		}
 		return nil

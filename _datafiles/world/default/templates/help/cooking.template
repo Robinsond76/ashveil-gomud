@@ -6,15 +6,22 @@ found in some rooms. You can also cook at a lit campfire (see below).
 
 <ansi fg="yellow-bold">How to cook</ansi>
 
+You can only cook a dish you know. Seared game meat and grilled fish are
+common knowledge; the rest you work out by trying a mix with <ansi fg="command">cook</ansi>
+or learn from a recipe page (<ansi fg="command">help recipes</ansi>, <ansi fg="command">recipes</ansi> lists your book).
+
   <ansi fg="command">use hearth</ansi>
   Cooks a meal. The hearth checks its recipes in a fixed order, skips
-  any whose ingredients aren't all there or whose Cooking level you
-  haven't reached, and makes the first one left. It consumes the
+  any you haven't learned, whose ingredients aren't all there or whose
+  Cooking level you haven't reached, and makes the first one left. It consumes the
   ingredients and adds the finished meal to the hearth for you to take.
 
   <ansi fg="command">look hearth</ansi>
-  Lists every recipe the hearth knows, and names the Cooking level any
+  Lists the recipes you know there, and names the Cooking level any
   of them requires.
+
+  <ansi fg="command">cook [ingredient] ...</ansi>
+  Tries a mix you name; a new dish is learned (<ansi fg="command">help recipes</ansi>).
 
 A recipe with no skill requirement can be cooked by anyone. One that
 needs a level you don't have is simply skipped; if every ready recipe
@@ -36,14 +43,39 @@ Fish gathered with <ansi fg="command">fish</ansi> (<ansi fg="command">help gathe
 
 The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train</ansi>).
 
+<ansi fg="yellow-bold">Meal buffs</ansi>
+
+Eating a cooked meal gives the member who eats it a buff for its next
+few battles (battles, not hours: it never wears off while you travel).
+One buff at a time; a new meal replaces the old one. Each battle the
+member fights counts one off, even one you retreat from at once.
+<ansi fg="command">company meal</ansi> feeds a member already on a buff plain food when it can.
+
+  <ansi fg="yellow">Meal</ansi>                <ansi fg="yellow">Buff</ansi>           <ansi fg="yellow">Battles</ansi>  <ansi fg="yellow">Effect</ansi>
+  Seared game meat    Strong         2        +5% damage dealt
+  Thyme-roasted game  Steady         3        +5% damage, 5% less damage taken
+  Hunter's stew       Hearty         3        10% less damage taken
+  Grilled fish        Clear-headed   3        20% of max mana back as each battle begins
+
+<ansi fg="command">eat</ansi> and <ansi fg="command">company eat</ansi> name the buff; <ansi fg="command">survival</ansi> and <ansi fg="command">status</ansi> show the battles
+left. A meal's buff adds to the member's battle condition (<ansi fg="command">help survival</ansi>).
+
+Raw game meat can be eaten as it is, for 10 Hunger, but it always gives a
+gut-ache (<ansi fg="command">help ailments</ansi>); <ansi fg="command">company eat</ansi> never serves it. Cook it first.
+
 <ansi fg="yellow-bold">Cooking at camp</ansi>
 
   <ansi fg="command">camp cook</ansi>
   At your own camp with its fire lit, the best cook with you cooks the
-  same meals, the first their Cooking allows, from company cargo.
+  same meals, the first of the dishes you know that their Cooking allows,
+  from company cargo. <ansi fg="command">camp cook meat thyme</ansi> (or <ansi fg="command">cook meat thyme</ansi>) tries a mix instead.
   The meal goes into the same cargo. A ranger's forage
   fills the cargo with meat and thyme (<ansi fg="command">help forage</ansi>). You can't cook
   in a fight.
+
+A member on the cook duty (<ansi fg="command">camp duties [member] cook</ansi>, <ansi fg="command">help camp duties</ansi>) cooks one
+dish you know when a rest ends, with their own Cooking and no lit fire
+needed, at the cost of their sleep.
 
 An iron cookpot in the company's gear (<ansi fg="command">help camp gear</ansi>) stretches a dish made
 from more than one ingredient into one extra portion.
@@ -62,7 +94,7 @@ your own Cooking only.
 The <ansi fg="skill">Cook</ansi> profession pairs Cooking with Track, for hunting the ingredients
 a hearth wants.
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help use</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help train</ansi>,
+See also: <ansi fg="command">help recipes</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help use</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help train</ansi>,
 <ansi fg="command">help skills</ansi>.
 
 Character > Skills lists Camp Cooking as a manual camp capability for

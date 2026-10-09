@@ -1,0 +1,20 @@
+roomid: 3503
+zone: Thornreach Wood
+title: Ancient Dell
+description: Thorn and bramble close in on both sides of the narrow ride. Something has rubbed
+  bark off the nearest trunk, very high up.
+biome: land
+exits:
+  east:
+    roomid: 3504
+  west:
+    roomid: 3502
+  south:
+    roomid: 3509
+resources:
+- forage
+- water
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

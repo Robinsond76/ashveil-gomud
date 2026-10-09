@@ -1,0 +1,17 @@
+roomid: 3320
+zone: Greywatch Pass
+title: Scree Switchback
+description: Cold wind funnels through the gap and snatches at cloaks.
+biome: mountains
+exits:
+  east:
+    roomid: 3321
+  north:
+    roomid: 3314
+resources:
+- game
+- herbs
+mapx: 1
+mapy: 3
+mapz: 0
+hascoordinates: true

@@ -172,6 +172,14 @@ type Situation struct {
 	// Flask only while more than FlaskKeep remain, so a heal is never left
 	// without one.
 	Flasks int
+	// Hold (Phase 61) is a battle order to hold mana: no attack spell
+	// (Lightning included) this round; heals, hexes, buffs, summons and
+	// weather go on.
+	Hold bool
+	// LanceFoes (Phase 84) is the most foes the character looses an Arcane
+	// Lance at; against more it sparks the group. 0 means no limit (a High
+	// Sorcerer, or a caster with no class).
+	LanceFoes int
 }
 
 // ActionKind is what a character does this round.
@@ -224,6 +232,9 @@ func Decide(s Situation) Action {
 			return Spell{}, false
 		}
 		if use == UseFlame && s.Flasks <= FlaskKeep {
+			return Spell{}, false
+		}
+		if s.Hold && (use == UseAttack || use == UseAttackAll || use == UseBurst || use == UseStorm) {
 			return Spell{}, false
 		}
 		if (use == UseAttack || use == UseAttackAll || use == UseBurst) && s.Reserve > 0 && (s.Mana-sp.Cost)*100 < s.Reserve*s.MaxMana {
@@ -356,7 +367,9 @@ func Decide(s Situation) Action {
 			return Action{Kind: Storm, Spell: sp.ID}
 		}
 		// Phase 38d: the Sorcerer's Arcane Lance, while its mana lasts.
-		if sp, ok := affordable(UseBurst); ok {
+		// Phase 84: against a crowd the Sorcerer sparks the group instead,
+		// as the plain wizard does.
+		if sp, ok := affordable(UseBurst); ok && LanceFits(s.LanceFoes, s.Foes) {
 			return Action{Kind: Attack, Spell: sp.ID}
 		}
 		if s.Foes >= 2 {
@@ -372,6 +385,17 @@ func Decide(s Situation) Action {
 		}
 	}
 	return Action{Kind: Swing}
+}
+
+// LanceFits (Phase 84) reports whether an Arcane Lance suits this many foes
+// for a caster whose limit is lanceFoes (0: any number). The Lance is a
+// single bolt, so a Sorcerer that loosed it at a full group spent a two-round
+// chant on one foe while the plain wizard's Shower of Sparks hit them all:
+// it read 12 points under the wizard at level 50. Limited to three foes it
+// is level with the wizard at levels 25, 40 and 50 (docs/plans/
+// 2026-10-07-phase-84-sorcerer-balance.md).
+func LanceFits(lanceFoes, foes int) bool {
+	return lanceFoes <= 0 || foes <= lanceFoes
 }
 
 // SummonFoes is how many foes make a battle worth a summon (faith routes

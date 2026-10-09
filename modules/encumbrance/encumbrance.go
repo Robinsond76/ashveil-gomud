@@ -11,12 +11,10 @@ package encumbrance
 
 import (
 	"embed"
-	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -24,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -66,21 +65,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	// ReadBytes discards YAML decode errors, so decode here to prevent
-	// unreadable data from becoming an empty, writable registry.
-	data, err := s.plug.ReadBytes("encumbrance")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = *NewRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "encumbrance", func() Registry { return *NewRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("encumbrance", registry)
+	return modstore.Save(s.plug, "encumbrance", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping only entries keyed by an
@@ -167,13 +156,7 @@ func init() {
 }
 
 func (m *EncumbranceModule) persistenceAvailable() error {
-	if m.loadErr != nil {
-		return fmt.Errorf("encumbrance: persistence unavailable until a successful reload: %w", m.loadErr)
-	}
-	if m.store == nil {
-		return fmt.Errorf("encumbrance: persistence unavailable")
-	}
-	return nil
+	return modstore.Available("encumbrance", m.loadErr, m.store != nil)
 }
 
 func (m *EncumbranceModule) save() error {
@@ -390,6 +373,11 @@ func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string 
 	// carries individual items.
 	if matchItem.IsRolled() {
 		return fmt.Sprintf(`The <ansi fg="item">%s</ansi> is individually crafted gear; carry it in your pack or give it to a companion with company equip. Company cargo holds only plain goods for now.`, matchItem.DisplayName())
+	}
+	// Phase 71 review: the same holds for a trophy enchant and a relic's
+	// awakening progress, which live on the item.
+	if matchItem.IsTrophyEnchanted() || len(matchItem.Awaken) > 0 {
+		return fmt.Sprintf(`The <ansi fg="item">%s</ansi> carries an enchant or a waking power that cargo would lose; carry it in your pack or give it to a companion with company equip.`, matchItem.DisplayName())
 	}
 
 	m.mu.Lock()
@@ -693,8 +681,8 @@ func pluralUses(n int) string {
 // (both in kg), and the load-band table, rejecting a malformed band rather
 // than applying a guess, matching modules/weather's parseBiomeTables.
 func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.LoadBand) {
-	baseGrams := max(int(configFloat(baseRaw)*1000), 0)
-	strengthGrams := max(int(configFloat(strengthRaw)*1000), 0)
+	baseGrams := max(int(modconfig.FloatOr(baseRaw, 0)*1000), 0)
+	strengthGrams := max(int(modconfig.FloatOr(strengthRaw, 0)*1000), 0)
 
 	bands := []encumbrance.LoadBand{}
 	list, ok := bandsRaw.([]any)
@@ -702,14 +690,14 @@ func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.Lo
 		return baseGrams, strengthGrams, bands
 	}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
 		band := encumbrance.LoadBand{
-			MinRatio:          configFloat(fields["minratio"]),
-			TravelDurationPct: configInt(fields["traveldurationpct"]),
-			FatiguePct:        configInt(fields["fatiguepct"]),
+			MinRatio:          modconfig.FloatOr(fields["minratio"], 0),
+			TravelDurationPct: modconfig.IntOr(fields["traveldurationpct"], 0),
+			FatiguePct:        modconfig.IntOr(fields["fatiguepct"], 0),
 		}
 		if err := band.Validate(); err != nil {
 			mudlog.Warn("encumbrance: invalid load band", "error", err)
@@ -719,58 +707,4 @@ func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.Lo
 	}
 	sort.Slice(bands, func(i, j int) bool { return bands[i].MinRatio < bands[j].MinRatio })
 	return baseGrams, strengthGrams, bands
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
-}
-
-func configFloat(raw any) float64 {
-	switch value := raw.(type) {
-	case float64:
-		return value
-	case int:
-		return float64(value)
-	case int64:
-		return float64(value)
-	case string:
-		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
-		if err == nil {
-			return f
-		}
-	}
-	return 0
 }

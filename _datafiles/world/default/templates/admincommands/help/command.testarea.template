@@ -7,17 +7,19 @@
 Your trip is saved: a disconnect or a server restart still lets you return. The area has no exit to the world: dying there wakes you in the hub, and leaving any other way (a teleport, say) ends the trip and restores you at once. You cannot start a trip in battle, while resting at a camp, or in a party.
 
 <ansi fg="yellow-bold">Combat</ansi>
-<ansi fg="command">testarea fight</ansi> [level] [size 2-6] [type ...]  Call a group of foes onto your company, e.g. <ansi fg="command">testarea fight 8 3 skeleton wolf</ansi>. Types: skeleton, acolyte, imp, spider, wolf, hexer, brigand, warden, chanter, shaman, ogre, ent, lich, or a mob id.
-<ansi fg="command">testarea clear</ansi>  Send your foes away. <ansi fg="command">testarea heal</ansi>  Restore your health and mana.
+<ansi fg="command">testarea fight</ansi> [level] [count] [type] [count] [type] ...  Call a mixed group of foes onto your company, e.g. <ansi fg="command">testarea fight 2 2 imp 1 skeleton</ansi> is two imps and a skeleton at level 2 (2-6 foes in all). The older <ansi fg="command">testarea fight 8 3 skeleton wolf</ansi> still works: a size, then types that repeat in turn. Types: skeleton, acolyte, imp, spider, wolf, hexer, brigand, warden, chanter, shaman, ogre, ent, lich, or a mob id. A boss type (ogre, ent, lich) leads the group as its boss.
+<ansi fg="command">testarea clear</ansi>  Send your foes away. <ansi fg="command">testarea heal</ansi>  Restore your health and mana (<ansi fg="command">healcompany</ansi> does the whole company).
 
 <ansi fg="yellow-bold">Characters</ansi>
 <ansi fg="command">testarea class</ansi> [class]  Become any archetype, advanced or elite class (no gates). Without a class it lists them.
 <ansi fg="command">testarea level</ansi> [1-100]  Set your level.
-<ansi fg="command">testarea companion add</ansi> [class] [level]  Recruit a companion of any class, or a creature (hound, stone-golem). A creature keeps its species: it can change level, not class. Stone mortar for a golem is in the supplies kit.
+<ansi fg="command">testarea companion add</ansi> [class] [level]  Recruit a companion of any class (with a random name), or a creature (hound, stone-golem). A creature keeps its species: it can change level, not class. Stone mortar for a golem is in the supplies kit.
 <ansi fg="command">testarea companion class</ansi> [member] [class]  Change a companion's class. <ansi fg="command">testarea companion level</ansi> [member] [level]  Change its level.
 
 <ansi fg="yellow-bold">Gear and the world</ansi>
-<ansi fg="command">testarea kit</ansi> [weapons|armor|camp|supplies|saddles]  One of each kind. <ansi fg="command">testarea give</ansi> [item] [count]  Any item. <ansi fg="command">testarea items</ansi> [word]  Search the catalog. <ansi fg="command">testarea gold</ansi> [amount]
+<ansi fg="command">testarea catalog</ansi> [word]  Browse every item of the world and pick what you want. The web client opens a screen with a search box, type filters and a Take button (with a count), and opens it by itself whenever you enter the armory; other clients get a text list. Nothing is given until you take it.
+<ansi fg="command">testarea give</ansi> [item name or id] [count]  Take one item (up to 20). <ansi fg="command">testarea items</ansi> [word]  A short text search. <ansi fg="command">testarea kit</ansi> [weapons|armor|camp|supplies|saddles]  One of each kind at once. <ansi fg="command">testarea gold</ansi> [amount]
+Anything you drop in a test room vanishes at once, and so does anything left on its floor; nothing here can be sold on or carried out.
 <ansi fg="command">testarea weather</ansi> [condition|auto]  Hold the zone's weather. The world's day and night are shared and never changed here.
 
 The camp room is quiet; the road camp east of it is visited by thieves and raiders every rest. Anyone with the <ansi fg="command">testarea</ansi> permission, and every admin, may use it. To make an account an admin, set <ansi fg="command">role: admin</ansi> in its user file or use <ansi fg="command">modify role [name] admin</ansi> as an admin.

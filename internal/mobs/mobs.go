@@ -92,6 +92,7 @@ type Mob struct {
 	TargetingNoise  int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
 	WindUps         map[string]int       `yaml:"windups,omitempty"`        // Ashveil (Phase 30d2): wind-up ability id -> percent of its turns it starts one (enemies only)
 	Sprite          string               `yaml:"sprite,omitempty"`         // Ashveil (Phase 40f): its battle-screen sprite key (e.g. wolf-timber); blank falls back by race
+	Townsfolk       []string             `yaml:"townsfolk,omitempty"`      // Ashveil (Phase 68): tags that make it a talker who mentions a company's deeds (internal/townsfolk)
 	Role            string               `yaml:"role,omitempty"`           // Ashveil (Phase 33i2): its role as an enemy: fighter (default), healer, caster, guardian
 	Coordination    int                  `yaml:"coordination,omitempty"`   // Ashveil (Phase 33i2): sets its group's coordination tier (1-4) outright; 0 is by level
 	WoundsRule      string               `yaml:"wounds,omitempty"`         // Ashveil (Phase 33i2): "none" takes no wounds as an enemy; else light wounds
@@ -118,6 +119,8 @@ type Mob struct {
 	conversationId  int              // Identifier of conversation currently involved in.
 	lastCommandTurn uint64           // The last turn a command was scheduled for
 	playersAttacked map[int]struct{} // all players this mob has attacked at some point
+	idle            *idleChatter     // set while the mob runs its idle turn (chatter.go)
+	lastChatter     uint64           // round this mob last chattered while idle (chatter.go)
 }
 
 func MobInstanceExists(instanceId int) bool {
@@ -474,6 +477,10 @@ func (m *Mob) command(inputTxt string, order *events.MemberOrder, waitSeconds ..
 
 	for i, cmd := range strings.Split(inputTxt, `;`) {
 
+		if !m.idleChatterAllowed(cmd) {
+			continue
+		}
+
 		// Update lastCommandTurn to whenever this command is scheduled for
 		m.lastCommandTurn = readyTurn + turnDelay + uint64(i)
 
@@ -502,6 +509,17 @@ func (m *Mob) IsSmith() bool {
 		}
 		spec := items.GetItemSpec(si.ItemId)
 		if spec != nil && (spec.Type == items.Weapon || spec.IsArmor()) {
+			return true
+		}
+	}
+	return false
+}
+
+// IsEnchanter (Phase 71) is a mob that works creature trophies into gear
+// (help enchanting): one whose character carries the `enchanter` adjective.
+func (m *Mob) IsEnchanter() bool {
+	for _, adj := range m.Character.Adjectives {
+		if adj == `enchanter` {
 			return true
 		}
 	}

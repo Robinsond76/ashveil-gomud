@@ -1,0 +1,118 @@
+# Life stories (Ashveil phase 72a).
+#
+# Three stages a player answers at creation: where they were born, how they
+# grew up, and what they did before taking the road. The trade IS the
+# character's background (phase 72 reads it). Every option gives +1 to one
+# of the stats it names (the player picks; an option naming one stat fixes
+# it). No stat rises above +2 from the whole life story, so the three
+# stages give +3 at most.
+#
+# Option fields:
+#   id        lowercase key stored on the character
+#   name      what the creation list shows
+#   text      one or two sentences of backstory
+#   stats     one or two of strength speed smarts vitality mysticism perception
+#   keepsake  trade only: an item id, a cheap keepsake for the pack
+#   skill     trade only: a skill id granted at level 1 when the character
+#             has none of it (never a combat skill)
+#
+# Placeholders in text: {name} {they} {their} {them} ({They} {Their} {Them}
+# at a sentence start). Avoid verbs after {they}: write "{name} was", not
+# "{they} was".
+#
+# Placeholder names and tales. The new world's lore renames and replaces
+# these; ids, effects and the three stages are the contract.
+
+stages:
+  - id: homeland
+    title: "Where were you born?"
+    options:
+      - id: river-farms
+        name: "The river farms"
+        stats: [vitality, strength]
+        text: "{name} was born on the river farms, in mud and early light, where a bad flood meant a hungry winter and a worse spring."
+      - id: hill-clans
+        name: "The hill clans"
+        stats: [strength, perception]
+        text: "{name} came up among the hill clans, where children learn to read weather and raiders before they learn their letters."
+      - id: walled-city
+        name: "A walled city"
+        stats: [smarts, speed]
+        text: "{name} was born inside the walls of a city that never quite felt safe, among crowds, rumours and closed doors."
+      - id: ash-marches
+        name: "The ash marches"
+        stats: [vitality, perception]
+        text: "{name} was born on the ash marches, where the ground is grey and the old wards are failing."
+      - id: coast
+        name: "The coast"
+        stats: [speed, perception]
+        text: "{name} grew up on the cold coast, among net-menders and wreckers who trusted the tide more than any lord."
+      - id: forest-roads
+        name: "The forest roads"
+        stats: [speed, strength]
+        text: "{name} was born on the forest roads, in a wagon or a lean-to, and never lived long in one place."
+
+  - id: upbringing
+    title: "How did you grow up?"
+    options:
+      - id: farmhand
+        name: "A farmhand"
+        stats: [strength, vitality]
+        text: "{Their} childhood was fields and fences and work from first light, and it left {them} hard to tire."
+      - id: temple-foundling
+        name: "A temple foundling"
+        stats: [smarts, mysticism]
+        text: "{name} was left at a temple door as an infant and raised by the clergy on scripture, chores and a little kindness."
+      - id: street-child
+        name: "A street child"
+        stats: [speed, perception]
+        text: "{name} grew up on the streets, quick of hand and quicker of eye, and learned that nobody gives anything away."
+      - id: hunters-get
+        name: "A hunter's get"
+        stats: [perception, speed]
+        text: "{name} was raised by a hunter who taught {them} to read tracks, keep still and kill quickly."
+      - id: minor-house
+        name: "A minor house"
+        stats: [smarts, mysticism]
+        text: "{name} was raised in a minor house with tutors, old debts and a name worth less each year."
+      - id: camp-follower
+        name: "A camp follower"
+        stats: [vitality, smarts]
+        text: "{name} grew up following armies, mending, cooking and counting coin, and learned what war leaves behind."
+
+  - id: trade
+    title: "What did you do before taking the road?"
+    options:
+      - id: soldier
+        name: "A soldier"
+        stats: [strength, vitality]
+        keepsake: 30400
+        text: "Before the road, {name} was a soldier, and still keeps a tin badge from a company that no longer exists."
+      - id: scholar
+        name: "A scholar"
+        stats: [smarts, mysticism]
+        keepsake: 30401
+        skill: inspect
+        text: "Before the road, {name} was a scholar, trained to read what others overlooked, and carries a worn primer to prove it."
+      - id: outlaw
+        name: "An outlaw"
+        stats: [speed, perception]
+        keepsake: 30402
+        text: "Before the road, {name} was an outlaw, and keeps a notched coin as a reminder of who once had a price on {their} head."
+      - id: acolyte
+        name: "An acolyte"
+        stats: [mysticism, smarts]
+        keepsake: 30403
+        text: "Before the road, {name} was an acolyte in a quiet order, and wears the cord that was never taken back."
+      - id: labourer
+        name: "A labourer"
+        stats: [vitality, strength]
+        keepsake: 30404
+        skill: cooking
+        text: "Before the road, {name} was a labourer, hauling and digging for wages, and still carries a well-worn ladle from the work camps."
+      - id: noble
+        name: "A noble"
+        stats: [smarts, perception]
+        keepsake: 30405
+        skill: map
+        text: "Before the road, {name} was of noble blood, brought up on maps and manners, and keeps a cracked signet that opens no doors now."

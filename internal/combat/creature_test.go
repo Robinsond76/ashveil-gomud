@@ -44,7 +44,7 @@ func TestStoneGolemIsSlowerThanTheSlowestPerson(t *testing.T) {
 	golem.Stats.Speed.ValueAdj = -100
 	golem.HPArchetype = "stone-golem"
 	golem.Level = 1
-	assert.InDelta(t, Tempo(person)*0.85, Tempo(golem), 1e-9)
+	assert.InDelta(t, Tempo(person)*0.90, Tempo(golem), 1e-9)
 }
 
 func TestStoneGolemTempoIsOrdinaryWithoutTheSpecies(t *testing.T) {

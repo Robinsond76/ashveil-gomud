@@ -1,0 +1,22 @@
+roomid: 3718
+zone: Ashen Barrows
+title: Silent Ossuary
+description: Stone arches hold up a ceiling of dry roots and old dust. A skull grins from a heap
+  of bones.
+biome: dungeon
+exits:
+  east:
+    roomid: 3719
+  west:
+    roomid: 3717
+  south:
+    roomid: 3723
+  north:
+    roomid: 3710
+resources:
+- firewood
+- water
+mapx: 4
+mapy: 2
+mapz: 0
+hascoordinates: true

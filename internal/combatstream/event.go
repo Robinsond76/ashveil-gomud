@@ -48,8 +48,12 @@ const (
 	WoundChange    Kind = "wound-change"    // Phase 30b
 	GuardUsed      Kind = "guard-used"      // Phase 30c
 	GuardExhausted Kind = "guard-exhausted" // Phase 30c
-	Yield          Kind = "yield"           // Phase 30e
-	Flee           Kind = "flee"
+	// GuardRefused is a rival who would have guarded a ward and let the
+	// blow fall (Phase 65); Status is "bond". A friend's step in is a
+	// GuardUsed with the same Status.
+	GuardRefused Kind = "guard-refused"
+	Yield        Kind = "yield" // Phase 30e
+	Flee         Kind = "flee"
 	// Death is a death or an incapacitation: Outcome is OutcomeSlain,
 	// OutcomeBeaten (a practice foe), or OutcomeIncapacitated. An empty
 	// Source is filled with the victim's last damager in the fight.
@@ -60,6 +64,10 @@ const (
 	// OutcomeFailed; a strike readied (Opening Strike, Aimed Shot) has
 	// none, its blow being the round's Attack.
 	Ability Kind = "ability"
+	// OrderFired is a battle order (Phase 61) carried out: Source is the
+	// member who held it, Target the ally or foe its condition named, Status
+	// its action ("heal", "break", "guard", "strongest" or "hold").
+	OrderFired Kind = "order-fired"
 )
 
 // Outcomes.
@@ -117,6 +125,7 @@ type Event struct {
 	Seq     uint64 // stamped by Emit, in emission order
 	Kind    Kind
 	Round   uint64
+	Slot    int    // the round's turn slot now acting, from 1 (Phase 82b); 0 outside a turn
 	FightID uint64 // 0 when the happening is not part of a tracked fight
 	PartyID string // the enemy party (Phase 11a) of the fight, if any
 	RoomId  int
@@ -129,7 +138,8 @@ type Event struct {
 	Defenses   []string // Attack: what stopped each defended strike (Phase 30g2)
 	Damage     int
 	Crit       bool
-	Quality    string // Attack: "glancing" or "telling" for a landed blow that was (Phase 35d); "" when solid
+	Strikes    []Strike // Attack: each strike's roll with its parts (Phase 62)
+	Quality    string   // Attack: "glancing" or "telling" for a landed blow that was (Phase 35d); "" when solid
 	WeaponType string
 	SpellId    string
 	Amount     int // Heal: health restored

@@ -6,7 +6,7 @@ Code-drawn pixel art for the visual client (roadmap: "Visual direction").
 `battle/mapping.json`, and two review contact sheets in `docs/verification/`
 (`40s1-contact-sheet.png` for S0/S1, `40s-s2-s3-contact-sheet.png` for S2/S3, `40s5-contact-sheet.png` for S5). Requires Pillow.
 
-- `palette.py`: the 64-color master palette (outline, 19 materials x 3 shades, ember).
+- `palette.py`: the 67-color master palette (outline, 21 materials x 3 shades, ember; `skin` and `hair` are the ramps the web client repaints for a player's looks).
 - `pixels.py`: canvas, shaded parts (top-left light), 1 px outline, sheet joiner.
 - `figures.py`: humanoid rig; 6 base classes + `adventurer` fallback; map (32px, 5 heads) and battle (64px, 7 heads).
 - `icons.py`: resource icons, markers, camp pieces from ASCII pixel maps.

@@ -4,6 +4,7 @@ package company
 import (
 	"errors"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/errands"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"slices"
 	"strings"
@@ -83,6 +84,13 @@ type Companion struct {
 	// rolled when it joins. Blank on a companion saved before then, which
 	// banter derives from its ID until one is set.
 	Personality string `yaml:"personality,omitempty"`
+	// Opinions is what it remembers saying about the leader's choices
+	// (Phase 64). Nil until it has said anything.
+	Opinions *OpinionMemory `yaml:"opinions,omitempty"`
+	// Errand is set while the companion is away on an errand (Phase 70):
+	// off the map until it is due and the leader is free, its State the
+	// snapshot taken as it left.
+	Errand *errands.Errand `yaml:"errand,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -131,8 +139,13 @@ type Record struct {
 	Claimed []int `yaml:"claimed,omitempty"`
 	// Service is each member's Phase 24 time with the band (chemistry).
 	Service []Service `yaml:"service,omitempty"`
+	// Bonds is what each pair of companions feels for the other (Phase 65).
+	Bonds []Bond `yaml:"bonds,omitempty"`
 	// Lost are the companions whose rescue allowance ran out (Phase 25b).
 	Lost []LostCompanion `yaml:"lost,omitempty"`
+	// Rites are the losses the company has not yet mourned or let pass
+	// (Phase 74).
+	Rites []Rite `yaml:"rites,omitempty"`
 	// Rosters are the leader's generated recruit candidates, one per
 	// recruiter room (Phase 32a2).
 	Rosters []Roster `yaml:"rosters,omitempty"`
@@ -210,6 +223,8 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	if record.Service != nil {
 		record.Service = append([]Service(nil), record.Service...)
 	}
+	record.Bonds = cloneBonds(record.Bonds)
+	record.Rites = cloneRites(record.Rites)
 	if record.Lost != nil {
 		record.Lost = append([]LostCompanion(nil), record.Lost...)
 	}
@@ -236,6 +251,13 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		if c.Separation != nil {
 			sep := *c.Separation
 			record.Companions[i].Separation = &sep
+		}
+		if c.Opinions != nil {
+			record.Companions[i].Opinions = c.Opinions.Clone()
+		}
+		if c.Errand != nil {
+			errand := *c.Errand
+			record.Companions[i].Errand = &errand
 		}
 		record.Companions[i].Skills = cloneRanks(c.Skills)
 		record.Companions[i].GrantedSkills = cloneRanks(c.GrantedSkills)
@@ -270,6 +292,7 @@ func (r *Registry) Put(record Record) {
 		_ = record.Formation.Place(LeaderMemberKey, 1, 1)
 	}
 	record.Service = pruneService(record.Service, valid)
+	record.Bonds = pruneBonds(record.Bonds, record)
 	r.Companies[record.LeaderUserID] = record
 }
 
@@ -515,6 +538,9 @@ func (r *Registry) PlaceMember(leaderUserID int, key MemberKey, row, col int) er
 	if record.isDead(key) {
 		return ErrMemberDead
 	}
+	if record.isAway(key) {
+		return ErrMemberAway
+	}
 	if err := record.Formation.Place(key, row, col); err != nil {
 		return err
 	}
@@ -534,6 +560,9 @@ func (r *Registry) SwapMembers(leaderUserID int, a, b MemberKey) error {
 	}
 	if record.isDead(a) || record.isDead(b) {
 		return ErrMemberDead
+	}
+	if record.isAway(a) || record.isAway(b) {
+		return ErrMemberAway
 	}
 	if err := record.Formation.Swap(a, b); err != nil {
 		return err

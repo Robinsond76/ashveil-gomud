@@ -1,12 +1,14 @@
 package company
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -72,28 +74,102 @@ func spawnRoom(roomId int, mobIds ...int) string {
 	return out
 }
 
+// shippedFile is one shipped data file, staged once per test process.
+type shippedFile struct {
+	rel    string
+	data   []byte
+	staged string
+}
+
+var (
+	shippedCacheMu sync.Mutex
+	shippedCache   = map[string][]shippedFile{}
+	shippedStage   string
+)
+
+// shippedFiles lists, reads, and stages a shipped path (a file or a
+// directory tree) once per process: the brawl fixtures copy the same item,
+// spell, and mob trees for every test, and creating those files each time
+// dominated the suite's runtime. The staged copies are hard-linked into each
+// test's data dir, so a test must replace (remove, then write) a copied file
+// rather than write over it; checkStagedShipped, run by TestMain, fails the
+// package when one did.
+func shippedFiles(t *testing.T, rel string) []shippedFile {
+	t.Helper()
+	shippedCacheMu.Lock()
+	defer shippedCacheMu.Unlock()
+	if files, ok := shippedCache[rel]; ok {
+		return files
+	}
+	if shippedStage == "" {
+		dir, err := os.MkdirTemp("", "company-shipped-")
+		require.NoError(t, err)
+		shippedStage = dir
+	}
+	shipped := shippedWorld(t)
+	var files []shippedFile
+	require.NoError(t, filepath.Walk(filepath.Join(shipped, rel), func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		r, err := filepath.Rel(shipped, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		staged := filepath.Join(shippedStage, r)
+		if _, err := os.Stat(staged); err != nil {
+			if err := os.MkdirAll(filepath.Dir(staged), 0755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(staged, data, 0600); err != nil {
+				return err
+			}
+		}
+		files = append(files, shippedFile{rel: r, data: data, staged: staged})
+		return nil
+	}))
+	shippedCache[rel] = files
+	return files
+}
+
+// checkStagedShipped reports staged files a test changed in place, then
+// removes the staging dir.
+func checkStagedShipped() (bad []string) {
+	shippedCacheMu.Lock()
+	defer shippedCacheMu.Unlock()
+	for _, files := range shippedCache {
+		for _, f := range files {
+			if got, err := os.ReadFile(f.staged); err != nil || !bytes.Equal(got, f.data) {
+				bad = append(bad, f.rel)
+			}
+		}
+	}
+	if shippedStage != "" {
+		_ = os.RemoveAll(shippedStage)
+	}
+	return bad
+}
+
+// copyShipped puts shipped files in a test's data dir, hard-linking the
+// process-wide staged copies (writing them when linking fails).
 func copyShipped(t *testing.T, dataDir string, rels ...string) {
 	t.Helper()
-	shipped := shippedWorld(t)
+	made := map[string]bool{}
 	for _, rel := range rels {
-		require.NoError(t, filepath.Walk(filepath.Join(shipped, rel), func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() {
-				return err
+		for _, f := range shippedFiles(t, rel) {
+			dst := filepath.Join(dataDir, f.rel)
+			if dir := filepath.Dir(dst); !made[dir] {
+				require.NoError(t, os.MkdirAll(dir, 0755))
+				made[dir] = true
 			}
-			r, err := filepath.Rel(shipped, path)
-			if err != nil {
-				return err
+			if err := os.Link(f.staged, dst); err != nil {
+				require.NoError(t, os.WriteFile(dst, f.data, 0600))
 			}
-			data, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			dst := filepath.Join(dataDir, r)
-			if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-				return err
-			}
-			return os.WriteFile(dst, data, 0600)
-		}))
+		}
 	}
 }
 
@@ -105,6 +181,8 @@ func copyShipped(t *testing.T, dataDir string, rels ...string) {
 func newBrawl(t *testing.T) *brawl {
 	hooks.ResetTempoForTest()
 	t.Cleanup(hooks.ResetTempoForTest)
+	hooks.ResetBattleClockForTest()
+	t.Cleanup(hooks.ResetBattleClockForTest)
 	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 1 }))
 	t.Cleanup(hooks.UseMoraleStateForTest(nil, nil))
 	t.Cleanup(hooks.UseMoraleRollForTest(func(int) int { return 99 }))
@@ -281,6 +359,14 @@ func newBrawl(t *testing.T) *brawl {
 // on one named bandit, as `attack <bandit>` did before Phase 32c (a fight is
 // now started by naming a group, and the first aim is chosen for her). The
 // 29a/29b scenarios that need a particular foe use it.
+// actsFirst makes a fighter the round's first slot (Phase 82b: turns run
+// in speed order, and the brawl pins every tempo at one, so raw Speed
+// breaks the tie). Fixtures that relied on the old "the player's blows
+// come before any mob's" order call it.
+func (b *brawl) actsFirst(c *characters.Character) {
+	c.Stats.Speed.ValueAdj = 200
+}
+
 func (b *brawl) aimAt(name string) {
 	b.t.Helper()
 	_, id := b.road.FindByName(name)
@@ -349,13 +435,27 @@ func (b *brawl) livingBandits() []*mobs.Mob {
 // and the invariants are checked over all of it. fightToTheEnd renews it
 // every round.
 func (b *brawl) toughen() {
-	b.aria.Character.HealthMax.Value = 1000
-	b.aria.Character.Health = 1000
+	hardTo(b.aria.Character, 1000)
 	for id := 1; id <= 4; id++ {
-		mob := b.companion(id)
-		mob.Character.HealthMax.Value = 1000
-		mob.Character.Health = 1000
+		hardTo(&b.companion(id).Character, 1000)
 	}
+}
+
+// hardTo makes a fighter hard to kill: full health of hp, and a max that a
+// stat recalculation keeps. A buff or status change (a knockdown ending)
+// recalculates a character's stats, and HealthMax.Value is rebuilt from
+// Training plus Mods, so setting Value alone let a foe drop back to its
+// natural 48 health mid-fight and die before the test's own scenario ran out.
+func hardTo(c *characters.Character, hp int) {
+	hardMaxTo(c, hp)
+	c.Health = hp
+}
+
+// hardMaxTo raises (or sets) a fighter's maximum health to hp, as a stat
+// recalculation keeps it, and leaves their current health alone.
+func hardMaxTo(c *characters.Character, hp int) {
+	c.HealthMax.Training = hp - c.HealthMax.Mods
+	c.HealthMax.Value, c.HealthMax.ValueAdj = hp, hp
 }
 
 // fightToTheEnd runs rounds until no bandit is standing, checking every
@@ -543,8 +643,7 @@ func TestSoloPlayerWithARecordTurnsOnHerOwn(t *testing.T) {
 
 	b.aimAt("bandit cutthroat")
 	for i := 0; i < 8; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		before := len(b.livingBandits())
 		got := b.fight()
 		assert.NotContains(t, got, "can't reach", "round %d", b.round)
@@ -578,5 +677,24 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		b.toughen()
 		assert.NotContains(t, b.fight(), "bandit fence turns toward")
+	}
+}
+
+func TestHardenedFightersKeepTheirHealthThroughARecalculation(t *testing.T) {
+	// A status ending recalculates stats; a bandit that fell back to its natural
+	// health mid-fight made the Warlord's Relentless test fail about 1 run in 120.
+	b := newBrawl(t)
+	b.shapeBandits()
+	b.hardenBandits()
+	b.toughen()
+	fighters := []*characters.Character{b.aria.Character, &b.companion(1).Character}
+	for _, m := range b.livingBandits() {
+		fighters = append(fighters, &m.Character)
+	}
+	require.GreaterOrEqual(t, len(fighters), 3)
+	for _, c := range fighters {
+		c.RecalculateStats()
+		assert.Equal(t, 1000, c.HealthMax.Value, "%s is still hard to kill", c.Name)
+		assert.Equal(t, 1000, c.Health)
 	}
 }

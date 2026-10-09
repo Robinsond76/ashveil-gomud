@@ -1,0 +1,93 @@
+name: Stormcrown Heights
+roomid: 3905
+defaultbiome: snow
+tileready: true
+encounters:
+  band:
+    low: 29
+    high: 33
+  entrychance: 15
+  tables:
+    heights:
+    - id: crown-wolves
+      weight: 25
+      pack: true
+      text: Snow wolves run along the ridge and cut off the path.
+      members:
+      - mobid: 55
+        count: 3
+    - id: crown-ruffians
+      weight: 20
+      text: Ruffians in furs shout and charge, led by a bruiser.
+      members:
+      - mobid: 29
+        count: 1
+      - mobid: 28
+        count: 2
+    - id: crown-enforcers
+      weight: 20
+      text: Enforcers hold the narrow path with their shields.
+      members:
+      - mobid: 91
+        count: 1
+      - mobid: 29
+        count: 2
+    - id: crown-horde
+      weight: 10
+      pack: true
+      text: A huge pack of snow wolves rises from the drifts.
+      members:
+      - mobid: 55
+        count: 4
+    - id: crown-hexers
+      weight: 15
+      text: Goblin hexers chant against the storm.
+      members:
+      - mobid: 70
+        count: 2
+      - mobid: 33
+        count: 1
+    - id: crown-surgeon
+      weight: 12
+      text: Ruffians push through the snow with their bonesetter.
+      members:
+      - mobid: 28
+        count: 1
+      - mobid: 29
+        count: 1
+      - mobid: 90
+        count: 1
+    lair:
+    - id: summit-ent
+      weight: 34
+      text: The mountain cracks and an ent in a coat of ice strides out.
+      members:
+      - mobid: 34
+        count: 1
+      - mobid: 55
+        count: 2
+      - mobid: 36
+        count: 1
+      boss: true
+    - id: summit-queen
+      weight: 33
+      text: Frost-silk ropes drop from the throne and the spider queen descends, her brood behind her.
+      members:
+      - mobid: 37
+        count: 1
+      - mobid: 36
+        count: 2
+      - mobid: 35
+        count: 1
+      boss: true
+    - id: summit-creeper
+      weight: 33
+      text: Black ice cracks under the throne and an abyssal creeper heaves itself out, stalkers around it.
+      members:
+      - mobid: 25
+        count: 1
+      - mobid: 24
+        count: 2
+      - mobid: 22
+        count: 1
+      boss: true

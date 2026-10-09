@@ -11,4 +11,7 @@ flee when a battle goes badly (<ansi fg="command">help morale</ansi>), and one a
 company keeps a vigil (and forages) at most once every 15 minutes of real
 time.
 
+Rest duties (<ansi fg="command">help camp duties</ansi>) don't change the vigil: your best cleric
+keeps it on their own, even on a duty.
+
 See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help morale</ansi>.

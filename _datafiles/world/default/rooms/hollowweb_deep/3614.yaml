@@ -1,0 +1,17 @@
+roomid: 3614
+zone: Hollowweb Deep
+title: Cocoon-hung Run
+description: The air is still and cold, and the trees are wrapped in silk. Something drops from
+  the branches and skitters away.
+biome: forest
+exits:
+  east:
+    roomid: 3615
+  north:
+    roomid: 3606
+resources:
+- game
+mapx: 0
+mapy: 2
+mapz: 0
+hascoordinates: true

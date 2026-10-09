@@ -362,6 +362,29 @@ func RelocateCompany(leaderUserID, originRoomID, roomID int) int {
 	return rp.RelocateCompany(leaderUserID, originRoomID, roomID)
 }
 
+// DefeatProvider is optionally implemented by the registered
+// FormationProvider (Phase 53). modules/company runs on the game loop, so
+// call it from the game loop only.
+type DefeatProvider interface {
+	// WoundCompany gives every living, attached companion with the leader a
+	// lasting wound holding back pct percent of its maximum health, and
+	// returns their names. roll picks the place of the wound.
+	WoundCompany(leaderUserID, pct int, roll func(n int) int) []string
+}
+
+// WoundCompany wounds a defeated leader's living companions (Phase 53). It
+// wounds none without a provider.
+func WoundCompany(leaderUserID, pct int, roll func(n int) int) []string {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	dp, ok := p.(DefeatProvider)
+	if !ok {
+		return nil
+	}
+	return dp.WoundCompany(leaderUserID, pct, roll)
+}
+
 // CompanyFollows is the line a leader sees when their company is brought
 // along by a move that is not an ordinary exit (Phase 33h3).
 const CompanyFollows = "Your company comes with you."
@@ -440,6 +463,8 @@ const (
 	MemberFled
 	// MemberSeparated is off the map, finding its way back (Phase 33h3).
 	MemberSeparated
+	// MemberErrand is away on an errand, due back at a saved time (Phase 70).
+	MemberErrand
 )
 
 // MemberView is one companion as the information surfaces show it.
@@ -454,6 +479,9 @@ type MemberView struct {
 	// promotion gate reads (Phase 38c1).
 	Class     string
 	Alignment int
+	// Personality is its temperament (Phase 49), as story events read it
+	// (Phase 60).
+	Personality string
 	// ExpInto and ExpTNL are the experience into the level and the span to
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int

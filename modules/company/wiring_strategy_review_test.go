@@ -19,7 +19,7 @@ import (
 // they stay where they were set.
 func (b *brawl) hardenBandits() {
 	for _, m := range b.livingBandits() {
-		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+		hardTo(&m.Character, 1000)
 	}
 }
 

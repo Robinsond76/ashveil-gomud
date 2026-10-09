@@ -1,6 +1,7 @@
 package testarea
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -37,6 +38,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
 	_ "github.com/GoMudEngine/GoMud/modules/expedition"
 	_ "github.com/GoMudEngine/GoMud/modules/exposure"
+	"github.com/GoMudEngine/GoMud/modules/gmcp"
 	_ "github.com/GoMudEngine/GoMud/modules/mount"
 	_ "github.com/GoMudEngine/GoMud/modules/strategy"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
@@ -436,4 +438,97 @@ func TestCreaturesInTheArea(t *testing.T) {
 
 	tr.run("testarea", "return")
 	tr.assertAsBefore(b)
+}
+
+// TestArmoryCatalogListsEverythingAndGivesNothing: the catalog is how an
+// admin browses the world's items and picks one. It hands the web client
+// every item as the Armory GMCP message, prints a text version for other
+// clients, works only on a trip, and puts nothing in the inventory until the
+// admin takes an item.
+func TestArmoryCatalogListsEverythingAndGivesNothing(t *testing.T) {
+	tr := newTrip(t)
+	usercommands.AddFunctionExporter(plugins.GetPluginRegistry()) // main.go does this at startup
+	var payloads []catalogPayload
+	id := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
+		if out := e.(gmcp.GMCPOut); out.UserId == tr.user.UserId && out.Module == "Armory" {
+			payloads = append(payloads, out.Payload.(catalogPayload))
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(gmcp.GMCPOut{}, id) })
+
+	assert.Contains(t, tr.run("testarea", "catalog"), "Start a trip first")
+	assert.Empty(t, payloads, "nothing is sent off a trip")
+
+	// Arriving in the armory opens the screen (any move in: a walk or testarea armory).
+	tr.run("testarea", "armory")
+	require.Len(t, payloads, 1, "the catalog opens on arrival in the armory")
+	assert.Len(t, payloads[0].Items, len(items.GetAllItemSpecs()))
+	tr.run("testarea", "hub")
+	assert.Len(t, payloads, 1, "the hub opens nothing")
+	tr.run("testarea", "armory")
+	require.Len(t, payloads, 2, "coming back into the armory opens it again")
+	payloads = nil
+
+	owned := len(tr.user.Character.Items)
+	out := tr.run("testarea", "catalog")
+	assert.Contains(t, out, "The catalog holds")
+	assert.Contains(t, out, "weapon (")
+	require.Len(t, payloads, 1)
+	assert.Len(t, payloads[0].Items, len(items.GetAllItemSpecs()), "the client gets every item")
+	assert.Equal(t, owned, len(tr.user.Character.Items), "browsing gives nothing")
+
+	out = tr.run("testarea", "catalog sword")
+	assert.Contains(t, out, "#")
+	assert.Contains(t, out, "takes one")
+	assert.Equal(t, "sword", payloads[1].Filter, "the word opens the screen's search")
+	assert.Equal(t, owned, len(tr.user.Character.Items))
+	assert.Contains(t, tr.run("testarea", "catalog zzzznothing"), "No item matches")
+
+	// Taking from the catalog is give, by id.
+	assert.Contains(t, tr.run("testarea", fmt.Sprintf("give %d 2", payloads[0].Items[0].ID)), "You take 2 x")
+	assert.Equal(t, owned+2, len(tr.user.Character.Items))
+}
+
+// TestDroppedItemsAndGoldVanishInTheArea: anything dropped in a test room is
+// gone at once (an item) or by the next round (gold), so the floor stays
+// empty.
+func TestDroppedItemsAndGoldVanishInTheArea(t *testing.T) {
+	tr := newTrip(t)
+	tr.run("testarea", "armory")
+	room := rooms.LoadRoom(tr.user.Character.RoomId)
+	require.NotNil(t, room)
+
+	spec := items.GetItemSpec(items.FindItem("sword"))
+	tr.run("testarea", fmt.Sprintf("give %d", spec.ItemId))
+	out := tr.run("drop", spec.Name)
+	assert.Contains(t, out, "vanishes in a puff of smoke")
+	assert.Empty(t, room.Items, "the item is gone from the floor")
+
+	tr.run("testarea", "gold 50")
+	tr.run("drop", "50 gold")
+	assert.Equal(t, 50, room.Gold)
+	onNewRound(events.NewRound{})
+	assert.Zero(t, room.Gold, "dropped gold is swept")
+	room.Items = append(room.Items, items.New(items.FindItem("sword")))
+	onNewRound(events.NewRound{})
+	assert.Empty(t, room.Items, "anything left on the floor is swept")
+}
+
+// TestAdminRecruitsGetRandomUniqueNames pins that test-area recruits of a
+// person class carry generated names, never the template's generic one, and
+// that no two in a company share a given name.
+func TestAdminRecruitsGetRandomUniqueNames(t *testing.T) {
+	tr := newTrip(t)
+	u := tr.user
+	tr.withCompany()
+	seen := map[string]bool{}
+	for i := 0; i < 3; i++ {
+		text, err := company.AdminRecruit(u.UserId, u.Character.RoomId, "wizard", 3)
+		require.NoError(t, err)
+		assert.NotContains(t, text, "Recruit Wizard")
+		given := strings.ToLower(strings.Fields(strings.TrimPrefix(text, "Recruited "))[0])
+		assert.False(t, seen[given], "duplicate name %s", given)
+		seen[given] = true
+	}
 }

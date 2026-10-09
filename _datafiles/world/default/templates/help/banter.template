@@ -23,6 +23,14 @@ lines are said in answer to another companion's, and some mention another
 member, or you, by name. Talk of the stars, the moon or the night waits
 for nightfall on the world clock.
 
+Talk reads like a page of a story, not a log: sometimes the quote comes first,
+sometimes a small gesture does, sometimes the speaker's name sits in the
+middle of the line. A gesture fits the mood of the words, and a companion turns
+to another only when answering them. Two companions never say the same words in
+one go; the second agrees with a nod instead. When a
+choice of yours shifts a companion's loyalty (<ansi fg="command">help opinions</ansi>), the change
+sits quietly in grey at the end of the line.
+
 After a battle the talk follows how it went:
 
   a close call    someone was left at under a third of their health
@@ -43,4 +51,11 @@ Only companions who are with you can speak, and it takes at least two.
 In the web client, Company > Camp shows the company's latest talk under
 "Around the fire" (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>.
+A personality also decides what a companion thinks of your choices: mercy,
+camps, sharing food, relics and the choices in scenes on the road
+(<ansi fg="command">help opinions</ansi>).
+
+Friends and rivals sometimes talk about each other, and it nudges their
+bond (<ansi fg="command">help bonds</ansi>).
+
+See also: <ansi fg="command">help bonds</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help set</ansi>, <ansi fg="command">help opinions</ansi>.

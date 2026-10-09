@@ -15,20 +15,19 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/livecompanions"
+	"github.com/GoMudEngine/GoMud/internal/modstore"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -94,12 +93,12 @@ func DefaultSettings() Settings {
 func parseSettings(get func(string) any) Settings {
 	s := DefaultSettings()
 	positive := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok && n > 0 {
+		if n, ok := modconfig.Int(get(name)); ok && n > 0 {
 			*dst = n
 		}
 	}
 	nonNegative := func(name string, dst *int) {
-		if n, ok := configInt(get(name)); ok && n >= 0 {
+		if n, ok := modconfig.Int(get(name)); ok && n >= 0 {
 			*dst = n
 		}
 	}
@@ -116,7 +115,7 @@ func parseSettings(get func(string) any) Settings {
 	if list, ok := get("Settlements").([]any); ok {
 		settlements := map[string]bool{}
 		for _, entry := range list {
-			if biome := strings.ToLower(strings.TrimSpace(configString(entry))); biome != "" {
+			if biome := strings.ToLower(strings.TrimSpace(modconfig.String(entry))); biome != "" {
 				settlements[biome] = true
 			}
 		}
@@ -125,9 +124,9 @@ func parseSettings(get func(string) any) Settings {
 	if list, ok := get("Biomes").([]any); ok {
 		biomes := map[string]int{}
 		for _, entry := range list {
-			fields := stringMap(entry)
-			biome := strings.ToLower(strings.TrimSpace(configString(fields["biome"])))
-			strain, ok := configInt(fields["strain"])
+			fields := modconfig.Map(entry)
+			biome := strings.ToLower(strings.TrimSpace(modconfig.String(fields["biome"])))
+			strain, ok := modconfig.Int(fields["strain"])
 			if biome == "" || !ok || strain < 0 {
 				mudlog.Warn("walking: invalid biome strain", "entry", entry)
 				continue
@@ -171,19 +170,11 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *Registry) error {
-	data, err := s.plug.ReadBytes("walking")
-	if errors.Is(err, os.ErrNotExist) {
-		*registry = newRegistry()
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return decodeRegistry(data, registry)
+	return modstore.Load(s.plug, "walking", func() Registry { return newRegistry() }, decodeRegistry, registry)
 }
 
 func (s pluginStore) Save(registry Registry) error {
-	return s.plug.WriteStruct("walking", registry)
+	return modstore.Save(s.plug, "walking", registry)
 }
 
 // decodeRegistry parses stored bytes, dropping invalid leaders, member keys,
@@ -271,6 +262,10 @@ func init() {
 	})
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	walking.SetStepProvider(m)
+	// Phase 55 review: a journey that ends out of doors with a member
+	// Frozen gives a chill, as a step on foot does. Arrival runs on the
+	// event queue, after the expedition's lock is released.
+	walking.AddArrivalListener(func(userID, _, toRoomID int) { m.catchChill(userID, toRoomID) })
 }
 
 func newModule() *WalkingModule {
@@ -299,22 +294,16 @@ func newModule() *WalkingModule {
 // companionRoster lists a leader's company companions, with the live
 // character for those currently spawned.
 func companionRoster(leaderUserID int) ([]member, bool) {
-	roster := survival.CurrentRoster(leaderUserID)
-	if roster == nil {
+	companions, ok := livecompanions.Of(leaderUserID, livecompanions.SkipDead) // a dead companion (Phase 25b) is drained of nothing
+	if !ok {
 		return nil, false
 	}
 	var out []member
-	for _, ref := range roster {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok || ref.Dead {
-			continue // a dead companion (Phase 25b) is drained of nothing
-		}
-		mb := member{Key: ref.Key, CompanionID: companionID, Name: ref.Name}
-		if instanceId, ok := company.InstanceFor(leaderUserID, companionID); ok {
-			if mob := mobs.GetInstance(instanceId); mob != nil {
-				mb.Character = &mob.Character
-				mb.RoomId = mob.Character.RoomId
-			}
+	for _, c := range companions {
+		mb := member{Key: c.Ref.Key, CompanionID: c.CompanionID, Name: c.Ref.Name}
+		if c.Mob != nil {
+			mb.Character = &c.Mob.Character
+			mb.RoomId = c.Mob.Character.RoomId
 		}
 		out = append(out, mb)
 	}
@@ -490,6 +479,26 @@ func (m *WalkingModule) applyPathfinder(p *stepPlan, leaderUserID int, roomIDs .
 // mover their share of the step's strain.
 func (m *WalkingModule) Stepped(userID, fromRoomID, toRoomID int) {
 	m.charge(userID, fromRoomID, toRoomID, 100)
+	m.catchChill(userID, toRoomID)
+}
+
+// catchChill (Phase 55) gives a Chill to every member who walks, or
+// arrives from a journey, out of doors Frozen. It runs after the charge, outside the module's lock: it
+// reads exposure and writes survival, and neither may be held across it.
+func (m *WalkingModule) catchChill(userID, toRoomID int) {
+	dest := m.loadRoom(toRoomID)
+	if dest == nil || dest.IsIndoor() {
+		return
+	}
+	caught := survival.CatchChillIfFrozen(userID)
+	if len(caught) == 0 {
+		return
+	}
+	if leader := m.lookupUser(userID); leader != nil {
+		for _, c := range caught {
+			leader.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
+		}
+	}
 }
 
 // Effort implements walking.EffortProvider (Phase 40a2): the company works
@@ -656,7 +665,7 @@ func bandMessage(change bandChange, self bool, name string) string {
 	switch change.after {
 	case ExhaustedBuffId:
 		if change.before == CollapsedBuffId {
-			return pick(self, "You find your feet again, though you are still exhausted.", name+" is back on their feet, though still exhausted.")
+			return pick(self, "You find your feet again, though you are still exhausted.", name+" is up again, though still exhausted.")
 		}
 		return pick(self, "You are exhausted. Rest at a camp or an inn.", name+" is exhausted.")
 	case CollapsedBuffId:
@@ -729,44 +738,4 @@ func (m *WalkingModule) report(user *users.UserRecord, room *rooms.Room) []strin
 		lines = append(lines, line+".")
 	}
 	return lines
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return map[string]any{}
-}
-
-func configInt(raw any) (int, bool) {
-	switch value := raw.(type) {
-	case int:
-		return value, true
-	case int64:
-		return int(value), true
-	case float64:
-		return int(value), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		return n, err == nil
-	}
-	return 0, false
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }

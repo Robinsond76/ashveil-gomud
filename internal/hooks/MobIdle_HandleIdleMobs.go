@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/townsfolk"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -35,9 +36,44 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		}
 	}
 
-	if conversations.HasConverseFile(int(mob.MobId), mob.Character.Zone) && util.Rand(100) < int(configs.GetGamePlayConfig().MobConverseChance) {
-		if mobRoom := rooms.LoadRoom(mob.Character.RoomId); mobRoom != nil {
+	mobRoom := rooms.LoadRoom(mob.Character.RoomId)
+
+	// Says and emotes queued during this idle turn obey the chatter limits
+	// (internal/mobs/chatter.go): rare, and never the same line twice to a
+	// player within the memory window.
+	var listeners []int
+	if mobRoom != nil {
+		listeners = mobRoom.GetPlayers()
+	}
+	mob.BeginIdle(listeners)
+	defer mob.EndIdle()
+
+	if mob.ChatterReady() && conversations.HasConverseFile(int(mob.MobId), mob.Character.Zone) && util.Rand(100) < int(configs.GetGamePlayConfig().MobConverseChance) {
+		if mobRoom != nil {
 			mobcommands.Converse(``, mob, mobRoom) // Execute this directly so that target mob doesn't leave the room before this command executes
+			if mob.InConversation() {
+				mob.MarkChatter()
+			}
+		}
+	}
+
+	// A town talker with something to say about a listener's company says it
+	// instead of its usual idle turn (Phase 68, internal/townsfolk).
+	if !isCharmed && mobRoom != nil && len(mob.Townsfolk) > 0 && len(listeners) > 0 && mob.ChatterReady() && !mob.InConversation() {
+		if speech, ok := townsfolk.Speak(townsfolk.NPC{MobID: int(mob.MobId), Tags: mob.Townsfolk, Zone: mob.Zone}, listeners); ok {
+			if speech.To != `` {
+				mob.Command(`sayto ` + speech.To + ` ` + speech.Text)
+			} else {
+				mob.Command(`say ` + speech.Text)
+			}
+			if mob.IdleSpoke() {
+				// Only a line let through uses up the deed.
+				speech.Confirm()
+				return events.Continue
+			}
+			// The chatter limits held the line back (the room has heard it);
+			// the deed stays untold and the talker carries on with its usual
+			// idle turn.
 		}
 	}
 

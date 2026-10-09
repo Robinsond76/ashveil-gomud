@@ -34,7 +34,7 @@ func TestCoatedBladePoisonsAFoeThroughTheRealRound(t *testing.T) {
 	var out strings.Builder
 	for i := 0; i < 40 && !status.PoisonLive(&captain.Character); i++ {
 		b.toughen()
-		captain.Character.HealthMax.Value, captain.Character.Health = 5000, 5000
+		hardTo(&captain.Character, 5000)
 		out.WriteString(b.fight())
 		if !weapon.Coated(time.Now()) {
 			require.True(t, weapon.Coat("bitterleaf", items.CoatExpiry(time.Now()), items.CoatContacts, time.Now()))
@@ -45,6 +45,6 @@ func TestCoatedBladePoisonsAFoeThroughTheRealRound(t *testing.T) {
 	assert.Contains(t, out.String(), "bitterleaf", "the blow that poisons names it")
 
 	b.toughen()
-	captain.Character.HealthMax.Value, captain.Character.Health = 5000, 5000
+	hardTo(&captain.Character, 5000)
 	assert.Contains(t, b.fight(), "Bitterleaf burns in the bandit captain's veins.", "it ticks on the next round")
 }

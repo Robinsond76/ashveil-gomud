@@ -3,6 +3,8 @@ package mobcommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -10,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // Phase 37 drop tables: what a death adds to each contributing company's
@@ -66,7 +69,10 @@ func lastOfGroup(mob *mobs.Mob, room *rooms.Room) bool {
 // encounter's foes, the group's cache.
 func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]personalDrop {
 	profile, ok := dropProfile(room)
-	if !ok || len(contributors) == 0 {
+	relics := mob.Boss && len(loot.RelicsOf(int(mob.MobId))) > 0
+	masterworks := mob.Boss && len(loot.InstrumentDropsOf(int(mob.MobId))) > 0                   // camp music
+	trophies := mob.Character.Zone != `Training` && len(loot.Trophies(mob.Character.Race())) > 0 // Phase 71
+	if (!ok && !relics && !masterworks && !trophies) || len(contributors) == 0 {
 		return nil
 	}
 	kind := loot.Ordinary
@@ -87,6 +93,25 @@ func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]pers
 				mudlog.Warn("zone drop roll", "mob", mob.Character.Name, "error", err)
 			}
 			d.Items = append(d.Items, got...)
+		}
+		if relics {
+			add(relicDrop(mob, uid, label, src))
+		}
+		if masterworks {
+			add(loot.InstrumentRoll(int(mob.MobId), src), nil)
+		}
+		if trophies {
+			if t := loot.TrophyRoll(kind, mob.Character.Race(), src); t != nil {
+				d.Items = append(d.Items, *t)
+			}
+		}
+		if !ok {
+			// A boss outside any drop profile drops only its relic and trophy.
+			if len(d.Items) > 0 {
+				out[uid] = d
+				noteDrop(uid, d)
+			}
+			continue
 		}
 		add(loot.Equipment(kind, mob.Character.Level, profile, label, src))
 		var goods loot.Table
@@ -109,15 +134,50 @@ func zoneDrops(mob *mobs.Mob, room *rooms.Room, contributors []int) map[int]pers
 		}
 		if len(d.Items) > 0 || d.Gold > 0 {
 			out[uid] = d
-			var lines []string
-			for _, it := range d.Items {
-				lines = append(lines, it.DisplayName())
-			}
-			if d.Gold > 0 {
-				lines = append(lines, fmt.Sprintf("%d gold", d.Gold))
-			}
-			loot.NoteSpoils(uid, lines...)
+			noteDrop(uid, d)
 		}
 	}
 	return out
+}
+
+// noteDrop adds a company's drop to the battle summary's spoils line.
+func noteDrop(uid int, d personalDrop) {
+	var lines []string
+	for _, it := range d.Items {
+		lines = append(lines, it.DisplayName())
+	}
+	if d.Gold > 0 {
+		lines = append(lines, fmt.Sprintf("%d gold", d.Gold))
+	}
+	loot.NoteSpoils(uid, lines...)
+}
+
+// relicLuckKey is the leader's saved count of kills of one boss that
+// dropped no relic (bad-luck protection, Phase 36d).
+func relicLuckKey(mobID int) string { return fmt.Sprintf("relicluck-%d", mobID) }
+
+// relicDrop is one company's relic roll for a boss kill. The count of
+// relic-less kills is kept on the leader's character, so it persists with
+// the company across restarts.
+func relicDrop(mob *mobs.Mob, uid int, label string, src loot.Source) ([]items.Item, error) {
+	var char *characters.Character
+	if u := users.GetByUserId(uid); u != nil {
+		char = u.Character
+	}
+	missed := 0
+	if char != nil {
+		if n, ok := char.GetMiscData(relicLuckKey(int(mob.MobId))).(int); ok {
+			missed = n
+		}
+	}
+	itm, missed, err := loot.RelicRoll(int(mob.MobId), missed, label, src)
+	if char != nil {
+		char.SetMiscData(relicLuckKey(int(mob.MobId)), missed)
+	}
+	if err != nil || itm == nil {
+		return nil, err
+	}
+	// Phase 63: the find is the company's deed.
+	chronicle.Record(uid, chronicle.Entry{Kind: chronicle.Relic, Subject: itm.Name(), Detail: label, Ref: fmt.Sprintf("item:%d", itm.ItemId)})
+	return []items.Item{*itm}, nil
 }

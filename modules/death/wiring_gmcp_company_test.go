@@ -49,6 +49,7 @@ func TestCompanyGMCPThroughPluginsLoad(t *testing.T) {
 	keywords.LoadAliases()
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
+	churchOnly(t)
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)

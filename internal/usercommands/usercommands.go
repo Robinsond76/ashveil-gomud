@@ -75,7 +75,9 @@ var (
 		`copyover`:    {Copyover, true, true}, // Admin only
 		`conditions`:  {Conditions, true, false},
 		`consider`:    {Consider, true, false},
-		`scout`:       {Scout, true, false}, // Ashveil Phase 32c
+		`scout`:       {Scout, true, false},    // Ashveil Phase 32c
+		`why`:         {Why, true, false},      // Ashveil Phase 62
+		`bestiary`:    {Bestiary, true, false}, // Ashveil Phase 66
 		`default`:     {Default, false, false},
 		`disarm`:      {Disarm, false, false},
 		`drop`:        {Drop, true, false},
@@ -101,6 +103,7 @@ var (
 		`keyring`:     {KeyRing, true, false},
 		`killstats`:   {Killstats, true, false},
 		`history`:     {History, true, false},
+		`imbue`:       {Imbue, false, false}, // Ashveil Phase 71
 		`inspect`:     {Inspect, false, false},
 		`inventory`:   {Inventory, true, false},
 		`item`:        {Item, true, true}, // Admin only
@@ -179,8 +182,11 @@ var (
 		`zap`:        {Zap, true, true},   // Admin only
 		`zone`:       {Zone, false, true}, // Admin only
 		// Special command only used upon creating a new account
-		`start`:     {Start, false, false},
-		`zombieact`: {ZombieAct, false, false},
+		`start`:      {Start, false, false},
+		`appearance`: {Appearance, false, false},
+		`lifestory`:  {Lifestory, false, false},
+		`creation`:   {Creation, false, false},
+		`zombieact`:  {ZombieAct, false, false},
 	}
 
 	selfKeywords = []string{
@@ -212,7 +218,9 @@ func GetCmdSuggestions(text string, includeAdmin bool) []string {
 		}
 
 		testCmd := strings.ToLower(info.Command)
-		if testCmd != text && strings.HasPrefix(testCmd, text) {
+		// A help topic that is only a topic (stances, events, relics) is
+		// not a command to finish typing (Phase 79).
+		if testCmd != text && strings.HasPrefix(testCmd, text) && IsRegistered(testCmd) {
 			results = append(results, info.Command[len(text):])
 		}
 	}

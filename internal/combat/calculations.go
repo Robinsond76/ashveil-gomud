@@ -265,14 +265,21 @@ func clampToHit(toHit int) int {
 // only the bonus made: the roll fell between the chance without it and the
 // chance with it. It rolls once, as Hits always has.
 func hitRoll(edge float64, hitModifier, bonus int) (hit, byBonus bool) {
+	hit, byBonus, _, _ = hitRollDetail(edge, hitModifier, bonus)
+	return hit, byBonus
+}
+
+// hitRollDetail is hitRoll that also reports the roll and the chance it was
+// made against (Phase 62: the explained battle line).
+func hitRollDetail(edge float64, hitModifier, bonus int) (hit, byBonus bool, roll, toHit int) {
 	base := hitChanceForEdge(edge) + hitModifier
 	without := clampToHit(base)
-	toHit := clampToHit(base + bonus)
+	toHit = clampToHit(base + bonus)
 
-	roll := util.Rand(100)
+	roll = util.Rand(100)
 	util.LogRoll(`Hits`, roll, toHit)
 	hit = roll < toHit
-	return hit, hit && roll >= without
+	return hit, hit && roll >= without, roll, toHit
 }
 
 // combatAttackCount resolves one complete weapon turn. Frequency is owned
@@ -407,7 +414,7 @@ func blockChanceForEdge(shieldArmor int, edge float64) int {
 // Attack, plus the Strength edge, with its shield's armor.
 func blockChance(def, atk *characters.Character) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Strength.ValueAdj, atk.Stats.Strength.ValueAdj))
-	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block
+	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block + def.StanceEffect().Block // Phase 69: shield wall
 	return max(0, min(100, chance))
 }
 
@@ -525,6 +532,23 @@ func applyDefenseReduction(damage, defenseRating int) (finalDamage, reduction in
 
 // damagePercentOfMax returns the dealt damage expressed as a percentage of the
 // theoretical maximum damage for the given dice configuration.
+// blowProsePct keeps a landed blow's lines in step with its quality (89
+// review): a glancing blow reads as a weak one ("nicks", not "punches
+// through the guard"), and a telling blow at least as a solid one. A crit
+// reads as a crit, and a blow that did nothing as a miss.
+func blowProsePct(pct int, quality string, crit bool) int {
+	if pct < 1 || crit {
+		return pct
+	}
+	switch quality {
+	case QualityGlancing:
+		return min(pct, items.NormalAttackPct-1)
+	case QualityTelling:
+		return max(pct, items.NormalAttackPct)
+	}
+	return pct
+}
+
 func damagePercentOfMax(damage, dCount, dSides, dBonus int) int {
 	maxDmg := dCount*dSides + dBonus
 	if maxDmg < 1 {
@@ -622,7 +646,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 	}
 
 	// hitChance already enforces [ToHitMin, ToHitMax].
-	hitPct := float64(hitChance(&atkChar, &defChar)) / 100.0
+	stanceFx := atkChar.StanceEffect() // Phase 69: a weapon stance's trade
+	hitPct := float64(clampToHit(hitChance(&atkChar, &defChar)+stanceFx.Hit)) / 100.0
 
 	dwLevel := atkChar.GetSkillLevel(`dual-wield`)
 	dwPenalty := 0.0
@@ -638,7 +663,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 		defChar.Stats.Smarts.ValueAdj,
 		false,
 		false,
-	)) / 100.0
+	)+stanceFx.Crit) / 100.0
+	critPct = math.Min(critPct, 1)
 
 	// A hit that lands is still negated by the one active defense it
 	// meets, as activeDefense rolls it (block for a shield-bearer, else
@@ -690,6 +716,7 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 		// Phase 35d: a landed blow is glancing, solid or telling.
 		rawDmg := (avgDmg*expectedQualityFactor(hitEdge(&atkChar, &defChar)) + critBonus) * effHit
+		rawDmg *= float64(100+stanceFx.DamagePct) / 100
 		netDmg := rawDmg * (1.0 - defenseFraction)
 
 		for atkIdx := 0; atkIdx < attacks; atkIdx++ {

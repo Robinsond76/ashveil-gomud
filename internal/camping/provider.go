@@ -198,6 +198,11 @@ type CampState struct {
 	Embers bool
 	// Tent is an oiled canvas tent pitched at the camp (Phase 40a3).
 	Tent bool
+	// TentKind and TentNote (Phase 52) name the pitched tent and what it
+	// does; Tents are the tents carried, for the Camp tab's picker.
+	TentKind TentKind
+	TentNote string
+	Tents    []TentChoice
 	// Gear is the camp gear the company carries (Phase 40a4), one short
 	// label each, for the web Camp tab.
 	Gear []string
@@ -215,6 +220,120 @@ type CampState struct {
 	// CanCamp is true when the leader has no camp and this room allows
 	// one; Inn when this room has an inn.
 	CanCamp, Inn bool
+	// Duties (Phase 51) are the camp rest duties of the members at the
+	// camp, for the Camp tab's picker; Locked is set while a rest runs
+	// (its duties are fixed then).
+	Duties       []DutyRow
+	DutiesLocked bool
+	// Recipes (Phase 56) are the dishes the leader has learned, one line
+	// each ("Hunter's stew: 2 raw game meat, 1 wild thyme (cooking 3)").
+	Recipes []string
+	// RecipeBook is the same book as structured rows (the Camp tab groups
+	// them by kind and marks which can be made from what is to hand).
+	RecipeBook []RecipeRow
+	// Music (camp music) is the Music block of the Camp tab: who plays
+	// what and what the next song gives. Gig is the inn's gig board, set
+	// only in a room with an inn.
+	Music MusicState
+	Gig   *GigNotice
+	// InnRooms (Phase 75) are the rooms this inn lets, cheapest first;
+	// empty away from an inn or where the settlement refuses the company.
+	InnRooms []InnRoomRow
+	// Activities are the camp chores the company can do now, before it
+	// sleeps: sharpen, poison and cook, each with who does it and what it
+	// would use, or why it cannot be done. Empty away from the camp and
+	// while a rest runs.
+	Activities []ActivityRow
+}
+
+// ActivityRow is one camp chore for the Camp tab. Command is what the
+// button runs; Ready says the chore would do something now; Note says who
+// does it and what it uses, or why nothing can be done.
+type ActivityRow struct {
+	Key, Label, Command, Note string
+	Ready                     bool
+}
+
+// InnRoomRow is one room an inn offers, for the Camp tab.
+type InnRoomRow struct {
+	Tier InnTier
+	// Price is the whole company's price today, markup included; Minutes
+	// the Well Rested it leaves.
+	Price, Minutes int
+}
+
+// MusicState is a company's Music at the camp, for the Camp tab.
+type MusicState struct {
+	// Known is false when the leader is offline and nothing can be read.
+	Known bool
+	// Off is the leader's switch: the camp song is silenced.
+	Off bool
+	// Players is each member at the camp, with their skill if any.
+	Players []MusicRow
+	// Covered is the families that play ("3 of 4") and Effects the lines
+	// the next camp song would give.
+	Covered string
+	Effects []string
+	// Cost is the song's added raid and thief chance in words ("" for none).
+	Cost string
+	// Teacher is true in a room with a music teacher; TeachPrice is its fee.
+	Teacher    bool
+	TeachPrice int
+}
+
+// MusicRow is one member's Music for the Camp tab.
+type MusicRow struct {
+	Key, Name string
+	// Family and Level are empty and 0 for a member with no music; Label
+	// is the skill in words ("Strings 2 (3 songs to level 3)"); Instrument
+	// is the instrument they would play.
+	Family     string
+	Level      int
+	Label      string
+	Instrument string
+}
+
+// GigNotice is an inn's gig board for a company.
+type GigNotice struct {
+	// Window is the evening window ("19:00 to 21:00"); Open whether the
+	// world clock is inside it now.
+	Window string
+	Open   bool
+	// Ready is whether the company can start a gig now; Reason why not.
+	Ready  bool
+	Reason string
+	// Families is how many families the company fields; Pay what a gig
+	// would earn now.
+	Families int
+	Pay      int
+}
+
+// MusicProvider is optionally implemented by the registered movement
+// provider: a member's Music for the Company panel, "" with none.
+type MusicProvider interface {
+	MusicLabelOf(leaderUserID int, memberKey string) string
+}
+
+// MusicLabelOf reports a member's Music in words. "" without a provider or
+// any music.
+func MusicLabelOf(leaderUserID int, memberKey string) string {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	if mp, ok := p.(MusicProvider); ok {
+		return mp.MusicLabelOf(leaderUserID, memberKey)
+	}
+	return ""
+}
+
+// DutyRow is one member's rest duty for the Camp tab's picker.
+type DutyRow struct {
+	// Key is the survival member key; Name the display name; Command the
+	// word "camp duties" takes for them ("me" for the leader).
+	Key, Name, Command string
+	// Duty is their duty now; Options the duties they can take.
+	Duty    string
+	Options []string
 }
 
 // CampStateProvider is optionally implemented by the registered movement
@@ -234,4 +353,59 @@ func CampStateOf(leaderUserID, roomID int, roomTags []string) (CampState, bool) 
 		return CampState{}, false
 	}
 	return cp.CampStateOf(leaderUserID, roomID, roomTags)
+}
+
+// TentChoice is one carried tent on the Camp tab: its kind, name, effect and
+// whether it is the one pitched.
+type TentChoice struct {
+	Kind    TentKind
+	Name    string
+	Effect  string
+	Pitched bool
+}
+
+// RestEndListener hears a camp rest that finished with its rewards given
+// (Phase 60: a camp trigger for story events). It runs on the game loop,
+// outside the camping module's lock.
+type RestEndListener func(leaderUserID, roomID int)
+
+var restEndListeners []RestEndListener
+
+// AddRestEndListener registers a listener for finished camp rests.
+func AddRestEndListener(fn RestEndListener) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	restEndListeners = append(restEndListeners, fn)
+}
+
+// RestEnded reports a finished camp rest to the listeners.
+func RestEnded(leaderUserID, roomID int) {
+	providerMu.RLock()
+	fns := append([]RestEndListener(nil), restEndListeners...)
+	providerMu.RUnlock()
+	for _, fn := range fns {
+		fn(leaderUserID, roomID)
+	}
+}
+
+// RecipeNeed is one ingredient of a recipe: how many it takes and how many
+// the company has to hand.
+type RecipeNeed struct {
+	Name  string
+	Count int
+	Have  int
+}
+
+// RecipeRow is one entry of the recipe book. Kind is "dish", "remedy" or
+// "hearth" (a dish learned elsewhere, with no camp ingredients listed); For
+// names the ailment of a remedy; Skill and Level are the cooking rank a dish
+// asks; Ready says it can be made now.
+type RecipeRow struct {
+	Name  string
+	Kind  string
+	For   string
+	Needs []RecipeNeed
+	Skill string
+	Level int
+	Ready bool
 }

@@ -1,0 +1,29 @@
+itemid: 50032
+name: "Deepdelver's Plate"
+namesimple: plate
+description: 'Black plate dented and re-hammered a dozen times, and still holding.'
+type: body
+subtype: wearable
+bulk: heavy
+tier: 6
+family: heavy
+damagereduction: 28
+weight: 8000
+value: 1050
+relic:
+  set: deepdelver
+  ilvl: 50
+  mob: 25
+  chance: 5
+  awakenings:
+    - name: "Plate Proved"
+      kind: lair
+      mob: 25
+      target: "the abyssal creeper"
+      effects: {armor: 3}
+    - name: "Vault Descent"
+      kind: place
+      zone: "Glassvault Depths"
+      target: "Glassvault Depths"
+      effects: {healthpct: 3}
+  lore: 'The ones who went into the Mirror Caves wore armor made to be argued with by the dark.'

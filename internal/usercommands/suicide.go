@@ -8,8 +8,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/chronicle"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -113,6 +115,7 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	allowPenalties := user.Character.Level > int(config.Death.ProtectionLevels)
 
 	killerMobId := 0
+	killerInstanceId := user.Character.KillerMobInstanceId
 	if user.Character.KillerMobInstanceId > 0 {
 		if killerMob := mobs.GetInstance(user.Character.KillerMobInstanceId); killerMob != nil {
 			killerMobId = int(killerMob.MobId)
@@ -123,6 +126,33 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		user.Character.KillerMobInstanceId = 0
 		user.Character.KillerMobIsElite = false
 		user.Character.KillerMobName = ``
+	}
+
+	// Phase 63: the leader's fall is the company's deed, written here, at
+	// the death itself, so it reads before the defeat it may lead to.
+	if user.Character.Zone != `Training` {
+		killerName := ``
+		if spec := mobs.GetMobSpec(mobs.MobId(killerMobId)); killerMobId > 0 && spec != nil {
+			killerName = spec.Character.Name
+		}
+		place := ``
+		if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+			place = r.Title
+		}
+		chronicle.Record(user.UserId, chronicle.Entry{Kind: chronicle.Fell, Members: []string{user.Character.Name},
+			Keys: []string{string(company.LeaderMemberKey)}, Subject: killerName, Place: place})
+	}
+
+	// Ashveil Phase 53: a defeat scenario may settle this death (rescue,
+	// capture, robbery). It owns the aftermath, so the engine's drops and
+	// corpse are skipped.
+	scenarioClaimed := false
+	if ashveilDeath {
+		if sp, ok := ashveil.(death.ScenarioProvider); ok {
+			killer := death.Killer{MobID: killerMobId, InstanceID: killerInstanceId,
+				Protected: !allowPenalties || user.Character.HasBuffFlag("perma-gear")}
+			scenarioClaimed = sp.ClaimDefeat(user.UserId, killer)
+		}
 	}
 
 	events.AddToQueue(events.PlayerDeath{
@@ -174,7 +204,9 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	user.EventLog.Add(`death`, fmt.Sprintf(`<ansi fg="username">%s</ansi> has <ansi fg="red-bold">DIED</ansi>`, user.Character.Name))
 
 	// Only apply penalties if they were above the threshold
-	if allowPenalties && !user.Character.HasBuffFlag("perma-gear") {
+	if scenarioClaimed {
+		// The scenario's aftermath replaces the drops and the corpse.
+	} else if allowPenalties && !user.Character.HasBuffFlag("perma-gear") {
 
 		corpseItems := []items.Item{}
 		corpseGold := 0

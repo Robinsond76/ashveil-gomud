@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -143,4 +144,56 @@ func TestAbsorbedBlowReportsNoQuality(t *testing.T) {
 		return
 	}
 	t.Fatal("no fully absorbed blow")
+}
+
+// intensityOf names the intensity whose bludgeoning lines a hit line came
+// from, by each line's longest stretch of plain words.
+func intensityOf(t *testing.T, line string) string {
+	t.Helper()
+	strip := regexp.MustCompile(`<[^>]*>|\{[^}]*\}`)
+	found := ""
+	for name, pct := range map[string]int{"weak": 10, "normal": 50, "heavy": 100} {
+		for _, tmpl := range items.GetAttackMessage(items.Bludgeoning, pct, false).Together.ToAttacker {
+			longest := ""
+			for _, piece := range strip.Split(string(tmpl), -1) {
+				if len(piece) > len(longest) {
+					longest = piece
+				}
+			}
+			if strings.Contains(line, longest) {
+				found = name
+			}
+		}
+	}
+	return found
+}
+
+// 89 review: a glancing blow reads as a weak hit, never one that "punches
+// through the guard", and a telling blow never as a nick, through a real
+// pass. The test club's blows are 5 (glancing), 10 or 14 of a top of 10,
+// so without the rule a glancing blow took the normal lines.
+func TestABlowsLinesMatchItsQuality(t *testing.T) {
+	qualityOn(t)
+	seen := map[string]int{}
+	for i := 0; i < 600; i++ {
+		src, target := edgeFighter(90231), edgeFighter(90231)
+		src.Equipment.Weapon = items.New(qualityClubID)
+		res := calculateCombat(*src, *target, User, Mob, 0, 0)
+		require.Len(t, res.Qualities, 1)
+		q, line := res.Qualities[0], res.MessagesToSource[0]
+		got := intensityOf(t, line)
+		require.NotEmpty(t, got, "%q comes from a bludgeoning line", line)
+		switch q {
+		case QualityGlancing:
+			assert.Equal(t, "weak", got, line)
+		case QualityTelling, QualitySolid:
+			assert.Equal(t, "heavy", got, line)
+		}
+		seen[q]++
+	}
+	assert.Positive(t, seen[QualityGlancing])
+	assert.Positive(t, seen[QualityTelling])
+	assert.Equal(t, 0, blowProsePct(0, QualityTelling, false), "a blow that did nothing still reads as a miss")
+	assert.Equal(t, items.NormalAttackPct, blowProsePct(12, QualityTelling, false), "a light telling blow reads as solid")
+	assert.Equal(t, 100, blowProsePct(100, QualityGlancing, true), "a crit reads as a crit")
 }

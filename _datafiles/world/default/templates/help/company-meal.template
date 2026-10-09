@@ -26,6 +26,10 @@ them, or the biggest there is when nothing will. Food that also waters,
 like a stew, counts toward thirst, so no one drinks after it who
 doesn't need to.
 
+A cooked meal gives the member who eats it a buff for a few battles,
+named in the line (<ansi fg="command">help cooking</ansi>); a hungry member fights worse
+(<ansi fg="command">help survival</ansi>), so feed the company before a fight.
+
 At a water source (<ansi fg="command">help resources</ansi>), <ansi fg="command">company drink</ansi> waters everyone from the
 source first and uses no supplies; <ansi fg="command">company fill</ansi> refills every refillable
 container the company carries.
@@ -40,7 +44,7 @@ and who still went without because there was nothing left. The room
 sees your company eat.
 
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help cargo</ansi>,
-<ansi fg="command">help company inventory</ansi>, <ansi fg="command">help company</ansi>.
+<ansi fg="command">help company inventory</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help opinions</ansi> (feeding a companion from your own pack, not the cargo, is a kindness they notice).
 
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.

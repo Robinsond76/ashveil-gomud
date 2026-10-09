@@ -44,6 +44,11 @@ The road post sells them a little dearer than Dunmar.
   (<ansi fg="command">all</ansi>). Draughts and salves start at once. Broth and incense are set
   by and spent when you start the rest, <ansi fg="command">camp rest</ansi>.
 
+  <ansi fg="command">camp prepare remedy</ansi> [member|all]
+  Makes the remedy for each ailing member from gathered herbs and ends the
+  ailment at once. <ansi fg="command">camp prepare remedy with</ansi> [herb] [herb] tries a new mix. See
+  <ansi fg="command">help ailments</ansi>.
+
   <ansi fg="command">camp prepare status</ansi>
   Shows each member's benefit and how long it has left, and what is queued.
 
@@ -67,5 +72,5 @@ The road post sells them a little dearer than Dunmar.
 In the web client, Company > Camp lists the supplies you carry and what is set
 by for the next rest, and the Conditions list shows each active benefit.
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help campwatch</ansi>, <ansi fg="command">help temperature</ansi>,
+See also: <ansi fg="command">help ailments</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help campwatch</ansi>, <ansi fg="command">help temperature</ansi>,
 <ansi fg="command">help market</ansi>.

@@ -248,3 +248,40 @@ func TestEatReportsMissingItemWhenSuffixIsNotAMember(t *testing.T) {
 	assert.Zero(t, fake.calls)
 	assert.Equal(t, 2, user.Character.Items[0].Uses)
 }
+
+// Phase 50: a cooked meal passes its buff kind to survival, and the eat line
+// names the buff.
+func TestEatingACookedMealPassesItsBuff(t *testing.T) {
+	fake := &fakeProvisioner{result: survival.ProvisionResult{Member: survival.LeaderMemberKey, Name: "Tester",
+		Needs: survival.Needs{Hunger: 90, Thirst: 100, Fatigue: 100, Meal: "stew", MealBattles: 3}}}
+	useFakeProvisioner(t, fake)
+	spec := edibleSpec("stew", 50, 0, 3)
+	spec.Meal = "stew"
+	user := userWithItem(t, 17, spec)
+
+	_, err := Eat("stew", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, survival.Benefit{Nutrition: 50, Meal: "stew"}, fake.lastBenefit)
+	assert.Equal(t, " (Hearty for 3 battles: 10% less damage taken)", mealSuffix("stew"))
+	assert.Empty(t, mealSuffix(""))
+}
+
+// Phase 55: raw meat passes its ailment to survival, and the eat line says
+// what the eater caught.
+func TestEatingRawMeatPassesItsAilment(t *testing.T) {
+	fake := &fakeProvisioner{result: survival.ProvisionResult{Member: survival.LeaderMemberKey, Name: "Tester",
+		Needs: survival.Needs{Hunger: 90, Thirst: 100, Fatigue: 100, GutAche: 3}, Caught: survival.AilmentGutAche}}
+	useFakeProvisioner(t, fake)
+	spec := edibleSpec("raw game meat", 10, 0, 0)
+	spec.Ailment = survival.AilmentGutAche
+	user := userWithItem(t, 17, spec)
+
+	_, err := Eat("raw game meat", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, survival.Benefit{Nutrition: 10, Ailment: survival.AilmentGutAche}, fake.lastBenefit)
+	assert.Contains(t, ailmentSuffix(fake.result, false), "It was raw: you catch a gut-ache (+10% damage taken for 3 battles")
+	explicit := fake.result
+	explicit.Name = "Bran"
+	assert.Contains(t, ailmentSuffix(explicit, true), "Bran catches a gut-ache")
+	assert.Empty(t, ailmentSuffix(survival.ProvisionResult{}, false), "no new ailment, no line")
+}

@@ -65,6 +65,7 @@ dangerous room (<ansi fg="command">help encounters</ansi>).
 To walk step by step through rooms you have visited, see <ansi fg="command">help walkto</ansi>.
 
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help strain</ansi>,
-<ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help go</ansi>.
+<ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help go</ansi>,
+<ansi fg="command">help regions</ansi> (the road east and its level bands), <ansi fg="command">help events</ansi> (scenes you meet on the way).
 
 An ambush you cannot evade may grant one side an opening combat round. Your best present observer, light, enemy stealth, and concealment decide it. See help ambush.

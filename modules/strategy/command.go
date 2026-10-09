@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/stance"
 	domain "github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -34,6 +35,10 @@ type member struct {
 	placed bool
 	// abilities are the class abilities it has (Phase 33e).
 	abilities []domain.Ability
+	// gear is what it holds (Phase 69: a weapon stance's needs), known only
+	// for a player and a companion here to read.
+	gear      stance.Gear
+	gearKnown bool
 }
 
 // env is the engine the command reads. Tests replace it.
@@ -103,6 +108,8 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 		present:   true,
 		knows:     PlayerKnows(user),
 		abilities: playerAbilities(user),
+		gear:      user.Character.StanceGear(),
+		gearKnown: true,
 	}}
 	form, hasForm := company.FormationFor(user.UserId)
 	if hasForm {
@@ -123,6 +130,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 		if instanceId, live := company.InstanceFor(user.UserId, v.ID); live && v.Status == company.MemberPresent {
 			if mob := mobs.GetInstance(instanceId); mob != nil {
 				mb.present, mb.mana, mb.manaMax = true, mob.Character.Mana, mob.Character.ManaMax.Value
+				mb.gear, mb.gearKnown = mob.Character.StanceGear(), true
 			}
 		}
 		out = append(out, mb)
@@ -535,6 +543,10 @@ func (m *StrategyModule) describe(userID int, mb member, members []member) strin
 	}
 	if st := m.Stored(userID, mb.key); st.IsZero() {
 		b.WriteString("  Unchanged from the archetype's default.\n")
+	}
+	// Phase 61: its battle orders, read before all of the above.
+	if list := m.StoredOrders(userID, mb.key); len(list) > 0 {
+		b.WriteString("  Orders, read first each round (<ansi fg=\"command\">help orders</ansi>):\n" + numbered(list) + "\n")
 	}
 	b.WriteString(usage)
 	return b.String()

@@ -1,0 +1,20 @@
+roomid: 3303
+zone: Greywatch Pass
+title: Crag Ledge
+description: Grey rock climbs on either side and the path clings to the slope. A raven watches
+  from a ledge above.
+biome: mountains
+exits:
+  east:
+    roomid: 3304
+  west:
+    roomid: 3302
+  south:
+    roomid: 3309
+resources:
+- water
+- herbs
+mapx: 3
+mapy: 0
+mapz: 0
+hascoordinates: true

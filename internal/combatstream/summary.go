@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode/utf8"
 )
 
 // Enemy endings in a Summary.
@@ -72,12 +73,28 @@ type Summary struct {
 	Effects          []Count
 	Kills            []Amount // company members, most first
 
+	// Phase 62: why the fight went as it did.
+	Taken       []Amount // damage each company member took, most first
+	NeverLanded []Swings // company members who swung and never landed a blow
+	Moves       []Count  // class abilities the company used
+	Sigil       string   // the sigil in force over the battle, set by the caller
+
 	// Spoils is what the leader's company took (Phase 37), set by the
 	// caller when the fight ends: item names and gold, as they fell.
 	Spoils []string
 
 	Enemies []EnemyEnding
 	Company []MemberHealth
+}
+
+// Swings is what became of a member's strikes: how many were thrown, and
+// why they did nothing.
+type Swings struct {
+	Who      Ref
+	Thrown   int
+	Missed   int // the roll fell short
+	Turned   int // a block, parry or dodge stopped it
+	Absorbed int // it landed and armor or a ward took it all
 }
 
 // DefenseCounts is how many strikes a side blocked, parried, and dodged.
@@ -128,10 +145,15 @@ type tally struct {
 	effectOrder                []string
 	kills                      map[string]int
 	refs                       map[string]Ref
+	taken                      map[string]int
+	swings                     map[string]*Swings
+	swingOrder                 []string
+	moves                      map[string]int
+	moveOrder                  []string
 }
 
 func newTally() tally {
-	return tally{damage: map[string]int{}, guards: map[string]int{}, effects: map[string]int{}, kills: map[string]int{}, refs: map[string]Ref{}}
+	return tally{damage: map[string]int{}, guards: map[string]int{}, effects: map[string]int{}, kills: map[string]int{}, refs: map[string]Ref{}, taken: map[string]int{}, swings: map[string]*Swings{}, moves: map[string]int{}}
 }
 
 func (t *tally) add(f *fight, e Event) {
@@ -153,8 +175,15 @@ func (t *tally) add(f *fight, e Event) {
 				t.enemyDefenses.add(d)
 			}
 		}
+		if e.Kind == Attack && sourceCompany && targetEnemy {
+			t.noteSwings(e)
+		}
 		if e.Damage <= 0 {
 			return
+		}
+		if targetCompany {
+			t.taken[e.Target.Key()] += e.Damage
+			t.refs[e.Target.Key()] = e.Target
 		}
 		switch {
 		case sourceCompany:
@@ -182,6 +211,15 @@ func (t *tally) add(f *fight, e Event) {
 			t.companyDamage += e.Damage
 		case targetCompany:
 			t.enemyDamage += e.Damage
+			t.taken[e.Target.Key()] += e.Damage
+			t.refs[e.Target.Key()] = e.Target
+		}
+	case Ability:
+		if sourceCompany && e.Status != "" {
+			if _, ok := t.moves[e.Status]; !ok {
+				t.moveOrder = append(t.moveOrder, e.Status)
+			}
+			t.moves[e.Status]++
 		}
 	case StatusApplied:
 		if e.Status == "" {
@@ -210,6 +248,47 @@ func (t *tally) add(f *fight, e Event) {
 		}
 	}
 }
+
+// noteSwings counts a company member's attack round's strikes by what
+// became of them. A round with no recorded strikes counts as one.
+func (t *tally) noteSwings(e Event) {
+	k := e.Source.Key()
+	sw := t.swings[k]
+	if sw == nil {
+		sw = &Swings{Who: e.Source}
+		t.swings[k] = sw
+		t.swingOrder = append(t.swingOrder, k)
+	}
+	if len(e.Strikes) == 0 {
+		sw.Thrown++
+		switch {
+		case e.Outcome == OutcomeMiss:
+			sw.Missed++
+		case len(e.Defenses) > 0:
+			sw.Turned++
+		case e.Damage <= 0:
+			sw.Absorbed++
+		}
+		return
+	}
+	for _, st := range e.Strikes {
+		if st.Pet != "" {
+			continue // a pet's bite is not the member's own swing
+		}
+		sw.Thrown++
+		switch {
+		case !st.Hit:
+			sw.Missed++
+		case st.Defense != "":
+			sw.Turned++
+		case st.Damage <= 0:
+			sw.Absorbed++
+		}
+	}
+}
+
+// landed is how many of a member's strikes got damage through.
+func (sw Swings) landed() int { return sw.Thrown - sw.Missed - sw.Turned - sw.Absorbed }
 
 // amounts turns a key->value map into Amounts, most first, ties by name.
 func (t *tally) amounts(m map[string]int) []Amount {
@@ -250,6 +329,15 @@ func (f *fight) summary(round uint64, outcome string, final Final) *Summary {
 		InterruptsTaken:  t.interruptsTaken,
 		Guards:           t.amounts(t.guards),
 		Kills:            t.amounts(t.kills),
+		Taken:            t.amounts(t.taken),
+	}
+	for _, k := range t.swingOrder {
+		if sw := t.swings[k]; sw.Thrown > 0 && sw.landed() == 0 {
+			s.NeverLanded = append(s.NeverLanded, *sw)
+		}
+	}
+	for _, name := range t.moveOrder {
+		s.Moves = append(s.Moves, Count{Name: name, Count: t.moves[name]})
 	}
 	for _, m := range final.Company {
 		if f.down[m.Ref.Key()] == OutcomeSlain {
@@ -314,7 +402,7 @@ func Render(s Summary, viewerUserId int) []string {
 		}
 		return r.Name
 	}
-	line := func(label, body string) string { return fmt.Sprintf("%-15s%s", label, body) }
+	line := func(label, body string) []string { return summaryLine(label, body) }
 	joinAmounts := func(as []Amount) string {
 		parts := make([]string, 0, len(as))
 		for _, a := range as {
@@ -330,26 +418,26 @@ func Render(s Summary, viewerUserId int) []string {
 	if s.GroupName != "" {
 		heading = namedHeading(s.Outcome, s.GroupName)
 	}
-	out := []string{
-		"── " + heading + " ──",
-		line("Damage dealt", fmt.Sprintf("Company %d · Enemies %d", s.CompanyDamage, s.EnemyDamage)),
-	}
+	// Phase 87: grouped into sections with a blank line between them.
+	// Each section is built in its own list, in the order it reads.
+	var blows, taken, result []string
+	blows = append(blows, line("Damage dealt", fmt.Sprintf("Company %d · Enemies %d", s.CompanyDamage, s.EnemyDamage))...)
 	if s.Healing > 0 || s.HeldBack > 0 {
 		body := fmt.Sprintf("Company %d", s.Healing)
 		if s.HeldBack > 0 {
 			body += fmt.Sprintf(" (%d held back by a wound)", s.HeldBack)
 		}
-		out = append(out, line("Healing", body))
+		taken = append(taken, line("Healing", body)...)
 	}
 	if len(s.MostDamage) > 0 {
-		out = append(out, line("Most damage", joinAmounts(s.MostDamage)))
+		blows = append(blows, line("Most damage", joinAmounts(s.MostDamage))...)
 	}
 	if h := s.HighestHit; h != nil {
 		body := fmt.Sprintf("%s %d on %s", name(h.Source), h.Damage, name(h.Target))
 		if h.Crit {
 			body += " (critical)"
 		}
-		out = append(out, line("Highest hit", body))
+		blows = append(blows, line("Highest hit", body)...)
 	}
 	// Phase 30g2: each side's blocks, parries, and dodges, when any.
 	var defenses []string
@@ -360,7 +448,7 @@ func Render(s Summary, viewerUserId int) []string {
 		defenses = append(defenses, "Enemies "+w)
 	}
 	if len(defenses) > 0 {
-		out = append(out, line("Defenses", strings.Join(defenses, " · ")))
+		taken = append(taken, line("Defenses", strings.Join(defenses, " · "))...)
 	}
 	if len(s.InterruptsDealt) > 0 || s.InterruptsFailed > 0 || s.InterruptsTaken > 0 {
 		dealt := fmt.Sprintf("dealt %d", len(s.InterruptsDealt))
@@ -375,23 +463,44 @@ func Render(s Summary, viewerUserId int) []string {
 			parts = append(parts, fmt.Sprintf("failed %d", s.InterruptsFailed))
 		}
 		parts = append(parts, fmt.Sprintf("taken %d", s.InterruptsTaken))
-		out = append(out, line("Interrupts", strings.Join(parts, " · ")))
+		taken = append(taken, line("Interrupts", strings.Join(parts, " · "))...)
 	}
 	if len(s.Guards) > 0 {
-		out = append(out, line("Guards", joinAmounts(s.Guards)))
+		taken = append(taken, line("Guards", joinAmounts(s.Guards))...)
 	}
 	if len(s.Effects) > 0 {
 		parts := make([]string, 0, len(s.Effects))
 		for _, c := range s.Effects {
 			parts = append(parts, fmt.Sprintf("%s %d", c.Name, c.Count))
 		}
-		out = append(out, line("Effects", strings.Join(parts, " · ")))
+		blows = append(blows, line("Effects", strings.Join(parts, " · "))...)
 	}
 	if len(s.Kills) > 0 {
-		out = append(out, line("Kills", joinAmounts(s.Kills)))
+		blows = append(blows, line("Kills", joinAmounts(s.Kills))...)
+	}
+	// Phase 62: why the fight went as it did.
+	if len(s.Taken) > 0 {
+		taken = append(taken, line("Damage taken", joinAmounts(s.Taken))...)
+	}
+	if len(s.NeverLanded) > 0 {
+		parts := make([]string, 0, len(s.NeverLanded))
+		for _, sw := range s.NeverLanded {
+			parts = append(parts, name(sw.Who)+" "+sw.why())
+		}
+		taken = append(taken, line("Never landed", strings.Join(parts, " · "))...)
+	}
+	if len(s.Moves) > 0 {
+		parts := make([]string, 0, len(s.Moves))
+		for _, c := range s.Moves {
+			parts = append(parts, fmt.Sprintf("%s %d", c.Name, c.Count))
+		}
+		blows = append(blows, line("Moves", strings.Join(parts, " · "))...)
+	}
+	if s.Sigil != "" {
+		blows = append(blows, line("Sigil", s.Sigil)...)
 	}
 	if len(s.Spoils) > 0 {
-		out = append(out, line("Spoils", strings.Join(s.Spoils, " · ")))
+		result = append(result, line("Spoils", strings.Join(s.Spoils, " · "))...)
 	}
 	enemies := make([]string, 0, len(s.Enemies))
 	for _, e := range s.Enemies {
@@ -400,7 +509,7 @@ func Render(s Summary, viewerUserId int) []string {
 	if len(enemies) == 0 {
 		enemies = append(enemies, "none")
 	}
-	out = append(out, line("Enemies", strings.Join(enemies, " · ")))
+	result = append(result, line("Enemies", strings.Join(enemies, " · "))...)
 	members := make([]string, 0, len(s.Company))
 	for _, m := range s.Company {
 		if m.Fallen {
@@ -409,6 +518,103 @@ func Render(s Summary, viewerUserId int) []string {
 		}
 		members = append(members, fmt.Sprintf("%s %d/%d", name(m.Ref), m.Health, m.Max))
 	}
-	out = append(out, line("Company", strings.Join(members, " · ")))
+	result = append(result, line("Company", strings.Join(members, " · "))...)
+	// The heading, then the sections that have lines, a blank line apart,
+	// each under its section's title.
+	out := []string{"── " + heading + " ──"}
+	for _, sec := range []struct {
+		title string
+		lines []string
+	}{{"The fight", blows}, {"What it cost", taken}, {"How it ended", result}} {
+		if len(sec.lines) == 0 {
+			continue
+		}
+		out = append(out, "", sec.title)
+		out = append(out, sec.lines...)
+	}
+	return out
+}
+
+// why says what became of the strikes that did nothing, "3 missed, 1
+// dodged or parried".
+func (sw Swings) why() string {
+	var parts []string
+	if sw.Missed > 0 {
+		parts = append(parts, fmt.Sprintf("%d missed", sw.Missed))
+	}
+	if sw.Turned > 0 {
+		parts = append(parts, fmt.Sprintf("%d turned aside", sw.Turned))
+	}
+	if sw.Absorbed > 0 {
+		parts = append(parts, fmt.Sprintf("%d stopped by armor or a ward", sw.Absorbed))
+	}
+	return strings.Join(parts, ", ")
+}
+
+// summaryWidth is the widest a summary line runs (Phase 87 review): the web
+// client on a 360px phone shows 49 columns with "Smaller text" off (57
+// with it on), and a value the terminal wraps starts again under the
+// labels and breaks a name mid-word.
+const summaryWidth = 48
+
+// summaryIndent lines a continued value up under its column.
+var summaryIndent = strings.Repeat(" ", summaryLabelWidth)
+
+const summaryLabelWidth = 15
+
+// summaryLine is one labelled summary row, its value wrapped to
+// summaryWidth between its " · " parts (or, for one long part, between
+// words), each continuation indented under the value column.
+func summaryLine(label, body string) []string {
+	room := summaryWidth - summaryLabelWidth
+	var rows []string
+	cur := ""
+	push := func() {
+		if cur != "" {
+			rows = append(rows, cur)
+			cur = ""
+		}
+	}
+	parts := strings.Split(body, " · ")
+	for i, part := range parts {
+		sep, tail := "", 0
+		if i > 0 {
+			sep = " · "
+		}
+		if i < len(parts)-1 {
+			tail = 2 // room for the " ·" a wrap after this part leaves
+		}
+		if cur != "" && utf8.RuneCountInString(cur+sep+part)+tail <= room {
+			cur += sep + part
+			continue
+		}
+		if cur != "" {
+			cur += " ·"
+			push()
+		}
+		for _, word := range strings.Fields(part) {
+			switch {
+			case cur == "":
+				cur = word
+			case utf8.RuneCountInString(cur+" "+word) <= room:
+				cur += " " + word
+			default:
+				push()
+				cur = word
+			}
+		}
+	}
+	push()
+	if len(rows) == 0 {
+		rows = []string{""}
+	}
+	out := make([]string, len(rows))
+	for i, r := range rows {
+		if i == 0 {
+			out[i] = fmt.Sprintf("%-*s%s", summaryLabelWidth, label, r)
+		} else {
+			out[i] = summaryIndent + r
+		}
+	}
 	return out
 }

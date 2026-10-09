@@ -1,0 +1,42 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">townsfolk</ansi>
+
+Towns remember. Some townsfolk are talkers: pass one idle in a settlement and
+it may say what your company has done, to you by name, a little while after.
+Each deed is told once. When there is nothing new to tell, a talker may
+remark on the weather or the hour, or say nothing at all.
+
+<ansi fg="yellow-bold">Reading it</ansi>
+
+  <ansi fg="command">townsfolk</ansi>           what has been said of you, and the deeds folk may yet speak of
+  <ansi fg="command">renown</ansi>              the same
+
+In the web client the Company window's Chronicle tab shows it too, above the
+deeds: "What the towns say of you".
+
+<ansi fg="yellow-bold">What they speak of</ansi>
+
+Talkers read your company's <ansi fg="command">chronicle</ansi> (<ansi fg="command">help chronicle</ansi>): bosses slain, relics
+found, mercy and executions, the fallen, how scenes on the road ended. A deed
+is worth mentioning for about two weeks of real time (some lines keep it
+longer, up to 90 days), newest deed first. Which deeds a talker can tell
+depends on the town: each world writes its own lines, so a deed with no line
+for that talker goes unmentioned there.
+
+<ansi fg="yellow-bold">What to know</ansi>
+
+  - A deed is told once per player. What you have been told is kept through a
+    restart and a copyover, and goes only when the character is deleted.
+  - A talker speaks rarely: a few minutes between lines, and never the same
+    line to you within the hour (the town's usual idle-chatter limits).
+  - Some lines leave a <ansi fg="yellow-bold">mark</ansi> on the company, a flag that later lines (and some
+    scenes, <ansi fg="command">help events</ansi>) can read: a town that has heard you slew its
+    monster greets you differently afterwards. <ansi fg="command">townsfolk</ansi> lists the marks.
+  - A talker may know you for your background: a soldier who fells a boss
+    hears a line for soldiers (<ansi fg="command">help lifestory</ansi>), addressed to the one
+    member who has that background, never to the whole company. It comes before the plain
+    lines (a deed with a line of its own still gets that one), but once
+    you have heard it lately the plain lines get their turn again.
+  - Nobody changes a price for what you did. Merchants buy and sell as ever.
+  - Talk is real-time and costs nothing. It gives no gold, experience or power.
+
+See also: <ansi fg="command">help chronicle</ansi>, <ansi fg="command">help events</ansi>, <ansi fg="command">help adventure</ansi>.

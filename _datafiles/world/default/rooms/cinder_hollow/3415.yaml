@@ -1,0 +1,22 @@
+roomid: 3415
+zone: Cinder Hollow
+title: Cinder Hollow Floor
+description: Ash drifts across the ground in grey drifts and the trees are black stumps. A cart
+  wheel lies half-burnt in a ditch.
+biome: forest
+exits:
+  east:
+    roomid: 3416
+  west:
+    roomid: 3414
+  south:
+    roomid: 3421
+  north:
+    roomid: 3407
+resources:
+- shelter
+- game
+mapx: 1
+mapy: 2
+mapz: 0
+hascoordinates: true

@@ -1,0 +1,30 @@
+itemid: 50011
+name: "Ogre-hunter's Helm"
+namesimple: helm
+description: 'Padded jack and scale riveted into a hunter''s helm, scuffed by a very large hand.'
+type: head
+subtype: wearable
+bulk: medium
+tier: 4
+family: medium
+damagereduction: 7
+weight: 1200
+value: 705
+relic:
+  set: ogrehunter
+  ilvl: 27
+  mob: 85
+  chance: 6
+  awakenings:
+    - name: "Hunter's Habit"
+      kind: slay
+      races: ["ogre", "goblin"]
+      count: 15
+      target: "ogres and goblins"
+      effects: {armor: 2}
+    - name: "Hunter's Pride"
+      kind: lair
+      mob: 85
+      target: "the forest ogre"
+      effects: {evasion: 3}
+  lore: 'Those who hunt the forest ogre learn to wear what it cannot easily crush.'

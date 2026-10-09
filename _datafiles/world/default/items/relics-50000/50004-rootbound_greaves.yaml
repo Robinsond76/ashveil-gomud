@@ -1,0 +1,31 @@
+itemid: 50004
+name: Rootbound Greaves
+namesimple: greaves
+description: 'Hide greaves laced with living roots that grip the ground and the leg in the same way.'
+type: legs
+subtype: wearable
+bulk: light
+tier: 5
+family: leather
+damagereduction: 7
+weight: 1200
+value: 1500
+relic:
+  signature: Deep Roots
+  effects: {secondwind: 15, armor: 3}
+  ilvl: 40
+  mob: 34
+  chance: 4
+  awakenings:
+    - name: "Pulled Roots"
+      kind: slay
+      races: ["tree", "fungus"]
+      count: 25
+      target: "woodland horrors"
+      effects: {armor: 3}
+    - name: "Deeper Roots"
+      kind: lair
+      mob: 34
+      target: "the ent"
+      effects: {secondwind: 5}
+  lore: 'The roots do not die when they are cut from the tree. They hold on.'

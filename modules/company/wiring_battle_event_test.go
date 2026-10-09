@@ -74,6 +74,7 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.CombatData{}, hooks.CombatData_Hold},
+		{events.NewTurn{}, hooks.BattleClock},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
 	} {
@@ -99,6 +100,8 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 		}
 	}
 	steps = nil
+	hooks.SetCombatRoundCounterForTest(40) // the server's counter is not the fight's
+	starts := clockRoundStarts(t, &now, start)
 	rounds := combatRoundsToPlay(t, b, &now)
 
 	var payloads []*eventPayload
@@ -167,7 +170,11 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 	// are spread over several moments rather than dumped at once.
 	byRound := map[int][]step{}
 	for _, s := range steps {
-		byRound[int(s.at/(8*time.Second))] = append(byRound[int(s.at/(8*time.Second))], s)
+		r := 0
+		for r+1 < len(*starts) && s.at >= (*starts)[r+1] {
+			r++
+		}
+		byRound[r] = append(byRound[r], s)
 	}
 	spread := false
 	for r, list := range byRound {
@@ -200,20 +207,23 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 	assert.Positive(t, rounds)
 }
 
-// combatRoundsToPlay runs the real round loop to the end of the fight and
-// lets the last lines out, returning how many game rounds it ran.
+// combatRoundsToPlay runs the real loop (game rounds every 4s, turns every
+// 50ms; the battle clock resolves the combat rounds on the turns) to the
+// end of the fight and lets the last lines out, returning how many game
+// rounds it ran.
 func combatRoundsToPlay(t *testing.T, b *brawl, now *time.Time) int {
 	t.Helper()
 	var round uint64 = 1
 	n := 0
 	for i := 0; i < 400 && len(b.livingBandits()) > 0; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
+		hardTo(b.aria.Character, 1000)
 		round++
 		n++
 		events.AddToQueue(events.NewRound{RoundNumber: round})
 		events.ProcessEvents()
-		for turn := 0; turn < 80; turn++ {
+		// Phase 87: at the slower paces a busy round outlasts 4 seconds, and
+		// the real clock waits for it to play out, so the helper does too.
+		for turn := 0; turn < 80 || turn < 600 && combatpace.Default().Busy(7); turn++ {
 			*now = now.Add(50 * time.Millisecond)
 			events.AddToQueue(events.NewTurn{})
 			events.ProcessEvents()
@@ -255,6 +265,7 @@ func TestBattleEventsGoOutAtOnceWithPacingOff(t *testing.T) {
 		{events.NewRound{}, hooks.CombatOnCadence},
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.CombatData{}, hooks.CombatData_Hold},
+		{events.NewTurn{}, hooks.BattleClock},
 	} {
 		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
@@ -264,8 +275,8 @@ func TestBattleEventsGoOutAtOnceWithPacingOff(t *testing.T) {
 
 	b.toughen()
 	b.aimAt("bandit captain")
-	events.AddToQueue(events.NewRound{RoundNumber: 2})
-	events.ProcessEvents() // no NewTurn: nothing is paced
+	events.AddToQueue(events.NewTurn{})
+	events.ProcessEvents() // the clock's round; no release turn: nothing is paced
 	assert.Positive(t, got, "events went out in the round itself")
 	assert.False(t, combatpace.Default().Busy(7))
 }

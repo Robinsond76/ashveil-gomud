@@ -1,0 +1,16 @@
+roomid: 3324
+zone: Greywatch Pass
+title: Rocky Scree Slope
+description: A raven watches from a ledge above.
+biome: mountains
+exits:
+  west:
+    roomid: 3323
+  north:
+    roomid: 3318
+resources:
+- game
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

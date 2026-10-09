@@ -1,0 +1,18 @@
+roomid: 3101
+zone: Brindle Downs
+title: Sheep-cropped Sheepwalk
+description: A drystone wall runs along the slope, patched with turf. A gorse thicket hides the
+  next rise.
+biome: forest
+exits:
+  east:
+    roomid: 3102
+  south:
+    roomid: 3107
+resources:
+- firewood
+- shelter
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

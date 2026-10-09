@@ -1,0 +1,13 @@
+itemid: 10134
+name: masterwork hunting spear
+namesimple: spear
+description: A leaf-bladed spear on a seasoned ash shaft, made by a master for the hunt of dangerous game.
+type: weapon
+hands: 1
+subtype: stabbing
+weaponclass: spear
+tier: 4
+family: spear
+damage:
+  diceroll: 1d8+2
+weight: 1500

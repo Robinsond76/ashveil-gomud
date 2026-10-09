@@ -134,7 +134,7 @@ function injectStyles(css) {
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
                 if (typeof item.fn === 'function') { item.fn(e); return; }
-                Client.SendInput(item.cmd);
+                Client.SendInput(item.cmd, item.echo, item.label);
             });
             entries.push(entry);
             menuEl.appendChild(entry);
@@ -1422,6 +1422,7 @@ const WINDOW_DOCK_DEFAULTS = [
     { id: 'Company',        side: 'right', group: 'dock' },
     { id: 'Combat',         side: 'right', group: 'dock' },
     { id: 'Communications', side: 'right', group: 'dock' },
+    { id: 'Bestiary',       side: 'right', group: 'dock' },
     { id: 'Online',         side: 'right', group: 'dock' },
     { id: 'KillStats',      side: 'right', group: 'dock' },
 ];
@@ -1437,9 +1438,11 @@ const WINDOW_DOCK_DEFAULTS = [
 //   }
 //
 // Multiple modules may register for the same namespace - all handlers are called.
-// handleGMCP(namespace, body) walks from the most-specific to least-specific
-// namespace segment and calls every handler registered at the first level that
-// has any handlers.
+// handleGMCP(namespace, body) calls each registered window once per message:
+// every module with a handler on the message's namespace or on one of its
+// parent namespaces ('Party' also receives 'Party.Vitals'), most specific
+// first, then the '*' handlers. A module listing several matching namespaces
+// still gets one call.
 // openAll() opens every registered window immediately - called by Client.init().
 // ---------------------------------------------------------------------------
 const VirtualWindows = (() => {
@@ -1476,7 +1479,7 @@ const VirtualWindows = (() => {
             }
             // Store the handler alongside its window so dispatch can skip
             // handlers whose window has been closed by the user.
-            _handlers[ns].push({ fn: descriptor.onGMCP.bind(descriptor), win });
+            _handlers[ns].push({ fn: descriptor.onGMCP.bind(descriptor), win, owner: descriptor });
         });
         if (win) {
             _windows.push(win);
@@ -1611,28 +1614,25 @@ const VirtualWindows = (() => {
     }
 
     function handleGMCP(namespace, body) {
-        // Walk from most-specific to least-specific namespace segment.
-        // Call all handlers registered at the first matching level,
-        // skipping any whose associated window has been closed.
+        // Walk from most-specific to least-specific namespace segment, then
+        // the '*' handlers. Each descriptor is called at most once per
+        // message, and handlers whose window has been closed are skipped.
         var handled = false;
+        const called = new Set();
+        const run = list => {
+            (list || []).forEach(entry => {
+                if (called.has(entry.owner)) { return; }
+                if (entry.win && !entry.win.isOpen()) { return; }
+                called.add(entry.owner);
+                entry.fn(namespace, body);
+                handled = true;
+            });
+        };
         const parts = namespace.split('.');
         for (let i = parts.length; i >= 1; i--) {
-            const path = parts.slice(0, i).join('.');
-            if (_handlers['*'] && _handlers['*'].length > 0) {
-                _handlers['*'].forEach(entry => {
-                    if (entry.win && !entry.win.isOpen()) { return; }
-                    entry.fn(namespace, body);
-                    handled = true;
-                });
-            }
-            if (_handlers[path] && _handlers[path].length > 0) {
-                _handlers[path].forEach(entry => {
-                    if (entry.win && !entry.win.isOpen()) { return; }
-                    entry.fn(namespace, body);
-                    handled = true;
-                });
-            }
+            run(_handlers[parts.slice(0, i).join('.')]);
         }
+        run(_handlers['*']);
         if (!handled) {
             console.log('GMCP (unhandled):', namespace, body);
         }
@@ -1735,6 +1735,93 @@ const VirtualWindows = (() => {
 // Shared state and services that window modules may read or call.
 // Nothing here is truly private - window modules are trusted collaborators.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Shared UI helpers: Client.tooltip and Client.tabs
+//
+// Client.tooltip(id) returns a controller for one floating tooltip element
+// (created on first show, styled by the caller's CSS for #id):
+//   show(content, place, opts)  content is HTML (or plain text with
+//                               opts.text); place is an anchor element
+//                               (tooltip beside it) or {x, y} (beside the
+//                               pointer); opts.topOffset lowers the anchor
+//                               placement without clamping to the viewport
+//   position(place)             re-place a shown tooltip (mouse moves)
+//   hide(delay)                 hide after delay ms (default 80, 0 = now)
+//   isShown()
+// Client.tabs(root, {button, panel}) wires click-to-switch tab buttons whose
+// data-panel names a panel id under root; it returns select(panelId).
+// ---------------------------------------------------------------------------
+const UiHelpers = (() => {
+    function tooltip(id) {
+        let el = null;
+        let hideTimer = null;
+        const ensure = () => {
+            if (el) { return el; }
+            el = document.createElement('div');
+            el.id = id;
+            document.body.appendChild(el);
+            return el;
+        };
+        const position = (place, opts) => {
+            if (!el || !place) { return; }
+            const ttW = el.offsetWidth;
+            const ttH = el.offsetHeight;
+            const vw  = window.innerWidth;
+            const vh  = window.innerHeight;
+            let left, top;
+            if (typeof place.getBoundingClientRect === 'function') {
+                const rect = place.getBoundingClientRect();
+                left = rect.right + 8;
+                if (left + ttW > vw - 8) { left = rect.left - ttW - 8; }
+                if (opts && opts.topOffset !== undefined) {
+                    el.style.left = Math.max(8, left) + 'px';
+                    el.style.top  = (rect.top + opts.topOffset) + 'px';
+                    return;
+                }
+                top = rect.top;
+            } else {
+                left = place.x + 14;
+                if (left + ttW > vw - 8) { left = place.x - ttW - 14; }
+                top = place.y - Math.floor(ttH / 2);
+            }
+            if (top + ttH > vh - 8) { top = vh - ttH - 8; }
+            el.style.left = Math.max(8, left) + 'px';
+            el.style.top  = Math.max(8, top) + 'px';
+        };
+        return {
+            show(content, place, opts) {
+                ensure();
+                clearTimeout(hideTimer);
+                if (opts && opts.text) { el.textContent = content; } else { el.innerHTML = content; }
+                el.style.display = 'block';
+                position(place, opts);
+            },
+            position(place, opts) { position(place, opts); },
+            hide(delay) {
+                if (!el) { return; }
+                clearTimeout(hideTimer);
+                const ms = delay === undefined ? 80 : delay;
+                if (ms <= 0) { el.style.display = 'none'; return; }
+                hideTimer = setTimeout(() => { el.style.display = 'none'; }, ms);
+            },
+            isShown() { return !!el && el.style.display === 'block'; },
+        };
+    }
+
+    function tabs(root, opts) {
+        const btns   = root.querySelectorAll(opts.button);
+        const panels = root.querySelectorAll(opts.panel);
+        const select = panelId => {
+            btns.forEach(b => b.classList.toggle('active', b.dataset.panel === panelId));
+            panels.forEach(p => p.classList.toggle('active', p.id === panelId));
+        };
+        btns.forEach(btn => btn.addEventListener('click', () => select(btn.dataset.panel)));
+        return select;
+    }
+
+    return { tooltip, tabs };
+})();
+
 const Client = (() => {
 
     // -----------------------------------------------------------------------
@@ -1761,7 +1848,12 @@ const Client = (() => {
         const hasRight = DockSlots.right && DockSlots.right.el && DockSlots.right.el.classList.contains('has-panels');
         // Phase 40i: the phone layout (mobile.js) shows one view at a time.
         const phone = document.body.classList.contains('mobile');
-        const fontSize = phone ? 13 : (hasLeft && hasRight) ? 16 : (hasLeft || hasRight) ? 18 : 20;
+        let fontSize = phone ? 13 : (hasLeft && hasRight) ? 16 : (hasLeft || hasRight) ? 18 : 20;
+        // Phase 82a: while the battle pane is open above the terminal, the
+        // battle lines come a size smaller (unless "Smaller text" is off).
+        if (document.body.classList.contains('battle-open') && document.body.dataset.battleText !== 'same') {
+            fontSize = { 20: 15, 18: 14, 16: 13, 13: 11 }[fontSize] || fontSize;
+        }
         if (term.options.fontSize !== fontSize) {
             term.options.fontSize = fontSize;
         }
@@ -1853,7 +1945,33 @@ const Client = (() => {
         }
     }
 
-    function SendInput(str) {
+    // A UI click is sent through here. A command that names its target by
+    // id ("look !40004:1-032b...", "walkto 40017") would echo that id into
+    // the terminal, so a click can say what to show instead: echo is the
+    // readable command ("look waterskin"), label the menu entry's text, used
+    // when the command carries a raw item id and no echo is given. Such a
+    // line goes out as !!ECHO(shown)command: the server runs the command and
+    // echoes only what is shown (nothing for a raw id with neither). Typed
+    // commands and plain clicks echo as sent.
+    const rawIdPattern = /(^|\s)![0-9]+:/;
+
+    function echoText(s) {
+        return (typeof s === 'string') ? s.replace(/[()\r\n]/g, '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function SendInput(str, echo, label) {
+        if (typeof str === 'string') {
+            const rawId = rawIdPattern.test(str);
+            const shown = echoText(echo) || (rawId ? echoText(label) : '');
+            if (shown && shown !== str) {
+                sendData('!!ECHO(' + shown + ')' + str);
+                return;
+            }
+            if (rawId) {
+                sendData('!!ECHO()' + str);
+                return;
+            }
+        }
         sendData(str);
     }
 
@@ -1951,7 +2069,7 @@ const Client = (() => {
     function _handleWebclientCommand(data) {
         if (data.startsWith('TEXTMASK:')) {
             debugLog(data);
-            textInput.type = data.substring(9) === 'true' ? 'password' : 'text';
+            setTextMask(data.substring(9) === 'true');
             return true;
         }
         if (data.startsWith('RELOGTKN:')) {
@@ -1959,6 +2077,24 @@ const Client = (() => {
             return true;
         }
         return false;
+    }
+
+    // A pending prompt question (yes/no, a name, a choice) replaces the game
+    // prompt with a line that starts ".:" and waits on the same line, where
+    // a blank Enter takes its default. While one waits, Enter and the arrows
+    // answer it as typed text, not the quick menu or walking.
+    let questionPending = false;
+    function _trackQuestion(data) {
+        const plain = data.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
+        const tail  = plain.slice(Math.max(plain.lastIndexOf('\n'), plain.lastIndexOf('\r')) + 1);
+        if (tail.trim() === '') { return; }
+        questionPending = tail.trimStart().startsWith('.:');
+    }
+
+    // playing: logged in and in a room, not at the login prompts or a
+    // pending question, so the empty box's keys can walk and open menus.
+    function playing() {
+        return !questionPending && !!(GMCPStructs.Room && GMCPStructs.Room.Info);
     }
 
     function _onMessage(event) {
@@ -2004,6 +2140,7 @@ const Client = (() => {
         }
 
         term.write(event.data);
+        _trackQuestion(event.data);
         Triggers.Try(event.data);
     }
 
@@ -2042,10 +2179,7 @@ const Client = (() => {
             connectButton.style.display = 'block';
             connectButton.disabled = false;
 
-            if (textInput.type === 'password') {
-                textInput.value = '';
-                textInput.type  = 'text';
-            }
+            setTextMask(false);
 
             if (pendingReconnectToken) {
                 const token = pendingReconnectToken;
@@ -2536,6 +2670,123 @@ const Client = (() => {
     // -----------------------------------------------------------------------
     let connectButton, textOutput, textInput;
 
+    // The command box's key handling (history, walking arrows, tab
+    // completion, Enter to send).
+    function onCommandKeydown(event) {
+    // Space while a suggestion is active: accept the suggestion and append
+    // a space so the user can keep typing (mirrors telnet behaviour).
+        if (event.key === ' ' && _tabSug.suggestions.length > 0) {
+            event.preventDefault();
+            const accepted = _tabSug.suggestions[_tabSug.index];
+            _tabSugReset();
+            textInput.value = accepted + ' ';
+            textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+            return false;
+        }
+
+    // Tab: request or cycle autocomplete suggestions
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const currentText = textInput.value;
+            const selStart    = textInput.selectionStart;
+            // The confirmed typed prefix is everything before the selection.
+            const typedPrefix = currentText.substring(0, selStart);
+            // If we already have suggestions for this typed prefix, cycle them.
+            if (_tabSug.suggestions.length > 0 && _tabSug.input === typedPrefix) {
+                _tabSug.index = (_tabSug.index + 1) % _tabSug.suggestions.length;
+                _tabSugApply();
+            } else {
+                // New request: use the typed prefix (excludes any selected suffix).
+                // Fall back to the full value if there is no selection (cursor at end).
+                const typed = typedPrefix || currentText;
+                _tabSugReset();
+                _tabSug.input = typed;
+                GMCPRequest('Suggestion', typed);
+            }
+            return false;
+        }
+
+        // F-key macros
+        if (event.key.substring(0, 1) === 'F' && event.key.length === 2) {
+            sendData('=' + event.key.substring(1));
+            if (event.preventDefault) { event.preventDefault(); }
+            return false;
+        }
+
+        // Command history. With the box empty the arrows walk instead
+        // (the numpad shortcuts below), so Alt+Up and Alt+Down start
+        // the history; once it is showing, plain arrows keep going.
+        const arrowsWalk = textInput.value.length === 0 && historyPosition === 0 &&
+            !event.altKey && textInput.type !== 'password' && playing();
+        if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && !arrowsWalk) {
+            event.preventDefault();
+            historyPosition += (event.key === 'ArrowUp') ? 1 : -1;
+            if (historyPosition < 0) { historyPosition = 0; }
+            if (historyPosition > commandHistory.length) { historyPosition = commandHistory.length; }
+            event.target.value = historyPosition === 0 ? '' : commandHistory[commandHistory.length - historyPosition];
+            _tabSugReset();
+            return;
+        }
+
+        // Numpad / arrow shortcuts when input is empty (arrows only in
+        // play, so they never answer a login or a pending question)
+        if (textInput.value.length === 0 && codeShortcuts[event.code] &&
+            (event.code.indexOf('Arrow') !== 0 || playing())) {
+            sendData(codeShortcuts[event.code]);
+            if (event.preventDefault) { event.preventDefault(); }
+            return false;
+        }
+
+        // Enter
+        if (event.key === 'Enter') {
+            // Accept any active suggestion before submitting
+            if (_tabSug.suggestions.length > 0) {
+                _tabSugReset();
+            }
+            if (event.target.value !== '' && textInput.type !== 'password') {
+                commandHistory.push(event.target.value);
+                historyPosition = 0;
+                if (commandHistory.length > commandHistoryMaxLength) {
+                    commandHistory = commandHistory.slice(commandHistory.length - commandHistoryMaxLength);
+                }
+            }
+
+            if (sendData(event.target.value)) {
+                event.target.value = '';
+            } else {
+                term.writeln('Not connected to the server. Did you click the Connect button?');
+            }
+        }
+    }
+
+    function bindCommandInput(input) {
+        input.addEventListener('keydown', onCommandKeydown);
+        // Clear tab-completion state whenever the input value changes by means
+        // other than the tab handler (typing, paste, cut, etc.).
+        input.addEventListener('input', _tabSugReset);
+    }
+
+    // setTextMask hides what the player types while the server asks for a
+    // password. Unmasking swaps in a fresh command box: Firefox keeps
+    // treating any box that was ever type="password" as a login field,
+    // ignores autocomplete="off" on it and opens its saved-logins dropdown
+    // ("Manage passwords") on the arrow keys for the rest of the session.
+    function setTextMask(masked) {
+        if (masked) { textInput.type = 'password'; return; }
+        if (textInput.type !== 'password') { return; }
+        const fresh = document.createElement('input');
+        Array.from(textInput.attributes).forEach(a => {
+            if (a.name !== 'type') { fresh.setAttribute(a.name, a.value); }
+        });
+        fresh.type = 'text';
+        const hadFocus = document.activeElement === textInput;
+        bindCommandInput(fresh);
+        textInput.replaceWith(fresh);
+        textInput = fresh;
+        if (hadFocus) { fresh.focus(); }
+    }
+
+
     // -----------------------------------------------------------------------
     // init()
     // -----------------------------------------------------------------------
@@ -2591,93 +2842,7 @@ const Client = (() => {
             attachSocketHandlers('Connected to the server!', true);
         });
 
-        // Input keydown
-        textInput.addEventListener('keydown', function(event) {
-        // Space while a suggestion is active: accept the suggestion and append
-        // a space so the user can keep typing (mirrors telnet behaviour).
-            if (event.key === ' ' && _tabSug.suggestions.length > 0) {
-                event.preventDefault();
-                const accepted = _tabSug.suggestions[_tabSug.index];
-                _tabSugReset();
-                textInput.value = accepted + ' ';
-                textInput.setSelectionRange(textInput.value.length, textInput.value.length);
-                return false;
-            }
-
-        // Tab: request or cycle autocomplete suggestions
-            if (event.key === 'Tab') {
-                event.preventDefault();
-                const currentText = textInput.value;
-                const selStart    = textInput.selectionStart;
-                // The confirmed typed prefix is everything before the selection.
-                const typedPrefix = currentText.substring(0, selStart);
-                // If we already have suggestions for this typed prefix, cycle them.
-                if (_tabSug.suggestions.length > 0 && _tabSug.input === typedPrefix) {
-                    _tabSug.index = (_tabSug.index + 1) % _tabSug.suggestions.length;
-                    _tabSugApply();
-                } else {
-                    // New request: use the typed prefix (excludes any selected suffix).
-                    // Fall back to the full value if there is no selection (cursor at end).
-                    const typed = typedPrefix || currentText;
-                    _tabSugReset();
-                    _tabSug.input = typed;
-                    GMCPRequest('Suggestion', typed);
-                }
-                return false;
-            }
-
-            // F-key macros
-            if (event.key.substring(0, 1) === 'F' && event.key.length === 2) {
-                sendData('=' + event.key.substring(1));
-                if (event.preventDefault) { event.preventDefault(); }
-                return false;
-            }
-
-            // Command history
-            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-                event.preventDefault();
-                historyPosition += (event.key === 'ArrowUp') ? 1 : -1;
-                if (historyPosition < 0) { historyPosition = 0; }
-                if (historyPosition > commandHistory.length) { historyPosition = commandHistory.length; }
-                event.target.value = historyPosition === 0 ? '' : commandHistory[commandHistory.length - historyPosition];
-                _tabSugReset();
-                return;
-            }
-
-            // Numpad / arrow shortcuts when input is empty
-            if (textInput.value.length === 0 && codeShortcuts[event.code]) {
-                sendData(codeShortcuts[event.code]);
-                if (event.preventDefault) { event.preventDefault(); }
-                return false;
-            }
-
-            // Enter
-            if (event.key === 'Enter') {
-                // Accept any active suggestion before submitting
-                if (_tabSug.suggestions.length > 0) {
-                    _tabSugReset();
-                }
-                if (event.target.value !== '' && textInput.type !== 'password') {
-                    commandHistory.push(event.target.value);
-                    historyPosition = 0;
-                    if (commandHistory.length > commandHistoryMaxLength) {
-                        commandHistory = commandHistory.slice(commandHistory.length - commandHistoryMaxLength);
-                    }
-                }
-
-                if (sendData(event.target.value)) {
-                    event.target.value = '';
-                } else {
-                    term.writeln('Not connected to the server. Did you click the Connect button?');
-                }
-            }
-        });
-
-        // Clear tab-completion state whenever the input value changes by means
-        // other than the tab handler (typing, paste, cut, etc.).
-        textInput.addEventListener('input', function() {
-            _tabSugReset();
-        });
+        bindCommandInput(textInput);
 
         // Volume sliders: load from localStorage
         _loadSoundStorage();
@@ -2765,6 +2930,7 @@ const Client = (() => {
 
         // Shared state (read by window modules)
         get GMCPStructs()  { return GMCPStructs; },
+        Playing:           playing,
         // sliderValues is a `let` that gets reassigned on mute/unmute, so the
         // getter captures the variable binding, not a snapshot of the object.
         get sliderValues() { return sliderValues; },
@@ -2775,8 +2941,11 @@ const Client = (() => {
 
         // Extension points for window modules
         registerShortcut,
+        tooltip: UiHelpers.tooltip,
+        tabs:    UiHelpers.tabs,
         onBattleEvents,
         dispatchBattleEvents: _dispatchBattleEvents, // for browser checks that feed the screen
+        resizeTerminal, // for browser checks that mount the terminal themselves (Phase 82a)
 
         // Functions called from HTML event handlers
         init,

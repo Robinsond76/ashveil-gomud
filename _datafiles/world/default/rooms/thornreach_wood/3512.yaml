@@ -1,0 +1,25 @@
+roomid: 3512
+zone: Thornreach Wood
+title: Ancient Hollow
+description: Ancient trees lean over the path and the light is green and dim. A bird calls once
+  and does not call again.
+biome: forest
+exits:
+  east:
+    roomid: 3513
+  west:
+    roomid: 3511
+  south:
+    roomid: 3520
+  north:
+    roomid: 3505
+resources:
+- forage
+- firewood
+mapx: 6
+mapy: 1
+mapz: 0
+hascoordinates: true
+encounter:
+  enabled: true
+  table: wood

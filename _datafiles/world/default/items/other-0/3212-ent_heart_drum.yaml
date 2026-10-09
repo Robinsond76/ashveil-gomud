@@ -1,0 +1,12 @@
+itemid: 3212
+name: ent-heart drum
+namesimple: ent drum
+description: "A drum hollowed from a fallen ent's heartwood, its head stretched with moss-cured hide. The wood swallows half the sound, so it carries less far than a drum should: it draws raiders and thieves half as much. A masterwork: it can be sold (help instruments)."
+type: object
+subtype: mundane
+instrument: drums
+instrumenttier: 4
+value: 650
+weight: 4000
+instrumentmob: 34
+instrumentchance: 25

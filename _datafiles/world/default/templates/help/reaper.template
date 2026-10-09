@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">reaper</ansi>
+
+The Reaper is the neutral elite of the Sweeper (Halberdier route; no alignment
+asked). Its glaive reaps a whole battlefield: a Sweep strikes the row behind
+its target too, and the Sweep itself comes back every other round at the top
+rank.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Reaping sweep  Sweep also strikes the foes in the row behind its target,
+                    each at 50% of a blow's damage
+  35 Long glaive    +3 Attack
+  40 Wider arc      the row behind takes 75% of a blow's damage from a Sweep
+  45 Reaper's toll  +1 damage on every blow
+  50 Hardened       +10% maximum health
+  55 Reaper's eye   +5% critical chance
+  60 Harvest        Sweep is ready two rounds sooner than a Sweeper's: every
+                    other round is a Sweep
+
+It needs the Sweeper first (<ansi fg="command">help halberdier-routes</ansi>) and keeps every rank of it. At level 30 a
+character that holds it promotes with <ansi fg="command">class promote [member] reaper confirm</ansi>. Any alignment may take it.
+Everything here lasts only for the battle and is never saved.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Elite Halberdier talents (levels 35, 45, 55): Iron Hide (+5 Armor), Veteran's
+Edge (+3 Attack), Second Wind (once a battle, below a quarter of its health at
+the start of its turn, heals a tenth of its maximum). See <ansi fg="command">help talents</ansi>.
+
+See also: <ansi fg="command">help halberdier-routes</ansi>, <ansi fg="command">help elite</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>.

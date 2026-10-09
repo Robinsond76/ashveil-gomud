@@ -31,6 +31,17 @@ WellRestedBuffId: 1030
 RestedBuffId: 1033
 RestedDuration: 15m
 WellRestedDuration: 30m
+# Phase 75 inn rooms. Every inn lets the common room above. A room that is
+# also tagged InnPrivateRoomTag lets private rooms, and one tagged
+# InnSuiteRoomTag a suite (`inn rest private`, `inn rest suite`). Prices
+# are per company member and take the settlement's standing markup; the
+# Well Rested a room leaves is the same buff, lasting the length given.
+InnPrivateRoomTag: inn-private
+InnSuiteRoomTag: inn-suite
+InnPrivatePricePerMember: 15
+InnSuitePricePerMember: 40
+InnPrivateWellRestedDuration: 60m
+InnSuiteWellRestedDuration: 120m
 # Phase 23b whetstones. `sharpen` (or `camp sharpen`), at any time but
 # never mid-fight, spends one use of the leader's whetstone (item
 # WhetstoneItemId, 10 uses) per company member whose dull blades it
@@ -58,6 +69,10 @@ CampRaids:
   - { Zone: Old Kings Road, MobId: 86, ChancePct: 15 }
   - { Zone: Test Area Road, MobId: 86, ChancePct: 100 } # the admin test area (testarea)
 WatchPctPerLevel: 25
+# Phase 51 rest duties (camp duties): a member on the watch duty adds their
+# own Camp Watch level at WatchPctPerLevel%, never less than WatcherBasePct%;
+# the watchers' chances stack with each other and the specialist's.
+WatcherBasePct: 20
 # Phase 40a4 camp theft: a rest in a zone listed here, with no camp bells
 # and trip lines strung, may draw thieves (ChancePct, rolled at rest start).
 # They work unseen and are noticed on waking: they take TheftSharePct percent
