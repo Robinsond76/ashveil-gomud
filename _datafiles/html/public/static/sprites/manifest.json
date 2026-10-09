@@ -482,7 +482,7 @@
    "source": "imported"
   },
   "battle/ui/hp-frame.png": {
-   "anchor": "center",
+   "anchor": "top-left",
    "density": 4,
    "frame": [
     128,

@@ -203,7 +203,7 @@
                 if (isSecret && !destVisited) { continue; }
 
                 if (destVisited) {
-                    exitIds.push({ num: exitInfo.num, locked: isLocked, secret: isSecret, dz: exitInfo.dz });
+                    exitIds.push({ num: exitInfo.num, locked: isLocked, secret: isSecret, dx: exitInfo.dx, dy: exitInfo.dy, dz: exitInfo.dz });
                 } else {
                     exitStubs.push({ dx: exitInfo.dx, dy: exitInfo.dy, dz: exitInfo.dz, locked: isLocked, secret: isSecret });
                 }
@@ -491,6 +491,7 @@
         var rooms         = new Map();
         var edges         = new Map();
         var zoneExitStubs = [];
+        var lakeCells     = [];   // E2: open water a ring of shore encloses ({ x, y }), from replayZone
         var currentRoomId = null;
         var cameraX = 0, cameraY = 0;
         var easeStartX = 0, easeStartY = 0;
@@ -542,7 +543,7 @@
             fadeStart: -1,
         };
         var animTimer = null;
-        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {} }; // what the last render drew (browser checks)
+        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, replaced: 0, lakes: 0 }; // what the last render drew (browser checks)
         var walkInfo = null;   // Phase 40d: Walkto { target, path: [room ids ahead] } while a walk is under way
         var timeInfo = null;   // Phase 40d: Gametime, for the day/night shading
         var nightQuant = -1;   // the shading level last drawn, in tenths
@@ -913,7 +914,7 @@
         }
 
         function resetMap() {
-            rooms.clear(); edges.clear(); zoneExitStubs = [];
+            rooms.clear(); edges.clear(); zoneExitStubs = []; lakeCells = [];
             currentRoomId = null;
             cameraX = 0; cameraY = 0; panOffsetX = 0; panOffsetY = 0;
             dragActive = false;
@@ -966,19 +967,42 @@
                     });
                 }
             });
+            lakeCells = findLakes();
+        }
+
+        // findLakes (E2) finds the open water a ring of shore rooms encloses
+        // (MapTiles.lakes). A cell any exit of this level leads into holds a
+        // room not seen yet, so it is never a lake.
+        function findLakes() {
+            if (!window.MapTiles) { return []; }
+            var cells = [], blocked = {};
+            rooms.forEach(function (room, id) {
+                cells.push({ x: room.x, y: room.y, env: room.env });
+                var rc = roomCache[id];
+                if (!rc) { return; }
+                (rc.stubs || []).concat(rc.exits || []).forEach(function (e) {
+                    if (e.dz === 0 && typeof e.dx === 'number' && typeof e.dy === 'number') {
+                        blocked[(room.x + e.dx) + ',' + (room.y + e.dy)] = true;
+                    }
+                });
+            });
+            return window.MapTiles.lakes(cells, blocked).map(function (k) {
+                var xy = k.split(',');
+                return { x: parseInt(xy[0], 10), y: parseInt(xy[1], 10) };
+            });
         }
 
         // -- Phase 40c: terrain tiles, walls, landmarks --------------------------
         // drawTileArt draws one frame of <path> (32 px at 1x, density times
         // that for imported art) centred on (px, py) at <size> px, smoothed
         // only for high-density art. <variant> picks a column of a variants
-        // sheet; <animated> instead picks the frame for <now>. It reports
-        // whether the image was ready.
-        function drawTileArt(path, variant, px, py, size, now, animated) {
+        // sheet; <animated> instead picks the frame for <now>, its loop
+        // starting at <startMs>. It reports whether the image was ready.
+        function drawTileArt(path, variant, px, py, size, now, animated, startMs) {
             var a = Sprites.art(path);
             if (!a) { return false; }
             var fw = a.info.frame[0], fh = a.info.frame[1];
-            var f = animated ? Sprites.frame(a.info, 0, now, 0) : { sx: variant * fw, sy: 0, sw: fw, sh: fh };
+            var f = animated ? Sprites.frame(a.info, 0, now, startMs || 0) : { sx: variant * fw, sy: 0, sw: fw, sh: fh };
             ctx.save();
             artSmoothing(a.info);
             ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(px - size / 2), Math.round(py - size / 2), size, size);
@@ -986,15 +1010,38 @@
             return true;
         }
 
-        // tileLook describes a room's four neighbours for MapTiles (E2): their
-        // ground, whether an exit joins them (a secret passage doesn't), and
-        // whether an exit leads into the fog of an unvisited room.
-        function tileLook(room, id, coordIndex) {
+        // onwardExits lists, as 'id,dx,dy', every exit on the drawn level that
+        // leaves the drawn map: into the fog of an unvisited room, or into a
+        // visited room of another zone. A road runs on through them
+        // (MapTiles); a secret passage doesn't count.
+        function onwardExits() {
+            var out = {};
+            rooms.forEach(function (room, id) {
+                var rc = roomCache[id];
+                if (!rc) { return; }
+                (rc.stubs || []).forEach(function (s) {
+                    if (s.dz === 0 && !s.secret) { out[id + ',' + s.dx + ',' + s.dy] = true; }
+                });
+                (rc.exits || []).forEach(function (e) {
+                    if (e.dz === 0 && !e.secret && !rooms.has(e.num) && typeof e.dx === 'number') {
+                        out[id + ',' + e.dx + ',' + e.dy] = true;
+                    }
+                });
+            });
+            return out;
+        }
+
+        // tileLook describes a road or coast room's four neighbours for
+        // MapTiles (E2): their ground (a lake cell is water), whether an exit
+        // joins them (a secret passage doesn't), and whether an exit leaves
+        // the drawn map there.
+        function tileLook(room, id, coordIndex, onward, lakeIndex) {
             function at(dx, dy) { return coordIndex[(room.x + dx) + ',' + (room.y + dy)]; }
             return {
                 envAt: function (dx, dy) {
                     var o = at(dx, dy);
-                    var r = o !== undefined ? rooms.get(o) : null;
+                    if (o === undefined) { return lakeIndex[(room.x + dx) + ',' + (room.y + dy)] ? 'water' : ''; }
+                    var r = rooms.get(o);
                     return r ? (r.env || '') : '';
                 },
                 linked: function (dx, dy) {
@@ -1003,9 +1050,8 @@
                     var e = edges.get(id < o ? (id + '-' + o) : (o + '-' + id));
                     return !!e && !e.secret;
                 },
-                fogAt: function (dx, dy) {
-                    if (at(dx, dy) !== undefined) { return false; }
-                    return zoneExitStubs.some(function (s) { return s.roomId === id && s.dx === dx && s.dy === dy && !s.secret; });
+                onward: function (dx, dy) {
+                    return at(dx, dy) === undefined && !!onward[id + ',' + dx + ',' + dy];
                 }
             };
         }
@@ -1014,12 +1060,15 @@
         // mod 3, the same for every viewer) and its animation. A road or
         // coast room draws the piece its neighbours pick (MapTiles) when that
         // art is listed, else its biome's variants. An animation whose sheet
-        // says replace (E2) is drawn instead of the base tile; an older one
-        // is an overlay on it. It returns null while the art is not ready,
-        // else { animated }.
-        function drawTerrain(room, id, p, size, now, coordIndex) {
+        // says replace (E2) holds whole tiles drawn from variant 1, so only
+        // rooms showing variant 1 play it, each at its own phase, and the
+        // others keep their still variants; an older animation is an overlay
+        // on every room. It returns null while the art is not ready, else
+        // { animated }.
+        function drawTerrain(room, id, p, size, now, coordIndex, onward, lakeIndex) {
             var biome = room.env ? room.env : 'default';
-            var name = window.MapTiles ? window.MapTiles.piece(biome, tileLook(room, id, coordIndex)) : '';
+            var mt = window.MapTiles;
+            var name = (mt && mt.tiled(biome)) ? mt.piece(biome, tileLook(room, id, coordIndex, onward, lakeIndex)) : '';
             if (name) {
                 var pp = 'map/terrain/' + name + '.png';
                 var ps = Sprites.status(pp);
@@ -1038,15 +1087,21 @@
             }
             var a = Sprites.art(path);
             if (!a) { return null; }
+            var variants = Math.max(1, a.info.variants || 1);
+            var variant = ((id % variants) + variants) % variants;
             var anim = (a.info.animated_overlay && !reducedMotion()) ? 'map/terrain/' + a.info.animated_overlay : '';
             var an = anim ? Sprites.art(anim) : null;
             if (an && an.info.replace) {
-                drawTileArt(anim, 0, p.px, p.py, size, now, true);
-                return { animated: true };
+                if (variant === 0) {
+                    drawTileArt(anim, 0, p.px, p.py, size, now, true, -id * (an.info.frame_ms || 0));
+                    drawn.replaced++;
+                    return { animated: true };
+                }
+                drawTileArt(path, variant, p.px, p.py, size, now, false);
+                return { animated: false };
             }
-            var variants = Math.max(1, a.info.variants || 1);
-            drawTileArt(path, ((id % variants) + variants) % variants, p.px, p.py, size, now, false);
-            if (anim) { drawTileArt(anim, 0, p.px, p.py, size, now, true); }
+            drawTileArt(path, variant, p.px, p.py, size, now, false);
+            if (anim) { drawTileArt(anim, 0, p.px, p.py, size, now, true, 0); }
             return { animated: !!anim };
         }
 
@@ -1202,7 +1257,7 @@
         // drawNightShade darkens and cools the tiles the sky reaches (not
         // indoor or dark biomes) by the time of day; labels stay readable
         // because only terrain, landmark and icon layers sit under it.
-        function drawNightShade(drewTiles, tilePx) {
+        function drawNightShade(drewTiles, tilePx, drewLakes) {
             var level = nightLevel();
             nightQuant = Math.round(level * 10);
             if (!mapSettings.dayNight || level <= 0.02) { return; }
@@ -1219,6 +1274,14 @@
                 ctx.fillRect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
                 drawn.shaded++;
             });
+            var water = biomeTable.water;
+            if (!(water && (water.indoor || water.dark))) {
+                (drewLakes || []).forEach(function (c) {
+                    var p = gridToCanvas(c.x, c.y);
+                    ctx.fillRect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
+                    drawn.shaded++;
+                });
+            }
             ctx.restore();
         }
 
@@ -1314,7 +1377,7 @@
             var useCircle = (mapSettings.roomShape === 'circle');
 
             var tiles = tilesOn();
-            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {} };
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, replaced: 0, lakes: 0 };
             var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
@@ -1395,6 +1458,9 @@
 
             var coordIndex = {};
             rooms.forEach(function (room, id) { coordIndex[room.x + ',' + room.y] = id; });
+            var onward = tiles ? onwardExits() : {};
+            var lakeIndex = {};
+            if (tiles) { lakeCells.forEach(function (c) { lakeIndex[c.x + ',' + c.y] = true; }); }
 
             if (!tiles) {
                 drawConnections();
@@ -1407,13 +1473,28 @@
             var spriteOn = spritesOn() && currentRoomId !== null && unit.x !== null &&
                 resolveSheet(chainKeys(identity.classid, identity.lineage), false) !== null;
 
+            // Lakes (E2): open water a ring of shore encloses, drawn as water
+            // tiles though no room is there. Their stand-in id picks a
+            // variant and phase from the cell.
+            var drewLakes = [];
+            if (tiles) {
+                lakeCells.forEach(function (c) {
+                    var lp = gridToCanvas(c.x, c.y);
+                    var lt = drawTerrain({ x: c.x, y: c.y, env: 'water' }, c.x * 7 + c.y * 13, lp, tilePx, nowMs, coordIndex, onward, lakeIndex);
+                    if (!lt) { return; }
+                    drewLakes.push(c);
+                    drawn.lakes++;
+                    if (lt.animated) { animTiles = true; }
+                });
+            }
+
             // Pass 1: terrain. A room with no tile art yet (loading, failed or
             // missing) draws its classic colour square so the map never blanks.
             rooms.forEach(function (room, id) {
                 var p         = gridToCanvas(room.x, room.y);
                 var isCurrent = (id === currentRoomId) && !spriteOn;
                 if (tiles) {
-                    var t = drawTerrain(room, id, p, tilePx, nowMs, coordIndex);
+                    var t = drawTerrain(room, id, p, tilePx, nowMs, coordIndex, onward, lakeIndex);
                     if (t) {
                         drewTiles[id] = true;
                         drawn.tiles++;
@@ -1496,7 +1577,7 @@
 
             // Phase 40d: the time of day shades the outdoor tiles, and a walk
             // under way draws its path over them.
-            if (tiles) { drawNightShade(drewTiles, tilePx); }
+            if (tiles) { drawNightShade(drewTiles, tilePx, drewLakes); }
             var walkAnim = drawWalkPath(tilePx, nowMs);
 
             // Animated tiles (water, shore, swamp, snow, desert) cycle on a

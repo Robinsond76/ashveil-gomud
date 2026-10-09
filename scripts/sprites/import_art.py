@@ -11,8 +11,10 @@ docs/designs/2026-10-09-e2-hires-terrain-icons-design.md.
 
 The files go to `scripts/sprites/imported/` (or --out) and their manifest
 entries into its `imported.json`, which `generate.py` copies over its own
-drawn output.  Every expected master must be present; any problem stops the
-import before anything is written.
+drawn output.  Every expected master must be present, and a full import
+refuses a PNG in a phase folder that no runtime file reads (`_`-prefixed
+review sheets are ignored); any problem stops the import before anything is
+written.
 """
 import argparse
 import io
@@ -126,12 +128,13 @@ def jobs():
         for i in ids:
             out.append(Job(f"ui/{group}/{i}.png", [f"A5/ui/{group}/{i}.png"], [64, 64],
                            {"kind": "ui-icon", "set": "S3", "frames": 1, "anchor": "center", "group": group}))
-    battle = [("cell", [128, 64], 1, 0), ("cell-acting", [128, 64], 4, 180), ("cell-targeted", [128, 64], 2, 250),
-              ("acting-arrow", [32, 32], 2, 250), ("fallen", [64, 64], 1, 0), ("surrendered", [64, 64], 1, 0),
-              ("hp-frame", [128, 24], 1, 0)]
-    for name, fr, n, ms in battle:
+    battle = [("cell", [128, 64], 1, 0, "center"), ("cell-acting", [128, 64], 4, 180, "center"),
+              ("cell-targeted", [128, 64], 2, 250, "center"), ("acting-arrow", [32, 32], 2, 250, "center"),
+              ("fallen", [64, 64], 1, 0, "center"), ("surrendered", [64, 64], 1, 0, "center"),
+              ("hp-frame", [128, 24], 1, 0, "top-left")]
+    for name, fr, n, ms, anchor in battle:
         out.append(Job(f"battle/ui/{name}.png", [f"A5/battle/ui/{name}.png"], fr,
-                       _anim({"kind": "battle-ui", "set": "S3", "frames": n, "anchor": "center"}, ms),
+                       _anim({"kind": "battle-ui", "set": "S3", "frames": n, "anchor": anchor}, ms),
                        frames=n, budget=BIG if fr[0] >= 128 else SMALL))
     return out
 
@@ -207,6 +210,8 @@ def build(job, src_root):
             raise ValueError(f"{job.masters[0]}: must be opaque")
         out = im.resize(tuple(job.exact), Image.Resampling.LANCZOS)
         data = encode(out, job.budget)
+        if len(data) > job.budget:
+            raise ValueError(f"{job.rel}: {len(data)} bytes after quantising, over {job.budget}")
         return data, dict(job.meta, size=list(job.exact), source="imported")
 
     fw, fh = job.frame
@@ -235,15 +240,37 @@ def build(job, src_root):
     return data, entry
 
 
+def unlisted(src_root, todo):
+    """Masters under the phase folders that no job reads (a misspelt name)."""
+    wanted = {m for j in todo for m in j.masters}
+    phases = {m.split("/")[0] for m in wanted}
+    extra = []
+    for phase in sorted(phases):
+        for dirpath, _, files in os.walk(os.path.join(src_root, phase)):
+            for f in files:
+                rel = os.path.relpath(os.path.join(dirpath, f), src_root).replace(os.sep, "/")
+                if f.endswith(".png") and not f.startswith("_") and rel not in wanted:
+                    extra.append(f"{rel}: not an expected master")
+    return sorted(extra)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--src", default=DEFAULT_SRC, help="the masters (default art/source)")
     ap.add_argument("--out", default=IMPORTED, help="output folder (default scripts/sprites/imported)")
     ap.add_argument("--only", nargs="+", default=[], help="import only these runtime paths (for tests)")
+    ap.add_argument("--budget", type=int, default=0, help="override every per-frame budget in bytes (for tests)")
     args = ap.parse_args(argv)
 
     todo = [j for j in jobs() if not args.only or j.rel in args.only]
+    if not todo:
+        raise SystemExit("nothing to import: --only matched no runtime path")
+    if args.budget:
+        for j in todo:
+            j.budget = args.budget
     built, problems = {}, []
+    if not args.only:
+        problems.extend(unlisted(args.src, todo))
     for job in todo:
         try:
             built[job.rel] = build(job, args.src)

@@ -128,6 +128,45 @@ func TestImportArt(t *testing.T) {
 		t.Errorf("an app icon has no density: %v", e)
 	}
 
+	// Quantising: a many-coloured landmark over its budget is saved as a
+	// 256-colour palette PNG; one still over after that is refused.
+	qsrc := t.TempDir()
+	writeArt(t, qsrc, "A3/map/landmarks/inn.png", 512, 512, func(x, y int) color.NRGBA {
+		x, y = x/4, y/4
+		return color.NRGBA{uint8(x * 2), uint8(y * 2), uint8((x * y) % 256), 255}
+	})
+	qrun := func(budget string) (string, string, error) {
+		out := t.TempDir()
+		b, err := exec.Command("python3", "-I", script, "--src", qsrc, "--out", out, "--only", "map/landmarks/inn.png", "--budget", budget).CombinedOutput()
+		return out, string(b), err
+	}
+	out, msg, err = qrun("5500")
+	if err != nil {
+		t.Fatalf("quantised import refused: %v\n%s", err, msg)
+	}
+	if f, err := os.Open(filepath.Join(out, "map/landmarks/inn.png")); err == nil {
+		img, derr := png.Decode(f)
+		f.Close()
+		if _, ok := img.(*image.Paletted); derr != nil || !ok {
+			t.Errorf("an over-budget file should be saved as a palette PNG, got %T (%v)", img, derr)
+		}
+	} else {
+		t.Fatal(err)
+	}
+	if _, msg, err := qrun("1000"); err == nil || !strings.Contains(msg, "after quantising") {
+		t.Errorf("a file over budget after quantising should be refused, got err %v: %s", err, msg)
+	}
+	if _, msg, err := run(qsrc, "map/landmarks/no-such.png"); err == nil || !strings.Contains(msg, "matched no runtime path") {
+		t.Errorf("an --only matching nothing should be refused, got err %v: %s", err, msg)
+	}
+
+	// A full import names a misspelt master in a phase folder.
+	stray := t.TempDir()
+	writeArt(t, stray, "A3/map/landmarks/inn-old.png", 512, 512, flat(color.NRGBA{}))
+	if b, err := exec.Command("python3", "-I", script, "--src", stray, "--out", t.TempDir()).CombinedOutput(); err == nil || !strings.Contains(string(b), "inn-old.png: not an expected master") {
+		t.Errorf("a stray master should be named, got err %v: %s", err, b)
+	}
+
 	for _, tc := range []struct {
 		name    string
 		write   func(root string)

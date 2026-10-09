@@ -48,10 +48,16 @@ the battle screen is E3.
      `map/terrain/<biome>.png`, as before; a room's variant is still
      `room id mod 3`.
    - The four animated biomes (water, swamp, snow, desert) get a 4-frame
-     `<biome>-anim.png` marked `"replace": true`. The client draws it
-     instead of the base tile, because A2's frames are whole tiles (variant
-     1 plus the motion), not overlays. With reduced motion, the variants
-     show.
+     `<biome>-anim.png` marked `"replace": true`. A2's frames are whole
+     tiles (variant 1 plus the motion), not overlays.
+     - Only rooms showing variant 1 (room id mod 3 is 0) play it, each at
+       its own phase (offset by room id), so a lake doesn't pulse in step.
+     - The other rooms keep their still variants 2 and 3, so a region is
+       not one tile repeated (standards section 5, no wallpaper).
+     - Every water, swamp, snow and desert tile and frame has identical
+       edge pixels (measured), so mixing frames and variants leaves no
+       seam.
+     - With reduced motion, every room shows its variant.
    - `fog` keeps its transparency; `unknown` is opaque.
    - Shore no longer animates (A2: the coast pieces don't). The generated
      1x `shore.png` and `shore-anim.png` stay, used only if the pieces were
@@ -63,15 +69,18 @@ the battle screen is E3.
    - **A road** joins a grid neighbour that is also road and has an exit
      between the two rooms.
      - A secret passage doesn't join, so the road never gives one away.
-     - An exit into the fog of an unvisited room also joins, so a road
-       runs on into the unknown rather than dead-ending at the edge of what
-       you have seen.
+     - An exit that leaves the drawn map also joins, so a road runs on
+       rather than dead-ending at the edge of what you have seen. That is
+       an exit into the fog of an unvisited room, or into a visited room
+       of another zone (a road that crosses a zone border).
      - Two road rooms with a wall between them don't join; the dark wall
        edge stays.
    - **A coast** faces each grid neighbour whose ground is `water`, exits
-     or not (owner decision, 2026-10-07).
-   - A piece that is still loading draws nothing that frame, as other
-     terrain does. A missing piece falls back to the biome's own sheet.
+     or not (owner decision, 2026-10-07). That includes a lake cell
+     (decision 8).
+   - A piece that is still loading draws the classic colour square that
+     frame, as other terrain does. A missing piece falls back to the
+     biome's own sheet.
 5. **Overlays and icons.**
    - Landmarks and the tent and camp pieces are 128 px frames.
    - Fire, smoke, embers, resting, the inn bed and resource icons are
@@ -96,6 +105,23 @@ the battle screen is E3.
    variant with the whole tile. If the band is much darker, the tile has a
    frame or vignette (standards section 5), and the import fails.
 
+8. **Lakes from shape** (owner decision, 2026-10-09).
+   - The shipped world has no `water` rooms. A lake is the empty middle of
+     a ring of shore rooms: Frost Lake's 98, Alderbrook's pond, Marrowmere
+     Fen. Without a rule, every coast would face nothing and draw as sand.
+   - `MapTiles.lakes` finds the empty cells the drawn rooms fully enclose
+     (4-connected, not reachable from outside the map's bounding box). It
+     keeps a region only if every room bordering it is shore and no exit
+     leads into it; a cell an exit leads into holds a room not yet seen.
+   - The map draws those cells as `water` tiles, with variants, animation
+     and night shading, and coasts face them.
+   - It runs when a zone is replayed, so a lake appears once its ring has
+     been walked.
+   - Known gap: the 16 pieces have no inside corner. Where a lake's corner
+     meets a shore room diagonally, that room is sand to its corner, and
+     the water shows a square notch. Four inside-corner overlays are
+     ordered as art phase A2b (`docs/art/A2b-coast-inner-corners.md`).
+
 ## State, persistence, multiplayer
 
 There's no server or game state. The change is client art plus a client
@@ -112,18 +138,23 @@ and the map still shows only what the game tells the player.
   `manifest.json`.
 - `static/js/map-tiles.js`: loaded by `webclient-pure.html`.
 - `window-map.js`:
-  - `tileLook` and `drawTerrain` pick and draw pieces and replace-style
-    animation;
-  - `state().drawn.pieces` records the pieces drawn, for the browser
-    check.
+  - `onwardExits`, `tileLook` and `drawTerrain` pick and draw pieces and
+    replace-style animation;
+  - `findLakes` (run by `replayZone`) and the lake pass draw lakes and
+    shade them at night;
+  - `state().drawn` records `pieces`, `replaced` and `lakes` for the
+    browser check.
 
 ## Player help
 
 The `worldmap` help page's Terrain section changes:
 
-- roads join the roads they lead to and run on into the fog;
-- coasts follow the water;
-- water, swamp, snow and desert move, and the shore no longer does.
+- roads join the roads they lead to and run on into the fog or another
+  region;
+- coasts follow the water, and a walked ring of shore fills with its
+  lake;
+- water, swamp, snow and desert move in places, and the shore no longer
+  does.
 
 There's no new command or topic. The tutorial's map hint ("the map window
 draws terrain tiles") stays true.
@@ -140,12 +171,18 @@ draws terrain tiles") stays true.
   and within budget. A Go test checks them all.
 - `TestImportArt` builds synthetic masters and checks:
   - an animated row cuts into the right frames;
-  - a wrong size, a transparent terrain tile and a framed tile are refused.
-- `map-tiles` Node tests: road joins (exit, wall, secret, fog), coast
-  sides, other ground.
+  - a wrong size, a transparent terrain tile, a framed tile, a missing or
+    stray master and an `--only` that matches nothing are refused;
+  - an over-budget file is quantised, and one still over is refused.
+- `map-tiles` Node tests: road joins (exit, wall, secret, onward), coast
+  sides, other ground, and lakes (ring, diagonal ring, open ring,
+  non-shore border, exit into the middle).
 - `map-check.mjs` checks that:
   - the harness's road and shore rooms draw their pieces;
-  - an animated biome draws its replace sheet;
-  - a missing piece falls back to the biome.
+  - an animated biome plays its replace sheet only on variant-1 rooms;
+  - a road runs on into another zone;
+  - a missing piece falls back to the biome;
+  - a shore ring's middle draws as a lake its coasts face, shaded at
+    night, and a ring with an exit into its middle has no lake.
 - `help worldmap` renders the new terrain text.
 - An independent reviewer checks the full diff before merge.

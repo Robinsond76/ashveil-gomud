@@ -366,12 +366,14 @@ s = await state(page);
 check(s.drawn.pieces[mid(1, 1)] === 'road-none' && s.drawn.pieces[mid(2, 0)] === 'shore-w',
   'the road and shore draw the pieces their neighbours pick: ' + JSON.stringify(s.drawn.pieces));
 check(Object.keys(s.drawn.pieces).length === 2, 'only road and shore rooms draw pieces');
+check(s.drawn.replaced === 1 && s.drawn.animated === 1, 'the water (room 201, variant 1) plays its replace sheet: ' + JSON.stringify([s.drawn.replaced, s.drawn.animated]));
 await page.close();
 
 // A road network: (1,1) joins the road north of it; a wall (no exit) to the
 // east and a found secret passage to the west don't join; (2,1) and (1,0)
-// run on into the fog of unvisited exits; the shore at (1,2) has water on
-// three sides and the road to its north.
+// run on into the fog of unvisited exits, and (0,1) into a visited room of
+// another zone; the shore at (1,2) has water on three sides and the road to
+// its north. The water rooms all show variants 2 and 3, so none animates.
 const roads = { biomes: {}, rooms: [] };
 const rid = (x, y) => 300 + x + 4 * y;
 const rlayout = { '1,0': 'road', '0,1': 'road', '1,1': 'road', '2,1': 'road', '0,2': 'water', '1,2': 'shore', '2,2': 'water', '1,3': 'water' };
@@ -388,17 +390,20 @@ for (const [key, env] of Object.entries(rlayout)) {
   });
   if (key === '2,1') { exitsv2.east = { num: 997, dx: 1, dy: 0, dz: 0 }; }
   if (key === '1,0') { exitsv2.north = { num: 998, dx: 0, dy: -1, dz: 0 }; }
+  if (key === '0,1') { exitsv2.west = { num: 996, dx: -1, dy: 0, dz: 0 }; }
   roads.rooms.push({ num: rid(x, y), area: 'Roads', coords: ['Roads', x, y, 0].join(','), environment: env, exitsv2, details: [] });
 }
+roads.rooms.push({ num: 996, area: 'Elsewhere', coords: 'Elsewhere,0,0,0', environment: 'road', exitsv2: { east: { num: rid(0, 1), dx: 1, dy: 0, dz: 0 } }, details: [] });
 page = await open({ width: 1280, height: 900 });
 await gmcp(page, 'World.Map', roads);
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 await gmcp(page, 'Room', { Info: roads.rooms.find(r => r.num === rid(1, 1)) });
 await page.waitForFunction(() => Object.keys(window.MapView.state().drawn.pieces).length === 5, null, { timeout: 5000 }).catch(() => {});
 s = await state(page);
-const want = { [rid(1, 1)]: 'road-n', [rid(0, 1)]: 'road-none', [rid(2, 1)]: 'road-e', [rid(1, 0)]: 'road-ns', [rid(1, 2)]: 'shore-esw' };
+const want = { [rid(1, 1)]: 'road-n', [rid(0, 1)]: 'road-w', [rid(2, 1)]: 'road-e', [rid(1, 0)]: 'road-ns', [rid(1, 2)]: 'shore-esw' };
 check(JSON.stringify(s.drawn.pieces) === JSON.stringify(want),
-  'roads join through exits only (not a wall or a secret passage) and run on into the fog; the coast faces its water: ' + JSON.stringify(s.drawn.pieces));
+  'roads join through exits only (not a wall or a secret passage) and run on into the fog and other zones; the coast faces its water: ' + JSON.stringify(s.drawn.pieces));
+check(s.drawn.replaced === 0 && s.drawn.animated === 0, 'water rooms on variants 2 and 3 keep their still tiles: ' + JSON.stringify([s.drawn.replaced, s.drawn.animated]));
 for (let i = 0; i < 3; i++) { await page.locator('.map-controls button[title="Zoom in"]').click(); }
 await tick(page, 400);
 await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-roads.png') : '/tmp/e2-roads.png' });
@@ -430,7 +435,7 @@ await gmcp(page, 'World.Map', mixed);
 await gmcp(page, 'Room', { Info: mixed.rooms[5] });
 await tick(page, 500);
 s = await state(page);
-check(s.drawn.tiles === 7 && s.drawn.animated === 0, 'with reduced motion no tile animates: ' + JSON.stringify(s.drawn));
+check(s.drawn.tiles === 7 && s.drawn.animated === 0 && s.drawn.replaced === 0, 'with reduced motion no tile animates: ' + JSON.stringify(s.drawn));
 await page.close();
 
 // Animated water cycles its frames.
@@ -585,6 +590,56 @@ await tick(page, 300);
 s = await state(page);
 check(s.drawn.shaded === 0, 'with day/night off nothing is shaded');
 await page.close();
+
+// --- E2: lakes from shape ---
+// A 4x4 ring of shore around an empty 2x2 middle, joined round the ring by
+// exits: the middle is a lake drawn as water, and each coast faces it. A
+// ring with an exit into its middle encloses an unseen room, not a lake.
+const lakeRing = (exitIn) => {
+  const out = { biomes: {}, rooms: [] };
+  const lid = (x, y) => 400 + x + 4 * y;
+  const ring = [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1], [3, 2], [3, 3], [2, 3], [1, 3], [0, 3], [0, 2], [0, 1]];
+  ring.forEach(([x, y], i) => {
+    const exitsv2 = {};
+    [ring[(i + 1) % ring.length], ring[(i + ring.length - 1) % ring.length]].forEach(([ox, oy]) => {
+      exitsv2[names[(ox - x) + ',' + (oy - y)]] = { num: lid(ox, oy), dx: ox - x, dy: oy - y, dz: 0 };
+    });
+    if (exitIn && x === 1 && y === 0) { exitsv2.south = { num: 999, dx: 0, dy: 1, dz: 0 }; }
+    out.rooms.push({ num: lid(x, y), area: 'Lake', coords: ['Lake', x, y, 0].join(','), environment: 'shore', exitsv2, details: [] });
+  });
+  return { world: out, lid };
+};
+{
+  const { world: lake, lid } = lakeRing(false);
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', lake);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await gmcp(page, 'Room', { Info: lake.rooms[0] });
+  await page.waitForFunction(() => window.MapView.state().drawn.lakes === 4, null, { timeout: 5000 }).catch(() => {});
+  s = await state(page);
+  check(s.drawn.lakes === 4, 'the empty middle of a shore ring draws as a 4-tile lake: ' + s.drawn.lakes);
+  const p = s.drawn.pieces;
+  check(p[lid(1, 0)] === 'shore-s' && p[lid(3, 1)] === 'shore-w' && p[lid(2, 3)] === 'shore-n' && p[lid(0, 2)] === 'shore-e' && p[lid(0, 0)] === 'shore-none',
+    'each coast faces the lake: ' + JSON.stringify(p));
+  await gmcp(page, 'Gametime', clock(23));
+  await tick(page, 300);
+  s = await state(page);
+  check(s.drawn.shaded === 16, 'night shades the lake with its shore: ' + s.drawn.shaded);
+  await gmcp(page, 'Gametime', clock(12));
+  for (let i = 0; i < 3; i++) { await page.locator('.map-controls button[title="Zoom in"]').click(); }
+  await tick(page, 400);
+  await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-lake.png') : '/tmp/e2-lake.png' });
+  await page.close();
+
+  const { world: notLake } = lakeRing(true);
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', notLake);
+  await gmcp(page, 'Room', { Info: notLake.rooms[0] });
+  await tick(page, 500);
+  s = await state(page);
+  check(s.drawn.lakes === 0 && s.drawn.tiles === 12, 'a ring with an exit into its middle has no lake: ' + JSON.stringify([s.drawn.lakes, s.drawn.tiles]));
+  await page.close();
+}
 
 // --- E1: high-density figures at whole and fractional pixel ratios ---
 for (const dpr of [1, 1.5, 2]) {

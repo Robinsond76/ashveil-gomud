@@ -119,6 +119,9 @@ func TestCommissionedTerrainAndIconsAreImported(t *testing.T) {
 			t.Errorf("%s-anim.png: replace %v frame_ms %v, want a replace sheet at 250 ms", b, anim["replace"], anim["frame_ms"])
 		}
 	}
+	if hp := loadRawEntry(t, dir, "battle/ui/hp-frame.png"); hp["anchor"] != "top-left" {
+		t.Errorf("battle/ui/hp-frame.png: anchor %v, want top-left as the 1x art had", hp["anchor"])
+	}
 	for name, px := range map[string]int{"icon-512": 512, "icon-192": 192, "icon-maskable-512": 512, "favicon-32": 32} {
 		rel := "app/" + name + ".png"
 		meta := m.Files[rel]
