@@ -1,25 +1,31 @@
 #!/usr/bin/env python3
-"""Import a commissioned map-unit sheet as high-density art.
+"""Import approved map-unit masters as high-density art.
 
-    python3 scripts/sprites/import_sheet.py SHEET UNIT_ID [--density 4]
+    python3 scripts/sprites/import_sheet.py SHEET UNIT_ID
+    python3 scripts/sprites/import_sheet.py --dir FOLDER [FOLDER ...]
 
-SHEET is a grid of figures on a transparent (or plain light) background:
-one row per direction (down, up, side facing right), each row 2 idle then
-6 walk frames (docs/art/00-standards.md, section 4).  The figures are
-cut out, scaled to one consistent size, given their feet on the spec's
-baseline and packed into `idle.png` and
-`walk.png` under `scripts/sprites/imported/map/units/UNIT_ID/`.  Their
-manifest entries go to `scripts/sprites/imported/imported.json`, which
-`generate.py` copies over its own output.
+A master is an approved art-program sheet (docs/art/00-standards.md,
+section 4): 3 rows (down, up, side facing right) of 8 cells, each 256 px
+square with 32 px gutters, feet on y 239 and every figure drawn at one
+fixed scale.  Columns 1-2 are the idle, 3-8 the walk.
 
-A density-N sheet has frames N times the spec's 32 px.  The client draws
-it at the same on-map size as 1x art, so the extra pixels show as detail
-when zoomed in or on high-resolution screens.
+Each cell is cut exactly from that grid (no per-figure fitting, so a
+raised weapon never shrinks a body) and halved to a 128 px frame:
+density 4, four times the spec's 32 px, feet baseline 120 (the frame's
+lower edge sits on the map's feet line, as 1x art's row 30 of 32 does).
+The halving averages each 2x2 block with premultiplied alpha and keeps
+alpha binary, which is exact for art drawn on a 4 px grain.
+
+`idle.png` and `walk.png` go to `scripts/sprites/imported/map/units/ID/`
+and their manifest entries to `scripts/sprites/imported/imported.json`,
+which `generate.py` copies over its own drawn output.  With --dir every
+`ID.png` in the folders is imported.
 """
 import argparse
+import glob
 import json
 import os
-from collections import deque
+import sys
 
 import numpy as np
 from PIL import Image
@@ -28,152 +34,120 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 IMPORTED = os.path.join(HERE, "imported")
 DIRECTIONS = ["down", "up", "side"]
 
-BASE_FRAME = 32        # the spec's map-unit frame
-BASE_FEET = 30         # feet baseline: frameHeight - 2
-BASE_FIGURE = 28       # spec: the figure fills about 14x28 px
-BG_DISTANCE = 60       # how far from the background a pixel must be to count as figure
-MIN_BLOB = 40          # smaller specks are compression noise
+CELL = 256            # master cell
+GUTTER = 32           # transparent gap between cells
+COLS = 8              # 2 idle + 6 walk
+FEET = 239            # lowest figure row in a master cell
+DENSITY = 4           # runtime frames are 32 * DENSITY px
+SHRINK = CELL // (32 * DENSITY)
+IDLE = (0, 1)
+WALK = (2, 3, 4, 5, 6, 7)
 
 
-def figure_mask(cell, bg):
-    """The figure's pixels: far enough from the background, specks removed."""
-    if bg is None:
-        mask = cell[..., 3] > 128
-    else:
-        mask = np.abs(cell[..., :3].astype(int) - bg).max(axis=2) > BG_DISTANCE
-    seen = np.zeros_like(mask)
-    keep = np.zeros_like(mask)
-    h, w = mask.shape
-    for y0, x0 in zip(*np.nonzero(mask)):
-        if seen[y0, x0]:
-            continue
-        blob, q = [], deque([(y0, x0)])
-        seen[y0, x0] = True
-        while q:
-            y, x = q.popleft()
-            blob.append((y, x))
-            for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
-                if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not seen[ny, nx]:
-                    seen[ny, nx] = True
-                    q.append((ny, nx))
-        if len(blob) >= MIN_BLOB:
-            ys, xs = zip(*blob)
-            keep[list(ys), list(xs)] = True
-    return keep
+def check_master(src, name):
+    """Problems with a master's layout, as messages (empty when it fits)."""
+    want = (len(DIRECTIONS) * CELL + (len(DIRECTIONS) - 1) * GUTTER,
+            COLS * CELL + (COLS - 1) * GUTTER)
+    if src.shape[:2] != want:
+        return [f"{name}: sheet is {src.shape[1]}x{src.shape[0]}, expected {want[1]}x{want[0]}"]
+    problems = []
+    alpha = src[..., 3] > 0
+    for r in range(len(DIRECTIONS)):
+        for c in range(COLS):
+            cell = alpha[r * (CELL + GUTTER):r * (CELL + GUTTER) + CELL,
+                         c * (CELL + GUTTER):c * (CELL + GUTTER) + CELL]
+            rows = np.nonzero(cell.any(axis=1))[0]
+            if len(rows) == 0:
+                problems.append(f"{name}: {DIRECTIONS[r]} cell {c + 1} is empty")
+            elif rows.max() != FEET:
+                problems.append(f"{name}: {DIRECTIONS[r]} cell {c + 1} has its feet on y {rows.max()}, not {FEET}")
+    cells = np.zeros_like(alpha)
+    for r in range(len(DIRECTIONS)):
+        for c in range(COLS):
+            cells[r * (CELL + GUTTER):r * (CELL + GUTTER) + CELL,
+                  c * (CELL + GUTTER):c * (CELL + GUTTER) + CELL] = True
+    if (alpha & ~cells).any():
+        problems.append(f"{name}: opaque pixels in the gutters")
+    return problems
 
 
-def spans(occupied, count, min_gap):
-    """The <count> widest runs of occupied lines, merging gaps under <min_gap>."""
-    runs, start, gap = [], None, 0
-    for i, on in enumerate(list(occupied) + [False] * min_gap):
-        if on:
-            if start is None:
-                start = i
-            gap, end = 0, i
-        elif start is not None:
-            gap += 1
-            if gap >= min_gap:
-                runs.append((start, end + 1))
-                start = None
-    if len(runs) < count:
-        raise SystemExit(f"found {len(runs)} figures, expected {count}")
-    return sorted(sorted(runs, key=lambda r: r[0] - r[1])[:count])
-
-
-def cut_figures(path, rows, cols):
-    src = np.array(Image.open(path).convert("RGBA"))
-    # A sheet with a transparent background is cut by alpha; an opaque one
-    # by distance from its border colour.
-    bg = None
-    if (src[..., 3] < 128).mean() < 0.2:
-        bg = np.median(np.concatenate([src[0, :, :3], src[-1, :, :3]]), axis=0)
-    full = figure_mask(src, bg)
-    figs = []
-    for top, bottom in spans(full.any(axis=1), rows, 6):
-        band = full[top:bottom]
-        row = []
-        for left, right in spans(band.any(axis=0), cols, 12):
-            mask = band[:, left:right]
-            ys, xs = np.nonzero(mask)
-            rgba = src[top:bottom, left:right].copy()
-            rgba[..., 3] = np.where(mask, 255, 0)
-            box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
-            # The horizontal anchor is the mask's centre of mass, so a cape
-            # or staff swinging out does not shove the body sideways.
-            cx = xs.mean() - box[0]
-            row.append((Image.fromarray(rgba).crop(box), cx))
-        figs.append(row)
-    return figs
-
-
-def place(fig, cx, scale, frame, feet):
-    """Scale one cut-out figure and stand it bottom-centre in a frame."""
-    w = max(1, round(fig.width * scale))
-    h = max(1, round(fig.height * scale))
-    # Premultiplied resampling keeps the edges free of a pale fringe.
-    small = fig.convert("RGBa").resize((w, h), Image.LANCZOS).convert("RGBA")
-    out = Image.new("RGBA", (frame, frame), (0, 0, 0, 0))
-    x = round(frame / 2 - cx * scale)
-    out.alpha_composite(small, (max(0, min(frame - w, x)), max(0, feet - h)))
+def shrink(cell):
+    """Halve an RGBA cell: premultiplied 2x2 average, binary alpha."""
+    h, w = cell.shape[0] // SHRINK, cell.shape[1] // SHRINK
+    blocks = cell.reshape(h, SHRINK, w, SHRINK, 4).astype(np.float64)
+    a = blocks[..., 3] / 255.0
+    cover = a.sum(axis=(1, 3))
+    rgb = (blocks[..., :3] * a[..., None]).sum(axis=(1, 3))
+    out = np.zeros((h, w, 4), np.uint8)
+    keep = cover >= (SHRINK * SHRINK) / 2
+    out[..., :3] = np.where(keep[..., None], np.round(rgb / np.maximum(cover, 1e-9)[..., None]), 0)
+    out[..., 3] = np.where(keep, 255, 0)
     return out
+
+
+def build(src, columns):
+    frame = CELL // SHRINK
+    out = np.zeros((frame * len(DIRECTIONS), frame * len(columns), 4), np.uint8)
+    for r in range(len(DIRECTIONS)):
+        for i, c in enumerate(columns):
+            y, x = r * (CELL + GUTTER), c * (CELL + GUTTER)
+            out[r * frame:(r + 1) * frame, i * frame:(i + 1) * frame] = shrink(src[y:y + CELL, x:x + CELL])
+    return Image.fromarray(out, "RGBA")
+
+
+def import_master(path, unit):
+    """Write one unit's idle and walk sheets; return their manifest entries."""
+    src = np.array(Image.open(path).convert("RGBA"))
+    problems = check_master(src, unit)
+    if problems:
+        raise SystemExit("\n".join(problems))
+    frame = CELL // SHRINK
+    rel_dir = f"map/units/{unit}"
+    os.makedirs(os.path.join(IMPORTED, rel_dir), exist_ok=True)
+    meta = {"kind": "map-unit", "set": "S1", "frame": [frame, frame], "rows": DIRECTIONS,
+            "anchor": "bottom-center", "feet_baseline": (FEET + 1) // SHRINK, "density": DENSITY,
+            "source": "imported"}
+    entries = {}
+    for name, columns, ms in (("idle", IDLE, 500), ("walk", WALK, 120)):
+        img = build(src, columns)
+        rel = f"{rel_dir}/{name}.png"
+        img.save(os.path.join(IMPORTED, rel), optimize=True)
+        entries[rel] = dict(meta, frames=len(columns), frame_ms=ms, size=[img.width, img.height])
+    return entries
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("sheet")
-    ap.add_argument("unit")
-    ap.add_argument("--density", type=int, default=4)
-    ap.add_argument("--cols", type=int, default=8, help="frames per row in the source")
-    ap.add_argument("--idle", default="0,1", help="source columns for the 2 idle frames")
-    ap.add_argument("--walk", default="2,3,4,5,6,7", help="source columns for the walk frames")
-    ap.add_argument("--source-figure", type=int, default=224,
-                    help="height in source pixels of a standing figure without raised weapons "
-                         "(the A0 lineup's 224); 0 fits each sheet's tallest frame instead")
+    ap.add_argument("sheet", nargs="?")
+    ap.add_argument("unit", nargs="?")
+    ap.add_argument("--dir", nargs="+", default=[], help="folders of ID.png masters")
     args = ap.parse_args(argv)
 
-    d = args.density
-    frame, feet = BASE_FRAME * d, BASE_FEET * d
-    figs = cut_figures(args.sheet, len(DIRECTIONS), args.cols)
-    # One fixed scale for every sheet keeps bodies the same size across
-    # classes; fitting each sheet's tallest frame would shrink a figure
-    # whose halberd, spear or crest rises above its head.
-    tallest = max(f.height for row in figs for f, _ in row)
-    scale = BASE_FIGURE * d / (args.source_figure or tallest)
-    if tallest * scale > feet:
-        print(f"warning: {args.unit}: tallest frame is {round(tallest * scale)} px, above the frame top")
-
-    def sheet(columns):
-        img = Image.new("RGBA", (frame * len(columns), frame * len(DIRECTIONS)), (0, 0, 0, 0))
-        for r, row in enumerate(figs):
-            for i, c in enumerate(columns):
-                f, cx = row[c]
-                img.alpha_composite(place(f, cx, scale, frame, feet), (i * frame, r * frame))
-        return img
-
-    rel_dir = f"map/units/{args.unit}"
-    os.makedirs(os.path.join(IMPORTED, rel_dir), exist_ok=True)
-    meta = {"kind": "map-unit", "set": "S1", "frame": [frame, frame], "rows": DIRECTIONS,
-            "anchor": "bottom-center", "feet_baseline": feet, "density": d,
-            "source": "imported"}
-    entries = {}
-    for name, columns, ms in (("idle", [int(c) for c in args.idle.split(",")], 500),
-                              ("walk", [int(c) for c in args.walk.split(",")], 120)):
-        img = sheet(columns)
-        rel = f"{rel_dir}/{name}.png"
-        img.save(os.path.join(IMPORTED, rel), optimize=True)
-        entries[rel] = dict(meta, frames=len(columns), frame_ms=ms, size=[img.width, img.height])
+    jobs = []
+    if args.sheet:
+        if not args.unit:
+            ap.error("give a UNIT_ID with a SHEET")
+        jobs.append((args.sheet, args.unit))
+    for folder in args.dir:
+        for path in sorted(glob.glob(os.path.join(folder, "*.png"))):
+            jobs.append((path, os.path.splitext(os.path.basename(path))[0]))
+    if not jobs:
+        ap.error("nothing to import")
+    units = [u for _, u in jobs]
+    if len(set(units)) != len(units):
+        ap.error("the same unit appears twice")
 
     index_path = os.path.join(IMPORTED, "imported.json")
     index = {}
     if os.path.exists(index_path):
         with open(index_path) as f:
             index = json.load(f)
-    index.update(entries)
+    for path, unit in jobs:
+        index.update(import_master(path, unit))
+        print("imported", unit, file=sys.stderr)
     with open(index_path, "w") as f:
         json.dump(dict(sorted(index.items())), f, indent=1, sort_keys=True)
         f.write("\n")
-    for rel in entries:
-        print("wrote", os.path.join(IMPORTED, rel))
 
 
 if __name__ == "__main__":
