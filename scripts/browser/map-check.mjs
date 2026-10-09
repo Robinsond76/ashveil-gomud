@@ -393,14 +393,16 @@ for (const [key, env] of Object.entries(rlayout)) {
   if (key === '0,1') { exitsv2.west = { num: 996, dx: -1, dy: 0, dz: 0 }; }
   roads.rooms.push({ num: rid(x, y), area: 'Roads', coords: ['Roads', x, y, 0].join(','), environment: env, exitsv2, details: [] });
 }
-roads.rooms.push({ num: 996, area: 'Elsewhere', coords: 'Elsewhere,0,0,0', environment: 'road', exitsv2: { east: { num: rid(0, 1), dx: 1, dy: 0, dz: 0 } }, details: [] });
+roads.rooms.push({ num: 996, area: 'Elsewhere', coords: 'Elsewhere,9,9,0', environment: 'road', exitsv2: { east: { num: rid(0, 1), dx: 1, dy: 0, dz: 0 } }, details: [] });
 page = await open({ width: 1280, height: 900 });
 await gmcp(page, 'World.Map', roads);
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 await gmcp(page, 'Room', { Info: roads.rooms.find(r => r.num === rid(1, 1)) });
-await page.waitForFunction(() => Object.keys(window.MapView.state().drawn.pieces).length === 5, null, { timeout: 5000 }).catch(() => {});
+// The visited room of zone Elsewhere is drawn at its own grid place (9,9),
+// as the map has long done; its exit back runs on too.
+await page.waitForFunction(() => Object.keys(window.MapView.state().drawn.pieces).length === 6, null, { timeout: 5000 }).catch(() => {});
 s = await state(page);
-const want = { [rid(1, 1)]: 'road-n', [rid(0, 1)]: 'road-w', [rid(2, 1)]: 'road-e', [rid(1, 0)]: 'road-ns', [rid(1, 2)]: 'shore-esw' };
+const want = { [rid(1, 1)]: 'road-n', [rid(0, 1)]: 'road-w', [rid(2, 1)]: 'road-e', [rid(1, 0)]: 'road-ns', [rid(1, 2)]: 'shore-esw', 996: 'road-e' };
 check(JSON.stringify(s.drawn.pieces) === JSON.stringify(want),
   'roads join through exits only (not a wall or a secret passage) and run on into the fog and other zones; the coast faces its water: ' + JSON.stringify(s.drawn.pieces));
 check(s.drawn.replaced === 0 && s.drawn.animated === 0, 'water rooms on variants 2 and 3 keep their still tiles: ' + JSON.stringify([s.drawn.replaced, s.drawn.animated]));
@@ -629,6 +631,23 @@ const lakeRing = (exitIn) => {
   for (let i = 0; i < 3; i++) { await page.locator('.map-controls button[title="Zoom in"]').click(); }
   await tick(page, 400);
   await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-lake.png') : '/tmp/e2-lake.png' });
+  await page.close();
+
+  // Walking the ring closes it: the map first knows half the ring, then
+  // each Room update adds a room, and the lake appears when it closes.
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', { biomes: {}, rooms: lake.rooms.slice(0, 6) });
+  await gmcp(page, 'Room', { Info: lake.rooms[0] });
+  await tick(page, 300);
+  s = await state(page);
+  check(s.drawn.lakes === 0, 'half a ring has no lake: ' + s.drawn.lakes);
+  for (const r of lake.rooms.slice(6)) {
+    await gmcp(page, 'Room', { Info: r });
+    await tick(page, 60);
+  }
+  await page.waitForFunction(() => window.MapView.state().drawn.lakes === 4, null, { timeout: 5000 }).catch(() => {});
+  s = await state(page);
+  check(s.drawn.lakes === 4 && s.drawn.pieces[lid(1, 0)] === 'shore-s', 'walking the rest of the ring fills its lake: ' + JSON.stringify([s.drawn.lakes, s.drawn.pieces[lid(1, 0)]]));
   await page.close();
 
   const { world: notLake } = lakeRing(true);

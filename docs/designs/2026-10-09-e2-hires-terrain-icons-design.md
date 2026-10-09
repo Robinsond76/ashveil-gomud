@@ -107,16 +107,22 @@ the battle screen is E3.
 
 8. **Lakes from shape** (owner decision, 2026-10-09).
    - The shipped world has no `water` rooms. A lake is the empty middle of
-     a ring of shore rooms: Frost Lake's 98, Alderbrook's pond, Marrowmere
-     Fen. Without a rule, every coast would face nothing and draw as sand.
+     a ring of shore rooms: Frost Lake, Alderbrook's pond. Without a rule,
+     every coast would face nothing and draw as sand. A shore with no water
+     beside it (much of Marrowmere Fen, whose empty cells open to the
+     zone's edge) shows the sand-patch piece.
    - `MapTiles.lakes` finds the empty cells the drawn rooms fully enclose
      (4-connected, not reachable from outside the map's bounding box). It
      keeps a region only if every room bordering it is shore and no exit
      leads into it; a cell an exit leads into holds a room not yet seen.
    - The map draws those cells as `water` tiles, with variants, animation
      and night shading, and coasts face them.
-   - It runs when a zone is replayed, so a lake appears once its ring has
-     been walked.
+   - Only the current zone's rooms count (a visited room of another zone
+     is drawn at its own zone's grid place). It runs whenever the drawn
+     rooms change (`refreshTiling`: a zone replay or a new room in the
+     same zone), so a lake appears as soon as its ring is walked closed.
+   - A lake cell's stand-in id is a hash of its place, so its variant and
+     animation phase look random, not striped.
    - Known gap: the 16 pieces have no inside corner. Where a lake's corner
      meets a shore room diagonally, that room is sand to its corner, and
      the water shows a square notch. Four inside-corner overlays are
@@ -140,8 +146,9 @@ and the map still shows only what the game tells the player.
 - `window-map.js`:
   - `onwardExits`, `tileLook` and `drawTerrain` pick and draw pieces and
     replace-style animation;
-  - `findLakes` (run by `replayZone`) and the lake pass draw lakes and
-    shade them at night;
+  - `refreshTiling` (run by `replayZone` and the same-zone room update)
+    caches `onwardExits` and `findLakes`; the lake pass draws lakes and
+    shades them at night;
   - `state().drawn` records `pieces`, `replaced` and `lakes` for the
     browser check.
 

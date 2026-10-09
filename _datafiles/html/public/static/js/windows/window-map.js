@@ -491,7 +491,8 @@
         var rooms         = new Map();
         var edges         = new Map();
         var zoneExitStubs = [];
-        var lakeCells     = [];   // E2: open water a ring of shore encloses ({ x, y }), from replayZone
+        var lakeCells     = [];   // E2: open water a ring of shore encloses ({ x, y }), from refreshTiling
+        var onwardCache   = {};   // E2: exits that leave the drawn map ('id,dx,dy'), from refreshTiling
         var currentRoomId = null;
         var cameraX = 0, cameraY = 0;
         var easeStartX = 0, easeStartY = 0;
@@ -914,7 +915,7 @@
         }
 
         function resetMap() {
-            rooms.clear(); edges.clear(); zoneExitStubs = []; lakeCells = [];
+            rooms.clear(); edges.clear(); zoneExitStubs = []; lakeCells = []; onwardCache = {};
             currentRoomId = null;
             cameraX = 0; cameraY = 0; panOffsetX = 0; panOffsetY = 0;
             dragActive = false;
@@ -967,19 +968,29 @@
                     });
                 }
             });
-            lakeCells = findLakes();
+            refreshTiling(zoneKey);
+        }
+
+        // refreshTiling (E2) recomputes what road and coast pieces and lakes
+        // depend on, whenever the drawn rooms change (a zone replay or a new
+        // room in the same zone).
+        function refreshTiling(zoneKey) {
+            onwardCache = onwardExits();
+            lakeCells = findLakes(zoneKey);
         }
 
         // findLakes (E2) finds the open water a ring of shore rooms encloses
-        // (MapTiles.lakes). A cell any exit of this level leads into holds a
-        // room not seen yet, so it is never a lake.
-        function findLakes() {
+        // (MapTiles.lakes), from this zone's rooms only (a visited room of
+        // another zone an exit reaches is drawn at its own zone's grid
+        // place). A cell any exit leads into holds a room not seen yet, so
+        // it is never a lake.
+        function findLakes(zoneKey) {
             if (!window.MapTiles) { return []; }
             var cells = [], blocked = {};
             rooms.forEach(function (room, id) {
-                cells.push({ x: room.x, y: room.y, env: room.env });
                 var rc = roomCache[id];
-                if (!rc) { return; }
+                if (!rc || rc.zoneName + '/z:' + rc.z !== zoneKey) { return; }
+                cells.push({ x: room.x, y: room.y, env: room.env });
                 (rc.stubs || []).concat(rc.exits || []).forEach(function (e) {
                     if (e.dz === 0 && typeof e.dx === 'number' && typeof e.dy === 'number') {
                         blocked[(room.x + e.dx) + ',' + (room.y + e.dy)] = true;
@@ -1010,10 +1021,12 @@
             return true;
         }
 
-        // onwardExits lists, as 'id,dx,dy', every exit on the drawn level that
-        // leaves the drawn map: into the fog of an unvisited room, or into a
-        // visited room of another zone. A road runs on through them
-        // (MapTiles); a secret passage doesn't count.
+        // onwardExits lists, as 'id,dx,dy', every exit on the drawn level:
+        // into the fog of an unvisited room, or into a visited room. Where the
+        // neighbouring cell on that side has no room drawn (tileLook), the
+        // exit leaves the map there (a room of another zone sits at its own
+        // zone's grid place), and a road runs on through it (MapTiles); a
+        // secret passage doesn't count.
         function onwardExits() {
             var out = {};
             rooms.forEach(function (room, id) {
@@ -1023,7 +1036,7 @@
                     if (s.dz === 0 && !s.secret) { out[id + ',' + s.dx + ',' + s.dy] = true; }
                 });
                 (rc.exits || []).forEach(function (e) {
-                    if (e.dz === 0 && !e.secret && !rooms.has(e.num) && typeof e.dx === 'number') {
+                    if (e.dz === 0 && !e.secret && typeof e.dx === 'number') {
                         out[id + ',' + e.dx + ',' + e.dy] = true;
                     }
                 });
@@ -1055,6 +1068,10 @@
                 }
             };
         }
+
+        // lakeId is a lake cell's stand-in room id: a hash of its place, so
+        // its variant and phase look random rather than striped.
+        function lakeId(x, y) { return ((x * 73856093) ^ (y * 19349663)) >>> 0; }
 
         // drawTerrain draws a room's biome tile (the variant is the room id
         // mod 3, the same for every viewer) and its animation. A road or
@@ -1093,7 +1110,8 @@
             var an = anim ? Sprites.art(anim) : null;
             if (an && an.info.replace) {
                 if (variant === 0) {
-                    drawTileArt(anim, 0, p.px, p.py, size, now, true, -id * (an.info.frame_ms || 0));
+                    var n = Math.max(1, an.info.frames || 1);
+                    drawTileArt(anim, 0, p.px, p.py, size, now, true, -(((id % n) + n) % n) * (an.info.frame_ms || 0));
                     drawn.replaced++;
                     return { animated: true };
                 }
@@ -1458,7 +1476,7 @@
 
             var coordIndex = {};
             rooms.forEach(function (room, id) { coordIndex[room.x + ',' + room.y] = id; });
-            var onward = tiles ? onwardExits() : {};
+            var onward = onwardCache;
             var lakeIndex = {};
             if (tiles) { lakeCells.forEach(function (c) { lakeIndex[c.x + ',' + c.y] = true; }); }
 
@@ -1474,13 +1492,13 @@
                 resolveSheet(chainKeys(identity.classid, identity.lineage), false) !== null;
 
             // Lakes (E2): open water a ring of shore encloses, drawn as water
-            // tiles though no room is there. Their stand-in id picks a
-            // variant and phase from the cell.
+            // tiles though no room is there. Their stand-in id, a hash of the
+            // cell, picks a variant and phase.
             var drewLakes = [];
             if (tiles) {
                 lakeCells.forEach(function (c) {
                     var lp = gridToCanvas(c.x, c.y);
-                    var lt = drawTerrain({ x: c.x, y: c.y, env: 'water' }, c.x * 7 + c.y * 13, lp, tilePx, nowMs, coordIndex, onward, lakeIndex);
+                    var lt = drawTerrain({ x: c.x, y: c.y, env: 'water' }, lakeId(c.x, c.y), lp, tilePx, nowMs, coordIndex, onward, lakeIndex);
                     if (!lt) { return; }
                     drewLakes.push(c);
                     drawn.lakes++;
@@ -1840,6 +1858,7 @@
                         });
                     }
                 }
+                refreshTiling(zoneKey);
             }
             currentRoomId = info.num;
             unitMoveTo(gx, gy, zoneKey, performance.now());
