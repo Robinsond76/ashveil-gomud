@@ -1,0 +1,5 @@
+<ansi fg="command">healcompany</ansi> fully restores your company, wherever you are: you and every companion are set to full health and mana and every wound is cleared. Any companion who has fallen is raised at once, at full health and mana and at the level they fell with, and rejoins you in your room.
+
+It costs no gold, no time and no level, and never moves the world clock. It does nothing while your company is in a battle: finish it or retreat first. Anyone with the <ansi fg="command">healcompany</ansi> permission, and every admin, may use it.
+
+Inside the test area, <ansi fg="command">testarea heal</ansi> restores only you; <ansi fg="command">healcompany</ansi> works there too and restores the whole company.

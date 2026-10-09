@@ -230,7 +230,9 @@ func init() {
 	m.plug.AddUserCommand("brew", m.brewCommand, false, false)        // Phase 39g: an Alchemist's flasks
 	m.plug.AddUserCommand("opinions", m.opinionsCommand, true, false) // Phase 64: read-only, so allowed while downed
 	m.plug.AddUserCommand("bonds", m.bondsCommand, true, false)       // Phase 65: read-only too
-	m.plug.AddUserCommand("errand", m.errandCommand, false, false)    // Phase 70: send a benched companion away
+	// Admin: heal and raise the whole company (usable while downed).
+	m.plug.AddUserCommand("healcompany", m.healCompanyCommand, true, true)
+	m.plug.AddUserCommand("errand", m.errandCommand, false, false) // Phase 70: send a benched companion away
 	m.plug.AddUserCommand("errands", m.errandCommand, false, false)
 	m.plug.AddUserCommand("rites", m.ritesCommand, true, false) // Phase 74: reading is allowed while downed
 	m.plug.AddUserCommand("rite", m.ritesCommand, false, false)
