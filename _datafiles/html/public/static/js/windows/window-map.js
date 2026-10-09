@@ -542,7 +542,7 @@
             fadeStart: -1,
         };
         var animTimer = null;
-        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0 }; // what the last render drew (browser checks)
+        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {} }; // what the last render drew (browser checks)
         var walkInfo = null;   // Phase 40d: Walkto { target, path: [room ids ahead] } while a walk is under way
         var timeInfo = null;   // Phase 40d: Gametime, for the day/night shading
         var nightQuant = -1;   // the shading level last drawn, in tenths
@@ -969,8 +969,9 @@
         }
 
         // -- Phase 40c: terrain tiles, walls, landmarks --------------------------
-        // drawTileArt draws one 32 px frame of <path> centred on (px, py) at
-        // <size> px, smoothing off. <variant> picks a column of a variants
+        // drawTileArt draws one frame of <path> (32 px at 1x, density times
+        // that for imported art) centred on (px, py) at <size> px, smoothed
+        // only for high-density art. <variant> picks a column of a variants
         // sheet; <animated> instead picks the frame for <now>. It reports
         // whether the image was ready.
         function drawTileArt(path, variant, px, py, size, now, animated) {
@@ -985,11 +986,50 @@
             return true;
         }
 
+        // tileLook describes a room's four neighbours for MapTiles (E2): their
+        // ground, whether an exit joins them (a secret passage doesn't), and
+        // whether an exit leads into the fog of an unvisited room.
+        function tileLook(room, id, coordIndex) {
+            function at(dx, dy) { return coordIndex[(room.x + dx) + ',' + (room.y + dy)]; }
+            return {
+                envAt: function (dx, dy) {
+                    var o = at(dx, dy);
+                    var r = o !== undefined ? rooms.get(o) : null;
+                    return r ? (r.env || '') : '';
+                },
+                linked: function (dx, dy) {
+                    var o = at(dx, dy);
+                    if (o === undefined) { return false; }
+                    var e = edges.get(id < o ? (id + '-' + o) : (o + '-' + id));
+                    return !!e && !e.secret;
+                },
+                fogAt: function (dx, dy) {
+                    if (at(dx, dy) !== undefined) { return false; }
+                    return zoneExitStubs.some(function (s) { return s.roomId === id && s.dx === dx && s.dy === dy && !s.secret; });
+                }
+            };
+        }
+
         // drawTerrain draws a room's biome tile (the variant is the room id
-        // mod 3, the same for every viewer) and its animated overlay. It
-        // returns null while the art is not ready, else { animated }.
-        function drawTerrain(room, id, p, size, now) {
+        // mod 3, the same for every viewer) and its animation. A road or
+        // coast room draws the piece its neighbours pick (MapTiles) when that
+        // art is listed, else its biome's variants. An animation whose sheet
+        // says replace (E2) is drawn instead of the base tile; an older one
+        // is an overlay on it. It returns null while the art is not ready,
+        // else { animated }.
+        function drawTerrain(room, id, p, size, now, coordIndex) {
             var biome = room.env ? room.env : 'default';
+            var name = window.MapTiles ? window.MapTiles.piece(biome, tileLook(room, id, coordIndex)) : '';
+            if (name) {
+                var pp = 'map/terrain/' + name + '.png';
+                var ps = Sprites.status(pp);
+                if (ps === 'loading') { return null; }
+                if (ps === 'ready') {
+                    drawTileArt(pp, 0, p.px, p.py, size, now, false);
+                    drawn.pieces[id] = name;
+                    return { animated: false };
+                }
+            }
             var path = 'map/terrain/' + biome + '.png';
             if (Sprites.status(path) === 'none') {
                 // A biome with no art (or none yet, before the manifest loads).
@@ -998,14 +1038,16 @@
             }
             var a = Sprites.art(path);
             if (!a) { return null; }
+            var anim = (a.info.animated_overlay && !reducedMotion()) ? 'map/terrain/' + a.info.animated_overlay : '';
+            var an = anim ? Sprites.art(anim) : null;
+            if (an && an.info.replace) {
+                drawTileArt(anim, 0, p.px, p.py, size, now, true);
+                return { animated: true };
+            }
             var variants = Math.max(1, a.info.variants || 1);
             drawTileArt(path, ((id % variants) + variants) % variants, p.px, p.py, size, now, false);
-            var animated = false;
-            if (a.info.animated_overlay && !reducedMotion()) {
-                animated = true;
-                drawTileArt('map/terrain/' + a.info.animated_overlay, 0, p.px, p.py, size, now, true);
-            }
-            return { animated: animated };
+            if (anim) { drawTileArt(anim, 0, p.px, p.py, size, now, true); }
+            return { animated: !!anim };
         }
 
         // drawWalls puts a dark edge between two touching rooms with no exit
@@ -1272,7 +1314,7 @@
             var useCircle = (mapSettings.roomShape === 'circle');
 
             var tiles = tilesOn();
-            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0 };
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {} };
             var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
@@ -1371,7 +1413,7 @@
                 var p         = gridToCanvas(room.x, room.y);
                 var isCurrent = (id === currentRoomId) && !spriteOn;
                 if (tiles) {
-                    var t = drawTerrain(room, id, p, tilePx, nowMs);
+                    var t = drawTerrain(room, id, p, tilePx, nowMs, coordIndex);
                     if (t) {
                         drewTiles[id] = true;
                         drawn.tiles++;

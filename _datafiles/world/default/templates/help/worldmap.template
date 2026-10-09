@@ -8,8 +8,13 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   Each room is a small picture of its ground: grass, forest, road, water,
   shore, swamp, snow, desert, cave, dungeon, city and the rest. Rooms that
   touch share an edge, so a region reads as one stretch of country. Water,
-  shore, swamp, snow and desert move gently; a setting for reduced motion
-  in your browser keeps them still.
+  swamp, snow and desert move gently; a setting for reduced motion in your
+  browser keeps them still.
+
+  A road joins the roads beside it that it has an exit to, so it bends,
+  forks and crosses as the paths do, and it runs on into the fog where an
+  exit leads somewhere you have not been. A shore follows the water: its
+  sand meets every neighbouring water tile.
 
   Where two rooms touch but have <ansi fg="yellow">no exit between them</ansi>, a dark edge marks the wall,
   so the map never suggests a way through. An exit between rooms that do
