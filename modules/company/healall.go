@@ -79,9 +79,19 @@ func (m *CompanyModule) healCompany(user *users.UserRecord, room *rooms.Room) st
 	}
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 	mudlog.Info("company: healcompany", "leader", user.UserId, "raised", len(raised))
-	out := fmt.Sprintf("Your company is whole again: %s restored to full health and mana.", strings.Join(restored, ", "))
-	if len(raised) > 0 {
-		out += " Raised: " + strings.Join(raised, ", ") + "."
+	out := fmt.Sprintf("Your company is whole again: %s are at full health and mana, every wound mended.", andList(append(restored, raised...)))
+	if len(raised) == 1 {
+		out += " " + raised[0] + " stands again."
+	} else if len(raised) > 1 {
+		out += " " + andList(raised) + " stand again."
 	}
 	return out
+}
+
+// andList joins names as "a", "a and b" or "a, b and c".
+func andList(names []string) string {
+	if len(names) <= 2 {
+		return strings.Join(names, " and ")
+	}
+	return strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
 }

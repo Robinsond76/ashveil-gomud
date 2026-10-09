@@ -23,6 +23,7 @@ func TestHealCompanyRestoresAndRaises(t *testing.T) {
 	tamsin.Character.Health, tamsin.Character.Mana = 3, 0
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 20}}
 	b.aria.Character.Health, b.aria.Character.Mana = 1, 0
+	b.aria.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "leg", Points: 10}}
 
 	// Companion #2 falls for good.
 	fallenMob := b.companion(2)
@@ -36,10 +37,12 @@ func TestHealCompanyRestoresAndRaises(t *testing.T) {
 
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 	out := b.cmd("healcompany", "")
-	assert.Contains(t, out, "Your company is whole again")
-	assert.Contains(t, out, "Raised:")
+	assert.Contains(t, out, "Your company is whole again: you, ")
+	assert.Contains(t, out, " are at full health and mana")
+	assert.Contains(t, out, "stands again")
 	assert.Equal(t, b.aria.Character.HealthMax.Value, b.aria.Character.Health)
 	assert.Equal(t, b.aria.Character.ManaMax.Value, b.aria.Character.Mana)
+	assert.Empty(t, b.aria.Character.Wounds)
 	assert.Empty(t, tamsin.Character.Wounds)
 	assert.Equal(t, tamsin.Character.HealthMax.Value, tamsin.Character.Health)
 	assert.Equal(t, tamsin.Character.ManaMax.Value, tamsin.Character.Mana)
