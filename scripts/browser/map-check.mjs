@@ -106,21 +106,55 @@ await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warr
 check((await state(page)).keys.join() === 'warrior,adventurer', 'an unpromoted class is its lineage');
 
 // Phase 72a: the player's skin and hair colours (Char.Info) repaint 1x
-// palette art. Every class now has imported high-density art (E1), which the
-// palette swap cannot repaint, so the 1x hound sheet stands in to test the
-// repaint, and the warrior checks that high-density art is left as drawn.
-const plainSig = () => page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
-await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'hound', lineage: '' });
-await settle(page);
-check((await state(page)).art.density === 1, 'the hound keeps its 1x palette art');
-const untinted = await plainSig();
-await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'hound', lineage: '', skin: '#5a3a28', hair: '#d8b868' });
-await page.waitForTimeout(150);
-s = await state(page);
-check(s.look && s.look.skin === '#5a3a28' && s.look.hair === '#d8b868', 'Char.Info skin and hair become the figure\'s look');
-check(await plainSig() !== untinted && (await state(page)).art.tinted, 'the tinted 1x figure is drawn differently');
-await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'hound', lineage: '', skin: 'red', hair: '' });
-check((await state(page)).look === null, 'a colour that is not #rrggbb is ignored');
+// palette art. Every class now draws imported high-density art (E1), which
+// the palette swap cannot repaint, so the old 1x warrior sheets
+// (fixtures/warrior-1x-*.png, which carry the skin and hair ramps) are served
+// under a test-only class id to test the repaint on a page of their own.
+{
+  const fixturePage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  fixturePage.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
+  const fixMeta = (frames, ms) => ({ frames, frame_ms: ms, kind: 'map-unit', set: 'S1', frame: [32, 32], rows: ['down', 'up', 'side'],
+    anchor: 'bottom-center', feet_baseline: 30, size: [32 * frames, 96] });
+  await fixturePage.route('**/sprites/manifest.json', async r => {
+    const m = JSON.parse(fs.readFileSync(path.join(root, '_datafiles/html/public/static/sprites/manifest.json'), 'utf8'));
+    m.files['map/units/tint-fixture/idle.png'] = fixMeta(2, 500);
+    m.files['map/units/tint-fixture/walk.png'] = fixMeta(4, 120);
+    await r.fulfill({ contentType: 'application/json', body: JSON.stringify(m) });
+  });
+  for (const f of ['idle', 'walk']) {
+    await fixturePage.route('**/sprites/map/units/tint-fixture/' + f + '.png', r =>
+      r.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(here, 'fixtures', 'warrior-1x-' + f + '.png')) }));
+  }
+  await fixturePage.goto(url);
+  await fixturePage.evaluate(() => localStorage.clear());
+  await fixturePage.reload();
+  await gmcp(fixturePage, 'World.Map', world);
+  await gmcp(fixturePage, 'Char.Info', { name: 'Wren', classid: 'tint-fixture', lineage: '' });
+  await moveTo(fixturePage, 2, 1);
+  await settle(fixturePage);
+  // The repaint is checked on the sheet itself (the drawn frame changes with
+  // the idle animation, so canvas snapshots are not compared).
+  const skinPixels = look => fixturePage.evaluate(lk => {
+    const res = window.Sprites.tinted('map/units/tint-fixture/idle.png', lk ? window.SpriteTint.look(lk[0], lk[1]) : null);
+    const c = document.createElement('canvas'); c.width = res.img.width; c.height = res.img.height;
+    const x = c.getContext('2d'); x.drawImage(res.img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] && d[i] === 0xb5 && d[i + 1] === 0x7d && d[i + 2] === 0x5a) { n++; } }
+    return n;
+  }, look);
+  s = await state(fixturePage);
+  check(s.art && s.art.density === 1 && !s.art.tinted, 'the 1x fixture draws untinted without a look');
+  check(await skinPixels(null) > 0, 'the 1x fixture carries the palette skin colour');
+  await gmcp(fixturePage, 'Char.Info', { name: 'Wren', classid: 'tint-fixture', lineage: '', skin: '#5a3a28', hair: '#d8b868' });
+  await fixturePage.waitForTimeout(150);
+  s = await state(fixturePage);
+  check(s.look && s.look.skin === '#5a3a28' && s.look.hair === '#d8b868', 'Char.Info skin and hair become the figure\'s look');
+  check(s.art.tinted && await skinPixels(['#5a3a28', '#d8b868']) === 0, 'the look repaints the 1x figure\'s skin');
+  await gmcp(fixturePage, 'Char.Info', { name: 'Wren', classid: 'tint-fixture', lineage: '', skin: 'red', hair: '' });
+  check((await state(fixturePage)).look === null, 'a colour that is not #rrggbb is ignored');
+  await fixturePage.close();
+}
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 await settle(page); await page.waitForTimeout(150);
 s = await state(page);

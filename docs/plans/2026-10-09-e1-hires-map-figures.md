@@ -13,7 +13,7 @@ Branch: `spike/hires-map-art` (worktree `.worktrees/spike-hires-map-art`).
 
    Check sizes (2272×832) and the class-ID list against the generated
    `map/units` folders.
-2. **Importer grid mode.** Add `--grid` to `import_sheet.py`, plus a folder
+2. **Importer grid mode.** Make `import_sheet.py` grid-only, with a folder
    mode. It cuts the exact 256 px cells (32 px gutters), checks feet at y 239,
    halves each cell to 128 px (box filter, alpha kept binary), writes
    `idle.png` and `walk.png` as optimised PNGs, and records manifest entries
@@ -23,14 +23,14 @@ Branch: `spike/hires-map-art` (worktree `.worktrees/spike-hires-map-art`).
    `manifest.json` and the file sizes.
 4. **Tint.** `Sprites.tinted` returns the untinted art when density > 1. Add
    a Node test.
-5. **Pixel ratio.** Snap 1x art to whole device pixels on fractional ratios
-   in `drawFrame` and `drawIcon`.
+5. **Pixel ratio.** Place figures and icons on whole device pixels in
+   `drawFrame` and `drawIcon` (sizes stay unrounded; see design decision 5).
 6. **Tests.** Extend `sprites_test.go`:
    - every imported map unit is density 4, has 128 px frames, feet baseline
      120, a 6-frame walk and is under 300 KB;
    - all 101 IDs are present.
 
-   Add `scripts/browser/hires-map-check.mjs`:
+   Extend `scripts/browser/map-check.mjs`:
    - a high-resolution figure standing and walking on the map harness;
    - frame changes;
    - no tint applied;

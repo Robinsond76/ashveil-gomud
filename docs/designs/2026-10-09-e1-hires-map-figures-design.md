@@ -28,7 +28,9 @@ screen is E3.
 1. **Runtime size.** Masters use 256 px cells with 32 px gutters, feet on
    y 239 and a 224 px body (standards section 4). The importer cuts each cell
    exactly from that grid and halves it to a 128 px frame: density 4, feet
-   baseline 120, the same anchor as 1x (30 of 32). There's no per-figure
+   baseline 120. The soles' lowest row is 119, so they rest exactly on the
+   map's feet line; 1x art's outline row hangs on that line (row 30 of 32),
+   so a hi-res figure stands one logical pixel higher. There's no per-figure
    rescaling. The masters are already at one scale, and the old fit-to-figure
    cutting was what shrank tall figures in A1.
 2. **Frames.** Idle is 2 frames at 500 ms, as 1x. Walk is the masters'
@@ -46,11 +48,12 @@ screen is E3.
    (`docs/art/A11-look-masks.md`) orders a skin mask and a hair mask per
    class sheet. A follow-up engineering step, E1b, will recolour the new art
    from those masks, keeping the art's own shading.
-5. **Pixel ratio.** The canvas already renders at the screen's ratio. 1x art
-   on a fractional ratio (1.25, 1.5) is drawn at a whole number of device
-   pixels per art pixel, so its pixels stay even. That's the README's
-   "even out 1x pixel art" item. High-density art is smoothed and needs
-   nothing.
+5. **Pixel ratio.** The canvas already renders at the screen's ratio. Map
+   figures and icons are placed on whole device pixels, so they don't
+   blur between pixels. Their sizes are not rounded: a first version drew
+   1x art at a whole number of device pixels per art pixel, but review found
+   it resized 1x companions and markers against the hi-res figures, so it
+   was dropped. High-density art is smoothed and needs nothing more.
 6. **Size.** Each imported sheet is saved as an optimised PNG, and the test
    holds every map unit sheet under the standards' 300 KB budget. Quantising
    and WebP are E2's job.
@@ -70,7 +73,7 @@ untouched.
 - `_datafiles/html/public/static/sprites/`: the generated sheets and
   `manifest.json`.
 - `sprites.js` `tinted`: returns the art untouched when density > 1.
-- `window-map.js`: snaps 1x art to whole device pixels on a fractional ratio.
+- `window-map.js`: places map figures and icons on whole device pixels.
 
 ## Player help
 

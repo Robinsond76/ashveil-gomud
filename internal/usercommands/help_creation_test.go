@@ -19,7 +19,7 @@ func TestCreationHelp(t *testing.T) {
 		aliases  []string
 	}{
 		"appearance": {
-			contains: []string{"Help for appearance", "appearance edit", "at an inn", "free", "160 characters"},
+			contains: []string{"Help for appearance", "appearance edit", "at an inn", "free", "160 characters", "do not show them yet"},
 			aliases:  []string{"looks", "description", "describe", "mirror"},
 		},
 		"lifestory": {
