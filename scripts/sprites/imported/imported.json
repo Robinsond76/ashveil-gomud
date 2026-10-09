@@ -1,0 +1,4648 @@
+{
+ "map/units/adventurer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/adventurer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/alchemist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/alchemist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/apothecary/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/apothecary/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/arbalist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/arbalist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/arcanist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/arcanist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/archmage/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/archmage/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/archon/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/archon/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/assassin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/assassin/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/bastion/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/bastion/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/bearward/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/bearward/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/beastlord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/beastlord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/beasttamer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/beasttamer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/blackguard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/blackguard/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/blood-priest/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/blood-priest/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/bombardier/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/bombardier/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/cleric/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/cleric/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/coven-mother/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/coven-mother/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/coven-sage/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/coven-sage/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/crone-of-ash/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/crone-of-ash/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/deadeye/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/deadeye/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/demonologist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/demonologist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dollmaster/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dollmaster/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dragon-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dragon-lord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dragon-tamer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dragon-tamer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dread-knight/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/dread-knight/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/druid/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/druid/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/duelist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/duelist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/earthspeaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/earthspeaker/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/elder-druid/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/elder-druid/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/falcon-marshal/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/falcon-marshal/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/golem-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/golem-lord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/golemancer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/golemancer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/grand-puppeteer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/grand-puppeteer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/grenadier/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/grenadier/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/gryphon-knight/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/gryphon-knight/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/gryphon-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/gryphon-lord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/gryphon-rider/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/gryphon-rider/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hag/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hag/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/halberdier/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/halberdier/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hatamoto/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hatamoto/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hedge-witch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hedge-witch/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hierarch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hierarch/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/high-sorcerer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/high-sorcerer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/houndmaster/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/houndmaster/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hunter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/hunter/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/kensai/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/kensai/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/kenshi/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/kenshi/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/knight/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/knight/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/linebreaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/linebreaker/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/marionettist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/marionettist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/marksman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/marksman/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mercenary/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mercenary/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mistweaver/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mistweaver/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mountain-speaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mountain-speaker/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mutagenist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/mutagenist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/necromancer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/necromancer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/nightblade/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/nightblade/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/packlord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/packlord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/paladin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/paladin/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/panacean/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/panacean/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/pathfinder/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/pathfinder/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/priest/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/priest/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/puppeteer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/puppeteer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/ranger/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/ranger/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/ravager/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/ravager/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/reaper/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/reaper/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/rogue/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/rogue/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/ronin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/ronin/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/samurai/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/samurai/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/scout/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/scout/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sentinel/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sentinel/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/shaman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/shaman/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sharpshooter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sharpshooter/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/shogun/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/shogun/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/siege-master/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/siege-master/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/siegebreaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/siegebreaker/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/skyscout/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/skyscout/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sorcerer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sorcerer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/stalker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/stalker/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/stormcaller/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/stormcaller/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/string-sovereign/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/string-sovereign/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sweeper/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sweeper/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sword-saint/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/sword-saint/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/swordmaster/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/swordmaster/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/tempest-lancer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/tempest-lancer/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/tempest-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/tempest-lord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/theurgist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/theurgist/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/transmuter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/transmuter/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/valkyrie/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/valkyrie/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/vanguard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/vanguard/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/veil-mother/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/veil-mother/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warden-of-the-wall/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warden-of-the-wall/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warden/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warden/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warlock/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warlock/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warlord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warlord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warrior/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/warrior/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wise-one/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wise-one/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/witch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/witch/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wizard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wizard/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wyvern-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wyvern-lord/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wyvern-rider/idle.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   256,
+   384
+  ],
+  "source": "imported"
+ },
+ "map/units/wyvern-rider/walk.png": {
+  "anchor": "bottom-center",
+  "density": 4,
+  "feet_baseline": 120,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 120,
+  "frames": 6,
+  "kind": "map-unit",
+  "rows": [
+   "down",
+   "up",
+   "side"
+  ],
+  "set": "S1",
+  "size": [
+   768,
+   384
+  ],
+  "source": "imported"
+ }
+}

@@ -20,6 +20,16 @@ Code-drawn pixel art for the visual client (roadmap: "Visual direction").
 - `backgrounds.py`: the 16 battle backgrounds (320x180, quiet ground band y 100-176).
 - `terrain.py`, `landmarks.py`: S2 tiles (3 variants, flat 2 px margin), animated overlays, fog/state tiles, landmark overlays.
 
+## Commissioned art
+
+`import_sheet.py` imports approved map-unit masters (docs/art/00-standards.md,
+section 4) as density-4 art: `python3 scripts/sprites/import_sheet.py --dir
+art/source/A1/map/units ...` checks each sheet's grid (2272x832, feet on
+y 239, empty gutters), halves the cells to 128 px frames and writes
+`imported/map/units/<id>/{idle,walk}.png` plus their entries in
+`imported/imported.json`. `generate.py` copies the imported files over its own
+drawn output, so run `make sprites` afterwards. Requires Pillow and numpy.
+
 Add a new sprite by adding a drawer and a `write_*` call, then run `make sprites`;
 `go test ./scripts` checks sizes, the palette, hard edges, anchors and that the
 committed PNGs equal the generator output. Any file can be replaced by commissioned art with no code change,

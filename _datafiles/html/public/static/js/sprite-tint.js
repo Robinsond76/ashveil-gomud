@@ -19,6 +19,9 @@
  *   SpriteTint.ramp(hex)                -> { d, m, l } three RGB triples around hex
  *   SpriteTint.apply(data, look)        -> repaints an RGBA array in place, returns
  *                                          how many pixels it changed
+ *   SpriteTint.applies(info)            -> whether a sheet (its manifest entry) can be
+ *                                          repainted: only 1x palette art can; the
+ *                                          high-density imported art (E1) cannot
  *   SpriteTint.canvasFor(img, look, make, cache, key)
  *                                       -> a canvas with img repainted (cached by key)
  */
@@ -99,6 +102,15 @@
         return changed;
     }
 
+    // applies: the swap needs the palette's exact colours, which only the
+    // generated 1x art uses. High-density imported art (density > 1) has its
+    // own colours, so repainting would at best do nothing and at worst
+    // recolour a stray pixel that happens to match; it is shown as drawn
+    // until skin and hair masks exist (docs/art/A11-look-masks.md).
+    function applies(info) {
+        return !!info && (info.density || 1) <= 1;
+    }
+
     // canvasFor draws img into a canvas and repaints it, once per (img, look):
     // the result is kept in cache under key + the look. make(w, h) returns a
     // canvas; it is the only part that touches the DOM.
@@ -125,5 +137,5 @@
         return cv;
     }
 
-    return { BASE: BASE, look: look, ramp: ramp, apply: apply, swaps: swaps, canvasFor: canvasFor };
+    return { BASE: BASE, look: look, ramp: ramp, apply: apply, swaps: swaps, applies: applies, canvasFor: canvasFor };
 }));

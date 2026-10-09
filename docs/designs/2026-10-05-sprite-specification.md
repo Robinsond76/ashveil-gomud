@@ -1,6 +1,13 @@
 # Sprite specification
 
 Drafted 2026-10-05 for the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
+
+> **2026-10-06: high-resolution art program.** The owner moved to
+> high-resolution art made by an art agent. Its work orders in
+> [`docs/art/`](../art/README.md) **supersede this document's Craft rules,
+> Palette, Technical, S0 and delivery checklist sections**: no 64-color cap,
+> no 1x hand-placed pixels, art delivered large and imported at density 4.
+> The rosters, logical sizes, IDs and paths below still apply.
 It lists every sprite the milestone needs, grouped into **art sets S0–S7**.
 The sets are ordered so that the earliest are usable soonest. A generating
 agent can work from this document alone.

@@ -29,3 +29,6 @@ cmd/modmanager/modmanager
 # Python bytecode (scripts/sprites)
 __pycache__/
 *.pyc
+
+# Art masters live in the shared art folder, not git (docs/art/README.md)
+art/source/

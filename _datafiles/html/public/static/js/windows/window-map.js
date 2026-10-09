@@ -568,7 +568,10 @@
         // and when every image is missing or failed (the caller then draws
         // the classic marker).
         // look (Phase 72a) repaints the figure's skin and hair in a player's
-        // chosen colours; companions and creatures keep their art.
+        // chosen colours; companions and creatures keep their art. Since E1
+        // every class draws imported high-density art, which the palette swap
+        // leaves as drawn (SpriteTint.applies), so on the map the look only
+        // reaches 1x sheets until the A11 skin and hair masks are wired (E1b).
         function resolveSheet(keys, walking, look) {
             for (var i = 0; i < keys.length; i++) {
                 var idle = 'map/units/' + keys[i] + '/idle.png';
@@ -589,15 +592,32 @@
             return tilePx < 16 ? 0.5 : Math.max(1, Math.round(tilePx / 32));
         }
 
+        // artSmoothing turns smoothing on only for high-density art, which
+        // is drawn below its native size; 1x pixel art stays crisp.
+        function artSmoothing(info) {
+            var hi = (info.density || 1) > 1;
+            ctx.imageSmoothingEnabled = hi;
+            if (hi) { ctx.imageSmoothingQuality = 'high'; }
+        }
+
+        // snap (E1) rounds a CSS coordinate to a whole device pixel, so a
+        // figure's edges fall on device pixels at any pixel ratio. Sizes are
+        // left alone: rounding them would resize 1x markers and companions
+        // against the figures they sit beside.
+        function snap(v) { return Math.round(v * pixelRatio) / pixelRatio; }
+
+        // A sheet with density N has frames N times the 1x size; it is
+        // drawn at the same on-map size as 1x art (mult is per 1x pixel).
         function drawFrame(sheet, row, flip, cx, feetY, mult, now, startMs, alpha) {
             var info = sheet.info;
             var r = Math.max(0, (info.rows || []).indexOf(row));
             var f = Sprites.frame(info, r, now, startMs);
-            var w = f.sw * mult, h = f.sh * mult;
-            var x = Math.round(cx - w / 2);
-            var y = Math.round(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
+            var d = info.density || 1;
+            var w = f.sw * mult / d, h = f.sh * mult / d;
+            var x = snap(cx - w / 2);
+            var y = snap(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
             ctx.save();
-            ctx.imageSmoothingEnabled = false;
+            artSmoothing(info);
             ctx.globalAlpha = alpha;
             if (flip) {
                 ctx.translate(x + w, 0);
@@ -615,10 +635,11 @@
             var a = Sprites.art(path);
             if (!a) { return false; }
             var f = Sprites.frame(a.info, 0, now, 0);
-            var w = f.sw * mult, h = f.sh * mult;
+            var d = a.info.density || 1;
+            var w = f.sw * mult / d, h = f.sh * mult / d;
             ctx.save();
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h);
+            artSmoothing(a.info);
+            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, snap(cx - w / 2), snap(cy - h / 2), w, h);
             ctx.restore();
             return true;
         }
@@ -816,15 +837,24 @@
         }
 
         // -- Helpers -----------------------------------------------------------
+        // The canvas backing store is sized in device pixels so art stays
+        // sharp on high-resolution screens; all drawing uses CSS pixels
+        // (viewW x viewH) through the transform render() sets.
+        var viewW = 1, viewH = 1, pixelRatio = 1;
         function resizeCanvas() {
             if (!canvas || !container) { return; }
-            canvas.width  = container.clientWidth  || 1;
-            canvas.height = container.clientHeight || 1;
+            pixelRatio = window.devicePixelRatio || 1;
+            viewW = container.clientWidth  || 1;
+            viewH = container.clientHeight || 1;
+            canvas.width  = Math.round(viewW * pixelRatio);
+            canvas.height = Math.round(viewH * pixelRatio);
+            canvas.style.width  = viewW + 'px';
+            canvas.style.height = viewH + 'px';
         }
 
         function gridToCanvas(gx, gy) {
-            var midX = Math.floor(canvas.width  / 2);
-            var midY = Math.floor(canvas.height / 2);
+            var midX = Math.floor(viewW / 2);
+            var midY = Math.floor(viewH / 2);
             var step = getBaseStep() * zoomScale;
             return {
                 px: midX + (gx - cameraX - panOffsetX) * step,
@@ -949,7 +979,7 @@
             var fw = a.info.frame[0], fh = a.info.frame[1];
             var f = animated ? Sprites.frame(a.info, 0, now, 0) : { sx: variant * fw, sy: 0, sw: fw, sh: fh };
             ctx.save();
-            ctx.imageSmoothingEnabled = false;
+            artSmoothing(a.info);
             ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(px - size / 2), Math.round(py - size / 2), size, size);
             ctx.restore();
             return true;
@@ -1232,9 +1262,10 @@
 
         function render() {
             if (!ctx || !canvas) { return; }
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            ctx.clearRect(0, 0, viewW, viewH);
             ctx.fillStyle = mapSettings.mapBackground;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, viewW, viewH);
 
             var ROOM_SIZE = getRoomSize();
             var BASE_STEP = getBaseStep();
@@ -1883,7 +1914,7 @@
             // window resize; measure then too, in case the observer missed
             // the panel coming back into sight.
             window.addEventListener('resize', function () {
-                if (container && container.clientWidth && canvas && (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight)) { resizeCanvas(); render(); }
+                if (container && container.clientWidth && canvas && (viewW !== container.clientWidth || viewH !== container.clientHeight || pixelRatio !== (window.devicePixelRatio || 1))) { resizeCanvas(); render(); }
             });
             var orig = win.open.bind(win);
             win.open = function () { orig(); if (container) { ro.observe(container); } };
@@ -1968,6 +1999,7 @@
             // state is for the browser checks (scripts/browser/map-check.mjs).
             state: function () {
                 var res = resolveSheet(chainKeys(identity.classid, identity.lineage), false);
+                var walkRes = resolveSheet(chainKeys(identity.classid, identity.lineage), true);
                 var pose = unit.x === null ? null : unitPose(performance.now());
                 return {
                     spriteDrawn: spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
@@ -1981,6 +2013,10 @@
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
+                    // E1: the drawn sheet's density and frame counts
+                    art: res ? { density: res.sheet.info.density || 1, idleFrames: res.sheet.info.frames,
+                                 walkFrames: walkRes && walkRes.walk ? walkRes.sheet.info.frames : 0,
+                                 tinted: !!(identity.look && window.SpriteTint && window.SpriteTint.applies(res.sheet.info)) } : null,
                     allies: Object.keys(partyHeartEase).map(function (n) {
                         var e = partyHeartEase[n];
                         return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,
