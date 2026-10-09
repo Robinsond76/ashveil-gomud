@@ -327,6 +327,7 @@ help:
       - formset
       - item
       - grant
+      - healcompany
       - locate
       - mob
       - modify

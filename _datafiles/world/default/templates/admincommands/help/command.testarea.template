@@ -8,7 +8,7 @@ Your trip is saved: a disconnect or a server restart still lets you return. The 
 
 <ansi fg="yellow-bold">Combat</ansi>
 <ansi fg="command">testarea fight</ansi> [level] [count] [type] [count] [type] ...  Call a mixed group of foes onto your company, e.g. <ansi fg="command">testarea fight 2 2 imp 1 skeleton</ansi> is two imps and a skeleton at level 2 (2-6 foes in all). The older <ansi fg="command">testarea fight 8 3 skeleton wolf</ansi> still works: a size, then types that repeat in turn. Types: skeleton, acolyte, imp, spider, wolf, hexer, brigand, warden, chanter, shaman, ogre, ent, lich, or a mob id. A boss type (ogre, ent, lich) leads the group as its boss.
-<ansi fg="command">testarea clear</ansi>  Send your foes away. <ansi fg="command">testarea heal</ansi>  Restore your health and mana.
+<ansi fg="command">testarea clear</ansi>  Send your foes away. <ansi fg="command">testarea heal</ansi>  Restore your health and mana (<ansi fg="command">healcompany</ansi> does the whole company).
 
 <ansi fg="yellow-bold">Characters</ansi>
 <ansi fg="command">testarea class</ansi> [class]  Become any archetype, advanced or elite class (no gates). Without a class it lists them.

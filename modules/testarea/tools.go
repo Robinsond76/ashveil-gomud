@@ -318,7 +318,7 @@ func toolHeal(m *Module, user *users.UserRecord, args []string) string {
 	c.Wounds = nil
 	c.RecalculateStats()
 	c.Health, c.Mana = c.HealthMax.Value, c.ManaMax.Value
-	return "You are fully restored. (Companions heal with " + cmd("company heal") + " or a camp rest.)"
+	return "You are fully restored. (" + cmd("healcompany") + " restores the whole company and raises the fallen.)"
 }
 
 // --- gold and gear ---------------------------------------------------------
