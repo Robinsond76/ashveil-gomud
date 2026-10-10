@@ -8,6 +8,16 @@ Walking out, you step out of the camp, which stays behind. Walking in, you're dr
 - the inn;
 - stepping out, and walking back in.
 
+*Independent review:* 8 findings, all accepted.
+1. The design asked for a larger tent. It is now drawn a quarter larger, standing back with the fire in front.
+2. Walking into your camp, the tent was pushed aside and then jumped back. Your own camp in your room is never pushed aside now.
+3. `Company.Camp`'s `here` can lag a move. Standing in the camp room (from Room.Info) is enough.
+4. The tests read only a flag. `state()` now reports the figures and companions drawn and the fire state, and the checks use them.
+5. Dead test code was removed.
+6. A party camp in your camp room was placed beside a figure that wasn't there. That's fixed, with checks for camps hidden and Sprites off.
+7. The camp now fades in with you after a zone change.
+8. The help now covers the inn and Sprites off.
+
 The owner's decisions (unseen rooms remembered; a lantern with oil, one-time torches, tents worn out after about 50 pitches; companions disappear into the camp; order LM1, LG and LM2, then LM3) are in the design. The light-gear phase LG is added.
 
 **Living map designed; art handoff (2026-10-10).**
