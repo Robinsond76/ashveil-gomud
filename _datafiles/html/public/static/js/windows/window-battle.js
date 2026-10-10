@@ -80,7 +80,7 @@
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
     // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
-    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'war-bear', drake: 'drake-hatchling' };
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'warhound', bear: 'war-bear', drake: 'drake-hatchling' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
@@ -211,6 +211,7 @@
     // the screen's own resolution while every drawing call keeps using the
     // 320 x 180 picture coordinates.
     let pxScale = 1;
+    let drawnBackdrop = null;   // E3: the backdrop art last drawn, for the browser check
     let badge = null;
     let minimised = false;
     let userOpened = false;     // opened by hand in manual mode
@@ -1046,12 +1047,17 @@
         }
     }
 
-    // artSmooth turns smoothing on only for high-density art, which is
-    // drawn below its native size; 1x pixel art stays crisp.
-    function artSmooth(info) {
-        const hi = ((info && info.density) || 1) > 1;
-        ctx.imageSmoothingEnabled = hi;
-        if (hi) { ctx.imageSmoothingQuality = 'high'; }
+    // artSmooth sets smoothing for drawing art at <scale> times its 1x
+    // size. The battle art (E3) is exact pixel art at density 2 (8/3 for
+    // small creatures): where each art pixel lands on a whole number of
+    // device pixels it is drawn crisp, as 1x art always is; otherwise it is
+    // smoothed so its pixels don't land unevenly.
+    function artSmooth(info, scale) {
+        const d = (info && info.density) || 1;
+        const per = pxScale * (scale || 1) / d;
+        const crisp = d <= 1 || Math.abs(per - Math.round(per)) < 0.001;
+        ctx.imageSmoothingEnabled = !crisp;
+        if (!crisp) { ctx.imageSmoothingQuality = 'high'; }
     }
 
     function paintChrome() {
@@ -1317,6 +1323,7 @@
         const s = scene();
         // A zone's own backdrop, when the art set has one, comes first.
         const bg = (zoneSlug() && art('battle/backgrounds/zone-' + zoneSlug() + '.png')) || art('battle/backgrounds/' + s.bg + '.png');
+        drawnBackdrop = bg ? { density: bg.info.density || 1, size: bg.info.size || null } : null;
         if (bg) {
             artSmooth(bg.info);
             ctx.drawImage(bg.img, 0, 0, W, H);
@@ -1428,18 +1435,19 @@
             const frames = sheet.info.frames || 1;
             const i = posed && !pose.loop ? Math.min(frames - 1, Math.floor(pose.p * frames))
                 : Math.floor(now / (sheet.info.frame_ms || 250)) % frames;
-            // A density-N sheet (E3) is drawn at its 1x size. The feet row
-            // sits 2 picture pixels above the ground point, as on the 1x
-            // sheets (feet_baseline = frame - 2), so both kinds stand alike.
+            // A density-N sheet (E3) is drawn at its 1x size. The bottom of
+            // the feet row (feet_baseline) lands 1 picture pixel above the
+            // ground point, as on the 1x sheets (feet on row frame - 2), so
+            // both kinds stand alike.
             const d = sheet.info.density || 1;
             const dw = fw / d, dh = fh / d;
             u.drawnArt = { path: posed ? posedPath : sheetPath, density: d };
-            const top = sheet.info.feet_baseline ? -2 - sheet.info.feet_baseline / d : -dh;
+            const top = typeof sheet.info.feet_baseline === 'number' ? -1 - (sheet.info.feet_baseline + 1) / d : -dh;
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }
             if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
-            artSmooth(sheet.info);
+            artSmooth(sheet.info, pose.squash === 1 ? (pose.scale || 1) : 0.5);
             ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -dw / 2, top, dw, dh);
             if (u.flash > now) {
                 // A hit tints the figure's own shape, not a box around it.
@@ -2000,6 +2008,7 @@
                 // E3: device pixels per picture pixel and the backing store.
                 pxScale,
                 backing: canvas ? [canvas.width, canvas.height] : null,
+                backdrop: drawnBackdrop,
                 units: Array.from(units.values()).map(u => ({
                     id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", skin: u.skin || '', hair: u.hair || '', cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,

@@ -145,16 +145,16 @@ def _anim(meta, ms):
     return meta
 
 
-def shrink(cell):
-    """Shrink an RGBA cell by SHRINK: premultiplied box average, soft alpha."""
-    h, w = cell.shape[0] // SHRINK, cell.shape[1] // SHRINK
-    blocks = cell.reshape(h, SHRINK, w, SHRINK, 4).astype(np.float64)
+def shrink(cell, by=SHRINK):
+    """Shrink an RGBA cell by `by`: premultiplied box average, soft alpha."""
+    h, w = cell.shape[0] // by, cell.shape[1] // by
+    blocks = cell[:h * by, :w * by].reshape(h, by, w, by, 4).astype(np.float64)
     a = blocks[..., 3] / 255.0
     cover = a.sum(axis=(1, 3))
     rgb = (blocks[..., :3] * a[..., None]).sum(axis=(1, 3))
     out = np.zeros((h, w, 4), np.uint8)
     out[..., :3] = np.round(rgb / np.maximum(cover, 1e-9)[..., None]).clip(0, 255)
-    out[..., 3] = np.round(cover / (SHRINK * SHRINK) * 255).clip(0, 255)
+    out[..., 3] = np.round(cover / (by * by) * 255).clip(0, 255)
     out[cover == 0] = 0
     return out
 

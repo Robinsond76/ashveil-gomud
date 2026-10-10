@@ -35,7 +35,7 @@ turns a delivered sheet into the client's sheet layout.
 |---|---|---|
 | **Masters:** the agent's large originals (1–3 MB each, 200–400 MB in all) | The shared art folder: the Google Drive folder [**Ashveil Art Masters**](https://drive.google.com/drive/folders/1BgQaAZfopzUVc4mKYthn5ygdMqSapAza). It has one subfolder per phase (`A0` to `A10`), and inside each the layout mirrors `art/source/`: `A1/map/units/warrior.png` and so on. The folder is private; the owner shares it with the art agent. | **No.** Git would keep every version forever, and every clone would download them all. |
 | **Local staging:** `art/source/` in a checkout | A copy of the phase being imported. It's listed in `.gitignore`. | No |
-| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're what players download. E1's 101 map units take about 12 MB of stored blobs (git keeps one copy of the identical pair, so a checkout holds about 24 MB); E2's 164 terrain, landmark and icon files about 1.7 MB more; E3's battle art will add more. |
+| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're what players download. E1's 101 map units take about 12 MB of stored blobs (git keeps one copy of the identical pair, so a checkout holds about 24 MB); E2's 164 terrain, landmark and icon files about 1.7 MB more; E3's 159 battle units and 16 backdrops, stored as exact pixel art at their 5–12 px grain, about 7.6 MB. |
 
 Drive keeps earlier versions of a replaced file, so a regenerated sheet
 can be uploaded over the old one. To re-import at a different size later,
@@ -67,7 +67,7 @@ the owner signs off on the style anchors.
 | **A8b** | [A8b-advanced-neutral.md](A8b-advanced-neutral.md) | 24 advanced classes of the 8 neutral lineages, map and battle | 48 | E1, E3 |
 | **A9** | [A9-elite-built.md](A9-elite-built.md) | The 19 elite classes in the game today, map and battle | 38 | E1, E3 |
 | **A10** | [A10-elite-planned.md](A10-elite-planned.md) | The 24 planned elites, each made when its class is built | 48 | E1, E3 |
-| **A11** | [A11-look-masks.md](A11-look-masks.md) | Skin and hair masks for the 101 map-unit masters, so players' chosen looks recolour the new art | 202 | E1b |
+| **A11** | [A11-look-masks.md](A11-look-masks.md) | Skin and hair masks for the 101 map-unit masters, then the 101 class battle idles, so players' chosen looks recolour the new art | 404 | E1b |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),
 then the battle screen, and the advanced and elite classes come last.
@@ -82,7 +82,7 @@ folder until the matching step is merged.
 | Step | Work | Unblocks |
 |---|---|---|
 | **E1** | Land the spike as a phase. Density on map units, a high-DPI map canvas, `import_sheet.py` reading the A1 layout (2 idle and 6 walk columns per row). Make the tests' rules depend on density. Even out 1x pixel art on fractional pixel ratios. | A1, map half of A8–A10 |
-| **E1b** | Recolour the new map figures from the A11 masks: within each mask, map the art's own shading onto a ramp built from the player's chosen skin or hair colour (`SpriteTint`), keeping light and shadow. Until then high-density sheets are shown untinted (`SpriteTint.applies`). | A11 |
+| **E1b** | Recolour the new map and battle figures from the A11 masks: within each mask, map the art's own shading onto a ramp built from the player's chosen skin or hair colour (`SpriteTint`), keeping light and shadow. Until then high-density sheets are shown untinted (`SpriteTint.applies`). | A11 |
 | **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. Road auto-tiling: the map picks `road-<sides>` from the neighbors that are road and joined by an exit. Coast auto-tiling: `shore-<sides>` from the grid neighbors whose biome is `water`, exits or not. | A2–A5 |
 | **E2b** | Draw the A2b inside-corner overlay on a shore piece in each corner whose diagonal neighbour is water (a lake cell or a water room) while the two sides beside it are not. | A2b |
 | **E3** | High-resolution battle screen. Today it draws a 320×180 canvas scaled by CSS. It must draw at device pixels, with density on units and backgrounds. | A6, A7, battle half of A8–A10 |

@@ -47,5 +47,9 @@ may fall outside the figure, and no gear may be marked.
 
 ## Later
 
-The battle-idle sheets (A6–A10) need the same masks once the high-resolution
-battle screen (E3) lands. They'll be a separate order.
+The high-resolution battle screen (E3) has landed, so the battle-idle sheets
+of the 15 base classes and the 86 advanced and elite classes (A6, A8a–A10)
+need the same masks, `art/source/A11/battle/units/<id>/idle.skin.png` and
+`idle.hair.png`, each the size and layout of its master (1 × 4 frames). Only
+player and companion classes need them; creatures (A7) don't. Deliver them
+after the map masks, as a second batch of this order.

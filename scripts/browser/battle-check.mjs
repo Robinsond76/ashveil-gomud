@@ -445,7 +445,9 @@ const chip = await page.evaluate(() => {
   const st = window.BattleScreen.state();
   const u = st.units.find(o => o.id === 'companion:2');
   const c = document.querySelector('#battle-screen canvas').getContext('2d');
-  const d = c.getImageData(Math.round(u.at.x - 9), Math.round(u.at.y + 7), 5, 7).data;
+  // E3: the canvas is drawn at device pixels, pxScale per picture pixel.
+  const k = st.pxScale;
+  const d = c.getImageData(Math.round((u.at.x - 9) * k), Math.round((u.at.y + 7) * k), Math.round(5 * k), Math.round(7 * k)).data;
   const colours = new Set();
   for (let i = 0; i < d.length; i += 4) { colours.add(d[i] + ',' + d[i + 1] + ',' + d[i + 2] + ',' + d[i + 3]); }
   return colours.size;
