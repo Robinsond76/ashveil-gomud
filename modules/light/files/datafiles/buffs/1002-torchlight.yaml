@@ -1,0 +1,8 @@
+buffid: 1002
+name: Torchlight
+description: A burning torch lights the way until it is spent (help light).
+secret: false
+triggerrate: 1 real minute
+triggercount: 15
+flags:
+  - lightsource

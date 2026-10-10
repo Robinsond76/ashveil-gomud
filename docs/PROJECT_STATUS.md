@@ -1,3 +1,48 @@
+**LG: light gear and lasting tents (2026-10-10).** This is the owner's light-gear rules ([living map design](designs/2026-10-10-living-map-design.md), LG), the phase before LM2.
+- **Torch** (new item 303). `light torch` uses one up for about six game hours (15 real minutes) of light, through the Torchlight buff. It can't be put out.
+- **Lantern** (item 20036). It no longer lights whenever worn; it burns oil.
+  - It holds 24 game hours of oil as its uses.
+  - `light lantern` (held in the off hand) and `douse lantern` turn it on and off.
+  - Lit, it gives light (the Lantern light buff) and burns an hour of oil each game hour, counted from the shared round counter.
+  - It goes out when stowed or when dry. Its uses are its oil plus one (25 full, 1 empty), so they're never 0 or less: `items.Validate` refills a 0, and cargo stacks a 0 as full.
+  - `fill lantern` refills it from a **flask of lamp oil** (new item 304), through a `RegisterFillHandler` hook on the core `fill`.
+  - Its lit state is the new `items.Item.Lit`, so it persists with the item.
+- **Tents** (items 46 and 300–302) have 50 uses. A rest wears one (`wearTent`, as the bells), and the last says it's worn out.
+- **Markets:** Dunmar and the Trappers' Post sell lanterns, torches and lamp oil.
+- **Help:** `help light` covers torches and lanterns, with aliases (lantern, torch, lamp oil, douse); `help camp gear` covers tent wear. The camp lesson gains a light hint and tent wear, and its map hint names camp-as-you.
+- **Tests:**
+  - the burn arithmetic;
+  - lit, dark, stowed and dry lanterns;
+  - the real `light`, `douse` and `fill` commands;
+  - a torch used up;
+  - an old save's always-on lantern light dropped on load;
+  - tent wear through `startRest`;
+  - the help pages.
+
+*Independent review:* 13 findings.
+- Accepted:
+  1. A lit lantern burned its oil while its holder was offline. A gap of more than two game hours isn't charged now.
+  2. That cap also stops a lantern dropped while lit from burning dry when picked up.
+  3. Dousing and relighting avoided oil; dousing now charges the hour under way.
+  4. An empty lantern came back full through cargo. Oil plus one makes empty 1, kept by cargo.
+  5. A lantern bought at the market sold dearer to a shopkeeper; it now has `value: 25`.
+  6. A second torch wasted the first; it's refused while one burns.
+  7. Lamp oil left with no ownership event; that's fixed.
+  9. Companions can't use a lantern or torch; the help says so.
+  10. The fill hook ran before the battle check, and split `Fill`'s doc comment. Both are fixed.
+  11. `fill lantern` filled the first lantern in the pack; it fills the emptiest now.
+  13. Coverage is added for:
+      - the real round listener;
+      - the offline gap;
+      - douse charging;
+      - water fills left alone;
+      - the shipped values and both markets;
+      - an empty lantern in cargo.
+- Noted, unchanged:
+  8. `look` shows a lantern's uses as "N/25" (oil plus one).
+  12. Tents wear from the company's first source, cargo first, as the bells do.
+- Deferred: the GMCP `sight` source is LM2's.
+
 **LM1: you are the camp (2026-10-10).** This is the first [living map](designs/2026-10-10-living-map-design.md) phase. While your company is camped in the room you stand in, and you have stopped walking, the camp is your marker:
 - your figure and companions aren't drawn;
 - the tent or rough camp stands on the tile itself, with its fire (unlit, lit with smoke, or embers) and the sleeping mark;

@@ -7,6 +7,23 @@ whether you're indoors, and the light people carry. A torch, a lantern, or
 the <ansi fg="command">floatinglight</ansi> spell lights your way. A companion's or ally's light in
 your party lights you too.
 
+<ansi fg="yellow-bold">Torches and lanterns</ansi>
+
+- A <ansi fg="yellow">torch</ansi> is used up when you light it (<ansi fg="command">light torch</ansi>). It burns for about
+  six game hours (fifteen minutes of real time) and can't be put out.
+- A <ansi fg="yellow">lantern</ansi> lasts, but burns oil. Hold it in your off hand (<ansi fg="command">wear lantern</ansi>)
+  and <ansi fg="command">light lantern</ansi>; it gives light while lit and burns an hour of oil each
+  game hour. <ansi fg="command">douse lantern</ansi> puts it out and saves the oil. Put away in your
+  pack, it goes out.
+- A full lantern holds about a game day of oil (an hour of real time).
+  When it runs dry it goes out. A <ansi fg="yellow">flask of lamp oil</ansi> fills it again:
+  <ansi fg="command">fill lantern</ansi>.
+- The markets of Dunmar and the Old Kings Road sell lanterns, torches and
+  lamp oil (<ansi fg="command">help market</ansi>).
+- Only you light a torch or lantern: a companion holding one gets no light
+  from it. A companion's light spell still lights your party.
+- Logged out with your lantern lit, it burns nothing while you are away.
+
 <ansi fg="yellow-bold">Fighting in the dark</ansi>
 
 - In <ansi fg="yellow">darkness</ansi>, every blow is 40% less likely to hit.
@@ -16,6 +33,16 @@ your party lights you too.
 <ansi fg="yellow">Usage:</ansi>
 
   <ansi fg="command">light</ansi>
-  Show the light here, whether you carry one, and your to-hit penalty.
+  Show the light here, whether you carry one (and your lantern's oil), and
+  your to-hit penalty.
 
-See also: <ansi fg="command">help combat</ansi>.
+  <ansi fg="command">light lantern</ansi>, <ansi fg="command">light torch</ansi>
+  Light your held lantern, or a torch from your pack.
+
+  <ansi fg="command">douse lantern</ansi>
+  Put your lantern out, saving its oil.
+
+  <ansi fg="command">fill lantern</ansi>
+  Fill your lantern from a flask of lamp oil.
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help camp gear</ansi>.

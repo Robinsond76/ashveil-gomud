@@ -210,3 +210,25 @@ func tentNames(kinds []camping.TentKind) string {
 	}
 	return strings.Join(names, ", ")
 }
+
+// wearTent (light gear, owner decision 2026-10-10) wears one use off the
+// pitched tent when a rest starts, as the camp bells wear; a tent lasts
+// about fifty camps. It returns the line to show when that was its last.
+func (m *CampingModule) wearTent(leaderUserID int, kind camping.TentKind) string {
+	tent := camping.TentOf(kind)
+	if tent.ItemID == 0 {
+		return ""
+	}
+	spend := m.spendItem
+	if spend == nil {
+		spend = company.SpendCompanyItem
+	}
+	before := m.gearCount(leaderUserID, tent.ItemID)
+	if !spend(leaderUserID, tent.ItemID) {
+		return ""
+	}
+	if m.gearCount(leaderUserID, tent.ItemID) < before {
+		return fmt.Sprintf("Your %s is worn out: this is the last camp it will see.", tent.Name)
+	}
+	return ""
+}

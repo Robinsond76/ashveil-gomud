@@ -4,8 +4,9 @@ namesimple: tent
 description: A small tent of oiled canvas, with pegs, cord and a pole. Pitched at
   camp, it counts as shelter against the weather and keeps the cold off the company
   while it rests. One tent covers the whole company, and it is heavy enough that a
-  horse is welcome (help camp gear).
+  horse is welcome (help camp gear). It wears out after about fifty camps.
 type: object
 subtype: mundane
+uses: 50
 value: 40
 weight: 9000

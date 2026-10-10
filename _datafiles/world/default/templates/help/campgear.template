@@ -13,10 +13,11 @@ you take on the road is the decision.
   camp rest. Bedrolls go to you first, then to companions by number.
   Members without one recover normally; a bedroll is a bonus, never a need.
 
-  <ansi fg="yellow">Tents</ansi>  (see Tents below)    never wear out
+  <ansi fg="yellow">Tents</ansi>  (see Tents below)    50 rests, then worn out
   One tent covers the whole company. Every tent counts as shelter for the
   rest and blocks the cold while the company rests; each trades something
-  for something. <ansi fg="command">look</ansi> shows the tent at your camp.
+  for something. <ansi fg="command">look</ansi> shows the tent at your camp. Each rest in it wears
+  it a little, and after about fifty it is worn out and gone.
 
   <ansi fg="yellow">Fire steel and tinder</ansi>  0.2 kg   5 gold   never wears out
   Damp firewood lights at the first try and burns with full warmth.
@@ -45,7 +46,8 @@ a little dearer on the road. They never buy gear back, tents included
 <ansi fg="yellow-bold">Tents</ansi>
 
 Four tents, one pitched at a time. Which one is pitched is your choice;
-the pitched tent is fixed when a rest begins.
+the pitched tent is fixed when a rest begins, and that rest wears it
+one use of its fifty.
 
   <ansi fg="yellow">Oiled canvas tent</ansi>   9 kg    40 gold
   The plain shelter. Halves the weather's penalty to a rest

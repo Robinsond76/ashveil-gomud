@@ -112,12 +112,26 @@ func drinkFromSource(rest string, user *users.UserRecord, room *rooms.Room) (han
 	return true, nil
 }
 
+// fillHandlers (light gear) let a module fill what water can't: a lantern
+// with lamp oil. Each returns whether it handled the command.
+var fillHandlers []func(rest string, user *users.UserRecord) bool
+
+// RegisterFillHandler adds a handler `fill` tries before water.
+func RegisterFillHandler(h func(rest string, user *users.UserRecord) bool) {
+	fillHandlers = append(fillHandlers, h)
+}
+
 // Fill refills a water container at a water source: `fill` tops up every
 // refillable container in your pack, `fill [container]` one of them.
 func Fill(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if InBattle(user) {
 		user.SendText(BattleUnderWay)
 		return true, nil
+	}
+	for _, h := range fillHandlers {
+		if h(strings.TrimSpace(rest), user) {
+			return true, nil
+		}
 	}
 	rest = strings.TrimSpace(rest)
 	if !HasWater(room) {

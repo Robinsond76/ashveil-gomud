@@ -487,7 +487,7 @@ func TestShippedGearItemsMatchTheDesign(t *testing.T) {
 		name                    string
 	}{
 		{bedrollItemID, 2500, 0, 8, "bedroll"},
-		{tentItemID, 9000, 0, 40, "oiled canvas tent"},
+		{tentItemID, 9000, 50, 40, "oiled canvas tent"},
 		{fireSteelItemID, 200, 0, 5, "fire steel and tinder"},
 		{cookpotItemID, 3000, 0, 12, "iron cookpot"},
 		{campBellsItemID, 1000, 10, 6, "camp bells and trip lines"},
@@ -524,4 +524,45 @@ func TestCampStatusListsGearAtHandBetweenRests(t *testing.T) {
 
 	stock{}.install(w.m)
 	assert.NotContains(t, w.m.status(7), "Camp gear at hand", "no gear, no list")
+}
+
+// usedStock holds items with uses: count is how many items, and a spend
+// wears one use off the first, which is gone at zero (as UseItem does).
+type usedStock map[int][]int
+
+func (s usedStock) count(_, itemID int) int { return len(s[itemID]) }
+func (s usedStock) spend(_, itemID int) bool {
+	if len(s[itemID]) == 0 {
+		return false
+	}
+	s[itemID][0]--
+	if s[itemID][0] <= 0 {
+		s[itemID] = s[itemID][1:]
+	}
+	return true
+}
+
+// Light gear (owner decision 2026-10-10): a pitched tent wears one use a
+// rest, and its last use says it is worn out; a tent kind wears its own item.
+func TestTentsWearOutAfterTheirUses(t *testing.T) {
+	w := newRaidWorld(t, 0)
+	supplies := usedStock{tentItemID: {2}}
+	w.m.itemCount, w.m.spendItem = supplies.count, supplies.spend
+	text := w.m.startRest(w.user, w.room)
+	assert.Contains(t, text, "You settle in")
+	assert.Equal(t, []int{1}, supplies[tentItemID], "one use a rest")
+	assert.NotContains(t, text, "worn out")
+
+	w2 := newRaidWorld(t, 0)
+	last := usedStock{tentItemID: {1}}
+	w2.m.itemCount, w2.m.spendItem = last.count, last.spend
+	text = w2.m.startRest(w2.user, w2.room)
+	assert.Empty(t, last[tentItemID], "the last use spends the tent")
+	assert.Contains(t, text, "Your oiled canvas tent is worn out")
+
+	fur := usedStock{300: {3}}
+	w3 := newRaidWorld(t, 0)
+	w3.m.itemCount, w3.m.spendItem = fur.count, fur.spend
+	assert.Equal(t, "", w3.m.wearTent(7, camping.TentFur))
+	assert.Equal(t, []int{2}, fur[300], "a fur-lined tent wears its own item")
 }

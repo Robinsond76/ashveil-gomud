@@ -3,8 +3,9 @@ name: camouflaged tent
 namesimple: camouflaged tent
 description: A low tent dyed and patched in the colours of leaf litter and stone.
   Pitched at camp, raiders and thieves find the company half as often, but the
-  company sleeps lightly and wakes with a shorter Rested (help camp gear).
+  company sleeps lightly and wakes with a shorter Rested (help camp gear). It wears out after about fifty camps.
 type: object
 subtype: mundane
+uses: 50
 value: 70
 weight: 7000

@@ -2,7 +2,8 @@
 // darkness to-hit penalties), the player-facing light command, and ships the
 // partylight buff flag and the Floating Light buff. The light model itself
 // lives in internal/rooms (light.go); this module only configures and
-// reports it. It stores no state and never touches the world clock.
+// reports it. Light gear (gear.go) adds torches and an oil-burning lantern,
+// whose state lives on the items. It never touches the world clock.
 package light
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -31,6 +33,9 @@ func init() {
 		panic(err)
 	}
 	m.plug.AddUserCommand("light", m.userCommand, true, false)
+	m.plug.AddUserCommand("douse", m.douse, true, false)
+	usercommands.RegisterFillHandler(fillLantern)
+	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	m.plug.Callbacks.SetOnLoad(m.load)
 }
 
@@ -115,7 +120,11 @@ func clamp(level int) int {
 	return level
 }
 
-func (m *LightModule) userCommand(_ string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
+func (m *LightModule) userCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
+	if what := strings.ToLower(strings.TrimSpace(rest)); what != "" {
+		lightThing(what, user, room)
+		return true, nil
+	}
 	c := user.Character
 	v := viewerLight{
 		Own:         c.HasBuffFlag(rooms.FlagLightSource),
@@ -124,6 +133,12 @@ func (m *LightModule) userCommand(_ string, user *users.UserRecord, room *rooms.
 	}
 	vis := room.VisibilityForUser(user)
 	lines := lightReport(room.LightConditions(), room.GetVisibility(), vis, v, rooms.HitPenaltyForVisibility(vis, false))
+	if line := lanternLine(userHolder{user}); line != "" {
+		lines = append(lines, line)
+	}
+	if liveBuff(c.GetBuffs(torchBuffID)) {
+		lines = append(lines, "You carry a burning torch.")
+	}
 	user.SendText(strings.Join(lines, "\n"))
 	return true, nil
 }

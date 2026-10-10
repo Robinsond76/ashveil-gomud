@@ -49,6 +49,10 @@ const featherId = 200
 // waterId is a 3-use waterskin (Phase 32f).
 const waterId = 300
 
+// lanternId is a lantern whose uses are its oil plus one (light gear): 25
+// full, 1 empty.
+const lanternId = 400
+
 func fakeItemSpec(itemId int) (items.ItemSpec, bool) {
 	switch itemId {
 	case rockId:
@@ -57,6 +61,8 @@ func fakeItemSpec(itemId int) (items.ItemSpec, bool) {
 		return items.ItemSpec{ItemId: featherId, Name: "feather", Weight: 0}, true
 	case waterId:
 		return items.ItemSpec{ItemId: waterId, Name: "waterskin", Weight: 1000, Uses: 3, Subtype: items.Drinkable}, true
+	case lanternId:
+		return items.ItemSpec{ItemId: lanternId, Name: "lantern", Weight: 1000, Uses: 25, Type: items.Offhand}, true
 	}
 	return items.ItemSpec{}, false
 }
@@ -427,4 +433,18 @@ func TestWithdrawCargo(t *testing.T) {
 	assert.Equal(t, 1, m.cargo[7].CountOf(rockId))
 	assert.ErrorIs(t, m.WithdrawCargo(7, rockId, 2), encumbrance.ErrInsufficientCargo)
 	assert.Equal(t, 1, m.cargo[7].CountOf(rockId))
+}
+
+// Light gear: an empty lantern (uses 1, oil plus one) stays a partly used
+// stack in cargo, so it comes back out empty, not full; a full one stacks
+// as full.
+func TestCargoKeepsAnEmptyLanternEmpty(t *testing.T) {
+	user := testUser(t, 7)
+	m := newTestModule(&fakeStore{}, user)
+	empty := testItem(lanternId)
+	empty.Uses = 1
+	assert.Equal(t, 1, m.partialUses(empty), "an empty lantern stacks apart, as a partly used one")
+	full := testItem(lanternId)
+	full.Uses = 25
+	assert.Equal(t, 0, m.partialUses(full), "a full lantern stacks as full")
 }

@@ -4,8 +4,9 @@ namesimple: pavilion tent
 description: A broad pavilion tent with room for the whole company to stretch out.
   Everyone who sleeps in it wakes Well Rested, but it is bright, tall and easy to
   find, so raiders and thieves come half again as often. It needs a pack horse
-  of its own (help camp gear).
+  of its own (help camp gear). It wears out after about fifty camps.
 type: object
 subtype: mundane
+uses: 50
 value: 120
 weight: 20000

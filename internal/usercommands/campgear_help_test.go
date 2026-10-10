@@ -27,7 +27,7 @@ func TestCampGearHelpRendersAndIsIndexed(t *testing.T) {
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(want, "")
 	for _, phrase := range []string{"Bedroll", "+25% Fatigue", "Oiled canvas tent", "Fire steel and tinder", "Iron cookpot",
-		"Camp bells and trip lines", "Field surgeon's kit", "20% chance", "90%", "embers", "10 rests", "5 uses", "camp fire", "Thieves", "Never taken", "mean thieves never"} {
+		"Camp bells and trip lines", "Field surgeon's kit", "20% chance", "90%", "embers", "10 rests", "5 uses", "50 rests, then worn out", "one use of its fifty", "camp fire", "Thieves", "Never taken", "mean thieves never"} {
 		assert.Contains(t, plain, phrase)
 	}
 	for _, alias := range []string{"camp gear", "camp-gear", "bedroll", "tent", "cookpot", "fire steel", "camp bells", "trip lines", "surgeon's kit", "embers", "thieves", "theft", "camp theft"} {

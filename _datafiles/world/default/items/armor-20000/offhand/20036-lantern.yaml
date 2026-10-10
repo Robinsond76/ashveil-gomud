@@ -3,11 +3,12 @@ tier: 1
 name: lantern
 displayname: ":glowing"
 namesimple: lantern
-description: A simple handheld lantern.
+description: A simple handheld lantern. Held in your off hand and lit, it lights
+  your way; it burns oil while lit, a full lantern lasting about a day (help light).
 type: offhand
 subtype: wearable
 bulk: light
 breakchance: 5
-wornbuffids:
-  - 1
+uses: 25
+value: 25
 weight: 1000
