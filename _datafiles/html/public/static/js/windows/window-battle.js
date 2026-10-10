@@ -647,8 +647,14 @@
     // artKey is the sprite key a unit's sheets are drawn from: a promoted
     // member (40s5) keeps to its class's sheets once its idle exists, so it
     // never flickers into the base class's poses.
+    // It goes by the manifest, not by whether the image has loaded yet,
+    // so a member's first blows plan and draw the same class's sheets.
     function artKey(u) {
-        return u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
+        if (!u.promoted) { return u.sprite; }
+        const idle = 'battle/units/' + u.promoted + '/idle.png';
+        if (!manifest || !manifest.files[idle]) { return u.sprite; }
+        art(idle);   // starts the load
+        return u.promoted;
     }
 
     // playEvents plans a batch and schedules it. Hidden, or when the screen
@@ -1031,7 +1037,18 @@
 
         window.addEventListener('resize', fit);
         watchResolution();
-        if (window.ResizeObserver) { new ResizeObserver(() => fit()).observe(overlay); }
+        // The column fit() measures, not the screen itself (whose height
+        // follows the canvas fit() sizes, which would loop); refit on the
+        // next frame.
+        const column = document.getElementById('battle-pane');
+        if (window.ResizeObserver && column) {
+            let queued = false;
+            new ResizeObserver(() => {
+                if (queued) { return; }
+                queued = true;
+                requestAnimationFrame(() => { queued = false; fit(); });
+            }).observe(column.parentElement || column);
+        }
     }
 
     // fit scales the canvas by a whole number (Phase 82a): the largest that
@@ -1317,12 +1334,14 @@
                 switch (FALLBACK_NAME[name] || name) {
                 case 'attack': case 'shoot': if (!st.lunge) { pose.dx += dir * 5 * tri(p); } break;
                 case 'hurt': case 'block': case 'parry': pose.dx -= dir * 3 * tri(p); break;
-                case 'dodge': pose.dx -= dir * 6 * tri(p); pose.dy -= 2 * tri(p); break;
+                case 'dodge': pose.dx -= dir * 6 * tri(p); if (full) { pose.dy -= 2 * tri(p); } break;
                 case 'windup': pose.dx -= dir * 3; break;
-                case 'cast': pose.dy -= Math.abs(Math.sin(p * Math.PI * 4)); break;
-                case 'prone': pose.squash = p < 0.6 ? 0.45 : 0.45 + (p - 0.6) * 1.4; break;
+                // Reduced motion keeps the idle figure still but for a
+                // flinch, a step and a fall: no bobbing or hopping.
+                case 'cast': if (full) { pose.dy -= Math.abs(Math.sin(p * Math.PI * 4)); } break;
+                case 'prone': pose.squash = Math.min(1, p < 0.6 ? 0.45 : 0.45 + (p - 0.6) * 1.4); break;
                 case 'down': pose.squash = 1 - 0.7 * p; break;
-                case 'victory': pose.dy -= 2 * Math.abs(Math.sin(p * Math.PI * 2)); break;
+                case 'victory': if (full) { pose.dy -= 2 * Math.abs(Math.sin(p * Math.PI * 2)); } break;
                 default: break;
                 }
             }
@@ -1470,9 +1489,11 @@
             // A pose sheet stands on its idle's feet row when the idle has one
             // at the same scale, so a lunging foot or a low weapon tip in the
             // pose never makes the figure jump as it switches sheets.
-            const idleInfo = posed ? (art('battle/units/' + key + '/idle.png') || {}).info : null;
-            const feet = idleInfo && typeof idleInfo.feet_baseline === 'number' && idleInfo.density === sheet.info.density && (idleInfo.frame || [])[1] === fh
-                ? idleInfo.feet_baseline : sheet.info.feet_baseline;
+            // A floating unit's idle has no feet row, so its poses don't either.
+            const idleInfo = posed && manifest ? manifest.files['battle/units/' + key + '/idle.png'] : null;
+            const sameScale = idleInfo && idleInfo.density === sheet.info.density && (idleInfo.frame || [])[1] === fh;
+            const feet = !sameScale ? sheet.info.feet_baseline
+                : (typeof idleInfo.feet_baseline === 'number' ? idleInfo.feet_baseline : undefined);
             const top = typeof feet === 'number' ? -1 - (feet + 1) / d : -dh;
             ctx.save();
             ctx.translate(Math.round(x), y);

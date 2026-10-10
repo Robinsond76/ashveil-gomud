@@ -1,6 +1,6 @@
 **E3: high-resolution battle screen (2026-10-10).** The approved battle art (A6–A10) is on the battle screen: 159 battle units, including the Beast Tamer's own warhound, and 16 backdrops. The picture keeps its 320×180 coordinates but is drawn at device pixels (`pxScale`, capped at 8), so text, bars and art are sharp.
 
-`scripts/sprites/import_battle.py` measures each master's pixel grain: 5 px for people, 6 for small creatures, 8 for beasts and the boss, 12 for large creatures, 4 for backdrops. It shrinks each frame by exactly that grain and stores sheets as exact palette PNGs. Every runtime frame is pixel-for-pixel the master's art, at density 2 (8/3 for small creatures), about 4.7 MB in all. The art is drawn crisp where its pixels land on whole device pixels.
+`scripts/sprites/import_battle.py` measures each master's pixel grain: 5 px for people, 6 for small creatures, 8 for beasts and the boss, 12 for large creatures, 4 for backdrops. It shrinks each frame by exactly that grain and stores sheets losslessly, never quantised: an exact palette where a sheet has 256 colours or fewer, else full RGBA. Every runtime frame is pixel-for-pixel the master's art, at density 2 (8/3 for small creatures), about 3.8 MB in all. The art is drawn crisp where its pixels land on whole device pixels.
 
 Players' skin and hair no longer show on the battle figures (the owner's "masks, ship meanwhile"). The creation panel previews looks on a generated 1x `look.png`, and `help appearance` says so; battle masks are a second A11 batch.
 
@@ -35,6 +35,18 @@ Design: [e3 design](designs/2026-10-10-e3-hires-battle-design.md); plan: [e3 pla
 8. A resize while hidden could leave a blank canvas, and a ratio change without a resize wasn't caught. `fit()` always redraws, and a ResizeObserver and resolution query refit.
 9. `pxScale` is capped at 8. The softness of shapes at fractional ratios is noted in the design.
 10. The Go density was truncated where it switched the 1x rules; `densityF` is used there now.
+
+*Second review, of the fixes:* 9 findings.
+- Accepted:
+  1. A ResizeObserver on the screen looped ("ResizeObserver loop completed"). It now observes the pane's column on the next frame; a browser check fails with the old observer.
+  2. `artKey` treated a promoted idle that wasn't loaded yet as missing. It now goes by the manifest.
+  3. Not every sheet fits a palette: 25 painted elites are RGBA. The docs are corrected, and a battle sheet over budget is refused rather than quantised.
+  4. The size was wrong; it is about 3.8 MB.
+  5. Reduced motion gained bobs and hops from the nudge fix. Reduced keeps only the flinch, step and fall.
+  6. Prone's squash ended at 1.01; it is clamped.
+  7. A floating unit's pose sheet now has no feet row, like its idle.
+  8. A shift that would push art off the cell is refused, and an offset-3 test covers the other direction.
+- Noted, unchanged: 9. the `pxScale` cap at ratio 3 and 4×.
 
 *Not this phase:* `scripts/browser/relic-check.mjs` already fails on master: the company gear row tooltip doesn't name the signature.
 

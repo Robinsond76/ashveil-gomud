@@ -83,6 +83,21 @@ for (const dpr of [1, 1.5, 2]) {
     'ratio ' + dpr + ': M, S and L creatures draw their imported art: ' + JSON.stringify([art('m:1'), art('m:2'), art('m:3')]));
   if (shot) { await page.locator('#battle-screen').screenshot({ path: shot.replace(/\.png$/, '-dpr' + dpr + '.png') }); }
   if (dpr === 1) {
+    // Narrowing and widening the battle pane refits the picture with no
+    // browser error (a ResizeObserver loop would raise one).
+    await page.evaluate(() => { window.__errs = []; window.addEventListener('error', e => window.__errs.push(e.message)); });
+    for (const w of [1000, 400, 1300]) {
+      await page.evaluate(px => { document.getElementById('battle-pane').style.width = px + 'px'; }, w);
+      await page.waitForTimeout(250);
+    }
+    const errs = await page.evaluate(() => window.__errs);
+    const fitted = await page.evaluate(() => {
+      const st = window.BattleScreen.state();
+      const css = document.querySelector('#battle-screen canvas').getBoundingClientRect().width;
+      return { css, pxScale: st.pxScale, backing: st.backing[0] };
+    });
+    check(errs.length === 0 && fitted.backing === Math.round(fitted.css * (fitted.pxScale / (fitted.css / 320))) && fitted.backing === Math.round(320 * fitted.pxScale),
+      'resizing the pane refits with no error: ' + JSON.stringify([errs, fitted]));
     // The Houndmaster's warhound draws the A7 warhound, not the junkyard dog.
     // A Beast Tamer's beast stands among the battle's dolls (39e).
     await gmcp('Company.Battle', { ...battle, positions: { ...positions, 'beast:1': { row: 1, col: 2 } },

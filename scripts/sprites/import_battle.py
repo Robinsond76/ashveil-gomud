@@ -77,6 +77,9 @@ def shift(cell, oy, ox, g):
     dx = -ox if ox <= g // 2 else g - ox
     out = np.zeros_like(cell)
     h, w = cell.shape[:2]
+    # Art the shift would push off the cell (bottom or right) is refused.
+    if (dy > 0 and cell[h - dy:, :, 3].any()) or (dx > 0 and cell[:, w - dx:, 3].any()):
+        return None
     ys, yd = (slice(-dy, h), slice(0, h + dy)) if dy <= 0 else (slice(0, h - dy), slice(dy, h))
     xs, xd = (slice(-dx, w), slice(0, w + dx)) if dx <= 0 else (slice(0, w - dx), slice(dx, w))
     out[yd, xd] = cell[ys, xs]
@@ -106,7 +109,13 @@ def exact_png(arr, budget):
         buf = io.BytesIO()
         img.save(buf, "PNG", optimize=True, transparency=img.info.get("transparency"))
         return buf.getvalue()
-    return encode(Image.fromarray(arr, "RGBA" if arr.shape[2] == 4 else "RGB"), budget)
+    # More colours (some painted elites): full RGB(A), still lossless. Never
+    # quantise battle art: a sheet over budget is refused instead.
+    buf = io.BytesIO()
+    Image.fromarray(arr, "RGBA" if arr.shape[2] == 4 else "RGB").save(buf, "PNG", optimize=True)
+    if buf.tell() > budget:
+        raise ValueError(f"{len(colours)} colours, {buf.tell()} bytes: over the {budget}-byte budget (battle art is never quantised)")
+    return buf.getvalue()
 
 
 def edges_touched(sheet, frame):
@@ -149,12 +158,17 @@ def unit_job(uid, path):
     if off != (0, 0):
         print(f"{path}: grain grid starts at {off}; shifted onto the cell", file=sys.stderr)
         raw = [shift(c, off[0], off[1], g) for c in raw]
+        if any(c is None for c in raw):
+            raise ValueError(f"{path}: shifting the art onto its grain would push it off the cell")
     frame = ch // g
     sheet = np.concatenate([shrink(c, g) for c in raw], axis=1)
     touched = edges_touched(sheet, frame)
     if touched:
         print(f"{path}: art touches the frame's {', '.join(touched)} edge (check it isn't clipped)", file=sys.stderr)
-    data = exact_png(sheet, UNIT_FRAME_BUDGET * FRAMES)
+    try:
+        data = exact_png(sheet, UNIT_FRAME_BUDGET * FRAMES)
+    except ValueError as e:
+        raise ValueError(f"{path}: {e}")
     if len(data) > UNIT_FRAME_BUDGET * FRAMES:
         raise ValueError(f"{path}: {len(data)} bytes, over {UNIT_FRAME_BUDGET * FRAMES}")
     meta = dict(kind="battle-unit", set="S5" if u.family in ("promoted class", "summon") else "S3",
@@ -184,7 +198,10 @@ def backdrop_job(path):
         raise ValueError(f"{path}: a backdrop must be opaque")
     if uneven(src[..., :3], g) > CLEAN:
         raise ValueError(f"{path}: the art is not drawn on a {g} px grain")
-    data = exact_png(shrink(src, g)[..., :3].copy(), BACKDROP_BUDGET)
+    try:
+        data = exact_png(shrink(src, g)[..., :3].copy(), BACKDROP_BUDGET)
+    except ValueError as e:
+        raise ValueError(f"{path}: {e}")
     if len(data) > BACKDROP_BUDGET:
         raise ValueError(f"{path}: {len(data)} bytes, over {BACKDROP_BUDGET}")
     return data, None

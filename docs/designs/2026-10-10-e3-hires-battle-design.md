@@ -36,9 +36,10 @@ It also makes the screen ready for action-pose art. The owner chose (2026-10-10)
    | Boss (XL) | 1536 | 8 | 192 | 2 |
    | Backdrop | 2560×1440 | 4 | 640×360 | 2 |
 
-   - The importer shrinks each frame by its grain, so every art pixel becomes exactly one runtime pixel. Nothing is lost, and the files are small (159 units and 16 backdrops come to about 4.7 MB).
+   - The importer shrinks each frame by its grain, so every art pixel becomes exactly one runtime pixel. Nothing is lost, and the files are small (159 units and 16 backdrops come to about 3.8 MB).
    - All 175 delivered masters sit exactly on their grain. Unevenness is measured over drawn blocks only, with hidden pixels' colour cleared. A sheet whose grid is offset from its cells' corners is shifted onto it, one offset for the whole sheet, by the smaller way round. Art that isn't on a grain, a backdrop included, is refused.
-   - A sheet of 256 colours or fewer is stored as an exact palette PNG. Every delivered sheet qualifies, so nothing is quantised. Each frame and backdrop is pixel-for-pixel the master shrunk by its grain (backdrops are about 180 KB).
+   - A sheet of 256 colours or fewer is stored as an exact palette PNG: 134 unit sheets and all 16 backdrops (about 180 KB each). The other 25, painted elites with up to about 4,600 colours, are stored as full RGBA, still lossless. Battle art is never quantised: a sheet over budget is refused. Each frame and backdrop is pixel-for-pixel the master shrunk by its grain.
+   - A shift that would push art off the cell is refused.
    - The importer warns when art touches a frame's top, left or right edge. Four approved sheets do: the beasttamer's whip, the gryphon-rider's spear, the doll's strings and the marionettist's strings.
    - This replaces the standards table's nominal 4× runtime size (256 px for M) with the art's real resolution.
 3. **Crisp where it can be.** Where an art pixel lands on a whole number of device pixels, art is drawn with nearest-neighbour sampling, so it stays pixel-crisp. That is `pxScale × pose scale / density` being whole: for example density 2 at 2× or 4×. Otherwise (odd scales, 8/3 creatures, a shrunk ally) it's smoothed, so pixels don't land unevenly. A squashed figure (prone, falling) is always smoothed. 1x art is always crisp.

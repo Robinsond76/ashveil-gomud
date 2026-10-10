@@ -206,6 +206,23 @@ func TestImportBattle(t *testing.T) {
 		t.Error("the shifted import should equal the one drawn on the grain")
 	}
 
+	// 3 px off (over half the grain) moves the smaller way, 2 px down and
+	// right, onto the next grid line: the same art one art pixel down-right.
+	shifted3 := t.TempDir()
+	writeStrip(t, shifted3, "A6/battle/units/warrior/idle.png", 640, 40, body(3))
+	if s3, msg, err := run(shifted3); err != nil {
+		t.Errorf("an offset of 3 should be shifted down and right, not refused: %v\n%s", err, msg)
+	} else {
+		moved := readPNG(filepath.Join(s3, "battle/units/warrior/idle.png"))
+		for y := 0; y < 127; y++ {
+			for x := 0; x < 127; x++ {
+				if moved.At(x+1, y+1) != img.At(x, y) {
+					t.Fatalf("the import shifted by 3 differs from the art one pixel down-right at %d,%d", x, y)
+				}
+			}
+		}
+	}
+
 	// A small creature (768 px cells, 6 px grain) imports at density 8/3,
 	// and --only imports just the paths it names.
 	both := t.TempDir()
