@@ -71,6 +71,10 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 
 <ansi fg="yellow-bold">Camps</ansi>
 
+  While you stand in your own camp, the camp is you: your figure and your
+  companions are round the fire, and the tent with its fire marks where you
+  are. Walk off and you step out of it; the camp stays where you pitched it.
+
   Your camp shows as a tent on its tile (<ansi fg="command">help camp</ansi>). A lit fire flickers beside
   it with smoke rising; an unlit one sits dark. While your company rests,
   a small sleeping mark floats over the tent; resting at an inn shows the

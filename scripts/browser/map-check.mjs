@@ -253,7 +253,43 @@ await tick(page, 300);
 const bare = await leftOfYou();
 await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: false, allied_camps: [] });
 await tick(page, 300);
-check(bare !== await leftOfYou(), 'a camp on your own tile shows beside your sprite');
+// LM1: camped where you stand, the camp is your marker: your figure and
+// companions are not drawn, and the tent stands on the tile itself.
+s = await state(page);
+check(s.campAsYou === true, 'camped in your own room, you are the camp');
+const campedTile = await page.evaluate(() => {
+  const c = document.getElementById('map-2d-canvas');
+  return Array.from(c.getContext('2d').getImageData(Math.round(c.width / 2) - 20, Math.round(c.height / 2) - 20, 40, 40).data).join();
+});
+await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: true, allied_camps: [] });
+await tick(page, 300);
+const litTile = await page.evaluate(() => {
+  const c = document.getElementById('map-2d-canvas');
+  return Array.from(c.getContext('2d').getImageData(Math.round(c.width / 2) - 20, Math.round(c.height / 2) - 20, 40, 40).data).join();
+});
+check(campedTile !== litTile, 'lighting the fire changes the camp you are');
+if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-camp-as-you.png') }); }
+// An inn rest keeps your figure.
+await gmcp(page, 'Company.Camp', { has_camp: true, here: true, inn: true, resting: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: false, allied_camps: [] });
+await tick(page, 300);
+check((await state(page)).campAsYou === false, 'resting at an inn keeps your figure');
+await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: true, allied_camps: [] });
+await tick(page, 300);
+// Walking out of the camp room, you step out of the camp; the camp stays.
+await gmcp(page, 'Company.Camp', { has_camp: true, here: false, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: true, allied_camps: [] });
+await gmcp(page, 'Room', { Info: roomInfo(yourTile.x + 1, yourTile.y) });
+await tick(page, 60);
+s = await state(page);
+check(s.campAsYou === false && s.walking, 'walking out, you step out of the camp: ' + JSON.stringify([s.campAsYou, s.walking]));
+await settle(page);
+check((await state(page)).campAsYou === false && (await state(page)).spriteDrawn, 'away from it your figure stands, the camp stays behind');
+await gmcp(page, 'Room', { Info: roomInfo(yourTile.x, yourTile.y) });
+await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: true, allied_camps: [] });
+await tick(page, 60);
+check((await state(page)).campAsYou === false, 'walking back in, you are drawn until you arrive');
+await settle(page);
+await tick(page, 100);
+check((await state(page)).campAsYou === true, 'and become the camp once there');
 
 // --- Allies ---
 await gmcp(page, 'Party.Vitals', {

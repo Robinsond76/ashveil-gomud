@@ -1,3 +1,15 @@
+**LM1: you are the camp (2026-10-10).** This is the first [living map](designs/2026-10-10-living-map-design.md) phase. While your company is camped in the room you stand in, and you have stopped walking, the camp is your marker:
+- your figure and companions aren't drawn;
+- the tent or rough camp stands on the tile itself, with its fire (unlit, lit with smoke, or embers) and the sleeping mark;
+- the here-ring and the company badge stay.
+
+Walking out, you step out of the camp, which stays behind. Walking in, you're drawn until you arrive. An inn rest keeps your figure. The change is client-only (`campAsYou` and `drawBadge` in `window-map.js`). `help worldmap` covers it. `map-check.mjs` checks:
+- camp-as-you, and lighting the fire;
+- the inn;
+- stepping out, and walking back in.
+
+The owner's decisions (unseen rooms remembered; a lantern with oil, one-time torches, tents worn out after about 50 pitches; companions disappear into the camp; order LM1, LG and LM2, then LM3) are in the design. The light-gear phase LG is added.
+
 **Living map designed; art handoff (2026-10-10).**
 - **Living map.** [Living map](designs/2026-10-10-living-map-design.md) proposes four phases from the owner's ideas:
   - LM1: your figure becomes the camp, with the fire showing its state;

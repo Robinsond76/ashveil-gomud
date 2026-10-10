@@ -529,6 +529,7 @@
         var identity    = { classid: '', lineage: '', look: null }; // Char.Info (look: Phase 72a skin and hair colours)
         var companySize = 0;        // members with the leader, 0 when alone or unknown
         var campInfo    = null;     // Company.Camp
+        var lastCampAsYou = false;  // LM1: the last render drew your camp as your marker (browser checks)
         var companions  = [];       // Phase 40c: present companions { key, lineage, classid }, drawn beside you
         // Where each companion stands around the player, in art pixels from
         // the player's feet (x across, y up); a fifth or later is not drawn
@@ -756,16 +757,26 @@
             fireAndRest(p.px, p.py, mult, lit, resting, now, fire, embers);
         }
 
+        // campAsYou (living map LM1) says your company is camped in the room
+        // you stand in, and you have stopped walking: the camp is then your
+        // marker and your figure and companions are not drawn (they are
+        // round the fire). An inn rest and a hidden camp layer keep you.
+        function campAsYou(pose) {
+            return !!(campInfo && mapSettings.showCamp !== false && campInfo.has_camp && campInfo.here &&
+                !campInfo.inn && currentRoomId !== null && campInfo.room_id === currentRoomId && pose && !pose.walking);
+        }
+
         // drawCamps draws your camp and your party's. spriteOn says your class
-        // sprite stands on your tile, so a camp there is drawn beside it.
-        function drawCamps(now, spriteOn) {
+        // sprite stands on your tile, so a camp there is drawn beside it;
+        // asYou (LM1) says your camp is your marker, drawn on the tile itself.
+        function drawCamps(now, spriteOn, asYou) {
             if (!campInfo || mapSettings.showCamp === false) { return; }
             (campInfo.allied_camps || []).forEach(function (c) {
                 drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, spriteOn && c.room_id === currentRoomId, !!c.embers, c.tent);
             });
             if (campInfo.has_camp && campInfo.room_id) {
                 var inn = !!(campInfo.here && campInfo.inn && campInfo.resting);
-                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, spriteOn && campInfo.room_id === currentRoomId, !!campInfo.embers, campInfo.tent);
+                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, !asYou && spriteOn && campInfo.room_id === currentRoomId, !!campInfo.embers, campInfo.tent);
             }
         }
 
@@ -773,7 +784,7 @@
         // the class sprite, then the company badge. It returns false when
         // there is no sprite to draw (off, still loading, or no art), so the
         // caller shows the classic red square.
-        function drawUnit(now) {
+        function drawUnit(now, asYou) {
             if (!spritesOn() || currentRoomId === null || unit.x === null) { return false; }
             var pose = unitPose(now);
             var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking, identity.look);
@@ -793,6 +804,12 @@
                 ctx.strokeRect(p.px - tile / 2, p.py - tile / 2, tile, tile);
             }
             ctx.restore();
+            if (asYou) {
+                // LM1: you are the camp. The ring marks your tile; the badge
+                // sits on the tent.
+                drawBadge(p, mult, now);
+                return { walking: false, camp: true };
+            }
             // Companions stand in behind you and move with you.
             companions.slice(0, COMPANION_SLOTS.length).forEach(function (c, i) {
                 var cres = resolveSheet(chainKeys(c.classid, c.lineage), pose.walking);
@@ -801,18 +818,23 @@
                 drawFrame(cres.sheet, unit.face, unit.flip, p.px + slot.x * mult, p.py + (12 - slot.y) * mult, cm, now, pose.walking ? pose.start : 0, alpha);
             });
             drawFrame(res.sheet, unit.face, unit.flip, p.px, p.py + 12 * mult, mult, now, pose.walking ? pose.start : 0, alpha);
-            if (companySize > 1) {
-                var bx = p.px + 9 * mult, by = p.py - 12 * mult;
-                var bw = 12 * mult;
-                if (!drawIcon('map/markers/company-badge.png', bx, by, mult, now)) {
-                    ctx.fillStyle = '#8a2a2a'; ctx.beginPath(); ctx.arc(bx, by, bw / 2, 0, Math.PI * 2); ctx.fill();
-                }
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold ' + Math.round(8 * mult) + 'px monospace';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(String(companySize), bx, by);
-            }
+            drawBadge(p, mult, now);
             return { walking: pose.walking };
+        }
+
+        // drawBadge draws the company badge (how many are with you) over
+        // your marker; it is hidden when you travel alone.
+        function drawBadge(p, mult, now) {
+            if (companySize <= 1) { return; }
+            var bx = p.px + 9 * mult, by = p.py - 12 * mult;
+            var bw = 12 * mult;
+            if (!drawIcon('map/markers/company-badge.png', bx, by, mult, now)) {
+                ctx.fillStyle = '#8a2a2a'; ctx.beginPath(); ctx.arc(bx, by, bw / 2, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold ' + Math.round(8 * mult) + 'px monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(String(companySize), bx, by);
         }
 
         // drawAllySprite draws a party member as a class sprite at 75% with
@@ -1602,7 +1624,11 @@
             // timer while the map is drawn; reduced motion keeps them still.
             if ((animTiles || walkAnim) && !reducedMotion() && !document.hidden) { scheduleAnim(false); }
 
-            drawCamps(nowMs, spriteOn);
+            // LM1: decided before the camps are drawn, so your camp sits on
+            // your tile rather than beside a figure that isn't drawn.
+            var asYou = spriteOn && unit.x !== null && campAsYou(unitPose(nowMs));
+            lastCampAsYou = asYou;
+            drawCamps(nowMs, spriteOn, asYou);
 
             // Draw party member hearts over rooms (skip the player's current room).
             // Each heart eases from its previous grid position to the new one over HEART_EASE_DURATION.
@@ -1634,7 +1660,7 @@
                 }
                 if (t < 1) { anyEasing = true; }
             });
-            var drewUnit = drawUnit(nowMs);
+            var drewUnit = drawUnit(nowMs, asYou);
             if (anyEasing && heartRafId === null) {
                 heartRafId = requestAnimationFrame(function () {
                     heartRafId = null;
@@ -2150,7 +2176,7 @@
                         return { key: c.key, sprite: spritesOn() && resolveSheet(chainKeys(c.classid, c.lineage), false) !== null };
                     }),
                     style: tilesOn() ? 'tiles' : 'classic', drawn: drawn, zoom: zoomScale,
-                    camp: campInfo, fading: unit.fadeStart >= 0,
+                    camp: campInfo, campAsYou: lastCampAsYou, fading: unit.fadeStart >= 0,
                     walk: walkInfo, night: nightLevel(),
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
