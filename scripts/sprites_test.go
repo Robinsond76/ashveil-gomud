@@ -171,7 +171,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 				t.Errorf("%s: %dx%d is not %d frames x %d rows of %v", rel, b.Dx(), b.Dy(), meta.Frames, rows, meta.Frame)
 			}
 		}
-		if meta.density() > 1 || meta.Source == "imported" {
+		if meta.densityF() > 1 || meta.Source == "imported" {
 			continue
 		}
 		// Hard edges (no partial alpha) and only master palette colors.

@@ -120,7 +120,9 @@
         function mk(unit, anims, props) {
             const chain = FALLBACKS[anims] || [anims];
             const r = anims ? resolveAnim(unit, chain, opts.has) : { anim: '', nudge: false };
-            return Object.assign({ unit: unit, anim: r.anim, nudge: r.nudge, delay: 0, dur: b.reaction, ops: [] }, props);
+            // want is the pose asked for, so a nudge (no art) still knows
+            // which way to move the idle figure (E3 review).
+            return Object.assign({ unit: unit, anim: r.anim, want: anims || '', nudge: r.nudge, delay: 0, dur: b.reaction, ops: [] }, props);
         }
         const act = (unit, anim, props) => mk(unit, anim, Object.assign({ role: 'action', dur: b.action }, props));
         const react = (unit, anim, props) => mk(unit, anim, Object.assign({ role: 'reaction', dur: b.reaction }, props));

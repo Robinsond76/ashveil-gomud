@@ -21,7 +21,9 @@ It also makes the screen ready for action-pose art. The owner chose (2026-10-10)
 1. **Device pixels.** The battle picture keeps its 320×180 coordinate space, so every drawing call is unchanged.
    - The canvas's backing store is the shown size times the pixel ratio (`pxScale`). `draw()` sets that transform once.
    - Code-drawn shapes, bars and text become sharp, and art is sampled at the screen's resolution.
-   - `fit()` keeps its whole-number display scale (1×–4×) and resizes the backing store when the scale or ratio changes.
+   - `fit()` keeps its whole-number display scale (1×–4×) and resizes the backing store when the scale or ratio changes. `pxScale` is capped at 8, so a huge, dense screen doesn't redraw an enormous bitmap every frame.
+   - `fit()` always redraws, and a ResizeObserver and a resolution media query refit the screen when it is shown again or moved to another monitor.
+   - On a fractional ratio at 1× (`pxScale` 1.25, 1.5), code-drawn shapes land on fractional device pixels, as any browser canvas does.
    - Pointer hit-testing already maps to picture coordinates through the shown size.
 2. **Exact pixel art.** The battle masters are pixel art on a coarse grain. Each art pixel is a square block of master pixels, measured on the delivered files:
 
@@ -34,18 +36,23 @@ It also makes the screen ready for action-pose art. The owner chose (2026-10-10)
    | Boss (XL) | 1536 | 8 | 192 | 2 |
    | Backdrop | 2560×1440 | 4 | 640×360 | 2 |
 
-   - The importer shrinks each frame by its grain, so every art pixel becomes exactly one runtime pixel. Nothing is lost, and the files are small (159 units and 16 backdrops come to about 7.6 MB).
-   - All 175 delivered masters sit exactly on their grain. A frame whose grid is offset from its cell's corner is shifted onto it; art that isn't on a grain is refused.
+   - The importer shrinks each frame by its grain, so every art pixel becomes exactly one runtime pixel. Nothing is lost, and the files are small (159 units and 16 backdrops come to about 4.7 MB).
+   - All 175 delivered masters sit exactly on their grain. Unevenness is measured over drawn blocks only, with hidden pixels' colour cleared. A sheet whose grid is offset from its cells' corners is shifted onto it, one offset for the whole sheet, by the smaller way round. Art that isn't on a grain, a backdrop included, is refused.
+   - A sheet of 256 colours or fewer is stored as an exact palette PNG. Every delivered sheet qualifies, so nothing is quantised. Each frame and backdrop is pixel-for-pixel the master shrunk by its grain (backdrops are about 180 KB).
+   - The importer warns when art touches a frame's top, left or right edge. Four approved sheets do: the beasttamer's whip, the gryphon-rider's spear, the doll's strings and the marionettist's strings.
    - This replaces the standards table's nominal 4× runtime size (256 px for M) with the art's real resolution.
-3. **Crisp where it can be.** Where an art pixel lands on a whole number of device pixels, art is drawn with nearest-neighbour sampling, so it stays pixel-crisp. That is `pxScale × pose scale / density` being whole: for example density 2 at 2× or 4×. Otherwise (odd scales, 8/3 creatures, a squashed or shrunk figure) it's smoothed, so pixels don't land unevenly. 1x art is always crisp.
-4. **Feet.** An imported sheet records its own feet row (`feet_baseline`, the lowest opaque row). The bottom of that row lands 1 picture pixel above the unit's ground point, exactly where the 1x sheets' feet (row frame − 2) land, so old and new figures stand on one line. A floating unit (echo bats) keeps its centre anchor.
+3. **Crisp where it can be.** Where an art pixel lands on a whole number of device pixels, art is drawn with nearest-neighbour sampling, so it stays pixel-crisp. That is `pxScale × pose scale / density` being whole: for example density 2 at 2× or 4×. Otherwise (odd scales, 8/3 creatures, a shrunk ally) it's smoothed, so pixels don't land unevenly. A squashed figure (prone, falling) is always smoothed. 1x art is always crisp.
+4. **Feet.** An imported sheet records its own feet row (`feet_baseline`, the lowest opaque row). The bottom of that row lands 1 picture pixel above the unit's ground point, exactly where the 1x sheets' feet (row frame − 2) land, so old and new figures stand on one line. A floating unit (echo bats) has no feet row and is drawn with its frame's bottom on the ground point, as the 1x code drew it. A pose sheet stands on its idle's feet row, so a figure never jumps when it switches sheets.
 5. **Skin and hair** (as the owner decided for the map: "masks, ship meanwhile").
    - The new battle figures can't be repainted by the palette swap, so they show the class's own colours. `help appearance` says so.
    - The creation panel previews looks on `battle/units/<class>/look.png`. That is a 1x copy of the drawn base-class figure, which the generator keeps for the 15 base classes, so the preview still changes colour as the player chooses.
    - Battle masks join the A11 follow-up.
 6. **Action poses.**
    - The screen already plays `battle/units/<key>/<pose>.png` when listed: attack, hurt, cast, shoot, block, parry, dodge, windup, walk, down, victory. Otherwise it nudges the idle figure in code.
-   - E3 makes those sheets density-aware like the idle. So a pilot order (the 15 base classes' attack, hurt and cast or shoot) drops in with only an importer table entry.
+   - E3 makes those sheets density-aware like the idle, standing on the idle's feet row.
+   - `hasArt` asks of the same sheets `drawBody` draws (`artKey`), so a promoted member is not frozen by its base class's pose sheet.
+   - A step with no art now nudges the idle figure the way the pose it wanted would (`want`). Before, the nudge looked up the step's role and never moved.
+   - The pilot is ordered as A12 (`docs/art/A12-battle-actions-pilot.md`): the 15 base classes' attack and hurt, plus shoot or cast. Step E3c teaches the importer pose files (their frame counts, the idle's grain).
 7. **The warhound.** A7 drew the Beast Tamer's warhound, which the screen had shown as the junkyard dog. It joins the roster (its 1x placeholder is still the dog), and `BEAST_SPRITES` points at it.
 
 ## State, persistence, multiplayer

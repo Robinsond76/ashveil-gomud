@@ -121,18 +121,40 @@ func TestImportBattle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run := func(src string) (string, string, error) {
+	run := func(src string, only ...string) (string, string, error) {
 		out := t.TempDir()
-		b, err := exec.Command("python3", "-I", script, "--src", src, "--out", out).CombinedOutput()
+		args := []string{"-I", script, "--src", src, "--out", out}
+		if len(only) > 0 {
+			args = append(append(args, "--only"), only...)
+		}
+		b, err := exec.Command("python3", args...).CombinedOutput()
 		return out, string(b), err
 	}
+	readPNG := func(path string) image.Image {
+		t.Helper()
+		f, err := os.Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		img, err := png.Decode(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return img
+	}
 	// A body of 5 px art pixels: columns 50-74 art px, rows 40-115, so its
-	// feet are on art row 115 (master y 575-579). Frame f breathes by
-	// lifting its top f art pixels.
+	// feet are on art row 115 (master y 575-579); frame 3's foot reaches
+	// one art row lower (116), so the sheet's feet are the lowest of all.
+	// Frame f breathes by lifting its top f art pixels.
 	body := func(shift int) func(f, x, y int) color.NRGBA {
 		return func(f, x, y int) color.NRGBA {
 			ax, ay := (x-shift)/5, (y-shift)/5
-			if x < shift || y < shift || ax < 50 || ax > 74 || ay < 40+f || ay > 115 {
+			low := 115
+			if f == 2 && ax < 55 {
+				low = 116
+			}
+			if x < shift || y < shift || ax < 50 || ax > 74 || ay < 40+f || ay > low {
 				return color.NRGBA{}
 			}
 			if (ax+ay)%2 == 0 {
@@ -148,15 +170,7 @@ func TestImportBattle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("a good master was refused: %v\n%s", err, msg)
 	}
-	f, err := os.Open(filepath.Join(out, "battle/units/warrior/idle.png"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	img, err := png.Decode(f)
-	f.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
+	img := readPNG(filepath.Join(out, "battle/units/warrior/idle.png"))
 	if b := img.Bounds(); b.Dx() != 512 || b.Dy() != 128 {
 		t.Fatalf("sheet is %v, want 512x128", b)
 	}
@@ -177,15 +191,76 @@ func TestImportBattle(t *testing.T) {
 		t.Fatal(err)
 	}
 	e := index["battle/units/warrior/idle.png"]
-	if e["density"] != float64(2) || e["feet_baseline"] != float64(115) || e["size_class"] != "M" || e["family"] != "class" {
-		t.Errorf("warrior entry = %v", e)
+	if e["density"] != float64(2) || e["feet_baseline"] != float64(116) || e["size_class"] != "M" || e["family"] != "class" {
+		t.Errorf("warrior entry = %v (feet are the lowest row of any frame)", e)
 	}
+	good, _ := os.ReadFile(filepath.Join(out, "battle/units/warrior/idle.png"))
 
-	// A frame drawn 2 px off the grain is shifted onto it.
+	// A sheet drawn 2 px off the grain is shifted onto it, to the same result.
 	shifted := t.TempDir()
 	writeStrip(t, shifted, "A6/battle/units/warrior/idle.png", 640, 40, body(2))
-	if _, msg, err := run(shifted); err != nil {
+	sout, msg, err := run(shifted)
+	if err != nil {
 		t.Errorf("an offset grain should be shifted, not refused: %v\n%s", err, msg)
+	} else if got, _ := os.ReadFile(filepath.Join(sout, "battle/units/warrior/idle.png")); string(got) != string(good) {
+		t.Error("the shifted import should equal the one drawn on the grain")
+	}
+
+	// A small creature (768 px cells, 6 px grain) imports at density 8/3,
+	// and --only imports just the paths it names.
+	both := t.TempDir()
+	writeStrip(t, both, "A6/battle/units/warrior/idle.png", 640, 40, body(0))
+	writeStrip(t, both, "A7/battle/units/rat/idle.png", 768, 48, func(f, x, y int) color.NRGBA {
+		if x/6 > 40 && x/6 < 90 && y/6 > 90+f%2 && y/6 <= 115 {
+			return color.NRGBA{120, 110, 100, 255}
+		}
+		return color.NRGBA{}
+	})
+	rout, msg, err := run(both, "battle/units/rat/idle.png")
+	if err != nil {
+		t.Fatalf("the rat was refused: %v\n%s", err, msg)
+	}
+	if _, err := os.Stat(filepath.Join(rout, "battle/units/warrior/idle.png")); err == nil {
+		t.Error("--only imported a path it did not name")
+	}
+	raw, _ = os.ReadFile(filepath.Join(rout, "imported.json"))
+	index = nil
+	if err := json.Unmarshal(raw, &index); err != nil {
+		t.Fatal(err)
+	}
+	if d, ok := index["battle/units/rat/idle.png"]["density"].(float64); !ok || math.Abs(d-8.0/3) > 1e-9 {
+		t.Errorf("rat density = %v, want 8/3", index["battle/units/rat/idle.png"]["density"])
+	}
+
+	// A backdrop on a 4 px grain imports as an exact 640x360 picture.
+	bg := t.TempDir()
+	{
+		im := image.NewNRGBA(image.Rect(0, 0, 2560, 1440))
+		for y := 0; y < 1440; y++ {
+			for x := 0; x < 2560; x++ {
+				ax, ay := x/4, y/4
+				im.SetNRGBA(x, y, color.NRGBA{uint8(ax % 16 * 16), uint8(ay % 8 * 32), 90, 255})
+			}
+		}
+		p := filepath.Join(bg, "A6/battle/backgrounds/plains.png")
+		_ = os.MkdirAll(filepath.Dir(p), 0o755)
+		fo, _ := os.Create(p)
+		_ = png.Encode(fo, im)
+		fo.Close()
+	}
+	bout, msg, err := run(bg)
+	if err != nil {
+		t.Fatalf("the backdrop was refused: %v\n%s", err, msg)
+	}
+	bimg := readPNG(filepath.Join(bout, "battle/backgrounds/plains.png"))
+	if b := bimg.Bounds(); b.Dx() != 640 || b.Dy() != 360 {
+		t.Fatalf("backdrop is %v, want 640x360", b)
+	}
+	for _, xy := range [][2]int{{0, 0}, {17, 5}, {333, 200}, {639, 359}} {
+		r, g, b, _ := bimg.At(xy[0], xy[1]).RGBA()
+		if r>>8 != uint32(xy[0]%16*16) || g>>8 != uint32(xy[1]%8*32) || b>>8 != 90 {
+			t.Errorf("backdrop pixel %v = %d,%d,%d, not the exact art pixel", xy, r>>8, g>>8, b>>8)
+		}
 	}
 
 	for _, tc := range []struct {
@@ -220,6 +295,19 @@ func TestImportBattle(t *testing.T) {
 		{"unknown unit", func(root string) {
 			writeStrip(t, root, "A7/battle/units/no-such-beast/idle.png", 640, 40, body(0))
 		}, "not a battle unit"},
+		{"off-grain backdrop", func(root string) {
+			im := image.NewNRGBA(image.Rect(0, 0, 2560, 1440))
+			for y := 0; y < 1440; y++ {
+				for x := 0; x < 2560; x++ {
+					im.SetNRGBA(x, y, color.NRGBA{uint8(x), uint8(y), 0, 255})
+				}
+			}
+			p := filepath.Join(root, "A6/battle/backgrounds/plains.png")
+			_ = os.MkdirAll(filepath.Dir(p), 0o755)
+			fo, _ := os.Create(p)
+			_ = png.Encode(fo, im)
+			fo.Close()
+		}, "not drawn on a 4 px grain"},
 	} {
 		root := t.TempDir()
 		tc.write(root)

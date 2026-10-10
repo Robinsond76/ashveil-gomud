@@ -254,3 +254,13 @@ test('an allied company\'s unit counts as company for the hit effect, and allied
   const down = first([{ seq: 2, kind: 'death', src: 'm:1', tgt: 'a:8:companion:2' }]);
   assert.ok(down.some(s => s.unit === 'a:8:companion:2'), 'an allied unit falls like any other');
 });
+
+test('a nudge keeps the pose it wanted, so the idle figure moves the right way', () => {
+  const steps = first([{ seq: 1, kind: 'attack', src: 'm:2', tgt: 'leader', outcome: 'hit', damage: 1 }], { has: () => false });
+  const hurt = stepFor(steps, 'leader');
+  assert.equal(hurt.nudge, true);
+  assert.equal(hurt.want, 'hurt', 'the struck flinch is a hurt nudge');
+  assert.equal(stepFor(steps, 'm:2').want, 'attack');
+  const dodge = stepFor(first([{ seq: 2, kind: 'attack', src: 'm:2', tgt: 'leader', outcome: 'miss' }], { has: () => false }), 'leader');
+  assert.equal(dodge.want, 'dodge');
+});

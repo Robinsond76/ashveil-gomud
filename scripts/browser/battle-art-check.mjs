@@ -98,6 +98,48 @@ for (const dpr of [1, 1.5, 2]) {
   }
   await ctx.close();
 }
+
+// A pose sheet for a base class (warrior/hurt.png, served here from the
+// warrior's idle) must not freeze a promoted member: the Paladin draws its
+// own class's sheets, which have no hurt pose, so it still flinches (the
+// nudge) instead of standing still.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
+  const spritesDir = path.join(root, '_datafiles/html/public/static/sprites');
+  await page.route('**/sprites/manifest.json', async r => {
+    const m = JSON.parse(fs.readFileSync(path.join(spritesDir, 'manifest.json'), 'utf8'));
+    m.files['battle/units/warrior/hurt.png'] = Object.assign({}, m.files['battle/units/warrior/idle.png']);
+    await r.fulfill({ contentType: 'application/json', body: JSON.stringify(m) });
+  });
+  await page.route('**/battle/units/warrior/hurt.png', r => r.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(spritesDir, 'battle/units/warrior/idle.png')) }));
+  await page.goto(base + '/scripts/browser/dock-windows-harness.html');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
+  await page.evaluate(() => window.BattleScreen.setMotion('full'));
+  await gmcp('Room', { Info: { environment: 'forest', area: 'Frostfang' } });
+  await gmcp('Company', company);
+  await gmcp('Company.Battle', battle);
+  await page.waitForFunction(() => { const u = window.BattleScreen.state().units.find(o => o.id === 'leader'); return u && u.art; }, null, { timeout: 8000 }).catch(() => {});
+  // The first blow asks for the pose sheets, which load lazily; the second
+  // is planned with them loaded.
+  await page.evaluate(b => Client.dispatchBattleEvents(b), { fight: 1, round: 5001, fight_round: 1,
+    events: [{ seq: 1, kind: 'attack', src: 'm:1', tgt: 'leader', outcome: 'hit', damage: 3 }] });
+  await page.waitForFunction(() => window.BattleScreen.state().backlog === 0, null, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  await page.evaluate(b => Client.dispatchBattleEvents(b), { fight: 1, round: 5002, fight_round: 2,
+    events: [{ seq: 2, kind: 'attack', src: 'm:1', tgt: 'leader', outcome: 'hit', damage: 3 }] });
+  let moved = false, anims = new Set();
+  for (let i = 0; i < 40 && !moved; i++) {
+    const u = await page.evaluate(() => window.BattleScreen.state().units.find(o => o.id === 'leader'));
+    if (u.pose) { anims.add(u.pose.anim); if (u.pose.dx !== 0) { moved = true; } }
+    await page.waitForTimeout(40);
+  }
+  check(moved, 'a promoted member flinches when struck though its base class has a hurt sheet: ' + JSON.stringify(Array.from(anims)));
+  await ctx.close();
+}
 await browser.close();
 server.close();
 console.log(failures ? failures + ' failed' : 'all passed');

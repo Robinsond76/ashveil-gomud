@@ -637,9 +637,18 @@
     }
 
     // hasArt answers the planner: does this unit have art for that pose?
+    // It asks of the same sheets drawBody draws (artKey), so a promoted
+    // member whose class has no pose sheet is nudged rather than frozen.
     function hasArt(id, anim) {
         const u = id === '*company*' ? null : units.get(id);
-        return !!(u && art('battle/units/' + u.sprite + '/' + anim + '.png'));
+        return !!(u && art('battle/units/' + artKey(u) + '/' + anim + '.png'));
+    }
+
+    // artKey is the sprite key a unit's sheets are drawn from: a promoted
+    // member (40s5) keeps to its class's sheets once its idle exists, so it
+    // never flickers into the base class's poses.
+    function artKey(u) {
+        return u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
     }
 
     // playEvents plans a batch and schedules it. Hidden, or when the screen
@@ -1021,6 +1030,8 @@
         document.body.appendChild(badge);
 
         window.addEventListener('resize', fit);
+        watchResolution();
+        if (window.ResizeObserver) { new ResizeObserver(() => fit()).observe(overlay); }
     }
 
     // fit scales the canvas by a whole number (Phase 82a): the largest that
@@ -1038,12 +1049,27 @@
         const s = Math.max(1, Math.min(4, Math.floor(Math.min(width / W, height / H))));
         canvas.style.width = (W * s) + 'px';
         canvas.style.height = (H * s) + 'px';
-        const k = Math.max(1, s * (window.devicePixelRatio || 1));
+        // Capped so a very large, very dense screen doesn't redraw a huge
+        // bitmap every frame (8 is 4x shown on a ratio-2 screen).
+        const k = Math.min(8, Math.max(1, s * (window.devicePixelRatio || 1)));
         if (k !== pxScale || canvas.width !== Math.round(W * k)) {
             pxScale = k;
             canvas.width = Math.round(W * k);
             canvas.height = Math.round(H * k);
-            draw();
+        }
+        // Resizing clears the bitmap; draw() is a no-op while hidden, and a
+        // later fit (the screen shown again, see watchResolution) redraws.
+        draw();
+    }
+
+    // watchResolution refits when the pixel ratio changes without a resize
+    // (a window moved to another screen), and when the screen's box changes
+    // size, which includes being shown again after a resize while hidden.
+    function watchResolution() {
+        if (window.matchMedia) {
+            const mq = window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+            const again = () => { fit(); watchResolution(); };
+            if (mq.addEventListener) { mq.addEventListener('change', again, { once: true }); }
         }
     }
 
@@ -1287,7 +1313,8 @@
             }
             if (st.nudge || !anim) {
                 // No art for this pose: the idle figure moves a little.
-                switch (st.anim === '' ? st.role : (FALLBACK_NAME[st.anim] || st.anim)) {
+                const name = st.anim === '' ? (st.want || st.role) : st.anim;
+                switch (FALLBACK_NAME[name] || name) {
                 case 'attack': case 'shoot': if (!st.lunge) { pose.dx += dir * 5 * tri(p); } break;
                 case 'hurt': case 'block': case 'parry': pose.dx -= dir * 3 * tri(p); break;
                 case 'dodge': pose.dx -= dir * 6 * tri(p); pose.dy -= 2 * tri(p); break;
@@ -1420,10 +1447,8 @@
             return;
         }
         // Art: the pose's own sheet when there is one (S4), else the idle
-        // loop, anchored bottom-centre, enemies mirrored. A promoted member
-        // (40s5) keeps to its class's sheets once its idle exists, so it never
-        // flickers into the base class's poses.
-        const key = u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
+        // loop, anchored bottom-centre, enemies mirrored (artKey).
+        const key = artKey(u);
         const look = window.SpriteTint ? window.SpriteTint.look(u.skin, u.hair) : null;
         const posedPath = pose.anim ? 'battle/units/' + key + '/' + pose.anim + '.png' : '';
         const posedArt = posedPath ? art(posedPath) : null;
@@ -1442,12 +1467,23 @@
             const d = sheet.info.density || 1;
             const dw = fw / d, dh = fh / d;
             u.drawnArt = { path: posed ? posedPath : sheetPath, density: d };
-            const top = typeof sheet.info.feet_baseline === 'number' ? -1 - (sheet.info.feet_baseline + 1) / d : -dh;
+            // A pose sheet stands on its idle's feet row when the idle has one
+            // at the same scale, so a lunging foot or a low weapon tip in the
+            // pose never makes the figure jump as it switches sheets.
+            const idleInfo = posed ? (art('battle/units/' + key + '/idle.png') || {}).info : null;
+            const feet = idleInfo && typeof idleInfo.feet_baseline === 'number' && idleInfo.density === sheet.info.density && (idleInfo.frame || [])[1] === fh
+                ? idleInfo.feet_baseline : sheet.info.feet_baseline;
+            const top = typeof feet === 'number' ? -1 - (feet + 1) / d : -dh;
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }
             if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
-            artSmooth(sheet.info, pose.squash === 1 ? (pose.scale || 1) : 0.5);
+            artSmooth(sheet.info, pose.scale || 1);
+            // A squashed figure (prone, falling) is scaled unevenly: smooth it.
+            if (pose.squash !== 1 && (sheet.info.density || 1) > 1) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+            }
             ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -dw / 2, top, dw, dh);
             if (u.flash > now) {
                 // A hit tints the figure's own shape, not a box around it.

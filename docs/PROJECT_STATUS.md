@@ -1,3 +1,50 @@
+**E3: high-resolution battle screen (2026-10-10).** The approved battle art (A6–A10) is on the battle screen: 159 battle units, including the Beast Tamer's own warhound, and 16 backdrops. The picture keeps its 320×180 coordinates but is drawn at device pixels (`pxScale`, capped at 8), so text, bars and art are sharp.
+
+`scripts/sprites/import_battle.py` measures each master's pixel grain: 5 px for people, 6 for small creatures, 8 for beasts and the boss, 12 for large creatures, 4 for backdrops. It shrinks each frame by exactly that grain and stores sheets as exact palette PNGs. Every runtime frame is pixel-for-pixel the master's art, at density 2 (8/3 for small creatures), about 4.7 MB in all. The art is drawn crisp where its pixels land on whole device pixels.
+
+Players' skin and hair no longer show on the battle figures (the owner's "masks, ship meanwhile"). The creation panel previews looks on a generated 1x `look.png`, and `help appearance` says so; battle masks are a second A11 batch.
+
+Attack animations: the owner chose a pilot order after E3. A12 ([A12-battle-actions-pilot.md](art/A12-battle-actions-pilot.md)) orders 38 sheets: attack and hurt for the 15 base classes, plus shoot or cast. E3c will import them, and the screen already plays them.
+
+Design: [e3 design](designs/2026-10-10-e3-hires-battle-design.md); plan: [e3 plan](plans/2026-10-10-e3-hires-battle.md).
+
+*Tests:*
+- `TestCommissionedBattleArtIsImported` (159 units, 16 backdrops, densities, budgets, the 15 look sheets);
+- `TestImportBattle`: exact grain shrink, feet as the lowest row of any frame, an offset sheet shifted to the same bytes, 8/3 for small creatures, `--only`, an exact backdrop, and refusals for a gutter speck, off-grain art and backdrops, a wrong cell and an unknown unit;
+- density-aware anchor and backdrop rules, with float densities;
+- a `battle-timeline` test for the nudge's wanted pose;
+- `battle-art-check.mjs`: device pixels at ratios 1, 1.5 and 2, the imported art for the backdrop, base and promoted members and M/S/L creatures, the warhound, and a promoted member that still flinches beside a base-class pose sheet;
+- `battle-check.mjs`, with its pixel probe scaled;
+- `help appearance`.
+
+*Independent review:* 10 findings, all accepted.
+1. Backdrops were quantised (lossy) or close to their budget, and backdrops had no grain check. Fixed with exact palette PNGs for all sheets (backdrops about 180 KB, lossless) and a backdrop grain check.
+2. Action poses wouldn't drop in:
+   - `hasArt` asked the base class while `drawBody` drew the promoted class, so a promoted member would freeze. Fixed with a shared `artKey` and a browser regression test that fails without the fix.
+   - Pose sheets would carry their own feet row. They now stand on the idle's.
+   - The importer needs pose support; that is step E3c.
+   - In fixing this I found a pre-existing bug: a step with no art never nudged, because the nudge looked up the step's role. Steps now carry `want`.
+3. A squashed figure could be drawn crisp at an uneven scale. It is now always smoothed.
+4. Stale docs: the standards' battle runtime sizes, the E2 entry's "E3 draws the markers", the floating anchor, the art README's E3 row.
+5. The warhound mob's own sprite key still named the dog. Fixed.
+6. The grain check was loose:
+   - it now counts drawn blocks only and clears hidden colour;
+   - it uses one shift per sheet, the smaller way round;
+   - a byte-equality test covers the shift.
+7. Art touching a frame edge now warns. The four that do are approved: whip, spear and strings.
+8. A resize while hidden could leave a blank canvas, and a ratio change without a resize wasn't caught. `fit()` always redraws, and a ResizeObserver and resolution query refit.
+9. `pxScale` is capped at 8. The softness of shapes at fractional ratios is noted in the design.
+10. The Go density was truncated where it switched the 1x rules; `densityF` is used there now.
+
+*Not this phase:* `scripts/browser/relic-check.mjs` already fails on master: the company gear row tooltip doesn't name the signature.
+
+*Owner ideas for a later "living map" design (2026-10-10):*
+- caves as their own map, which mostly works already since the map shows one zone and level at a time, plus an entering transition;
+- your figure becoming the camp while camped, with the bonfire drawn when lit;
+- darkness and light: dim dark places and hide rooms beyond sight until a light source is lit, with a torch marker and a wider view. The server already tracks visibility and light sources (`internal/rooms/light.go`) but doesn't send them to the map.
+
+The current world is the stock GoMud world and will be replaced.
+
 **E2: high-resolution terrain, landmarks and icons (2026-10-09).** The approved A2–A5 art is in the game. `scripts/sprites/import_art.py` imports 164 files from the masters:
 - 17 biome sheets, 4 animations, 16 road and 16 coast pieces, fog and unknown;
 - 27 landmarks, camp pieces, markers, and resource, interface and app icons;
@@ -8,7 +55,7 @@ Every master is shrunk by 4 into density-4 sheets (1x frames × 4); app icons ar
 - coasts pick `shore-<sides>` from neighbouring water;
 - water, swamp, snow and desert animate only on variant-1 rooms, each at its own phase, so regions keep their variety.
 
-The world has no water rooms, so lakes come from the map's shape (owner decision, "lakes from shape"). The empty middle of a walked ring of shore rooms, such as Frost Lake or Alderbrook's pond, is drawn as open water, shaded at night, and the coasts face it. Inside corners of a lake show a small notch until art phase A2b ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) and step E2b land. The interface icons and battle markers ship as files; the battle screen draws them in E3. `help worldmap` covers roads, coasts and lakes. Design: [e2 design](designs/2026-10-09-e2-hires-terrain-icons-design.md); plan: [e2 plan](plans/2026-10-09-e2-hires-terrain-icons.md).
+The world has no water rooms, so lakes come from the map's shape (owner decision, "lakes from shape"). The empty middle of a walked ring of shore rooms, such as Frost Lake or Alderbrook's pond, is drawn as open water, shaded at night, and the coasts face it. Inside corners of a lake show a small notch until art phase A2b ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) and step E2b land. The interface icons and battle markers ship as files; no screen draws them yet. `help worldmap` covers roads, coasts and lakes. Design: [e2 design](designs/2026-10-09-e2-hires-terrain-icons-design.md); plan: [e2 plan](plans/2026-10-09-e2-hires-terrain-icons.md).
 
 *Tests:*
 - `TestCommissionedTerrainAndIconsAreImported` (160 density-4 files and 4 app icons: frames, budgets, opacity, replace sheets, the hp-frame anchor);

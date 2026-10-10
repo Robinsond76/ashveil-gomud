@@ -24,6 +24,7 @@ its `imported.json`; `generate.py` copies them over its drawn output.
 """
 import argparse
 import glob
+import io
 import json
 import os
 import sys
@@ -48,27 +49,75 @@ CELLS = {
 BACKDROP = (2560, 1440, 4)    # master size and grain: 640 x 360 runtime, density 2
 UNIT_FRAME_BUDGET = 60 * 1024
 BACKDROP_BUDGET = 400 * 1024
-CLEAN = 0.002                 # the share of grain blocks allowed to be uneven (antialiased specks)
+CLEAN = 0.001                 # the share of drawn grain blocks allowed to be uneven (a stray speck)
+
+
+def clear_hidden(a):
+    """A copy of an RGBA array with the colour of fully transparent pixels zeroed."""
+    a = a.copy()
+    a[a[..., 3] == 0] = 0
+    return a
 
 
 def uneven(cell, g, oy=0, ox=0):
-    """The share of g x g blocks (from offset oy, ox) that aren't one colour."""
+    """The share of drawn g x g blocks (from offset oy, ox) that aren't one colour."""
     h, w = (cell.shape[0] - oy) // g, (cell.shape[1] - ox) // g
-    b = cell[oy:oy + h * g, ox:ox + w * g].astype(np.int16).reshape(h, g, w, g, 4)
-    return float((b != b[:, :1, :, :1]).any(axis=(1, 3, 4)).mean())
+    b = cell[oy:oy + h * g, ox:ox + w * g].astype(np.int16).reshape(h, g, w, g, cell.shape[2])
+    drawn = (b[..., -1] > 0).any(axis=(1, 3)) if cell.shape[2] == 4 else np.ones((h, w), bool)
+    if not drawn.any():
+        return 0.0
+    bad = (b != b[:, :1, :, :1]).any(axis=(1, 3, 4))
+    return float(bad[drawn].mean())
 
 
-def on_grain(cell, g):
-    """The cell shifted so its grain grid starts at the corner, or None."""
-    if uneven(cell, g) <= CLEAN:
-        return cell
-    best = min(((uneven(cell, g, oy, ox), oy, ox) for oy in range(g) for ox in range(g)))
-    if best[0] > CLEAN:
-        return None
-    _, oy, ox = best
+def shift(cell, oy, ox, g):
+    """The cell moved so a grain grid starting at (oy, ox) starts at the corner,
+    by the smaller way round (up or down, left or right): under half an art pixel."""
+    dy = -oy if oy <= g // 2 else g - oy
+    dx = -ox if ox <= g // 2 else g - ox
     out = np.zeros_like(cell)
-    out[:cell.shape[0] - oy, :cell.shape[1] - ox] = cell[oy:, ox:]
+    h, w = cell.shape[:2]
+    ys, yd = (slice(-dy, h), slice(0, h + dy)) if dy <= 0 else (slice(0, h - dy), slice(dy, h))
+    xs, xd = (slice(-dx, w), slice(0, w + dx)) if dx <= 0 else (slice(0, w - dx), slice(dx, w))
+    out[yd, xd] = cell[ys, xs]
     return out
+
+
+def grain_offset(cells, g):
+    """The one (oy, ox) a sheet's grain grid starts at, or None when the art isn't on a g px grain."""
+    if all(uneven(c, g) <= CLEAN for c in cells):
+        return 0, 0
+    best = min((sum(uneven(c, g, oy, ox) for c in cells), oy, ox) for oy in range(g) for ox in range(g))
+    if any(uneven(c, g, best[1], best[2]) > CLEAN for c in cells):
+        return None
+    return best[1], best[2]
+
+
+def exact_png(arr, budget):
+    """PNG bytes for an RGB(A) array: an exact palette when it has 256 colours
+    or fewer (lossless and small), else as encode() would."""
+    flat = arr.reshape(-1, arr.shape[2])
+    colours, index = np.unique(flat, axis=0, return_inverse=True)
+    if len(colours) <= 256:
+        img = Image.fromarray(index.reshape(arr.shape[:2]).astype(np.uint8), "P")
+        img.putpalette(colours[:, :3].astype(np.uint8).flatten().tolist())
+        if arr.shape[2] == 4:
+            img.info["transparency"] = bytes(colours[:, 3].astype(np.uint8).tolist())
+        buf = io.BytesIO()
+        img.save(buf, "PNG", optimize=True, transparency=img.info.get("transparency"))
+        return buf.getvalue()
+    return encode(Image.fromarray(arr, "RGBA" if arr.shape[2] == 4 else "RGB"), budget)
+
+
+def edges_touched(sheet, frame):
+    """The sides of any frame its art touches (a clipped figure, or a whip or strings reaching out)."""
+    sides = set()
+    for i in range(sheet.shape[1] // frame):
+        a = sheet[:, i * frame:(i + 1) * frame, 3] > 0
+        for name, edge in (("top", a[0]), ("left", a[:, 0]), ("right", a[:, -1])):
+            if edge.any():
+                sides.add(name)
+    return sorted(sides)
 
 
 def unit_job(uid, path):
@@ -87,18 +136,25 @@ def unit_job(uid, path):
     if gap != int(gap) or gap < 0:
         raise ValueError(f"{path}: {width} px is not {FRAMES} cells of {ch} with equal gutters")
     gap = int(gap)
-    cells = []
+    src = clear_hidden(src)
+    raw = []
     for i in range(FRAMES):
         x = i * (ch + gap)
         if gap and src[:, x + ch:x + ch + gap, 3].any() and i < FRAMES - 1:
             raise ValueError(f"{path}: opaque pixels in the gutter after frame {i + 1}")
-        cell = on_grain(src[:, x:x + ch], g)
-        if cell is None:
-            raise ValueError(f"{path}: frame {i + 1} is not drawn on a {g} px grain")
-        cells.append(shrink(cell, g))
+        raw.append(src[:, x:x + ch])
+    off = grain_offset(raw, g)
+    if off is None:
+        raise ValueError(f"{path}: the art is not drawn on a {g} px grain")
+    if off != (0, 0):
+        print(f"{path}: grain grid starts at {off}; shifted onto the cell", file=sys.stderr)
+        raw = [shift(c, off[0], off[1], g) for c in raw]
     frame = ch // g
-    sheet = np.concatenate(cells, axis=1)
-    data = encode(Image.fromarray(sheet, "RGBA"), UNIT_FRAME_BUDGET * FRAMES)
+    sheet = np.concatenate([shrink(c, g) for c in raw], axis=1)
+    touched = edges_touched(sheet, frame)
+    if touched:
+        print(f"{path}: art touches the frame's {', '.join(touched)} edge (check it isn't clipped)", file=sys.stderr)
+    data = exact_png(sheet, UNIT_FRAME_BUDGET * FRAMES)
     if len(data) > UNIT_FRAME_BUDGET * FRAMES:
         raise ValueError(f"{path}: {len(data)} bytes, over {UNIT_FRAME_BUDGET * FRAMES}")
     meta = dict(kind="battle-unit", set="S5" if u.family in ("promoted class", "summon") else "S3",
@@ -126,8 +182,9 @@ def backdrop_job(path):
         raise ValueError(f"{path}: {src.shape[1]}x{src.shape[0]}, expected {w}x{h}")
     if src[..., 3].min() < 255:
         raise ValueError(f"{path}: a backdrop must be opaque")
-    img = Image.fromarray(shrink(src, g), "RGBA").convert("RGB")
-    data = encode(img, BACKDROP_BUDGET)
+    if uneven(src[..., :3], g) > CLEAN:
+        raise ValueError(f"{path}: the art is not drawn on a {g} px grain")
+    data = exact_png(shrink(src, g)[..., :3].copy(), BACKDROP_BUDGET)
     if len(data) > BACKDROP_BUDGET:
         raise ValueError(f"{path}: {len(data)} bytes, over {BACKDROP_BUDGET}")
     return data, None
