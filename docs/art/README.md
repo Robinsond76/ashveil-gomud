@@ -68,6 +68,7 @@ the owner signs off on the style anchors.
 | **A9** | [A9-elite-built.md](A9-elite-built.md) | The 19 elite classes in the game today, map and battle | 38 | E1, E3 |
 | **A10** | [A10-elite-planned.md](A10-elite-planned.md) | The 24 planned elites, each made when its class is built | 48 | E1, E3 |
 | **A11** | [A11-look-masks.md](A11-look-masks.md) | Skin and hair masks for the 101 map-unit masters, then the 101 class battle idles, so players' chosen looks recolour the new art | 404 | E1b |
+| **A12** | [A12-battle-actions-pilot.md](A12-battle-actions-pilot.md) | Pilot battle action poses for the 15 base classes: attack, hurt, and shoot or cast | 38 | E3c |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),
 then the battle screen, and the advanced and elite classes come last.
@@ -86,6 +87,7 @@ folder until the matching step is merged.
 | **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. Road auto-tiling: the map picks `road-<sides>` from the neighbors that are road and joined by an exit. Coast auto-tiling: `shore-<sides>` from the grid neighbors whose biome is `water`, exits or not. | A2–A5 |
 | **E2b** | Draw the A2b inside-corner overlay on a shore piece in each corner whose diagonal neighbour is water (a lake cell or a water room) while the two sides beside it are not. | A2b |
 | **E3** | High-resolution battle screen. Today it draws a 320×180 canvas scaled by CSS. It must draw at device pixels, with density on units and backgrounds. | A6, A7, battle half of A8–A10 |
+| **E3c** | Import the A12 pose sheets: `import_battle.py` learns pose files (frame counts from the order, the idle's grain and feet line); the battle screen already plays `battle/units/<id>/<pose>.png` when listed. | A12 |
 | **E4** | Rewrite the sprite specification's craft and technical sections to point here. Contact sheets come from the imported art. | all, as phases land |
 
 ## Owner decisions to confirm
