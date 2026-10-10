@@ -18,7 +18,7 @@ func TestLightHelpCoversTorchesAndLanterns(t *testing.T) {
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(want, "")
 	for _, phrase := range []string{"Torches and lanterns", "light torch", "can't be put out", "light lantern", "off hand",
-		"douse lantern", "fill lantern", "flask of lamp oil", "about a game day of oil", "help camp gear"} {
+		"douse lantern", "fill lantern", "flask of lamp oil", "about a game day of oil", "help camp gear", "a companion holding one gets no light"} {
 		assert.Contains(t, plain, phrase)
 	}
 	for _, alias := range []string{"lantern", "torch", "lamp oil", "douse", "darkness"} {

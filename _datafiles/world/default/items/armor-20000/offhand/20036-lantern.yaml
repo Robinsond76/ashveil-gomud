@@ -9,5 +9,6 @@ type: offhand
 subtype: wearable
 bulk: light
 breakchance: 5
-uses: 24
+uses: 25
+value: 25
 weight: 1000

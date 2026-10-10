@@ -1,12 +1,15 @@
 package light
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -14,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // 900 rounds a game day: a game hour is 37 rounds.
@@ -28,13 +32,29 @@ func TestBurnCountsWholeGameHoursFromWhenLit(t *testing.T) {
 	assert.Equal(t, 0, h)
 	assert.Equal(t, uint64(100), next, "less than an hour keeps its start")
 
-	h, next = burn(100, 100+37*3+5, testDay)
-	assert.Equal(t, 3, h, "three whole hours")
-	assert.Equal(t, uint64(100+37*3), next, "the part-hour carries over")
+	h, next = burn(100, 100+37*2-3, testDay)
+	assert.Equal(t, 1, h, "one whole hour")
+	assert.Equal(t, uint64(100+37), next, "the part-hour carries over")
 
 	h, next = burn(900, 100, testDay)
 	assert.Equal(t, 0, h, "a start after now (a reset counter) burns nothing")
 	assert.Equal(t, uint64(100), next)
+
+	// More than two hours since the last tick: the lantern wasn't burning
+	// (its holder was offline, or it lay out of hand). That time is free.
+	h, next = burn(100, 100+37*2+1, testDay)
+	assert.Equal(t, 0, h, "a gap longer than two hours is not charged")
+	assert.Equal(t, uint64(100+37*2+1), next, "and the burn starts afresh")
+}
+
+func TestDousingChargesTheHourUnderWay(t *testing.T) {
+	l := douseCharge(items.Item{ItemId: lanternItemID, Uses: 10, Lit: true, LastUsedRound: 100}, 101, testDay)
+	assert.Equal(t, 9, l.Uses, "a lantern lit for a round and doused spends the hour it started")
+	assert.False(t, l.Lit)
+	l = douseCharge(items.Item{ItemId: lanternItemID, Uses: 10, Lit: true, LastUsedRound: 100}, 100+37+5, testDay)
+	assert.Equal(t, 8, l.Uses, "a whole hour and the second under way")
+	l = douseCharge(items.Item{ItemId: lanternItemID, Uses: 2, Lit: true, LastUsedRound: 100}, 100+37+5, testDay)
+	assert.Equal(t, 1, l.Uses, "never below empty")
 }
 
 // fakeHolder is a character's lantern and buffs, without a game.
@@ -56,16 +76,29 @@ func (f *fakeHolder) dousePacked() {
 }
 
 func TestALitLanternBurnsOilAndGivesLight(t *testing.T) {
+	// Uses is oil plus one: 3 is two hours of oil.
 	f := &fakeHolder{held: items.Item{ItemId: lanternItemID, Uses: 3, Lit: true, LastUsedRound: 1000}, buff: map[int]bool{}}
 	assert.Empty(t, tickLantern(f, 1000+37, testDay))
-	assert.Equal(t, 2, f.held.Uses, "one game hour burns one hour of oil")
+	assert.Equal(t, 1, oil(f.held), "one game hour burns one hour of oil")
 	assert.True(t, f.buff[lanternBuffID], "a lit lantern gives light")
 
-	msg := tickLantern(f, 1000+37*3, testDay)
+	msg := tickLantern(f, 1000+37*2, testDay)
 	assert.Contains(t, msg, "gutters and goes out")
-	assert.Equal(t, emptyLantern, f.held.Uses, "empty is -1, never 0 (items.Validate would refill a 0)")
+	assert.Equal(t, 1, f.held.Uses, "empty is 1, never 0 or less (items.Validate refills a 0, cargo stacks it as full)")
+	assert.Equal(t, 0, oil(f.held))
 	assert.False(t, f.held.Lit)
 	assert.False(t, f.buff[lanternBuffID], "out of oil, it gives no light")
+}
+
+// Logged out with the lantern lit, a player comes back to the oil they
+// left: the round counter ran on, but no tick charged the time away.
+func TestALanternBurnsNothingWhileItsHolderIsAway(t *testing.T) {
+	f := &fakeHolder{held: items.Item{ItemId: lanternItemID, Uses: 11, Lit: true, LastUsedRound: 1000}, buff: map[int]bool{}}
+	tickLantern(f, 1000+900*3, testDay)
+	assert.Equal(t, 10, oil(f.held), "three game days away cost nothing")
+	assert.True(t, f.held.Lit, "and it is still lit")
+	tickLantern(f, 1000+900*3+37, testDay)
+	assert.Equal(t, 9, oil(f.held), "back in hand, it burns again by the hour")
 }
 
 func TestADarkOrStowedLanternBurnsNothingAndGivesNoLight(t *testing.T) {
@@ -84,7 +117,7 @@ func TestADarkOrStowedLanternBurnsNothingAndGivesNoLight(t *testing.T) {
 // captures what they are told.
 func world(t *testing.T) (*users.UserRecord, *rooms.Room, *[]string) {
 	t.Helper()
-	items.SetTestItemSpec(&items.ItemSpec{ItemId: lanternItemID, Name: "lantern", NameSimple: "lantern", Type: items.Offhand, Uses: 24})
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: lanternItemID, Name: "lantern", NameSimple: "lantern", Type: items.Offhand, Uses: 25})
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: torchItemID, Name: "torch", NameSimple: "torch", Type: items.Object})
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: lampOilItemID, Name: "flask of lamp oil", NameSimple: "lamp oil", Type: items.Object})
 	t.Cleanup(func() {
@@ -135,7 +168,7 @@ func TestLanternCommands(t *testing.T) {
 	assert.Contains(t, said(told), "You have no lantern.")
 
 	lantern := items.New(lanternItemID)
-	require.Equal(t, 24, lantern.Uses, "a new lantern comes full")
+	require.Equal(t, 24, oil(lantern), "a new lantern comes full")
 	c.Items = append(c.Items, lantern)
 	_, _ = m.userCommand("lantern", user, room, 0)
 	assert.Contains(t, said(told), "Hold your lantern first")
@@ -171,7 +204,7 @@ func TestLanternCommands(t *testing.T) {
 	// An empty lantern won't light; lamp oil through the core fill command
 	// fills it.
 	l := c.Equipment.Offhand
-	l.Uses = emptyLantern
+	l.Uses = 1
 	c.Equipment.Offhand = l
 	_, _ = m.userCommand("lantern", user, room, 0)
 	assert.Contains(t, said(told), "out of oil")
@@ -183,11 +216,40 @@ func TestLanternCommands(t *testing.T) {
 	c.Items = append(c.Items, items.New(lampOilItemID))
 	_, _ = usercommands.Fill("lantern", user, room, 0)
 	assert.Contains(t, said(told), "You fill your")
-	assert.Equal(t, 24, c.Equipment.Offhand.Uses)
+	assert.Equal(t, 24, oil(c.Equipment.Offhand))
 	_, found := findItem(c.Items, lampOilItemID)
 	assert.False(t, found, "the flask is used up")
 	_, _ = usercommands.Fill("lantern", user, room, 0)
 	assert.Contains(t, said(told), "already full")
+
+	// Water fills are left to the water code.
+	assert.False(t, fillLantern("waterskin", user))
+	assert.False(t, fillLantern("", user), "a bare fill tops up water containers, as before")
+
+	// With two lanterns in the pack, the emptier one is filled.
+	c.Equipment.Offhand = items.Item{}
+	fullOne, emptyOne := items.New(lanternItemID), items.New(lanternItemID)
+	emptyOne.Uses = 1
+	c.Items = []items.Item{fullOne, emptyOne, items.New(lampOilItemID)}
+	_, _ = usercommands.Fill("lantern", user, room, 0)
+	assert.Contains(t, said(told), "You fill your")
+	assert.Equal(t, 24, oil(c.Items[1]), "the empty lantern is filled, not the full one")
+}
+
+// The real round listener, over the online players: a lit, held lantern
+// burns and keeps its light.
+func TestTheRoundListenerBurnsOnlinePlayersLanterns(t *testing.T) {
+	user, _, told := world(t)
+	c := user.Character
+	start := util.GetRoundCount() + 10
+	c.Equipment.Offhand = items.Item{ItemId: lanternItemID, Uses: 5, Lit: true, LastUsedRound: start}
+	m := &LightModule{}
+	m.onNewRound(events.NewRound{RoundNumber: start + 1})
+	assert.True(t, liveBuff(c.GetBuffs(lanternBuffID)), "the listener lights an online player's lantern")
+	perHourRounds := uint64(gametimeRoundsPerDay() / 24)
+	m.onNewRound(events.NewRound{RoundNumber: start + perHourRounds})
+	assert.Equal(t, 3, oil(c.Equipment.Offhand), "and burns its oil by the game hour")
+	said(told)
 }
 
 func TestATorchIsUsedUpAndBurns(t *testing.T) {
@@ -208,6 +270,12 @@ func TestATorchIsUsedUpAndBurns(t *testing.T) {
 
 	_, _ = m.userCommand("", user, room, 0)
 	assert.Contains(t, said(told), "You carry a burning torch.")
+
+	c.Items = append(c.Items, items.New(torchItemID))
+	_, _ = m.userCommand("torch", user, room, 0)
+	assert.Contains(t, said(told), "still burning", "a second torch isn't wasted on the first")
+	_, found = findItem(c.Items, torchItemID)
+	assert.True(t, found, "and stays in the pack")
 }
 
 // A save from before light gear: its lantern lit whenever worn, through the
@@ -215,7 +283,7 @@ func TestATorchIsUsedUpAndBurns(t *testing.T) {
 // and copyover do) drops that buff, since the lantern no longer grants it,
 // and the lantern comes back full of oil and dark.
 func TestAnOldSavesAlwaysOnLanternLightIsDropped(t *testing.T) {
-	items.SetTestItemSpec(&items.ItemSpec{ItemId: lanternItemID, Name: "lantern", NameSimple: "lantern", Type: items.Offhand, Uses: 24})
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: lanternItemID, Name: "lantern", NameSimple: "lantern", Type: items.Offhand, Uses: 25})
 	t.Cleanup(func() { items.RemoveTestItemSpec(lanternItemID) })
 	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 1, Name: "Illumination", TriggerRate: "5 real minutes", TriggerCount: 1, Flags: []string{rooms.FlagLightSource}})
 
@@ -226,6 +294,58 @@ func TestAnOldSavesAlwaysOnLanternLightIsDropped(t *testing.T) {
 
 	require.NoError(t, c.Validate(true))
 	assert.False(t, liveBuff(c.GetBuffs(1)), "the old permanent lantern light is gone")
-	assert.Equal(t, 24, c.Equipment.Offhand.Uses, "and it comes full")
+	assert.Equal(t, 24, oil(c.Equipment.Offhand), "and it comes full")
 	assert.False(t, c.Equipment.Offhand.Lit)
+}
+
+func gametimeRoundsPerDay() int { return gametime.GetDate().RoundsPerDay }
+
+// The shipped data: a lantern carries 24 hours of oil (uses 25) and a value
+// near its market price, so it can't be bought cheap at market and sold
+// dear to a shopkeeper; the torch and lamp oil exist; both markets sell
+// all three.
+func TestShippedLightGear(t *testing.T) {
+	root := filepath.Join("..", "..")
+	read := func(rel string) map[string]any {
+		raw, err := os.ReadFile(filepath.Join(root, rel))
+		require.NoError(t, err, rel)
+		out := map[string]any{}
+		require.NoError(t, yaml.Unmarshal(raw, &out), rel)
+		return out
+	}
+	lantern := read("_datafiles/world/default/items/armor-20000/offhand/20036-lantern.yaml")
+	assert.Equal(t, 25, lantern["uses"], "24 hours of oil, plus one")
+	assert.Equal(t, 25, lantern["value"], "worth what Dunmar's market asks")
+	assert.Nil(t, lantern["wornbuffids"], "it no longer lights just by being worn")
+	assert.Equal(t, "torch", read("_datafiles/world/default/items/other-0/303-torch.yaml")["name"])
+	assert.Equal(t, "flask of lamp oil", read("_datafiles/world/default/items/other-0/304-flask_of_lamp_oil.yaml")["name"])
+
+	raw, err := os.ReadFile(filepath.Join(root, "modules/market/files/data-overlays/config.yaml"))
+	require.NoError(t, err)
+	var cfg struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId    int `yaml:"ItemId"`
+				BasePrice int `yaml:"BasePrice"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	require.NoError(t, yaml.Unmarshal(raw, &cfg))
+	selling := 0
+	for _, mkt := range cfg.Markets {
+		zone := mkt.Zone
+		ids := map[int]int{}
+		for _, g := range mkt.Goods {
+			ids[g.ItemId] = g.BasePrice
+		}
+		if _, ok := ids[46]; !ok {
+			continue // a market without camp gear
+		}
+		selling++
+		for _, id := range []int{lanternItemID, torchItemID, lampOilItemID} {
+			assert.Contains(t, ids, id, "%s sells item %d", zone, id)
+		}
+	}
+	assert.Equal(t, 2, selling, "both camp-gear markets sell light gear")
 }

@@ -20,6 +20,9 @@ your party lights you too.
   <ansi fg="command">fill lantern</ansi>.
 - The markets of Dunmar and the Old Kings Road sell lanterns, torches and
   lamp oil (<ansi fg="command">help market</ansi>).
+- Only you light a torch or lantern: a companion holding one gets no light
+  from it. A companion's light spell still lights your party.
+- Logged out with your lantern lit, it burns nothing while you are away.
 
 <ansi fg="yellow-bold">Fighting in the dark</ansi>
 
