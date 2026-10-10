@@ -1,3 +1,25 @@
+**LM1: you are the camp (2026-10-10).** This is the first [living map](designs/2026-10-10-living-map-design.md) phase. While your company is camped in the room you stand in, and you have stopped walking, the camp is your marker:
+- your figure and companions aren't drawn;
+- the tent or rough camp stands on the tile itself, with its fire (unlit, lit with smoke, or embers) and the sleeping mark;
+- the here-ring and the company badge stay.
+
+Walking out, you step out of the camp, which stays behind. Walking in, you're drawn until you arrive. An inn rest keeps your figure. The change is client-only (`campAsYou` and `drawBadge` in `window-map.js`). `help worldmap` covers it. `map-check.mjs` checks:
+- camp-as-you, and lighting the fire;
+- the inn;
+- stepping out, and walking back in.
+
+*Independent review:* 8 findings, all accepted.
+1. The design asked for a larger tent. It is now drawn a quarter larger, standing back with the fire in front.
+2. Walking into your camp, the tent was pushed aside and then jumped back. Your own camp in your room is never pushed aside now.
+3. `Company.Camp`'s `here` can lag a move. Standing in the camp room (from Room.Info) is enough.
+4. The tests read only a flag. `state()` now reports the figures and companions drawn and the fire state, and the checks use them.
+5. Dead test code was removed.
+6. A party camp in your camp room was placed beside a figure that wasn't there. That's fixed, with checks for camps hidden and Sprites off.
+7. The camp now fades in with you after a zone change.
+8. The help now covers the inn and Sprites off.
+
+The owner's decisions (unseen rooms remembered; a lantern with oil, one-time torches, tents worn out after about 50 pitches; companions disappear into the camp; order LM1, LG and LM2, then LM3) are in the design. The light-gear phase LG is added.
+
 **Living map designed; art handoff (2026-10-10).**
 - **Living map.** [Living map](designs/2026-10-10-living-map-design.md) proposes four phases from the owner's ideas:
   - LM1: your figure becomes the camp, with the fire showing its state;
