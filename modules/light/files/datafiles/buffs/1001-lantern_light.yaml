@@ -1,0 +1,8 @@
+buffid: 1001
+name: Lantern light
+description: Your lantern lights the way. It burns oil while lit (help light).
+secret: false
+triggerrate: 1 round
+triggercount: 1
+flags:
+  - lightsource

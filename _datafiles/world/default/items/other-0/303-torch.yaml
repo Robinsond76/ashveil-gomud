@@ -1,0 +1,10 @@
+itemid: 303
+name: torch
+namesimple: torch
+description: A pitch-soaked torch. Lit (light torch), it burns for about six hours
+  and lights your way; it can't be put out, and is spent when it burns down (help
+  light).
+type: object
+subtype: mundane
+value: 2
+weight: 500

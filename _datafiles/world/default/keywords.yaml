@@ -556,7 +556,7 @@ help-aliases:
   resurrect:        [resurrection]
   defeat:           [defeated, defeats, captured, captive, captives, capture, rescued, robbed, robbery, left-for-dead, reclaim, scenario, scenarios, captors, chest]
   wounds:           [wound, wound-limit, woundlimit, heal-wounds, injury, injuries, bandage, bandages, splint, splints, physician, tend]
-  light:            [darkness, dark]
+  light:            [darkness, dark, lantern, torch, lamp oil, douse]
   brawling:         [tackle, brawl, disarm, recover, throw]
   enchant:          [unenchant, uncurse]
   skulduggery:      [backstab, rogue-skills]

@@ -300,6 +300,33 @@ Markets:
         StartStock: 3
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      - ItemId: 20036 # lantern (light gear)
+        BasePrice: 25
+        MinPrice: 15
+        MaxPrice: 50
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 303 # torch (light gear)
+        BasePrice: 2
+        MinPrice: 1
+        MaxPrice: 5
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 20
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 304 # flask of lamp oil (light gear)
+        BasePrice: 4
+        MinPrice: 2
+        MaxPrice: 9
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 15
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       - ItemId: 300 # fur-lined tent (Phase 52)
         BasePrice: 90
         MinPrice: 60
@@ -642,6 +669,33 @@ Markets:
         MaxStock: 3
         TargetStock: 1
         StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 20036 # lantern (light gear)
+        BasePrice: 30
+        MinPrice: 18
+        MaxPrice: 60
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 303 # torch (light gear)
+        BasePrice: 2
+        MinPrice: 1
+        MaxPrice: 6
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 20
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 304 # flask of lamp oil (light gear)
+        BasePrice: 5
+        MinPrice: 2
+        MaxPrice: 11
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 15
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
       - ItemId: 300 # fur-lined tent (Phase 52)

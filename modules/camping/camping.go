@@ -1056,6 +1056,11 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 		}
 		spend(user.UserId, campBellsItemID)
 	}
+	if started && gear.Tent {
+		if line := m.wearTent(user.UserId, gear.TentKind); line != "" {
+			text += "\n" + line
+		}
+	}
 	if started {
 		m.settlePrepared(user.UserId, funded)
 		m.announceDuties(user.UserId)

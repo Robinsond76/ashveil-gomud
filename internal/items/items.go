@@ -74,6 +74,10 @@ type Item struct {
 	// nothing else: not the spec, the value or the roll.
 	Trophy        int            `yaml:"trophy,omitempty"`
 	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
+
+	// Lit (light gear) is a lantern lit to give light; it burns its uses as
+	// oil while lit and held (modules/light).
+	Lit bool `yaml:"lit,omitempty"`
 }
 
 func New(itemId int) Item {

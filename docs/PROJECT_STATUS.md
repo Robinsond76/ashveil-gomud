@@ -1,3 +1,24 @@
+**LG: light gear and lasting tents (2026-10-10).** This is the owner's light-gear rules ([living map design](designs/2026-10-10-living-map-design.md), LG), the phase before LM2.
+- **Torch** (new item 303). `light torch` uses one up for about six game hours (15 real minutes) of light, through the Torchlight buff. It can't be put out.
+- **Lantern** (item 20036). It no longer lights whenever worn; it burns oil.
+  - It holds 24 game hours of oil as its uses.
+  - `light lantern` (held in the off hand) and `douse lantern` turn it on and off.
+  - Lit, it gives light (the Lantern light buff) and burns an hour of oil each game hour, counted from the shared round counter.
+  - It goes out when stowed or when dry; an empty lantern's uses are -1, since `items.Validate` refills a 0.
+  - `fill lantern` refills it from a **flask of lamp oil** (new item 304), through a `RegisterFillHandler` hook on the core `fill`.
+  - Its lit state is the new `items.Item.Lit`, so it persists with the item.
+- **Tents** (items 46 and 300–302) have 50 uses. A rest wears one (`wearTent`, as the bells), and the last says it's worn out.
+- **Markets:** Dunmar and the Trappers' Post sell lanterns, torches and lamp oil.
+- **Help:** `help light` covers torches and lanterns, with aliases (lantern, torch, lamp oil, douse); `help camp gear` covers tent wear. The camp lesson gains a light hint and tent wear, and its map hint names camp-as-you.
+- **Tests:**
+  - the burn arithmetic;
+  - lit, dark, stowed and dry lanterns;
+  - the real `light`, `douse` and `fill` commands;
+  - a torch used up;
+  - an old save's always-on lantern light dropped on load;
+  - tent wear through `startRest`;
+  - the help pages.
+
 **LM1: you are the camp (2026-10-10).** This is the first [living map](designs/2026-10-10-living-map-design.md) phase. While your company is camped in the room you stand in, and you have stopped walking, the camp is your marker:
 - your figure and companions aren't drawn;
 - the tent or rough camp stands on the tile itself, with its fire (unlit, lit with smoke, or embers) and the sleeping mark;
