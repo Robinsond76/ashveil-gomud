@@ -112,6 +112,8 @@ add("rat-big", "S", "rodent", beasts.rat_big, ["big rat"], "rat")
 add("wolf-timber", "M", "canine", beasts.wolf, ["timber wolf"])
 add("wolf-snow", "M", "canine", beasts.wolf_snow, ["snow wolf"], "wolf-timber")
 add("dog-junkyard", "M", "canine", beasts.dog_junkyard, ["junkyard dog"])
+add("warhound", "M", "canine", beasts.dog_junkyard, ["warhound"], "dog-junkyard",
+    note="the Beast Tamer's warhound (39e): A7 art; the 1x placeholder is the junkyard dog")
 add("spider-hatchling", "S", "spider", beasts.spider_hatchling, ["spider hatchling", "baby spider"])
 add("spider-large", "M", "spider", beasts.spider_large, ["large spider"])
 add("spider-warrior", "M", "spider", beasts.spider_warrior, ["spider warrior"], "spider-large")

@@ -37,6 +37,391 @@
   ],
   "source": "imported"
  },
+ "battle/backgrounds/catacombs.png": {
+  "biomes": [
+   "dungeon"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/cave.png": {
+  "biomes": [
+   "cave"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/city.png": {
+  "biomes": [
+   "city",
+   "fort"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/deep-web.png": {
+  "biomes": [
+   "spiderweb"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/desert.png": {
+  "biomes": [
+   "desert"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/forest.png": {
+  "biomes": [
+   "forest"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/highlands.png": {
+  "biomes": [
+   "mountains",
+   "cliffs"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/ice-keep.png": {
+  "biomes": [],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/interior.png": {
+  "biomes": [
+   "house"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/plains.png": {
+  "biomes": [
+   "land",
+   "farmland",
+   "default"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/road.png": {
+  "biomes": [
+   "road"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/shore.png": {
+  "biomes": [
+   "shore",
+   "water"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/slums.png": {
+  "biomes": [
+   "slums"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/snowfield.png": {
+  "biomes": [
+   "snow"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/swamp.png": {
+  "biomes": [
+   "swamp"
+  ],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
+ "battle/backgrounds/training-yard.png": {
+  "biomes": [],
+  "density": 2,
+  "frame": [
+   640,
+   360
+  ],
+  "frames": 1,
+  "ground_band": [
+   16,
+   100,
+   304,
+   176
+  ],
+  "kind": "battle-background",
+  "set": "S3",
+  "size": [
+   640,
+   360
+  ],
+  "source": "imported"
+ },
  "battle/ui/acting-arrow.png": {
   "anchor": "center",
   "density": 4,
@@ -151,6 +536,3749 @@
    64
   ],
   "source": "imported"
+ },
+ "battle/units/acolyte-dark/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "cultist",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "dark acolyte",
+   "dark acolyte trainer"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/adventurer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/alchemist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit alchemist"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/angel/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "summon",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "angel"
+  ],
+  "note": "a Hierarch's summon",
+  "set": "S5",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/apothecary/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "alchemist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "alchemist"
+ },
+ "battle/units/arbalist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit arbalist"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/arcanist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/archmage/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/archon/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/assassin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "rogue line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "rogue"
+ },
+ "battle/units/bastion/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "arbalist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "arbalist"
+ },
+ "battle/units/bats-echo/idle.png": {
+  "anchor": "center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "cave",
+  "floating": true,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "echo bats"
+  ],
+  "note": "a flying swarm; no ground baseline",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/bearward/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "beasttamer line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "beasttamer"
+ },
+ "battle/units/beastlord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "beasttamer line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "beasttamer"
+ },
+ "battle/units/beasttamer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit beasttamer"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/blackguard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "warrior line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "warrior"
+ },
+ "battle/units/blood-priest/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "cleric line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "cleric"
+ },
+ "battle/units/bombardier/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "alchemist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "alchemist"
+ },
+ "battle/units/bone-warden/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "undead",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "bone warden"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/bonecrafter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "undead",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "bonecrafter"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/bonesetter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "poacher bonesetter",
+   "back-alley bonesetter"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/brigand/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "road brigand"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/cleric/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit cleric"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/coven-mother/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "witch line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "witch"
+ },
+ "battle/units/coven-sage/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "witch line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "witch"
+ },
+ "battle/units/creeper-abyssal/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "cave",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "abyssal creeper"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "creeper-cave"
+ },
+ "battle/units/creeper-cave/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "cave",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "cave creeper"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/crocodile/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "reptile",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "crocodile"
+  ],
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/crone-of-ash/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "witch line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "witch"
+ },
+ "battle/units/deadeye/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "arbalist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "arbalist"
+ },
+ "battle/units/demon/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "summon",
+  "feet_baseline": 128,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "demon"
+  ],
+  "note": "a Demonologist's summon",
+  "set": "S5",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/demonologist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "cleric line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "cleric"
+ },
+ "battle/units/dog-junkyard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "canine",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "junkyard dog"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/doll/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "construct",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "doll"
+  ],
+  "note": "a Doll Master's painted wooden puppet (39d)",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/dollmaster/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit dollmaster"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/dragon-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "beasttamer line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "beasttamer"
+ },
+ "battle/units/dragon-tamer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "beasttamer line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "beasttamer"
+ },
+ "battle/units/drake-hatchling/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "creature",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "drake hatchling"
+  ],
+  "note": "a Beast Tamer's bonded drake (39e)",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/dread-knight/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "warrior line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "warrior"
+ },
+ "battle/units/druid/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "cleric line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "cleric"
+ },
+ "battle/units/duelist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "rogue line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "rogue"
+ },
+ "battle/units/dummy-training/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "training",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "training dummy"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/earthspeaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "shaman line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shaman"
+ },
+ "battle/units/elder-druid/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "cleric line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "cleric"
+ },
+ "battle/units/ent/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "plant",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "ent"
+  ],
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/faerie/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "fey",
+  "feet_baseline": 114,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "faerie folk"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/falcon-marshal/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "gryphon-rider line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "gryphon-rider"
+ },
+ "battle/units/fungus/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "plant",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "sentient fungus"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/goblin-hexer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "goblin",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "goblin hexer"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "goblin"
+ },
+ "battle/units/goblin-loot/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "goblin",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "loot goblin"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "goblin"
+ },
+ "battle/units/goblin-shaman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "goblin",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "goblin shaman"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "goblin"
+ },
+ "battle/units/goblin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "goblin",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "goblin"
+  ],
+  "note": "base for the variants and random encounters",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/golem-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "dollmaster line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dollmaster"
+ },
+ "battle/units/golemancer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "dollmaster line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dollmaster"
+ },
+ "battle/units/grand-puppeteer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "dollmaster line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dollmaster"
+ },
+ "battle/units/grave-chanter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "cultist",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "grave chanter"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/grenadier/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "alchemist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "alchemist"
+ },
+ "battle/units/gryphon-knight/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "gryphon-rider line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "gryphon-rider"
+ },
+ "battle/units/gryphon-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "gryphon-rider line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "gryphon-rider"
+ },
+ "battle/units/gryphon-rider/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit gryphon-rider"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/guard-captain/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "town guard",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "captain of the guard"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "guard"
+ },
+ "battle/units/guard-royal/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "town guard",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "king's guard"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "guard"
+ },
+ "battle/units/guard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "town guard",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "guard"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/hag/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "witch line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "witch"
+ },
+ "battle/units/halberdier/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit halberdier"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/hatamoto/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "samurai line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "samurai"
+ },
+ "battle/units/hedge-witch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "witch line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "witch"
+ },
+ "battle/units/hierarch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "cleric line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "cleric"
+ },
+ "battle/units/high-sorcerer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/hound/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "creature",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "a hound recruit (38e)",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/houndmaster/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "beasttamer line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "beasttamer"
+ },
+ "battle/units/hunter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "ranger line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ranger"
+ },
+ "battle/units/ice-guardian/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "ice",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "ice guardian"
+  ],
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/ice-warrior/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "ice",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "ice warrior"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/imp-forest/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "fey",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "forest imp"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/kensai/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "samurai line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "samurai"
+ },
+ "battle/units/kenshi/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "samurai line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "samurai"
+ },
+ "battle/units/knight/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "warrior line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "warrior"
+ },
+ "battle/units/lich/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "undead",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "lich"
+  ],
+  "note": "boss",
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/linebreaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "halberdier line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "halberdier"
+ },
+ "battle/units/marionettist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "dollmaster line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dollmaster"
+ },
+ "battle/units/marksman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "ranger line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ranger"
+ },
+ "battle/units/mercenary/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "warrior line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "warrior"
+ },
+ "battle/units/mistweaver/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "shaman line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shaman"
+ },
+ "battle/units/mountain-speaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "shaman line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shaman"
+ },
+ "battle/units/mutagenist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "alchemist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "alchemist"
+ },
+ "battle/units/necromancer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/nightblade/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "rogue line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "rogue"
+ },
+ "battle/units/ogre-forest/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "ogre",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "forest ogre"
+  ],
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/packlord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "beasttamer line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "beasttamer"
+ },
+ "battle/units/paladin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "warrior line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "warrior"
+ },
+ "battle/units/panacean/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "alchemist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "alchemist"
+ },
+ "battle/units/pathfinder/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "rogue line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "rogue"
+ },
+ "battle/units/poacher-shieldman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "poacher shieldman"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/poacher/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "lake poacher"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/priest/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "cleric line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "cleric"
+ },
+ "battle/units/puppeteer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "dollmaster line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dollmaster"
+ },
+ "battle/units/ranger/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit ranger"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/rat-big/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "rodent",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "big rat"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported",
+  "variant_of": "rat"
+ },
+ "battle/units/rat/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "rodent",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "rat"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/ravager/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "ranger line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ranger"
+ },
+ "battle/units/reaper/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "halberdier line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "halberdier"
+ },
+ "battle/units/rogue/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit rogue"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/ronin/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "samurai line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "samurai"
+ },
+ "battle/units/ruffian-dangerous/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "dangerous ruffian"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ruffian"
+ },
+ "battle/units/ruffian-enforcer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "ruffian enforcer"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/ruffian/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "bandit",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "ruffian"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/samurai/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit samurai"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/scout/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "rogue line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "rogue"
+ },
+ "battle/units/sentinel/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "ranger line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ranger"
+ },
+ "battle/units/shadow-master/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "shadow guild",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "shadow master"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shadow-trainee"
+ },
+ "battle/units/shadow-trainee/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "shadow guild",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "shadow trainee"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/shaman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit shaman"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/sharpshooter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "arbalist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "arbalist"
+ },
+ "battle/units/shogun/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "samurai line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "samurai"
+ },
+ "battle/units/siege-master/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "arbalist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "arbalist"
+ },
+ "battle/units/siegebreaker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "arbalist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "arbalist"
+ },
+ "battle/units/skeleton/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "undead",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "skeleton"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/skyscout/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "gryphon-rider line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "gryphon-rider"
+ },
+ "battle/units/snow-floof/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "snow",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "snow floof"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/sorcerer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/spider-hatchling/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2.6666666666666665,
+  "facing": "right",
+  "family": "spider",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "spider hatchling",
+   "baby spider"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "S",
+  "source": "imported"
+ },
+ "battle/units/spider-large/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "spider",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "large spider"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/spider-queen/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "spider",
+  "feet_baseline": 173,
+  "frame": [
+   192,
+   192
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "spider queen"
+  ],
+  "note": "boss",
+  "set": "S3",
+  "size": [
+   768,
+   192
+  ],
+  "size_class": "XL",
+  "source": "imported"
+ },
+ "battle/units/spider-warrior/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "spider",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "spider warrior"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "spider-large"
+ },
+ "battle/units/stalker-cave/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "cave",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "cave stalker"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/stalker/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "ranger line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ranger"
+ },
+ "battle/units/stone-golem/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "creature",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "a stone golem recruit (38e)",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/stormcaller/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "shaman line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shaman"
+ },
+ "battle/units/straw-archer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "training",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "straw archer"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "straw-footman"
+ },
+ "battle/units/straw-footman/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "training",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "straw footman"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/string-sovereign/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "dollmaster line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dollmaster"
+ },
+ "battle/units/sweeper/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "halberdier line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "halberdier"
+ },
+ "battle/units/sword-saint/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "samurai line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "samurai"
+ },
+ "battle/units/swordmaster/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "rogue line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "rogue"
+ },
+ "battle/units/tempest-lancer/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "halberdier line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "halberdier"
+ },
+ "battle/units/tempest-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "shaman line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shaman"
+ },
+ "battle/units/theurgist/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/transmuter/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "alchemist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "alchemist"
+ },
+ "battle/units/unknown-beast/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "fallback",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "fallback silhouette",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/unknown-humanoid/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "fallback",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "fallback silhouette",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/unknown-large/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "fallback",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "fallback silhouette",
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/valkyrie/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "halberdier line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "halberdier"
+ },
+ "battle/units/vanguard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "halberdier line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "halberdier"
+ },
+ "battle/units/veil-mother/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "shaman line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "shaman"
+ },
+ "battle/units/war-bear/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "creature",
+  "feet_baseline": 129,
+  "frame": [
+   144,
+   144
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "war bear"
+  ],
+  "note": "a Beast Tamer's bonded bear (39e)",
+  "set": "S3",
+  "size": [
+   576,
+   144
+  ],
+  "size_class": "L",
+  "source": "imported"
+ },
+ "battle/units/warden-of-the-wall/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "arbalist line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "arbalist"
+ },
+ "battle/units/warden/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 112,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "ranger line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "ranger"
+ },
+ "battle/units/warhound/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "canine",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "warhound"
+  ],
+  "note": "the Beast Tamer's warhound (39e): A7 art; the 1x placeholder is the junkyard dog",
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "dog-junkyard"
+ },
+ "battle/units/warlock/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "wizard line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wizard"
+ },
+ "battle/units/warlord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "warrior line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "warrior"
+ },
+ "battle/units/warrior/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit warrior"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/wise-one/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "witch line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "witch"
+ },
+ "battle/units/witch/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit witch"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/wizard/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "recruit wizard"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/wolf-snow/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "canine",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "snow wolf"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "wolf-timber"
+ },
+ "battle/units/wolf-timber/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "canine",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "names": [
+   "timber wolf"
+  ],
+  "set": "S3",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported"
+ },
+ "battle/units/wyvern-lord/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "gryphon-rider line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "gryphon-rider"
+ },
+ "battle/units/wyvern-rider/idle.png": {
+  "anchor": "bottom-center",
+  "density": 2,
+  "facing": "right",
+  "family": "promoted class",
+  "feet_baseline": 115,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 180,
+  "frames": 4,
+  "kind": "battle-unit",
+  "note": "gryphon-rider line",
+  "set": "S5",
+  "size": [
+   512,
+   128
+  ],
+  "size_class": "M",
+  "source": "imported",
+  "variant_of": "gryphon-rider"
  },
  "map/camp/camp-rough-ally.png": {
   "anchor": "center",

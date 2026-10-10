@@ -143,11 +143,11 @@ very large files).
 | Small camp piece and icon | 16×16 | 256×256 | 64×64 |
 | Marker (12 px) | 12×12 | 192×192 | 48×48 |
 | Small marker (8 px) | 8×8 | 128×128 | 32×32 |
-| Battle figure, size S | 48×48 frame; an upright figure ~34–38 tall, a low or wide creature may be shorter | figure ≥ 240 px tall | 192×192 |
-| Battle figure, size M | 64×64, figure ~40–46 tall | figure ≥ 320 px tall | 256×256 |
-| Battle figure, size L | 72×72 (covers two cells) | figure ≥ 480 px tall | 288×288 |
-| Battle figure, size XL | 96×96 (boss) | figure ≥ 640 px tall | 384×384 |
-| Battle background | 320×180 | 2560×1440 | 1280×720 |
+| Battle figure, size S | 48×48 frame; an upright figure ~34–38 tall, a low or wide creature may be shorter | figure ≥ 240 px tall | 128×128 (E3: the delivered art's real resolution, 8/3×) |
+| Battle figure, size M | 64×64, figure ~40–46 tall | figure ≥ 320 px tall | 128×128 (E3: 2×, exact to the art's grain) |
+| Battle figure, size L | 72×72 (covers two cells) | figure ≥ 480 px tall | 144×144 (E3: 2×) |
+| Battle figure, size XL | 96×96 (boss) | figure ≥ 640 px tall | 192×192 (E3: 2×) |
+| Battle background | 320×180 | 2560×1440 | 640×360 (E3: 2×, exact to the art's 4 px grain) |
 | App icon | 512×512 | 1024×1024 | 512×512 |
 
 **Size budgets after import** (the lead's importer enforces these; you

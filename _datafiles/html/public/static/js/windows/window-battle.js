@@ -80,7 +80,7 @@
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
     // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
-    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'war-bear', drake: 'drake-hatchling' };
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'warhound', bear: 'war-bear', drake: 'drake-hatchling' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
@@ -206,6 +206,12 @@
     let overlay = null;
     let canvas = null;
     let ctx = null;
+    // pxScale (E3) is device pixels per picture pixel: the canvas's backing
+    // store is W x H times it, so high-density art and text are drawn at
+    // the screen's own resolution while every drawing call keeps using the
+    // 320 x 180 picture coordinates.
+    let pxScale = 1;
+    let drawnBackdrop = null;   // E3: the backdrop art last drawn, for the browser check
     let badge = null;
     let minimised = false;
     let userOpened = false;     // opened by hand in manual mode
@@ -631,9 +637,24 @@
     }
 
     // hasArt answers the planner: does this unit have art for that pose?
+    // It asks of the same sheets drawBody draws (artKey), so a promoted
+    // member whose class has no pose sheet is nudged rather than frozen.
     function hasArt(id, anim) {
         const u = id === '*company*' ? null : units.get(id);
-        return !!(u && art('battle/units/' + u.sprite + '/' + anim + '.png'));
+        return !!(u && art('battle/units/' + artKey(u) + '/' + anim + '.png'));
+    }
+
+    // artKey is the sprite key a unit's sheets are drawn from: a promoted
+    // member (40s5) keeps to its class's sheets once its idle exists, so it
+    // never flickers into the base class's poses.
+    // It goes by the manifest, not by whether the image has loaded yet,
+    // so a member's first blows plan and draw the same class's sheets.
+    function artKey(u) {
+        if (!u.promoted) { return u.sprite; }
+        const idle = 'battle/units/' + u.promoted + '/idle.png';
+        if (!manifest || !manifest.files[idle]) { return u.sprite; }
+        art(idle);   // starts the load
+        return u.promoted;
     }
 
     // playEvents plans a batch and schedules it. Hidden, or when the screen
@@ -1015,12 +1036,27 @@
         document.body.appendChild(badge);
 
         window.addEventListener('resize', fit);
+        watchResolution();
+        // The column fit() measures, not the screen itself (whose height
+        // follows the canvas fit() sizes, which would loop); refit on the
+        // next frame.
+        const column = document.getElementById('battle-pane');
+        if (window.ResizeObserver && column) {
+            let queued = false;
+            new ResizeObserver(() => {
+                if (queued) { return; }
+                queued = true;
+                requestAnimationFrame(() => { queued = false; fit(); });
+            }).observe(column.parentElement || column);
+        }
     }
 
     // fit scales the canvas by a whole number (Phase 82a): the largest that
     // fits the column's width and half its height, 1x at the least, so the
     // pixel art stays crisp and the terminal below keeps its lines. At 1x
     // the picture is 320 px wide, which fits a 360 px phone.
+    // E3: the backing store follows the shown size times the device pixel
+    // ratio (pxScale), so the picture is drawn at device pixels.
     function fit() {
         if (!canvas) { return; }
         const pane = document.getElementById('battle-pane');
@@ -1030,6 +1066,41 @@
         const s = Math.max(1, Math.min(4, Math.floor(Math.min(width / W, height / H))));
         canvas.style.width = (W * s) + 'px';
         canvas.style.height = (H * s) + 'px';
+        // Capped so a very large, very dense screen doesn't redraw a huge
+        // bitmap every frame (8 is 4x shown on a ratio-2 screen).
+        const k = Math.min(8, Math.max(1, s * (window.devicePixelRatio || 1)));
+        if (k !== pxScale || canvas.width !== Math.round(W * k)) {
+            pxScale = k;
+            canvas.width = Math.round(W * k);
+            canvas.height = Math.round(H * k);
+        }
+        // Resizing clears the bitmap; draw() is a no-op while hidden, and a
+        // later fit (the screen shown again, see watchResolution) redraws.
+        draw();
+    }
+
+    // watchResolution refits when the pixel ratio changes without a resize
+    // (a window moved to another screen), and when the screen's box changes
+    // size, which includes being shown again after a resize while hidden.
+    function watchResolution() {
+        if (window.matchMedia) {
+            const mq = window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+            const again = () => { fit(); watchResolution(); };
+            if (mq.addEventListener) { mq.addEventListener('change', again, { once: true }); }
+        }
+    }
+
+    // artSmooth sets smoothing for drawing art at <scale> times its 1x
+    // size. The battle art (E3) is exact pixel art at density 2 (8/3 for
+    // small creatures): where each art pixel lands on a whole number of
+    // device pixels it is drawn crisp, as 1x art always is; otherwise it is
+    // smoothed so its pixels don't land unevenly.
+    function artSmooth(info, scale) {
+        const d = (info && info.density) || 1;
+        const per = pxScale * (scale || 1) / d;
+        const crisp = d <= 1 || Math.abs(per - Math.round(per)) < 0.001;
+        ctx.imageSmoothingEnabled = !crisp;
+        if (!crisp) { ctx.imageSmoothingQuality = 'high'; }
     }
 
     function paintChrome() {
@@ -1259,15 +1330,18 @@
             }
             if (st.nudge || !anim) {
                 // No art for this pose: the idle figure moves a little.
-                switch (st.anim === '' ? st.role : (FALLBACK_NAME[st.anim] || st.anim)) {
+                const name = st.anim === '' ? (st.want || st.role) : st.anim;
+                switch (FALLBACK_NAME[name] || name) {
                 case 'attack': case 'shoot': if (!st.lunge) { pose.dx += dir * 5 * tri(p); } break;
                 case 'hurt': case 'block': case 'parry': pose.dx -= dir * 3 * tri(p); break;
-                case 'dodge': pose.dx -= dir * 6 * tri(p); pose.dy -= 2 * tri(p); break;
+                case 'dodge': pose.dx -= dir * 6 * tri(p); if (full) { pose.dy -= 2 * tri(p); } break;
                 case 'windup': pose.dx -= dir * 3; break;
-                case 'cast': pose.dy -= Math.abs(Math.sin(p * Math.PI * 4)); break;
-                case 'prone': pose.squash = p < 0.6 ? 0.45 : 0.45 + (p - 0.6) * 1.4; break;
+                // Reduced motion keeps the idle figure still but for a
+                // flinch, a step and a fall: no bobbing or hopping.
+                case 'cast': if (full) { pose.dy -= Math.abs(Math.sin(p * Math.PI * 4)); } break;
+                case 'prone': pose.squash = Math.min(1, p < 0.6 ? 0.45 : 0.45 + (p - 0.6) * 1.4); break;
                 case 'down': pose.squash = 1 - 0.7 * p; break;
-                case 'victory': pose.dy -= 2 * Math.abs(Math.sin(p * Math.PI * 2)); break;
+                case 'victory': if (full) { pose.dy -= 2 * Math.abs(Math.sin(p * Math.PI * 2)); } break;
                 default: break;
                 }
             }
@@ -1295,7 +1369,13 @@
         const s = scene();
         // A zone's own backdrop, when the art set has one, comes first.
         const bg = (zoneSlug() && art('battle/backgrounds/zone-' + zoneSlug() + '.png')) || art('battle/backgrounds/' + s.bg + '.png');
-        if (bg) { ctx.drawImage(bg.img, 0, 0, W, H); return; }
+        drawnBackdrop = bg ? { density: bg.info.density || 1, size: bg.info.size || null } : null;
+        if (bg) {
+            artSmooth(bg.info);
+            ctx.drawImage(bg.img, 0, 0, W, H);
+            ctx.imageSmoothingEnabled = false;
+            return;
+        }
         const g = ctx.createLinearGradient(0, 0, 0, 100);
         g.addColorStop(0, s.sky[0]);
         g.addColorStop(1, s.sky[1]);
@@ -1372,6 +1452,7 @@
 
     function drawBody(u, x, y, now, pose, dir, dim) {
         u.tinted = false;
+        u.drawnArt = null;
         if (u.fallen) {
             // Lying down: a flat shape, the figure's body hue.
             const c = u.side !== 'enemy' ? (CLASS_HUES[u.klass] || DEFAULT_HUES)[0] : '#6a4a4a';
@@ -1385,10 +1466,8 @@
             return;
         }
         // Art: the pose's own sheet when there is one (S4), else the idle
-        // loop, anchored bottom-centre, enemies mirrored. A promoted member
-        // (40s5) keeps to its class's sheets once its idle exists, so it never
-        // flickers into the base class's poses.
-        const key = u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
+        // loop, anchored bottom-centre, enemies mirrored (artKey).
+        const key = artKey(u);
         const look = window.SpriteTint ? window.SpriteTint.look(u.skin, u.hair) : null;
         const posedPath = pose.anim ? 'battle/units/' + key + '/' + pose.anim + '.png' : '';
         const posedArt = posedPath ? art(posedPath) : null;
@@ -1400,11 +1479,33 @@
             const frames = sheet.info.frames || 1;
             const i = posed && !pose.loop ? Math.min(frames - 1, Math.floor(pose.p * frames))
                 : Math.floor(now / (sheet.info.frame_ms || 250)) % frames;
+            // A density-N sheet (E3) is drawn at its 1x size. The bottom of
+            // the feet row (feet_baseline) lands 1 picture pixel above the
+            // ground point, as on the 1x sheets (feet on row frame - 2), so
+            // both kinds stand alike.
+            const d = sheet.info.density || 1;
+            const dw = fw / d, dh = fh / d;
+            u.drawnArt = { path: posed ? posedPath : sheetPath, density: d };
+            // A pose sheet stands on its idle's feet row when the idle has one
+            // at the same scale, so a lunging foot or a low weapon tip in the
+            // pose never makes the figure jump as it switches sheets.
+            // A floating unit's idle has no feet row, so its poses don't either.
+            const idleInfo = posed && manifest ? manifest.files['battle/units/' + key + '/idle.png'] : null;
+            const sameScale = idleInfo && idleInfo.density === sheet.info.density && (idleInfo.frame || [])[1] === fh;
+            const feet = !sameScale ? sheet.info.feet_baseline
+                : (typeof idleInfo.feet_baseline === 'number' ? idleInfo.feet_baseline : undefined);
+            const top = typeof feet === 'number' ? -1 - (feet + 1) / d : -dh;
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }
             if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
-            ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            artSmooth(sheet.info, pose.scale || 1);
+            // A squashed figure (prone, falling) is scaled unevenly: smooth it.
+            if (pose.squash !== 1 && (sheet.info.density || 1) > 1) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+            }
+            ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -dw / 2, top, dw, dh);
             if (u.flash > now) {
                 // A hit tints the figure's own shape, not a box around it.
                 const t = tintLayer(fw, fh);
@@ -1416,7 +1517,7 @@
                 t.fillStyle = u.flashColor;
                 t.fillRect(0, 0, fw, fh);
                 t.globalAlpha = 1;
-                ctx.drawImage(tintCanvas, 0, 0, fw, fh, -fw / 2, -fh, fw, fh);
+                ctx.drawImage(tintCanvas, 0, 0, fw, fh, -dw / 2, top, dw, dh);
             }
             ctx.restore();
             u.tinted = u.flash > now;
@@ -1589,6 +1690,7 @@
         const now = Date.now();
         sched.due(now).forEach(applyOp);
         ctx.save();
+        ctx.setTransform(pxScale, 0, 0, pxScale, 0, 0);
         if (shakeUntil > now) { ctx.translate(Math.round((Math.random() - 0.5) * 3), 0); }
         ctx.imageSmoothingEnabled = false;
         drawBackground();
@@ -1960,12 +2062,17 @@
                 shaking: shakeUntil > Date.now(),
                 legend: legendOf(Array.from(units.values()).filter(u => u.cell)),
                 badge: !!badge && badge.classList.contains('show'),
+                // E3: device pixels per picture pixel and the backing store.
+                pxScale,
+                backing: canvas ? [canvas.width, canvas.height] : null,
+                backdrop: drawnBackdrop,
                 units: Array.from(units.values()).map(u => ({
                     id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", skin: u.skin || '', hair: u.hair || '', cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
                     pose: u.cell ? poseOf(u, slotOf(u), Date.now()) : null,
                     at: u.cell ? slotOf(u) : null,
+                    art: u.drawnArt || null,
                 })),
             };
         },

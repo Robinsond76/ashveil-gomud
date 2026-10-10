@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"image"
 	"image/png"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,14 +30,23 @@ type spriteMeta struct {
 	// Density is how many art pixels make one 1x pixel; 0 means 1. Imported
 	// high-density art is smooth-shaded, so the palette and hard-edge rules
 	// apply only at density 1.
-	Density      int    `json:"density"`
-	FeetBaseline int    `json:"feet_baseline"`
-	FrameMs      int    `json:"frame_ms"`
-	Source       string `json:"source"`
+	Density      float64 `json:"density"`
+	FeetBaseline int     `json:"feet_baseline"`
+	FrameMs      int     `json:"frame_ms"`
+	Source       string  `json:"source"`
 }
 
 func (m spriteMeta) density() int {
 	if m.Density < 1 {
+		return 1
+	}
+	return int(m.Density)
+}
+
+// densityF is the exact density: battle art (E3) may have a fractional one,
+// 8/3 for small creatures.
+func (m spriteMeta) densityF() float64 {
+	if m.Density <= 0 {
 		return 1
 	}
 	return m.Density
@@ -161,7 +171,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 				t.Errorf("%s: %dx%d is not %d frames x %d rows of %v", rel, b.Dx(), b.Dy(), meta.Frames, rows, meta.Frame)
 			}
 		}
-		if meta.density() > 1 || meta.Source == "imported" {
+		if meta.densityF() > 1 || meta.Source == "imported" {
 			continue
 		}
 		// Hard edges (no partial alpha) and only master palette colors.
@@ -401,13 +411,20 @@ func TestBattleUnitSpritesFollowAnchorRules(t *testing.T) {
 			continue
 		}
 		// L and XL are drawn large and shrunk 3/4 so they cover two
-		// formation cells at 1x, not three (40s review).
-		if want, ok := sizes[meta.SizeClass]; !ok || want != fs {
-			t.Errorf("%s: size class %q wants frame %d, got %d", rel, meta.SizeClass, want, fs)
+		// formation cells at 1x, not three (40s review). Imported art (E3)
+		// is the 1x frame times its density, and its feet sit on its own
+		// feet_baseline row rather than frame-2.
+		if want, ok := sizes[meta.SizeClass]; !ok || math.Abs(float64(want)*meta.densityF()-float64(fs)) > 0.01 {
+			t.Errorf("%s: size class %q wants frame %d x density %.3g, got %d", rel, meta.SizeClass, want, meta.densityF(), fs)
+		}
+		feet := fs - 2
+		if meta.Source == "imported" {
+			feet = meta.FeetBaseline
 		}
 		floating := strings.Contains(rel, "bats-echo")
 		differ := false
 		var first []uint32
+		lowestOfAll := -1
 		for f := 0; f < 4; f++ {
 			lowest, count := -1, 0
 			var px []uint32
@@ -424,8 +441,14 @@ func TestBattleUnitSpritesFollowAnchorRules(t *testing.T) {
 			if count < 40 {
 				t.Errorf("%s frame %d is nearly empty", rel, f)
 			}
-			if !floating && lowest != fs-2 {
-				t.Errorf("%s frame %d: lowest opaque row %d, want %d", rel, f, lowest, fs-2)
+			if lowest > lowestOfAll {
+				lowestOfAll = lowest
+			}
+			if !floating && meta.Source != "imported" && lowest != feet {
+				t.Errorf("%s frame %d: lowest opaque row %d, want %d", rel, f, lowest, feet)
+			}
+			if !floating && meta.Source == "imported" && (lowest > feet || feet-lowest > 2) {
+				t.Errorf("%s frame %d: lowest opaque row %d, want within 2 rows above feet %d", rel, f, lowest, feet)
 			}
 			if f == 0 {
 				first = px
@@ -435,6 +458,9 @@ func TestBattleUnitSpritesFollowAnchorRules(t *testing.T) {
 		}
 		if !differ {
 			t.Errorf("%s: the four idle frames are identical", rel)
+		}
+		if !floating && meta.Source == "imported" && lowestOfAll != feet {
+			t.Errorf("%s: lowest opaque row of the sheet %d, want feet_baseline %d", rel, lowestOfAll, feet)
 		}
 	}
 	if n < 55 {
@@ -454,22 +480,28 @@ func u32bytes(v []uint32) []byte {
 func TestBattleBackgroundsAreOpaqueAndQuietInGroundBand(t *testing.T) {
 	dir := spriteDir(t)
 	m := loadSpriteManifest(t, dir)
-	for rel := range m.Files {
+	for rel, meta := range m.Files {
 		if !strings.HasPrefix(rel, "battle/backgrounds/") {
 			continue
 		}
 		img := readSprite(t, dir, rel)
-		if img.Bounds().Dx() != 320 || img.Bounds().Dy() != 180 {
-			t.Errorf("%s: size %v", rel, img.Bounds())
+		d := meta.density()
+		if img.Bounds().Dx() != 320*d || img.Bounds().Dy() != 180*d {
+			t.Errorf("%s: size %v, want %dx%d", rel, img.Bounds(), 320*d, 180*d)
 		}
-		for y := 0; y < 180; y++ {
-			for x := 0; x < 320; x++ {
+		for y := 0; y < 180*d; y++ {
+			for x := 0; x < 320*d; x++ {
 				if _, _, _, a := img.At(x, y).RGBA(); a != 0xffff {
 					t.Fatalf("%s: transparent pixel at %d,%d", rel, x, y)
 				}
 			}
 		}
-		// Ground band: no more than 4 distinct colors in any 16x16 block below the horizon fringe.
+		// Ground band: no more than 4 distinct colors in any 16x16 block below
+		// the horizon fringe. The rule is for the code-drawn 1x backdrops;
+		// the commissioned ones (E3) are painted, approved art.
+		if meta.Source == "imported" {
+			continue
+		}
 		for by := 108; by+16 <= 176; by += 16 {
 			for bx := 16; bx+16 <= 304; bx += 16 {
 				seen := map[uint32]bool{}

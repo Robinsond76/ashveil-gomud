@@ -193,7 +193,13 @@ def write_s3(w):
         if u.floating:
             meta.update(floating=True, anchor="center")
             del meta["feet_baseline"]
-        w.canvas(f"battle/units/{u.id}/idle.png", sheet([u.frames()]), **meta)
+        frames = sheet([u.frames()])
+        w.canvas(f"battle/units/{u.id}/idle.png", frames, **meta)
+        if u.id in roster.CLASS_IDS:
+            # E3: the creation panel's look preview keeps a 1x sheet the
+            # skin and hair palette swap can repaint, since the class's
+            # imported idle is high-density art it cannot.
+            w.canvas(f"battle/units/{u.id}/look.png", frames, **dict(meta, kind="battle-look"))
     B = "battle/ui/"
     one = dict(kind="battle-ui", set="S3", frames=1)
     w.canvas(B + "cell.png", uiicons.cell(), frame=[32, 16], anchor="center", **one)
