@@ -1,3 +1,13 @@
+**Living map designed; art handoff (2026-10-10).**
+- **Living map.** [Living map](designs/2026-10-10-living-map-design.md) proposes four phases from the owner's ideas:
+  - LM1: your figure becomes the camp, with the fire showing its state;
+  - LM2: light and sight. The server sends the viewer's sight in `Gametime`; the map dims to what you can see and remembers the rest, with a torch marker and firelight;
+  - LM3: a fade and title when you cross into a zone or level, such as a cave;
+  - LM4: weather on the map.
+
+  It lists four owner decisions, and art order A13 (torch and orb markers, an optional bonfire, weather overlays).
+- **Art handoff.** The A11, A2b and A12 briefs were copied to their Drive folders (`_brief-*.md`). The A12 folder was created. A11's battle batch now names the battle art's 5 px grain.
+
 **E3: high-resolution battle screen (2026-10-10).** The approved battle art (A6–A10) is on the battle screen: 159 battle units, including the Beast Tamer's own warhound, and 16 backdrops. The picture keeps its 320×180 coordinates but is drawn at device pixels (`pxScale`, capped at 8), so text, bars and art are sharp.
 
 `scripts/sprites/import_battle.py` measures each master's pixel grain: 5 px for people, 6 for small creatures, 8 for beasts and the boss, 12 for large creatures, 4 for backdrops. It shrinks each frame by exactly that grain and stores sheets losslessly, never quantised: an exact palette where a sheet has 256 colours or fewer, else full RGBA. Every runtime frame is pixel-for-pixel the master's art, at density 2 (8/3 for small creatures), about 3.8 MB in all. The art is drawn crisp where its pixels land on whole device pixels.

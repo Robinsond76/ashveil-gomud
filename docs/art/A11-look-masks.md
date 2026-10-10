@@ -50,6 +50,7 @@ may fall outside the figure, and no gear may be marked.
 The high-resolution battle screen (E3) has landed, so the battle-idle sheets
 of the 15 base classes and the 86 advanced and elite classes (A6, A8a–A10)
 need the same masks, `art/source/A11/battle/units/<id>/idle.skin.png` and
-`idle.hair.png`, each the size and layout of its master (1 × 4 frames). Only
+`idle.hair.png`, each the size and layout of its master (1 × 4 frames of
+640 px cells with 40 px gutters), following the battle art's **5 px** grain. Only
 player and companion classes need them; creatures (A7) don't. Deliver them
 after the map masks, as a second batch of this order.

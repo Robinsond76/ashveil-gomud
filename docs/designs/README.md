@@ -11,6 +11,11 @@ current phase sequence. Its [sprite specification](2026-10-05-sprite-specificati
 lists every sprite to generate. The [high-resolution art program](../art/README.md) (2026-10-06) supersedes its craft and technical rules and splits the art into phases A0–A10 for an art agent. Phase designs 40a–40g are linked from the
 milestone's phase table.
 
+The [living map](2026-10-10-living-map-design.md) (proposed, 2026-10-10)
+phases the owner's ideas for a map that reflects the player's conditions:
+the camp as your marker (LM1), light and sight (LM2), crossing into a
+place (LM3) and weather (LM4).
+
 [Equipment families and tiers](2026-10-01-equipment-tiers-design.md)
 records the owner-approved equipment catalog for future
 equipment/progression work; it is not implemented gameplay.
