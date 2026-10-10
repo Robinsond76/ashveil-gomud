@@ -555,8 +555,49 @@
     64
    ]
   },
+  "battle/units/adventurer/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/alchemist/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit alchemist"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/alchemist/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -623,6 +664,28 @@
   },
   "battle/units/arbalist/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit arbalist"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/arbalist/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -835,6 +898,28 @@
     64
    ]
   },
+  "battle/units/beasttamer/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit beasttamer"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/blackguard/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -989,6 +1074,28 @@
   },
   "battle/units/cleric/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit cleric"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/cleric/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -1251,6 +1358,28 @@
   },
   "battle/units/dollmaster/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit dollmaster"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/dollmaster/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -1812,6 +1941,28 @@
     64
    ]
   },
+  "battle/units/gryphon-rider/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit gryphon-rider"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/guard-captain/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -1903,6 +2054,28 @@
   },
   "battle/units/halberdier/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit halberdier"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/halberdier/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -2624,6 +2797,28 @@
     64
    ]
   },
+  "battle/units/ranger/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit ranger"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/rat-big/idle.png": {
    "kind": "battle-unit",
    "set": "S3",
@@ -2713,6 +2908,28 @@
   },
   "battle/units/rogue/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit rogue"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/rogue/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -2843,6 +3060,28 @@
     64
    ]
   },
+  "battle/units/samurai/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit samurai"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/scout/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -2932,6 +3171,28 @@
   },
   "battle/units/shaman/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit shaman"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/shaman/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,
@@ -3762,6 +4023,28 @@
     64
    ]
   },
+  "battle/units/warrior/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit warrior"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/wise-one/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -3805,8 +4088,52 @@
     64
    ]
   },
+  "battle/units/witch/look.png": {
+   "kind": "battle-look",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit witch"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/wizard/idle.png": {
    "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit wizard"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/wizard/look.png": {
+   "kind": "battle-look",
    "set": "S3",
    "frame": [
     64,

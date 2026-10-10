@@ -206,6 +206,11 @@
     let overlay = null;
     let canvas = null;
     let ctx = null;
+    // pxScale (E3) is device pixels per picture pixel: the canvas's backing
+    // store is W x H times it, so high-density art and text are drawn at
+    // the screen's own resolution while every drawing call keeps using the
+    // 320 x 180 picture coordinates.
+    let pxScale = 1;
     let badge = null;
     let minimised = false;
     let userOpened = false;     // opened by hand in manual mode
@@ -1021,6 +1026,8 @@
     // fits the column's width and half its height, 1x at the least, so the
     // pixel art stays crisp and the terminal below keeps its lines. At 1x
     // the picture is 320 px wide, which fits a 360 px phone.
+    // E3: the backing store follows the shown size times the device pixel
+    // ratio (pxScale), so the picture is drawn at device pixels.
     function fit() {
         if (!canvas) { return; }
         const pane = document.getElementById('battle-pane');
@@ -1030,6 +1037,21 @@
         const s = Math.max(1, Math.min(4, Math.floor(Math.min(width / W, height / H))));
         canvas.style.width = (W * s) + 'px';
         canvas.style.height = (H * s) + 'px';
+        const k = Math.max(1, s * (window.devicePixelRatio || 1));
+        if (k !== pxScale || canvas.width !== Math.round(W * k)) {
+            pxScale = k;
+            canvas.width = Math.round(W * k);
+            canvas.height = Math.round(H * k);
+            draw();
+        }
+    }
+
+    // artSmooth turns smoothing on only for high-density art, which is
+    // drawn below its native size; 1x pixel art stays crisp.
+    function artSmooth(info) {
+        const hi = ((info && info.density) || 1) > 1;
+        ctx.imageSmoothingEnabled = hi;
+        if (hi) { ctx.imageSmoothingQuality = 'high'; }
     }
 
     function paintChrome() {
@@ -1295,7 +1317,12 @@
         const s = scene();
         // A zone's own backdrop, when the art set has one, comes first.
         const bg = (zoneSlug() && art('battle/backgrounds/zone-' + zoneSlug() + '.png')) || art('battle/backgrounds/' + s.bg + '.png');
-        if (bg) { ctx.drawImage(bg.img, 0, 0, W, H); return; }
+        if (bg) {
+            artSmooth(bg.info);
+            ctx.drawImage(bg.img, 0, 0, W, H);
+            ctx.imageSmoothingEnabled = false;
+            return;
+        }
         const g = ctx.createLinearGradient(0, 0, 0, 100);
         g.addColorStop(0, s.sky[0]);
         g.addColorStop(1, s.sky[1]);
@@ -1372,6 +1399,7 @@
 
     function drawBody(u, x, y, now, pose, dir, dim) {
         u.tinted = false;
+        u.drawnArt = null;
         if (u.fallen) {
             // Lying down: a flat shape, the figure's body hue.
             const c = u.side !== 'enemy' ? (CLASS_HUES[u.klass] || DEFAULT_HUES)[0] : '#6a4a4a';
@@ -1400,11 +1428,19 @@
             const frames = sheet.info.frames || 1;
             const i = posed && !pose.loop ? Math.min(frames - 1, Math.floor(pose.p * frames))
                 : Math.floor(now / (sheet.info.frame_ms || 250)) % frames;
+            // A density-N sheet (E3) is drawn at its 1x size. The feet row
+            // sits 2 picture pixels above the ground point, as on the 1x
+            // sheets (feet_baseline = frame - 2), so both kinds stand alike.
+            const d = sheet.info.density || 1;
+            const dw = fw / d, dh = fh / d;
+            u.drawnArt = { path: posed ? posedPath : sheetPath, density: d };
+            const top = sheet.info.feet_baseline ? -2 - sheet.info.feet_baseline / d : -dh;
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }
             if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
-            ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            artSmooth(sheet.info);
+            ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -dw / 2, top, dw, dh);
             if (u.flash > now) {
                 // A hit tints the figure's own shape, not a box around it.
                 const t = tintLayer(fw, fh);
@@ -1416,7 +1452,7 @@
                 t.fillStyle = u.flashColor;
                 t.fillRect(0, 0, fw, fh);
                 t.globalAlpha = 1;
-                ctx.drawImage(tintCanvas, 0, 0, fw, fh, -fw / 2, -fh, fw, fh);
+                ctx.drawImage(tintCanvas, 0, 0, fw, fh, -dw / 2, top, dw, dh);
             }
             ctx.restore();
             u.tinted = u.flash > now;
@@ -1589,6 +1625,7 @@
         const now = Date.now();
         sched.due(now).forEach(applyOp);
         ctx.save();
+        ctx.setTransform(pxScale, 0, 0, pxScale, 0, 0);
         if (shakeUntil > now) { ctx.translate(Math.round((Math.random() - 0.5) * 3), 0); }
         ctx.imageSmoothingEnabled = false;
         drawBackground();
@@ -1960,12 +1997,16 @@
                 shaking: shakeUntil > Date.now(),
                 legend: legendOf(Array.from(units.values()).filter(u => u.cell)),
                 badge: !!badge && badge.classList.contains('show'),
+                // E3: device pixels per picture pixel and the backing store.
+                pxScale,
+                backing: canvas ? [canvas.width, canvas.height] : null,
                 units: Array.from(units.values()).map(u => ({
                     id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", skin: u.skin || '', hair: u.hair || '', cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
                     pose: u.cell ? poseOf(u, slotOf(u), Date.now()) : null,
                     at: u.cell ? slotOf(u) : null,
+                    art: u.drawnArt || null,
                 })),
             };
         },

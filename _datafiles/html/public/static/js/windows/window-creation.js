@@ -271,21 +271,28 @@
     // figure draws the player's class sprite, in the skin tone and hair
     // colour chosen so far. It is null until the sprite sheet has loaded
     // (Sprites.onChange then redraws the panel) or when there is no art.
+    // Since E3 the battle idles are high-density art the palette swap can't
+    // repaint, so the panel draws the class's 1x look sheet
+    // (battle/units/<class>/look.png) when there is one; a high-density
+    // sheet is drawn smoothed at its 1x size.
     function figure(d) {
         if (!window.Sprites || !d.lineage) { return null; }
         const look = window.SpriteTint ? window.SpriteTint.look(d.skin, d.hair) : null;
-        const sheet = Sprites.tinted('battle/units/' + d.lineage + '/idle.png', look);
+        const lookPath = 'battle/units/' + d.lineage + '/look.png';
+        const path = Sprites.has(lookPath) ? lookPath : 'battle/units/' + d.lineage + '/idle.png';
+        const sheet = Sprites.tinted(path, look);
         if (!sheet || !sheet.info || !sheet.info.frame) { return null; }
         const fw = sheet.info.frame[0], fh = sheet.info.frame[1];
+        const density = sheet.info.density || 1;
         const scale = 2;
         const cv = el('canvas', 'creation-preview-art');
-        cv.width = fw * scale;
-        cv.height = fh * scale;
+        cv.width = fw / density * scale;
+        cv.height = fh / density * scale;
         cv.setAttribute('role', 'img');
         cv.setAttribute('aria-label', 'Your figure, with the skin tone and hair colour chosen so far');
         const ctx = cv.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(sheet.img, 0, 0, fw, fh, 0, 0, fw * scale, fh * scale);
+        ctx.imageSmoothingEnabled = density > 1;
+        ctx.drawImage(sheet.img, 0, 0, fw, fh, 0, 0, cv.width, cv.height);
         return cv;
     }
 
