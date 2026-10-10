@@ -80,7 +80,7 @@ camp is gone. Party camps keep today's drawing.
 The map shows what your character can see.
 
 **Server: send the sight.** `Gametime` gains `sight` for the viewer's room:
-`{ level: 0-2, daylight: bool, source: "" | "torch" | "party" | "nightvision" | "fixture" }`.
+`{ level: 0-2, daylight: bool, source: "" | "lantern" | "torch" | "party" | "nightvision" | "fixture" }`.
 - `level` is `VisibilityForUser`.
 - `daylight` is true when the room's own ambient light is full without
   help: outdoors by day with no thick fog, or an indoor or lit place.
@@ -118,8 +118,8 @@ The map shows what your character can see.
   different.
 
 **Markers.**
-- A carried light shows a small torch beside your figure (owner decision 2:
-  torch or lantern), flickering.
+- A carried light shows a small lantern (or a torch, for a torch) beside
+  your figure, flickering (owner decision 2).
 - A party light shows a floating orb over the one carrying it, and its
   glow covers allies standing with them.
 - Companions and party members don't carry their own light marker unless
@@ -168,24 +168,66 @@ outdoor tiles:
 It is drawn in code or from small A13 overlays, kept faint so the map stays
 readable, and it follows the reduced-motion setting.
 
-## Owner decisions (to confirm)
+## Owner decisions (2026-10-10)
 
-1. **Unseen rooms: remembered or hidden?** Recommended: *remembered*.
-   Rooms you have visited but can't see now are drawn dark and still, with
-   no live details. The map stays useful for finding your way back.
-   Alternative: hidden completely until light returns, more atmospheric but
-   harder to navigate.
-2. **Torch or lantern** as the carried-light marker (the game's light items
-   decide; a torch is the default).
-3. **Companions in camp:** hidden with you (recommended, as they're round
-   the fire), or drawn sitting by it (needs art).
-4. **Phase order.** Recommended: LM1, then LM2, then LM3, with LM4 when
-   wanted.
+1. **Unseen rooms are remembered:** drawn dark and still, with no live
+   details.
+2. **A lantern, with real light gear.** The carried-light marker is a
+   lantern, and light gets a gameplay phase (LG, below): torches are
+   one-time consumables, lanterns burn oil, and tents wear out after about 50
+   pitches.
+3. **Companions disappear into the camp** with you.
+4. **Order:** LM1, then LG and LM2, then LM3. LM4 when wanted.
+
+## LG: Light gear and lasting tents (gameplay, before LM2)
+
+The owner's rules (2026-10-10). The numbers are proposals to tune. A game
+day is one real hour (900 rounds of 4 s), so a game hour is 2.5 real
+minutes.
+
+- **Torch** (new item, cheap). `light torch` lights it and uses it up. It
+  burns for about **6 game hours (15 real minutes)**, giving `lightsource`
+  to its bearer, then is gone. It can't be put out and relit.
+- **Lantern** (the existing item 20036, off-hand). It now needs oil.
+  - It holds up to **24 game hours** of oil (one real hour), tracked as the
+    item's uses in hours.
+  - `light lantern` and `douse lantern` turn it on and off. While lit and
+    worn it gives `lightsource` and burns oil, one hour's worth per game
+    hour. Doused, it burns nothing.
+  - With no oil it goes out, and says so.
+  - A **flask of lamp oil** (new item, consumable) refills it: `fill lantern`.
+  - Today's lantern lights whenever worn; it will light only when lit and
+    fuelled.
+- **Tents** (items 46 and 300–302) gain `uses: 50`. Pitching one for a rest
+  spends a use, the way camp bells already wear (`spendItem` at rest start).
+  The last use leaves a "worn-out tent" message, and the tent is gone.
+- **Shops:** general shops and outfitters sell torches and lamp oil; tents
+  already sell. Prices are set with the economy's balance pass.
+- **State:** a lantern's oil and lit state live on the item (uses, and a
+  lit flag), so they persist and survive copyover. A lit lantern burns by
+  the shared clock's rounds; a torch's burn is a buff with a duration.
+  Nothing advances game time.
+- **Help:** `help light` covers torches, lanterns, oil and how light affects
+  sight, combat and the map. `help camp gear` covers tent wear. Each is
+  indexed and points from the tutorial lesson that hands out a light, or
+  from Departure.
+- **Tests:**
+  - burning, refilling and running dry;
+  - a torch burning out;
+  - a tent's last use;
+  - the lit state persisting;
+  - the `lightsource` flag on and off;
+  - the GMCP `sight` source showing `lantern` or `torch`.
 
 ## Art order A13 (for LM1 and LM2)
 
+- `map/markers/lantern.png`: 2 frames, 128×128 per frame. A hand lantern,
+  its flame flickering behind glass, drawn to hang beside a figure's
+  shoulder.
 - `map/markers/torch.png`: 2 frames, 128×128 per frame. A hand torch,
-  flame flickering, drawn to sit beside a figure's shoulder.
+  flame flickering.
+- Item icons for the lantern, torch and lamp oil, if the inventory shows
+  icons by then.
 - `map/markers/light-orb.png`: 2 frames, 128×128 per frame. A small pale
   floating light, pulsing.
 - *(optional)* `map/camp/bonfire.png`: 4 frames, 256×256 per frame. A larger
