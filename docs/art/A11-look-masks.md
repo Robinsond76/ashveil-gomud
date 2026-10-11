@@ -54,3 +54,25 @@ need the same masks, `art/source/A11/battle/units/<id>/idle.skin.png` and
 640 px cells with 40 px gutters), following the battle art's **5 px** grain. Only
 player and companion classes need them; creatures (A7) don't. Deliver them
 after the map masks, as a second batch of this order.
+
+## A11c: masks for the action poses (ordered 2026-10-11)
+
+The game now recolours a player's figure through these masks (E1b), and the
+A12 action poses (attack, hurt, shoot, cast) play in battle (E3c). Without
+masks a pose shows the painted skin and hair, so a player's chosen look
+flickers off during each blow. Deliver the same two masks for each of the
+38 approved A12 sheets:
+
+- `art/source/A11/battle/units/<id>/<pose>.skin.png` and `<pose>.hair.png`
+  for every `art/source/A12/battle/units/<id>/<pose>.png` (15 `attack`,
+  15 `hurt`, 3 `shoot`, 5 `cast`: 76 masks).
+- Each exactly the size and layout of its pose sheet (1 × N frames of 640 px
+  cells with 40 px gutters), on the **5 px** grain, with the same rules as
+  above: opaque white on real skin or hair only, everything else fully
+  transparent, no overlap, nothing outside the opaque art. Beards and
+  moustaches are hair; helms, hoods and gauntlets hide what they cover.
+- Keep each class's choices consistent with its idle masks (the same skin
+  and hair, frame to frame).
+
+Check before delivering: the same magenta/cyan overlay strip for every pose
+frame next to the idle frame 1 overlay, in review sheets under 5 MB each.
