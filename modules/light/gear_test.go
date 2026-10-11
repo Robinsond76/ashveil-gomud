@@ -349,3 +349,27 @@ func TestShippedLightGear(t *testing.T) {
 	}
 	assert.Equal(t, 2, selling, "both camp-gear markets sell light gear")
 }
+
+// TestCarriedLightNamesTheLight (LM2): the map's sight learns what the
+// player carries: a lit lantern, a burning torch, or a lantern held unlit;
+// the real lantern commands and torch drive it.
+func TestCarriedLightNamesTheLight(t *testing.T) {
+	user, room, told := world(t)
+	m := &LightModule{}
+	c := user.Character
+	assert.Equal(t, "", carriedLight(user), "nothing carried")
+	c.Equipment.Offhand = items.New(lanternItemID)
+	assert.Equal(t, "lantern-out", carriedLight(user), "a lantern held unlit")
+	assert.Equal(t, "lantern-out", rooms.CarriedLightFor(user), "registered with the light model")
+	_, _ = m.userCommand("lantern", user, room, 0)
+	said(told)
+	assert.Equal(t, "lantern", carriedLight(user))
+	_, _ = m.douse("lantern", user, room, 0)
+	said(told)
+	assert.Equal(t, "lantern-out", carriedLight(user))
+	c.Equipment.Offhand = items.Item{}
+	c.Items = append(c.Items, items.New(torchItemID))
+	_, _ = m.userCommand("torch", user, room, 0)
+	said(told)
+	assert.Equal(t, "torch", carriedLight(user))
+}

@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"strings"
 	"testing"
 
@@ -131,5 +132,57 @@ func TestHitPenaltyForVisibility(t *testing.T) {
 	SetDarknessPenalties(-5, -1)
 	if HitPenaltyForVisibility(0, false) != 0 {
 		t.Fatal("negative penalties clamp to 0")
+	}
+}
+
+// TestSightFrom (LM2): the map's sight names the level, whether the room is
+// in daylight, and what raised the level.
+func TestSightFrom(t *testing.T) {
+	day := LightConditions{}
+	night := LightConditions{Night: true}
+	cave := LightConditions{DarkBiome: true}
+	cases := []struct {
+		name                              string
+		c                                 LightConditions
+		nightVision, own, party, ownParty bool
+		carried                           string
+		want                              Sight
+	}{
+		{"day outdoors", day, false, false, false, false, "", Sight{Level: 2, Daylight: true}},
+		{"thick fog by day is not daylight", LightConditions{FogMod: -2}, false, false, false, false, "", Sight{Level: 1}},
+		{"night, no moon", night, false, false, false, false, "", Sight{Level: 0}},
+		{"moonlit night", LightConditions{Night: true, Moonlight: 2}, false, false, false, false, "", Sight{Level: 1}},
+		{"a torch at night", night, false, true, false, false, "torch", Sight{Level: 1, Source: "torch"}},
+		{"a lantern in a cave", cave, false, true, false, false, "lantern", Sight{Level: 1, Source: "lantern"}},
+		{"another carried light", night, false, true, false, false, "", Sight{Level: 1, Source: "light"}},
+		{"an ally's party light", night, false, false, true, false, "", Sight{Level: 1, Source: "party"}},
+		{"your own party light", night, false, false, true, true, "", Sight{Level: 1, Source: "orb"}},
+		{"night vision", cave, true, false, false, false, "", Sight{Level: 2, Source: "nightvision"}},
+		{"a hearth in a cave", LightConditions{DarkBiome: true, Fixture: true}, false, false, false, false, "", Sight{Level: 1, Source: "fixture"}},
+		{"a lit hall", LightConditions{Indoor: true, LitBiome: true}, false, false, false, false, "", Sight{Level: 2, Daylight: true}},
+		{"a fixture by day changes nothing", LightConditions{Fixture: true}, false, false, false, false, "", Sight{Level: 2, Daylight: true}},
+		{"a lantern held unlit", night, false, false, false, false, "lantern-out", Sight{Level: 0, Carried: "lantern-out"}},
+	}
+	for _, c := range cases {
+		if got := sightFrom(c.c, c.nightVision, c.own, c.party, c.ownParty, c.carried); got != c.want {
+			t.Errorf("%s: got %+v want %+v", c.name, got, c.want)
+		}
+	}
+}
+
+// TestCarriedLightRegistry: the first provider with an answer names the light.
+func TestCarriedLightRegistry(t *testing.T) {
+	carriedMu.Lock()
+	saved := carriedProviders
+	carriedProviders = nil
+	carriedMu.Unlock()
+	t.Cleanup(func() { carriedMu.Lock(); carriedProviders = saved; carriedMu.Unlock() })
+	if got := CarriedLightFor(nil); got != "" {
+		t.Fatalf("no providers: %q", got)
+	}
+	RegisterCarriedLight(func(*users.UserRecord) string { return "" })
+	RegisterCarriedLight(func(*users.UserRecord) string { return "torch" })
+	if got := CarriedLightFor(nil); got != "torch" {
+		t.Errorf("got %q, want torch", got)
 	}
 }

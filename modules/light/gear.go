@@ -137,6 +137,23 @@ func (h userHolder) dousePacked() {
 	}
 }
 
+// carriedLight names the light a user carries, for the map's sight (LM2):
+// a lit lantern or a burning torch, else a lantern held unlit
+// ("lantern-out"), else "".
+func carriedLight(u *users.UserRecord) string {
+	c := u.Character
+	lanternHeld := c.Equipment.Offhand.ItemId == lanternItemID
+	switch {
+	case lanternHeld && c.Equipment.Offhand.Lit && liveBuff(c.GetBuffs(lanternBuffID)):
+		return "lantern"
+	case liveBuff(c.GetBuffs(torchBuffID)):
+		return "torch"
+	case lanternHeld:
+		return "lantern-out"
+	}
+	return ""
+}
+
 // liveBuff reports a buff that is on and not expired: RemoveBuff only marks
 // a buff expired until the next prune.
 func liveBuff(list []*buffs.Buff) bool {

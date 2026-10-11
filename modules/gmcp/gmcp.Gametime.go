@@ -25,6 +25,11 @@ func init() {
 	}
 
 	events.RegisterListener(events.NewRound{}, g.newRoundHandler)
+	// LM2: a player's sight changes when they move or a light buff starts
+	// or ends, so their Gametime goes out then too, not only each round.
+	events.RegisterListener(events.RoomChange{}, g.sightChangeHandler)
+	events.RegisterListener(events.BuffsAdded{}, g.sightChangeHandler)
+	events.RegisterListener(events.BuffsRemoved{}, g.sightChangeHandler)
 
 }
 
@@ -40,9 +45,40 @@ func (g *GMCPGametimeModule) newRoundHandler(e events.Event) events.ListenerRetu
 		return events.Cancel
 	}
 
+	payload := gametimeBase()
+	for _, user := range users.GetAllActiveUsers() {
+		sendGametime(user, payload)
+	}
+
+	return events.Continue
+}
+
+// sightChangeHandler sends one player their Gametime (with their sight) at
+// once when they move or gain or lose a buff.
+func (g *GMCPGametimeModule) sightChangeHandler(e events.Event) events.ListenerReturn {
+	userId := 0
+	switch ev := e.(type) {
+	case events.RoomChange:
+		userId = ev.UserId
+	case events.BuffsAdded:
+		userId = ev.UserId
+	case events.BuffsRemoved:
+		userId = ev.UserId
+	}
+	if userId <= 0 {
+		return events.Continue
+	}
+	if user := users.GetByUserId(userId); user != nil {
+		sendGametime(user, gametimeBase())
+	}
+	return events.Continue
+}
+
+// gametimeBase is the clock part of Gametime, the same for every player.
+func gametimeBase() GMCPGametimeModule_Payload {
 	gd := gametime.GetDate()
 
-	payload := GMCPGametimeModule_Payload{
+	return GMCPGametimeModule_Payload{
 		Calendar:   gd.Calendar + "/" + configs.GetServerConfig().MudName.String(),
 		Hour:       gd.Hour,
 		Hour24:     gd.Hour24,
@@ -59,23 +95,26 @@ func (g *GMCPGametimeModule) newRoundHandler(e events.Event) events.ListenerRetu
 		SunCount:   gd.SunCount,
 		MoonCount:  gd.MoonCount,
 	}
+}
 
-	for _, user := range users.GetAllActiveUsers() {
-		if !isGMCPEnabled(user.ConnectionId()) {
-			continue
-		}
-		// The weather is per zone, so each player's copy carries what
-		// they can see from where they stand.
-		p := payload
-		p.Weather = gametimeWeatherFor(rooms.LoadRoom(user.Character.RoomId))
-		events.AddToQueue(GMCPOut{
-			UserId:  user.UserId,
-			Module:  `Gametime`,
-			Payload: p,
-		})
+// sendGametime queues one player's Gametime: the shared clock plus what they
+// can see from where they stand (the zone's weather, and their sight).
+func sendGametime(user *users.UserRecord, payload GMCPGametimeModule_Payload) {
+	if user == nil || !isGMCPEnabled(user.ConnectionId()) {
+		return
 	}
-
-	return events.Continue
+	p := payload
+	room := rooms.LoadRoom(user.Character.RoomId)
+	p.Weather = gametimeWeatherFor(room)
+	if room != nil {
+		sight := room.SightForUser(user)
+		p.Sight = &sight
+	}
+	events.AddToQueue(GMCPOut{
+		UserId:  user.UserId,
+		Module:  `Gametime`,
+		Payload: p,
+	})
 }
 
 // /////////////////
@@ -102,6 +141,10 @@ type GMCPGametimeModule_Payload struct {
 	// time panel's sky); absent indoors with no view out, or in a zone
 	// with no weather.
 	Weather *gametimeWeather `json:"weather,omitempty"`
+
+	// Sight (LM2) is how far the player can see where they stand, so the
+	// map can darken and remember what is out of sight.
+	Sight *rooms.Sight `json:"sight,omitempty"`
 }
 
 // gametimeWeather is the weather a player can see: the same condition the
