@@ -162,7 +162,27 @@ check(s.art && s.art.density === 4 && s.art.idleFrames === 2 && s.art.walkFrames
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior', skin: '#5a3a28', hair: '#d8b868' });
 await page.waitForTimeout(150);
 s = await state(page);
-check(s.look && s.art && s.art.density === 4 && !s.art.tinted, 'high-density art is drawn untinted (skin and hair masks come later)');
+check(s.look && s.art && s.art.density === 4 && !s.art.tinted && s.art.lookMask === '', 'a class whose helm hides all skin and hair (the warrior) has no look mask and is drawn as is');
+// E1b: a class with skin and hair showing is recoloured through its look
+// mask: the masked pixels change, and only they.
+await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'alchemist', lineage: 'alchemist', skin: '#5a3a28', hair: '#d8b868' });
+await page.waitForFunction(() => { const a = window.MapView.state().art; return a && a.tinted; }, null, { timeout: 5000 }).catch(() => {});
+s = await state(page);
+check(s.art && s.art.density === 4 && s.art.lookMask === 'map/units/alchemist/idle.look.png' && s.art.tinted, 'the alchemist is drawn in the player\'s look through its mask: ' + JSON.stringify(s.art));
+const diff = await page.evaluate(() => {
+  const read = img => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0); return x.getImageData(0, 0, c.width, c.height).data; };
+  const base = read(window.Sprites.art('map/units/alchemist/idle.png').img);
+  const tint = read(window.Sprites.tinted('map/units/alchemist/idle.png', window.SpriteTint.look('#5a3a28', '#d8b868')).img);
+  const mask = read(window.Sprites.art('map/units/alchemist/idle.look.png').img);
+  let changed = 0, outside = 0, masked = 0;
+  for (let i = 0; i < base.length; i += 4) {
+    const m = mask[i + 3] > 0;
+    if (m) { masked++; }
+    if (base[i] !== tint[i] || base[i + 1] !== tint[i + 1] || base[i + 2] !== tint[i + 2] || base[i + 3] !== tint[i + 3]) { changed++; if (!m) { outside++; } }
+  }
+  return { changed, outside, masked };
+});
+check(diff.changed > 0.8 * diff.masked && diff.outside === 0, 'the look repaints the masked skin and hair and nothing else: ' + JSON.stringify(diff));
 await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
 
 await moveTo(page, 2, 0); await tick(page, 60);

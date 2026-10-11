@@ -21,9 +21,12 @@ at the game line if you prefer; "Type instead" tucks the panel away.
 <ansi fg="command">back</ansi> starts your looks over, and <ansi fg="command">cancel</ansi> leaves <ansi fg="command">appearance edit</ansi>
 with nothing changed.
 
-Your chosen skin and hair show in that panel. The figures on the world
-map and the battle screen are newly painted and do not show them yet;
-there you appear in your class's own colours.
+Your chosen skin and hair show on your figure in that panel, on the world
+map and on the battle screen, keeping the figure's own light and shade.
+Where a helm, hood or mask hides your face or hair, it stays hidden. In a
+fight the swings, recoils and chants of the base classes are drawn in
+their own colours for now, so your skin shows its painted tone during a
+blow.
 
 <ansi fg="yellow-bold">Changing them</ansi>
 

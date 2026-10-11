@@ -34,6 +34,9 @@ type spriteMeta struct {
 	FeetBaseline int     `json:"feet_baseline"`
 	FrameMs      int     `json:"frame_ms"`
 	Source       string  `json:"source"`
+	// LookMask names a sheet's E1b look mask; Of names the sheet a mask is for.
+	LookMask string `json:"look_mask"`
+	Of       string `json:"of"`
 }
 
 func (m spriteMeta) density() int {

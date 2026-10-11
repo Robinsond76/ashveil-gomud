@@ -226,6 +226,41 @@ for (const mode of ['full', 'reduced']) {
   check(rel.length > 0 && rel.every((f, i) => i === 0 || f >= rel[i - 1]), tag + 'the release plays the cast sheet once through: frames ' + JSON.stringify(Array.from(new Set(rel))));
   await ctx.close();
 }
+// E1b: the leader's chosen skin and hair recolour their high-resolution
+// battle idle through its look mask; a class whose helm hides both (the
+// warrior) has no mask and is drawn as is; a figure without a look is never
+// recoloured; the action poses, with no masks yet, are drawn as painted.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
+  await page.goto(base + '/scripts/browser/dock-windows-harness.html');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
+  await page.evaluate(() => window.BattleScreen.setMotion('full'));
+  const looked = (archetype) => Object.assign({}, company, {
+    leader: Object.assign(member('leader', 0, 'Wren', archetype, { row: 0, col: 1 }), { skin: '#5a3a28', hair: '#d8b868' }),
+  });
+  const leaderArt = () => page.evaluate(() => { const u = window.BattleScreen.state().units.find(o => o.id === 'leader'); return u && u.art; });
+  await gmcp('Room', { Info: { environment: 'forest', area: 'Frostfang' } });
+  await gmcp('Company', looked('Cleric'));
+  await gmcp('Company.Battle', battle);
+  await page.waitForFunction(() => { const u = window.BattleScreen.state().units.find(o => o.id === 'leader'); return u && u.art && u.art.tinted; }, null, { timeout: 8000 }).catch(() => {});
+  let a = await leaderArt();
+  check(a && a.path === 'battle/units/cleric/idle.png' && a.tinted, 'a cleric leader with a chosen look is drawn recoloured through its mask: ' + JSON.stringify(a));
+  check(await page.evaluate(() => { const u = window.BattleScreen.state().units.find(o => o.id === 'companion:1'); return u && u.art && !u.art.tinted; }), 'a companion (no look) is drawn as painted');
+  await page.evaluate(b => Client.dispatchBattleEvents(b), { fight: 4, round: 8001, fight_round: 1, events: [{ seq: 8001, kind: 'attack', src: 'leader', tgt: 'm:1', outcome: 'hit', damage: 2 }] });
+  let posed = null;
+  for (let k = 0; k < 80 && !posed; k++) { const x = await leaderArt(); if (x && x.path === 'battle/units/cleric/attack.png') { posed = x; } await page.waitForTimeout(20); }
+  check(posed && !posed.tinted, 'the attack pose (no masks yet) is drawn as painted: ' + JSON.stringify(posed));
+  await page.waitForFunction(() => window.BattleScreen.state().backlog === 0, null, { timeout: 8000 }).catch(() => {});
+  await gmcp('Company', looked('Warrior'));
+  await page.waitForTimeout(400);
+  a = await leaderArt();
+  check(a && a.path === 'battle/units/warrior/idle.png' && !a.tinted, 'a warrior leader (helmed, no mask) is drawn as painted: ' + JSON.stringify(a));
+  await ctx.close();
+}
 await browser.close();
 server.close();
 console.log(failures ? failures + ' failed' : 'all passed');

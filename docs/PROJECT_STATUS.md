@@ -1,3 +1,34 @@
+**E1b: chosen looks on the high-resolution figures (2026-10-11).** A player's chosen skin and hair now show on the new map and battle figures, keeping the art's light and shade, through the A11 masks ([design](designs/2026-10-11-e1b-look-recolour-design.md), [A11](art/A11-look-masks.md)).
+- **Art:** `import_sheet.py --masks` (map) and `import_battle.py` (battle, from `A11/battle/units/<id>/<sheet>.skin|hair.png`) cut each unit's masks exactly like its sheet into `<sheet>.look.png`. That is a three-colour PNG: red skin, green hair, clear elsewhere, cleared where the sheet is transparent. The sheet's entry names it (`look_mask`), and the mask has a `look-mask` entry. Masks that mark nothing make no file.
+  - 71 map classes (idle and walk) and 72 battle idles have masks, 98,815 bytes (about 97 KB) in all. The other classes' helms, hoods or masks hide all skin and hair.
+  - Re-importing left every sheet byte-identical.
+  - A mask of another size, marking transparent art, marking a pixel as both skin and hair, or missing is refused.
+- **Client:** `SpriteTint.recolour` (pure) gives each masked pixel the chosen colour, scaled by its brightness over its material's median. The median pixel takes the colour exactly, shadows darken, and highlights lift toward white by at most 60%.
+  - `applies` is true for high-density art with a `look_mask`.
+  - `Sprites.tinted` (map, creation panel) and the battle screen's `tintedArt` draw a sheet as is until its mask has loaded.
+  - The creation panel previews the high-resolution battle idle once its mask is in. `look.png` stands in while the mask loads, and for a class with no mask (the helmed warrior), so a choice always shows.
+  - The battle screen preloads every sheet's look mask with its poses, so a player's first blow is already drawn in their look once pose masks exist.
+  - `state()` reports whether the drawn figure is really recoloured (map `art.tinted`, `art.lookMask`; battle `art.tinted`).
+- **Not yet:** the A12 action poses have no masks, so a figure shows its painted skin during a blow, flinch or chant. **A11c** orders their 76 masks; the battle importer already reads `<pose>.skin|hair.png`.
+- **Help:** `help appearance` says looks show on the map and in battle, stay hidden under a helm, and that the base-class poses keep their painted skin for now. The appearance hint in the opening lesson says looks show on the figure.
+- *Tests:*
+  - `sprite-tint.test.mjs`: the recolour keeps the light and dark order, gives the median the chosen colour, changes only the chosen material, leaves unmasked pixels and a missing mask alone, and `canvasFor` recolours through a mask image.
+  - `TestLookMasksAreImported`: 71/71/72 masks, each the sheet's size, pure red or green, on drawn pixels only.
+  - `TestImportLookMasks`: synthetic map and battle masks; empty masks make no file; four refusals.
+  - `map-check.mjs`: the alchemist's recolour changes exactly its 2,108 masked pixels; the helmed warrior has no mask.
+  - `battle-art-check.mjs`: a cleric leader with a look is recoloured; a companion and a warrior aren't; the attack pose is drawn as painted. The harness now loads `sprite-tint.js`, as the client does.
+  - `creation-panel-check.mjs`: the high-resolution idle is drawn and repainted.
+  - The help assertion.
+- *Independent review:* 6 findings; 5 accepted, 1 kept as is.
+  - **Accepted.**
+    - The warrior's preview had stopped answering colour choices: it showed its unmasked high-resolution idle. A class with no mask now previews its 1x `look.png`, and a browser check covers the warrior.
+    - Re-importing map art without `--masks` deleted a class's masks. `--masks` now defaults to `art/source/A11/map/units`, as the battle importer reads from `--src`. A unit with no mask files keeps the masks it has, and every master and mask is checked before anything is written. Regression tests cover both.
+    - The preview now asks for the mask as soon as the idle is in, so the first colour choice doesn't drop back to the 1x sheet for long.
+    - The status gave the mask size as 860 KB; it is about 97 KB.
+    - Pose and idle look masks are now preloaded.
+  - **Kept as is.** Highlights lift toward white by a fixed share, so a very dark chosen colour shows brighter highlights. This is an aesthetic call to judge in play; the shading order is kept and tested.
+- *Full checks:* these pass on the branch merged with master (E3c and E2b): `make generate`, `make validate`, `go test -race -timeout 40m ./...`, `make js-lint`, `make js-test`, and the map, battle, battle art and creation panel browser checks.
+
 **E2b: lake inside corners (2026-10-11).** The approved A2b overlays ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) round off a lake's corners on the map, where a ring of shore used to leave a square notch of sand.
 - **Art:** `import_art.py` imports `shore-corner-ne/es/sw/nw` (512 px masters on an 8 px grain, shrunk to 128 px at density 4, under 2 KB each) as `terrain-corner` entries, transparent but for the water's quarter.
 - **Map:** `MapTiles.corners(env, look)` (pure) lists a shore room's corners whose diagonal neighbour is water while both sides beside it are shore (the ring runs on round the water, so the overlay's sand meets sand); `drawTerrain` draws each over the room's piece once its art has loaded, and `state().drawn.corners` records them. Water on a side already reaches the corner through the piece, so no overlay is drawn there.

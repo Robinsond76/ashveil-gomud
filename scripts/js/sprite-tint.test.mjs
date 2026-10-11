@@ -114,10 +114,59 @@ test('canvasFor falls back to the stock image when the canvas cannot be read', (
   assert.equal(T.canvasFor(img, T.look('#52311d', ''), make, cache, 'cdn'), img);
 });
 
-test('only 1x palette art is repainted; high-density art is left as drawn (E1)', () => {
+test('1x palette art is repainted, and high-density art only through a look mask (E1, E1b)', () => {
   assert.equal(T.applies({ frame: [32, 32] }), true);
   assert.equal(T.applies({ frame: [32, 32], density: 1 }), true);
   assert.equal(T.applies({ frame: [128, 128], density: 4 }), false);
+  assert.equal(T.applies({ frame: [128, 128], density: 4, look_mask: 'map/units/witch/idle.look.png' }), true);
   assert.equal(T.applies(null), false);
   assert.equal(T.applies(undefined), false);
+});
+
+// E1b: recolour through a look mask. Four skin pixels of rising brightness,
+// two hair pixels, one gear pixel; the mask marks skin red, hair green.
+const SKIN = [255, 0, 0, 255], HAIR = [0, 255, 0, 255], NONE = [0, 0, 0, 0];
+const art = () => px([60, 40, 30, 255], [120, 90, 70, 255], [140, 105, 85, 255], [230, 200, 180, 255],
+  [40, 30, 20, 255], [90, 70, 50, 255], [100, 100, 100, 255]);
+const mask = px(SKIN, SKIN, SKIN, SKIN, HAIR, HAIR, NONE);
+const lum = (d, i) => 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+
+test('recolour paints masked skin and hair in the chosen colours, keeping light and shade', () => {
+  const d = art();
+  const n = T.recolour(d, mask, T.look('#3a2a5e', '#d8c070'));
+  assert.equal(n, 6);
+  // The skin's median pixel (the third, 140,105,85) takes the chosen colour exactly.
+  assert.deepEqual(Array.from(d.slice(8, 11)), [0x3a, 0x2a, 0x5e]);
+  // Light and dark keep their order, and the hue follows the choice.
+  assert.ok(lum(d, 0) < lum(d, 1) && lum(d, 1) < lum(d, 2) && lum(d, 2) < lum(d, 3), 'skin shading order kept');
+  assert.ok(d[2] >= d[0] && d[6] >= d[4], 'shadows and mid-tones take the chosen (blue-violet) hue');
+  assert.ok(d[12] > 0x3a && d[13] > 0x2a && d[14] > 0x5e, 'the highlight lifts toward white');
+  assert.ok(lum(d, 4) < lum(d, 5), 'hair shading order kept');
+  assert.deepEqual(Array.from(d.slice(20, 23)), [0xd8, 0xc0, 0x70], 'the hair median takes the chosen hair colour');
+  assert.deepEqual(Array.from(d.slice(24, 28)), [100, 100, 100, 255], 'gear outside the mask is untouched');
+});
+
+test('recolour changes only the chosen material, and nothing without a look or a mask', () => {
+  const d = art();
+  assert.equal(T.recolour(d, mask, T.look('', '#d8c070')), 2);
+  assert.deepEqual(Array.from(d.slice(0, 16)), Array.from(art().slice(0, 16)), 'skin untouched when only hair is chosen');
+  const e = art();
+  assert.equal(T.recolour(e, mask, null), 0);
+  assert.equal(T.recolour(e, px(NONE, NONE, NONE, NONE, NONE, NONE, NONE), T.look('#3a2a5e', '#d8c070')), 0);
+  assert.equal(T.recolour(e, px(SKIN), T.look('#3a2a5e', '')), 0, 'a mask of another size is ignored');
+  assert.deepEqual(Array.from(e), Array.from(art()));
+});
+
+test('canvasFor with a mask image recolours through it', () => {
+  const pixels = art();
+  const maskPixels = mask;
+  let made = 0;
+  const make = () => {
+    const mine = made++ === 0 ? pixels : maskPixels;
+    return { getContext: () => ({ drawImage() {}, putImageData() {}, getImageData: () => ({ data: mine }), set imageSmoothingEnabled(v) {} }) };
+  };
+  const out = T.canvasFor({ width: 7, height: 1 }, T.look('#3a2a5e', ''), make, {}, 'battle/units/cleric/idle.png', { width: 7, height: 1 });
+  assert.ok(out);
+  assert.deepEqual(Array.from(pixels.slice(8, 11)), [0x3a, 0x2a, 0x5e]);
+  assert.deepEqual(Array.from(pixels.slice(24, 28)), [100, 100, 100, 255]);
 });

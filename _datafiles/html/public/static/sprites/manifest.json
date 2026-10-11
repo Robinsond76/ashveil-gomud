@@ -614,6 +614,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/adventurer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/adventurer/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/adventurer/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -627,6 +643,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/adventurer/idle.look.png",
    "set": "S3",
    "size": [
     512,
@@ -698,6 +715,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/alchemist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/alchemist/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/alchemist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -711,6 +744,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/alchemist/idle.look.png",
    "names": [
     "recruit alchemist"
    ],
@@ -791,6 +825,22 @@
    "size_class": "L",
    "source": "imported"
   },
+  "battle/units/apothecary/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/apothecary/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/apothecary/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -804,6 +854,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/apothecary/idle.look.png",
    "note": "alchemist line",
    "set": "S5",
    "size": [
@@ -858,6 +909,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/arbalist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/arbalist/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/arbalist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -871,6 +938,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/arbalist/idle.look.png",
    "names": [
     "recruit arbalist"
    ],
@@ -926,6 +994,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/arcanist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/arcanist/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/arcanist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -939,6 +1023,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/arcanist/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -948,6 +1033,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "wizard"
+  },
+  "battle/units/archmage/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/archmage/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/archmage/idle.png": {
    "anchor": "bottom-center",
@@ -962,6 +1063,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/archmage/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -971,6 +1073,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "wizard"
+  },
+  "battle/units/archon/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/archon/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/archon/idle.png": {
    "anchor": "bottom-center",
@@ -985,6 +1103,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/archon/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -1066,6 +1185,22 @@
    "size_class": "S",
    "source": "imported"
   },
+  "battle/units/bearward/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/bearward/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/bearward/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1079,6 +1214,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/bearward/idle.look.png",
    "note": "beasttamer line",
    "set": "S5",
    "size": [
@@ -1088,6 +1224,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "beasttamer"
+  },
+  "battle/units/beastlord/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/beastlord/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/beastlord/idle.png": {
    "anchor": "bottom-center",
@@ -1102,6 +1254,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/beastlord/idle.look.png",
    "note": "beasttamer line",
    "set": "S5",
    "size": [
@@ -1156,6 +1309,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/beasttamer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/beasttamer/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/beasttamer/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1169,6 +1338,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/beasttamer/idle.look.png",
    "names": [
     "recruit beasttamer"
    ],
@@ -1225,6 +1395,22 @@
    "source": "imported",
    "variant_of": "warrior"
   },
+  "battle/units/blood-priest/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/blood-priest/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/blood-priest/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1238,6 +1424,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/blood-priest/idle.look.png",
    "note": "cleric line",
    "set": "S5",
    "size": [
@@ -1247,6 +1434,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "cleric"
+  },
+  "battle/units/bombardier/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/bombardier/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/bombardier/idle.png": {
    "anchor": "bottom-center",
@@ -1261,6 +1464,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/bombardier/idle.look.png",
    "note": "alchemist line",
    "set": "S5",
    "size": [
@@ -1435,6 +1639,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/cleric/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/cleric/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/cleric/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1448,6 +1668,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/cleric/idle.look.png",
    "names": [
     "recruit cleric"
    ],
@@ -1481,6 +1702,22 @@
     64
    ]
   },
+  "battle/units/coven-mother/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/coven-mother/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/coven-mother/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1494,6 +1731,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/coven-mother/idle.look.png",
    "note": "witch line",
    "set": "S5",
    "size": [
@@ -1503,6 +1741,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "witch"
+  },
+  "battle/units/coven-sage/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/coven-sage/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/coven-sage/idle.png": {
    "anchor": "bottom-center",
@@ -1517,6 +1771,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/coven-sage/idle.look.png",
    "note": "witch line",
    "set": "S5",
    "size": [
@@ -1600,6 +1855,22 @@
    "size_class": "L",
    "source": "imported"
   },
+  "battle/units/crone-of-ash/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/crone-of-ash/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/crone-of-ash/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1613,6 +1884,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/crone-of-ash/idle.look.png",
    "note": "witch line",
    "set": "S5",
    "size": [
@@ -1622,6 +1894,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "witch"
+  },
+  "battle/units/deadeye/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/deadeye/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/deadeye/idle.png": {
    "anchor": "bottom-center",
@@ -1636,6 +1924,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/deadeye/idle.look.png",
    "note": "arbalist line",
    "set": "S5",
    "size": [
@@ -1671,6 +1960,22 @@
    "size_class": "L",
    "source": "imported"
   },
+  "battle/units/demonologist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/demonologist/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/demonologist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1684,6 +1989,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/demonologist/idle.look.png",
    "note": "cleric line",
    "set": "S5",
    "size": [
@@ -1810,6 +2116,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/dollmaster/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/dollmaster/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/dollmaster/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1823,6 +2145,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/dollmaster/idle.look.png",
    "names": [
     "recruit dollmaster"
    ],
@@ -1856,6 +2179,22 @@
     64
    ]
   },
+  "battle/units/dragon-lord/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/dragon-lord/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/dragon-lord/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1869,6 +2208,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/dragon-lord/idle.look.png",
    "note": "beasttamer line",
    "set": "S5",
    "size": [
@@ -1878,6 +2218,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "beasttamer"
+  },
+  "battle/units/dragon-tamer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/dragon-tamer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/dragon-tamer/idle.png": {
    "anchor": "bottom-center",
@@ -1892,6 +2248,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/dragon-tamer/idle.look.png",
    "note": "beasttamer line",
    "set": "S5",
    "size": [
@@ -1950,6 +2307,22 @@
    "source": "imported",
    "variant_of": "warrior"
   },
+  "battle/units/druid/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/druid/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/druid/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1963,6 +2336,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/druid/idle.look.png",
    "note": "cleric line",
    "set": "S5",
    "size": [
@@ -1972,6 +2346,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "cleric"
+  },
+  "battle/units/duelist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/duelist/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/duelist/idle.png": {
    "anchor": "bottom-center",
@@ -1986,6 +2376,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/duelist/idle.look.png",
    "note": "rogue line",
    "set": "S5",
    "size": [
@@ -2043,6 +2434,22 @@
    "source": "imported",
    "variant_of": "shaman"
   },
+  "battle/units/elder-druid/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/elder-druid/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/elder-druid/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2056,6 +2463,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/elder-druid/idle.look.png",
    "note": "cleric line",
    "set": "S5",
    "size": [
@@ -2114,6 +2522,22 @@
    "size_class": "S",
    "source": "imported"
   },
+  "battle/units/falcon-marshal/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/falcon-marshal/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/falcon-marshal/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2127,6 +2551,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/falcon-marshal/idle.look.png",
    "note": "gryphon-rider line",
    "set": "S5",
    "size": [
@@ -2261,6 +2686,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/golem-lord/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/golem-lord/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/golem-lord/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2274,6 +2715,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/golem-lord/idle.look.png",
    "note": "dollmaster line",
    "set": "S5",
    "size": [
@@ -2283,6 +2725,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "dollmaster"
+  },
+  "battle/units/golemancer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/golemancer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/golemancer/idle.png": {
    "anchor": "bottom-center",
@@ -2297,6 +2755,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/golemancer/idle.look.png",
    "note": "dollmaster line",
    "set": "S5",
    "size": [
@@ -2306,6 +2765,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "dollmaster"
+  },
+  "battle/units/grand-puppeteer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/grand-puppeteer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/grand-puppeteer/idle.png": {
    "anchor": "bottom-center",
@@ -2320,6 +2795,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/grand-puppeteer/idle.look.png",
    "note": "dollmaster line",
    "set": "S5",
    "size": [
@@ -2354,6 +2830,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/grenadier/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/grenadier/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/grenadier/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2367,6 +2859,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/grenadier/idle.look.png",
    "note": "alchemist line",
    "set": "S5",
    "size": [
@@ -2467,6 +2960,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/gryphon-rider/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/gryphon-rider/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/gryphon-rider/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2480,6 +2989,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/gryphon-rider/idle.look.png",
    "names": [
     "recruit gryphon-rider"
    ],
@@ -2587,6 +3097,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/hag/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/hag/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/hag/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2600,6 +3126,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/hag/idle.look.png",
    "note": "witch line",
    "set": "S5",
    "size": [
@@ -2654,6 +3181,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/halberdier/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/halberdier/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/halberdier/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2667,6 +3210,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/halberdier/idle.look.png",
    "names": [
     "recruit halberdier"
    ],
@@ -2723,6 +3267,22 @@
    "source": "imported",
    "variant_of": "samurai"
   },
+  "battle/units/hedge-witch/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/hedge-witch/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/hedge-witch/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2736,6 +3296,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/hedge-witch/idle.look.png",
    "note": "witch line",
    "set": "S5",
    "size": [
@@ -2745,6 +3306,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "witch"
+  },
+  "battle/units/hierarch/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/hierarch/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/hierarch/idle.png": {
    "anchor": "bottom-center",
@@ -2759,6 +3336,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/hierarch/idle.look.png",
    "note": "cleric line",
    "set": "S5",
    "size": [
@@ -2768,6 +3346,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "cleric"
+  },
+  "battle/units/high-sorcerer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/high-sorcerer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/high-sorcerer/idle.png": {
    "anchor": "bottom-center",
@@ -2782,6 +3376,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/high-sorcerer/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -2814,6 +3409,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/houndmaster/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/houndmaster/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/houndmaster/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2827,6 +3438,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/houndmaster/idle.look.png",
    "note": "beasttamer line",
    "set": "S5",
    "size": [
@@ -2836,6 +3448,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "beasttamer"
+  },
+  "battle/units/hunter/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/hunter/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/hunter/idle.png": {
    "anchor": "bottom-center",
@@ -2850,6 +3478,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/hunter/idle.look.png",
    "note": "ranger line",
    "set": "S5",
    "size": [
@@ -3049,6 +3678,22 @@
    "source": "imported",
    "variant_of": "halberdier"
   },
+  "battle/units/marionettist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/marionettist/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/marionettist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3062,6 +3707,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/marionettist/idle.look.png",
    "note": "dollmaster line",
    "set": "S5",
    "size": [
@@ -3071,6 +3717,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "dollmaster"
+  },
+  "battle/units/marksman/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/marksman/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/marksman/idle.png": {
    "anchor": "bottom-center",
@@ -3085,6 +3747,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/marksman/idle.look.png",
    "note": "ranger line",
    "set": "S5",
    "size": [
@@ -3164,6 +3827,22 @@
    "source": "imported",
    "variant_of": "shaman"
   },
+  "battle/units/mutagenist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/mutagenist/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/mutagenist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3177,6 +3856,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/mutagenist/idle.look.png",
    "note": "alchemist line",
    "set": "S5",
    "size": [
@@ -3186,6 +3866,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "alchemist"
+  },
+  "battle/units/necromancer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/necromancer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/necromancer/idle.png": {
    "anchor": "bottom-center",
@@ -3200,6 +3896,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/necromancer/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -3257,6 +3954,22 @@
    "size_class": "L",
    "source": "imported"
   },
+  "battle/units/packlord/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/packlord/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/packlord/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3270,6 +3983,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/packlord/idle.look.png",
    "note": "beasttamer line",
    "set": "S5",
    "size": [
@@ -3303,6 +4017,22 @@
    "source": "imported",
    "variant_of": "warrior"
   },
+  "battle/units/panacean/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/panacean/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/panacean/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3316,6 +4046,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/panacean/idle.look.png",
    "note": "alchemist line",
    "set": "S5",
    "size": [
@@ -3325,6 +4056,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "alchemist"
+  },
+  "battle/units/pathfinder/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/pathfinder/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/pathfinder/idle.png": {
    "anchor": "bottom-center",
@@ -3339,6 +4086,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/pathfinder/idle.look.png",
    "note": "rogue line",
    "set": "S5",
    "size": [
@@ -3397,6 +4145,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/priest/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/priest/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/priest/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3410,6 +4174,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/priest/idle.look.png",
    "note": "cleric line",
    "set": "S5",
    "size": [
@@ -3419,6 +4184,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "cleric"
+  },
+  "battle/units/puppeteer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/puppeteer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/puppeteer/idle.png": {
    "anchor": "bottom-center",
@@ -3433,6 +4214,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/puppeteer/idle.look.png",
    "note": "dollmaster line",
    "set": "S5",
    "size": [
@@ -3487,6 +4269,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/ranger/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/ranger/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/ranger/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3500,6 +4298,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/ranger/idle.look.png",
    "names": [
     "recruit ranger"
    ],
@@ -3604,6 +4403,22 @@
    "size_class": "S",
    "source": "imported"
   },
+  "battle/units/ravager/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/ravager/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/ravager/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3617,6 +4432,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/ravager/idle.look.png",
    "note": "ranger line",
    "set": "S5",
    "size": [
@@ -3626,6 +4442,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "ranger"
+  },
+  "battle/units/reaper/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/reaper/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/reaper/idle.png": {
    "anchor": "bottom-center",
@@ -3640,6 +4472,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/reaper/idle.look.png",
    "note": "halberdier line",
    "set": "S5",
    "size": [
@@ -3694,6 +4527,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/rogue/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/rogue/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/rogue/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3707,6 +4556,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/rogue/idle.look.png",
    "names": [
     "recruit rogue"
    ],
@@ -3880,6 +4730,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/samurai/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/samurai/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/samurai/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3893,6 +4759,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/samurai/idle.look.png",
    "names": [
     "recruit samurai"
    ],
@@ -3949,6 +4816,22 @@
    "source": "imported",
    "variant_of": "rogue"
   },
+  "battle/units/sentinel/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/sentinel/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/sentinel/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3962,6 +4845,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/sentinel/idle.look.png",
    "note": "ranger line",
    "set": "S5",
    "size": [
@@ -4088,6 +4972,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/shaman/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/shaman/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/shaman/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4101,6 +5001,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/shaman/idle.look.png",
    "names": [
     "recruit shaman"
    ],
@@ -4134,6 +5035,22 @@
     64
    ]
   },
+  "battle/units/sharpshooter/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/sharpshooter/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/sharpshooter/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4147,6 +5064,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/sharpshooter/idle.look.png",
    "note": "arbalist line",
    "set": "S5",
    "size": [
@@ -4180,6 +5098,22 @@
    "source": "imported",
    "variant_of": "samurai"
   },
+  "battle/units/siege-master/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/siege-master/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/siege-master/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4193,6 +5127,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/siege-master/idle.look.png",
    "note": "arbalist line",
    "set": "S5",
    "size": [
@@ -4202,6 +5137,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "arbalist"
+  },
+  "battle/units/siegebreaker/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/siegebreaker/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/siegebreaker/idle.png": {
    "anchor": "bottom-center",
@@ -4216,6 +5167,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/siegebreaker/idle.look.png",
    "note": "arbalist line",
    "set": "S5",
    "size": [
@@ -4250,6 +5202,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/skyscout/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/skyscout/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/skyscout/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4263,6 +5231,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/skyscout/idle.look.png",
    "note": "gryphon-rider line",
    "set": "S5",
    "size": [
@@ -4297,6 +5266,22 @@
    "size_class": "S",
    "source": "imported"
   },
+  "battle/units/sorcerer/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/sorcerer/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/sorcerer/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4310,6 +5295,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/sorcerer/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -4560,6 +5546,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/string-sovereign/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/string-sovereign/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/string-sovereign/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4573,6 +5575,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/string-sovereign/idle.look.png",
    "note": "dollmaster line",
    "set": "S5",
    "size": [
@@ -4582,6 +5585,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "dollmaster"
+  },
+  "battle/units/sweeper/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/sweeper/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/sweeper/idle.png": {
    "anchor": "bottom-center",
@@ -4596,6 +5615,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/sweeper/idle.look.png",
    "note": "halberdier line",
    "set": "S5",
    "size": [
@@ -4605,6 +5625,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "halberdier"
+  },
+  "battle/units/sword-saint/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/sword-saint/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/sword-saint/idle.png": {
    "anchor": "bottom-center",
@@ -4619,6 +5655,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/sword-saint/idle.look.png",
    "note": "samurai line",
    "set": "S5",
    "size": [
@@ -4628,6 +5665,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "samurai"
+  },
+  "battle/units/swordmaster/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/swordmaster/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/swordmaster/idle.png": {
    "anchor": "bottom-center",
@@ -4642,6 +5695,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/swordmaster/idle.look.png",
    "note": "rogue line",
    "set": "S5",
    "size": [
@@ -4698,6 +5752,22 @@
    "source": "imported",
    "variant_of": "shaman"
   },
+  "battle/units/theurgist/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/theurgist/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/theurgist/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4711,6 +5781,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/theurgist/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -4720,6 +5791,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "wizard"
+  },
+  "battle/units/transmuter/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/transmuter/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/transmuter/idle.png": {
    "anchor": "bottom-center",
@@ -4734,6 +5821,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/transmuter/idle.look.png",
    "note": "alchemist line",
    "set": "S5",
    "size": [
@@ -4810,6 +5898,22 @@
    "size_class": "L",
    "source": "imported"
   },
+  "battle/units/valkyrie/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/valkyrie/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/valkyrie/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4823,6 +5927,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/valkyrie/idle.look.png",
    "note": "halberdier line",
    "set": "S5",
    "size": [
@@ -4832,6 +5937,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "halberdier"
+  },
+  "battle/units/vanguard/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/vanguard/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/vanguard/idle.png": {
    "anchor": "bottom-center",
@@ -4846,6 +5967,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/vanguard/idle.look.png",
    "note": "halberdier line",
    "set": "S5",
    "size": [
@@ -4904,6 +6026,22 @@
    "size_class": "L",
    "source": "imported"
   },
+  "battle/units/warden-of-the-wall/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/warden-of-the-wall/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/warden-of-the-wall/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4917,6 +6055,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/warden-of-the-wall/idle.look.png",
    "note": "arbalist line",
    "set": "S5",
    "size": [
@@ -4926,6 +6065,22 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "arbalist"
+  },
+  "battle/units/warden/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/warden/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
   },
   "battle/units/warden/idle.png": {
    "anchor": "bottom-center",
@@ -4940,6 +6095,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/warden/idle.look.png",
    "note": "ranger line",
    "set": "S5",
    "size": [
@@ -4976,6 +6132,22 @@
    "source": "imported",
    "variant_of": "dog-junkyard"
   },
+  "battle/units/warlock/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/warlock/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/warlock/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4989,6 +6161,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/warlock/idle.look.png",
    "note": "wizard line",
    "set": "S5",
    "size": [
@@ -5112,6 +6285,22 @@
     64
    ]
   },
+  "battle/units/wise-one/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/wise-one/idle.png",
+   "set": "S5",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/wise-one/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -5125,6 +6314,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/wise-one/idle.look.png",
    "note": "witch line",
    "set": "S5",
    "size": [
@@ -5202,6 +6392,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/witch/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/witch/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/witch/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -5215,6 +6421,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/witch/idle.look.png",
    "names": [
     "recruit witch"
    ],
@@ -5315,6 +6522,22 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/wizard/idle.look.png": {
+   "density": 2,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 4,
+   "kind": "look-mask",
+   "of": "battle/units/wizard/idle.png",
+   "set": "S3",
+   "size": [
+    512,
+    128
+   ],
+   "source": "imported"
+  },
   "battle/units/wizard/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -5328,6 +6551,7 @@
    "frame_ms": 180,
    "frames": 4,
    "kind": "battle-unit",
+   "look_mask": "battle/units/wizard/idle.look.png",
    "names": [
     "recruit wizard"
    ],
@@ -7380,6 +8604,27 @@
    "source": "imported",
    "variants": 3
   },
+  "map/units/adventurer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/adventurer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/adventurer/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -7391,6 +8636,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/adventurer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7399,6 +8645,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/adventurer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/adventurer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7414,6 +8681,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/adventurer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7422,6 +8690,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/alchemist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/alchemist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7437,6 +8726,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/alchemist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7445,6 +8735,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/alchemist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/alchemist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7460,6 +8771,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/alchemist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7468,6 +8780,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/apothecary/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/apothecary/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7483,6 +8816,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/apothecary/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7491,6 +8825,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/apothecary/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/apothecary/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7506,6 +8861,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/apothecary/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7514,6 +8870,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/arbalist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/arbalist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7529,6 +8906,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/arbalist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7537,6 +8915,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/arbalist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/arbalist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7552,6 +8951,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/arbalist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7560,6 +8960,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/arcanist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/arcanist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7575,6 +8996,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/arcanist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7583,6 +9005,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/arcanist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/arcanist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7598,6 +9041,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/arcanist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7606,6 +9050,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/archmage/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/archmage/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7621,6 +9086,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/archmage/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7629,6 +9095,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/archmage/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/archmage/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7644,6 +9131,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/archmage/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7652,6 +9140,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/archon/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/archon/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7667,6 +9176,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/archon/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7675,6 +9185,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/archon/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/archon/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7690,6 +9221,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/archon/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7794,6 +9326,27 @@
    ],
    "source": "imported"
   },
+  "map/units/bearward/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/bearward/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/bearward/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -7805,6 +9358,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/bearward/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7813,6 +9367,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/bearward/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/bearward/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7828,6 +9403,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/bearward/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7836,6 +9412,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/beastlord/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/beastlord/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7851,6 +9448,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/beastlord/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7859,6 +9457,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/beastlord/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/beastlord/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7874,6 +9493,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/beastlord/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7882,6 +9502,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/beasttamer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/beasttamer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -7897,6 +9538,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/beasttamer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7905,6 +9547,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/beasttamer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/beasttamer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -7920,6 +9583,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/beasttamer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -7978,6 +9642,27 @@
    ],
    "source": "imported"
   },
+  "map/units/blood-priest/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/blood-priest/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/blood-priest/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -7989,6 +9674,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/blood-priest/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -7997,6 +9683,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/blood-priest/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/blood-priest/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8012,6 +9719,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/blood-priest/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8020,6 +9728,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/bombardier/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/bombardier/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8035,6 +9764,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/bombardier/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8043,6 +9773,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/bombardier/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/bombardier/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8058,6 +9809,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/bombardier/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8066,6 +9818,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/cleric/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/cleric/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8081,6 +9854,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/cleric/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8089,6 +9863,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/cleric/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/cleric/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8104,6 +9899,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/cleric/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8112,6 +9908,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/coven-mother/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/coven-mother/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8127,6 +9944,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/coven-mother/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8135,6 +9953,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/coven-mother/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/coven-mother/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8150,6 +9989,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/coven-mother/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8158,6 +9998,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/coven-sage/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/coven-sage/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8173,6 +10034,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/coven-sage/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8181,6 +10043,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/coven-sage/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/coven-sage/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8196,6 +10079,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/coven-sage/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8204,6 +10088,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/crone-of-ash/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/crone-of-ash/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8219,6 +10124,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/crone-of-ash/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8227,6 +10133,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/crone-of-ash/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/crone-of-ash/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8242,6 +10169,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/crone-of-ash/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8250,6 +10178,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/deadeye/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/deadeye/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8265,6 +10214,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/deadeye/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8273,6 +10223,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/deadeye/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/deadeye/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8288,6 +10259,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/deadeye/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8296,6 +10268,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/demonologist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/demonologist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8311,6 +10304,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/demonologist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8319,6 +10313,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/demonologist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/demonologist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8334,6 +10349,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/demonologist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8342,6 +10358,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/dollmaster/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/dollmaster/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8357,6 +10394,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/dollmaster/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8365,6 +10403,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/dollmaster/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/dollmaster/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8380,6 +10439,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/dollmaster/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8388,6 +10448,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/dragon-lord/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/dragon-lord/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8403,6 +10484,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/dragon-lord/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8411,6 +10493,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/dragon-lord/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/dragon-lord/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8426,6 +10529,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/dragon-lord/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8434,6 +10538,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/dragon-tamer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/dragon-tamer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8449,6 +10574,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/dragon-tamer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8457,6 +10583,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/dragon-tamer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/dragon-tamer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8472,6 +10619,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/dragon-tamer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8530,6 +10678,27 @@
    ],
    "source": "imported"
   },
+  "map/units/druid/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/druid/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/druid/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -8541,6 +10710,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/druid/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8549,6 +10719,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/druid/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/druid/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8564,6 +10755,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/druid/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8572,6 +10764,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/duelist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/duelist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8587,6 +10800,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/duelist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8595,6 +10809,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/duelist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/duelist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8610,6 +10845,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/duelist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8668,6 +10904,27 @@
    ],
    "source": "imported"
   },
+  "map/units/elder-druid/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/elder-druid/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/elder-druid/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -8679,6 +10936,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/elder-druid/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8687,6 +10945,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/elder-druid/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/elder-druid/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8702,6 +10981,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/elder-druid/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8710,6 +10990,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/falcon-marshal/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/falcon-marshal/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8725,6 +11026,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/falcon-marshal/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8733,6 +11035,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/falcon-marshal/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/falcon-marshal/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8748,6 +11071,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/falcon-marshal/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8756,6 +11080,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/golem-lord/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/golem-lord/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8771,6 +11116,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/golem-lord/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8779,6 +11125,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/golem-lord/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/golem-lord/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8794,6 +11161,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/golem-lord/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8802,6 +11170,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/golemancer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/golemancer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8817,6 +11206,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/golemancer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8825,6 +11215,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/golemancer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/golemancer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8840,6 +11251,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/golemancer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8848,6 +11260,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/grand-puppeteer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/grand-puppeteer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8863,6 +11296,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/grand-puppeteer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8871,6 +11305,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/grand-puppeteer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/grand-puppeteer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8886,6 +11341,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/grand-puppeteer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -8894,6 +11350,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/grenadier/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/grenadier/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -8909,6 +11386,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/grenadier/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -8917,6 +11395,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/grenadier/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/grenadier/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -8932,6 +11431,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/grenadier/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9036,6 +11536,27 @@
    ],
    "source": "imported"
   },
+  "map/units/gryphon-rider/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/gryphon-rider/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/gryphon-rider/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -9047,6 +11568,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/gryphon-rider/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9055,6 +11577,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/gryphon-rider/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/gryphon-rider/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9070,6 +11613,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/gryphon-rider/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9078,6 +11622,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hag/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/hag/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9093,6 +11658,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/hag/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9101,6 +11667,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hag/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/hag/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9116,6 +11703,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/hag/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9124,6 +11712,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/halberdier/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/halberdier/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9139,6 +11748,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/halberdier/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9147,6 +11757,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/halberdier/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/halberdier/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9162,6 +11793,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/halberdier/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9220,6 +11852,27 @@
    ],
    "source": "imported"
   },
+  "map/units/hedge-witch/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/hedge-witch/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/hedge-witch/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -9231,6 +11884,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/hedge-witch/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9239,6 +11893,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hedge-witch/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/hedge-witch/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9254,6 +11929,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/hedge-witch/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9262,6 +11938,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hierarch/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/hierarch/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9277,6 +11974,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/hierarch/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9285,6 +11983,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hierarch/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/hierarch/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9300,6 +12019,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/hierarch/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9308,6 +12028,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/high-sorcerer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/high-sorcerer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9323,6 +12064,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/high-sorcerer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9331,6 +12073,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/high-sorcerer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/high-sorcerer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9346,6 +12109,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/high-sorcerer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9400,6 +12164,27 @@
     96
    ]
   },
+  "map/units/houndmaster/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/houndmaster/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/houndmaster/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -9411,6 +12196,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/houndmaster/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9419,6 +12205,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/houndmaster/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/houndmaster/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9434,6 +12241,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/houndmaster/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9442,6 +12250,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hunter/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/hunter/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9457,6 +12286,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/hunter/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9465,6 +12295,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/hunter/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/hunter/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9480,6 +12331,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/hunter/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9584,6 +12436,27 @@
    ],
    "source": "imported"
   },
+  "map/units/knight/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/knight/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/knight/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -9595,6 +12468,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/knight/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9603,6 +12477,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/knight/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/knight/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9618,6 +12513,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/knight/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9676,6 +12572,27 @@
    ],
    "source": "imported"
   },
+  "map/units/marionettist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/marionettist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/marionettist/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -9687,6 +12604,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/marionettist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9695,6 +12613,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/marionettist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/marionettist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9710,6 +12649,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/marionettist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9718,6 +12658,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/marksman/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/marksman/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9733,6 +12694,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/marksman/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9741,6 +12703,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/marksman/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/marksman/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9756,6 +12739,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/marksman/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9906,6 +12890,27 @@
    ],
    "source": "imported"
   },
+  "map/units/mutagenist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/mutagenist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/mutagenist/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -9917,6 +12922,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/mutagenist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9925,6 +12931,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/mutagenist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/mutagenist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9940,6 +12967,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/mutagenist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -9948,6 +12976,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/necromancer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/necromancer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -9963,6 +13012,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/necromancer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -9971,6 +13021,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/necromancer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/necromancer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -9986,6 +13057,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/necromancer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10044,6 +13116,27 @@
    ],
    "source": "imported"
   },
+  "map/units/packlord/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/packlord/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/packlord/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -10055,6 +13148,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/packlord/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10063,6 +13157,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/packlord/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/packlord/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10078,6 +13193,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/packlord/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10136,6 +13252,27 @@
    ],
    "source": "imported"
   },
+  "map/units/panacean/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/panacean/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/panacean/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -10147,6 +13284,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/panacean/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10155,6 +13293,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/panacean/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/panacean/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10170,6 +13329,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/panacean/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10178,6 +13338,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/pathfinder/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/pathfinder/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10193,6 +13374,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/pathfinder/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10201,6 +13383,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/pathfinder/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/pathfinder/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10216,6 +13419,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/pathfinder/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10224,6 +13428,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/priest/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/priest/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10239,6 +13464,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/priest/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10247,6 +13473,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/priest/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/priest/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10262,6 +13509,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/priest/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10270,6 +13518,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/puppeteer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/puppeteer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10285,6 +13554,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/puppeteer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10293,6 +13563,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/puppeteer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/puppeteer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10308,6 +13599,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/puppeteer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10316,6 +13608,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/ranger/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/ranger/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10331,6 +13644,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/ranger/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10339,6 +13653,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/ranger/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/ranger/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10354,6 +13689,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/ranger/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10412,6 +13748,27 @@
    ],
    "source": "imported"
   },
+  "map/units/reaper/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/reaper/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/reaper/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -10423,6 +13780,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/reaper/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10431,6 +13789,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/reaper/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/reaper/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10446,6 +13825,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/reaper/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10454,6 +13834,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/rogue/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/rogue/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10469,6 +13870,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/rogue/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10477,6 +13879,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/rogue/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/rogue/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10492,6 +13915,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/rogue/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10550,6 +13974,27 @@
    ],
    "source": "imported"
   },
+  "map/units/samurai/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/samurai/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/samurai/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -10561,6 +14006,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/samurai/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10569,6 +14015,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/samurai/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/samurai/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10584,6 +14051,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/samurai/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10642,6 +14110,27 @@
    ],
    "source": "imported"
   },
+  "map/units/sentinel/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/sentinel/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/sentinel/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -10653,6 +14142,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/sentinel/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10661,6 +14151,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sentinel/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/sentinel/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10676,6 +14187,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/sentinel/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10684,6 +14196,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/shaman/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/shaman/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10699,6 +14232,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/shaman/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10707,6 +14241,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/shaman/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/shaman/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10722,6 +14277,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/shaman/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10730,6 +14286,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sharpshooter/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/sharpshooter/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10745,6 +14322,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/sharpshooter/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10753,6 +14331,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sharpshooter/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/sharpshooter/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10768,6 +14367,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/sharpshooter/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10826,6 +14426,27 @@
    ],
    "source": "imported"
   },
+  "map/units/siege-master/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/siege-master/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/siege-master/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -10837,6 +14458,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/siege-master/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10845,6 +14467,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/siege-master/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/siege-master/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10860,6 +14503,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/siege-master/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10868,6 +14512,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/siegebreaker/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/siegebreaker/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10883,6 +14548,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/siegebreaker/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10891,6 +14557,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/siegebreaker/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/siegebreaker/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10906,6 +14593,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/siegebreaker/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10914,6 +14602,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/skyscout/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/skyscout/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10929,6 +14638,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/skyscout/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10937,6 +14647,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/skyscout/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/skyscout/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10952,6 +14683,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/skyscout/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -10960,6 +14692,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sorcerer/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/sorcerer/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -10975,6 +14728,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/sorcerer/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -10983,6 +14737,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sorcerer/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/sorcerer/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -10998,6 +14773,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/sorcerer/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11144,6 +14920,27 @@
    ],
    "source": "imported"
   },
+  "map/units/string-sovereign/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/string-sovereign/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/string-sovereign/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -11155,6 +14952,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/string-sovereign/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11163,6 +14961,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/string-sovereign/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/string-sovereign/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11178,6 +14997,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/string-sovereign/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11186,6 +15006,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sweeper/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/sweeper/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11201,6 +15042,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/sweeper/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11209,6 +15051,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sweeper/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/sweeper/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11224,6 +15087,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/sweeper/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11232,6 +15096,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sword-saint/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/sword-saint/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11247,6 +15132,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/sword-saint/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11255,6 +15141,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/sword-saint/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/sword-saint/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11270,6 +15177,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/sword-saint/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11278,6 +15186,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/swordmaster/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/swordmaster/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11293,6 +15222,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/swordmaster/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11301,6 +15231,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/swordmaster/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/swordmaster/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11316,6 +15267,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/swordmaster/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11420,6 +15372,27 @@
    ],
    "source": "imported"
   },
+  "map/units/theurgist/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/theurgist/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/theurgist/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -11431,6 +15404,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/theurgist/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11439,6 +15413,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/theurgist/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/theurgist/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11454,6 +15449,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/theurgist/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11462,6 +15458,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/transmuter/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/transmuter/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11477,6 +15494,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/transmuter/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11485,6 +15503,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/transmuter/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/transmuter/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11500,6 +15539,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/transmuter/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11558,6 +15598,27 @@
    ],
    "source": "imported"
   },
+  "map/units/vanguard/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/vanguard/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/vanguard/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -11569,6 +15630,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/vanguard/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11577,6 +15639,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/vanguard/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/vanguard/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11592,6 +15675,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/vanguard/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11650,6 +15734,27 @@
    ],
    "source": "imported"
   },
+  "map/units/warden-of-the-wall/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/warden-of-the-wall/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/warden-of-the-wall/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -11661,6 +15766,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/warden-of-the-wall/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11669,6 +15775,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/warden-of-the-wall/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/warden-of-the-wall/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11684,6 +15811,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/warden-of-the-wall/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11692,6 +15820,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/warden/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/warden/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11707,6 +15856,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/warden/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11715,6 +15865,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/warden/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/warden/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11730,6 +15901,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/warden/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11738,6 +15910,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/warlock/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/warlock/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11753,6 +15946,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/warlock/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11761,6 +15955,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/warlock/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/warlock/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11776,6 +15991,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/warlock/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11880,6 +16096,27 @@
    ],
    "source": "imported"
   },
+  "map/units/wise-one/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/wise-one/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
+    384
+   ],
+   "source": "imported"
+  },
   "map/units/wise-one/idle.png": {
    "anchor": "bottom-center",
    "density": 4,
@@ -11891,6 +16128,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/wise-one/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11899,6 +16137,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/wise-one/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/wise-one/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11914,6 +16173,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/wise-one/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11922,6 +16182,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/witch/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/witch/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11937,6 +16218,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/witch/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11945,6 +16227,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/witch/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/witch/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -11960,6 +16263,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/witch/walk.look.png",
    "rows": [
     "down",
     "up",
@@ -11968,6 +16272,27 @@
    "set": "S1",
    "size": [
     768,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/wizard/idle.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 2,
+   "kind": "look-mask",
+   "of": "map/units/wizard/idle.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    256,
     384
    ],
    "source": "imported"
@@ -11983,6 +16308,7 @@
    "frame_ms": 500,
    "frames": 2,
    "kind": "map-unit",
+   "look_mask": "map/units/wizard/idle.look.png",
    "rows": [
     "down",
     "up",
@@ -11991,6 +16317,27 @@
    "set": "S1",
    "size": [
     256,
+    384
+   ],
+   "source": "imported"
+  },
+  "map/units/wizard/walk.look.png": {
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 6,
+   "kind": "look-mask",
+   "of": "map/units/wizard/walk.png",
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "set": "S1",
+   "size": [
+    768,
     384
    ],
    "source": "imported"
@@ -12006,6 +16353,7 @@
    "frame_ms": 120,
    "frames": 6,
    "kind": "map-unit",
+   "look_mask": "map/units/wizard/walk.look.png",
    "rows": [
     "down",
     "up",
