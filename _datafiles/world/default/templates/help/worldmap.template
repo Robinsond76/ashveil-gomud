@@ -46,8 +46,14 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 
   When you move, you walk to the next tile and face the way you went:
   north shows your back, south your front, east and west your side. A
-  recall or a teleport jumps without walking. Moving up or down a level
-  fades you in on the new level.
+  recall or a teleport jumps without walking.
+
+  Crossing into a new place (another zone, or up or down a level) fades
+  the old map to black and brings in the new one under its name for a
+  moment, with the level when it isn't the one the place's map starts on:
+  "level 2 below" means two levels down. A cave that is a place of its own
+  shows its own map when you go in by its mouth, usually dark. With
+  reduced motion the name shows without the fade.
 
   Zooming moves between sizes that keep the pixels sharp, so the picture
   never smears.

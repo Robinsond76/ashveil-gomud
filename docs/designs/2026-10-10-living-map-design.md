@@ -159,6 +159,11 @@ cool glow sprites (the glow can be drawn in code).
 
 ### LM3: Crossing into a place
 
+*Built 2026-10-11 (see `docs/PROJECT_STATUS.md`).* As built, the old map
+fades out over 300 ms and the new one in over 450 ms; the title is a page
+element over the map for 2 s, level above or below reads "level 1 above" /
+"level 2 below", and arriving on the map at login shows no title.
+
 When the map switches zone or level, the old map fades to black. The new
 one fades in with a title for about two seconds: the zone's name (from
 `Room.Info.area`), and the level when it isn't the surface ("Hollowweb Deep

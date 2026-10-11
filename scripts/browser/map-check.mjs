@@ -897,6 +897,75 @@ for (const dpr of [1, 1.5, 2]) {
   await page.close();
 }
 
+// --- LM3: crossing into a place ---
+// A zone or level change fades the old map to black and the new one in,
+// under a title naming the place (and the level, off the surface); a step
+// within a zone shows nothing; reduced motion keeps the title, not the fade.
+{
+  const canvasLight = () => page.evaluate(() => {
+    const c = document.getElementById('map-2d-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let sum = 0, n = 0;
+    for (let i = 0; i < d.length; i += 64) { sum += d[i] + d[i + 1] + d[i + 2]; n++; }
+    return sum / n;
+  });
+  const elsewhere = (x, y, z, zone, num) => Object.assign(roomInfo(x, y, z, zone), { num, exitsv2: {} });
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', world);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await moveTo(page, 2, 1);
+  await tick(page, 300);
+  s = await state(page);
+  check(s.crossing === null, 'arriving on the map shows no crossing');
+  await moveTo(page, 3, 1);
+  await tick(page, 300);
+  check((await state(page)).crossing === null, 'a step within a zone shows no title');
+  const before = await canvasLight();
+
+  await gmcp(page, 'Room', { Info: elsewhere(1, 1, 0, 'Hollowweb Deep', 500) });
+  await tick(page, 280);
+  s = await state(page);
+  const mid = await canvasLight();
+  check(s.crossing && s.crossing.name === 'Hollowweb Deep' && s.crossing.level === '' && s.crossing.fading && s.crossing.title,
+    'a zone change fades and shows the zone\'s name: ' + JSON.stringify(s.crossing));
+  check(s.crossing.oldLight > before * 0.7, 'the old map is kept to fade out (not a blank canvas): ' + s.crossing.oldLight.toFixed(1) + ' vs ' + before.toFixed(1));
+  check(mid < before * 0.35, 'the old map fades to black: ' + mid.toFixed(1) + ' vs ' + before.toFixed(1));
+  check((await page.locator('.map-crossing-title').innerText()).includes('Hollowweb Deep'), 'the title is on screen');
+  await tick(page, 700);
+  s = await state(page);
+  check(!s.crossing.fading && s.crossing.title, 'the new map is in, the title stays a moment');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm3-title.png') }); }
+  await tick(page, 1600);
+  check(!(await state(page)).crossing.title, 'the title goes after about 2 seconds');
+
+  await gmcp(page, 'Room', { Info: elsewhere(1, 1, -2, 'Hollowweb Deep', 501) });
+  await tick(page, 100);
+  s = await state(page);
+  check(s.crossing.name === 'Hollowweb Deep' && s.crossing.level === 'level 2 below' && s.crossing.title,
+    'a level change names the level: ' + JSON.stringify(s.crossing));
+  check((await page.locator('.map-crossing-title').innerText()).includes('level 2 below'), 'the level shows under the name');
+  await gmcp(page, 'Room', { Info: elsewhere(1, 1, 1, 'Hollowweb Deep', 502) });
+  await tick(page, 100);
+  check((await state(page)).crossing.level === 'level 1 above', 'a level up reads as above');
+  await gmcp(page, 'Room', { Info: Object.assign(elsewhere(1, 1, 1, 'Lost', 503), { coords: 'Lost,999999999999999999,999999999999999999,999999999999999999' }) });
+  await tick(page, 100);
+  check((await state(page)).crossing.level === '', 'a room the mapper could not place names no level');
+  await tick(page, 2200);
+  check((await page.locator('.map-crossing-title').textContent()) === '', 'a hidden title leaves no stale name behind');
+  await page.close();
+
+  page = await open({ width: 1280, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gmcp(page, 'World.Map', world);
+  await moveTo(page, 2, 1);
+  await tick(page, 200);
+  await gmcp(page, 'Room', { Info: elsewhere(1, 1, 0, 'Hollowweb Deep', 500) });
+  await tick(page, 60);
+  s = await state(page);
+  check(s.crossing && !s.crossing.faded && !s.crossing.fading && s.crossing.title, 'reduced motion shows the title without the fade: ' + JSON.stringify(s.crossing));
+  await page.close();
+}
+
 await browser.close();
 server.close();
 console.log(failures ? failures + ' check(s) failed' : 'all checks passed');

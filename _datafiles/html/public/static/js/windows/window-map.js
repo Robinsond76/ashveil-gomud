@@ -392,6 +392,12 @@
         '#map-tooltip .tt-badge.bank    { background:var(--t-badge-bank-bg); color:var(--t-badge-bank-text); border-color:var(--t-badge-bank-border); }',
         '#map-tooltip .tt-badge.trainer { background:var(--t-badge-trainer-bg); color:var(--t-badge-trainer-text); border-color:var(--t-badge-trainer-border); }',
         '#map-tooltip .tt-badge.storage { background:var(--t-badge-storage-bg); color:var(--t-badge-storage-text); border-color:var(--t-badge-storage-border); }',
+        // LM3: the place title shown when you cross into a zone or level.
+        '.map-crossing-title { position:absolute; left:0; right:0; top:28%; text-align:center; pointer-events:none; z-index:9; opacity:0; transition:opacity 0.4s ease; color:#f2e6c8; text-shadow:0 1px 3px #000, 0 0 8px #000; }',
+        '.map-crossing-title.show { opacity:1; }',
+        '.map-crossing-title .mct-name { font-size:1.35em; font-weight:bold; letter-spacing:0.04em; }',
+        '.map-crossing-title .mct-level { font-size:0.85em; margin-top:2px; color:#d8ccb0; }',
+        '@media (prefers-reduced-motion: reduce) { .map-crossing-title { transition:none; } }',
         '.map-controls {',
         '    position: absolute;',
         '    top: 6px;',
@@ -525,6 +531,15 @@
         var WALK_STEP_MS    = 200;  // time the sprite takes per tile; matches CENTER_EASE_DURATION
         var WALK_QUEUE_MAX  = 2;    // steps the sprite may trail the player before it snaps
         var FADE_MS         = 250;  // fade-in after a level (z) or zone change
+        // LM3: crossing into a zone or level fades the old map to black, then
+        // the new one in, under a title naming the place for about 2 s.
+        var CROSS_OUT_MS    = 300;
+        var CROSS_IN_MS     = 450;
+        var CROSS_TITLE_MS  = 2000;
+        var crossing = null;        // { start, old (canvas snapshot), name, level }
+        var crossTitle = null;      // the title element
+        var crossTitleTimer = null;
+        var lastCrossing = null;    // the last crossing's title (browser checks)
         var ALLY_SCALE      = 0.75; // allied class sprites at 75% of the player's
         var identity    = { classid: '', lineage: '', look: null }; // Char.Info (look: Phase 72a skin and hair colours)
         var companySize = 0;        // members with the leader, 0 when alone or unknown
@@ -912,8 +927,12 @@
             pixelRatio = window.devicePixelRatio || 1;
             viewW = container.clientWidth  || 1;
             viewH = container.clientHeight || 1;
-            canvas.width  = Math.round(viewW * pixelRatio);
-            canvas.height = Math.round(viewH * pixelRatio);
+            // Setting a canvas's size clears it, even to the same size: only
+            // set it when it changes, so the map last drawn survives (LM3
+            // fades it out on a crossing).
+            var w = Math.round(viewW * pixelRatio), h = Math.round(viewH * pixelRatio);
+            if (canvas.width !== w)  { canvas.width = w; }
+            if (canvas.height !== h) { canvas.height = h; }
             canvas.style.width  = viewW + 'px';
             canvas.style.height = viewH + 'px';
         }
@@ -1501,6 +1520,82 @@
             return { x: q.px, y: q.py };
         }
 
+        // levelName (LM3) names a level that isn't the surface: z below 0 is
+        // "level 2 below", above 0 "level 1 above".
+        function levelName(z) {
+            // A room the mapper couldn't place has absurd coordinates.
+            if (!z || !isFinite(z) || Math.abs(z) > 50) { return ''; }
+            return 'level ' + Math.abs(z) + (z < 0 ? ' below' : ' above');
+        }
+
+        // meanLight is a canvas's average brightness (0-765, red+green+blue),
+        // read from a 16x16 copy (browser checks: the kept map isn't blank).
+        function meanLight(c) {
+            try {
+                var t = document.createElement('canvas');
+                t.width = 16; t.height = 16;
+                var tc = t.getContext('2d');
+                tc.drawImage(c, 0, 0, 16, 16);
+                var d = tc.getImageData(0, 0, 16, 16).data, sum = 0;
+                for (var i = 0; i < d.length; i += 4) { sum += (d[i] + d[i + 1] + d[i + 2]) * d[i + 3] / 255; }
+                return sum / 256;
+            } catch (e) { return -1; }
+        }
+
+        // startCrossing (LM3) begins the fade and title for a zone or level
+        // change: the canvas still shows the old map, so it is kept to fade
+        // out. Reduced motion shows the title without the fade.
+        function startCrossing(name, z) {
+            var old = null;
+            if (!reducedMotion() && canvas && canvas.width > 0 && canvas.height > 0) {
+                old = document.createElement('canvas');
+                old.width = canvas.width; old.height = canvas.height;
+                try { old.getContext('2d').drawImage(canvas, 0, 0); } catch (e) { old = null; }
+            }
+            lastCrossing = { name: name, level: levelName(z), faded: !!old, oldLight: old ? meanLight(old) : 0 };
+            crossing = old ? { start: performance.now(), old: old } : null;
+            lastCrossing.start = performance.now();
+            if (crossTitle) {
+                crossTitle.textContent = '';
+                var n = document.createElement('div');
+                n.className = 'mct-name'; n.textContent = name;
+                crossTitle.appendChild(n);
+                if (lastCrossing.level) {
+                    var l = document.createElement('div');
+                    l.className = 'mct-level'; l.textContent = lastCrossing.level;
+                    crossTitle.appendChild(l);
+                }
+                crossTitle.classList.add('show');
+                if (crossTitleTimer) { clearTimeout(crossTitleTimer); }
+                crossTitleTimer = setTimeout(function () {
+                    crossTitleTimer = null;
+                    crossTitle.classList.remove('show');
+                    crossTitle.textContent = '';   // no stale name for screen readers
+                }, CROSS_TITLE_MS);
+            }
+        }
+
+        // drawCrossing (LM3) draws the fade over the new map: the old map
+        // darkening to black, then black lifting off the new one. It returns
+        // true while the fade runs.
+        function drawCrossing(nowMs) {
+            if (!crossing) { return false; }
+            var t = nowMs - crossing.start;
+            if (t >= CROSS_OUT_MS + CROSS_IN_MS) { crossing = null; return false; }
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            if (t < CROSS_OUT_MS) {
+                ctx.drawImage(crossing.old, 0, 0, canvas.width, canvas.height);
+                ctx.globalAlpha = t / CROSS_OUT_MS;
+            } else {
+                ctx.globalAlpha = 1 - (t - CROSS_OUT_MS) / CROSS_IN_MS;
+            }
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+            return true;
+        }
+
         // drawLightMarker (LM2) shows the light you carry beside your figure:
         // a torch or lantern at your hand (a dark lantern when it is out), or
         // your party light floating over your head. It uses the A13 marker art
@@ -1941,6 +2036,7 @@
                     render();
                 });
             }
+            if (drawCrossing(nowMs)) { scheduleAnim(true); }
             // The sprites and camp fires animate: keep redrawing while any is
             // on screen (a walk redraws every frame, idling a few times a second).
             if (drewUnit || (spritesOn() && campInfo && mapSettings.showCamp !== false &&
@@ -1968,6 +2064,11 @@
             canvas.id = 'map-2d-canvas';
             wrap.appendChild(canvas);
             ctx = canvas.getContext('2d');
+            crossTitle = document.createElement('div');
+            crossTitle.className = 'map-crossing-title';
+            crossTitle.setAttribute('role', 'status');
+            crossTitle.setAttribute('aria-live', 'polite');
+            wrap.appendChild(crossTitle);
 
             canvas.addEventListener('mouseleave', function () {
                 hideTooltip();
@@ -2131,6 +2232,7 @@
             resizeCanvas();
             var zoneKey = info.coords.split(',').map(function (s) { return s.trim(); })[0] + '/z:' + gz;
             if (currentZoneKey !== zoneKey) {
+                if (currentZoneKey) { startCrossing(info.area || info.coords.split(',')[0].trim(), gz); }
                 currentZoneKey = zoneKey;
                 replayZone(zoneKey);
             } else {
@@ -2462,6 +2564,11 @@
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
                     sight: lastSight,
+                    crossing: lastCrossing ? {
+                        name: lastCrossing.name, level: lastCrossing.level, faded: lastCrossing.faded, oldLight: lastCrossing.oldLight,
+                        fading: !!crossing && performance.now() - crossing.start < CROSS_OUT_MS + CROSS_IN_MS,
+                        title: !!(crossTitle && crossTitle.classList.contains('show')),
+                    } : null,
                     // E1: the drawn sheet's density and frame counts
                     art: res ? { density: res.sheet.info.density || 1, idleFrames: res.sheet.info.frames,
                                  walkFrames: walkRes && walkRes.walk ? walkRes.sheet.info.frames : 0,
