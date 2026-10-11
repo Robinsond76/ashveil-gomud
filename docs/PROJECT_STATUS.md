@@ -1,3 +1,5 @@
+**A12b/A12c ordered: battle poses for creatures (2026-10-11).** [A12b-creature-actions.md](art/A12b-creature-actions.md) orders attack and hurt poses (and cast or shoot where a creature uses them) for all 58 A7 enemies, summons and company creatures, in two batches by how often the default world spawns them: A12b, the 25 met most plus the 3 fallbacks (53 sheets); A12c, the other 33 (69 sheets). Same cells, grain and frames as each idle and as A12; no masks. The importer and battle screen already handle them.
+
 **LM2: light and sight on the map (2026-10-11).** The map shows what the character can see ([living map design](designs/2026-10-10-living-map-design.md), LM2).
 - **Server:** `rooms.Sight` (`Room.SightForUser`, pure `sightFrom`) gives the visibility level and `daylight`, true when the room is fully lit without help: by day outdoors (fog permitting), or an indoor or lit place. A fixture in a dark place isn't daylight.
   - It also gives `source`: `lantern`, `torch`, `light`, `orb` (your own party light), `party` (an ally's), `nightvision` or `fixture`.
