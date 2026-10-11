@@ -25,7 +25,8 @@ one of the 101 class sheets, map and battle (owner decision 2026-10-09:
   or a chant the figure shows its drawn skin. Masks for the 38 pose sheets
   are a small follow-up order (A11c); the importer reads them beside the
   idle masks and the battle screen preloads every sheet's look mask, so
-  the client needs nothing more for them.
+  the client needs nothing more for them. *A11c was delivered and imported
+  on 2026-10-11: 36 pose sheets have masks (the warrior's mark nothing).*
 
 ## Art pipeline
 

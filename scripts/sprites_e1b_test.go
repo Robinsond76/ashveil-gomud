@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-// TestLookMasksAreImported (E1b): every map figure and battle idle whose A11
+// TestLookMasksAreImported (E1b, A11c): every map figure, battle idle and pose whose A11
 // masks mark skin or hair ships a look mask, named by the sheet's look_mask,
 // the sheet's size, red for skin and green for hair only, and marking only
 // pixels the sheet draws.
@@ -31,6 +31,8 @@ func TestLookMasksAreImported(t *testing.T) {
 			counts["map walk"]++
 		case strings.HasPrefix(rel, "battle/units/") && strings.HasSuffix(rel, "/idle.png"):
 			counts["battle idle"]++
+		case strings.HasPrefix(rel, "battle/units/") && meta.Kind == "battle-pose":
+			counts["battle pose"]++
 		default:
 			counts["other "+rel]++
 		}
@@ -70,7 +72,9 @@ func TestLookMasksAreImported(t *testing.T) {
 		}
 	}
 	// The A11 delivery: 71 map classes and 72 battle idles show skin or hair.
-	want := map[string]int{"map idle": 71, "map walk": 71, "battle idle": 72}
+	// A11c: the 38 A12 pose sheets of the 15 base classes, but for the
+	// helmed warrior's two (its masks mark nothing): 36.
+	want := map[string]int{"map idle": 71, "map walk": 71, "battle idle": 72, "battle pose": 36}
 	for k, n := range counts {
 		if want[k] != n {
 			t.Errorf("%d %s sheets have look masks, want %d", n, k, want[k])

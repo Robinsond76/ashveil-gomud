@@ -25,8 +25,28 @@ func e3cWants(class string) []string {
 	return poses
 }
 
-// TestCommissionedBattlePosesAreImported (E3c): the 38 approved A12 pose
-// sheets ship for the 15 base classes, cut like their idle (the same frame
+// a12bCreatures are the A12b creatures (docs/art/A12b-creature-actions.md):
+// each attacks and is hurt; the hexer and the bonesetter cast; the poacher
+// shoots.
+var a12bCreatures = []string{"spider-hatchling", "fungus", "skeleton", "crocodile", "snow-floof", "imp-forest",
+	"ruffian", "rat", "rat-big", "wolf-snow", "wolf-timber", "goblin-hexer", "bats-echo", "spider-warrior",
+	"acolyte-dark", "ruffian-dangerous", "poacher", "dog-junkyard", "bonesetter", "ice-warrior", "stalker-cave",
+	"spider-large", "unknown-humanoid", "unknown-beast", "unknown-large"}
+
+func a12bWants(creature string) []string {
+	poses := []string{"attack", "hurt"}
+	switch creature {
+	case "goblin-hexer", "bonesetter":
+		poses = append(poses, "cast")
+	case "poacher":
+		poses = append(poses, "shoot")
+	}
+	return poses
+}
+
+// TestCommissionedBattlePosesAreImported (E3c, A12b): the 38 approved A12
+// pose sheets ship for the 15 base classes and the 53 A12b sheets for 25
+// creatures, each cut like its idle (the same frame
 // size and density, so the screen stands them on the idle's feet row),
 // with the pose's frame count, a looping cast, and within 60 KB a frame.
 func TestCommissionedBattlePosesAreImported(t *testing.T) {
@@ -51,12 +71,20 @@ func TestCommissionedBattlePosesAreImported(t *testing.T) {
 	if len(want) != 38 {
 		t.Fatalf("the pilot lists %d sheets, want 38", len(want))
 	}
+	for _, c := range a12bCreatures {
+		for _, p := range a12bWants(c) {
+			want["battle/units/"+c+"/"+p+".png"] = true
+		}
+	}
+	if len(want) != 38+53 {
+		t.Fatalf("A12 and A12b list %d sheets, want 91", len(want))
+	}
 	for rel, meta := range m.Files {
 		if meta.Kind != "battle-pose" {
 			continue
 		}
 		if !want[rel] {
-			t.Errorf("%s: a pose sheet the pilot did not order", rel)
+			t.Errorf("%s: a pose sheet A12 and A12b did not order", rel)
 		}
 	}
 	for rel := range want {

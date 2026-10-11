@@ -54,7 +54,7 @@ import roster  # noqa: E402
 from import_art import encode, shrink, IMPORTED, DEFAULT_SRC  # noqa: E402
 from import_sheet import look_mask, mask_png  # noqa: E402
 
-PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10", "A12"]
+PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10", "A12", "A12b"]
 FRAMES = 4
 # Action poses (A12): frames, and whether the screen loops the sheet.
 POSES = {"attack": (6, False), "hurt": (3, False), "shoot": (6, False), "cast": (4, True)}
