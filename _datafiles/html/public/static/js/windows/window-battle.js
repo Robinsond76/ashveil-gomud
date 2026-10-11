@@ -185,7 +185,8 @@
     // has the art: the planner only plays a pose whose sheet has loaded.
     const posesAsked = new Set();
     function preloadPoses(key) {
-        if (!manifest || posesAsked.has(key)) { return; }
+        // Animation off plays no poses: ask again if it is turned back on.
+        if (!manifest || posesAsked.has(key) || motion() === 'off') { return; }
         posesAsked.add(key);
         const prefix = 'battle/units/' + key + '/';
         Object.keys(manifest.files).forEach(p => {
@@ -1357,6 +1358,11 @@
                 case 'victory': if (full) { pose.dy -= 2 * Math.abs(Math.sin(p * Math.PI * 2)); } break;
                 default: break;
                 }
+            } else if (st.want === 'dodge' && anim !== 'dodge') {
+                // A dodge drawn with the hurt sheet (E3c) still steps back
+                // and hops, so it never reads as a hit.
+                pose.dx -= dir * 6 * tri(p);
+                if (full) { pose.dy -= 2 * tri(p); }
             }
         });
         if (!full) { pose.dx = Math.round(pose.dx); pose.dy = Math.round(pose.dy); }

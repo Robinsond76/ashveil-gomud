@@ -157,9 +157,11 @@ for (const dpr of [1, 1.5, 2]) {
 }
 // E3c: the shipped A12 pose sheets play. A base member (the Cleric) draws
 // its attack sheet through the blow frame (4 of 6), its hurt sheet when
-// struck and its looping cast sheet while chanting, each standing on the
-// idle's feet row; a creature with no pose sheets keeps its idle.
-{
+// struck (stepping back as well when it dodges) and its cast sheet while
+// chanting and at the release, each standing on the idle's feet row; a
+// Ranger shoots with its shoot sheet; a creature with no pose sheets keeps
+// its idle; reduced motion still plays the poses, in place.
+for (const mode of ['full', 'reduced']) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
   page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
@@ -167,44 +169,61 @@ for (const dpr of [1, 1.5, 2]) {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
-  await page.evaluate(() => window.BattleScreen.setMotion('full'));
+  await page.evaluate(m => window.BattleScreen.setMotion(m), mode);
+  // Ysolde is a plain Ranger here, so a base ranged class is on the field.
+  const withRanger = Object.assign({}, company, { members: [company.members[0], member('companion:2', 2, 'Ysolde', 'Ranger', { row: 2, col: 2 })] });
   await gmcp('Room', { Info: { environment: 'forest', area: 'Frostfang' } });
-  await gmcp('Company', company);
+  await gmcp('Company', withRanger);
   await gmcp('Company.Battle', battle);
   const unit = id => page.evaluate(i => window.BattleScreen.state().units.find(o => o.id === i), id);
   await page.waitForFunction(() => { const u = window.BattleScreen.state().units.find(o => o.id === 'companion:1'); return u && u.art; }, null, { timeout: 8000 }).catch(() => {});
   const idleTop = ((await unit('companion:1')).art || {}).top;
+  // A unit's pose sheets load as its figure is first drawn, so the very
+  // first blow, flinch and chant of the fight play them: wait for the loads.
+  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot'];
+  await page.waitForFunction(names => names.every(n => performance.getEntriesByType('resource').some(e => e.name.endsWith('/battle/units/' + n + '.png') && e.responseEnd > 0)),
+    sheets, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(50);
   let round = 6000;
-  // send plays one event and samples who draws what until the screen is idle.
+  // send plays one event and samples who draws what (and how far they move) until the screen is idle.
   const send = async (ev, ids) => {
     round++;
     await page.evaluate(b => Client.dispatchBattleEvents(b), { fight: 2, round, fight_round: round - 6000, events: [Object.assign({ seq: round }, ev)] });
     const seen = {};
     ids.forEach(i => { seen[i] = []; });
     for (let k = 0; k < 120; k++) {
-      const st = await page.evaluate(() => { const s = window.BattleScreen.state(); return { backlog: s.backlog, units: s.units.map(u => ({ id: u.id, art: u.art })) }; });
-      st.units.forEach(u => { if (seen[u.id] && u.art) { seen[u.id].push(u.art); } });
+      const st = await page.evaluate(() => { const s = window.BattleScreen.state(); return { backlog: s.backlog, units: s.units.map(u => ({ id: u.id, art: u.art, pose: u.pose })) }; });
+      st.units.forEach(u => { if (seen[u.id] && u.art) { seen[u.id].push(Object.assign({ dx: u.pose ? u.pose.dx : 0 }, u.art)); } });
       if (k > 3 && st.backlog === 0) { break; }
       await page.waitForTimeout(25);
     }
     return seen;
   };
-  // A unit's pose sheets load as its figure is first drawn, so the very
-  // first blow, flinch and chant of the fight play them.
-  await page.waitForTimeout(300);
+  const tag = mode + ': ';
   let seen = await send({ kind: 'attack', src: 'companion:1', tgt: 'm:1', outcome: 'hit', damage: 2 }, ['companion:1']);
   const atk = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/attack.png');
   const atkFrames = new Set(atk.map(a => a.frame));
   check(atk.length > 0 && atkFrames.has(3) && Math.max(...atkFrames) <= 5,
-    'the cleric strikes with its attack sheet through the blow frame: frames ' + JSON.stringify(Array.from(atkFrames).sort()));
-  check(typeof idleTop === 'number' && atk.every(a => a.top === idleTop), 'the attack sheet stands on the idle\'s feet row: tops ' +
+    tag + 'the cleric\'s first blow plays its attack sheet through the blow frame: frames ' + JSON.stringify(Array.from(atkFrames).sort()));
+  check(typeof idleTop === 'number' && atk.every(a => a.top === idleTop), tag + 'the attack sheet stands on the idle\'s feet row: tops ' +
     JSON.stringify(Array.from(new Set(atk.map(a => a.top)))) + ' vs idle ' + idleTop);
+  const lunge = Math.max(0, ...atk.map(a => Math.abs(a.dx)));
+  check(mode === 'full' ? lunge > 10 : lunge === 0, tag + 'the cleric ' + (mode === 'full' ? 'steps in to strike' : 'strikes in place') + ': moved ' + lunge);
   seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['companion:1', 'm:1']);
-  check(seen['companion:1'].some(a => a.path === 'battle/units/cleric/hurt.png'), 'the struck cleric plays its hurt sheet');
-  check(seen['m:1'].length > 0 && seen['m:1'].every(a => a.path === 'battle/units/wolf-timber/idle.png'), 'a wolf (no pose sheets) keeps its idle as it strikes');
+  check(seen['companion:1'].some(a => a.path === 'battle/units/cleric/hurt.png'), tag + 'the struck cleric plays its hurt sheet');
+  check(seen['m:1'].length > 0 && seen['m:1'].every(a => a.path === 'battle/units/wolf-timber/idle.png'), tag + 'a wolf (no pose sheets) keeps its idle as it strikes');
+  seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'miss' }, ['companion:1']);
+  const dodge = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/hurt.png');
+  check(dodge.length > 0 && Math.max(...dodge.map(a => Math.abs(a.dx))) >= 4, tag + 'a dodging cleric plays its hurt sheet and steps back: moved ' + Math.max(0, ...dodge.map(a => Math.abs(a.dx))));
+  seen = await send({ kind: 'attack', src: 'companion:2', tgt: 'm:1', outcome: 'hit', damage: 2, weapon: 'shooting' }, ['companion:2']);
+  const shot = seen['companion:2'].filter(a => a.path === 'battle/units/ranger/shoot.png');
+  check(shot.length > 0 && new Set(shot.map(a => a.frame)).has(3), tag + 'the ranger shoots with its shoot sheet through the release: frames ' + JSON.stringify(Array.from(new Set(shot.map(a => a.frame))).sort()));
   seen = await send({ kind: 'cast-start', src: 'companion:1', spell: 'heal', spell_name: 'heal' }, ['companion:1']);
   const cast = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/cast.png');
-  check(cast.length > 0 && new Set(cast.map(a => a.frame)).size >= 2, 'the chanting cleric loops its cast sheet: frames ' + JSON.stringify(Array.from(new Set(cast.map(a => a.frame)))));
+  check(cast.length > 0 && new Set(cast.map(a => a.frame)).size >= 2, tag + 'the chanting cleric loops its cast sheet: frames ' + JSON.stringify(Array.from(new Set(cast.map(a => a.frame)))));
+  seen = await send({ kind: 'cast-complete', src: 'companion:1', spell: 'heal', outcome: 'cast' }, ['companion:1']);
+  const rel = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/cast.png').map(a => a.frame);
+  check(rel.length > 0 && rel.every((f, i) => i === 0 || f >= rel[i - 1]), tag + 'the release plays the cast sheet once through: frames ' + JSON.stringify(Array.from(new Set(rel))));
   await ctx.close();
 }
 await browser.close();

@@ -21,9 +21,12 @@ refused.
 
 A pose sheet (A12, E3c: `battle/units/<id>/<pose>.png`) is cut the same
 way, with the pose's own frame count (POSES): an attack and a shot have 6
-frames (the blow or release on frame 4), a hurt 3, and a cast 4 that loop.
-A pose is imported only for a unit whose idle is imported too, on the same
-cell and grain, so the battle screen can stand it on the idle's feet row.
+frames (the blow or release on frame 4), a hurt 3, and a cast 4 drawn to
+loop (`loop` in its entry; the battle screen's planner decides when a step
+loops it: while chanting, not at the release). A pose is imported only for a
+unit whose idle is imported too (in the same run or already in the index),
+at the same runtime frame and density, so the battle screen can stand it on
+the idle's feet row.
 
 The files go to `scripts/sprites/imported/` (or --out) with their entries in
 its `imported.json`; `generate.py` copies them over its drawn output.
@@ -271,7 +274,8 @@ def main(argv=None):
                 idle_rel = f"battle/units/{key}/idle.png"
                 idle = built[idle_rel][1] if idle_rel in built else index.get(idle_rel)
                 if not idle:
-                    raise ValueError(f"{path}: {key} has no imported idle to stand the {pose} on")
+                    raise ValueError(f"{path}: {key} has no imported idle to stand the {pose} on "
+                                     f"(import its idle.png first, or name {idle_rel} in --only too)")
                 data, meta = unit_job(key, path, pose)
                 if meta["frame"] != idle["frame"] or meta["density"] != idle["density"]:
                     raise ValueError(f"{path}: frames {meta['frame']} at density {meta['density']}, "

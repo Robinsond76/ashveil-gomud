@@ -152,6 +152,18 @@ func TestImportBattlePoses(t *testing.T) {
 		t.Errorf("hurt entry = %v", h)
 	}
 
+	// A pose whose idle in the index was cut at another size is refused,
+	// so it can't stand on the wrong feet row.
+	stale := t.TempDir()
+	if err := os.WriteFile(filepath.Join(stale, "imported.json"), []byte(`{"battle/units/rogue/idle.png": {"frame": [96, 96], "density": 1.5}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	other := t.TempDir()
+	writeStripN(t, other, "A12/battle/units/rogue/hurt.png", 3, 640, 40, fig)
+	if msg, err := run(other, stale); err == nil || !strings.Contains(msg, "but the idle's are [96, 96]") {
+		t.Errorf("a pose on another frame size than its idle: err %v, output %q; want a refusal", err, msg)
+	}
+
 	for _, tc := range []struct {
 		name, problem string
 		write         func(root string)
