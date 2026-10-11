@@ -64,6 +64,21 @@ test('a coast faces water neighbours, exits or not', () => {
   assert.equal(M.piece('shore', look([['', '', ''], ['', 'shore', ''], ['', '', '']])), 'shore-none');
 });
 
+test('a coast bends inward where water sits only on its diagonal (E2b)', () => {
+  // The top-left room of a ring round a lake: shore east and south, the lake south-east.
+  assert.deepEqual(M.corners('shore', look([['', '', ''], ['', 'shore', 'shore'], ['', 'shore', 'water']])), ['es']);
+  assert.deepEqual(M.corners('shore', look([['water', 'shore', 'water'], ['shore', 'shore', 'shore'], ['water', 'shore', 'water']])), ['ne', 'es', 'sw', 'nw']);
+  // A side that isn't coast (open land, the map's edge) would cut the water off square: no overlay.
+  assert.deepEqual(M.corners('shore', look([['', '', ''], ['', 'shore', 'forest'], ['', 'shore', 'water']])), []);
+  assert.deepEqual(M.corners('shore', look([['', '', ''], ['', 'shore', ''], ['', 'shore', 'water']])), []);
+  // Water on a side already reaches the corner through the piece: no overlay there.
+  assert.deepEqual(M.corners('shore', look([['', '', ''], ['', 'shore', 'water'], ['', '', 'water']])), []);
+  assert.deepEqual(M.corners('shore', look([['', '', ''], ['', 'shore', ''], ['', 'water', 'water']])), []);
+  // Only water counts, and only a coast bends.
+  assert.deepEqual(M.corners('shore', look([['', '', ''], ['', 'shore', ''], ['', '', 'forest']])), []);
+  assert.deepEqual(M.corners('road', look([['', '', ''], ['', 'road', ''], ['', '', 'water']])), []);
+});
+
 test('other ground has no piece', () => {
   assert.equal(M.piece('forest', look([['', 'road', ''], ['road', 'forest', 'road'], ['', '', '']], ['0,-1'])), '');
   assert.equal(M.piece('', look([])), '');

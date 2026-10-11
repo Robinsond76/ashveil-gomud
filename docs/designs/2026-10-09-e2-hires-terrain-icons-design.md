@@ -123,10 +123,11 @@ the battle screen is E3.
      same zone), so a lake appears as soon as its ring is walked closed.
    - A lake cell's stand-in id is a hash of its place, so its variant and
      animation phase look random, not striped.
-   - Known gap: the 16 pieces have no inside corner. Where a lake's corner
-     meets a shore room diagonally, that room is sand to its corner, and
-     the water shows a square notch. Four inside-corner overlays are
-     ordered as art phase A2b (`docs/art/A2b-coast-inner-corners.md`).
+   - The 16 pieces have no inside corner: where a lake's corner meets a
+     shore room diagonally, that room was sand to its corner, a square
+     notch. Closed by E2b (2026-10-11): the four A2b inside-corner overlays
+     (`docs/art/A2b-coast-inner-corners.md`) are drawn over such a room's
+     piece (`MapTiles.corners`).
 
 ## State, persistence, multiplayer
 

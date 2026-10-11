@@ -28,6 +28,20 @@
     - Pose and idle look masks are now preloaded.
   - **Kept as is.** Highlights lift toward white by a fixed share, so a very dark chosen colour shows brighter highlights. This is an aesthetic call to judge in play; the shading order is kept and tested.
 
+**E2b: lake inside corners (2026-10-11).** The approved A2b overlays ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) round off a lake's corners on the map, where a ring of shore used to leave a square notch of sand.
+- **Art:** `import_art.py` imports `shore-corner-ne/es/sw/nw` (512 px masters on an 8 px grain, shrunk to 128 px at density 4, under 2 KB each) as `terrain-corner` entries, transparent but for the water's quarter.
+- **Map:** `MapTiles.corners(env, look)` (pure) lists a shore room's corners whose diagonal neighbour is water while both sides beside it are shore (the ring runs on round the water, so the overlay's sand meets sand); `drawTerrain` draws each over the room's piece once its art has loaded, and `state().drawn.corners` records them. Water on a side already reaches the corner through the piece, so no overlay is drawn there.
+- **Help:** `help worldmap` says the shore curves round a lake's corners; the camp lesson's map hint names roads and shores.
+- *Tests:* `map-tiles.test.mjs` (the ring's corner, all four, water on a side, other ground); `TestShoreCornersAreImported` (four density-4 overlays, water in their corner and clear in the opposite one); `map-check.mjs` (the 4×4 lake ring draws exactly its four corner rooms' overlays, and none in the classic style); the help assertion.
+- *Independent review:* 4 low findings, all accepted.
+  - The E2 design's known-gap note is now marked closed.
+  - `window-map.js` guards `MapTiles.corners`, for a browser holding an older cached `map-tiles.js`.
+  - A corner now needs shore on both sides. A real water room next to open land would otherwise cut its water off square; the Node test covers this.
+  - The browser check now asserts that the classic style draws no corners.
+- *Full checks:* `make generate`, `make validate`, `go test -race -timeout 40m ./...`, `make js-lint` and `make js-test` pass.
+  - The one exception was `TestSorcererLanceHitsAboutTwiceAMagicMissile`, a pre-existing flaky test that also fails on master about once in 30 runs under `-race`.
+  - It compared the best of 6 random hits against a fixed 1.5× ratio, so a lance of 31 against a missile of 21 failed it. It now compares the mean of every hit, and passed 40 of 40 runs under `-race`.
+  - `modules/company` takes about 12 minutes under `-race`, over Go's default 10-minute timeout.
 **E3c: battle action poses (2026-10-11).** The approved A12 pilot ([A12-battle-actions-pilot.md](art/A12-battle-actions-pilot.md)) is in the game: the 15 base classes act out their blows on the battle screen instead of nudging their idle figure.
 - **Importer:** `scripts/sprites/import_battle.py` reads `A12/battle/units/<id>/<pose>.png`. `POSES` gives each pose its frame count (attack and shoot 6, hurt 3, cast 4) and marks the cast to loop. A pose is cut like its idle and must match its runtime frame and density (checked against the idle imported in the same run or already in the index); it is refused without an imported idle, so the screen can stand it on the idle's feet row. Entries are `battle-pose` (set S4) with `pose`, `frames`, `loop`.
 - **Art:** 38 sheets (15 attack, 15 hurt, 3 shoot, 5 cast), 128 px frames at density 2, about 1.9 MB in all. They are painted with thousands of colours (the idles use about 96), so they ship as lossless RGBA, never quantised; each is within the 60 KB a frame budget.

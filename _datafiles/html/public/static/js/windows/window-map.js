@@ -547,7 +547,7 @@
             fadeStart: -1,
         };
         var animTimer = null;
-        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, replaced: 0, lakes: 0 }; // what the last render drew (browser checks)
+        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, corners: {}, replaced: 0, lakes: 0 }; // what the last render drew (browser checks)
         var walkInfo = null;   // Phase 40d: Walkto { target, path: [room ids ahead] } while a walk is under way
         var timeInfo = null;   // Phase 40d: Gametime, for the day/night shading
         var nightQuant = -1;   // the shading level last drawn, in tenths
@@ -1133,7 +1133,8 @@
         function drawTerrain(room, id, p, size, now, coordIndex, onward, lakeIndex) {
             var biome = room.env ? room.env : 'default';
             var mt = window.MapTiles;
-            var name = (mt && mt.tiled(biome)) ? mt.piece(biome, tileLook(room, id, coordIndex, onward, lakeIndex)) : '';
+            var look = (mt && mt.tiled(biome)) ? tileLook(room, id, coordIndex, onward, lakeIndex) : null;
+            var name = look ? mt.piece(biome, look) : '';
             if (name) {
                 var pp = 'map/terrain/' + name + '.png';
                 var ps = Sprites.status(pp);
@@ -1141,6 +1142,15 @@
                 if (ps === 'ready') {
                     drawTileArt(pp, 0, p.px, p.py, size, now, false);
                     drawn.pieces[id] = name;
+                    // E2b: a coast bending round a lake's corner gets the
+                    // inside-corner water over its piece (an overlay that
+                    // hasn't loaded yet is simply left off this frame).
+                    (mt.corners ? mt.corners(biome, look) : []).forEach(function (c) {
+                        var cp = 'map/terrain/shore-corner-' + c + '.png';
+                        if (Sprites.status(cp) !== 'ready') { return; }
+                        drawTileArt(cp, 0, p.px, p.py, size, now, false);
+                        (drawn.corners[id] = drawn.corners[id] || []).push(c);
+                    });
                     return { animated: false };
                 }
             }
@@ -1443,7 +1453,7 @@
             var useCircle = (mapSettings.roomShape === 'circle');
 
             var tiles = tilesOn();
-            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, replaced: 0, lakes: 0 };
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, corners: {}, replaced: 0, lakes: 0 };
             var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
