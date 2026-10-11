@@ -19,6 +19,15 @@ whose grain grid is offset from the cell's corner is shifted onto it (less
 than one art pixel), and a sheet that still isn't on a clean grain is
 refused.
 
+A pose sheet (A12, E3c: `battle/units/<id>/<pose>.png`) is cut the same
+way, with the pose's own frame count (POSES): an attack and a shot have 6
+frames (the blow or release on frame 4), a hurt 3, and a cast 4 drawn to
+loop (`loop` in its entry; the battle screen's planner decides when a step
+loops it: while chanting, not at the release). A pose is imported only for a
+unit whose idle is imported too (in the same run or already in the index),
+at the same runtime frame and density, so the battle screen can stand it on
+the idle's feet row.
+
 The files go to `scripts/sprites/imported/` (or --out) with their entries in
 its `imported.json`; `generate.py` copies them over its drawn output.
 """
@@ -37,8 +46,11 @@ sys.path.insert(0, HERE)
 import roster  # noqa: E402
 from import_art import encode, shrink, IMPORTED, DEFAULT_SRC  # noqa: E402
 
-PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10"]
+PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10", "A12"]
 FRAMES = 4
+# Action poses (A12): frames, and whether the screen loops the sheet.
+POSES = {"attack": (6, False), "hurt": (3, False), "shoot": (6, False), "cast": (4, True)}
+POSE_FRAME_MS = 120           # a looping pose's frame time; the others span their step
 # master cell -> (grain, runtime frame) by size class.
 CELLS = {
     "S": {768: 6},
@@ -129,8 +141,9 @@ def edges_touched(sheet, frame):
     return sorted(sides)
 
 
-def unit_job(uid, path):
-    """(png bytes, manifest entry) for one unit's idle master, or raise ValueError."""
+def unit_job(uid, path, pose=None):
+    """(png bytes, manifest entry) for one unit's idle master, or for one of
+    its pose sheets (pose names a POSES entry), or raise ValueError."""
     units = {u.id: u for u in roster.UNITS}
     if uid not in units:
         raise ValueError(f"{path}: {uid} is not a battle unit in roster.py")
@@ -141,15 +154,16 @@ def unit_job(uid, path):
     if ch not in grains:
         raise ValueError(f"{path}: a {u.size} unit's cell is {sorted(grains)} px, not {ch}")
     g = grains[ch]
-    gap = (width - FRAMES * ch) / (FRAMES - 1)
+    frames = POSES[pose][0] if pose else FRAMES
+    gap = (width - frames * ch) / (frames - 1)
     if gap != int(gap) or gap < 0:
-        raise ValueError(f"{path}: {width} px is not {FRAMES} cells of {ch} with equal gutters")
+        raise ValueError(f"{path}: {width} px is not {frames} cells of {ch} with equal gutters")
     gap = int(gap)
     src = clear_hidden(src)
     raw = []
-    for i in range(FRAMES):
+    for i in range(frames):
         x = i * (ch + gap)
-        if gap and src[:, x + ch:x + ch + gap, 3].any() and i < FRAMES - 1:
+        if gap and src[:, x + ch:x + ch + gap, 3].any() and i < frames - 1:
             raise ValueError(f"{path}: opaque pixels in the gutter after frame {i + 1}")
         raw.append(src[:, x:x + ch])
     off = grain_offset(raw, g)
@@ -166,13 +180,13 @@ def unit_job(uid, path):
     if touched:
         print(f"{path}: art touches the frame's {', '.join(touched)} edge (check it isn't clipped)", file=sys.stderr)
     try:
-        data = exact_png(sheet, UNIT_FRAME_BUDGET * FRAMES)
+        data = exact_png(sheet, UNIT_FRAME_BUDGET * frames)
     except ValueError as e:
         raise ValueError(f"{path}: {e}")
-    if len(data) > UNIT_FRAME_BUDGET * FRAMES:
-        raise ValueError(f"{path}: {len(data)} bytes, over {UNIT_FRAME_BUDGET * FRAMES}")
+    if len(data) > UNIT_FRAME_BUDGET * frames:
+        raise ValueError(f"{path}: {len(data)} bytes, over {UNIT_FRAME_BUDGET * frames}")
     meta = dict(kind="battle-unit", set="S5" if u.family in ("promoted class", "summon") else "S3",
-                frame=[frame, frame], frames=FRAMES, frame_ms=180, anchor="bottom-center",
+                frame=[frame, frame], frames=frames, frame_ms=180, anchor="bottom-center",
                 facing="right", size_class=u.size, family=u.family, size=[sheet.shape[1], sheet.shape[0]],
                 density=frame // u.frame if frame % u.frame == 0 else frame / u.frame, source="imported")
     if u.names:
@@ -181,6 +195,12 @@ def unit_job(uid, path):
         meta["variant_of"] = u.variant_of
     if u.note:
         meta["note"] = u.note
+    if pose:
+        meta.update(kind="battle-pose", set="S4", pose=pose, frame_ms=POSE_FRAME_MS)
+        if POSES[pose][1]:
+            meta["loop"] = True
+        for k in ("names", "variant_of", "note"):
+            meta.pop(k, None)
     if u.floating:
         meta.update(floating=True, anchor="center")
     else:
@@ -222,6 +242,10 @@ def main(argv=None):
         for path in sorted(glob.glob(os.path.join(args.src, phase, "battle", "units", "*", "idle.png"))):
             uid = os.path.basename(os.path.dirname(path))
             jobs.append((f"battle/units/{uid}/idle.png", "unit", uid, path))
+        for pose in POSES:
+            for path in sorted(glob.glob(os.path.join(args.src, phase, "battle", "units", "*", pose + ".png"))):
+                uid = os.path.basename(os.path.dirname(path))
+                jobs.append((f"battle/units/{uid}/{pose}.png", "pose", uid, path))
         for path in sorted(glob.glob(os.path.join(args.src, phase, "battle", "backgrounds", "*.png"))):
             bid = os.path.splitext(os.path.basename(path))[0]
             jobs.append((f"battle/backgrounds/{bid}.png", "backdrop", bid, path))
@@ -234,11 +258,29 @@ def main(argv=None):
     if dupes:
         raise SystemExit("the same runtime file has masters in two phases: " + ", ".join(dupes))
 
+    index_path = os.path.join(args.out, "imported.json")
+    index = {}
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            index = json.load(f)
     built, problems = {}, []
-    for rel, kind, key, path in jobs:
+    # Idles first, so a pose can be checked against its unit's idle.
+    for rel, kind, key, path in sorted(jobs, key=lambda j: j[1] == "pose"):
         try:
             if kind == "unit":
                 built[rel] = unit_job(key, path)
+            elif kind == "pose":
+                pose = os.path.splitext(os.path.basename(rel))[0]
+                idle_rel = f"battle/units/{key}/idle.png"
+                idle = built[idle_rel][1] if idle_rel in built else index.get(idle_rel)
+                if not idle:
+                    raise ValueError(f"{path}: {key} has no imported idle to stand the {pose} on "
+                                     f"(import its idle.png first, or name {idle_rel} in --only too)")
+                data, meta = unit_job(key, path, pose)
+                if meta["frame"] != idle["frame"] or meta["density"] != idle["density"]:
+                    raise ValueError(f"{path}: frames {meta['frame']} at density {meta['density']}, "
+                                     f"but the idle's are {idle['frame']} at {idle['density']}")
+                built[rel] = (data, meta)
             else:
                 if key not in backgrounds.BACKGROUNDS:
                     raise ValueError(f"{path}: {key} is not a backdrop in backgrounds.py")
@@ -252,11 +294,6 @@ def main(argv=None):
     if problems:
         raise SystemExit("\n".join(problems))
 
-    index_path = os.path.join(args.out, "imported.json")
-    index = {}
-    if os.path.exists(index_path):
-        with open(index_path) as f:
-            index = json.load(f)
     for rel, (data, entry) in built.items():
         dst = os.path.join(args.out, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)

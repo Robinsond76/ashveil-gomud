@@ -8,6 +8,23 @@
   - `window-map.js` guards `MapTiles.corners`, for a browser holding an older cached `map-tiles.js`.
   - A corner now needs shore on both sides. A real water room next to open land would otherwise cut its water off square; the Node test covers this.
   - The browser check now asserts that the classic style draws no corners.
+**E3c: battle action poses (2026-10-11).** The approved A12 pilot ([A12-battle-actions-pilot.md](art/A12-battle-actions-pilot.md)) is in the game: the 15 base classes act out their blows on the battle screen instead of nudging their idle figure.
+- **Importer:** `scripts/sprites/import_battle.py` reads `A12/battle/units/<id>/<pose>.png`. `POSES` gives each pose its frame count (attack and shoot 6, hurt 3, cast 4) and marks the cast to loop. A pose is cut like its idle and must match its runtime frame and density (checked against the idle imported in the same run or already in the index); it is refused without an imported idle, so the screen can stand it on the idle's feet row. Entries are `battle-pose` (set S4) with `pose`, `frames`, `loop`.
+- **Art:** 38 sheets (15 attack, 15 hurt, 3 shoot, 5 cast), 128 px frames at density 2, about 1.9 MB in all. They are painted with thousands of colours (the idles use about 96), so they ship as lossless RGBA, never quantised; each is within the 60 KB a frame budget.
+- **Battle screen:** the timeline already planned a pose when its sheet had loaded: the blow (attack frame 4) and the release (shoot frame 4) fall at the step's midpoint, where the hit lands and the shot leaves; a cast loops while chanting; a hurt plays over the flinch; a dodge, block or parry falls back to the hurt sheet. New: `preloadPoses` loads a unit's pose sheets when its figure is first drawn, since the planner skips a pose whose sheet hasn't loaded, which made every first blow, flinch and chant a nudge. `state()` now also reports the drawn frame and its top. Other figures (advanced and elite classes, creatures) still nudge.
+- **Help:** `help battlescreen` says the base classes act in their own poses and other figures nudge; the combat lesson's battle-screen hint names the poses.
+- *Tests:* `TestCommissionedBattlePosesAreImported` (the 38 sheets, frames, the idle's cell and density, cast loops, budget); `TestImportBattlePoses` (synthetic attack and cast import; a pose whose idle is already imported; refusals: no idle, wrong frame count, another cell size); `battle-art-check.mjs` (the cleric's first blow plays attack frames 1–6 including the blow on the idle's feet row, its hurt and looping cast sheets, a wolf keeps its idle; it fails without the preload); the help assertion.
+- *Independent review:* 7 findings; 6 accepted, 1 partly.
+  - **Accepted.**
+    - A dodge drawn with the hurt sheet looked like a hit. It now keeps the dodge's step back and hop; the browser check fails without that.
+    - The status claimed the pose was checked against its idle's "cell and grain". It now says frame and density, and a test covers that refusal with a planted stale idle.
+    - The "no idle" refusal now says to import the idle or name it in `--only`.
+    - The importer docstring now says the planner decides when a cast loops.
+    - The help wording on chants and defenses is more accurate.
+    - The browser check now covers the ranger's shot, a dodge, the cast release and reduced motion (poses still play, with no lunge). It waits for the sheets to load instead of a fixed 300 ms.
+    - Animation `off` no longer preloads poses.
+  - **Rejected.** Re-checking already-imported poses when only an idle is re-imported is moot, because every size class has one runtime frame.
+- *Full checks:* `make generate`, `make validate`, `go test -race ./...`, `make js-lint`, `make js-test` and the battle browser checks pass. `modules/company` alone needs a longer test timeout under `-race`: it hit the default 10 minutes in the full run, then passed alone in 716 s with `-timeout 40m`. That is pre-existing slowness; E3c changes no Go code there.
 
 **LG: light gear and lasting tents (2026-10-10).** This is the owner's light-gear rules ([living map design](designs/2026-10-10-living-map-design.md), LG), the phase before LM2.
 - **Torch** (new item 303). `light torch` uses one up for about six game hours (15 real minutes) of light, through the Torchlight buff. It can't be put out.
