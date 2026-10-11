@@ -1,3 +1,8 @@
+**LM3: crossing into a place (2026-10-11).** Crossing into another zone or level on the map now reads as going somewhere ([living map design](designs/2026-10-10-living-map-design.md), LM3). Client only.
+- `window-map.js`: on a zone or level change (`onRoomUpdate`, not the first room) `startCrossing` keeps the old map's canvas, and `drawCrossing` darkens it to black over 300 ms, then lifts the black off the new map over 450 ms. A title over the map (`.map-crossing-title`) names the zone (`Room.Info.area`) and, off the surface, the level ("level 2 below", "level 1 above") for 2 s. Reduced motion shows the title without the fade. `state().crossing` reports it.
+- **Help:** `help worldmap` describes the crossing; the web-client map hint in the tutorial mentions it.
+- *Tests:* `map-check.mjs` LM3: no title on arrival or on a step within a zone; a zone change fades the old map to black (canvas brightness) and shows the name, which goes after about 2 s; a level change down and up names the level; reduced motion skips the fade. The help assertions.
+
 **LM2: light and sight on the map (2026-10-11).** The map shows what the character can see ([living map design](designs/2026-10-10-living-map-design.md), LM2).
 - **Server:** `rooms.Sight` (`Room.SightForUser`, pure `sightFrom`) gives the visibility level and `daylight`, true when the room is fully lit without help: by day outdoors (fog permitting), or an indoor or lit place. A fixture in a dark place isn't daylight.
   - It also gives `source`: `lantern`, `torch`, `light`, `orb` (your own party light), `party` (an ally's), `nightvision` or `fixture`.
