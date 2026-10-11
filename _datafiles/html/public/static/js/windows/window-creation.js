@@ -272,9 +272,10 @@
     // colour chosen so far. It is null until the sprite sheet has loaded
     // (Sprites.onChange then redraws the panel) or when there is no art.
     // It draws the class's high-resolution battle idle (E3), recoloured
-    // through its look mask (E1b) once that has loaded, smoothed at its 1x
-    // size; until then, the 1x look sheet (battle/units/<class>/look.png)
-    // the palette swap repaints stands in.
+    // through its look mask (E1b), smoothed at its 1x size. The 1x look
+    // sheet (battle/units/<class>/look.png), which the palette swap
+    // repaints, stands in while a chosen look's mask is loading, and for a
+    // class with no mask (the helmed warrior), so a choice always shows.
     function figure(d) {
         if (!window.Sprites || !d.lineage) { return null; }
         const look = window.SpriteTint ? window.SpriteTint.look(d.skin, d.hair) : null;
@@ -282,8 +283,10 @@
         const idlePath = 'battle/units/' + d.lineage + '/idle.png';
         const idle = Sprites.art(idlePath);
         const mask = idle && idle.info.look_mask;
-        const ready = idle && (!mask || !look || Sprites.status(mask) === 'ready');
-        const path = ready || !Sprites.has(lookPath) ? idlePath : lookPath;
+        // Asking for the mask's status starts its load as soon as the idle is in.
+        const maskReady = !!mask && Sprites.status(mask) === 'ready';
+        const useIdle = !Sprites.has(lookPath) || (!!idle && !!mask && (maskReady || !look));
+        const path = useIdle ? idlePath : lookPath;
         const sheet = Sprites.tinted(path, look);
         if (!sheet || !sheet.info || !sheet.info.frame) { return null; }
         const fw = sheet.info.frame[0], fh = sheet.info.frame[1];

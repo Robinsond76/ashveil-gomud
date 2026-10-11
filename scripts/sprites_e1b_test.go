@@ -178,6 +178,33 @@ func TestImportLookMasks(t *testing.T) {
 			t.Errorf("%s.look.png: skin at (60,10) rgba %d,%d,_,%d; hair at (60,20) %d,%d,_,%d; body (60,60) a %d", name, r>>8, g>>8, a>>8, r2>>8, g2>>8, a2>>8, a3>>8)
 		}
 	}
+	// Re-importing the sheet with no mask files for it (none delivered, or
+	// another masks folder) keeps the masks it has (review: the plain
+	// --dir command used to delete them).
+	again := t.TempDir()
+	writeMaster(t, filepath.Join(again, "probe.png"), 239, false)
+	if b, err := exec.Command("python3", "-I", sheetScript, filepath.Join(again, "probe.png"), "probe", "--out", out, "--masks", t.TempDir()).CombinedOutput(); err != nil {
+		t.Fatalf("a re-import without masks failed: %v\n%s", err, b)
+	}
+	if _, err := os.Stat(filepath.Join(out, "map/units/probe/idle.look.png")); err != nil || index(out)["map/units/probe/idle.png"]["look_mask"] != "map/units/probe/idle.look.png" || index(out)["map/units/probe/walk.look.png"]["kind"] != "look-mask" {
+		t.Errorf("a re-import without mask files dropped the existing masks: %v %v", err, index(out)["map/units/probe/idle.png"])
+	}
+	// A bad mask anywhere in a run writes nothing at all.
+	{
+		src, mdir, fresh := t.TempDir(), t.TempDir(), t.TempDir()
+		writeMaster(t, filepath.Join(src, "aaa.png"), 239, false)
+		writeMaster(t, filepath.Join(src, "zzz.png"), 239, false)
+		writeMask(t, filepath.Join(mdir, "zzz.skin.png"), W, H, skin)
+		writeMask(t, filepath.Join(mdir, "zzz.hair.png"), W, H, skin)
+		b, err := exec.Command("python3", "-I", sheetScript, "--dir", src, "--out", fresh, "--masks", mdir).CombinedOutput()
+		if err == nil || !strings.Contains(string(b), "both skin and hair") {
+			t.Errorf("a bad mask was not refused: %v %s", err, b)
+		}
+		if _, err := os.Stat(filepath.Join(fresh, "map/units/aaa/idle.png")); err == nil {
+			t.Error("a run with a bad mask wrote the units before it")
+		}
+	}
+
 	out, msg, err = mapRun(func(d string) {
 		writeMask(t, filepath.Join(d, "probe.skin.png"), W, H, none)
 		writeMask(t, filepath.Join(d, "probe.hair.png"), W, H, none)

@@ -91,6 +91,15 @@ if (hasFigure) {
   check(a !== b && await page.evaluate(() => document.querySelector('.creation-preview-art').dataset.sheet) === 'battle/units/adventurer/idle.png',
     'a different skin and hair repaint the high-resolution figure');
 }
+// A class whose helm hides all skin and hair (the warrior) has no look
+// mask: its 1x look sheet stands in, so a choice still shows (E1b review).
+await page.evaluate(s => window.gmcp('Char.Creation', { ...s, lineage: 'warrior' }), step);
+await page.waitForFunction(() => (document.querySelector('.creation-preview-art') || {}).dataset?.sheet, null, { timeout: 5000 }).catch(() => {});
+const w1 = await page.evaluate(() => { const cv = document.querySelector('.creation-preview-art'); return { sheet: cv.dataset.sheet, px: Array.from(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data).join(',') }; });
+await page.evaluate(s => window.gmcp('Char.Creation', { ...s, lineage: 'warrior', skin: '#5a3a28', hair: '#d8b868', key: 'hair', number: 4 }), step);
+await page.waitForTimeout(200);
+const w2 = await page.evaluate(() => { const cv = document.querySelector('.creation-preview-art'); return { sheet: cv.dataset.sheet, px: Array.from(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data).join(',') }; });
+check(w1.sheet === 'battle/units/warrior/look.png' && w2.sheet === w1.sheet && w1.px !== w2.px, 'the helmed warrior previews its 1x look sheet, which the choice repaints: ' + w1.sheet);
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'creation-desktop.png') }); }
 
 // A click sends the telnet input.

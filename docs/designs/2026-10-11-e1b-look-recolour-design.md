@@ -16,13 +16,16 @@ one of the 101 class sheets, map and battle (owner decision 2026-10-09:
   full resolution, keeping the art's own light and shade.
 - The creation panel's preview shows the class's high-resolution battle idle
   in the chosen look once its masks exist; the 1x `look.png` remains the
-  fallback.
+  fallback while a mask loads and for a class with no mask (the helmed
+  warrior), whose 1x look still shows the choice.
 - Figures without a look (companions, creatures, a player who chose nothing)
   are drawn as before. A class whose masks are both empty (a full helm) has
   no mask file and is drawn as before.
 - The A12 action poses (E3c) have no masks yet, so during a blow, a flinch
   or a chant the figure shows its drawn skin. Masks for the 38 pose sheets
-  are a small follow-up order (A11c); the client needs nothing more for them.
+  are a small follow-up order (A11c); the importer reads them beside the
+  idle masks and the battle screen preloads every sheet's look mask, so
+  the client needs nothing more for them.
 
 ## Art pipeline
 

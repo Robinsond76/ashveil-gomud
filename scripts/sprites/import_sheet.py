@@ -6,7 +6,8 @@
 
 --out DIR writes to DIR instead of scripts/sprites/imported (for tests).
 --masks DIR reads each unit's A11 look masks, `DIR/ID.skin.png` and
-`DIR/ID.hair.png` (E1b).
+`DIR/ID.hair.png` (E1b); it defaults to art/source/A11/map/units when that
+folder exists, as the battle importer reads its masks from --src.
 
 A master is an approved art-program sheet (docs/art/00-standards.md,
 section 4): 3 rows (down, up, side facing right) of 8 cells, each 256 px
@@ -22,13 +23,16 @@ one logical pixel higher than a 1x one.
 The halving averages each 2x2 block with premultiplied alpha and keeps
 alpha binary, which is exact for art drawn on a 4 px grain.
 
-With --masks, a unit whose masks mark any skin or hair also gets
+A unit whose masks mark any skin or hair also gets
 `idle.look.png` and `walk.look.png`, cut and halved exactly like its sheets:
 red where the skin is, green where the hair is, transparent elsewhere (a
 three-colour PNG). Each sheet's entry names its mask (`look_mask`) so the
 client can recolour it in the player's chosen look (sprite-tint.js). A mask
 must match its master's size, mark only opaque art and not mark a pixel as
-both skin and hair.
+both skin and hair. Every master and mask is checked before anything is
+written. A unit with neither mask file (none delivered yet, or no masks
+folder) keeps the look masks it already has; one whose masks mark nothing
+loses them.
 
 `idle.png` and `walk.png` go to `scripts/sprites/imported/map/units/ID/`
 and their manifest entries to `scripts/sprites/imported/imported.json`,
@@ -46,6 +50,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 IMPORTED = os.path.join(HERE, "imported")
+DEFAULT_MASKS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "art", "source", "A11", "map", "units")
 DIRECTIONS = ["down", "up", "side"]
 
 CELL = 256            # master cell
@@ -149,19 +154,32 @@ def mask_png(arr, sheet):
     return img
 
 
-def import_master(path, unit, out=IMPORTED, masks=None):
-    """Write one unit's idle and walk sheets (and their look masks, from the
-    folder masks); return their manifest entries."""
+KEEP = "keep"   # import_master's mask: leave the unit's existing look masks as they are
+
+
+def load_unit(path, unit, masks=None):
+    """(master, mask) for a unit, checked: mask is its combined look mask,
+    None when its masks mark nothing, or KEEP when it has no mask files.
+    Raise ValueError with every problem found."""
     src = np.array(Image.open(path).convert("RGBA"))
     problems = check_master(src, unit)
     if problems:
-        raise SystemExit("\n".join(problems))
-    mask = None
-    if masks:
-        try:
-            mask = look_mask(src, os.path.join(masks, f"{unit}.skin.png"), os.path.join(masks, f"{unit}.hair.png"), unit)
-        except ValueError as e:
-            raise SystemExit(str(e))
+        raise ValueError("\n".join(problems))
+    skin = os.path.join(masks, f"{unit}.skin.png") if masks else ""
+    hair = os.path.join(masks, f"{unit}.hair.png") if masks else ""
+    if not masks or (not os.path.exists(skin) and not os.path.exists(hair)):
+        return src, KEEP
+    return src, look_mask(src, skin, hair, unit)
+
+
+def import_master(path, unit, out=IMPORTED, masks=None, loaded=None, index=None):
+    """Write one unit's idle and walk sheets (and their look masks, from the
+    folder masks); return their manifest entries. loaded is load_unit's
+    result when already checked; index the existing entries, for masks kept."""
+    try:
+        src, mask = loaded or load_unit(path, unit, masks)
+    except ValueError as e:
+        raise SystemExit(str(e))
     frame = CELL // SHRINK
     rel_dir = f"map/units/{unit}"
     os.makedirs(os.path.join(out, rel_dir), exist_ok=True)
@@ -175,7 +193,12 @@ def import_master(path, unit, out=IMPORTED, masks=None):
         img.save(os.path.join(out, rel), optimize=True)
         entries[rel] = dict(meta, frames=len(columns), frame_ms=ms, size=[img.width, img.height])
         mrel = f"{rel_dir}/{name}.look.png"
-        if mask is not None:
+        if mask is KEEP:
+            old = (index or {}).get(mrel)
+            if old and os.path.exists(os.path.join(out, mrel)):
+                entries[rel]["look_mask"] = mrel
+                entries[mrel] = old
+        elif mask is not None:
             mask_png(np.array(build(mask, columns)), np.array(img)).save(os.path.join(out, mrel), optimize=True)
             entries[rel]["look_mask"] = mrel
             entries[mrel] = {"kind": "look-mask", "set": "S1", "frame": [frame, frame], "rows": DIRECTIONS,
@@ -192,7 +215,8 @@ def main(argv=None):
     ap.add_argument("unit", nargs="?")
     ap.add_argument("--dir", nargs="+", default=[], help="folders of ID.png masters")
     ap.add_argument("--out", default=IMPORTED, help="output folder (default scripts/sprites/imported)")
-    ap.add_argument("--masks", help="the A11 map look masks (ID.skin.png, ID.hair.png)")
+    ap.add_argument("--masks", default=DEFAULT_MASKS if os.path.isdir(DEFAULT_MASKS) else None,
+                    help="the A11 map look masks, ID.skin.png and ID.hair.png (default art/source/A11/map/units)")
     args = ap.parse_args(argv)
 
     jobs = []
@@ -214,10 +238,20 @@ def main(argv=None):
     if os.path.exists(index_path):
         with open(index_path) as f:
             index = json.load(f)
+    # Check every master and mask before writing anything.
+    loaded, problems = {}, []
     for path, unit in jobs:
+        try:
+            loaded[unit] = load_unit(path, unit, args.masks)
+        except ValueError as e:
+            problems.append(str(e))
+    if problems:
+        raise SystemExit("\n".join(problems))
+    for path, unit in jobs:
+        old = dict(index)
         for name in ("idle", "walk"):
             index.pop(f"map/units/{unit}/{name}.look.png", None)
-        index.update(import_master(path, unit, args.out, args.masks))
+        index.update(import_master(path, unit, args.out, args.masks, loaded[unit], old))
         print("imported", unit, file=sys.stderr)
     with open(index_path, "w") as f:
         json.dump(dict(sorted(index.items())), f, indent=1, sort_keys=True)

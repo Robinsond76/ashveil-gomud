@@ -190,7 +190,11 @@
         posesAsked.add(key);
         const prefix = 'battle/units/' + key + '/';
         Object.keys(manifest.files).forEach(p => {
-            if (p.startsWith(prefix) && manifest.files[p].kind === 'battle-pose') { art(p); }
+            const f = manifest.files[p];
+            if (!p.startsWith(prefix)) { return; }
+            // Pose sheets, and every sheet's look mask (E1b), so a player's
+            // first blow is already drawn in their look.
+            if (f.kind === 'battle-pose' || f.kind === 'look-mask') { art(p); }
         });
     }
 
