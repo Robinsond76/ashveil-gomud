@@ -573,10 +573,9 @@
         // and when every image is missing or failed (the caller then draws
         // the classic marker).
         // look (Phase 72a) repaints the figure's skin and hair in a player's
-        // chosen colours; companions and creatures keep their art. Since E1
-        // every class draws imported high-density art, which the palette swap
-        // leaves as drawn (SpriteTint.applies), so on the map the look only
-        // reaches 1x sheets until the A11 skin and hair masks are wired (E1b).
+        // chosen colours; companions and creatures keep their art. The
+        // imported high-density art is recoloured through its A11 look mask
+        // (E1b, Sprites.tinted); a class with no mask is drawn as is.
         function resolveSheet(keys, walking, look) {
             for (var i = 0; i < keys.length; i++) {
                 var idle = 'map/units/' + keys[i] + '/idle.png';
@@ -2195,6 +2194,7 @@
             state: function () {
                 var res = resolveSheet(chainKeys(identity.classid, identity.lineage), false);
                 var walkRes = resolveSheet(chainKeys(identity.classid, identity.lineage), true);
+                var lookRes = identity.look ? resolveSheet(chainKeys(identity.classid, identity.lineage), false, identity.look) : null;
                 var pose = unit.x === null ? null : unitPose(performance.now());
                 return {
                     spriteDrawn: spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
@@ -2211,7 +2211,10 @@
                     // E1: the drawn sheet's density and frame counts
                     art: res ? { density: res.sheet.info.density || 1, idleFrames: res.sheet.info.frames,
                                  walkFrames: walkRes && walkRes.walk ? walkRes.sheet.info.frames : 0,
-                                 tinted: !!(identity.look && window.SpriteTint && window.SpriteTint.applies(res.sheet.info)) } : null,
+                                 // tinted: the figure is drawn repainted in the player's look (a
+                                 // high-density sheet once its look mask has loaded, E1b).
+                                 tinted: !!(lookRes && lookRes.sheet.img !== res.sheet.img),
+                                 lookMask: res.sheet.info.look_mask || '' } : null,
                     allies: Object.keys(partyHeartEase).map(function (n) {
                         var e = partyHeartEase[n];
                         return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,

@@ -79,11 +79,17 @@ if (hasFigure) {
     const cv = document.querySelector('.creation-preview-art');
     return Array.from(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data).join(',');
   });
+  // E1b: once its sheet and look mask have loaded, the figure is the
+  // high-resolution battle idle, recoloured through the mask.
+  await page.waitForFunction(() => (document.querySelector('.creation-preview-art') || {}).dataset?.sheet === 'battle/units/adventurer/idle.png', null, { timeout: 5000 }).catch(() => {});
+  check(await page.evaluate(() => document.querySelector('.creation-preview-art').dataset.sheet) === 'battle/units/adventurer/idle.png',
+    'the figure is the high-resolution battle idle');
   const a = await sig();
   await page.evaluate(s => window.gmcp('Char.Creation', { ...s, skin: '#5a3a28', hair: '#d8b868', key: 'hair', number: 4 }), step);
   await page.waitForTimeout(200);
   const b = await sig();
-  check(a !== b, 'a different skin and hair repaint the figure');
+  check(a !== b && await page.evaluate(() => document.querySelector('.creation-preview-art').dataset.sheet) === 'battle/units/adventurer/idle.png',
+    'a different skin and hair repaint the high-resolution figure');
 }
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'creation-desktop.png') }); }
 

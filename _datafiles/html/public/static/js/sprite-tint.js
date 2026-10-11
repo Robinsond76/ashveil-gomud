@@ -19,11 +19,17 @@
  *   SpriteTint.ramp(hex)                -> { d, m, l } three RGB triples around hex
  *   SpriteTint.apply(data, look)        -> repaints an RGBA array in place, returns
  *                                          how many pixels it changed
+ *   SpriteTint.recolour(data, mask, look) -> repaints the pixels a look mask marks
+ *                                          (E1b: red skin, green hair) in the chosen
+ *                                          colours, keeping their light and shade;
+ *                                          returns how many pixels it changed
  *   SpriteTint.applies(info)            -> whether a sheet (its manifest entry) can be
- *                                          repainted: only 1x palette art can; the
- *                                          high-density imported art (E1) cannot
- *   SpriteTint.canvasFor(img, look, make, cache, key)
- *                                       -> a canvas with img repainted (cached by key)
+ *                                          repainted: 1x palette art by the swap, and
+ *                                          high-density art (E1, E3) that has a
+ *                                          look_mask by recolour
+ *   SpriteTint.canvasFor(img, look, make, cache, key, maskImg)
+ *                                       -> a canvas with img repainted (cached by key);
+ *                                          with maskImg, by recolour
  */
 
 /* globals module */
@@ -102,19 +108,57 @@
         return changed;
     }
 
+    function luma(r, g, b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
+
+    // recolour (E1b) repaints high-density art, which has thousands of
+    // colours, through its look mask (docs/art/A11-look-masks.md): a mask
+    // pixel is red for skin, green for hair. Each material's masked pixels
+    // take the chosen colour scaled by their own brightness over the
+    // material's median brightness, so the median pixel becomes the chosen
+    // colour, darker ones darken toward black and lighter ones lift toward
+    // white (at most LIFT of the way): the art's light and shade survive.
+    const LIFT = 0.6;
+    function recolour(data, mask, look) {
+        if (!look || !data || !mask || mask.length !== data.length) { return 0; }
+        let changed = 0;
+        [['skin', 0], ['hair', 1]].forEach(function(m) {
+            const hex = look[m[0]];
+            if (!hex) { return; }
+            const c = parse(hex);
+            const idx = [], lum = [];
+            for (let i = 0; i + 3 < data.length; i += 4) {
+                if (mask[i + 3] === 0 || mask[i + m[1]] < 128 || data[i + 3] === 0) { continue; }
+                idx.push(i);
+                lum.push(luma(data[i], data[i + 1], data[i + 2]));
+            }
+            if (!idx.length) { return; }
+            const sorted = lum.slice().sort(function(a, b) { return a - b; });
+            const ref = Math.max(1, sorted[Math.floor(sorted.length / 2)]);
+            idx.forEach(function(i, n) {
+                const k = lum[n] / ref;
+                for (let ch = 0; ch < 3; ch++) {
+                    data[i + ch] = k <= 1 ? clamp(c[ch] * k) : clamp(c[ch] + (255 - c[ch]) * Math.min(1, k - 1) * LIFT);
+                }
+                changed++;
+            });
+        });
+        return changed;
+    }
+
     // applies: the swap needs the palette's exact colours, which only the
     // generated 1x art uses. High-density imported art (density > 1) has its
-    // own colours, so repainting would at best do nothing and at worst
-    // recolour a stray pixel that happens to match; it is shown as drawn
-    // until skin and hair masks exist (docs/art/A11-look-masks.md).
+    // own colours, so the swap would at best do nothing and at worst
+    // recolour a stray pixel that happens to match; it is repainted through
+    // its look mask instead (recolour, E1b) when it has one, and shown as
+    // drawn when it has none (no skin or hair shows, or no masks yet).
     function applies(info) {
-        return !!info && (info.density || 1) <= 1;
+        return !!info && ((info.density || 1) <= 1 || !!info.look_mask);
     }
 
     // canvasFor draws img into a canvas and repaints it, once per (img, look):
     // the result is kept in cache under key + the look. make(w, h) returns a
     // canvas; it is the only part that touches the DOM.
-    function canvasFor(img, lk, make, cache, cacheKey) {
+    function canvasFor(img, lk, make, cache, cacheKey, maskImg) {
         if (!lk || !img) { return img; }
         const k = cacheKey + '#' + key(lk);
         if (cache[k]) { return cache[k]; }
@@ -125,7 +169,15 @@
         ctx.drawImage(img, 0, 0);
         try {
             const px = ctx.getImageData(0, 0, w, h);
-            apply(px.data, lk);
+            if (maskImg) {
+                const mc = make(w, h);
+                const mctx = mc.getContext('2d', { willReadFrequently: true });
+                mctx.imageSmoothingEnabled = false;
+                mctx.drawImage(maskImg, 0, 0);
+                recolour(px.data, mctx.getImageData(0, 0, w, h).data, lk);
+            } else {
+                apply(px.data, lk);
+            }
             ctx.putImageData(px, 0, 0);
         } catch (e) {
             // A sprite served from another origin (a CDN) cannot be read
@@ -137,5 +189,5 @@
         return cv;
     }
 
-    return { BASE: BASE, look: look, ramp: ramp, apply: apply, swaps: swaps, applies: applies, canvasFor: canvasFor };
+    return { BASE: BASE, look: look, ramp: ramp, apply: apply, swaps: swaps, recolour: recolour, applies: applies, canvasFor: canvasFor };
 }));

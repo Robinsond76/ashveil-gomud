@@ -271,15 +271,19 @@
     // figure draws the player's class sprite, in the skin tone and hair
     // colour chosen so far. It is null until the sprite sheet has loaded
     // (Sprites.onChange then redraws the panel) or when there is no art.
-    // Since E3 the battle idles are high-density art the palette swap can't
-    // repaint, so the panel draws the class's 1x look sheet
-    // (battle/units/<class>/look.png) when there is one; a high-density
-    // sheet is drawn smoothed at its 1x size.
+    // It draws the class's high-resolution battle idle (E3), recoloured
+    // through its look mask (E1b) once that has loaded, smoothed at its 1x
+    // size; until then, the 1x look sheet (battle/units/<class>/look.png)
+    // the palette swap repaints stands in.
     function figure(d) {
         if (!window.Sprites || !d.lineage) { return null; }
         const look = window.SpriteTint ? window.SpriteTint.look(d.skin, d.hair) : null;
         const lookPath = 'battle/units/' + d.lineage + '/look.png';
-        const path = Sprites.has(lookPath) ? lookPath : 'battle/units/' + d.lineage + '/idle.png';
+        const idlePath = 'battle/units/' + d.lineage + '/idle.png';
+        const idle = Sprites.art(idlePath);
+        const mask = idle && idle.info.look_mask;
+        const ready = idle && (!mask || !look || Sprites.status(mask) === 'ready');
+        const path = ready || !Sprites.has(lookPath) ? idlePath : lookPath;
         const sheet = Sprites.tinted(path, look);
         if (!sheet || !sheet.info || !sheet.info.frame) { return null; }
         const fw = sheet.info.frame[0], fh = sheet.info.frame[1];
@@ -290,6 +294,7 @@
         cv.height = fh / density * scale;
         cv.setAttribute('role', 'img');
         cv.setAttribute('aria-label', 'Your figure, with the skin tone and hair colour chosen so far');
+        cv.dataset.sheet = path;
         const ctx = cv.getContext('2d');
         ctx.imageSmoothingEnabled = density > 1;
         ctx.drawImage(sheet.img, 0, 0, fw, fh, 0, 0, cv.width, cv.height);
