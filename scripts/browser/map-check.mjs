@@ -679,6 +679,16 @@ const lakeRing = (exitIn) => {
   const want = { [lid(0, 0)]: ['es'], [lid(3, 0)]: ['sw'], [lid(0, 3)]: ['ne'], [lid(3, 3)]: ['nw'] };
   check(JSON.stringify(s.drawn.corners) === JSON.stringify(want),
     'the ring\'s corners draw the lake\'s inside corners, and only they do: ' + JSON.stringify(s.drawn.corners));
+  {
+    // The classic style draws no tiles, so no corners either.
+    const cp = await open({ width: 1280, height: 900 }, { style: 'classic' });
+    await gmcp(cp, 'World.Map', lake);
+    await gmcp(cp, 'Room', { Info: lake.rooms[0] });
+    await tick(cp, 400);
+    const cs = await state(cp);
+    check(cs.style === 'classic' && Object.keys(cs.drawn.corners).length === 0, 'the classic style draws no lake corners: ' + JSON.stringify(cs.drawn.corners));
+    await cp.close();
+  }
   await gmcp(page, 'Gametime', clock(23));
   await tick(page, 300);
   s = await state(page);

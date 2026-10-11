@@ -1,8 +1,13 @@
 **E2b: lake inside corners (2026-10-11).** The approved A2b overlays ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) round off a lake's corners on the map, where a ring of shore used to leave a square notch of sand.
 - **Art:** `import_art.py` imports `shore-corner-ne/es/sw/nw` (512 px masters on an 8 px grain, shrunk to 128 px at density 4, under 2 KB each) as `terrain-corner` entries, transparent but for the water's quarter.
-- **Map:** `MapTiles.corners(env, look)` (pure) lists a shore room's corners whose diagonal neighbour is water while neither side beside it is; `drawTerrain` draws each over the room's piece once its art has loaded, and `state().drawn.corners` records them. Water on a side already reaches the corner through the piece, so no overlay is drawn there.
+- **Map:** `MapTiles.corners(env, look)` (pure) lists a shore room's corners whose diagonal neighbour is water while both sides beside it are shore (the ring runs on round the water, so the overlay's sand meets sand); `drawTerrain` draws each over the room's piece once its art has loaded, and `state().drawn.corners` records them. Water on a side already reaches the corner through the piece, so no overlay is drawn there.
 - **Help:** `help worldmap` says the shore curves round a lake's corners; the camp lesson's map hint names roads and shores.
-- *Tests:* `map-tiles.test.mjs` (the ring's corner, all four, water on a side, other ground); `TestShoreCornersAreImported` (four density-4 overlays, water in their corner and clear in the opposite one); `map-check.mjs` (the 4×4 lake ring draws exactly its four corner rooms' overlays); the help assertion.
+- *Tests:* `map-tiles.test.mjs` (the ring's corner, all four, water on a side, other ground); `TestShoreCornersAreImported` (four density-4 overlays, water in their corner and clear in the opposite one); `map-check.mjs` (the 4×4 lake ring draws exactly its four corner rooms' overlays, and none in the classic style); the help assertion.
+- *Independent review:* 4 low findings, all accepted.
+  - The E2 design's known-gap note is now marked closed.
+  - `window-map.js` guards `MapTiles.corners`, for a browser holding an older cached `map-tiles.js`.
+  - A corner now needs shore on both sides. A real water room next to open land would otherwise cut its water off square; the Node test covers this.
+  - The browser check now asserts that the classic style draws no corners.
 
 **LG: light gear and lasting tents (2026-10-10).** This is the owner's light-gear rules ([living map design](designs/2026-10-10-living-map-design.md), LG), the phase before LM2.
 - **Torch** (new item 303). `light torch` uses one up for about six game hours (15 real minutes) of light, through the Torchlight buff. It can't be put out.

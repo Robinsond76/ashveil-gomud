@@ -33,7 +33,7 @@
  *   MapTiles.corners(env, look) -> the inside corners of a coast (E2b):
  *                                  'ne', 'es', 'sw', 'nw' for each corner
  *                                  whose diagonal neighbour is water while
- *                                  the two sides beside it are not (a lake's
+ *                                  the two sides beside it are shore (a lake's
  *                                  corner, seen from the ring of shore
  *                                  round it); [] for other ground. The map
  *                                  draws `shore-corner-<c>` over the piece.
@@ -82,8 +82,11 @@
     function corners(env, look) {
         if (env !== 'shore') { return []; }
         var water = function(dx, dy) { return look.envAt(dx, dy) === 'water'; };
+        var shore = function(dx, dy) { return look.envAt(dx, dy) === 'shore'; };
+        // The coast runs on along both sides (a ring round the water), so
+        // the overlay's sand meets sand on each side.
         return CORNERS.filter(function(c) {
-            return water(c[1], c[2]) && !water(c[1], 0) && !water(0, c[2]);
+            return water(c[1], c[2]) && shore(c[1], 0) && shore(0, c[2]);
         }).map(function(c) { return c[0]; });
     }
 

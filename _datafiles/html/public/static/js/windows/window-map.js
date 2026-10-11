@@ -1146,7 +1146,7 @@
                     // E2b: a coast bending round a lake's corner gets the
                     // inside-corner water over its piece (an overlay that
                     // hasn't loaded yet is simply left off this frame).
-                    mt.corners(biome, look).forEach(function (c) {
+                    (mt.corners ? mt.corners(biome, look) : []).forEach(function (c) {
                         var cp = 'map/terrain/shore-corner-' + c + '.png';
                         if (Sprites.status(cp) !== 'ready') { return; }
                         drawTileArt(cp, 0, p.px, p.py, size, now, false);
