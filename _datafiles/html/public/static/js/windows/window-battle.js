@@ -180,6 +180,19 @@
         return img ? { img, info: manifest.files[path] } : null;
     }
 
+    // preloadPoses starts loading a unit's pose sheets (E3c) when its
+    // figure is first drawn, so its first blow, flinch or chant already
+    // has the art: the planner only plays a pose whose sheet has loaded.
+    const posesAsked = new Set();
+    function preloadPoses(key) {
+        if (!manifest || posesAsked.has(key)) { return; }
+        posesAsked.add(key);
+        const prefix = 'battle/units/' + key + '/';
+        Object.keys(manifest.files).forEach(p => {
+            if (p.startsWith(prefix) && manifest.files[p].kind === 'battle-pose') { art(p); }
+        });
+    }
+
     // tintedArt (Phase 72a) repaints a player's figure in their chosen skin
     // tone and hair colour (sprite-tint.js); the repainted canvas is made
     // once per sheet and look. Companions and creatures have no look, and
@@ -1468,6 +1481,7 @@
         // Art: the pose's own sheet when there is one (S4), else the idle
         // loop, anchored bottom-centre, enemies mirrored (artKey).
         const key = artKey(u);
+        preloadPoses(key);
         const look = window.SpriteTint ? window.SpriteTint.look(u.skin, u.hair) : null;
         const posedPath = pose.anim ? 'battle/units/' + key + '/' + pose.anim + '.png' : '';
         const posedArt = posedPath ? art(posedPath) : null;
@@ -1485,7 +1499,6 @@
             // both kinds stand alike.
             const d = sheet.info.density || 1;
             const dw = fw / d, dh = fh / d;
-            u.drawnArt = { path: posed ? posedPath : sheetPath, density: d };
             // A pose sheet stands on its idle's feet row when the idle has one
             // at the same scale, so a lunging foot or a low weapon tip in the
             // pose never makes the figure jump as it switches sheets.
@@ -1495,6 +1508,8 @@
             const feet = !sameScale ? sheet.info.feet_baseline
                 : (typeof idleInfo.feet_baseline === 'number' ? idleInfo.feet_baseline : undefined);
             const top = typeof feet === 'number' ? -1 - (feet + 1) / d : -dh;
+            // For tests: the sheet, frame and where its top stands (state()).
+            u.drawnArt = { path: posed ? posedPath : sheetPath, density: d, frame: i, top: top };
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }

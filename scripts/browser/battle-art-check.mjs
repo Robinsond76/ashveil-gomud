@@ -155,6 +155,58 @@ for (const dpr of [1, 1.5, 2]) {
   check(moved, 'a promoted member flinches when struck though its base class has a hurt sheet: ' + JSON.stringify(Array.from(anims)));
   await ctx.close();
 }
+// E3c: the shipped A12 pose sheets play. A base member (the Cleric) draws
+// its attack sheet through the blow frame (4 of 6), its hurt sheet when
+// struck and its looping cast sheet while chanting, each standing on the
+// idle's feet row; a creature with no pose sheets keeps its idle.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
+  await page.goto(base + '/scripts/browser/dock-windows-harness.html');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
+  await page.evaluate(() => window.BattleScreen.setMotion('full'));
+  await gmcp('Room', { Info: { environment: 'forest', area: 'Frostfang' } });
+  await gmcp('Company', company);
+  await gmcp('Company.Battle', battle);
+  const unit = id => page.evaluate(i => window.BattleScreen.state().units.find(o => o.id === i), id);
+  await page.waitForFunction(() => { const u = window.BattleScreen.state().units.find(o => o.id === 'companion:1'); return u && u.art; }, null, { timeout: 8000 }).catch(() => {});
+  const idleTop = ((await unit('companion:1')).art || {}).top;
+  let round = 6000;
+  // send plays one event and samples who draws what until the screen is idle.
+  const send = async (ev, ids) => {
+    round++;
+    await page.evaluate(b => Client.dispatchBattleEvents(b), { fight: 2, round, fight_round: round - 6000, events: [Object.assign({ seq: round }, ev)] });
+    const seen = {};
+    ids.forEach(i => { seen[i] = []; });
+    for (let k = 0; k < 120; k++) {
+      const st = await page.evaluate(() => { const s = window.BattleScreen.state(); return { backlog: s.backlog, units: s.units.map(u => ({ id: u.id, art: u.art })) }; });
+      st.units.forEach(u => { if (seen[u.id] && u.art) { seen[u.id].push(u.art); } });
+      if (k > 3 && st.backlog === 0) { break; }
+      await page.waitForTimeout(25);
+    }
+    return seen;
+  };
+  // A unit's pose sheets load as its figure is first drawn, so the very
+  // first blow, flinch and chant of the fight play them.
+  await page.waitForTimeout(300);
+  let seen = await send({ kind: 'attack', src: 'companion:1', tgt: 'm:1', outcome: 'hit', damage: 2 }, ['companion:1']);
+  const atk = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/attack.png');
+  const atkFrames = new Set(atk.map(a => a.frame));
+  check(atk.length > 0 && atkFrames.has(3) && Math.max(...atkFrames) <= 5,
+    'the cleric strikes with its attack sheet through the blow frame: frames ' + JSON.stringify(Array.from(atkFrames).sort()));
+  check(typeof idleTop === 'number' && atk.every(a => a.top === idleTop), 'the attack sheet stands on the idle\'s feet row: tops ' +
+    JSON.stringify(Array.from(new Set(atk.map(a => a.top)))) + ' vs idle ' + idleTop);
+  seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['companion:1', 'm:1']);
+  check(seen['companion:1'].some(a => a.path === 'battle/units/cleric/hurt.png'), 'the struck cleric plays its hurt sheet');
+  check(seen['m:1'].length > 0 && seen['m:1'].every(a => a.path === 'battle/units/wolf-timber/idle.png'), 'a wolf (no pose sheets) keeps its idle as it strikes');
+  seen = await send({ kind: 'cast-start', src: 'companion:1', spell: 'heal', spell_name: 'heal' }, ['companion:1']);
+  const cast = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/cast.png');
+  check(cast.length > 0 && new Set(cast.map(a => a.frame)).size >= 2, 'the chanting cleric loops its cast sheet: frames ' + JSON.stringify(Array.from(new Set(cast.map(a => a.frame)))));
+  await ctx.close();
+}
 await browser.close();
 server.close();
 console.log(failures ? failures + ' failed' : 'all passed');
