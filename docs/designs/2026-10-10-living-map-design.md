@@ -221,22 +221,16 @@ minutes.
 
 ## Art order A13 (for LM1 and LM2)
 
-- `map/markers/lantern.png`: 2 frames, 128×128 per frame. A hand lantern,
-  its flame flickering behind glass, drawn to hang beside a figure's
-  shoulder.
-- `map/markers/torch.png`: 2 frames, 128×128 per frame. A hand torch,
-  flame flickering.
-- Item icons for the lantern, torch and lamp oil, if the inventory shows
-  icons by then.
-- `map/markers/light-orb.png`: 2 frames, 128×128 per frame. A small pale
-  floating light, pulsing.
-- *(optional)* `map/camp/bonfire.png`: 4 frames, 256×256 per frame. A larger
-  camp fire for the camp-as-you view, from the same stone ring as
-  `fire-lit`.
-- *(optional, LM4)* rain, snow and mist overlays: 4 frames, 512×512, with
-  transparency, seamless.
+Ordered 2026-10-11 as [A13-light-markers.md](../art/A13-light-markers.md):
+- `torch.png`, `lantern.png` (2 frames each) and `lantern-out.png`, at the
+  A4 icon size (256 px masters), held at the figure's hand. The marker
+  shows the light the character really carries (owner decision 2).
+- `light-orb.png` (2 frames).
+- An optional `bonfire.png` (4 frames, tile size).
 
-The A4 rules apply (4 px grain, one shared box per animated row).
+The glow is drawn in code. Item icons for the lantern, torch and lamp oil
+wait until the inventory shows icons. The LM4 weather overlays (rain, snow,
+mist) will be their own order when LM4 is taken up.
 
 ## State, persistence, multiplayer
 
