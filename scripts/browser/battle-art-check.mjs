@@ -159,8 +159,8 @@ for (const dpr of [1, 1.5, 2]) {
 // its attack sheet through the blow frame (4 of 6), its hurt sheet when
 // struck (stepping back as well when it dodges) and its cast sheet while
 // chanting and at the release, each standing on the idle's feet row; a
-// Ranger shoots with its shoot sheet; a creature with no pose sheets keeps
-// its idle; reduced motion still plays the poses, in place.
+// Ranger shoots with its shoot sheet; a wolf strikes with its A12b sheet;
+// a creature with no pose sheets keeps its idle; reduced motion still plays the poses, in place.
 for (const mode of ['full', 'reduced']) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
@@ -180,7 +180,7 @@ for (const mode of ['full', 'reduced']) {
   const idleTop = ((await unit('companion:1')).art || {}).top;
   // A unit's pose sheets load as its figure is first drawn, so the very
   // first blow, flinch and chant of the fight play them: wait for the loads.
-  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot'];
+  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot', 'wolf-timber/attack'];
   await page.waitForFunction(names => names.every(n => performance.getEntriesByType('resource').some(e => e.name.endsWith('/battle/units/' + n + '.png') && e.responseEnd > 0)),
     sheets, { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(50);
@@ -211,7 +211,9 @@ for (const mode of ['full', 'reduced']) {
   check(mode === 'full' ? lunge > 10 : lunge === 0, tag + 'the cleric ' + (mode === 'full' ? 'steps in to strike' : 'strikes in place') + ': moved ' + lunge);
   seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['companion:1', 'm:1']);
   check(seen['companion:1'].some(a => a.path === 'battle/units/cleric/hurt.png'), tag + 'the struck cleric plays its hurt sheet');
-  check(seen['m:1'].length > 0 && seen['m:1'].every(a => a.path === 'battle/units/wolf-timber/idle.png'), tag + 'a wolf (no pose sheets) keeps its idle as it strikes');
+  check(seen['m:1'].some(a => a.path === 'battle/units/wolf-timber/attack.png'), tag + 'a wolf strikes with its A12b attack sheet');
+  seen = await send({ kind: 'attack', src: 'm:3', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['m:3']);
+  check(seen['m:3'].length > 0 && seen['m:3'].every(a => a.path === 'battle/units/ogre-forest/idle.png'), tag + 'a forest ogre (no pose sheets until A12c) keeps its idle as it strikes');
   seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'miss' }, ['companion:1']);
   const dodge = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/hurt.png');
   check(dodge.length > 0 && Math.max(...dodge.map(a => Math.abs(a.dx))) >= 4, tag + 'a dodging cleric plays its hurt sheet and steps back: moved ' + Math.max(0, ...dodge.map(a => Math.abs(a.dx))));
@@ -229,7 +231,7 @@ for (const mode of ['full', 'reduced']) {
 // E1b: the leader's chosen skin and hair recolour their high-resolution
 // battle idle through its look mask; a class whose helm hides both (the
 // warrior) has no mask and is drawn as is; a figure without a look is never
-// recoloured; the action poses, with no masks yet, are drawn as painted.
+// recoloured; the action poses are recoloured too, through their A11c masks.
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
@@ -253,7 +255,7 @@ for (const mode of ['full', 'reduced']) {
   await page.evaluate(b => Client.dispatchBattleEvents(b), { fight: 4, round: 8001, fight_round: 1, events: [{ seq: 8001, kind: 'attack', src: 'leader', tgt: 'm:1', outcome: 'hit', damage: 2 }] });
   let posed = null;
   for (let k = 0; k < 80 && !posed; k++) { const x = await leaderArt(); if (x && x.path === 'battle/units/cleric/attack.png') { posed = x; } await page.waitForTimeout(20); }
-  check(posed && !posed.tinted, 'the attack pose (no masks yet) is drawn as painted: ' + JSON.stringify(posed));
+  check(posed && posed.tinted, 'the attack pose keeps the chosen look (A11c masks): ' + JSON.stringify(posed));
   await page.waitForFunction(() => window.BattleScreen.state().backlog === 0, null, { timeout: 8000 }).catch(() => {});
   await gmcp('Company', looked('Warrior'));
   await page.waitForTimeout(400);
