@@ -176,16 +176,46 @@ where LM2's sight takes over.
 - **Tests:** `map-check` (the title shows on a zone change and on a level
   change, and not on a step within a zone; reduced motion skips the fade).
 
-### LM4 (proposed): Weather on the map
+### LM4: Weather on the map
 
-`Gametime.weather` already reaches the client. The map can show it over
-outdoor tiles:
-- light rain streaks;
-- snowfall;
-- mist or fog drifting (with fog also cutting sight through LM2).
+*Owner decisions 2026-10-11:* drawn from art (A14), with snow, with
+lightning, and with its own map setting.
 
-It is drawn in code or from small A13 overlays, kept faint so the map stays
-readable, and it follows the reduced-motion setting.
+`Gametime.weather` already reaches the client: the condition the player can
+see (`name`, `cloud_cover` 0-3, `visibility`, and `indoor` when seen
+through an exit). The map draws it over the **outdoor tiles of the zone
+shown**, the same tiles the night shade covers (not indoor, cave or dark
+ones), faint enough that the map stays readable:
+
+| Condition | On the map |
+|---|---|
+| `clear` | nothing |
+| `overcast` (and any `cloud_cover` of 2 or more) | `clouds.png` drifting slowly, a slight dimming |
+| `rain` | `rain.png` sliding along its slant, so the rain **falls diagonally** across the map; `splash.png` scattered on tiles |
+| `storm` | `rain-heavy.png`, faster; a darker sky; **lightning** every few seconds: the map flashes briefly and `lightning.png` strikes a random outdoor tile in view |
+| `mist` | `fog.png` drifting, thin |
+| `fog`, `thick-fog` | `fog.png` drifting, thicker for thick fog, over LM2's pale fog veil without doubling it |
+| `snow`, `blizzard` | `snow.png` and `snow-far.png` falling at two speeds (blizzard faster, denser and slanted) |
+
+- **Snow:** the game has no seasons (the calendar's months change nothing)
+  and no weather table has a snow condition yet. The map draws `snow` and
+  `blizzard` as soon as a zone's weather table has them; the new world's
+  northern areas will add them. Until then no player sees snow.
+- **Seen from indoors** (`indoor`): the weather shows on the outdoor tiles
+  only; the room you stand in stays dry.
+- **Reduced motion:** the textures stay still (rain and snow as a still
+  veil), there is no splash, and no flash: lightning shows only its bolt,
+  briefly.
+- **Lightning flash:** short (under 150 ms), at most one every 4 seconds,
+  dimmed rather than full white, never at all under reduced motion.
+- **Setting:** a `Weather` switch in the map settings (on by default),
+  separate from Day/night.
+- **Help:** `help worldmap` gains a Weather section; the tutorial hint that
+  mentions the map points to it.
+- **Tests:** a pure `map-weather.js` (condition to layers, speeds and
+  opacity; the lightning timer) under `make js-test`; `map-check` for each
+  condition, the indoor case, reduced motion, the setting off, and the art
+  loading (code fallback until A14 is imported).
 
 ## Owner decisions (2026-10-10)
 
