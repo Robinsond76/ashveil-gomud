@@ -672,6 +672,13 @@ const lakeRing = (exitIn) => {
   const p = s.drawn.pieces;
   check(p[lid(1, 0)] === 'shore-s' && p[lid(3, 1)] === 'shore-w' && p[lid(2, 3)] === 'shore-n' && p[lid(0, 2)] === 'shore-e' && p[lid(0, 0)] === 'shore-none',
     'each coast faces the lake: ' + JSON.stringify(p));
+  // E2b: the ring's corner rooms bend round the lake's corners (the
+  // overlays load with the first frame, so wait for them).
+  await page.waitForFunction(() => Object.keys(window.MapView.state().drawn.corners).length === 4, null, { timeout: 5000 }).catch(() => {});
+  s = await state(page);
+  const want = { [lid(0, 0)]: ['es'], [lid(3, 0)]: ['sw'], [lid(0, 3)]: ['ne'], [lid(3, 3)]: ['nw'] };
+  check(JSON.stringify(s.drawn.corners) === JSON.stringify(want),
+    'the ring\'s corners draw the lake\'s inside corners, and only they do: ' + JSON.stringify(s.drawn.corners));
   await gmcp(page, 'Gametime', clock(23));
   await tick(page, 300);
   s = await state(page);

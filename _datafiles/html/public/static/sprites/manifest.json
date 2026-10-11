@@ -6026,6 +6026,78 @@
     32
    ]
   },
+  "map/terrain/shore-corner-es.png": {
+   "corner": "es",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "terrain-corner",
+   "overlay": true,
+   "piece": "shore",
+   "set": "S2",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/terrain/shore-corner-ne.png": {
+   "corner": "ne",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "terrain-corner",
+   "overlay": true,
+   "piece": "shore",
+   "set": "S2",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/terrain/shore-corner-nw.png": {
+   "corner": "nw",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "terrain-corner",
+   "overlay": true,
+   "piece": "shore",
+   "set": "S2",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/terrain/shore-corner-sw.png": {
+   "corner": "sw",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "terrain-corner",
+   "overlay": true,
+   "piece": "shore",
+   "set": "S2",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
   "map/terrain/shore-e.png": {
    "density": 4,
    "frame": [

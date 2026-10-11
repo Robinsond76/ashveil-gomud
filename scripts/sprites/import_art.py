@@ -32,6 +32,7 @@ DEFAULT_SRC = os.path.join(os.path.dirname(os.path.dirname(HERE)), "art", "sourc
 DENSITY = 4
 SHRINK = 4            # master px per runtime px
 GUTTER = 32           # optional gap between the frames of an animated row
+CORNERS = ["ne", "es", "sw", "nw"]   # A2b: the corner a diagonal of water touches
 SIDES = ["none", "n", "e", "s", "w", "ns", "ew", "ne", "es", "sw", "nw",
          "nes", "esw", "nsw", "new", "nesw"]
 BIOMES = ["cave", "city", "cliffs", "default", "desert", "dungeon", "farmland", "forest",
@@ -92,6 +93,12 @@ def jobs():
             out.append(Job(f"map/terrain/{kind}-{s}.png", [f"{t}{kind}-{s}.png"], [128, 128],
                            {"kind": "terrain-piece", "set": "S2", "frames": 1, "piece": kind, "sides": s},
                            opaque=True, budget=BIG))
+    # A2b (E2b): inside-corner overlays, drawn over a shore piece whose
+    # diagonal neighbour is water; transparent but for the water's quarter.
+    for c in CORNERS:
+        out.append(Job(f"map/terrain/shore-corner-{c}.png", [f"{t}shore-corner-{c}.png"], [128, 128],
+                       {"kind": "terrain-corner", "set": "S2", "frames": 1, "piece": "shore", "corner": c,
+                        "overlay": True}, budget=BIG))
     out.append(Job("map/terrain/fog.png", [f"{t}fog.png"], [128, 128],
                    {"kind": "terrain-state", "set": "S2", "frames": 1, "overlay": True}, budget=BIG))
     out.append(Job("map/terrain/unknown.png", [f"{t}unknown.png"], [128, 128],

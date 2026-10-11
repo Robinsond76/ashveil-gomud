@@ -17,8 +17,8 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   A shore follows the water: its sand meets every neighbouring water tile.
 
   A lake is open water, not a place you can stand. Once you have walked
-  all the way round a ring of shore, the lake fills its middle; you cannot
-  click it or walk onto it.
+  all the way round a ring of shore, the lake fills its middle, and the
+  shore curves round its corners; you cannot click it or walk onto it.
 
   Where two rooms touch but have <ansi fg="yellow">no exit between them</ansi>, a dark edge marks the wall,
   so the map never suggests a way through. An exit between rooms that do

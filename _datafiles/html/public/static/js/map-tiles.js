@@ -30,6 +30,13 @@
  *                                  dy) (an exit joins it, not a secret one)
  *                                  and onward(dx, dy) (an exit leaves the
  *                                  drawn map there)
+ *   MapTiles.corners(env, look) -> the inside corners of a coast (E2b):
+ *                                  'ne', 'es', 'sw', 'nw' for each corner
+ *                                  whose diagonal neighbour is water while
+ *                                  the two sides beside it are not (a lake's
+ *                                  corner, seen from the ring of shore
+ *                                  round it); [] for other ground. The map
+ *                                  draws `shore-corner-<c>` over the piece.
  *   MapTiles.lakes(cells, blocked) -> the 'x,y' keys of lake cells; cells
  *                                  are the drawn rooms ({ x, y, env }),
  *                                  blocked the 'x,y' keys an exit leads into
@@ -67,6 +74,17 @@
             return 'shore-' + sides(function(dx, dy) { return look.envAt(dx, dy) === 'water'; });
         }
         return '';
+    }
+
+    // A corner's diagonal and the two sides beside it.
+    var CORNERS = [['ne', 1, -1], ['es', 1, 1], ['sw', -1, 1], ['nw', -1, -1]];
+
+    function corners(env, look) {
+        if (env !== 'shore') { return []; }
+        var water = function(dx, dy) { return look.envAt(dx, dy) === 'water'; };
+        return CORNERS.filter(function(c) {
+            return water(c[1], c[2]) && !water(c[1], 0) && !water(0, c[2]);
+        }).map(function(c) { return c[0]; });
     }
 
     var LAKE_MAX_AREA = 40000;   // a map larger than this (with its margin) finds no lakes
@@ -121,5 +139,5 @@
 
     function tiled(env) { return env === 'road' || env === 'shore'; }
 
-    return { sides: sides, piece: piece, tiled: tiled, lakes: lakes };
+    return { sides: sides, piece: piece, corners: corners, tiled: tiled, lakes: lakes };
 }));
