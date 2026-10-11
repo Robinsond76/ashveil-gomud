@@ -82,9 +82,15 @@ func TestCommissionedBattleArtIsImported(t *testing.T) {
 // gutters, each frame filled by fill(frame, x, y).
 func writeStrip(t *testing.T, root, rel string, cell, gutter int, fill func(f, x, y int) color.NRGBA) {
 	t.Helper()
-	w := 4*cell + 3*gutter
+	writeStripN(t, root, rel, 4, cell, gutter, fill)
+}
+
+// writeStripN writes a 1 x n battle master (a pose sheet has 3, 4 or 6).
+func writeStripN(t *testing.T, root, rel string, n, cell, gutter int, fill func(f, x, y int) color.NRGBA) {
+	t.Helper()
+	w := n*cell + (n-1)*gutter
 	img := image.NewNRGBA(image.Rect(0, 0, w, cell))
-	for f := 0; f < 4; f++ {
+	for f := 0; f < n; f++ {
 		for y := 0; y < cell; y++ {
 			for x := 0; x < cell; x++ {
 				img.SetNRGBA(f*(cell+gutter)+x, y, fill(f, x, y))
