@@ -133,3 +133,8 @@ test('a coast faces a lake cell as water', () => {
   const piece = M.piece('shore', { envAt: (dx, dy) => at(1 + dx, 0 + dy), linked: () => false, onward: () => false });
   assert.equal(piece, 'shore-s');
 });
+
+test('a room the server could not place finds no lakes (and does not hang)', () => {
+  const far = 999999999999999999;
+  assert.deepEqual(M.lakes([{ x: far, y: far, env: 'forest' }], {}), []);
+});

@@ -927,8 +927,12 @@
             pixelRatio = window.devicePixelRatio || 1;
             viewW = container.clientWidth  || 1;
             viewH = container.clientHeight || 1;
-            canvas.width  = Math.round(viewW * pixelRatio);
-            canvas.height = Math.round(viewH * pixelRatio);
+            // Setting a canvas's size clears it, even to the same size: only
+            // set it when it changes, so the map last drawn survives (LM3
+            // fades it out on a crossing).
+            var w = Math.round(viewW * pixelRatio), h = Math.round(viewH * pixelRatio);
+            if (canvas.width !== w)  { canvas.width = w; }
+            if (canvas.height !== h) { canvas.height = h; }
             canvas.style.width  = viewW + 'px';
             canvas.style.height = viewH + 'px';
         }
@@ -1519,8 +1523,23 @@
         // levelName (LM3) names a level that isn't the surface: z below 0 is
         // "level 2 below", above 0 "level 1 above".
         function levelName(z) {
-            if (!z) { return ''; }
+            // A room the mapper couldn't place has absurd coordinates.
+            if (!z || !isFinite(z) || Math.abs(z) > 50) { return ''; }
             return 'level ' + Math.abs(z) + (z < 0 ? ' below' : ' above');
+        }
+
+        // meanLight is a canvas's average brightness (0-765, red+green+blue),
+        // read from a 16x16 copy (browser checks: the kept map isn't blank).
+        function meanLight(c) {
+            try {
+                var t = document.createElement('canvas');
+                t.width = 16; t.height = 16;
+                var tc = t.getContext('2d');
+                tc.drawImage(c, 0, 0, 16, 16);
+                var d = tc.getImageData(0, 0, 16, 16).data, sum = 0;
+                for (var i = 0; i < d.length; i += 4) { sum += (d[i] + d[i + 1] + d[i + 2]) * d[i + 3] / 255; }
+                return sum / 256;
+            } catch (e) { return -1; }
         }
 
         // startCrossing (LM3) begins the fade and title for a zone or level
@@ -1533,8 +1552,9 @@
                 old.width = canvas.width; old.height = canvas.height;
                 try { old.getContext('2d').drawImage(canvas, 0, 0); } catch (e) { old = null; }
             }
-            lastCrossing = { name: name, level: levelName(z), faded: !!old };
+            lastCrossing = { name: name, level: levelName(z), faded: !!old, oldLight: old ? meanLight(old) : 0 };
             crossing = old ? { start: performance.now(), old: old } : null;
+            lastCrossing.start = performance.now();
             if (crossTitle) {
                 crossTitle.textContent = '';
                 var n = document.createElement('div');
@@ -1550,6 +1570,7 @@
                 crossTitleTimer = setTimeout(function () {
                     crossTitleTimer = null;
                     crossTitle.classList.remove('show');
+                    crossTitle.textContent = '';   // no stale name for screen readers
                 }, CROSS_TITLE_MS);
             }
         }
@@ -1564,7 +1585,7 @@
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             if (t < CROSS_OUT_MS) {
-                ctx.drawImage(crossing.old, 0, 0);
+                ctx.drawImage(crossing.old, 0, 0, canvas.width, canvas.height);
                 ctx.globalAlpha = t / CROSS_OUT_MS;
             } else {
                 ctx.globalAlpha = 1 - (t - CROSS_OUT_MS) / CROSS_IN_MS;
@@ -2045,6 +2066,7 @@
             ctx = canvas.getContext('2d');
             crossTitle = document.createElement('div');
             crossTitle.className = 'map-crossing-title';
+            crossTitle.setAttribute('role', 'status');
             crossTitle.setAttribute('aria-live', 'polite');
             wrap.appendChild(crossTitle);
 
@@ -2542,7 +2564,11 @@
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
                     sight: lastSight,
-                    crossing: lastCrossing ? Object.assign({ fading: !!crossing, title: !!(crossTitle && crossTitle.classList.contains('show')) }, lastCrossing) : null,
+                    crossing: lastCrossing ? {
+                        name: lastCrossing.name, level: lastCrossing.level, faded: lastCrossing.faded, oldLight: lastCrossing.oldLight,
+                        fading: !!crossing && performance.now() - crossing.start < CROSS_OUT_MS + CROSS_IN_MS,
+                        title: !!(crossTitle && crossTitle.classList.contains('show')),
+                    } : null,
                     // E1: the drawn sheet's density and frame counts
                     art: res ? { density: res.sheet.info.density || 1, idleFrames: res.sheet.info.frames,
                                  walkFrames: walkRes && walkRes.walk ? walkRes.sheet.info.frames : 0,

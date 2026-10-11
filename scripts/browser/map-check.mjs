@@ -928,6 +928,7 @@ for (const dpr of [1, 1.5, 2]) {
   const mid = await canvasLight();
   check(s.crossing && s.crossing.name === 'Hollowweb Deep' && s.crossing.level === '' && s.crossing.fading && s.crossing.title,
     'a zone change fades and shows the zone\'s name: ' + JSON.stringify(s.crossing));
+  check(s.crossing.oldLight > before * 0.7, 'the old map is kept to fade out (not a blank canvas): ' + s.crossing.oldLight.toFixed(1) + ' vs ' + before.toFixed(1));
   check(mid < before * 0.35, 'the old map fades to black: ' + mid.toFixed(1) + ' vs ' + before.toFixed(1));
   check((await page.locator('.map-crossing-title').innerText()).includes('Hollowweb Deep'), 'the title is on screen');
   await tick(page, 700);
@@ -946,6 +947,11 @@ for (const dpr of [1, 1.5, 2]) {
   await gmcp(page, 'Room', { Info: elsewhere(1, 1, 1, 'Hollowweb Deep', 502) });
   await tick(page, 100);
   check((await state(page)).crossing.level === 'level 1 above', 'a level up reads as above');
+  await gmcp(page, 'Room', { Info: Object.assign(elsewhere(1, 1, 1, 'Lost', 503), { coords: 'Lost,999999999999999999,999999999999999999,999999999999999999' }) });
+  await tick(page, 100);
+  check((await state(page)).crossing.level === '', 'a room the mapper could not place names no level');
+  await tick(page, 2200);
+  check((await page.locator('.map-crossing-title').textContent()) === '', 'a hidden title leaves no stale name behind');
   await page.close();
 
   page = await open({ width: 1280, height: 900 });

@@ -1,7 +1,17 @@
 **LM3: crossing into a place (2026-10-11).** Crossing into another zone or level on the map now reads as going somewhere ([living map design](designs/2026-10-10-living-map-design.md), LM3). Client only.
 - `window-map.js`: on a zone or level change (`onRoomUpdate`, not the first room) `startCrossing` keeps the old map's canvas, and `drawCrossing` darkens it to black over 300 ms, then lifts the black off the new map over 450 ms. A title over the map (`.map-crossing-title`) names the zone (`Room.Info.area`) and, off the surface, the level ("level 2 below", "level 1 above") for 2 s. Reduced motion shows the title without the fade. `state().crossing` reports it.
 - **Help:** `help worldmap` describes the crossing; the web-client map hint in the tutorial mentions it.
-- *Tests:* `map-check.mjs` LM3: no title on arrival or on a step within a zone; a zone change fades the old map to black (canvas brightness) and shows the name, which goes after about 2 s; a level change down and up names the level; reduced motion skips the fade. The help assertions.
+- *Tests:* `map-check.mjs` LM3: no title on arrival or on a step within a zone; a zone change keeps the old map (its brightness) and fades it to black, and shows the name, which goes after about 2 s and leaves no text behind; a level change down and up names the level; an unplaceable room names none; reduced motion skips the fade. `map-tiles.test.mjs`: no lake scan at unplaceable coordinates. The help assertions.
+- **Review** (independent reviewer, full diff). Accepted and fixed:
+  1. *High:* the old map never faded out. `resizeCanvas` set the canvas size on every room update, which clears it, so the kept copy was blank. It now sets the size only when it changes; a check on the kept copy's brightness fails without the fix.
+  2. The test couldn't see that: replaced by the brightness check above.
+  3. A resize during the fade misplaced the old map: it is drawn at the canvas's size.
+  4. A room the mapper couldn't place read "level 1000000000000000000 above": no level is named.
+  5. The level counts from where a place's map starts, not the ground: the help says so.
+  6. The hidden title kept its text for screen readers: it is cleared, and the title is a `role="status"` region.
+  7. `state().crossing.fading` could stay true while the map was hidden: it is worked out from the time.
+  - Found while testing (already on master): a room the server couldn't place (coordinates 999999999999999999) froze the web client, because the lake scan's `x++` can't move past that number. `MapTiles.lakes` now skips coordinates that aren't safe integers.
+  - Rejected: starting the figure's fade-in after the black-out (it runs under the fade, harmless) and theme tokens for the title's colours (its shadow keeps it readable on any map background).
 
 **LM2: light and sight on the map (2026-10-11).** The map shows what the character can see ([living map design](designs/2026-10-10-living-map-design.md), LM2).
 - **Server:** `rooms.Sight` (`Room.SightForUser`, pure `sightFrom`) gives the visibility level and `daylight`, true when the room is fully lit without help: by day outdoors (fog permitting), or an indoor or lit place. A fixture in a dark place isn't daylight.

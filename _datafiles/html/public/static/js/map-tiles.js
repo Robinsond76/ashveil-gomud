@@ -94,6 +94,9 @@
 
     function lakes(cells, blocked) {
         if (!cells.length) { return []; }
+        // A room the server couldn't place comes at 999999999999999999,
+        // where adding 1 changes nothing and the box scan would never end.
+        if (!cells.every(function(c) { return Number.isSafeInteger(c.x) && Number.isSafeInteger(c.y); })) { return []; }
         var env = {}, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         cells.forEach(function(c) {
             env[c.x + ',' + c.y] = c.env || '';
