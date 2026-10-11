@@ -38,21 +38,26 @@ func TestSorcererLoosesALanceAfterAChantAndPaysItsMana(t *testing.T) {
 }
 
 func TestSorcererLanceHitsAboutTwiceAMagicMissile(t *testing.T) {
-	dmg := func(spell string) int {
+	// The mean of every hit, not the single best: a best-of-six compared one
+	// unlucky lance with one top missile roll (31 against 21) about once in
+	// 30 runs under -race.
+	dmg := func(spell string) float64 {
 		b := eliteCaster(t, "sorcerer", 10, spell)
 		thinBandits(b, 3)
 		b.startWitchFight()
 		out := lanceRounds(b, 6)
 		re := regexp.MustCompile(`\((\d+) damage\)`)
-		best := 0
+		sum, hits := 0, 0
 		for _, m := range re.FindAllStringSubmatch(out, -1) {
 			n, _ := strconv.Atoi(m[1])
-			best = max(best, n)
+			sum += n
+			hits++
 		}
-		return best
+		require.Positive(t, hits, "%s landed no hits", spell)
+		return float64(sum) / float64(hits)
 	}
 	lance, missile := dmg("arcanelance"), dmg("mm")
-	assert.Greater(t, lance, missile*3/2, "a lance (%d) well over a missile (%d)", lance, missile)
+	assert.Greater(t, lance, missile*1.5, "a lance (%.1f a hit) well over a missile (%.1f)", lance, missile)
 }
 
 func TestSorcererLanceNeedsTheRankToBeKnown(t *testing.T) {
