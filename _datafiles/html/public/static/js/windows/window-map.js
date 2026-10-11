@@ -43,6 +43,7 @@
         showCamp:        true,       // Phase 40b: your camp and your party's camps
         style:           'tiles',    // Phase 40c: 'tiles' (terrain art, landmarks, walls, fog) | 'classic' (coloured squares and letters)
         dayNight:        true,       // Phase 40d: shade outdoor tiles by the game's time of day
+        weather:         true,       // LM4: rain, storms, fog, clouds and snow over outdoor tiles
     };
 
     // Phase 40a: room resources. The tiles style draws each one's S1 icon in
@@ -566,6 +567,10 @@
         var walkInfo = null;   // Phase 40d: Walkto { target, path: [room ids ahead] } while a walk is under way
         var timeInfo = null;   // Phase 40d: Gametime, for the day/night shading
         var sightKey = '';     // LM2: MapSight.key of the last sight drawn
+        var weatherKey = '';   // LM4: MapWeather.key of the last weather drawn
+        var weatherTex = {};   // LM4: code-drawn stand-ins for the A14 textures, by name
+        var storm = { next: 0, start: -1, tile: null, strikes: 0 }; // LM4: the lightning under way
+        var lastWeather = null; // LM4: what the last render drew of the weather (browser checks)
         var lastSight = null;  // LM2: what the last render drew of sight (browser checks)
         var heldSight = null;  // LM2: the sight last drawn for the room you are in
         var figureDim = 1;     // LM2: your figure is faint when you can't see your own room
@@ -1520,6 +1525,223 @@
             return { x: q.px, y: q.py };
         }
 
+        // -- LM4: weather ------------------------------------------------------
+        // weatherArt is an A14 texture once imported, else a code-drawn
+        // stand-in (a small canvas, made once), so the weather shows before
+        // the art comes.
+        function weatherArt(tex) {
+            var a = Sprites.art('map/weather/' + tex + '.png');
+            if (a) { return { img: a.img, art: true }; }
+            if (!weatherTex[tex]) { weatherTex[tex] = codeTexture(tex); }
+            return { img: weatherTex[tex], art: false };
+        }
+
+        // codeTexture draws a seamless stand-in texture: 64 px for a one-tile
+        // texture, 128 for a two-tile one, on a 2 px grain like the art.
+        function codeTexture(tex) {
+            var big = tex === 'fog' || tex === 'clouds';
+            var n = big ? 128 : 64;
+            var c = document.createElement('canvas');
+            c.width = n; c.height = n;
+            var g = c.getContext('2d');
+            var seed = 7;
+            function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+            function px(x, y, w, h) {
+                // Wrap round the edges so the texture tiles seamlessly.
+                for (var dx = -n; dx <= n; dx += n) {
+                    for (var dy = -n; dy <= n; dy += n) { g.fillRect(x + dx, y + dy, w, h); }
+                }
+            }
+            var i, x, y;
+            if (tex === 'rain' || tex === 'rain-heavy') {
+                g.fillStyle = 'rgb(176,196,214)';
+                var count = tex === 'rain' ? 22 : 40, len = tex === 'rain' ? 4 : 7;
+                for (i = 0; i < count; i++) {
+                    x = Math.floor(rnd() * n / 2) * 2; y = Math.floor(rnd() * n / 2) * 2;
+                    // A streak slanting down to the left, about 20 degrees.
+                    for (var k = 0; k < len; k++) { px(x - Math.round(k * 0.7), y + k * 2, 2, 2); }
+                }
+            } else if (tex === 'snow' || tex === 'snow-far') {
+                var far = tex === 'snow-far';
+                for (i = 0; i < (far ? 30 : 16); i++) {
+                    x = Math.floor(rnd() * n / 2) * 2; y = Math.floor(rnd() * n / 2) * 2;
+                    g.fillStyle = rnd() < 0.3 ? 'rgb(214,224,238)' : 'rgb(236,238,242)';
+                    px(x, y, far ? 2 : (rnd() < 0.5 ? 2 : 4), far ? 2 : (rnd() < 0.5 ? 2 : 4));
+                }
+            } else if (tex === 'fog') {
+                // Long banks that taper at both ends, their edges dithered.
+                for (i = 0; i < 16; i++) {
+                    x = Math.floor(rnd() * n / 2) * 2; y = Math.floor(rnd() * n / 2) * 2;
+                    g.fillStyle = ['rgb(214,218,222)', 'rgb(196,202,208)', 'rgb(230,232,234)'][i % 3];
+                    var len2 = 24 + Math.floor(rnd() * 24) * 2, thick = 2 + Math.floor(rnd() * 3) * 2;
+                    for (var sx = 0; sx < len2; sx += 2) {
+                        var edge = Math.min(sx, len2 - sx) / (len2 / 2);
+                        var hgt = Math.max(2, Math.round(thick * Math.sqrt(edge) / 2) * 2);
+                        if (edge < 0.35 && (sx / 2) % 2) { continue; }
+                        px(x + sx, y - hgt / 2, 2, hgt);
+                        if ((sx / 2) % 2 === 0) { px(x + sx, y - hgt / 2 - 2, 2, 2); }
+                    }
+                }
+            } else if (tex === 'clouds') {
+                g.fillStyle = 'rgb(28,34,46)';
+                for (i = 0; i < 4; i++) {
+                    x = Math.floor(rnd() * n / 2) * 2; y = Math.floor(rnd() * n / 2) * 2;
+                    px(x, y, 30, 16); px(x + 6, y - 6, 18, 28);
+                }
+            }
+            return c;
+        }
+
+        // weatherCells are the tiles the weather falls on: outdoor tiles drawn
+        // (as the night shade picks them), the lakes, only those in sight
+        // when LM2 limits sight, and not your own room when you only see the
+        // weather through an exit.
+        function weatherCells(drewTiles, drewLakes, inSight, indoorView) {
+            var cells = [];
+            rooms.forEach(function (room, id) {
+                if (!drewTiles[id]) { return; }
+                var biome = biomeTable[room.env];
+                if (biome && (biome.indoor || biome.dark)) { return; }
+                if (inSight !== null && !inSight.has(id)) { return; }
+                if (indoorView && id === currentRoomId) { return; }
+                cells.push({ x: room.x, y: room.y, id: id });
+            });
+            var water = biomeTable.water;
+            if (!(water && (water.indoor || water.dark)) && inSight === null) {
+                (drewLakes || []).forEach(function (c) { cells.push({ x: c.x, y: c.y, id: null }); });
+            }
+            return cells;
+        }
+
+        // drawWeather (LM4) slides each texture of the plan over the weather
+        // cells, anchored to the map so it pans with it, then scatters the
+        // raindrops' splashes. It returns true while anything moves.
+        function drawWeather(plan, cells, tilePx, nowMs) {
+            if (!cells.length) { return false; }
+            var t = nowMs / 1000;
+            var origin = gridToCanvas(0, 0);
+            ctx.save();
+            ctx.beginPath();
+            cells.forEach(function (c) {
+                var p = gridToCanvas(c.x, c.y);
+                ctx.rect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
+            });
+            ctx.clip();
+            if (plan.dim > 0) {
+                ctx.fillStyle = 'rgba(14,18,28,' + plan.dim + ')';
+                ctx.fillRect(0, 0, viewW, viewH);
+            }
+            var art = {}, moving = false;
+            plan.layers.forEach(function (l) {
+                var tx = weatherArt(l.tex);
+                art[l.tex] = tx.art ? 'art' : 'code';
+                var span = tilePx * l.size;
+                var scale = span / tx.img.width;
+                var ox = (origin.px - tilePx / 2 + l.vx * t * tilePx) % span;
+                var oy = (origin.py - tilePx / 2 + l.vy * t * tilePx) % span;
+                if (l.vx || l.vy) { moving = true; }
+                var pat = ctx.createPattern(tx.img, 'repeat');
+                if (!pat) { return; }
+                if (pat.setTransform && window.DOMMatrix) {
+                    pat.setTransform(new window.DOMMatrix().translateSelf(ox, oy).scaleSelf(scale, scale));
+                }
+                ctx.globalAlpha = l.alpha;
+                ctx.imageSmoothingEnabled = false;
+                ctx.fillStyle = pat;
+                ctx.fillRect(0, 0, viewW, viewH);
+            });
+            ctx.globalAlpha = 1;
+            var splashes = plan.splash > 0 ? drawSplashes(plan.splash, cells, tilePx, nowMs) : 0;
+            ctx.restore();
+            lastWeather = { name: plan.name, layers: plan.layers.map(function (l) { return l.tex; }), art: art,
+                cells: cells.length, splashes: splashes, strikes: storm.strikes, flash: false, dim: plan.dim, moving: moving };
+            return moving || splashes > 0;
+        }
+
+        // drawSplashes scatters raindrops: each tile gets a splash at a time
+        // and place picked from its position and the second, so they don't
+        // jump about between frames. At most 24 tiles splash.
+        var SPLASH_MS = 400;
+        function drawSplashes(rate, cells, tilePx, nowMs) {
+            var a = Sprites.art('map/weather/splash.png');
+            var mult = spriteMult(tilePx);
+            var drawnN = 0;
+            var period = 1000 / rate;
+            cells.slice(0, 24).forEach(function (c) {
+                var h = ((c.x * 73856093) ^ (c.y * 19349663)) >>> 0;
+                var phase = (nowMs + (h % 1000)) % period;
+                if (phase >= SPLASH_MS) { return; }
+                var slot = Math.floor((nowMs + (h % 1000)) / period);
+                var hh = (h ^ (slot * 83492791)) >>> 0;
+                var p = gridToCanvas(c.x, c.y);
+                var sx = p.px + ((hh % 100) / 100 - 0.5) * tilePx * 0.7;
+                var sy = p.py + (((hh >> 8) % 100) / 100 - 0.5) * tilePx * 0.7;
+                var k = phase / SPLASH_MS;
+                if (a) {
+                    var fw = a.info.frame[0], fh = a.info.frame[1], d = a.info.density || 1;
+                    var fi = Math.min(Math.floor(k * 4), 3), w = fw * mult / d, hgt = fh * mult / d;
+                    ctx.globalAlpha = 0.7;
+                    ctx.drawImage(a.img, fi * fw, 0, fw, fh, Math.round(sx - w / 2), Math.round(sy - hgt / 2), w, hgt);
+                } else {
+                    ctx.globalAlpha = 0.5 * (1 - k);
+                    ctx.strokeStyle = 'rgb(190,208,224)';
+                    ctx.lineWidth = Math.max(1, mult * 0.6);
+                    ctx.beginPath(); ctx.ellipse(sx, sy, (1 + 3 * k) * mult, (0.5 + 1.5 * k) * mult, 0, 0, Math.PI * 2); ctx.stroke();
+                }
+                drawnN++;
+            });
+            ctx.globalAlpha = 1;
+            return drawnN;
+        }
+
+        // drawLightning (LM4) runs a storm's strikes: every 4 to 9 seconds the
+        // map flashes briefly and a bolt strikes a tile in view. Reduced
+        // motion shows the bolt without the flash. It returns true while a
+        // strike is under way or due (so the map keeps redrawing).
+        function drawLightning(plan, cells, tilePx, nowMs) {
+            if (!plan || !plan.lightning || !cells.length) { storm.start = -1; storm.next = 0; return false; }
+            if (!storm.next) { storm.next = window.MapWeather.nextStrike(nowMs, Math.random()); }
+            if (nowMs >= storm.next) {
+                storm.start = nowMs;
+                storm.tile = cells[Math.floor(Math.random() * cells.length)];
+                storm.next = window.MapWeather.nextStrike(nowMs, Math.random());
+                storm.strikes++;
+            }
+            var st = storm.start >= 0 ? window.MapWeather.strike(storm.start, nowMs) : null;
+            if (!st) { return true; }
+            var p = gridToCanvas(storm.tile.x, storm.tile.y);
+            var mult = spriteMult(tilePx);
+            var a = Sprites.art('map/weather/lightning.png');
+            ctx.save();
+            if (a) {
+                var fw = a.info.frame[0], fh = a.info.frame[1], d = a.info.density || 1;
+                var w = fw * mult / d, h = fh * mult / d;
+                artSmoothing(a.info);
+                ctx.drawImage(a.img, st.frame * fw, 0, fw, fh, Math.round(p.px - w / 2), Math.round(p.py - h / 2), w, h);
+            } else {
+                // A forked bolt down onto the tile, thinner each frame.
+                ctx.strokeStyle = 'rgba(236,230,255,' + (1 - st.frame * 0.3) + ')';
+                ctx.lineWidth = Math.max(1, mult * (1.6 - st.frame * 0.5));
+                ctx.beginPath();
+                ctx.moveTo(p.px + 4 * mult, p.py - 16 * mult);
+                ctx.lineTo(p.px - 1 * mult, p.py - 7 * mult);
+                ctx.lineTo(p.px + 3 * mult, p.py - 5 * mult);
+                ctx.lineTo(p.px, p.py + 2 * mult);
+                ctx.moveTo(p.px - 1 * mult, p.py - 7 * mult);
+                ctx.lineTo(p.px - 5 * mult, p.py - 2 * mult);
+                ctx.stroke();
+            }
+            if (st.flash > 0 && !reducedMotion()) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.fillStyle = 'rgba(214,220,255,' + (0.28 * st.flash) + ')';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (lastWeather) { lastWeather.flash = true; }
+            }
+            ctx.restore();
+            if (lastWeather) { lastWeather.strikes = storm.strikes; lastWeather.bolt = a ? 'art' : 'code'; }
+            return true;
+        }
+
         // levelName (LM3) names a level that isn't the surface: z below 0 is
         // "level 2 below", above 0 "level 1 above".
         function levelName(z) {
@@ -1955,6 +2177,15 @@
                 }
             });
 
+            // LM4: the weather falls on the outdoor tiles in sight, under the
+            // night shade and darkness so they dim it too.
+            var weatherInfo = (window.MapWeather && mapSettings.weather !== false && tiles && timeInfo) ? timeInfo.weather : null;
+            var weatherPlan = weatherInfo ? window.MapWeather.plan(weatherInfo, { reduced: reducedMotion(), fogVeil: !!(glow && glow.fog) }) : null;
+            var weatherAt = weatherPlan ? weatherCells(drewTiles, drewLakes, inSight, !!weatherInfo.indoor) : [];
+            lastWeather = null;
+            var weatherMoving = weatherPlan ? drawWeather(weatherPlan, weatherAt, tilePx, nowMs) : false;
+            if (weatherPlan && !lastWeather) { lastWeather = { name: weatherPlan.name, layers: [], art: {}, cells: 0, splashes: 0, strikes: storm.strikes, flash: false, dim: 0 }; }
+
             // Phase 40d: the time of day shades the outdoor tiles, and a walk
             // under way draws its path over them.
             if (glow) {
@@ -2036,6 +2267,9 @@
                     render();
                 });
             }
+            // LM4: lightning over everything but the crossing fade.
+            var stormOn = drawLightning(weatherPlan, weatherAt, tilePx, nowMs);
+            if (weatherMoving && !reducedMotion() && !document.hidden) { scheduleAnim(true); } else if (stormOn && !document.hidden) { scheduleAnim(false); }
             if (drawCrossing(nowMs)) { scheduleAnim(true); }
             // The sprites and camp fires animate: keep redrawing while any is
             // on screen (a walk redraws every frame, idling a few times a second).
@@ -2342,6 +2576,12 @@
                 function (v) { mapSettings.dayNight = v; }
             )));
 
+            panel.appendChild(row('Weather', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.weather !== false; },
+                function (v) { mapSettings.weather = v; }
+            )));
+
             panel.appendChild(row('Sprites', btnGroup(
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
                 function () { return mapSettings.sprites !== false; },
@@ -2502,9 +2742,12 @@
                 // A sight for a room you aren't drawn in yet waits for
                 // Room.Info, whose redraw uses it (render holds the old one).
                 if (sight && sight.room && currentRoomId !== null && sight.room !== currentRoomId) { return; }
-                if (q !== nightQuant || k !== sightKey) { sightKey = k; render(); }
+                var wk = window.MapWeather ? window.MapWeather.key(timeInfo && timeInfo.weather) : '';
+                if (q !== nightQuant || k !== sightKey || wk !== weatherKey) { sightKey = k; weatherKey = wk; render(); }
             },
             redraw: function () { render(); },
+            // LM4 (browser checks): bring the next lightning strike forward.
+            strikeNow: function () { storm.next = performance.now(); render(); },
             // Phase 40i: the named places the map knows (a landmark legend),
             // nearest first, for the phone's "Walk to" list. The server still
             // decides whether the player may walk there.
@@ -2564,6 +2807,7 @@
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
                     sight: lastSight,
+                    weather: lastWeather,
                     crossing: lastCrossing ? {
                         name: lastCrossing.name, level: lastCrossing.level, faded: lastCrossing.faded, oldLight: lastCrossing.oldLight,
                         fading: !!crossing && performance.now() - crossing.start < CROSS_OUT_MS + CROSS_IN_MS,
@@ -2694,7 +2938,8 @@
     view2d.setupResizeObserver(win);
     Sprites.onChange(function () { view2d.redraw(); });
     Sprites.data('map/landmarks.json'); // start the landmark table loading
-    window.MapView = { state: function () { return view2d.state(); }, pointOf: function (id) { return view2d.pointOf(id); } };
+    window.MapView = { state: function () { return view2d.state(); }, pointOf: function (id) { return view2d.pointOf(id); },
+                       strikeNow: function () { view2d.strikeNow(); } };
 
     // =========================================================================
     // GMCP update logic
