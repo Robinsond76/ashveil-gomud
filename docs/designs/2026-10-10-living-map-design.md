@@ -181,6 +181,12 @@ where LM2's sight takes over.
 *Owner decisions 2026-10-11:* drawn from art (A14), with snow, with
 lightning, and with its own map setting.
 
+*Built 2026-10-11 (see `docs/PROJECT_STATUS.md`).* As built, the map draws
+code stand-ins for each A14 texture until the art is imported; the weather
+is drawn on the Tiles style only, under the night shade and LM2's darkness,
+on the outdoor tiles in sight; splashes fall on at most 24 tiles; and
+`MapView.strikeNow()` brings the next strike forward for browser checks.
+
 `Gametime.weather` already reaches the client: the condition the player can
 see (`name`, `cloud_cover` 0-3, `visibility`, and `indoor` when seen
 through an exit). The map draws it over the **outdoor tiles of the zone

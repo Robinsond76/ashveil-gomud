@@ -1,3 +1,22 @@
+**LM4: weather on the map (2026-10-11).** The map shows the weather a player can see ([living map design](designs/2026-10-10-living-map-design.md), LM4). Client only.
+- `map-weather.js` (pure): `plan` turns `Gametime.weather` into layers (cloud shadows; rain sliding down and to the left about 20° off vertical; heavy rain; fog thickening from mist to thick fog, halved over LM2's fog veil; near and far snow, faster and slanted in a blizzard), splashes, lightning and a sky dimming; reduced motion stops every layer and the splashes. `nextStrike` (4 to 9 s apart) and `strike` (a flash under 140 ms, a 3-frame bolt).
+- `window-map.js`: `drawWeather` slides each texture as a pattern anchored to the map over the outdoor tiles in sight (not indoor or dark biomes; not your room when the weather is seen through an exit), under the night shade and darkness. `drawSplashes` scatters raindrops; `drawLightning` strikes a tile in view and flashes the map (no flash under reduced motion). Each texture is the A14 art once imported, else a seamless code stand-in. A **Weather** map setting (on by default). `state().weather` reports it; `MapView.strikeNow()` serves the browser checks.
+- Snow and blizzard are drawn when a zone's weather table has them; none does yet (no seasons; the new world's north will add them).
+- **Help:** `help worldmap` gains a Weather section and the setting; the tutorial's web-client map hint mentions the weather.
+- *Tests:* `map-weather.test.mjs` (9). `map-check.mjs` LM4: none without weather or with a clear sky; overcast over every outdoor tile; rain moving with splashes; a storm's heavy rain, darker sky and a forced strike with its flash, gone within half a second; your room dry when seen from indoors; thick fog; snow in two layers; rain only where you can see at night; reduced motion still, with no splashes and no flash; the setting off, the settings switch, and the classic style. The help assertions.
+- **Review** (independent reviewer, full diff). Accepted and fixed:
+  1. *High:* fog barely showed and thick fog never did, because LM2 already limits sight in fog and the weather fell only on tiles in sight. In fog the weather now covers every outdoor tile.
+  2. Rain fell to about 8 frames a second whenever water or another animated tile was on screen (the slow timer won), so storm rain could seem to rise. A request for every frame now replaces a pending slow one.
+  3. Cost: only rain, snow and splashes redraw every frame; clouds and fog use the slow timer; patterns are cached; a hidden map checks back once a second.
+  4. Splashes picked the first 24 rooms, often off screen: they are now spread over the tiles in view.
+  5. A signed shift put half the splashes outside their tile: fixed.
+  6. Lakes lost the weather whenever sight was limited: a lake in sight now gets it.
+  7. A strike could be drawn on a tile no longer in view after a pan or zone change: it ends.
+  8. Under reduced motion a storm redrew every 120 ms: it now waits for the next strike.
+  9. Checks added: thick fog under LM2's fog sight, every-frame rain with water in view and the slow timer for clouds, and the Weather switch turned off; the first two fail without their fixes.
+  - Not done: the A14 art paths run only once the art is imported (checked then), and the design's "over LM2's fog veil" is drawn under it (recorded in the as-built note).
+- *Next:* the A14 import jobs go in `import_art.py` when the masters arrive (the importer refuses jobs whose masters are missing).
+
 **A14 ordered and LM4 decided: weather on the map (2026-10-11).** The owner chose art over code-drawn weather, snow, lightning and a separate map setting ([living map design](designs/2026-10-10-living-map-design.md), LM4). [A14-map-weather.md](art/A14-map-weather.md) orders 8 files: seamless rain (light and heavy, slanted so it can fall diagonally), a splash, near and far snow, fog, cloud shadows and a lightning strike. The game has no seasons and no snow weather yet, so the map will draw snow as soon as a zone's weather table has it (the new world's north). LM4 is built against the A14 art, with code fallbacks until it arrives.
 
 **LM3: crossing into a place (2026-10-11).** Crossing into another zone or level on the map now reads as going somewhere ([living map design](designs/2026-10-10-living-map-design.md), LM3). Client only.
