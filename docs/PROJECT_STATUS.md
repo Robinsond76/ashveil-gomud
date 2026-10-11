@@ -14,6 +14,7 @@
     - The browser check now covers the ranger's shot, a dodge, the cast release and reduced motion (poses still play, with no lunge). It waits for the sheets to load instead of a fixed 300 ms.
     - Animation `off` no longer preloads poses.
   - **Rejected.** Re-checking already-imported poses when only an idle is re-imported is moot, because every size class has one runtime frame.
+- *Full checks:* `make generate`, `make validate`, `go test -race ./...`, `make js-lint`, `make js-test` and the battle browser checks pass. `modules/company` alone needs a longer test timeout under `-race`: it hit the default 10 minutes in the full run, then passed alone in 716 s with `-timeout 40m`. That is pre-existing slowness; E3c changes no Go code there.
 
 **LG: light gear and lasting tents (2026-10-10).** This is the owner's light-gear rules ([living map design](designs/2026-10-10-living-map-design.md), LG), the phase before LM2.
 - **Torch** (new item 303). `light torch` uses one up for about six game hours (15 real minutes) of light, through the Torchlight buff. It can't be put out.
