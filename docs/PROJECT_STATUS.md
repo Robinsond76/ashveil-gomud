@@ -1,3 +1,9 @@
+**A11 final masks imported (2026-10-11).** The art agent's last A11 corrections are in the game; A11 is complete and approved.
+- The dragon-lord, sweeper and vanguard battle idles have their visible beards marked as hair, kept off the skin. Their `idle.look.png` are re-cut.
+- The bearward's map hair mask now covers its long hair as well as its beard. Its `idle.look.png` and `walk.look.png` are re-cut.
+- Only those 5 runtime masks changed: no sheet, manifest entry or mask count did.
+- Checks: `go test ./scripts`, `map-check.mjs` and `battle-art-check.mjs` pass.
+
 **E1b: chosen looks on the high-resolution figures (2026-10-11).** A player's chosen skin and hair now show on the new map and battle figures, keeping the art's light and shade, through the A11 masks ([design](designs/2026-10-11-e1b-look-recolour-design.md), [A11](art/A11-look-masks.md)).
 - **Art:** `import_sheet.py --masks` (map) and `import_battle.py` (battle, from `A11/battle/units/<id>/<sheet>.skin|hair.png`) cut each unit's masks exactly like its sheet into `<sheet>.look.png`. That is a three-colour PNG: red skin, green hair, clear elsewhere, cleared where the sheet is transparent. The sheet's entry names it (`look_mask`), and the mask has a `look-mask` entry. Masks that mark nothing make no file.
   - 71 map classes (idle and walk) and 72 battle idles have masks, 98,815 bytes (about 97 KB) in all. The other classes' helms, hoods or masks hide all skin and hair.
