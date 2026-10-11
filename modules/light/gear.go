@@ -124,14 +124,14 @@ type lanternHolder interface {
 
 type userHolder struct{ u *users.UserRecord }
 
-func (h userHolder) offhand() items.Item      { return h.u.Character.Equipment.Offhand }
-func (h userHolder) setOffhand(i items.Item)  { h.u.Character.Equipment.Offhand = i }
-func (h userHolder) hasBuff(id int) bool      { return liveBuff(h.u.Character.GetBuffs(id)) }
+func (h userHolder) offhand() items.Item     { return h.u.Character.Equipment.Offhand }
+func (h userHolder) setOffhand(i items.Item) { h.u.Character.Equipment.Offhand = i }
+func (h userHolder) hasBuff(id int) bool     { return liveBuff(h.u.Character.GetBuffs(id)) }
 func (h userHolder) addBuff(id, triggers int) {
 	_ = h.u.Character.AddBuff(id, false, triggers)
 	buffAdded(h.u.UserId, id)
 }
-func (h userHolder) removeBuff(id int)        { h.u.Character.RemoveBuff(id) }
+func (h userHolder) removeBuff(id int) { h.u.Character.RemoveBuff(id) }
 func (h userHolder) dousePacked() {
 	for i := range h.u.Character.Items {
 		if h.u.Character.Items[i].ItemId == lanternItemID && h.u.Character.Items[i].Lit {
