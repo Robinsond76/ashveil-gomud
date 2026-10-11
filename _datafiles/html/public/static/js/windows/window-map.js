@@ -569,6 +569,7 @@
         var sightKey = '';     // LM2: MapSight.key of the last sight drawn
         var weatherKey = '';   // LM4: MapWeather.key of the last weather drawn
         var weatherTex = {};   // LM4: code-drawn stand-ins for the A14 textures, by name
+        var patternCache = new Map(); // LM4: a canvas pattern per texture image
         var storm = { next: 0, start: -1, tile: null, strikes: 0 }; // LM4: the lightning under way
         var lastWeather = null; // LM4: what the last render drew of the weather (browser checks)
         var lastSight = null;  // LM2: what the last render drew of sight (browser checks)
@@ -913,13 +914,29 @@
             return true;
         }
 
-        function scheduleAnim(walking) {
-            if (!container || !container.isConnected || animTimer !== null) { return; }
-            if (walking) {
-                animTimer = requestAnimationFrame(function () { animTimer = null; render(); });
-            } else {
-                animTimer = setTimeout(function () { animTimer = null; render(); }, 120);
+        // animKind is what animTimer holds: 'frame' (a requestAnimationFrame)
+        // or 'timer' (a timeout). A request for every frame replaces a
+        // pending timeout (LM4 review: rain must not drop to the slow timer).
+        var animKind = null;
+        var lastAnim = '';     // the last kind of redraw scheduled (browser checks)
+        function scheduleAnim(walking, delayMs) {
+            if (!container || !container.isConnected) { return; }
+            if (animTimer !== null) {
+                if (!(walking && animKind === 'timer')) { return; }
+                clearTimeout(animTimer);
+                animTimer = null;
             }
+            // A hidden map (another phone view, a closed tab) checks back
+            // once a second instead of drawing every frame.
+            if (container.offsetParent === null) { walking = false; delayMs = 1000; }
+            if (walking) {
+                animKind = 'frame';
+                animTimer = requestAnimationFrame(function () { animTimer = null; animKind = null; render(); });
+            } else {
+                animKind = 'timer';
+                animTimer = setTimeout(function () { animTimer = null; animKind = null; render(); }, delayMs || 120);
+            }
+            lastAnim = animKind;
         }
 
         // -- Helpers -----------------------------------------------------------
@@ -1596,8 +1613,11 @@
         // (as the night shade picks them), the lakes, only those in sight
         // when LM2 limits sight, and not your own room when you only see the
         // weather through an exit.
-        function weatherCells(drewTiles, drewLakes, inSight, indoorView) {
+        // In fog the fog is what limits sight, so it covers every outdoor tile
+        // (allSky), remembered ones too (LM4 review).
+        function weatherCells(drewTiles, drewLakes, inSight, indoorView, allSky, lakeSeen) {
             var cells = [];
+            if (allSky) { inSight = null; }
             rooms.forEach(function (room, id) {
                 if (!drewTiles[id]) { return; }
                 var biome = biomeTable[room.env];
@@ -1607,8 +1627,11 @@
                 cells.push({ x: room.x, y: room.y, id: id });
             });
             var water = biomeTable.water;
-            if (!(water && (water.indoor || water.dark)) && inSight === null) {
-                (drewLakes || []).forEach(function (c) { cells.push({ x: c.x, y: c.y, id: null }); });
+            if (!(water && (water.indoor || water.dark))) {
+                (drewLakes || []).forEach(function (c) {
+                    if (inSight !== null && !(lakeSeen && lakeSeen(c))) { return; }
+                    cells.push({ x: c.x, y: c.y, id: null });
+                });
             }
             return cells;
         }
@@ -1631,7 +1654,7 @@
                 ctx.fillStyle = 'rgba(14,18,28,' + plan.dim + ')';
                 ctx.fillRect(0, 0, viewW, viewH);
             }
-            var art = {}, moving = false;
+            var art = {}, moving = false, fast = false;
             plan.layers.forEach(function (l) {
                 var tx = weatherArt(l.tex);
                 art[l.tex] = tx.art ? 'art' : 'code';
@@ -1640,7 +1663,9 @@
                 var ox = (origin.px - tilePx / 2 + l.vx * t * tilePx) % span;
                 var oy = (origin.py - tilePx / 2 + l.vy * t * tilePx) % span;
                 if (l.vx || l.vy) { moving = true; }
-                var pat = ctx.createPattern(tx.img, 'repeat');
+                if (Math.abs(l.vx) + Math.abs(l.vy) > 0.5) { fast = true; }
+                var pat = patternCache.get(tx.img);
+                if (!pat) { pat = ctx.createPattern(tx.img, 'repeat'); if (pat) { patternCache.set(tx.img, pat); } }
                 if (!pat) { return; }
                 if (pat.setTransform && window.DOMMatrix) {
                     pat.setTransform(new window.DOMMatrix().translateSelf(ox, oy).scaleSelf(scale, scale));
@@ -1655,7 +1680,9 @@
             ctx.restore();
             lastWeather = { name: plan.name, layers: plan.layers.map(function (l) { return l.tex; }), art: art,
                 cells: cells.length, splashes: splashes, strikes: storm.strikes, flash: false, dim: plan.dim, moving: moving };
-            return moving || splashes > 0;
+            // Rain, snow and splashes need every frame; drifting clouds and
+            // fog the slow timer.
+            return (fast || splashes > 0) ? 'fast' : (moving ? 'slow' : '');
         }
 
         // drawSplashes scatters raindrops: each tile gets a splash at a time
@@ -1667,7 +1694,13 @@
             var mult = spriteMult(tilePx);
             var drawnN = 0;
             var period = 1000 / rate;
-            cells.slice(0, 24).forEach(function (c) {
+            // Only tiles in view splash, up to 24 spread across them.
+            var inView = cells.filter(function (c) {
+                var q = gridToCanvas(c.x, c.y);
+                return q.px > -tilePx && q.py > -tilePx && q.px < viewW + tilePx && q.py < viewH + tilePx;
+            });
+            var step = Math.max(1, Math.ceil(inView.length / 24));
+            inView.filter(function (c, i) { return i % step === 0; }).forEach(function (c) {
                 var h = ((c.x * 73856093) ^ (c.y * 19349663)) >>> 0;
                 var phase = (nowMs + (h % 1000)) % period;
                 if (phase >= SPLASH_MS) { return; }
@@ -1675,7 +1708,7 @@
                 var hh = (h ^ (slot * 83492791)) >>> 0;
                 var p = gridToCanvas(c.x, c.y);
                 var sx = p.px + ((hh % 100) / 100 - 0.5) * tilePx * 0.7;
-                var sy = p.py + (((hh >> 8) % 100) / 100 - 0.5) * tilePx * 0.7;
+                var sy = p.py + (((hh >>> 8) % 100) / 100 - 0.5) * tilePx * 0.7;
                 var k = phase / SPLASH_MS;
                 if (a) {
                     var fw = a.info.frame[0], fh = a.info.frame[1], d = a.info.density || 1;
@@ -1696,10 +1729,11 @@
 
         // drawLightning (LM4) runs a storm's strikes: every 4 to 9 seconds the
         // map flashes briefly and a bolt strikes a tile in view. Reduced
-        // motion shows the bolt without the flash. It returns true while a
-        // strike is under way or due (so the map keeps redrawing).
+        // motion shows the bolt without the flash. It returns how soon to
+        // redraw (ms): every frame during a strike, else at the next one; 0
+        // when there is no storm.
         function drawLightning(plan, cells, tilePx, nowMs) {
-            if (!plan || !plan.lightning || !cells.length) { storm.start = -1; storm.next = 0; return false; }
+            if (!plan || !plan.lightning || !cells.length) { storm.start = -1; storm.next = 0; return 0; }
             if (!storm.next) { storm.next = window.MapWeather.nextStrike(nowMs, Math.random()); }
             if (nowMs >= storm.next) {
                 storm.start = nowMs;
@@ -1707,8 +1741,10 @@
                 storm.next = window.MapWeather.nextStrike(nowMs, Math.random());
                 storm.strikes++;
             }
+            // A strike whose tile has left the view (a pan, a new zone) ends.
+            if (storm.start >= 0 && !cells.some(function (c) { return c.x === storm.tile.x && c.y === storm.tile.y; })) { storm.start = -1; }
             var st = storm.start >= 0 ? window.MapWeather.strike(storm.start, nowMs) : null;
-            if (!st) { return true; }
+            if (!st) { return Math.max(16, storm.next - nowMs); }
             var p = gridToCanvas(storm.tile.x, storm.tile.y);
             var mult = spriteMult(tilePx);
             var a = Sprites.art('map/weather/lightning.png');
@@ -1739,7 +1775,7 @@
             }
             ctx.restore();
             if (lastWeather) { lastWeather.strikes = storm.strikes; lastWeather.bolt = a ? 'art' : 'code'; }
-            return true;
+            return 16;
         }
 
         // levelName (LM3) names a level that isn't the surface: z below 0 is
@@ -2181,7 +2217,7 @@
             // night shade and darkness so they dim it too.
             var weatherInfo = (window.MapWeather && mapSettings.weather !== false && tiles && timeInfo) ? timeInfo.weather : null;
             var weatherPlan = weatherInfo ? window.MapWeather.plan(weatherInfo, { reduced: reducedMotion(), fogVeil: !!(glow && glow.fog) }) : null;
-            var weatherAt = weatherPlan ? weatherCells(drewTiles, drewLakes, inSight, !!weatherInfo.indoor) : [];
+            var weatherAt = weatherPlan ? weatherCells(drewTiles, drewLakes, inSight, !!weatherInfo.indoor, !!(glow && glow.fog), lakeSeen) : [];
             lastWeather = null;
             var weatherMoving = weatherPlan ? drawWeather(weatherPlan, weatherAt, tilePx, nowMs) : false;
             if (weatherPlan && !lastWeather) { lastWeather = { name: weatherPlan.name, layers: [], art: {}, cells: 0, splashes: 0, strikes: storm.strikes, flash: false, dim: 0 }; }
@@ -2268,8 +2304,12 @@
                 });
             }
             // LM4: lightning over everything but the crossing fade.
-            var stormOn = drawLightning(weatherPlan, weatherAt, tilePx, nowMs);
-            if (weatherMoving && !reducedMotion() && !document.hidden) { scheduleAnim(true); } else if (stormOn && !document.hidden) { scheduleAnim(false); }
+            var stormIn = drawLightning(weatherPlan, weatherAt, tilePx, nowMs);
+            if (!document.hidden) {
+                if (weatherMoving === 'fast' || (stormIn && stormIn <= 16)) { scheduleAnim(true); }
+                else if (weatherMoving === 'slow') { scheduleAnim(false); }
+                if (stormIn > 16) { scheduleAnim(false, stormIn); }
+            }
             if (drawCrossing(nowMs)) { scheduleAnim(true); }
             // The sprites and camp fires animate: keep redrawing while any is
             // on screen (a walk redraws every frame, idling a few times a second).
@@ -2807,7 +2847,7 @@
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
                     sight: lastSight,
-                    weather: lastWeather,
+                    weather: lastWeather, anim: lastAnim,
                     crossing: lastCrossing ? {
                         name: lastCrossing.name, level: lastCrossing.level, faded: lastCrossing.faded, oldLight: lastCrossing.oldLight,
                         fading: !!crossing && performance.now() - crossing.start < CROSS_OUT_MS + CROSS_IN_MS,

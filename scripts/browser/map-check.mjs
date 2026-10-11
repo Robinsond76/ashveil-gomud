@@ -1018,14 +1018,31 @@ for (const dpr of [1, 1.5, 2]) {
 
   s = await setWeather({ name: 'rain', cloud_cover: 3, indoor: true });
   check(s.weather.cells === s.drawn.tiles - 1, 'seen from indoors, your own room stays dry: ' + s.weather.cells + ' of ' + s.drawn.tiles);
-  s = await setWeather({ name: 'thick-fog', cloud_cover: 2, visibility: -2 });
-  check(JSON.stringify(s.weather.layers) === '["clouds","fog"]', 'thick fog drifts: ' + JSON.stringify(s.weather.layers));
+  s = await setWeather({ name: 'thick-fog', cloud_cover: 2, visibility: -2 }, 12, { level: 0, daylight: false, fog: true, room: id(2, 1) });
+  check(JSON.stringify(s.weather.layers) === '["clouds","fog"]' && s.weather.cells === s.drawn.tiles,
+    'thick fog drifts over every outdoor tile, though it hides them from sight: ' + JSON.stringify(s.weather));
   if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm4-fog.png') }); }
   s = await setWeather({ name: 'snow', cloud_cover: 2 });
   check(JSON.stringify(s.weather.layers) === '["clouds","snow-far","snow"]', 'snow falls in two layers: ' + JSON.stringify(s.weather.layers));
   if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm4-snow.png') }); }
   s = await setWeather({ name: 'rain', cloud_cover: 3 }, 23, { level: 1, daylight: false, room: id(2, 1) });
   check(s.weather.cells === 1, 'at night the rain shows only where you can see: ' + s.weather.cells);
+  await page.close();
+
+  // With water in view (an animated tile on the slow timer) the rain still
+  // gets every frame.
+  const wet = { biomes: world.biomes, rooms: world.rooms.map(r => r.num === id(3, 1) ? Object.assign({}, r, { environment: 'water' }) : r) };
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', wet);
+  await moveTo(page, 2, 1);
+  await tick(page, 400);
+  check((await state(page)).anim === 'timer', 'water alone redraws on the slow timer');
+  s = await setWeather({ name: 'storm', cloud_cover: 3 });
+  await tick(page, 100);
+  check((await state(page)).anim === 'frame', 'rain with water in view still draws every frame');
+  s = await setWeather({ name: 'overcast', cloud_cover: 3 });
+  await tick(page, 300);
+  check((await state(page)).anim === 'timer', 'slow cloud shadows need only the slow timer');
   await page.close();
 
   // Reduced motion: the weather stays, still; lightning without the flash.
@@ -1047,8 +1064,17 @@ for (const dpr of [1, 1.5, 2]) {
   await moveTo(page, 2, 1);
   s = await setWeather({ name: 'storm', cloud_cover: 3 });
   check(s.weather === null, 'with the Weather setting off there is no weather');
+  await page.close();
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', world);
+  await moveTo(page, 2, 1);
+  s = await setWeather({ name: 'rain', cloud_cover: 3 });
+  check(s.weather !== null, 'rain before turning the switch off');
   await page.click('.map-controls button[title="Map settings"]');
-  check(await page.locator('.map-settings-panel', { hasText: 'Weather' }).count() === 1, 'the settings have a Weather switch');
+  const weatherRow = page.locator('.map-settings-panel div', { hasText: /^Weather/ }).last();
+  await weatherRow.locator('button', { hasText: 'Off' }).click();
+  await tick(page, 200);
+  check((await state(page)).weather === null, 'the Weather switch turns it off');
   await page.close();
   page = await open({ width: 1280, height: 900 }, { style: 'classic' });
   await gmcp(page, 'World.Map', world);

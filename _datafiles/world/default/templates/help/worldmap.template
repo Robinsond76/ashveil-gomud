@@ -144,7 +144,7 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
     snow falls where a place has snowy weather.
   Weather never falls indoors or underground. Seen from indoors through an
   exit, it falls outside but not in your room; at night or in the dark it
-  shows only where you can see. With reduced motion the weather stays still
+  shows only where you can see, but fog covers everything, as it hides it. With reduced motion the weather stays still
   and lightning strikes without the flash.
 
 <ansi fg="yellow-bold">Settings</ansi>
