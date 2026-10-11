@@ -27,6 +27,7 @@
     - The status gave the mask size as 860 KB; it is about 97 KB.
     - Pose and idle look masks are now preloaded.
   - **Kept as is.** Highlights lift toward white by a fixed share, so a very dark chosen colour shows brighter highlights. This is an aesthetic call to judge in play; the shading order is kept and tested.
+- *Full checks:* these pass on the branch merged with master (E3c and E2b): `make generate`, `make validate`, `go test -race -timeout 40m ./...`, `make js-lint`, `make js-test`, and the map, battle, battle art and creation panel browser checks.
 
 **E2b: lake inside corners (2026-10-11).** The approved A2b overlays ([A2b-coast-inner-corners.md](art/A2b-coast-inner-corners.md)) round off a lake's corners on the map, where a ring of shore used to leave a square notch of sand.
 - **Art:** `import_art.py` imports `shore-corner-ne/es/sw/nw` (512 px masters on an 8 px grain, shrunk to 128 px at density 4, under 2 KB each) as `terrain-corner` entries, transparent but for the water's quarter.
