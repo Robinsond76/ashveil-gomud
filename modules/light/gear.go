@@ -124,17 +124,37 @@ type lanternHolder interface {
 
 type userHolder struct{ u *users.UserRecord }
 
-func (h userHolder) offhand() items.Item      { return h.u.Character.Equipment.Offhand }
-func (h userHolder) setOffhand(i items.Item)  { h.u.Character.Equipment.Offhand = i }
-func (h userHolder) hasBuff(id int) bool      { return liveBuff(h.u.Character.GetBuffs(id)) }
-func (h userHolder) addBuff(id, triggers int) { _ = h.u.Character.AddBuff(id, false, triggers) }
-func (h userHolder) removeBuff(id int)        { h.u.Character.RemoveBuff(id) }
+func (h userHolder) offhand() items.Item     { return h.u.Character.Equipment.Offhand }
+func (h userHolder) setOffhand(i items.Item) { h.u.Character.Equipment.Offhand = i }
+func (h userHolder) hasBuff(id int) bool     { return liveBuff(h.u.Character.GetBuffs(id)) }
+func (h userHolder) addBuff(id, triggers int) {
+	_ = h.u.Character.AddBuff(id, false, triggers)
+	buffAdded(h.u.UserId, id)
+}
+func (h userHolder) removeBuff(id int) { h.u.Character.RemoveBuff(id) }
 func (h userHolder) dousePacked() {
 	for i := range h.u.Character.Items {
 		if h.u.Character.Items[i].ItemId == lanternItemID && h.u.Character.Items[i].Lit {
 			h.u.Character.Items[i].Lit = false
 		}
 	}
+}
+
+// carriedLight names the light a user carries, for the map's sight (LM2):
+// a lit lantern or a burning torch, else a lantern held unlit
+// ("lantern-out"), else "".
+func carriedLight(u *users.UserRecord) string {
+	c := u.Character
+	lanternHeld := c.Equipment.Offhand.ItemId == lanternItemID
+	switch {
+	case lanternHeld && c.Equipment.Offhand.Lit && liveBuff(c.GetBuffs(lanternBuffID)):
+		return "lantern"
+	case liveBuff(c.GetBuffs(torchBuffID)):
+		return "torch"
+	case lanternHeld:
+		return "lantern-out"
+	}
+	return ""
 }
 
 // liveBuff reports a buff that is on and not expired: RemoveBuff only marks
@@ -166,6 +186,12 @@ func (m *LightModule) onNewRound(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
+// buffAdded announces a light buff put on directly (AddBuff queues no
+// event), so the buff list and the map's sight (LM2) update at once.
+func buffAdded(userId, buffId int) {
+	events.AddToQueue(events.BuffsAdded{UserId: userId, BuffIds: []int{buffId}})
+}
+
 func isLantern(what string) bool { return strings.HasPrefix("lantern", what) || what == "lamp" }
 
 // lightThing is `light lantern` and `light torch`.
@@ -194,6 +220,7 @@ func lightThing(what string, user *users.UserRecord, room *rooms.Room) {
 		lantern.LastUsedRound = util.GetRoundCount()
 		c.Equipment.Offhand = lantern
 		_ = c.AddBuff(lanternBuffID, false, buffs.TriggersLeftUnlimited)
+		buffAdded(user.UserId, lanternBuffID)
 		user.SendText(fmt.Sprintf(`You light your <ansi fg="itemname">lantern</ansi>. It has oil for about %s.`, hoursText(oil(lantern))))
 		room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> lights a lantern.`, c.Name), user.UserId)
 	case strings.HasPrefix("torch", what):
@@ -209,6 +236,7 @@ func lightThing(what string, user *users.UserRecord, room *rooms.Room) {
 		c.RemoveItem(torch)
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: torch, Gained: false})
 		_ = c.AddBuff(torchBuffID, false)
+		buffAdded(user.UserId, torchBuffID)
 		user.SendText(`You light a <ansi fg="itemname">torch</ansi>. It will burn for about six hours, and can't be put out.`)
 		room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> lights a torch.`, c.Name), user.UserId)
 	default:

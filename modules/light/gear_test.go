@@ -349,3 +349,55 @@ func TestShippedLightGear(t *testing.T) {
 	}
 	assert.Equal(t, 2, selling, "both camp-gear markets sell light gear")
 }
+
+// TestCarriedLightNamesTheLight (LM2): the map's sight learns what the
+// player carries: a lit lantern, a burning torch, or a lantern held unlit;
+// the real lantern commands and torch drive it.
+func TestCarriedLightNamesTheLight(t *testing.T) {
+	user, room, told := world(t)
+	m := &LightModule{}
+	c := user.Character
+	assert.Equal(t, "", carriedLight(user), "nothing carried")
+	c.Equipment.Offhand = items.New(lanternItemID)
+	assert.Equal(t, "lantern-out", carriedLight(user), "a lantern held unlit")
+	assert.Equal(t, "lantern-out", rooms.CarriedLightFor(user), "registered with the light model")
+	_, _ = m.userCommand("lantern", user, room, 0)
+	said(told)
+	assert.Equal(t, "lantern", carriedLight(user))
+	_, _ = m.douse("lantern", user, room, 0)
+	said(told)
+	assert.Equal(t, "lantern-out", carriedLight(user))
+	c.Equipment.Offhand = items.Item{}
+	c.Items = append(c.Items, items.New(torchItemID))
+	_, _ = m.userCommand("torch", user, room, 0)
+	said(told)
+	assert.Equal(t, "torch", carriedLight(user))
+}
+
+// LM2 review: lighting a torch or lantern puts its buff on directly, which
+// queues no event of its own, so the light module announces it and the
+// map's sight (gmcp Gametime listens for BuffsAdded) updates at once rather
+// than at the next round.
+func TestLightingAnnouncesTheBuffAtOnce(t *testing.T) {
+	user, room, told := world(t)
+	m := &LightModule{}
+	c := user.Character
+	var added [][]int
+	id := events.RegisterListener(events.BuffsAdded{}, func(e events.Event) events.ListenerReturn {
+		if b := e.(events.BuffsAdded); b.UserId == 7 {
+			added = append(added, b.BuffIds)
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.BuffsAdded{}, id) })
+
+	c.Items = append(c.Items, items.New(torchItemID))
+	_, _ = m.userCommand("torch", user, room, 0)
+	said(told)
+	require.Equal(t, [][]int{{torchBuffID}}, added, "light torch")
+
+	c.Equipment.Offhand = items.New(lanternItemID)
+	_, _ = m.userCommand("lantern", user, room, 0)
+	said(told)
+	require.Equal(t, [][]int{{torchBuffID}, {lanternBuffID}}, added, "light lantern")
+}

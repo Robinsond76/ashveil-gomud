@@ -45,4 +45,8 @@ your party lights you too.
   <ansi fg="command">fill lantern</ansi>
   Fill your lantern from a flask of lamp oil.
 
-See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help camp gear</ansi>.
+In the web client the map shows what you can see: in the dark, the rooms
+beyond your light are drawn dark and remembered, and your torch or lantern
+shows at your figure's hand (<ansi fg="command">help worldmap</ansi>).
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help worldmap</ansi>.

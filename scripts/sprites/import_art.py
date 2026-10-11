@@ -117,6 +117,15 @@ def jobs():
         out.append(Job(f"map/markers/{name}.png", [f"A4/map/markers/{name}.png"], [px, px],
                        _anim({"kind": "marker", "set": "S1", "frames": n, "anchor": "center"}, ms),
                        frames=n, budget=BIG if px >= 128 else SMALL))
+    # A13 (LM2): the light a figure carries, held at its hand or over its head.
+    lights = [("torch", 2, 200), ("lantern", 2, 450), ("lantern-out", 1, 0), ("light-orb", 2, 500)]
+    for name, n, ms in lights:
+        out.append(Job(f"map/markers/{name}.png", [f"A13/map/markers/{name}.png"], [64, 64],
+                       _anim({"kind": "marker", "set": "S1", "frames": n, "anchor": "center"}, ms),
+                       frames=n))
+    out.append(Job("map/camp/bonfire.png", ["A13/map/camp/bonfire.png"], [128, 128],
+                   _anim({"kind": "camp", "set": "S1", "frames": 4, "anchor": "center"}, 150),
+                   frames=4, budget=BIG))
     camp = [("tent", 128, 1, 0), ("tent-ally", 128, 1, 0), ("camp-rough", 128, 1, 0),
             ("camp-rough-ally", 128, 1, 0), ("fire-unlit", 64, 1, 0), ("fire-lit", 64, 4, 150),
             ("embers", 64, 3, 150), ("smoke", 64, 4, 150), ("resting", 64, 3, 150), ("inn-rest", 64, 1, 0)]

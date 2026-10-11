@@ -35,6 +35,7 @@ func init() {
 	m.plug.AddUserCommand("light", m.userCommand, true, false)
 	m.plug.AddUserCommand("douse", m.douse, true, false)
 	usercommands.RegisterFillHandler(fillLantern)
+	rooms.RegisterCarriedLight(carriedLight)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	m.plug.Callbacks.SetOnLoad(m.load)
 }

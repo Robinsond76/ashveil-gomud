@@ -531,7 +531,7 @@
         var campInfo    = null;     // Company.Camp
         var lastCampAsYou = false;  // LM1: the last render drew your camp as your marker (browser checks)
         var lastFigures = { you: false, companions: 0 };  // what drawUnit last drew (browser checks)
-        var lastFire = '';          // the last camp fire drawn: lit, embers or unlit (browser checks)
+        var lastFire = '';          // the last camp fire drawn: lit, bonfire (your camp as you), embers or unlit (browser checks)
         var companions  = [];       // Phase 40c: present companions { key, lineage, classid }, drawn beside you
         // Where each companion stands around the player, in art pixels from
         // the player's feet (x across, y up); a fifth or later is not drawn
@@ -547,9 +547,14 @@
             fadeStart: -1,
         };
         var animTimer = null;
-        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, corners: {}, replaced: 0, lakes: 0 }; // what the last render drew (browser checks)
+        var drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, corners: {}, replaced: 0, lakes: 0, remembered: 0 }; // what the last render drew (browser checks)
         var walkInfo = null;   // Phase 40d: Walkto { target, path: [room ids ahead] } while a walk is under way
         var timeInfo = null;   // Phase 40d: Gametime, for the day/night shading
+        var sightKey = '';     // LM2: MapSight.key of the last sight drawn
+        var lastSight = null;  // LM2: what the last render drew of sight (browser checks)
+        var heldSight = null;  // LM2: the sight last drawn for the room you are in
+        var figureDim = 1;     // LM2: your figure is faint when you can't see your own room
+        var darkCanvas = null; // LM2: the darkness layer, cut by your glow
         var nightQuant = -1;   // the shading level last drawn, in tenths
 
         function faceOf(dx, dy, prev) {
@@ -710,10 +715,14 @@
 
         // fireAndRest draws a camp's fire (bottom right of the tent, or at
         // <at>) and its resting mark (over the tent).
-        function fireAndRest(cx, cy, mult, lit, resting, now, at, embers) {
+        function fireAndRest(cx, cy, mult, lit, resting, now, at, embers, big) {
             var fx = at ? at.px : cx + 8 * mult, fy = at ? at.py : cy + 8 * mult;
             lastFire = lit ? 'lit' : (embers ? 'embers' : 'unlit');
-            if (lit) {
+            if (lit && big && drawIcon('map/camp/bonfire.png', fx, fy - 3 * mult, mult * 0.75, now)) {
+                // A13: your camp as your marker burns a bigger fire.
+                lastFire = 'bonfire';
+                drawIcon('map/camp/smoke.png', fx, fy - 18 * mult, mult, now);
+            } else if (lit) {
                 drawIcon('map/camp/fire-lit.png', fx, fy, mult, now);
                 drawIcon('map/camp/smoke.png', fx, fy - 12 * mult, mult, now);
             } else if (embers) {
@@ -764,7 +773,7 @@
                 ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
                 ctx.beginPath(); ctx.moveTo(p.px, p.py - q); ctx.lineTo(p.px + q, p.py + q); ctx.lineTo(p.px - q, p.py + q); ctx.closePath(); ctx.fill();
             }
-            fireAndRest(p.px, p.py, mult, lit, resting, now, fire, embers);
+            fireAndRest(p.px, p.py, mult, lit, resting, now, fire, embers, asYou);
         }
 
         // campAsYou (living map LM1) says your company is camped in the room
@@ -783,10 +792,12 @@
         // asYou (LM1) says your camp is your marker, drawn on the tile itself.
         // Your own camp in the room you stand in is never pushed aside: you
         // are walking into it or already are it (LM1).
-        function drawCamps(now, spriteOn, asYou, alpha) {
+        function drawCamps(now, spriteOn, asYou, alpha, outOfSight) {
             if (!campInfo || mapSettings.showCamp === false) { return; }
             var ownHere = campInfo.has_camp && !campInfo.inn && campInfo.room_id === currentRoomId;
             (campInfo.allied_camps || []).forEach(function (c) {
+                // LM2: an ally's camp out of sight isn't drawn (yours is: you know where it is).
+                if (outOfSight && outOfSight(c.room_id)) { return; }
                 drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, !asYou && spriteOn && c.room_id === currentRoomId, !!c.embers, c.tent);
             });
             if (campInfo.has_camp && campInfo.room_id) {
@@ -813,6 +824,7 @@
             var p = gridToCanvas(pose.x, pose.y);
             var alpha = unitAlpha(now);
             if (alpha >= 1) { unit.fadeStart = -1; }
+            alpha *= figureDim;
             ctx.save();
             ctx.globalAlpha = alpha;
             if (!drawIcon('map/markers/here-ring.png', p.px, p.py + 8 * mult, mult, now)) {
@@ -823,7 +835,9 @@
             if (asYou) {
                 // LM1: you are the camp. The ring marks your tile; the badge
                 // sits on the tent.
+                ctx.save(); ctx.globalAlpha = alpha;
                 drawBadge(p, mult, now);
+                ctx.restore();
                 lastFigures = { you: false, companions: 0 };
                 return { walking: false, camp: true };
             }
@@ -837,7 +851,9 @@
                 drawnCompanions++;
             });
             drawFrame(res.sheet, unit.face, unit.flip, p.px, p.py + 12 * mult, mult, now, pose.walking ? pose.start : 0, alpha);
+            ctx.save(); ctx.globalAlpha = alpha;
             drawBadge(p, mult, now);
+            ctx.restore();
             lastFigures = { you: true, companions: drawnCompanions };
             return { walking: pose.walking };
         }
@@ -1130,7 +1146,7 @@
         // others keep their still variants; an older animation is an overlay
         // on every room. It returns null while the art is not ready, else
         // { animated }.
-        function drawTerrain(room, id, p, size, now, coordIndex, onward, lakeIndex) {
+        function drawTerrain(room, id, p, size, now, coordIndex, onward, lakeIndex, still) {
             var biome = room.env ? room.env : 'default';
             var mt = window.MapTiles;
             var look = (mt && mt.tiled(biome)) ? tileLook(room, id, coordIndex, onward, lakeIndex) : null;
@@ -1164,7 +1180,8 @@
             if (!a) { return null; }
             var variants = Math.max(1, a.info.variants || 1);
             var variant = ((id % variants) + variants) % variants;
-            var anim = (a.info.animated_overlay && !reducedMotion()) ? 'map/terrain/' + a.info.animated_overlay : '';
+            // A remembered room (LM2: out of sight) is drawn still.
+            var anim = (a.info.animated_overlay && !reducedMotion() && !still) ? 'map/terrain/' + a.info.animated_overlay : '';
             var an = anim ? Sprites.art(anim) : null;
             if (an && an.info.replace) {
                 if (variant === 0) {
@@ -1361,6 +1378,169 @@
             ctx.restore();
         }
 
+        // joinedTo lists the drawn rooms an exit joins to room id (LM2: at full
+        // sight you see them from where you stand).
+        function joinedTo(id) {
+            if (id === null || id === undefined) { return []; }
+            var out = [];
+            edges.forEach(function (flags, key) {
+                var parts = key.split('-');
+                var a = parseInt(parts[0], 10), b = parseInt(parts[1], 10);
+                var other = a === id ? b : (b === id ? a : null);
+                if (other !== null && rooms.has(other)) { out.push(other); }
+            });
+            return out;
+        }
+
+        // LM2 darkness: how dark the darkness layer makes a room in sight
+        // (outside the glow), a remembered room, and your own room when you
+        // can't see it.
+        var SEEN_DARK = 0.5, REMEMBERED_DARK = 0.78, BLIND_DARK = 0.9;
+        var FOG_VEIL = 0.5;   // fog by day veils lighter than night darkens
+        var LIGHT_TINT = { warm: 'rgba(255,150,50,0.32)', cool: 'rgba(150,190,255,0.22)', pale: 'rgba(190,200,230,0.12)' };
+
+        // drawSight (LM2) replaces the clock's night shade when you can't see
+        // the whole map: remembered rooms lose their colour and sink into the
+        // dark; the rooms in sight are dimmed but for a soft pool of light round
+        // you (warm for a flame, cool for a party light, pale for the moon),
+        // and a lit campfire is a pool of firelight wherever it is. Night
+        // vision has no glow: what you see turns a cool monochrome.
+        function drawSight(inSight, glow, tilePx, lakes, nowMs) {
+            var cells = [];
+            rooms.forEach(function (room, id) {
+                cells.push({ p: gridToCanvas(room.x, room.y), seen: inSight.has(id), here: id === currentRoomId });
+            });
+            lakes.forEach(function (c) { cells.push({ p: gridToCanvas(c.x, c.y), seen: c.seen, here: false }); });
+            function cell(c2, c) {
+                c2.fillRect(Math.round(c.p.px - tilePx / 2), Math.round(c.p.py - tilePx / 2), tilePx, tilePx);
+            }
+            ctx.save();
+            ctx.globalCompositeOperation = 'saturation';
+            ctx.fillStyle = '#808080';
+            cells.forEach(function (c) { if (!c.seen || glow.mono) { cell(ctx, c); } });
+            if (glow.mono) {
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.fillStyle = 'rgb(170,215,190)';
+                cells.forEach(function (c) { if (c.seen) { cell(ctx, c); } });
+            }
+            ctx.restore();
+
+            if (!darkCanvas) { darkCanvas = document.createElement('canvas'); }
+            if (darkCanvas.width !== canvas.width || darkCanvas.height !== canvas.height) {
+                darkCanvas.width = canvas.width; darkCanvas.height = canvas.height;
+            }
+            var d = darkCanvas.getContext('2d');
+            d.setTransform(1, 0, 0, 1, 0, 0);
+            d.globalCompositeOperation = 'source-over';
+            d.clearRect(0, 0, darkCanvas.width, darkCanvas.height);
+            d.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            // Fog by day is a pale veil, not night.
+            var veil = glow.fog ? 'rgba(168,174,182,' : 'rgba(5,7,14,';
+            cells.forEach(function (c) {
+                var a = c.seen ? (glow.mono ? 0.2 : SEEN_DARK) : (c.here ? BLIND_DARK : REMEMBERED_DARK);
+                d.fillStyle = veil + (glow.fog ? a * FOG_VEIL : a) + ')';
+                cell(d, c);
+                drawn.shaded++;
+            });
+
+            var lights = [];
+            var centre = glowCentre(nowMs);
+            if (glow.radius > 0 && centre) { lights.push({ x: centre.x, y: centre.y, r: glow.radius * tilePx, color: glow.color }); }
+            if (campInfo && campInfo.has_camp && campInfo.fire_lit && !campInfo.inn && rooms.has(campInfo.room_id)) {
+                var cr = rooms.get(campInfo.room_id), cp = gridToCanvas(cr.x, cr.y);
+                lights.push({ x: cp.px, y: cp.py, r: 0.9 * tilePx, color: 'warm' });
+            }
+            // An ally's lit campfire in sight lights its tile too.
+            if (campInfo && mapSettings.showCamp !== false) {
+                (campInfo.allied_camps || []).forEach(function (ac) {
+                    if (!ac.fire_lit || !rooms.has(ac.room_id) || !inSight.has(ac.room_id)) { return; }
+                    var ar = rooms.get(ac.room_id), ap = gridToCanvas(ar.x, ar.y);
+                    lights.push({ x: ap.px, y: ap.py, r: 0.9 * tilePx, color: 'warm' });
+                });
+            }
+            var flicker = reducedMotion() ? 1 : 1 + 0.03 * Math.sin(nowMs / 140) + 0.02 * Math.sin(nowMs / 57);
+            d.globalCompositeOperation = 'destination-out';
+            lights.forEach(function (l) {
+                var r = l.r * (l.color === 'warm' ? flicker : 1);
+                var g = d.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
+                g.addColorStop(0, 'rgba(0,0,0,1)');
+                g.addColorStop(0.55, 'rgba(0,0,0,0.75)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                d.fillStyle = g;
+                d.fillRect(l.x - r, l.y - r, 2 * r, 2 * r);
+            });
+            d.globalCompositeOperation = 'source-over';
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.drawImage(darkCanvas, 0, 0);
+            ctx.restore();
+            ctx.save();
+            lights.forEach(function (l) {
+                if (!LIGHT_TINT[l.color]) { return; }
+                var g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
+                g.addColorStop(0, LIGHT_TINT[l.color]);
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.fillRect(l.x - l.r, l.y - l.r, 2 * l.r, 2 * l.r);
+            });
+            ctx.restore();
+            drawn.lights = lights.length;
+        }
+
+        // glowCentre is where your light is: your figure (as it walks), else
+        // your room.
+        function glowCentre(nowMs) {
+            if (unit.x !== null) {
+                var pose = unitPose(nowMs);
+                var p = gridToCanvas(pose.x, pose.y);
+                return { x: p.px, y: p.py };
+            }
+            var r = rooms.get(currentRoomId);
+            if (!r) { return null; }
+            var q = gridToCanvas(r.x, r.y);
+            return { x: q.px, y: q.py };
+        }
+
+        // drawLightMarker (LM2) shows the light you carry beside your figure:
+        // a torch or lantern at your hand (a dark lantern when it is out), or
+        // your party light floating over your head. It uses the A13 marker art
+        // when it has loaded (its hand point sits 2 px below its centre), and
+        // draws a small light in code until then.
+        function drawLightMarker(kind, now) {
+            if (!kind || unit.x === null) { return; }
+            var pose = unitPose(now);
+            var mult = spriteMult(getRoomSize() * zoomScale);
+            var p = gridToCanvas(pose.x, pose.y);
+            var orb = kind === 'orb';
+            var hx = orb ? p.px : p.px + (unit.flip ? -7 : 7) * mult;
+            var hy = orb ? p.py - 22 * mult : p.py + 2 * mult;
+            ctx.save();
+            ctx.globalAlpha = figureDim * unitAlpha(now);
+            var art = drawIcon('map/markers/' + (orb ? 'light-orb' : kind) + '.png', hx, orb ? hy : hy - 2 * mult, mult, now);
+            if (!art) {
+                var pulse = reducedMotion() ? 0 : Math.sin(now / 120);
+                if (kind === 'torch') {
+                    ctx.fillStyle = '#5a3a22';
+                    ctx.fillRect(Math.round(hx - 0.6 * mult), Math.round(hy - 3 * mult), Math.max(1, Math.round(1.2 * mult)), Math.round(6 * mult));
+                    ctx.fillStyle = '#f0a040';
+                    ctx.beginPath(); ctx.arc(hx, hy - (4.5 + 0.3 * pulse) * mult, (2 + 0.25 * pulse) * mult, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ffe08a';
+                    ctx.beginPath(); ctx.arc(hx, hy - 4.2 * mult, 0.9 * mult, 0, Math.PI * 2); ctx.fill();
+                } else if (kind === 'lantern' || kind === 'lantern-out') {
+                    ctx.fillStyle = '#2e2a26';
+                    ctx.fillRect(Math.round(hx - 1.8 * mult), Math.round(hy - 1 * mult), Math.round(3.6 * mult), Math.round(4.4 * mult));
+                    ctx.fillStyle = kind === 'lantern' ? '#ffd27a' : '#4a4a52';
+                    ctx.fillRect(Math.round(hx - 1.1 * mult), Math.round(hy - 0.3 * mult), Math.max(1, Math.round(2.2 * mult)), Math.max(1, Math.round(3 * mult)));
+                } else {
+                    ctx.globalAlpha *= 0.85 + 0.15 * pulse;
+                    ctx.fillStyle = '#dfe8ff';
+                    ctx.beginPath(); ctx.arc(hx, hy, 2.2 * mult, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            ctx.restore();
+            if (lastSight) { lastSight.markerArt = art ? 'art' : 'code'; }
+        }
+
         // drawWalkPath marks the planned walk: a breadcrumb on each room
         // ahead and the destination flag on the last (S1 markers). Rooms off
         // this map level or zone are skipped.
@@ -1453,7 +1633,7 @@
             var useCircle = (mapSettings.roomShape === 'circle');
 
             var tiles = tilesOn();
-            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, corners: {}, replaced: 0, lakes: 0 };
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0, pieces: {}, corners: {}, replaced: 0, lakes: 0, remembered: 0 };
             var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
@@ -1538,6 +1718,33 @@
             var lakeIndex = {};
             if (tiles) { lakeCells.forEach(function (c) { lakeIndex[c.x + ',' + c.y] = true; }); }
 
+            // LM2: what you can see where you stand. inSight is null when the
+            // whole map shows as today (daylight, no sight from the server, or
+            // the day/night setting off); else the rooms in sight, and the
+            // others are drawn as remembered: dark and still, with no figures,
+            // landmarks or resource icons.
+            var sight = (window.MapSight && mapSettings.dayNight !== false && timeInfo) ? timeInfo.sight : null;
+            // After a move the new room's sight comes before the room itself:
+            // keep drawing the sight you had until Room.Info catches up.
+            if (sight && sight.room && currentRoomId !== null && sight.room !== currentRoomId) {
+                sight = heldSight;
+            } else {
+                heldSight = sight;
+            }
+            var inSight = window.MapSight ? window.MapSight.visible(sight, currentRoomId, joinedTo(currentRoomId)) : null;
+            var glow = window.MapSight ? window.MapSight.glow(sight) : null;
+            function remembered(id) { return inSight !== null && !inSight.has(id); }
+            function lakeSeen(c) {
+                if (inSight === null) { return true; }
+                // Open water is never your room: it is in sight only when
+                // sight reaches past your room (level 2) to a shore beside it.
+                if (!sight || sight.level < 2) { return false; }
+                return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (d) {
+                    var n = coordIndex[(c.x + d[0]) + ',' + (c.y + d[1])];
+                    return n !== undefined && inSight.has(n);
+                });
+            }
+
             if (!tiles) {
                 drawConnections();
                 drawStubs(false);
@@ -1556,7 +1763,7 @@
             if (tiles) {
                 lakeCells.forEach(function (c) {
                     var lp = gridToCanvas(c.x, c.y);
-                    var lt = drawTerrain({ x: c.x, y: c.y, env: 'water' }, lakeId(c.x, c.y), lp, tilePx, nowMs, coordIndex, onward, lakeIndex);
+                    var lt = drawTerrain({ x: c.x, y: c.y, env: 'water' }, lakeId(c.x, c.y), lp, tilePx, nowMs, coordIndex, onward, lakeIndex, !lakeSeen(c));
                     if (!lt) { return; }
                     drewLakes.push(c);
                     drawn.lakes++;
@@ -1570,7 +1777,7 @@
                 var p         = gridToCanvas(room.x, room.y);
                 var isCurrent = (id === currentRoomId) && !spriteOn;
                 if (tiles) {
-                    var t = drawTerrain(room, id, p, tilePx, nowMs, coordIndex, onward, lakeIndex);
+                    var t = drawTerrain(room, id, p, tilePx, nowMs, coordIndex, onward, lakeIndex, remembered(id));
                     if (t) {
                         drewTiles[id] = true;
                         drawn.tiles++;
@@ -1623,11 +1830,13 @@
                 var fill      = isCurrent ? CURRENT_ROOM_COLOR : colorForSymbol(room.symbol, room.env);
                 var symColor  = isCurrent ? CURRENT_ROOM_TEXT_COLOR
                     : (fill !== '#3a3a4a' ? contrastColor(fill) : SYMBOL_TEXT_COLOR);
-                if (tiled) {
+                var mem = remembered(id);
+                if (mem) { drawn.remembered++; }
+                if (tiled && !mem) {
                     var mark = drawLandmark(room, id, p, tilePx, scaledFont, nowMs);
                     if (mark === 'landmark') { drawn.landmarks++; } else if (mark === 'glyph') { drawn.glyphs++; }
                 }
-                if (mapSettings.showResources) {
+                if (mapSettings.showResources && !mem) {
                     drawResources(id, p, tilePx, scaledSize, half, useCircle, tiles, tiled, symColor, nowMs);
                 }
                 if (room.hasUp || room.hasDown) {
@@ -1653,7 +1862,19 @@
 
             // Phase 40d: the time of day shades the outdoor tiles, and a walk
             // under way draws its path over them.
-            if (tiles) { drawNightShade(drewTiles, tilePx, drewLakes); }
+            if (glow) {
+                nightQuant = Math.round(nightLevel() * 10);
+                drawSight(inSight, glow, tilePx, drewLakes.map(function (c) { return { x: c.x, y: c.y, seen: lakeSeen(c) }; }), nowMs);
+            } else if (tiles) {
+                drawNightShade(drewTiles, tilePx, drewLakes);
+            }
+            figureDim = (sight && inSight !== null && sight.level === 0) ? 0.45 : 1;
+            lastSight = sight ? {
+                level: sight.level, daylight: !!sight.daylight, source: sight.source || '',
+                carried: sight.carried || '', fog: !!sight.fog,
+                visible: inSight === null ? 'all' : Array.from(inSight).sort(function (a, b) { return a - b; }),
+                glow: glow, marker: window.MapSight.marker(sight), dim: figureDim
+            } : null;
             var walkAnim = drawWalkPath(tilePx, nowMs);
 
             // Animated tiles (water, shore, swamp, snow, desert) cycle on a
@@ -1664,7 +1885,7 @@
             // your tile rather than beside a figure that isn't drawn.
             var asYou = spriteOn && unit.x !== null && campAsYou(unitPose(nowMs));
             lastCampAsYou = asYou;
-            drawCamps(nowMs, spriteOn, asYou, unitAlpha(nowMs));
+            drawCamps(nowMs, spriteOn, asYou, unitAlpha(nowMs) * figureDim, remembered);
 
             // Draw party member hearts over rooms (skip the player's current room).
             // Each heart eases from its previous grid position to the new one over HEART_EASE_DURATION.
@@ -1680,6 +1901,9 @@
                 var ease = partyHeartEase[name];
                 if (currentRoomZ === null || ease.toZ !== currentRoomZ) { return; }
                 if (currentRc && ease.toGx === currentRc.x && ease.toGy === currentRc.y) { return; }
+                // LM2: an ally out of sight isn't drawn.
+                var allyRoom = coordIndex[ease.toGx + ',' + ease.toGy];
+                if (inSight !== null && (allyRoom === undefined || remembered(allyRoom))) { return; }
                 var t = Math.min((now - ease.startTime) / 1000 / HEART_EASE_DURATION, 1);
                 var s = smoothstep(t);
                 var gx = ease.fromGx + (ease.toGx - ease.fromGx) * s;
@@ -1697,6 +1921,20 @@
                 if (t < 1) { anyEasing = true; }
             });
             var drewUnit = drawUnit(nowMs, asYou);
+            if (drewUnit && lastSight) { drawLightMarker(lastSight.marker, nowMs); }
+            // LM2 review: with no figure (sprites off or Classic) your room's
+            // red square sits under the darkness; outline it again over the
+            // darkness so you still know where you stand.
+            if (!drewUnit && inSight !== null && rooms.has(currentRoomId)) {
+                var hr = rooms.get(currentRoomId), hp = gridToCanvas(hr.x, hr.y);
+                ctx.save();
+                ctx.globalAlpha = sight.level === 0 ? 0.55 : 0.9;
+                ctx.strokeStyle = CURRENT_ROOM_COLOR;
+                ctx.lineWidth = Math.max(2, Math.round(scaledSize * 0.08));
+                ctx.strokeRect(Math.round(hp.px - tilePx / 2) + 1, Math.round(hp.py - tilePx / 2) + 1, tilePx - 2, tilePx - 2);
+                ctx.restore();
+                drawn.hereOutline = true;
+            }
             if (anyEasing && heartRafId === null) {
                 heartRafId = requestAnimationFrame(function () {
                     heartRafId = null;
@@ -2157,7 +2395,12 @@
             setTime: function (time) {
                 timeInfo = time || null;
                 var q = Math.round(nightLevel() * 10);
-                if (q !== nightQuant) { render(); }
+                var sight = timeInfo && timeInfo.sight;
+                var k = window.MapSight ? window.MapSight.key(sight) : '';
+                // A sight for a room you aren't drawn in yet waits for
+                // Room.Info, whose redraw uses it (render holds the old one).
+                if (sight && sight.room && currentRoomId !== null && sight.room !== currentRoomId) { return; }
+                if (q !== nightQuant || k !== sightKey) { sightKey = k; render(); }
             },
             redraw: function () { render(); },
             // Phase 40i: the named places the map knows (a landmark legend),
@@ -2218,6 +2461,7 @@
                     unit: pose ? { x: pose.x, y: pose.y } : null,
                     keys: chainKeys(identity.classid, identity.lineage),
                     look: identity.look,
+                    sight: lastSight,
                     // E1: the drawn sheet's density and frame counts
                     art: res ? { density: res.sheet.info.density || 1, idleFrames: res.sheet.info.frames,
                                  walkFrames: walkRes && walkRes.walk ? walkRes.sheet.info.frames : 0,

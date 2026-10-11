@@ -1,3 +1,38 @@
+**LM2: light and sight on the map (2026-10-11).** The map shows what the character can see ([living map design](designs/2026-10-10-living-map-design.md), LM2).
+- **Server:** `rooms.Sight` (`Room.SightForUser`, pure `sightFrom`) gives the visibility level and `daylight`, true when the room is fully lit without help: by day outdoors (fog permitting), or an indoor or lit place. A fixture in a dark place isn't daylight.
+  - It also gives `source`: `lantern`, `torch`, `light`, `orb` (your own party light), `party` (an ally's), `nightvision` or `fixture`.
+  - `carried` names the light you hold (`torch`, `lantern`, or `lantern-out` unlit), whichever light wins. The light module tells the light model what a player carries (`rooms.RegisterCarriedLight`).
+  - `fog` marks fog by day, and `room` names the room the sight is for.
+  - `Gametime.sight` carries it every round, and at once on a `RoomChange`, `BuffsAdded`/`BuffsRemoved` or a change of what you hold (`EquipmentChange`) (`sightChangeHandler`, `sendGametime`). Lighting a torch or lantern announces its buff (`buffAdded`), since `AddBuff` queues no event.
+- **Client:** `map-sight.js` (pure) decides which rooms are in sight: everything by day; at night your room and the rooms its exits join at level 2, your room only at level 1, nothing at level 0. It also picks the glow (radius, warm, cool or pale; none and monochrome for night vision) and the marker.
+  - `window-map.js` draws rooms out of sight as remembered: grey and dark, still, without landmarks, resource icons, allies or allied camps.
+  - A darkness layer is cut by a soft glow round you, and by a lit campfire wherever it is.
+  - A torch or lantern shows at your hand (a dark lantern when it's out), and your party light floats over your head, in the A13 art (drawn in code while it loads). Your camp as your marker burns the A13 bonfire.
+  - Your figure, badge and camp are faint when you can't see your room; with sprites off, your room keeps a red outline over the darkness.
+  - Fog by day is a pale veil, not night. A sight for a room the map hasn't moved you to yet waits for `Room.Info`.
+  - The day/night setting off turns all of it off. With no sight from the server, the clock's night shade stays as before.
+- **Help:** `help worldmap` gains "Light and dark"; `help light` points to the map; the camp lesson's light hint mentions the map.
+- *Tests:*
+  - `TestSightFrom` (17 cases) and `TestCarriedLightRegistry` (rooms).
+  - `TestGametimeCarriesSight` (gmcp): the round, a move, buff start and end, holding something (not a gold change), and a mob's move sending nothing. `TestGametimeSightThroughTheRealLightModel`: a fixture provider, an ally's and your own party light, and a carried torch, through the real buffs and party.
+  - `TestCarriedLightNamesTheLight` and `TestLightingAnnouncesTheBuffAtOnce` (light, through the real commands).
+  - `map-sight.test.mjs` (6).
+  - `map-check.mjs` LM2: no sight; day; a torch (the 5 rooms in sight, the rest remembered, the warm glow, the marker); a remembered room's brightness against day and your lit room; the moon; total dark with a dark lantern; night vision; your party light; the setting off. After review: the A13 art for every marker, remembered rooms dropping landmarks, fog by day, sight waiting for its room, the torch under night vision, an ally's campfire in and out of sight, sprites off, a pixel ratio of 2, and the bonfire.
+  - The help assertions.
+- **A13 imported:** the art agent's torch, lantern, dark lantern and orb markers (64 px, density 4, hand point 2 px below centre) and the optional bonfire (128 px, 4 frames). All passed review: sizes, 8 px and 16 px grain, binary alpha, empty gutters, no hidden colour, the hand point on the centre line at y = 160, and the lit and dark lantern sharing every pixel but the panes. `import_art.py` has their jobs.
+- **Review** (independent reviewer, full diff; 2 medium, 9 low). Accepted and fixed:
+  1. Lighting didn't send sight at once (`AddBuff` queues no event): the light module now announces its buffs, and holding something sends too.
+  2. The help overstated sight: one light shows your room only; two, or a lit place, show the joined rooms. Reworded, with test phrases.
+  3. Any fog by day was drawn as night: the server marks `fog`, and the map draws a pale veil with no moonlight.
+  4. With sprites off you lost your room in the dark: an outline is drawn over the darkness.
+  5. The torch or lantern vanished when night vision or an orb won the glow: `carried` now always names it.
+  6. The badge and camp-as-you weren't dimmed, and an ally's lit campfire didn't glow: both fixed.
+  7. Lakes counted as in sight at level 1: open water is in sight only at level 2.
+  8. Sight reached the client before the room on a move: the map holds the old sight until `Room.Info`.
+  9. Test gaps: the real server path, remembered landmarks, campfire glow, sprites off and a pixel ratio of 2 are now covered.
+  - Deferred: an orb over another party light's carrier (recorded in the design); your own camp in a remembered room stays bright and animated, since you know where it is.
+  - Rejected as not worth the code: batching the darkness cells into one path, and filtering Gametime resends to light buffs only (both cheap as is).
+
 **A11 final masks imported (2026-10-11).** The art agent's last A11 corrections are in the game; A11 is complete and approved.
 - The dragon-lord, sweeper and vanguard battle idles have their visible beards marked as hair, kept off the skin. Their `idle.look.png` are re-cut.
 - The bearward's map hair mask now covers its long hair as well as its beard. Its `idle.look.png` and `walk.look.png` are re-cut.

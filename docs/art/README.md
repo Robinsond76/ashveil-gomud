@@ -69,7 +69,7 @@ the owner signs off on the style anchors.
 | **A10** | [A10-elite-planned.md](A10-elite-planned.md) | The 24 planned elites, each made when its class is built | 48 | E1, E3 |
 | **A11** | [A11-look-masks.md](A11-look-masks.md) | Skin and hair masks for the 101 map-unit masters, then the 101 class battle idles, so players' chosen looks recolour the new art | 404 | E1b |
 | **A11c** | [A11-look-masks.md](A11-look-masks.md#a11c-masks-for-the-action-poses-ordered-2026-10-11) | Skin and hair masks for the 38 A12 action-pose sheets, so a player's look holds through a blow | 76 | none (E1b imports them) |
-| **A13** | [A13-light-markers.md](A13-light-markers.md) | Map markers for carried light: a torch, a lantern (lit and out) and a party light orb; optional bonfire | 4 (+1 optional) | LM2 |
+| **A13** | [A13-light-markers.md](A13-light-markers.md) | Map markers for carried light: a torch, a lantern (lit and out) and a party light orb; optional bonfire | 4 (+1 optional); delivered with the bonfire, approved and imported 2026-10-11 | LM2 |
 | **A12** | [A12-battle-actions-pilot.md](A12-battle-actions-pilot.md) | Pilot battle action poses for the 15 base classes: attack, hurt, and shoot or cast | 38 | E3c |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),

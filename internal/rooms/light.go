@@ -232,6 +232,95 @@ func (r *Room) VisibilityForMob(m *mobs.Mob) int {
 	return viewerLevel(r.GetVisibility(), c.HasBuffFlag(FlagNightVision), c.HasBuffFlag(FlagLightSource), r.HasPartyLightFor(c.GetCharmedUserId()))
 }
 
+// Sight is what a viewer can see where they stand, for the map (LM2,
+// docs/designs/2026-10-10-living-map-design.md). It only restates what
+// look already tells them.
+type Sight struct {
+	// Level is VisibilityForUser: 0 dark, 1 this room, 2 this room and its exits.
+	Level int `json:"level"`
+	// Daylight is true when the room's own light is full without help:
+	// outdoors by day (fog permitting) or an indoor or lit place. A lit
+	// fixture in a dark place is not daylight.
+	Daylight bool `json:"daylight"`
+	// Source is what raised the level, if anything: "lantern" or "torch"
+	// (or "light" for another carried light), "orb" (the viewer's own party
+	// light), "party" (an ally's), "nightvision", or "fixture" (a lit
+	// hearth or campfire here).
+	Source string `json:"source,omitempty"`
+	// Carried names the light the viewer carries, lit ("lantern", "torch")
+	// or not ("lantern-out"), so the map can show it whichever light wins.
+	Carried string `json:"carried,omitempty"`
+	// Fog is true outdoors by day when fog shortens sight, so the map
+	// draws a fog veil rather than night.
+	Fog bool `json:"fog,omitempty"`
+	// Room is the room this sight is for, so the map can wait for the room
+	// itself after a move.
+	Room int `json:"room,omitempty"`
+}
+
+// sightFrom works out a viewer's sight from the room's conditions and the
+// viewer's own lights. carried is the viewer's carried-light kind
+// (CarriedLightFor): "lantern", "torch", "lantern-out" or "".
+func sightFrom(c LightConditions, nightVision, ownLight, partyLight, ownParty bool, carried string) Sight {
+	ambient := ambientLevel(c)
+	bare := c
+	bare.Fixture = false
+	s := Sight{Level: viewerLevel(ambient, nightVision, ownLight, partyLight), Daylight: ambientLevel(bare) == 2}
+	switch {
+	case nightVision:
+		s.Source = "nightvision"
+	case ownLight && carried != "" && carried != "lantern-out":
+		s.Source = carried
+	case ownLight:
+		s.Source = "light"
+	case partyLight && ownParty:
+		s.Source = "orb"
+	case partyLight:
+		s.Source = "party"
+	case ambient > ambientLevel(bare):
+		s.Source = "fixture"
+	}
+	s.Carried = carried
+	s.Fog = !c.Indoor && !c.DarkBiome && !c.Night && c.FogMod < 0
+	return s
+}
+
+// SightForUser is the user's sight here, for the map (LM2).
+func (r *Room) SightForUser(u *users.UserRecord) Sight {
+	c := u.Character
+	s := sightFrom(r.LightConditions(), c.HasBuffFlag(FlagNightVision), c.HasBuffFlag(FlagLightSource),
+		r.HasPartyLightFor(u.UserId), c.HasBuffFlag(FlagPartyLight), CarriedLightFor(u))
+	s.Room = r.RoomId
+	return s
+}
+
+var (
+	carriedMu        sync.RWMutex
+	carriedProviders []func(*users.UserRecord) string
+)
+
+// RegisterCarriedLight adds a provider that names the light a user carries
+// ("lantern", "torch", "lantern-out" for an unlit lantern, or "" for none),
+// e.g. modules/light's lanterns and torches.
+func RegisterCarriedLight(provider func(*users.UserRecord) string) {
+	carriedMu.Lock()
+	defer carriedMu.Unlock()
+	carriedProviders = append(carriedProviders, provider)
+}
+
+// CarriedLightFor is the first non-empty answer of the carried-light providers.
+func CarriedLightFor(u *users.UserRecord) string {
+	carriedMu.RLock()
+	providers := append([]func(*users.UserRecord) string(nil), carriedProviders...)
+	carriedMu.RUnlock()
+	for _, p := range providers {
+		if k := p(u); k != "" {
+			return k
+		}
+	}
+	return ""
+}
+
 var (
 	fixtureMu        sync.RWMutex
 	fixtureProviders []func(roomId int) bool
