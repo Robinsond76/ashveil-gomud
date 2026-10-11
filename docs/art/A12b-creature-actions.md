@@ -42,8 +42,8 @@ Exactly as the creature's own A7 idle:
 - The **same art grain** as its idle, aligned to each cell's top-left
   corner: S units 768 px cells on a 6 px grain; M units 640 px on 5 px, or
   1024 px on 8 px, whichever the idle uses; L units 1728 px on 12 px; XL
-  units 1536 px on 8 px. The importer refuses a pose whose cell or grain
-  differs from the idle's.
+  units 1536 px on 8 px. The importer refuses art off its grain or on a
+  cell its size class doesn't use.
 - The **same scale, ground line and facing (right)** as the idle. Colours,
   markings, gear and size match the idle exactly. A lunging foot or paw may
   leave the ground line; the planted ones stay on it.
