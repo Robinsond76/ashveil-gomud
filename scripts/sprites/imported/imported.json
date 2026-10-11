@@ -6345,6 +6345,23 @@
   "source": "imported",
   "variant_of": "gryphon-rider"
  },
+ "map/camp/bonfire.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   128,
+   128
+  ],
+  "frame_ms": 150,
+  "frames": 4,
+  "kind": "camp",
+  "set": "S1",
+  "size": [
+   512,
+   128
+  ],
+  "source": "imported"
+ },
  "map/camp/camp-rough-ally.png": {
   "anchor": "center",
   "density": 4,
@@ -7020,6 +7037,73 @@
   "size": [
    512,
    128
+  ],
+  "source": "imported"
+ },
+ "map/markers/lantern-out.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frames": 1,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   64,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/markers/lantern.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 450,
+  "frames": 2,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   128,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/markers/light-orb.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 500,
+  "frames": 2,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   128,
+   64
+  ],
+  "source": "imported"
+ },
+ "map/markers/torch.png": {
+  "anchor": "center",
+  "density": 4,
+  "frame": [
+   64,
+   64
+  ],
+  "frame_ms": 200,
+  "frames": 2,
+  "kind": "marker",
+  "set": "S1",
+  "size": [
+   128,
+   64
   ],
   "source": "imported"
  },

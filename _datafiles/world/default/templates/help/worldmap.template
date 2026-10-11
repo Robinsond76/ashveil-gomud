@@ -111,12 +111,15 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 <ansi fg="yellow-bold">Light and dark</ansi>
 
   The map shows what your character can see, as <ansi fg="command">look</ansi> and <ansi fg="command">light</ansi> tell you.
-  By day you see everything you have seen. In the dark, at night, in a cave
-  or in thick fog, sight is shorter:
-    with a light (a lantern, a torch, a party light, or a lit place) you
-    see your room and the rooms its exits join, in a soft pool of light;
-    with only the moon, or a dim light, you see your own room;
-    in total darkness you can't see even that, and your figure is faint.
+  By day you see everything you have seen. At night, underground, indoors
+  with no light, or in fog, sight is shorter. Each light helps one step:
+    one light (the moon, a lantern, a torch, a party light or a campfire)
+    shows your own room;
+    two together (say, moonlight and your lantern), or a lit hall or street,
+    show your room and the rooms its exits join, in a soft pool of light;
+    in total darkness you can't see even your room, and your figure is faint
+    (with sprites off, your room keeps a faint red outline).
+  Fog by day draws as a pale veil rather than night.
   Rooms out of sight are remembered: drawn dark and grey, with no people,
   landmarks or resources on them, so you can still find your way back.
   A torch or lantern shows at your hand (a dark lantern when it is out),

@@ -3,7 +3,7 @@
  *
  * Light and sight on the map (LM2, docs/designs/2026-10-10-living-map-design.md).
  * The server sends each player their sight in Gametime:
- * { level: 0-2, daylight, source, carried } (internal/rooms Sight). These
+ * { level: 0-2, daylight, source, carried, fog, room } (internal/rooms Sight). These
  * pure rules turn it into what the map draws, so Node can test them
  * (scripts/js/map-sight.test.mjs, `make js-test`):
  *
@@ -14,17 +14,20 @@
  *                       (joined, an array of ids) at level 2, your room only
  *                       at level 1, nothing at level 0. Rooms outside it are
  *                       drawn as remembered: dark and still.
- *   MapSight.glow(sight) -> null in daylight, else { radius, color, mono }:
+ *   MapSight.glow(sight) -> null in daylight, else { radius, color, mono, fog }:
  *                       the soft pool of light round you, radius in tiles
  *                       (1.5 at level 2, 0.6 at level 1, 0 when you can't
  *                       see your room); color 'warm' for a flame (lantern,
  *                       torch, another carried light, a hearth), 'cool' for a
  *                       party light, 'pale' for moonlight; mono true for
  *                       night vision, which has no glow but a cool
- *                       monochrome tint.
- *   MapSight.marker(sight) -> the marker beside your figure: 'torch',
- *                       'lantern', 'lantern-out', 'orb' (your own party
- *                       light, over your head), or ''.
+ *                       monochrome tint. fog is true outdoors by day when fog
+ *                       shortens sight: the map draws a grey veil, not night,
+ *                       and there is no moonlight.
+ *   MapSight.marker(sight) -> the marker beside your figure: the light you
+ *                       carry ('torch', 'lantern', 'lantern-out'), whichever
+ *                       light wins, else 'orb' (your own party light, over
+ *                       your head), or ''.
  *   MapSight.key(sight) -> a string that changes when the drawing would.
  */
 
@@ -54,25 +57,27 @@
 
     function glow(sight) {
         if (!valid(sight) || (sight.daylight && sight.level >= 2)) { return null; }
-        if (sight.source === 'nightvision') { return { radius: 0, color: '', mono: true }; }
+        var fog = !!sight.fog;
+        if (sight.source === 'nightvision') { return { radius: 0, color: '', mono: true, fog: fog }; }
         var radius = sight.level >= 2 ? 1.5 : (sight.level === 1 ? 0.6 : 0);
         var color = WARM[sight.source] ? 'warm'
             : (sight.source === 'orb' || sight.source === 'party') ? 'cool'
-                : (radius > 0 ? 'pale' : '');
-        return { radius: radius, color: color, mono: false };
+                : (radius > 0 && !fog ? 'pale' : '');
+        return { radius: radius, color: color, mono: false, fog: fog };
     }
+
+    var CARRIED = { torch: true, lantern: true, 'lantern-out': true };
 
     function marker(sight) {
         if (!valid(sight)) { return ''; }
-        if (sight.source === 'torch' || sight.source === 'lantern') { return sight.source; }
+        if (CARRIED[sight.carried]) { return sight.carried; }
         if (sight.source === 'orb') { return 'orb'; }
-        if (sight.carried === 'lantern-out') { return 'lantern-out'; }
         return '';
     }
 
     function key(sight) {
         if (!valid(sight)) { return ''; }
-        return [sight.level, sight.daylight ? 1 : 0, sight.source || '', sight.carried || ''].join('|');
+        return [sight.level, sight.daylight ? 1 : 0, sight.source || '', sight.carried || '', sight.fog ? 1 : 0].join('|');
     }
 
     return { visible: visible, glow: glow, marker: marker, key: key };

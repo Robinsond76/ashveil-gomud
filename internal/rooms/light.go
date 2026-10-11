@@ -247,9 +247,15 @@ type Sight struct {
 	// light), "party" (an ally's), "nightvision", or "fixture" (a lit
 	// hearth or campfire here).
 	Source string `json:"source,omitempty"`
-	// Carried names an unlit light the viewer carries ("lantern-out"), so
-	// the map can show it.
+	// Carried names the light the viewer carries, lit ("lantern", "torch")
+	// or not ("lantern-out"), so the map can show it whichever light wins.
 	Carried string `json:"carried,omitempty"`
+	// Fog is true outdoors by day when fog shortens sight, so the map
+	// draws a fog veil rather than night.
+	Fog bool `json:"fog,omitempty"`
+	// Room is the room this sight is for, so the map can wait for the room
+	// itself after a move.
+	Room int `json:"room,omitempty"`
 }
 
 // sightFrom works out a viewer's sight from the room's conditions and the
@@ -274,17 +280,18 @@ func sightFrom(c LightConditions, nightVision, ownLight, partyLight, ownParty bo
 	case ambient > ambientLevel(bare):
 		s.Source = "fixture"
 	}
-	if carried == "lantern-out" {
-		s.Carried = carried
-	}
+	s.Carried = carried
+	s.Fog = !c.Indoor && !c.DarkBiome && !c.Night && c.FogMod < 0
 	return s
 }
 
 // SightForUser is the user's sight here, for the map (LM2).
 func (r *Room) SightForUser(u *users.UserRecord) Sight {
 	c := u.Character
-	return sightFrom(r.LightConditions(), c.HasBuffFlag(FlagNightVision), c.HasBuffFlag(FlagLightSource),
+	s := sightFrom(r.LightConditions(), c.HasBuffFlag(FlagNightVision), c.HasBuffFlag(FlagLightSource),
 		r.HasPartyLightFor(u.UserId), c.HasBuffFlag(FlagPartyLight), CarriedLightFor(u))
+	s.Room = r.RoomId
+	return s
 }
 
 var (

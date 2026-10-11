@@ -58,7 +58,8 @@ const company = {
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined });
 async function open(viewport, settings, abort) {
-  const page = await browser.newPage({ viewport });
+  const { deviceScaleFactor, ...vp } = viewport;
+  const page = await browser.newPage({ viewport: vp, deviceScaleFactor: deviceScaleFactor || 1 });
   page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
   page.on('console', m => {
     if (m.type() !== 'error') { return; }
@@ -278,7 +279,8 @@ check(s.campAsYou === true && !s.figures.you && s.figures.companions === 0 && s.
   'camped in your own room, you are the camp: no figure, no companions, a cold fire: ' + JSON.stringify([s.campAsYou, s.figures, s.fire]));
 await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: true, allied_camps: [] });
 await tick(page, 300);
-check((await state(page)).fire === 'lit', 'lighting the fire lights the camp you are');
+s = await state(page);
+check(s.fire === 'bonfire', 'lighting the fire lights the camp you are, as a bonfire (A13): ' + s.fire);
 await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: false, embers: true, allied_camps: [] });
 await tick(page, 300);
 check((await state(page)).fire === 'embers', 'after a rest the camp you are glows with embers');
@@ -776,8 +778,12 @@ for (const dpr of [1, 1.5, 2]) {
 // landmarks or icons. A carried light shows beside the figure and the
 // darkness opens round it; with no sight, or by day, the map is as before.
 {
+  // An inn in sight (north of you) and one out of it (the far corner).
+  const lmWorld = { biomes: world.biomes, rooms: world.rooms.map(r => Object.assign({}, r)) };
+  lmWorld.rooms.find(r => r.num === id(2, 0)).maplegend = 'Inn';
+  lmWorld.rooms.find(r => r.num === id(4, 2)).maplegend = 'Inn';
   page = await open({ width: 1280, height: 900 });
-  await gmcp(page, 'World.Map', world);
+  await gmcp(page, 'World.Map', lmWorld);
   await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
   await moveTo(page, 2, 1);
   await settle(page).catch(() => {});
@@ -803,14 +809,19 @@ for (const dpr of [1, 1.5, 2]) {
   const far = id(4, 2);
   const dayFar = await brightness(far);
   s = await sightAt({ level: 2, daylight: true }, 12);
+  const dayLandmarks = s.drawn.landmarks;
   check(s.sight && s.sight.visible === 'all' && s.drawn.remembered === 0 && s.sight.marker === '', 'by day everything you have seen is shown');
 
-  s = await sightAt({ level: 2, daylight: false, source: 'torch' });
+  s = await sightAt({ level: 2, daylight: false, source: 'torch', carried: 'torch' });
+  await tick(page, 400); // the A13 marker art loads
+  s = await sightAt({ level: 2, daylight: false, source: 'torch', carried: 'torch', room: here });
   check(JSON.stringify(s.sight.visible) === JSON.stringify([here].concat(joined).sort((a, b) => a - b)),
     'a torch at night shows your room and the rooms its exits join: ' + JSON.stringify(s.sight.visible));
   check(s.drawn.remembered === W * H - 6, 'the other rooms are remembered: ' + s.drawn.remembered);
   check(s.sight.glow && s.sight.glow.color === 'warm' && s.sight.glow.radius === 1.5 && s.drawn.lights >= 1, 'a warm glow a tile and a half across: ' + JSON.stringify(s.sight.glow));
-  check(s.sight.marker === 'torch' && s.sight.markerArt === 'code', 'a torch shows beside your figure (drawn in code until its art comes): ' + s.sight.markerArt);
+  check(s.sight.marker === 'torch' && s.sight.markerArt === 'art', 'a torch shows beside your figure, in its A13 art: ' + s.sight.markerArt);
+  check(dayLandmarks === 2 && s.drawn.landmarks === 1, 'remembered rooms drop their landmarks: ' + dayLandmarks + ' by day, ' + s.drawn.landmarks + ' at night');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm2-torch.png') }); }
   const farDark = await brightness(far), nearLit = await brightness(here);
   check(farDark < dayFar * 0.45, 'a remembered room is dark: ' + farDark.toFixed(1) + ' vs ' + dayFar.toFixed(1) + ' by day');
   check(nearLit > farDark * 1.8, 'your own room is lit by the glow: ' + nearLit.toFixed(1) + ' vs ' + farDark.toFixed(1));
@@ -818,13 +829,60 @@ for (const dpr of [1, 1.5, 2]) {
   s = await sightAt({ level: 1, daylight: false });
   check(JSON.stringify(s.sight.visible) === JSON.stringify([here]) && s.drawn.remembered === W * H - 2 && s.sight.glow.color === 'pale',
     'moonlight shows your room only, in a pale glow: ' + JSON.stringify(s.sight));
-  s = await sightAt({ level: 0, daylight: false, carried: 'lantern-out' });
+  // Fog by day: a pale veil, not night, and no moonlight.
+  s = await sightAt({ level: 1, daylight: false, fog: true }, 12);
+  const fogFar = await brightness(far);
+  check(s.sight.fog && s.sight.glow.color === '' && fogFar > farDark * 2, 'fog by day is a pale veil, not night: ' + fogFar.toFixed(1) + ' vs ' + farDark.toFixed(1) + ' at night');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm2-fog.png') }); }
+  // After a move, sight for the new room waits for the room itself.
+  s = await sightAt({ level: 0, daylight: false, room: far });
+  check(s.sight.level === 1 && s.sight.fog, 'sight for a room you are not yet drawn in waits for Room.Info: ' + JSON.stringify(s.sight.level));
+  await moveTo(page, 4, 2);
+  await tick(page, 300);
+  s = await state(page);
+  check(s.sight.level === 0, 'and is drawn when the room arrives: ' + s.sight.level);
+  await moveTo(page, 2, 1);
+  await tick(page, 300);
+  s = await sightAt({ level: 0, daylight: false, carried: 'lantern-out', room: here });
   check(JSON.stringify(s.sight.visible) === '[]' && s.sight.dim < 1 && s.sight.marker === 'lantern-out',
     'in the dark you can\'t see your room, your figure is faint, and a dark lantern shows: ' + JSON.stringify(s.sight));
-  s = await sightAt({ level: 2, daylight: false, source: 'nightvision' });
+  check(s.sight.markerArt === 'art', 'the dark lantern has its art too: ' + s.sight.markerArt);
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm2-dark.png') }); }
+  s = await sightAt({ level: 2, daylight: false, source: 'nightvision', carried: 'torch' });
   check(s.sight.glow && s.sight.glow.mono && s.sight.glow.radius === 0, 'night vision has no glow but a monochrome tint');
+  check(s.sight.marker === 'torch', 'and the torch in your hand still shows');
   s = await sightAt({ level: 2, daylight: false, source: 'orb' });
-  check(s.sight.glow.color === 'cool' && s.sight.marker === 'orb', 'your party light is a cool glow and an orb over you');
+  check(s.sight.glow.color === 'cool' && s.sight.marker === 'orb' && s.sight.markerArt === 'art', 'your party light is a cool glow and an orb over you: ' + s.sight.markerArt);
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm2-orb.png') }); }
+  // An ally's lit campfire in sight glows; out of sight it is not drawn.
+  await gmcp(page, 'Company.Camp', { has_camp: false, here: false, room: '', room_id: 0, fire_lit: false, allied_camps: [{ room_id: id(3, 1), leader: 'Ally', fire_lit: true }] });
+  s = await sightAt({ level: 2, daylight: false, source: 'torch', carried: 'torch' });
+  check(s.drawn.lights === 2, 'an ally\'s lit campfire in sight glows too: ' + s.drawn.lights);
+  await gmcp(page, 'Company.Camp', { has_camp: false, here: false, room: '', room_id: 0, fire_lit: false, allied_camps: [{ room_id: far, leader: 'Ally', fire_lit: true }] });
+  s = await sightAt({ level: 2, daylight: false, source: 'torch', carried: 'torch' });
+  check(s.drawn.lights === 1, 'one out of sight does not: ' + s.drawn.lights);
+  await page.close();
+
+  // With sprites off your room keeps an outline over the darkness.
+  page = await open({ width: 1280, height: 900 }, { sprites: false });
+  await gmcp(page, 'World.Map', world);
+  await moveTo(page, 2, 1);
+  await gmcp(page, 'Gametime', Object.assign(clock(23), { sight: { level: 0, daylight: false } }));
+  await tick(page, 250);
+  s = await state(page);
+  check(s.drawn.hereOutline === true, 'with sprites off you still know where you stand in the dark');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm2-nosprites.png') }); }
+  await page.close();
+
+  // The same at a device pixel ratio of 2.
+  page = await open({ width: 1280, height: 900, deviceScaleFactor: 2 });
+  await gmcp(page, 'World.Map', world);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await moveTo(page, 2, 1);
+  await gmcp(page, 'Gametime', Object.assign(clock(23), { sight: { level: 2, daylight: false, source: 'torch', carried: 'torch' } }));
+  await tick(page, 400);
+  const far2 = await brightness(far), here2 = await brightness(here);
+  check(here2 > far2 * 1.8, 'at a pixel ratio of 2 the darkness lines up with the tiles: ' + here2.toFixed(1) + ' vs ' + far2.toFixed(1));
   await page.close();
 
   // The day and night setting off turns the darkness off too.

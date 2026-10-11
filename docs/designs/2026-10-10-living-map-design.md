@@ -79,10 +79,17 @@ camp is gone. Party camps keep today's drawing.
 
 *Built 2026-10-11 (see `docs/PROJECT_STATUS.md`).* As built, `source` also
 names `lantern`, `light` (another carried light) and `orb` (your own party
-light), `carried: "lantern-out"` names an unlit lantern you hold, and the
-glow is drawn in code (no glow sprites). Sight is sent every round and at
-once on a move or a buff starting or ending; a campfire lit or a party light
-changing reaches allies within a round.
+light), `carried` names the light you hold (`torch`, `lantern`, or
+`lantern-out` unlit) whichever light wins, `fog` marks fog by day (any fog,
+not only thick: the map draws a pale veil, not night), `room` names the room
+so the map holds the old sight until `Room.Info` arrives, and the glow is
+drawn in code (no glow sprites). Sight is sent every round and at once on a
+move, a buff starting or ending (the light module announces the buffs it
+puts on), or a change of what you hold; a campfire lit or a party light
+changing reaches allies within a round. The A13 markers draw the torch,
+lantern and orb, and your camp as your marker burns the A13 bonfire. *Not
+yet:* an orb over another party light's carrier (only your own shows; an
+ally's light glows on you).
 
 The map shows what your character can see.
 

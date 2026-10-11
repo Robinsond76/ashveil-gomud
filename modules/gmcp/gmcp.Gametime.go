@@ -30,6 +30,8 @@ func init() {
 	events.RegisterListener(events.RoomChange{}, g.sightChangeHandler)
 	events.RegisterListener(events.BuffsAdded{}, g.sightChangeHandler)
 	events.RegisterListener(events.BuffsRemoved{}, g.sightChangeHandler)
+	// Holding or putting away a lantern changes the light shown at your hand.
+	events.RegisterListener(events.EquipmentChange{}, g.sightChangeHandler)
 
 }
 
@@ -54,7 +56,7 @@ func (g *GMCPGametimeModule) newRoundHandler(e events.Event) events.ListenerRetu
 }
 
 // sightChangeHandler sends one player their Gametime (with their sight) at
-// once when they move or gain or lose a buff.
+// once when they move, gain or lose a buff, or change what they hold.
 func (g *GMCPGametimeModule) sightChangeHandler(e events.Event) events.ListenerReturn {
 	userId := 0
 	switch ev := e.(type) {
@@ -63,6 +65,11 @@ func (g *GMCPGametimeModule) sightChangeHandler(e events.Event) events.ListenerR
 	case events.BuffsAdded:
 		userId = ev.UserId
 	case events.BuffsRemoved:
+		userId = ev.UserId
+	case events.EquipmentChange:
+		if len(ev.ItemsWorn) == 0 && len(ev.ItemsRemoved) == 0 {
+			return events.Continue // gold or bank only
+		}
 		userId = ev.UserId
 	}
 	if userId <= 0 {

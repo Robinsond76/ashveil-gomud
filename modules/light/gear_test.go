@@ -373,3 +373,31 @@ func TestCarriedLightNamesTheLight(t *testing.T) {
 	said(told)
 	assert.Equal(t, "torch", carriedLight(user))
 }
+
+// LM2 review: lighting a torch or lantern puts its buff on directly, which
+// queues no event of its own, so the light module announces it and the
+// map's sight (gmcp Gametime listens for BuffsAdded) updates at once rather
+// than at the next round.
+func TestLightingAnnouncesTheBuffAtOnce(t *testing.T) {
+	user, room, told := world(t)
+	m := &LightModule{}
+	c := user.Character
+	var added [][]int
+	id := events.RegisterListener(events.BuffsAdded{}, func(e events.Event) events.ListenerReturn {
+		if b := e.(events.BuffsAdded); b.UserId == 7 {
+			added = append(added, b.BuffIds)
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.BuffsAdded{}, id) })
+
+	c.Items = append(c.Items, items.New(torchItemID))
+	_, _ = m.userCommand("torch", user, room, 0)
+	said(told)
+	require.Equal(t, [][]int{{torchBuffID}}, added, "light torch")
+
+	c.Equipment.Offhand = items.New(lanternItemID)
+	_, _ = m.userCommand("lantern", user, room, 0)
+	said(told)
+	require.Equal(t, [][]int{{torchBuffID}, {lanternBuffID}}, added, "light lantern")
+}

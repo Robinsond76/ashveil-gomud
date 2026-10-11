@@ -27,23 +27,31 @@ test('in the dark, sight reaches your room and the rooms its exits join, or less
 });
 
 test('the glow is warm for a flame, cool for a party light, pale for the moon, none for night vision', () => {
-  assert.deepEqual(S.glow({ level: 2, source: 'lantern' }), { radius: 1.5, color: 'warm', mono: false });
-  assert.deepEqual(S.glow({ level: 1, source: 'torch' }), { radius: 0.6, color: 'warm', mono: false });
-  assert.deepEqual(S.glow({ level: 1, source: 'fixture' }), { radius: 0.6, color: 'warm', mono: false });
-  assert.deepEqual(S.glow({ level: 1, source: 'party' }), { radius: 0.6, color: 'cool', mono: false });
-  assert.deepEqual(S.glow({ level: 2, source: 'orb' }), { radius: 1.5, color: 'cool', mono: false });
-  assert.deepEqual(S.glow({ level: 1, source: '' }), { radius: 0.6, color: 'pale', mono: false }, 'moonlight');
-  assert.deepEqual(S.glow({ level: 0, source: '' }), { radius: 0, color: '', mono: false });
-  assert.deepEqual(S.glow({ level: 2, source: 'nightvision' }), { radius: 0, color: '', mono: true });
+  assert.deepEqual(S.glow({ level: 2, source: 'lantern' }), { radius: 1.5, color: 'warm', mono: false, fog: false });
+  assert.deepEqual(S.glow({ level: 1, source: 'torch' }), { radius: 0.6, color: 'warm', mono: false, fog: false });
+  assert.deepEqual(S.glow({ level: 1, source: 'fixture' }), { radius: 0.6, color: 'warm', mono: false, fog: false });
+  assert.deepEqual(S.glow({ level: 1, source: 'party' }), { radius: 0.6, color: 'cool', mono: false, fog: false });
+  assert.deepEqual(S.glow({ level: 2, source: 'orb' }), { radius: 1.5, color: 'cool', mono: false, fog: false });
+  assert.deepEqual(S.glow({ level: 1, source: '' }), { radius: 0.6, color: 'pale', mono: false, fog: false }, 'moonlight');
+  assert.deepEqual(S.glow({ level: 0, source: '' }), { radius: 0, color: '', mono: false, fog: false });
+  assert.deepEqual(S.glow({ level: 2, source: 'nightvision' }), { radius: 0, color: '', mono: true, fog: false });
+});
+
+test('fog by day is a grey veil with no moonlight, but a carried flame still glows', () => {
+  assert.deepEqual(S.glow({ level: 1, daylight: false, fog: true }), { radius: 0.6, color: '', mono: false, fog: true });
+  assert.deepEqual(S.glow({ level: 1, daylight: false, fog: true, source: 'torch' }), { radius: 0.6, color: 'warm', mono: false, fog: true });
+  assert.notEqual(S.key({ level: 1, fog: true }), S.key({ level: 1 }));
 });
 
 test('the marker shows the light you really carry', () => {
-  assert.equal(S.marker({ level: 1, source: 'torch' }), 'torch');
-  assert.equal(S.marker({ level: 1, source: 'lantern' }), 'lantern');
+  assert.equal(S.marker({ level: 1, source: 'torch', carried: 'torch' }), 'torch');
+  assert.equal(S.marker({ level: 1, source: 'lantern', carried: 'lantern' }), 'lantern');
+  assert.equal(S.marker({ level: 2, source: 'nightvision', carried: 'torch' }), 'torch', 'night vision wins the glow, not the torch in your hand');
+  assert.equal(S.marker({ level: 1, source: 'torch', carried: 'torch' }), 'torch', 'a torch over your own party light');
   assert.equal(S.marker({ level: 2, source: 'orb' }), 'orb');
   assert.equal(S.marker({ level: 1, source: 'party' }), '', 'an ally\'s light is over the ally');
   assert.equal(S.marker({ level: 0, carried: 'lantern-out' }), 'lantern-out');
-  assert.equal(S.marker({ level: 2, daylight: true, source: 'lantern' }), 'lantern', 'a lit lantern shows by day too');
+  assert.equal(S.marker({ level: 2, daylight: true, source: 'lantern', carried: 'lantern' }), 'lantern', 'a lit lantern shows by day too');
   assert.equal(S.marker(null), '');
 });
 
