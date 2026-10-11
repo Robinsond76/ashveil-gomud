@@ -28,6 +28,13 @@ unit whose idle is imported too (in the same run or already in the index),
 at the same runtime frame and density, so the battle screen can stand it on
 the idle's feet row.
 
+A unit sheet with A11 look masks (`A11/battle/units/<id>/<sheet>.skin.png`
+and `<sheet>.hair.png`, beside the idle or a pose; E1b) also gets
+`<sheet>.look.png`: the masks cut, shifted and shrunk exactly like the
+sheet, red for skin, green for hair (import_sheet's look_mask and
+mask_png), named by the sheet's `look_mask`. Masks that mark nothing make no
+file.
+
 The files go to `scripts/sprites/imported/` (or --out) with their entries in
 its `imported.json`; `generate.py` copies them over its drawn output.
 """
@@ -45,6 +52,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import roster  # noqa: E402
 from import_art import encode, shrink, IMPORTED, DEFAULT_SRC  # noqa: E402
+from import_sheet import look_mask, mask_png  # noqa: E402
 
 PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10", "A12"]
 FRAMES = 4
@@ -141,9 +149,11 @@ def edges_touched(sheet, frame):
     return sorted(sides)
 
 
-def unit_job(uid, path, pose=None):
-    """(png bytes, manifest entry) for one unit's idle master, or for one of
-    its pose sheets (pose names a POSES entry), or raise ValueError."""
+def unit_job(uid, path, pose=None, masks=None):
+    """(png bytes, manifest entry, look-mask png bytes or None) for one
+    unit's idle master, or for one of its pose sheets (pose names a POSES
+    entry), or raise ValueError. masks is the (skin, hair) mask paths, or
+    None when the sheet has none."""
     units = {u.id: u for u in roster.UNITS}
     if uid not in units:
         raise ValueError(f"{path}: {uid} is not a battle unit in roster.py")
@@ -160,12 +170,15 @@ def unit_job(uid, path, pose=None):
         raise ValueError(f"{path}: {width} px is not {frames} cells of {ch} with equal gutters")
     gap = int(gap)
     src = clear_hidden(src)
-    raw = []
+    mask = look_mask(src, masks[0], masks[1], path) if masks else None
+    raw, mraw = [], []
     for i in range(frames):
         x = i * (ch + gap)
         if gap and src[:, x + ch:x + ch + gap, 3].any() and i < frames - 1:
             raise ValueError(f"{path}: opaque pixels in the gutter after frame {i + 1}")
         raw.append(src[:, x:x + ch])
+        if mask is not None:
+            mraw.append(mask[:, x:x + ch])
     off = grain_offset(raw, g)
     if off is None:
         raise ValueError(f"{path}: the art is not drawn on a {g} px grain")
@@ -174,8 +187,14 @@ def unit_job(uid, path, pose=None):
         raw = [shift(c, off[0], off[1], g) for c in raw]
         if any(c is None for c in raw):
             raise ValueError(f"{path}: shifting the art onto its grain would push it off the cell")
+        mraw = [shift(c, off[0], off[1], g) for c in mraw]
     frame = ch // g
     sheet = np.concatenate([shrink(c, g) for c in raw], axis=1)
+    look = None
+    if mraw:
+        buf = io.BytesIO()
+        mask_png(np.concatenate([shrink(c, g) for c in mraw], axis=1), sheet).save(buf, "PNG", optimize=True)
+        look = buf.getvalue()
     touched = edges_touched(sheet, frame)
     if touched:
         print(f"{path}: art touches the frame's {', '.join(touched)} edge (check it isn't clipped)", file=sys.stderr)
@@ -206,7 +225,15 @@ def unit_job(uid, path, pose=None):
     else:
         rows = np.nonzero(sheet[..., 3].any(axis=1))[0]
         meta["feet_baseline"] = int(rows.max())
-    return data, meta
+    return data, meta, look
+
+
+def mask_paths(src_root, uid, sheet):
+    """The (skin, hair) A11 mask paths for a unit's sheet ('idle', 'attack'),
+    or None when it has neither."""
+    d = os.path.join(src_root, "A11", "battle", "units", uid)
+    skin, hair = os.path.join(d, f"{sheet}.skin.png"), os.path.join(d, f"{sheet}.hair.png")
+    return (skin, hair) if os.path.exists(skin) or os.path.exists(hair) else None
 
 
 def backdrop_job(path):
@@ -268,7 +295,7 @@ def main(argv=None):
     for rel, kind, key, path in sorted(jobs, key=lambda j: j[1] == "pose"):
         try:
             if kind == "unit":
-                built[rel] = unit_job(key, path)
+                built[rel] = unit_job(key, path, masks=mask_paths(args.src, key, "idle"))
             elif kind == "pose":
                 pose = os.path.splitext(os.path.basename(rel))[0]
                 idle_rel = f"battle/units/{key}/idle.png"
@@ -276,11 +303,11 @@ def main(argv=None):
                 if not idle:
                     raise ValueError(f"{path}: {key} has no imported idle to stand the {pose} on "
                                      f"(import its idle.png first, or name {idle_rel} in --only too)")
-                data, meta = unit_job(key, path, pose)
+                data, meta, look = unit_job(key, path, pose, masks=mask_paths(args.src, key, pose))
                 if meta["frame"] != idle["frame"] or meta["density"] != idle["density"]:
                     raise ValueError(f"{path}: frames {meta['frame']} at density {meta['density']}, "
                                      f"but the idle's are {idle['frame']} at {idle['density']}")
-                built[rel] = (data, meta)
+                built[rel] = (data, meta, look)
             else:
                 if key not in backgrounds.BACKGROUNDS:
                     raise ValueError(f"{path}: {key} is not a backdrop in backgrounds.py")
@@ -288,18 +315,31 @@ def main(argv=None):
                 _, biomes = backgrounds.BACKGROUNDS[key]
                 built[rel] = (data, dict(kind="battle-background", set="S3", frame=[640, 360], frames=1,
                                          biomes=biomes, ground_band=[16, 100, 304, 176], size=[640, 360],
-                                         density=2, source="imported"))
+                                         density=2, source="imported"), None)
         except (ValueError, OSError) as e:
             problems.append(str(e))
     if problems:
         raise SystemExit("\n".join(problems))
 
-    for rel, (data, entry) in built.items():
+    for rel, (data, entry, look) in built.items():
         dst = os.path.join(args.out, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(dst, "wb") as f:
             f.write(data)
         index[rel] = entry
+        # The sheet's look mask (E1b): written beside it, or cleared when it
+        # has none now.
+        mrel = rel[:-len(".png")] + ".look.png"
+        if look is not None:
+            with open(os.path.join(args.out, mrel), "wb") as f:
+                f.write(look)
+            entry["look_mask"] = mrel
+            index[mrel] = {"kind": "look-mask", "set": entry["set"], "frame": entry["frame"], "frames": entry["frames"],
+                           "density": entry["density"], "size": entry["size"], "of": rel, "source": "imported"}
+        elif entry.get("kind") in ("battle-unit", "battle-pose"):
+            index.pop(mrel, None)
+            if os.path.exists(os.path.join(args.out, mrel)):
+                os.remove(os.path.join(args.out, mrel))
     os.makedirs(args.out, exist_ok=True)
     with open(index_path, "w") as f:
         json.dump(dict(sorted(index.items())), f, indent=1, sort_keys=True)

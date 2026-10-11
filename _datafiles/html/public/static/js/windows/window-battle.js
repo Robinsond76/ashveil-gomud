@@ -196,16 +196,25 @@
 
     // tintedArt (Phase 72a) repaints a player's figure in their chosen skin
     // tone and hair colour (sprite-tint.js); the repainted canvas is made
-    // once per sheet and look. Companions and creatures have no look, and
-    // high-density art is shown as drawn (SpriteTint.applies).
+    // once per sheet and look. Companions and creatures have no look; a
+    // high-density sheet with no look mask is shown as drawn
+    // (SpriteTint.applies).
     const tintCache = {};
     function tintedArt(a, path, look) {
         if (!a || !look || !window.SpriteTint || !window.SpriteTint.applies(a.info)) { return a; }
+        // High-density art is recoloured through its look mask (E1b), once
+        // the mask has loaded; until then it is drawn as is.
+        let mask = null;
+        if ((a.info.density || 1) > 1) {
+            const m = art(a.info.look_mask);
+            if (!m) { return a; }
+            mask = m.img;
+        }
         const img = window.SpriteTint.canvasFor(a.img, look, (w, h) => {
             const c = document.createElement('canvas');
             c.width = w; c.height = h;
             return c;
-        }, tintCache, path);
+        }, tintCache, path, mask);
         return { img, info: a.info };
     }
 
@@ -1515,7 +1524,9 @@
                 : (typeof idleInfo.feet_baseline === 'number' ? idleInfo.feet_baseline : undefined);
             const top = typeof feet === 'number' ? -1 - (feet + 1) / d : -dh;
             // For tests: the sheet, frame and where its top stands (state()).
-            u.drawnArt = { path: posed ? posedPath : sheetPath, density: d, frame: i, top: top };
+            const drawnPath = posed ? posedPath : sheetPath;
+            const plain = art(drawnPath);
+            u.drawnArt = { path: drawnPath, density: d, frame: i, top: top, tinted: !!plain && sheet.img !== plain.img };
             ctx.save();
             ctx.translate(Math.round(x), y);
             if (dir < 0) { ctx.scale(-1, 1); }

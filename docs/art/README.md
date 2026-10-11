@@ -68,6 +68,7 @@ the owner signs off on the style anchors.
 | **A9** | [A9-elite-built.md](A9-elite-built.md) | The 19 elite classes in the game today, map and battle | 38 | E1, E3 |
 | **A10** | [A10-elite-planned.md](A10-elite-planned.md) | The 24 planned elites, each made when its class is built | 48 | E1, E3 |
 | **A11** | [A11-look-masks.md](A11-look-masks.md) | Skin and hair masks for the 101 map-unit masters, then the 101 class battle idles, so players' chosen looks recolour the new art | 404 | E1b |
+| **A11c** | [A11-look-masks.md](A11-look-masks.md#a11c-masks-for-the-action-poses-ordered-2026-10-11) | Skin and hair masks for the 38 A12 action-pose sheets, so a player's look holds through a blow | 76 | none (E1b imports them) |
 | **A12** | [A12-battle-actions-pilot.md](A12-battle-actions-pilot.md) | Pilot battle action poses for the 15 base classes: attack, hurt, and shoot or cast | 38 | E3c |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),
@@ -83,7 +84,7 @@ folder until the matching step is merged.
 | Step | Work | Unblocks |
 |---|---|---|
 | **E1** | Land the spike as a phase. Density on map units, a high-DPI map canvas, `import_sheet.py` reading the A1 layout (2 idle and 6 walk columns per row). Make the tests' rules depend on density. Even out 1x pixel art on fractional pixel ratios. | A1, map half of A8–A10 |
-| **E1b** | Recolour the new map and battle figures from the A11 masks: within each mask, map the art's own shading onto a ramp built from the player's chosen skin or hair colour (`SpriteTint`), keeping light and shadow. Until then high-density sheets are shown untinted (`SpriteTint.applies`). | A11 |
+| **E1b** | *Done 2026-10-11* ([design](../designs/2026-10-11-e1b-look-recolour-design.md)). The importers cut the A11 masks like their sheets into `<sheet>.look.png` (red skin, green hair) named by the sheet's `look_mask`; `SpriteTint.recolour` paints the masked pixels in the chosen colours, scaled by their own brightness, so light and shade survive. The creation panel shows the high-resolution idle. Pose sheets take masks the same way (A11c). | A11, A11c |
 | **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. Road auto-tiling: the map picks `road-<sides>` from the neighbors that are road and joined by an exit. Coast auto-tiling: `shore-<sides>` from the grid neighbors whose biome is `water`, exits or not. | A2–A5 |
 | **E2b** | Draw the A2b inside-corner overlay on a shore piece in each corner whose diagonal neighbour is water (a lake cell or a water room) while the two sides beside it are not. | A2b |
 | **E3** | High-resolution battle screen: the 320×180 picture drawn at device pixels, with the battle units and backdrops imported as exact pixel art at their measured grain (density 2; 8/3 for small creatures). | A6, A7, battle half of A8–A10 |

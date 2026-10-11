@@ -1,3 +1,24 @@
+**E1b: chosen looks on the high-resolution figures (2026-10-11).** A player's chosen skin and hair now show on the new map and battle figures, keeping the art's light and shade, through the A11 masks ([design](designs/2026-10-11-e1b-look-recolour-design.md), [A11](art/A11-look-masks.md)).
+- **Art:** `import_sheet.py --masks` (map) and `import_battle.py` (battle, from `A11/battle/units/<id>/<sheet>.skin|hair.png`) cut each unit's masks exactly like its sheet into `<sheet>.look.png`. That is a three-colour PNG: red skin, green hair, clear elsewhere, cleared where the sheet is transparent. The sheet's entry names it (`look_mask`), and the mask has a `look-mask` entry. Masks that mark nothing make no file.
+  - 71 map classes (idle and walk) and 72 battle idles have masks, about 860 KB in all. The other classes' helms, hoods or masks hide all skin and hair.
+  - Re-importing left every sheet byte-identical.
+  - A mask of another size, marking transparent art, marking a pixel as both skin and hair, or missing is refused.
+- **Client:** `SpriteTint.recolour` (pure) gives each masked pixel the chosen colour, scaled by its brightness over its material's median. The median pixel takes the colour exactly, shadows darken, and highlights lift toward white by at most 60%.
+  - `applies` is true for high-density art with a `look_mask`.
+  - `Sprites.tinted` (map, creation panel) and the battle screen's `tintedArt` draw a sheet as is until its mask has loaded.
+  - The creation panel previews the high-resolution battle idle once its mask is in, with `look.png` standing in until then.
+  - `state()` reports whether the drawn figure is really recoloured (map `art.tinted`, `art.lookMask`; battle `art.tinted`).
+- **Not yet:** the A12 action poses have no masks, so a figure shows its painted skin during a blow, flinch or chant. **A11c** orders their 76 masks; the battle importer already reads `<pose>.skin|hair.png`.
+- **Help:** `help appearance` says looks show on the map and in battle, stay hidden under a helm, and that the base-class poses keep their painted skin for now. The appearance hint in the opening lesson says looks show on the figure.
+- *Tests:*
+  - `sprite-tint.test.mjs`: the recolour keeps the light and dark order, gives the median the chosen colour, changes only the chosen material, leaves unmasked pixels and a missing mask alone, and `canvasFor` recolours through a mask image.
+  - `TestLookMasksAreImported`: 71/71/72 masks, each the sheet's size, pure red or green, on drawn pixels only.
+  - `TestImportLookMasks`: synthetic map and battle masks; empty masks make no file; four refusals.
+  - `map-check.mjs`: the alchemist's recolour changes exactly its 2,108 masked pixels; the helmed warrior has no mask.
+  - `battle-art-check.mjs`: a cleric leader with a look is recoloured; a companion and a warrior aren't; the attack pose is drawn as painted. The harness now loads `sprite-tint.js`, as the client does.
+  - `creation-panel-check.mjs`: the high-resolution idle is drawn and repainted.
+  - The help assertion.
+
 **E3c: battle action poses (2026-10-11).** The approved A12 pilot ([A12-battle-actions-pilot.md](art/A12-battle-actions-pilot.md)) is in the game: the 15 base classes act out their blows on the battle screen instead of nudging their idle figure.
 - **Importer:** `scripts/sprites/import_battle.py` reads `A12/battle/units/<id>/<pose>.png`. `POSES` gives each pose its frame count (attack and shoot 6, hurt 3, cast 4) and marks the cast to loop. A pose is cut like its idle and must match its runtime frame and density (checked against the idle imported in the same run or already in the index); it is refused without an imported idle, so the screen can stand it on the idle's feet row. Entries are `battle-pose` (set S4) with `pose`, `frames`, `loop`.
 - **Art:** 38 sheets (15 attack, 15 hurt, 3 shoot, 5 cast), 128 px frames at density 2, about 1.9 MB in all. They are painted with thousands of colours (the idles use about 96), so they ship as lossless RGBA, never quantised; each is within the 60 KB a frame budget.
