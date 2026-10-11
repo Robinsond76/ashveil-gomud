@@ -77,6 +77,13 @@ camp is gone. Party camps keep today's drawing.
 
 ### LM2: Light and sight
 
+*Built 2026-10-11 (see `docs/PROJECT_STATUS.md`).* As built, `source` also
+names `lantern`, `light` (another carried light) and `orb` (your own party
+light), `carried: "lantern-out"` names an unlit lantern you hold, and the
+glow is drawn in code (no glow sprites). Sight is sent every round and at
+once on a move or a buff starting or ending; a campfire lit or a party light
+changing reaches allies within a round.
+
 The map shows what your character can see.
 
 **Server: send the sight.** `Gametime` gains `sight` for the viewer's room:

@@ -108,12 +108,27 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   dusk before nightfall and an hour of dawn after sunrise. Rooms under a roof or
   underground are not shaded, as the sky does not reach them.
 
+<ansi fg="yellow-bold">Light and dark</ansi>
+
+  The map shows what your character can see, as <ansi fg="command">look</ansi> and <ansi fg="command">light</ansi> tell you.
+  By day you see everything you have seen. In the dark, at night, in a cave
+  or in thick fog, sight is shorter:
+    with a light (a lantern, a torch, a party light, or a lit place) you
+    see your room and the rooms its exits join, in a soft pool of light;
+    with only the moon, or a dim light, you see your own room;
+    in total darkness you can't see even that, and your figure is faint.
+  Rooms out of sight are remembered: drawn dark and grey, with no people,
+  landmarks or resources on them, so you can still find your way back.
+  A torch or lantern shows at your hand (a dark lantern when it is out),
+  your own party light floats over your head, and a lit campfire glows
+  wherever it is. Night vision has no glow; what you see turns a cool grey.
+
 <ansi fg="yellow-bold">Settings</ansi>
 
   The settings button on the map has <ansi fg="yellow">Style</ansi> (Tiles, or Classic for the plain
   coloured squares and letters, where shape, size and spacing apply),
   <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red square and hearts) and
-  <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker) and <ansi fg="yellow">Day/night</ansi> (on, or off for no shading). All are kept per browser. The map shows only what the game already tells
+  <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker) and <ansi fg="yellow">Day/night</ansi> (on, or off for no shading and no darkness). All are kept per browser. The map shows only what the game already tells
   you: nothing about anyone outside your party.
 
 See also: <ansi fg="command">help walkto</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.

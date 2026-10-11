@@ -1,3 +1,23 @@
+**LM2: light and sight on the map (2026-10-11).** The map shows what the character can see ([living map design](designs/2026-10-10-living-map-design.md), LM2).
+- **Server:** `rooms.Sight` (`Room.SightForUser`, pure `sightFrom`) gives the visibility level and `daylight`, true when the room is fully lit without help: by day outdoors (fog permitting), or an indoor or lit place. A fixture in a dark place isn't daylight.
+  - It also gives `source`: `lantern`, `torch`, `light`, `orb` (your own party light), `party` (an ally's), `nightvision` or `fixture`.
+  - `carried: "lantern-out"` marks an unlit lantern you hold. The light module tells the light model what a player carries (`rooms.RegisterCarriedLight`).
+  - `Gametime.sight` carries it every round, and at once on a `RoomChange` or `BuffsAdded`/`BuffsRemoved` (`sightChangeHandler`, `sendGametime`).
+- **Client:** `map-sight.js` (pure) decides which rooms are in sight: everything by day; at night your room and the rooms its exits join at level 2, your room only at level 1, nothing at level 0. It also picks the glow (radius, warm, cool or pale; none and monochrome for night vision) and the marker.
+  - `window-map.js` draws rooms out of sight as remembered: grey and dark, still, without landmarks, resource icons, allies or allied camps.
+  - A darkness layer is cut by a soft glow round you, and by a lit campfire wherever it is.
+  - A torch or lantern shows at your hand (a dark lantern when it's out), and your party light floats over your head. These are drawn in code until the A13 marker art comes.
+  - Your figure is faint when you can't see your room.
+  - The day/night setting off turns all of it off. With no sight from the server, the clock's night shade stays as before.
+- **Help:** `help worldmap` gains "Light and dark"; `help light` points to the map; the camp lesson's light hint mentions the map.
+- *Tests:*
+  - `TestSightFrom` (14 cases) and `TestCarriedLightRegistry` (rooms).
+  - `TestGametimeCarriesSight` (gmcp): the round, a move, buff start and end, and a mob's move sending nothing.
+  - `TestCarriedLightNamesTheLight` (light, through the real commands).
+  - `map-sight.test.mjs` (5).
+  - `map-check.mjs` LM2: no sight; day; a torch (the 5 rooms in sight, the rest remembered, the warm glow, the marker); a remembered room's brightness against day and your lit room; the moon; total dark with a dark lantern; night vision; your party light; the setting off.
+  - The help assertions.
+
 **A11 final masks imported (2026-10-11).** The art agent's last A11 corrections are in the game; A11 is complete and approved.
 - The dragon-lord, sweeper and vanguard battle idles have their visible beards marked as hair, kept off the skin. Their `idle.look.png` are re-cut.
 - The bearward's map hair mask now covers its long hair as well as its beard. Its `idle.look.png` and `walk.look.png` are re-cut.

@@ -770,6 +770,75 @@ for (const dpr of [1, 1.5, 2]) {
   await ctx.close();
 }
 
+// --- LM2: light and sight ---
+// Standing at (2,1) in the 5x3 field. Gametime's sight decides what is in
+// sight; the rest is remembered: dark, colourless and still, without
+// landmarks or icons. A carried light shows beside the figure and the
+// darkness opens round it; with no sight, or by day, the map is as before.
+{
+  page = await open({ width: 1280, height: 900 });
+  await gmcp(page, 'World.Map', world);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await moveTo(page, 2, 1);
+  await settle(page).catch(() => {});
+  const here = id(2, 1), joined = [id(2, 0), id(1, 1), id(3, 1), id(2, 2)].sort((a, b) => a - b);
+  // brightness reads the canvas at a room's centre (a 5x5 average).
+  const brightness = roomId => page.evaluate(rid => {
+    const c = document.getElementById('map-2d-canvas');
+    const pt = window.MapView.pointOf(rid), r = c.getBoundingClientRect();
+    const k = c.width / r.width;
+    const x = Math.round((pt.x - r.left) * k) - 2, y = Math.round((pt.y - r.top) * k) - 2;
+    const d = c.getContext('2d').getImageData(x, y, 5, 5).data;
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4) { sum += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; }
+    return sum / 25;
+  }, roomId);
+  const sightAt = async (sight, hour = 23) => {
+    await gmcp(page, 'Gametime', Object.assign(clock(hour), sight ? { sight } : {}));
+    await tick(page, 250);
+    return state(page);
+  };
+  s = await sightAt(null, 12);
+  check(s.sight === null && s.drawn.remembered === 0, 'with no sight from the server the map is as before');
+  const far = id(4, 2);
+  const dayFar = await brightness(far);
+  s = await sightAt({ level: 2, daylight: true }, 12);
+  check(s.sight && s.sight.visible === 'all' && s.drawn.remembered === 0 && s.sight.marker === '', 'by day everything you have seen is shown');
+
+  s = await sightAt({ level: 2, daylight: false, source: 'torch' });
+  check(JSON.stringify(s.sight.visible) === JSON.stringify([here].concat(joined).sort((a, b) => a - b)),
+    'a torch at night shows your room and the rooms its exits join: ' + JSON.stringify(s.sight.visible));
+  check(s.drawn.remembered === W * H - 6, 'the other rooms are remembered: ' + s.drawn.remembered);
+  check(s.sight.glow && s.sight.glow.color === 'warm' && s.sight.glow.radius === 1.5 && s.drawn.lights >= 1, 'a warm glow a tile and a half across: ' + JSON.stringify(s.sight.glow));
+  check(s.sight.marker === 'torch' && s.sight.markerArt === 'code', 'a torch shows beside your figure (drawn in code until its art comes): ' + s.sight.markerArt);
+  const farDark = await brightness(far), nearLit = await brightness(here);
+  check(farDark < dayFar * 0.45, 'a remembered room is dark: ' + farDark.toFixed(1) + ' vs ' + dayFar.toFixed(1) + ' by day');
+  check(nearLit > farDark * 1.8, 'your own room is lit by the glow: ' + nearLit.toFixed(1) + ' vs ' + farDark.toFixed(1));
+
+  s = await sightAt({ level: 1, daylight: false });
+  check(JSON.stringify(s.sight.visible) === JSON.stringify([here]) && s.drawn.remembered === W * H - 2 && s.sight.glow.color === 'pale',
+    'moonlight shows your room only, in a pale glow: ' + JSON.stringify(s.sight));
+  s = await sightAt({ level: 0, daylight: false, carried: 'lantern-out' });
+  check(JSON.stringify(s.sight.visible) === '[]' && s.sight.dim < 1 && s.sight.marker === 'lantern-out',
+    'in the dark you can\'t see your room, your figure is faint, and a dark lantern shows: ' + JSON.stringify(s.sight));
+  s = await sightAt({ level: 2, daylight: false, source: 'nightvision' });
+  check(s.sight.glow && s.sight.glow.mono && s.sight.glow.radius === 0, 'night vision has no glow but a monochrome tint');
+  s = await sightAt({ level: 2, daylight: false, source: 'orb' });
+  check(s.sight.glow.color === 'cool' && s.sight.marker === 'orb', 'your party light is a cool glow and an orb over you');
+  await page.close();
+
+  // The day and night setting off turns the darkness off too.
+  page = await open({ width: 1280, height: 900 }, { dayNight: false });
+  await gmcp(page, 'World.Map', world);
+  await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await moveTo(page, 2, 1);
+  await gmcp(page, 'Gametime', Object.assign(clock(23), { sight: { level: 0, daylight: false } }));
+  await tick(page, 250);
+  s = await state(page);
+  check(s.sight === null && s.drawn.remembered === 0, 'with day and night shading off, sight changes nothing');
+  await page.close();
+}
+
 await browser.close();
 server.close();
 console.log(failures ? failures + ' check(s) failed' : 'all checks passed');
