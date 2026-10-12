@@ -27,7 +27,7 @@ func samuraiMob(t *testing.T, id, level int, class string) *statusHolder {
 func TestIaijutsuStartsTheActionMeterHalfATurnUp(t *testing.T) {
 	ResetTempoForTest()
 	t.Cleanup(ResetTempoForTest)
-	s := samuraiMob(t, 8601, 1, "")
+	s := samuraiMob(t, 8601, 2, "")
 	plain := engagementMob(t, 8602, 100, 1)
 	for _, c := range []*characters.Character{&plain.Character, s.char} {
 		c.Stats.Speed.ValueAdj = 30
@@ -82,7 +82,7 @@ func TestZanshinGivesHalfATurnWhenItFellsAFoeOncePerRound(t *testing.T) {
 }
 
 func TestFocusCountsQuietRoundsAndAHitResetsIt(t *testing.T) {
-	s := samuraiMob(t, 8621, 3, "")
+	s := samuraiMob(t, 8621, 4, "")
 	side := []actor{{who: caster{mobId: 8621}, char: s.char}}
 	round := func() { samuraiRound(side) }
 

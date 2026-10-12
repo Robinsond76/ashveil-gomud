@@ -46,8 +46,8 @@
         weather:         true,       // LM4: rain, storms, fog, clouds and snow over outdoor tiles
     };
 
-    // Phase 40a: room resources. The tiles style draws each one's S1 icon in
-    // the tile's corner (Phase 40d); the classic style, a tile too small for
+    // Phase 40a: room resources. The tiles style draws each one's S1 icon
+    // packed inside the tile (Phase 40d); the classic style, a tile too small for
     // an icon and an icon still loading keep the small coloured dot. Tooltips
     // name them.
     var RESOURCE_INFO = {
@@ -59,7 +59,7 @@
         fishing:  { label: 'Fishing',     color: '#5fd0d0' },
         game:     { label: 'Game',        color: '#c85a5a' },
     };
-    var RESOURCE_ICON_MAX = 3;
+    var RESOURCE_ICON_MAX = 9;
 
     function resourcesFor(roomId) {
         var info = roomInfoStore.get(roomId);
@@ -1324,71 +1324,70 @@
             return 'glyph';
         }
 
-        // drawResources marks what a room offers in its corner: the S1 icon
-        // for each (a depleted one gets the empty-basket overlay), at most
-        // RESOURCE_ICON_MAX with a "+" for the rest. A classic map, a tile
-        // under 24 px and an icon not loaded yet fall back to coloured dots,
-        // hollow with a slash once picked clean.
+        // drawResources marks what a room offers inside its tile: the S1 icon
+        // for each (a depleted one gets the empty-basket overlay) packed in a
+        // small grid from the top-left corner, however many there are, so a
+        // busy room never spills into its neighbour. Each sits on a dark disc
+        // with a light rim so it reads on forest and other dark tiles. A
+        // classic map, a tile under 32 px (icons packed that small blur into
+        // smudges) and an icon not loaded yet fall back to coloured dots in
+        // the same cells, hollow with a slash once picked clean.
         function drawResources(id, p, tilePx, scaledSize, half, useCircle, tiles, tiled, symColor, nowMs) {
             var resIds = resourcesFor(id);
             if (resIds.length === 0) { return; }
             var goneIds = depletedFor(id);
             var shown = resIds.slice(0, RESOURCE_ICON_MAX);
-            var iconMult = Math.max(0.5, spriteMult(tilePx) / 2);   // 8 px icons on a 32 px tile, 16 px on a 64 px one
-            var iconPx = 16 * iconMult;
-            var useIcons = tiles && tiled && tilePx >= 24;
-            var dot = Math.max(3, scaledSize * 0.16);
-            var inset = (useCircle && !tiles) ? Math.max(2, half * 0.45) : Math.max(2, scaledSize * 0.1);
+            var useIcons = tiles && tiled && tilePx >= 32;
+            var box = (useCircle && !tiles) ? half * 1.3 : (tiles ? tilePx : scaledSize);
+            var inset = Math.max(1, box * 0.04);
+            var n = shown.length;
+            var cols = n <= 3 ? n : (n <= 4 ? 2 : 3);
+            var cell = Math.min(box * 0.42, (box - inset * 2) / cols);
+            var left = (useCircle && !tiles) ? p.px - half * 0.65 : p.px - box / 2;
+            var top = (useCircle && !tiles) ? p.py - half * 0.8 : p.py - box / 2;
 
             shown.forEach(function (rid, i) {
                 var picked = goneIds.indexOf(rid) !== -1;
+                var cx = left + inset + cell * (i % cols) + cell / 2;
+                var cy = top + inset + cell * Math.floor(i / cols) + cell / 2;
+                var meta = RESOURCE_INFO[rid];
+                var r = cell / 2;
+                // backing disc: dark fill and light rim, for contrast
+                ctx.fillStyle = 'rgba(12,12,16,0.72)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
                 if (useIcons) {
-                    var cx = p.px - tilePx / 2 + 1 + iconPx / 2 + i * (iconPx + 1);
-                    var cy = p.py - tilePx / 2 + 1 + iconPx / 2;
-                    var path = 'map/resources/' + (RESOURCE_INFO[rid] ? rid : 'unknown') + '.png';
+                    var path = 'map/resources/' + (meta ? rid : 'unknown') + '.png';
+                    var iconMult = cell * 0.9 / 16;
                     if (drawIcon(path, cx, cy, iconMult, nowMs)) {
                         drawn.icons++;
                         if (picked) { drawIcon('map/resources/depleted.png', cx, cy, iconMult, nowMs); }
                         return;
                     }
                 }
-                var meta = RESOURCE_INFO[rid];
-                var dx = p.px - half + inset + i * (dot * 2 + 1) + dot * 0.5;
-                var dy = p.py - half + inset;
-                if (useCircle && !tiles) {
-                    dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
-                    dy = p.py - half * 0.62;
-                }
+                var dot = Math.max(2, r * 0.7);
                 drawn.dots++;
                 ctx.fillStyle = (meta && meta.color) || '#aaaaaa';
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
                 ctx.beginPath();
-                ctx.arc(dx, dy, dot, 0, Math.PI * 2);
+                ctx.arc(cx, cy, dot, 0, Math.PI * 2);
                 if (picked) {
                     // depleted: the dot is hollow with a slash through it
-                    ctx.fillStyle = mapSettings.mapBackground;
+                    ctx.fillStyle = 'rgba(12,12,16,0.72)';
                     ctx.fill();
-                    ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dx - dot, dy + dot);
-                    ctx.lineTo(dx + dot, dy - dot);
+                    ctx.moveTo(cx - dot, cy + dot);
+                    ctx.lineTo(cx + dot, cy - dot);
                     ctx.stroke();
                 } else {
                     ctx.fill();
-                    ctx.stroke();
                 }
             });
-            if (resIds.length > RESOURCE_ICON_MAX) {
-                var plusX = useIcons ? p.px - tilePx / 2 + 1 + RESOURCE_ICON_MAX * (iconPx + 1) + 2
-                                     : p.px - half + inset + RESOURCE_ICON_MAX * (dot * 2 + 1);
-                var plusY = useIcons ? p.py - tilePx / 2 + 1 + iconPx / 2 : p.py - half + inset;
-                ctx.fillStyle = tiled ? '#ffffff' : symColor;
-                ctx.font = 'bold ' + Math.max(6, (useIcons ? iconPx : dot * 2)) + 'px monospace';
-                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                ctx.fillText('+', plusX, plusY);
-            }
         }
 
         // nightLevel is how far into night the game's clock is, 0 (day) to 1

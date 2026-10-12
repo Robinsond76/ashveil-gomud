@@ -2,8 +2,9 @@
 
 Some rooms provide something your company can use. <ansi fg="command">look</ansi> names it on a
 line that starts with "Here:", and the web client's map marks the room with
-a small icon in the corner of its tile (hover over a room to read what it
-offers; on the Classic style and on tiny tiles it is a coloured dot). Turn
+a small icon on a dark disc inside its tile, one for each resource (hover
+over a room to read what it offers; on the Classic style and on small tiles
+it is a coloured dot). Turn
 the markers off under the map's settings button.
 
 <ansi fg="yellow-bold">What the markers mean</ansi>

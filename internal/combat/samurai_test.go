@@ -33,6 +33,8 @@ func samurai(t *testing.T, level int, class string) *characters.Character {
 	return c
 }
 
+// Samurai here are level 2 and 4: the skill schedule brings Iaijutsu at 2
+// and Focus at 4.
 func TestIaijutsuIsTheFirstStrikeOfABattleOnly(t *testing.T) {
 	defenseSpecs(t)
 	defenseOdds(t, 0, 0, 0)
@@ -40,7 +42,7 @@ func TestIaijutsuIsTheFirstStrikeOfABattleOnly(t *testing.T) {
 	// to 0, so a crit doubled the first strike about 1 run in 10 (37c
 	// review): every roll is its top face, which never crits.
 	t.Cleanup(util.UseRandForTest(func(n int) int { return n - 1 }))
-	s := samurai(t, 1, "")
+	s := samurai(t, 2, "")
 	target := armed(0)
 	assert.True(t, s.IaiReady())
 
@@ -59,7 +61,7 @@ func TestIaijutsuIsTheFirstStrikeOfABattleOnly(t *testing.T) {
 func TestIaijutsuIsSpentEvenWhenTheFirstSwingMisses(t *testing.T) {
 	defenseSpecs(t)
 	defenseOdds(t, 0, 0, 100)
-	s := samurai(t, 1, "")
+	s := samurai(t, 2, "")
 	r := strikeAt(s, armed(0))
 	assert.False(t, r.Hit, "a certain dodge")
 	assert.False(t, s.IaiReady(), "the opening is gone")
@@ -68,14 +70,16 @@ func TestIaijutsuIsSpentEvenWhenTheFirstSwingMisses(t *testing.T) {
 func TestNoIaijutsuWithoutTheLineageOrForAWindUp(t *testing.T) {
 	defenseSpecs(t)
 	defenseOdds(t, 0, 0, 0)
-	plain := samurai(t, 1, "")
+	plain := samurai(t, 2, "")
 	plain.HPArchetype = "warrior"
 	assert.False(t, plain.IaiReady())
 	assert.Equal(t, 20, strikeAt(plain, armed(0)).DamageToTarget)
 
-	s := samurai(t, 1, "")
+	s := samurai(t, 2, "")
 	calculateCombatPower(*s, *armed(0), User, Mob, 0, 0, &Power{Multiplier: 2})
 	assert.True(t, s.IaiReady(), "a wind-up's blow is not the first strike")
+
+	assert.False(t, samurai(t, 1, "").IaiReady(), "the skill schedule: Iaijutsu comes at level 2")
 }
 
 func TestIaijutsuRaisesTheCriticalChanceOnTheFirstStrike(t *testing.T) {
@@ -83,7 +87,7 @@ func TestIaijutsuRaisesTheCriticalChanceOnTheFirstStrike(t *testing.T) {
 	defenseOdds(t, 0, 0, 0)
 	firstCrits, laterCrits := 0, 0
 	for i := 0; i < 1500; i++ {
-		s := samurai(t, 1, "")
+		s := samurai(t, 2, "")
 		if strikeAt(s, armed(0)).Crit {
 			firstCrits++
 		}
@@ -98,7 +102,7 @@ func TestIaijutsuRaisesTheCriticalChanceOnTheFirstStrike(t *testing.T) {
 func TestFocusBuildsCriticalChanceFromQuietRoundsAndStopsAtItsCap(t *testing.T) {
 	defenseSpecs(t)
 	defenseOdds(t, 0, 0, 0)
-	s := samurai(t, 3, "")
+	s := samurai(t, 4, "")
 	assert.Zero(t, s.ClassCrit(), "nothing yet")
 	s.RT.Quiet = 1
 	assert.Equal(t, 3, s.ClassCrit())
@@ -111,7 +115,7 @@ func TestFocusBuildsCriticalChanceFromQuietRoundsAndStopsAtItsCap(t *testing.T) 
 	assert.Equal(t, 20, s.ClassCrit(), "Deep focus raises the cap")
 
 	// In the formula: a Samurai that has been quiet crits more.
-	s = samurai(t, 3, "")
+	s = samurai(t, 4, "")
 	s.RT.IaiSpent = true
 	s.RT.Quiet = 3
 	crits := 0

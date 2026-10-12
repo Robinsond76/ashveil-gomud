@@ -10,7 +10,7 @@ func init() {
 	registerBase("alchemist",
 		rank(1, "Healing Draught", "a thrown flask heals any ally, a Minor Heal's worth, with no chant and no mana (one flask)"),
 		rank(1, "Brew", "a camp rest (or the brew command) refills the satchel from reagents"),
-		rank(3, "Antidote", "a flask that cures an ally's poison and bleeding"),
+		rank(4, "Antidote", "a flask that cures an ally's poison and bleeding"),
 		rank(6, "Fire Flask", "a flask of fire at one foe and the foe beside it, at 70% of Sparks"),
 		rank(8, "Bracing Tonic", "a flask that gives one ally +5 Attack and +5 Evasion for 3 rounds"),
 	)

@@ -34,8 +34,8 @@ func TestDollMasterHasThreeUngatedRoutes(t *testing.T) {
 }
 
 func TestDollMasterBaseRanksComeByLevel(t *testing.T) {
-	assert.Zero(t, EffectsForLineage("dollmaster", "", 4, nil).Int(DollGuards))
-	assert.Equal(t, 2, EffectsForLineage("dollmaster", "", 5, nil).Int(DollGuards))
+	assert.Zero(t, EffectsForLineage("dollmaster", "", 3, nil).Int(DollGuards))
+	assert.Equal(t, 2, EffectsForLineage("dollmaster", "", 4, nil).Int(DollGuards))
 	assert.Equal(t, 3, EffectsForLineage("dollmaster", "", 8, nil).Int(DollGuards))
 	assert.False(t, EffectsForLineage("dollmaster", "", 11, nil).Has(DollTangle))
 	assert.True(t, EffectsForLineage("dollmaster", "", 12, nil).Has(DollTangle))
