@@ -1284,6 +1284,7 @@ check(await page.locator('#cw-capabilities img').count() === 0 && await page.loc
 // Phase 57 review: a long status badge wraps instead of squeezing the name to one letter a line.
 await page.evaluate(() => window.gmcp('Char.Capabilities', { automatic: [], utility: [
   { name: 'Camp Cooking', group: 'camp', mode: 'manual', skill: 'cooking', rank: 0, description: 'Manual camp cook at your own lit campfire', enabled: false, reason: 'Missing recipe ingredients or trained ranks' }] }));
+check((await skillsText()).includes('None yet: class abilities come as you level (help skill-levels)'), 'Skills says abilities come with levels when none is known yet (skill schedule)');
 const squeezed = await page.evaluate(() => {
   const name = [...document.querySelectorAll('#cw-capabilities .csk-name')].find(e => e.textContent === 'Camp Cooking');
   const lh = parseFloat(getComputedStyle(name).lineHeight) || parseFloat(getComputedStyle(name).fontSize) * 1.4;

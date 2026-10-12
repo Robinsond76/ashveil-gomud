@@ -37,15 +37,14 @@ func buildCapabilities(user *users.UserRecord) charCapabilities {
 	class, _ := user.Character.ClassState()
 	for _, ability := range strategy.WithClass(strategy.PlayerAbilities(user.Character.GetSkillLevel), class, user.Character.Level) {
 		spec, ok := strategy.SpecOf(ability)
-		if !ok {
+		// The skill schedule: an ability is not shown before its level
+		// (the class command says what comes next).
+		if !ok || spec.MinLevel > user.Character.Level {
 			continue
 		}
 		v := automaticCapability{Name: spec.Name, Skill: spec.Skill, Description: spec.Does, When: spec.When, Cooldown: spec.Cooldown, Enabled: !s.NoAbilities}
 		if s.NoAbilities {
 			v.Reason = "Automatic abilities disabled by strategy"
-		}
-		if spec.MinLevel > user.Character.Level {
-			v.Enabled, v.Reason = false, fmt.Sprintf("Comes at level %d", spec.MinLevel)
 		}
 		out.Automatic = append(out.Automatic, v)
 	}
