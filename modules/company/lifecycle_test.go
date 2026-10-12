@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
@@ -29,6 +30,12 @@ func TestMain(m *testing.M) {
 	// Pure company tests do not load optional modules. Wiring fixtures load
 	// and register the real shared cargo provider explicitly through plugins.Load.
 	encumbrance.SetProvider(nil)
+	// The light module ships the partylight flag, which these tests do not
+	// load. Without it every flag check logs a warning, hundreds of thousands
+	// of them, burying any failure in the CI log.
+	if !buffs.IsValidFlag(rooms.FlagPartyLight) {
+		buffs.SetTestFlag(rooms.FlagPartyLight)
+	}
 	code := m.Run()
 	if bad := checkStagedShipped(); len(bad) > 0 && code == 0 {
 		fmt.Fprintf(os.Stderr, "tests wrote over shipped files copied by copyShipped (remove, then write): %v\n", bad)
