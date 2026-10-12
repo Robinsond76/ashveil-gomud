@@ -8,8 +8,8 @@ package classes
 
 func init() {
 	registerBase("arbalist",
-		rank(1, "Piercing Bolt", "a heavy crossbow bolt that ignores half the target's armor (cooldown 2 rounds); winding the crossbow afterwards takes the Arbalist's next turn", BoltPierce, 50),
-		rank(3, "Steady Aim", "a bolt has +10 Attack when nothing has hurt the Arbalist since its last one", SteadyAim, 10),
+		rank(2, "Piercing Bolt", "a heavy crossbow bolt that ignores half the target's armor (cooldown 2 rounds); winding the crossbow afterwards takes the Arbalist's next turn", BoltPierce, 50),
+		rank(4, "Steady Aim", "a bolt has +10 Attack when nothing has hurt the Arbalist since its last one", SteadyAim, 10),
 		rank(6, "Crippling Bolt", "a bolt that lands hobbles the foe for 2 rounds", BoltCripple, 2),
 		rank(8, "Armor-breaker", "a Piercing Bolt ignores all of the target's armor", BoltPierce, 100),
 	)

@@ -105,7 +105,7 @@ func samuraiRounds(t *testing.T, level int, class string) *brawl {
 }
 
 func TestFocusBuildsOverQuietRoundsThroughTheRealRound(t *testing.T) {
-	b := samuraiRounds(t, 3, "")
+	b := samuraiRounds(t, 4, "") // Focus comes at level 4
 	for i := 0; i < 4; i++ {
 		b.hold(nil)
 		b.fight()
@@ -159,13 +159,12 @@ func TestClassShowsASamuraisBaseRanksBeforePromotion(t *testing.T) {
 	w, _ := samuraiClassBrawl(t, 1, 0)
 	view := w.cmd("class", "")
 	assert.Contains(t, view, "level 1 Samurai with no promotion yet")
-	assert.Contains(t, view, "Rank 1, Iaijutsu")
-	assert.NotContains(t, view, "Rank 3, Focus")
-	assert.Contains(t, view, "Next: a rank (Focus) at level 3.")
+	assert.NotContains(t, view, "Iaijutsu:", "the skill schedule: nothing but a plain blow at level 1")
+	assert.Contains(t, view, "Next: a rank (Iaijutsu) at level 2.")
 
 	w.aria.Character.Level = 8
 	view = w.cmd("class", "")
-	for _, want := range []string{"Rank 1, Iaijutsu", "Rank 3, Focus", "Rank 8, Zanshin"} {
+	for _, want := range []string{"Rank 2, Iaijutsu", "Rank 4, Focus", "Rank 8, Zanshin"} {
 		assert.Contains(t, view, want)
 	}
 }
@@ -187,7 +186,7 @@ func TestSamuraiPromotesAtAnyAlignmentThroughTheRealCommand(t *testing.T) {
 			view = w.cmd("class", "")
 			assert.Contains(t, view, "a Hatamoto (advanced class)")
 			assert.Contains(t, view, "Rank 10, Bodyguard")
-			assert.Contains(t, view, "Rank 1, Iaijutsu", "its base ranks stay")
+			assert.Contains(t, view, "Rank 2, Iaijutsu", "its base ranks stay")
 		})
 	}
 }

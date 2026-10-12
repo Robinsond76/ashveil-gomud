@@ -21,11 +21,11 @@ A Halberdier's strategy rule is <ansi fg="command">crowded</ansi> by default: it
 in the row with the most foes (<ansi fg="command">help strategy</ansi>). Its abilities need no command
 and use no mana (<ansi fg="command">help abilities</ansi>):
 
-  <ansi fg="yellow-bold">Sweep</ansi>   one swing strikes its foe and the nearest foe beside it in the same
+  <ansi fg="yellow-bold">Sweep</ansi>   from level 2, one swing strikes its foe and the nearest foe beside it in the same
           row, each at 90% damage. From level 8 it strikes the whole row. It
           takes the whole turn and is ready again after 3 rounds. It is used
           when two or more foes stand in the target's row.
-  <ansi fg="yellow-bold">Brace</ansi>   from level 3, it holds its turn with the glaive set. The first foe
+  <ansi fg="yellow-bold">Brace</ansi>   from level 4, it holds its turn with the glaive set. The first foe
           that strikes into its place in the line is answered at once with
           a blow at 125% damage. If no foe strikes, the turn is lost. Used
           when Sweep is not ready (or has no second foe to strike) and a

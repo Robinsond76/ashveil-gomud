@@ -14,10 +14,10 @@ import (
 func TestSteadyAimEndsWhenABlowLandsOnTheArbalist(t *testing.T) {
 	c := characters.New()
 	c.HPArchetype = "arbalist"
-	c.Level = 3
+	c.Level = 4 // Steady Aim comes at level 4
 	rt := c.RTState()
 	fx := c.ClassEffects()
-	assert.Equal(t, 10, steadyAim(rt, fx), "level 3: +10 Attack while unhurt")
+	assert.Equal(t, 10, steadyAim(rt, fx), "level 4: +10 Attack while unhurt")
 
 	// A miss, or a blow that did nothing, does not end it.
 	arbalistBlow(statusHolder{char: c}, combat.AttackResult{Hit: false})

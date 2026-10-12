@@ -28,7 +28,7 @@ the binary on a free telnet port (rounds shortened to 2 s), then:
 3. Renders `help` for every topic and alias in `keywords.yaml`.
 4. Copyover (`SIGUSR1`): the connection, company and room survive.
 5. A second player (a Witch, tutorial skipped) shares the room: `spells`
-   lists Slumber and `say` reaches the first player.
+   lists Withering Hex (not yet Slumber) and `say` reaches the first player.
 6. Logs out, restarts the server (`SIGTERM`), logs back in: the company and
    formation persist.
 

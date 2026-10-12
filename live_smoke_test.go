@@ -749,9 +749,11 @@ func TestLiveSmoke(t *testing.T) {
 		p2.expect(`Town Square`, 40*time.Second)
 		p2.drain(2 * time.Second)
 
-		out := p2.do("spells", `Slumber`)
-		if !strings.Contains(out, "Slumber") {
-			t.Errorf("a new Witch should know Slumber:\n%s", out)
+		// The skill schedule (2026-10-12): a level-1 Witch knows Withering
+		// Hex; Slumber comes at level 2.
+		out := p2.do("spells", `Withering Hex`)
+		if !strings.Contains(out, "Withering Hex") || strings.Contains(out, "Slumber") {
+			t.Errorf("a new Witch should know Withering Hex and not yet Slumber:\n%s", out)
 		}
 		p2.do("status", `More: company status`)
 

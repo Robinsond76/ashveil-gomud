@@ -8,7 +8,7 @@ package classes
 
 func init() {
 	registerBase("dollmaster",
-		rank(5, "Guard String", "the doll guards the most hurt ally beside it, twice a battle", DollGuards, 2),
+		rank(4, "Guard String", "the doll guards the most hurt ally beside it, twice a battle", DollGuards, 2),
 		rank(8, "Stronger strings", "Guard String works three times a battle", DollGuards, 3),
 		rank(12, "Tangle", "strings snag a foe in reach of the doll and push its action meter back by half a turn (a quarter for a boss); ready every 3 rounds, and the same foe can't be tangled again for 2 rounds", DollTangle, 1),
 		rank(18, "Emergency Splice", "once a battle, when the doll would break, you spend your next turn and it stands back up at 25% health", Splice, 1),

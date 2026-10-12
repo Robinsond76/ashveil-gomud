@@ -1,0 +1,46 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">skill-levels</ansi>
+
+Skills come as a character levels, not all at once. At level 1 a character
+has only its plain blow, and a caster its first spell. Its class's other
+skills and spells arrive one or two at a time on the way to level 10, about
+one every other level. Companions learn theirs at the same levels as
+players (only a player cleric learns Cure Poison).
+
+<ansi fg="yellow-bold">Before promotion (levels 1 to 9)</ansi>
+
+  <ansi fg="yellow">Class</ansi>          <ansi fg="yellow">1</ansi>                 <ansi fg="yellow">2</ansi>               <ansi fg="yellow">4</ansi>              <ansi fg="yellow">6</ansi>             <ansi fg="yellow">8</ansi>
+  Warrior        plain blow        Tackle
+  Rogue          plain blow        Opening Strike
+  Ranger         plain blow        Aimed Shot
+  Cleric         Minor Heal        -               Minor Heal All Cure Poison   Bless
+  Wizard         Magic Missile     -               Sparks
+  Witch          Withering Hex     Slumber         Earthbind      Leaden Curse  Miasma
+  Shaman         Gust              Call Fog        Chill Wind     Rain          Lightning
+  Halberdier     plain blow        Sweep           Brace          Hook          Wide sweep
+  Samurai        plain blow        Iaijutsu        Focus          -             Zanshin
+  Gryphon Rider  plain blow        Dive            Talons         -             Power dive
+  Arbalist       plain shot        Piercing Bolt   Steady Aim     Crippling     Armor-breaker
+  Beast Tamer    its beast         Sic             Rally          -             Pack Sense
+  Doll Master    Puppet Strike     -               Guard String   -             Stronger strings
+  Alchemist      Healing Draught   -               Antidote       Fire Flask    Bracing Tonic
+
+A cleric also knows Tend (patching wounds after a battle) and a wizard
+Floating Light from level 1; neither is used in a fight. An Alchemist
+brews its flasks from level 1. A witch's later hexes come at 10, 12, 15
+and 18 (<ansi fg="command">help hexes</ansi>), and a Doll Master's Tangle at 12 and Emergency Splice
+at 18. Level 5 brings the first talent (<ansi fg="command">help talents</ansi>).
+
+<ansi fg="yellow-bold">After promotion</ansi>
+
+At level 10 a character promotes to a class (<ansi fg="command">help promotion</ansi>), which brings a
+rank at 10, 15, 20 and 25. At level 30 an elite class brings a rank every
+five levels to 60 (<ansi fg="command">help elite</ansi>). Each level-up names what it brought, and
+<ansi fg="command">class</ansi> shows what comes next.
+
+<ansi fg="yellow-bold">Characters made before this</ansi>
+
+A spell you have learned stays learned. A class ability follows your
+level: a level 1 warrior made before Tackle moved to level 2 tackles again
+once it reaches level 2.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help abilities</ansi>, <ansi fg="command">help progression</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help spells</ansi>

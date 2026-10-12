@@ -20,11 +20,11 @@ of any of its routes.
 
 <ansi fg="yellow-bold">Ranks of the Arbalist</ansi>
 
-  Level 1   <ansi fg="yellow">Piercing Bolt</ansi>   the Arbalist's whole turn, once every 2 combat rounds: one
+  Level 2   <ansi fg="yellow">Piercing Bolt</ansi>   the Arbalist's whole turn, once every 2 combat rounds: one
             bolt at 140% of an ordinary shot that ignores half the foe's
             armor. The turn after it is spent winding the crossbow: no
             shot, though the action meter still fills.
-  Level 3   <ansi fg="yellow">Steady Aim</ansi>      a bolt has +10 Attack when nothing has hurt the Arbalist
+  Level 4   <ansi fg="yellow">Steady Aim</ansi>      a bolt has +10 Attack when nothing has hurt the Arbalist
             (no blow has landed on it) since its last bolt.
   Level 6   <ansi fg="yellow">Crippling Bolt</ansi>  a bolt that lands hobbles the foe for 2 rounds
             (<ansi fg="command">help statuses</ansi>).

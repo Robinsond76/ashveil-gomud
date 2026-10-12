@@ -33,10 +33,11 @@ func TestBeastTamerHasThreeUngatedRoutes(t *testing.T) {
 }
 
 func TestBeastTamerBaseRanksComeByLevel(t *testing.T) {
-	assert.True(t, EffectsForLineage("beasttamer", "", 1, nil).Has(BeastSic))
-	assert.Equal(t, 10, EffectsForLineage("beasttamer", "", 1, nil).Int(SicAttack))
-	assert.Zero(t, EffectsForLineage("beasttamer", "", 2, nil).Int(Rally))
-	assert.Equal(t, 2, EffectsForLineage("beasttamer", "", 3, nil).Int(Rally))
+	assert.False(t, EffectsForLineage("beasttamer", "", 1, nil).Has(BeastSic), "Sic comes at level 2")
+	assert.True(t, EffectsForLineage("beasttamer", "", 2, nil).Has(BeastSic))
+	assert.Equal(t, 10, EffectsForLineage("beasttamer", "", 2, nil).Int(SicAttack))
+	assert.Zero(t, EffectsForLineage("beasttamer", "", 3, nil).Int(Rally))
+	assert.Equal(t, 2, EffectsForLineage("beasttamer", "", 4, nil).Int(Rally))
 	assert.Zero(t, EffectsForLineage("beasttamer", "", 7, nil).Int(PackSense))
 	assert.Equal(t, 5, EffectsForLineage("beasttamer", "", 8, nil).Int(PackSense))
 }
