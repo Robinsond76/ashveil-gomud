@@ -591,6 +591,13 @@ await tick(page, 400);
 s = await state(page);
 check(s.drawn.icons === 7 && s.drawn.dots === 0, 'a room with seven resources draws all seven icons: ' + JSON.stringify(s.drawn));
 if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-resources.png') }); }
+// Zoomed out to 24 px tiles, packed icons would blur; they show as dots.
+const resBox = await page.locator('#map-2d-canvas').boundingBox();
+await page.mouse.move(resBox.x + resBox.width / 2, resBox.y + resBox.height / 2);
+await page.mouse.wheel(0, 120);
+await tick(page, 600);
+s = await state(page);
+check(s.zoom === 0.75 && s.drawn.icons === 0 && s.drawn.dots === 7, 'at 24 px tiles the seven resources show as dots: ' + s.zoom + ' ' + JSON.stringify(s.drawn));
 await page.close();
 page = await gotoMixed({ style: 'classic' });
 await gmcp(page, 'World.Map', withRes({ [mid(1, 1)]: { resources: ['water', 'forage'] } }));

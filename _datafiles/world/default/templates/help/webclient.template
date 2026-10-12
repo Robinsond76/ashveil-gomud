@@ -11,7 +11,7 @@ button in them just types a command for you.
   The Time and Date sky also shows the weather where you are
   (<ansi fg="command">help weather</ansi>).
 
-  On the map, a small icon in a room's corner marks what it provides:
+  On the map, small icons inside a room's tile mark what it provides:
   fresh water, forage, shelter, and what you can gather. Hover for names;
   the settings button turns the markers off (<ansi fg="command">help resources</ansi>). The Room Info
   panel lists the current room's resources as badges under its name. A

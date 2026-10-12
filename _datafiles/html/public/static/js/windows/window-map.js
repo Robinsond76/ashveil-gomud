@@ -46,8 +46,8 @@
         weather:         true,       // LM4: rain, storms, fog, clouds and snow over outdoor tiles
     };
 
-    // Phase 40a: room resources. The tiles style draws each one's S1 icon in
-    // the tile's corner (Phase 40d); the classic style, a tile too small for
+    // Phase 40a: room resources. The tiles style draws each one's S1 icon
+    // packed inside the tile (Phase 40d); the classic style, a tile too small for
     // an icon and an icon still loading keep the small coloured dot. Tooltips
     // name them.
     var RESOURCE_INFO = {
@@ -1329,15 +1329,15 @@
         // small grid from the top-left corner, however many there are, so a
         // busy room never spills into its neighbour. Each sits on a dark disc
         // with a light rim so it reads on forest and other dark tiles. A
-        // classic map, a tile under 24 px and an icon not loaded yet fall
-        // back to coloured dots in the same cells, hollow with a slash once
-        // picked clean.
+        // classic map, a tile under 32 px (icons packed that small blur into
+        // smudges) and an icon not loaded yet fall back to coloured dots in
+        // the same cells, hollow with a slash once picked clean.
         function drawResources(id, p, tilePx, scaledSize, half, useCircle, tiles, tiled, symColor, nowMs) {
             var resIds = resourcesFor(id);
             if (resIds.length === 0) { return; }
             var goneIds = depletedFor(id);
             var shown = resIds.slice(0, RESOURCE_ICON_MAX);
-            var useIcons = tiles && tiled && tilePx >= 24;
+            var useIcons = tiles && tiled && tilePx >= 32;
             var box = (useCircle && !tiles) ? half * 1.3 : (tiles ? tilePx : scaledSize);
             var inset = Math.max(1, box * 0.04);
             var n = shown.length;
