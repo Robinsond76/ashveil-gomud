@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
@@ -1128,6 +1129,9 @@ type GMCPCharModule_Payload_Inventory_Item struct {
 	// words, and its lore, for the gear window's tooltip.
 	Relic     []string `json:"relic,omitempty"`
 	RelicLore string   `json:"relic_lore,omitempty"`
+	// Warmth is what the piece adds while worn (slot default or its own,
+	// plus affixes); omitted when it adds none.
+	Warmth int `json:"warmth,omitempty"`
 }
 
 func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
@@ -1163,6 +1167,10 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		d.Rarity = string(itmSpec.Relic.Rarity())
 	} else if lines := itm.TrophyLines(); len(lines) > 0 {
 		d.Relic = lines // Phase 71: an enchanted plain item
+	}
+
+	if w := climate.PieceWarmth(characters.WarmthPieceOf(itm)); w > 0 {
+		d.Warmth = w
 	}
 
 	if !itm.Uncursed && itmSpec.Cursed {

@@ -180,3 +180,20 @@ func TestSkillGapWords(t *testing.T) {
 		assert.Equal(t, want, usercommands.SkillGapWords(gap), "%d", gap)
 	}
 }
+
+// The Gear editor offers only the weapons and shields a class can use, so
+// it never needs to explain a refusal.
+func TestGearEditorHidesWeaponsTheClassCannotUse(t *testing.T) {
+	b := skillBrawl(t, "cleric")
+	shield, cudgel, mace := items.New(20004), items.New(10015), items.New(10023)
+	b.aria.Character.Items = []items.Item{shield, cudgel, mace}
+	view := domain.EquipmentViewOf(7)
+	require.True(t, view.Available, view.Reason)
+	for _, slot := range []string{"weapon", "offhand"} {
+		for _, c := range editorSlot(t, view, slot).Choices {
+			assert.NotEqual(t, cudgel.ShorthandId(), c.Ref, "%s offers a weapon clerics can't use", slot)
+			assert.NotEqual(t, shield.ShorthandId(), c.Ref, "%s offers a shield clerics can't use", slot)
+		}
+	}
+	editorChoice(t, editorSlot(t, view, "weapon"), mace.ShorthandId())
+}

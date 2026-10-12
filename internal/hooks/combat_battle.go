@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/util"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -261,7 +260,6 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		emitTargetChange(userRef(u), mobRefById(u.Character.Aggro.MobInstanceId), mobRefById(next), room.RoomId)
 		u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
-		u.SendText(turnsToward(`You`, mobTag(mobName(next))))
 	}
 	for _, instanceId := range sortedKeys(sd.allies) {
 		m := mobs.GetInstance(instanceId)
@@ -275,7 +273,6 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		emitTargetChange(mobRef(m), mobRefById(m.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
 		m.Character.SetAggro(0, foe, attackType(m.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(turnsToward(mobTag(mobName(m.InstanceId)), mobTag(mobName(foe))))
 	}
 }
 
@@ -450,7 +447,6 @@ func (sd side) rallyIdleFoes(p mobparty.Party, room *rooms.Room) {
 		m.PlayerAttacked(u.UserId)
 		m.PreventIdle = true
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(turnsToward(mobTag(mobName(m.InstanceId)), userTag(u.Character.Name)))
 	}
 }
 
@@ -504,8 +500,6 @@ func (sd side) turnTo(previous, next int, room *rooms.Room) {
 	emitTargetChange(userRef(u), mobRefById(previous), mobRefById(next), room.RoomId)
 	u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
-	u.SendText(turnsToward(`You`, mobTag(mobName(next))))
-	room.SendText(turnsToward(userTag(u.Character.Name), mobTag(mobName(next))), u.UserId)
 }
 
 // turnWaitingOntoFreePlayers turns each group waiting on a busy player onto
@@ -571,7 +565,6 @@ func turnWaitingOntoFreePlayers(round uint64) {
 			if !turned {
 				continue
 			}
-			room.SendText(fmt.Sprintf(`%s %s.`, groupTurnsToward(p), userTag(free.Character.Name)))
 			freeSide := loadSide(free, room)
 			battle.NoteSet(free.UserId, p.ID, round)
 			freeSide.beginBattle(p, room, round)
@@ -600,24 +593,6 @@ func freePlayer(room *rooms.Room, busyId int) *users.UserRecord {
 		}
 	}
 	return best
-}
-
-// groupTurnsToward names a group turning on someone, for a message: "The
-// ruffian turns toward", or "The ruffian and the others turn toward".
-func groupTurnsToward(p mobparty.Party) string {
-	var names []string
-	for _, instanceId := range p.Members {
-		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
-			names = append(names, mobName(m.InstanceId))
-		}
-	}
-	switch len(names) {
-	case 0:
-		return `They turn toward`
-	case 1:
-		return util.CapitalizeFirst(util.Article(mobTag(names[0]))) + ` turns toward`
-	}
-	return util.CapitalizeFirst(util.Article(mobTag(names[0]))) + ` and the others turn toward`
 }
 
 // settleBattles ends, at the end of the round and after its deaths are

@@ -20,6 +20,7 @@ type EquipmentStats struct {
 	WornG              int            `json:"worn_g"`
 	Burden             string         `json:"burden"`
 	DodgePct           int            `json:"dodge_pct"`
+	Warmth             int            `json:"warmth"`
 	Stats              map[string]int `json:"stats"`
 	PackCapacityG      int            `json:"pack_capacity_g"`
 	CapacityG          int            `json:"capacity_g"`

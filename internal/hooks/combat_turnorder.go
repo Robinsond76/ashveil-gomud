@@ -63,6 +63,14 @@ func UseTurnOrderRollForTest(roll func() float64) (restore func()) {
 	return func() { turnOrderRoll = prev }
 }
 
+var roundTurnOrderForTest func(userId int) []TurnRef
+
+// SetRoundTurnOrderForTest replaces RoundTurnOrder and returns a restore func.
+func SetRoundTurnOrderForTest(fn func(userId int) []TurnRef) (restore func()) {
+	roundTurnOrderForTest = fn
+	return func() { roundTurnOrderForTest = nil }
+}
+
 // CurrentTurnSlot is the slot of the fighter now acting, 0 between turns.
 func CurrentTurnSlot() int { return int(currentSlot.Load()) }
 
@@ -237,6 +245,9 @@ func roundHadTurns() bool {
 // data lists it: every fighter in the same fights as the player, in the
 // order they acted. Empty outside a round or when the player is not in one.
 func RoundTurnOrder(userId int) []TurnRef {
+	if roundTurnOrderForTest != nil {
+		return roundTurnOrderForTest(userId)
+	}
 	fights := tempoMembership(caster{userId: userId})
 	if len(fights) == 0 {
 		return nil

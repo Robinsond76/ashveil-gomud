@@ -83,12 +83,12 @@ change the company's focus.
   blow or a heal. A hard hit shakes the picture. A fight that ends shows why
   it ended: the foe is down, the company has fallen, or it withdrew.
 
-  The fifteen base classes act these out in their own poses: a full swing
-  with their weapon, a recoil when struck (and when blocking or parrying; a
-  dodge also steps back), a drawn bow, a bolt or a thrown flask, and a glowing
-  chant as a spell begins, as it is kept up and at its release. Other figures,
-  the advanced and elite classes and the creatures, still nudge their standing
-  picture forward or back until their poses are drawn.
+  The base classes, the creatures and most advanced classes act these
+  out in their own poses: a full swing with their weapon, a recoil when struck
+  (and when blocking or parrying; a dodge also steps back), a drawn bow, a
+  bolt or a thrown flask, and a glowing chant as a spell begins, as it is kept
+  up and at its release. The elite classes, and any figure whose pose is still being
+  drawn, nudge their standing picture forward or back instead.
 
   The <ansi fg="yellow">Animation</ansi> menu has three settings. <ansi fg="yellow">full</ansi> shows all of it. <ansi fg="yellow">reduced</ansi> has no
   flashes, shaking or travelling shots, and is the choice already made for
