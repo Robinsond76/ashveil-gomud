@@ -177,7 +177,8 @@ func runTurnOrder(evt events.NewRound) (affectedPlayerIds []int, affectedMobInst
 		// now, so it is closed before the next turn whoever takes it,
 		// and the wasted line still follows the blow it belongs to.
 		finishLanding()
-		events.SetSlot(i + 1) // Phase 82c: the turn's lines are paced as one beat
+		landDisablingStatuses() // PR #222 review: a stun from an earlier turn takes this one
+		events.SetSlot(i + 1)   // Phase 82c: the turn's lines are paced as one beat
 		extra := s.k > 1
 		if s.who.userId > 0 {
 			p, m = actPlayer(evt, s.who.userId, extra)

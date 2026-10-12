@@ -230,6 +230,25 @@ func LostAction(c *characters.Character) (*Spec, bool) {
 	return found, found != nil
 }
 
+// Disables reports whether buffId is a status that costs its holder turns
+// (lose-actions or lose-first-action): sleep, stun, stagger, paralysis, a
+// knockdown.
+func Disables(buffId int) bool {
+	if specs[buffId] == nil {
+		return false
+	}
+	spec := buffs.GetBuffSpec(buffId)
+	if spec == nil {
+		return false
+	}
+	for _, f := range spec.Flags {
+		if f == FlagLoseActions || f == FlagLoseFirstAction {
+			return true
+		}
+	}
+	return false
+}
+
 // FreshLostAction reports whether c carries a disabling status applied
 // since the last tick: one landed earlier in this round, before c's turn.
 // Such a holder has not acted yet, so the status takes this turn rather
