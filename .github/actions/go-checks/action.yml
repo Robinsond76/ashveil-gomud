@@ -11,5 +11,20 @@ runs:
       run: git diff --exit-code
       shell: bash
     - name: Run Go tests
-      run: go test -race ./...
+      # Company tests log a "partylight unknown buff flag" warning hundreds of
+      # thousands of times, which pushes every failure out of the readable end
+      # of the job log. Drop that one warning and repeat failures at the end.
+      run: |
+        set -o pipefail
+        log="$(mktemp)"
+        status=0
+        go test -race ./... 2>&1 \
+          | { grep -v --line-buffered 'flag=partylight error="unknown buff flag"' || [ $? -eq 1 ]; } \
+          | tee "$log" || status=$?
+        if [ "$status" -ne 0 ]; then
+          echo "::group::Failed tests"
+          grep -E -- '^(--- FAIL|FAIL|panic:)|DATA RACE|_test\.go:[0-9]+' "$log" || true
+          echo "::endgroup::"
+        fi
+        exit "$status"
       shell: bash
