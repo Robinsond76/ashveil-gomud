@@ -11,6 +11,10 @@ you hit and the more you can carry.
   bonus rounds down and stops at +{{ config "GamePlay.Combat.DamageBonusMax" }} damage, before critical hits and armor.
   Your Strength helps even against an equally strong opponent, but the
   weapon's own dice matter most: a greatsword hits far harder than a dagger.
+* That bonus grows with level: none at level 1, a share more each level,
+  whole from level {{ config "GamePlay.Combat.DamageFullLevel" }}. Your own character reads {{ config "GamePlay.Combat.HeroDamageLead" }} levels
+  ahead of a companion, so you hit a little harder early on. Foes follow the
+  same rule, so a level-1 imp hits for little more than its dagger's dice.
 * Increases the size of your unarmed damage dice when fighting without a weapon.
 * With a shield, raises your chance to block a blow, and to slam a blocked
   melee blow back with a shield bash (<ansi fg="command">help shields</ansi>).

@@ -328,6 +328,11 @@ GamePlay:
     DamagePerStrength: 0.375
     # Extra damage at a full Strength edge (StatEdgeSpan points stronger).
     DamageEdgeMax: 2
+    # Everyone's flat bonus grows from none at level 1 to whole at this
+    # level, so low-level blows are their weapon's dice. The player character
+    # reads HeroDamageLead levels ahead of a companion.
+    DamageFullLevel: 6
+    HeroDamageLead: 2
     # Stat edge (30g6): every opposed chance reads the difference of two
     # stats over this span. A lead of StatEdgeSpan points reaches a bound;
     # each point moves a chance 1/StatEdgeSpan of the way.
