@@ -53,3 +53,24 @@ func TestWoundsHelp(t *testing.T) {
 		assert.Contains(t, tagPattern.ReplaceAllString(got, ""), "help wounds", "help %s points to help wounds", topic)
 	}
 }
+
+// TestDamageByLevelHelp (2026-10-12): the pages that explain blows say
+// only critical hits wound and the flat bonus grows with level.
+func TestDamageByLevelHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	for topic, wants := range map[string][]string{
+		"wounds":       {"Only critical hits wound"},
+		"coordination": {"a critical hit\nholds back"},
+		"strength":     {"none at level 1", "whole from level", "levels\n  ahead of a companion"},
+		"perception":   {"none at level 1, whole from level"},
+	} {
+		page, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		plain := tagPattern.ReplaceAllString(page, "")
+		for _, want := range wants {
+			assert.Contains(t, plain, want, topic)
+		}
+		assert.NotContains(t, plain, "crushing blow (one hit", topic)
+	}
+}

@@ -7,7 +7,8 @@ A perceptive fighter strikes with precision and is difficult to catch off guard.
 
 * Increases your critical hit damage. A critical blow does {{ config "GamePlay.Combat.CritMultMin" }}x damage, and
   each point of Perception over your target's adds 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to
-  {{ config "GamePlay.Combat.CritMultMax" }}x (<ansi fg="command">help stat-edge</ansi>).
+  {{ config "GamePlay.Combat.CritMultMax" }}x (<ansi fg="command">help stat-edge</ansi>). That edge grows with level like
+  Strength's bonus: none at level 1, whole from level {{ config "GamePlay.Combat.DamageFullLevel" }} (<ansi fg="command">help strength</ansi>).
 * Moves your chance to dodge incoming attacks: {{ config "GamePlay.Combat.DodgeChanceEven" }}% at an even match, and
   each point of Perception over your attacker's adds 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to {{ config "GamePlay.Combat.DodgeChanceMax" }}%
   (each point under takes it toward {{ config "GamePlay.Combat.DodgeChanceMin" }}%), on top of your Evasion against their

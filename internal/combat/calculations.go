@@ -157,6 +157,22 @@ func damageBonus(atkStr, defStr int) int {
 	return int(bonus)
 }
 
+// levelDamageBonus is damageBonus for an attacker of the given level: whole
+// at DamageFullLevel and above, growing evenly from nothing at level 1, so a
+// low-level attacker hits for its weapon's dice and damage tracks level
+// (owner, 2026-10-12). A hero reads HeroDamageLead levels ahead.
+func levelDamageBonus(bonus, level int, hero bool) int {
+	cfg := configs.GetCombatConfig()
+	full := int(cfg.DamageFullLevel)
+	if hero {
+		level += int(cfg.HeroDamageLead)
+	}
+	if full <= 1 || level >= full {
+		return bonus
+	}
+	return bonus * max(level-1, 0) / (full - 1)
+}
+
 // hitChanceForEdge returns a hit probability in [ToHitMin, ToHitMax]:
 // ToHitEven when even, moved toward a bound by the combined edge.
 func hitChanceForEdge(edge float64) int {
@@ -350,6 +366,17 @@ func critDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc int) int {
 	}
 	mult := critMultiplier(atkPerc, defPerc)
 	return int(math.Floor(float64(base) * (mult - 1.0)))
+}
+
+// levelCritDamageBonus is critDamageBonus for an attacker of the given
+// level: the Perception advantage's share of the crit grows on the same
+// ramp as the flat bonus (levelDamageBonus), so a level-1 crit adds half
+// its weapon's best roll whatever the Perception gap (owner, 2026-10-12: a
+// level-1 foe's 1d4 crit is at most 9).
+func levelCritDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc, level int, hero bool) int {
+	even := critDamageBonus(dCount, dSides, dBonus, 0, 0)
+	full := critDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc)
+	return even + levelDamageBonus(full-even, level, hero)
 }
 
 // dodgeChanceForEdge returns the probability in [DodgeChanceMin,
@@ -621,7 +648,9 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 	rate := math.Min(Tempo(&atkChar), float64(configs.GetCombatConfig().MaxTurnsPerRound))
 
-	statDmgBonus := damageBonus(atkChar.Stats.Strength.ValueAdj, defChar.Stats.Strength.ValueAdj)
+	// The level ramp as calculateCombatPower applies it (a hero's lead is
+	// not known here, so the estimate reads every attacker as a companion).
+	statDmgBonus := levelDamageBonus(damageBonus(atkChar.Stats.Strength.ValueAdj, defChar.Stats.Strength.ValueAdj), atkChar.Level, false)
 
 	attackWeapons := resolveAttackWeapons(atkChar)
 
@@ -703,8 +732,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 			avgDmg = 0
 		}
 
-		critBonusAmt := float64(critDamageBonus(dCount, dSides, dBonus,
-			atkChar.Stats.Perception.ValueAdj, defChar.Stats.Perception.ValueAdj))
+		critBonusAmt := float64(levelCritDamageBonus(dCount, dSides, dBonus,
+			atkChar.Stats.Perception.ValueAdj, defChar.Stats.Perception.ValueAdj, atkChar.Level, false))
 		critBonus := critBonusAmt * critPct
 
 		effHit := hitPct

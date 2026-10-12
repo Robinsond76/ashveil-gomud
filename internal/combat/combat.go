@@ -566,7 +566,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 	strikeBonus := 0
 
 	// Statmods can add a damage bonus plus the stat-driven damage bonus.
-	statModDBonus := sourceChar.StatMod(`damage`) + sourceChar.ClassEffects().Int(classes.Damage) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
+	flatBonus := damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
+	flatBonus = levelDamageBonus(flatBonus, sourceChar.Level, sourceType == User)
+	statModDBonus := sourceChar.StatMod(`damage`) + sourceChar.ClassEffects().Int(classes.Damage) + flatBonus
 
 	for i := 0; i < atkCount; i++ {
 
@@ -780,8 +782,8 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						// Phase 30a review: added, so a later crit never drops an
 						// earlier strike's status.
 						attackResult.BuffTarget = append(attackResult.BuffTarget, withoutBleeding(critBuffs, IsBloodless(&targetChar))...)
-						attackTargetDamage += critDamageBonus(dCount, dSides, dBonus,
-							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj)
+						attackTargetDamage += levelCritDamageBonus(dCount, dSides, dBonus,
+							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj, sourceChar.Level, sourceType == User)
 						// Phase 38c2: a Marksman's Called Shot hits harder when it crits.
 						if p := iaiFx.Int(classes.CritDamage); p > 0 {
 							attackTargetDamage += (attackTargetDamage*p + 50) / 100
@@ -919,8 +921,8 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					critStatuses = append(critStatuses, status.Words([]int{power.Status})...)
 				}
 
-				// Phase 30b: a crit that got through leaves a lasting wound,
-				// named in the hit's parentheses; a crushing blow a light one.
+				// Phase 30b: a crit that got through leaves a wound, named in
+				// the hit's parentheses. Only a crit does (owner, 2026-10-12).
 				if woundable && attackTargetDamage > 0 {
 					if isCrit {
 						w := wounds.FromCrit(weaponSubType, attackTargetDamage, util.Rand)
@@ -936,8 +938,6 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 							attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
 							critStatuses = append(critStatuses, "wounded")
 						}
-					} else if w, ok := wounds.Crushing(attackTargetDamage, targetChar.HealthMax.Value, util.Rand); ok {
-						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
 					}
 				}
 
