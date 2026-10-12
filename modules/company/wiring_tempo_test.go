@@ -350,7 +350,7 @@ func TestTempoDeathBetweenPassesCancelsSecondTurn(t *testing.T) {
 	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 1)
 }
 
-func TestTempoNewStatusBetweenPassesStartsAfterFirstTick(t *testing.T) {
+func TestTempoNewStatusBetweenPassesTakesTheSecondTurn(t *testing.T) {
 	b, seen := tempoBrawl(t, 30)
 	loadStatusBuffs(t)
 	b.fight()
@@ -364,10 +364,10 @@ func TestTempoNewStatusBetweenPassesStartsAfterFirstTick(t *testing.T) {
 	}))
 	n := len(*seen)
 	b.fight()
-	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 2, "a new status waits for its first tick")
+	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 1, "a new status takes the turn still to come")
 	n = len(*seen)
 	b.fight()
-	assert.Empty(t, swingsBy(since(*seen, n), b.aria.Character.Name), "first tick now loses the round")
+	assert.Empty(t, swingsBy(since(*seen, n), b.aria.Character.Name), "and the next round's turn too")
 }
 
 func TestTempoAimedShotRestoresOrdinarySecondTurn(t *testing.T) {

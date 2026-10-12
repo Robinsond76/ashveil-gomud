@@ -1,14 +1,18 @@
 package hooks
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -202,6 +206,14 @@ func tempoStatusCostsAction(h statusHolder) bool {
 		return true
 	}
 	if statusCostsAction(h) {
+		tempoLostTold[who], tempoBlocked[who] = true, true
+		return true
+	}
+	// A disabling status landed earlier this round (a lullaby, a stun, a
+	// knockdown) takes the holder's turn that has not come yet.
+	if spec, lost := status.FreshLostAction(h.char, true); lost {
+		h.say(spec.LoseYou, spec.LoseOther, fmt.Sprintf(" (%s)", spec.Word))
+		emitCombat(combatstream.Event{Kind: combatstream.StatusTick, RoomId: h.roomId, Target: h.ref, BuffId: spec.Id, Status: spec.Word, Outcome: combatstream.OutcomeLostAction})
 		tempoLostTold[who], tempoBlocked[who] = true, true
 		return true
 	}
