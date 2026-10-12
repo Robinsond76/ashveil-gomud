@@ -735,7 +735,7 @@
         }
 
         // ROUGH_PIT: where the fire pit sits in camp-rough.png, from the sprite's
-        // centre in sprite pixels (art is 128 px, drawn at half size on the map).
+        // centre in map units (times the camp's mult), and the fire's scale there.
         var ROUGH_PIT = { x: -1, y: -1, scale: 1 };
 
         // fireAndRest draws a camp's fire (bottom right of the tent, or at
@@ -791,7 +791,9 @@
             if (asYou && !innRest) {
                 tentMult = mult * 1.25;
                 fire = { px: p.px + 5 * mult, py: p.py + 10 * mult };
-                p = { px: p.px, py: p.py - 3 * mult };
+                // A rough camp has no tent to stand back: it sits lower so
+                // its own pit, where the fire burns, is on your here-ring.
+                p = { px: p.px, py: p.py + (tent === false ? 9 : -3) * mult };
             }
             if (occupied) {
                 // Your sprite stands on this tile and would hide the camp:
