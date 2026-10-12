@@ -986,7 +986,9 @@
                     spoken.push(CompanyData.conditionLabel(effect, group[2]));
                 });
             });
-            if (state.state === 'live' && !(state.effects || []).length && !(state.wounds || []).length) {
+            // An ailing member is not "without effects": the Ailing line says what they carry.
+            const ailing = m.status !== 'dead' && Array.isArray(v.ailments) && v.ailments.length > 0;
+            if (state.state === 'live' && !ailing && !(state.effects || []).length && !(state.wounds || []).length) {
                 card.appendChild(el('div', 'company-status', 'No active effects or wounds'));
             }
         }

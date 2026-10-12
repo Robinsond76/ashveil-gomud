@@ -1250,6 +1250,23 @@ await page.locator('#party-panel [data-key=leader]').focus();
 conditions.leader.effects = [];
 await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
 check(!(await status()).includes('2 combat rounds remaining') && await page.evaluate(() => document.activeElement.dataset.key === 'leader'), 'removed effect disappears while the member card keeps keyboard focus');
+{
+  const leaderCard = () => page.evaluate(() => document.querySelector('#party-panel [data-key=leader]').textContent);
+  const heldWounds = conditions.leader.wounds;
+  conditions.leader.wounds = [];
+  await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+  check((await leaderCard()).includes('No active effects or wounds'), 'a well member with no effects says so');
+  const ill = JSON.parse(JSON.stringify(company));
+  ill.vitals.leader.ailments = ['Chill (4 battles)'];
+  await page.evaluate(c => window.gmcp('Company', c), ill);
+  await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+  check((await leaderCard()).includes('Ailing: Chill (4 battles)') && !(await leaderCard()).includes('No active effects'), 'an ailing member card never says it has no active effects');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+  await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+  check((await leaderCard()).includes('No active effects or wounds') && !(await leaderCard()).includes('Ailing'), 'the card is back to no effects once the ailment ends');
+  conditions.leader.wounds = heldWounds;
+  await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+}
 await page.setViewportSize({ width: 360, height: 760 });
 check(await page.evaluate(() => { const p = document.getElementById('party-panel'); return p.scrollWidth <= p.clientWidth + 1; }), 'conditions fit a narrow Company Status');
 await page.getByRole('tab', { name: 'Character', exact: true }).first().click();
