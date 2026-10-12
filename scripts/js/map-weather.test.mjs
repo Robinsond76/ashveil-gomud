@@ -33,6 +33,7 @@ test('rain falls diagonally, down and to the left, with splashes', () => {
   const angle = Math.atan2(-r.vx, r.vy) * 180 / Math.PI;
   assert.ok(angle > 15 && angle < 25, 'about 20 degrees off vertical: ' + angle);
   assert.ok(p.splash > 0 && !p.lightning);
+  assert.equal(r.size, 2, 'a rain texture spans two tiles so its streaks read');
 });
 
 test('a storm is heavier, faster rain with lightning and a darker sky', () => {
@@ -46,7 +47,7 @@ test('mist, fog and thick fog drift ever thicker, thinner over the sight veil', 
   const a = n => W.plan({ name: n }).layers[0].alpha;
   assert.ok(a('mist') < a('fog') && a('fog') < a('thick-fog'));
   assert.deepEqual(texes(W.plan({ name: 'fog' })), ['fog']);
-  assert.equal(W.plan({ name: 'fog' }, { fogVeil: true }).layers[0].alpha, a('fog') / 2, 'LM2 already veils the fog');
+  assert.ok(Math.abs(W.plan({ name: 'fog' }, { fogVeil: true }).layers[0].alpha - a('fog') * 0.35) < 1e-9, 'LM2 already veils the fog');
 });
 
 test('snow falls in two layers at two speeds; a blizzard is faster and slanted', () => {

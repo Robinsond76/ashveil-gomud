@@ -18322,6 +18322,136 @@
    ],
    "source": "imported"
   },
+  "map/weather/clouds.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    256,
+    256
+   ],
+   "frames": 1,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    256,
+    256
+   ],
+   "source": "imported"
+  },
+  "map/weather/fog.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    256,
+    256
+   ],
+   "frames": 1,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    256,
+    256
+   ],
+   "source": "imported"
+  },
+  "map/weather/lightning.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 140,
+   "frames": 3,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    384,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/weather/rain-heavy.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/weather/rain.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/weather/snow-far.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/weather/snow.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    128,
+    128
+   ],
+   "frames": 1,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    128,
+    128
+   ],
+   "source": "imported"
+  },
+  "map/weather/splash.png": {
+   "anchor": "center",
+   "density": 4,
+   "frame": [
+    64,
+    64
+   ],
+   "frame_ms": 100,
+   "frames": 4,
+   "kind": "weather",
+   "set": "S1",
+   "size": [
+    256,
+    64
+   ],
+   "source": "imported"
+  },
   "style/icon-sample.png": {
    "kind": "icons",
    "set": "S0",
