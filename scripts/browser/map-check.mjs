@@ -583,8 +583,14 @@ page = await gotoMixed(null);
 await gmcp(page, 'World.Map', withRes({ [mid(1, 1)]: { resources: ['water', 'forage', 'herbs', 'game'] }, [mid(0, 1)]: { resources: ['fishing'], depleted: ['fishing'] } }));
 await tick(page, 400);
 s = await state(page);
-check(s.drawn.icons === 4 && s.drawn.dots === 0, 'the tiles style draws resource icons (3 in a corner plus the lone one), no dots: ' + JSON.stringify(s.drawn));
+check(s.drawn.icons === 5 && s.drawn.dots === 0, 'the tiles style draws resource icons (all four stacked in one tile plus the lone one), no dots: ' + JSON.stringify(s.drawn));
 const iconsOn = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+// A busy room shows every resource, packed inside its own tile.
+await gmcp(page, 'World.Map', withRes({ [mid(1, 1)]: { resources: ['water', 'forage', 'shelter', 'herbs', 'firewood', 'fishing', 'game'] } }));
+await tick(page, 400);
+s = await state(page);
+check(s.drawn.icons === 7 && s.drawn.dots === 0, 'a room with seven resources draws all seven icons: ' + JSON.stringify(s.drawn));
+if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-resources.png') }); }
 await page.close();
 page = await gotoMixed({ style: 'classic' });
 await gmcp(page, 'World.Map', withRes({ [mid(1, 1)]: { resources: ['water', 'forage'] } }));
