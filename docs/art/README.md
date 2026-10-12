@@ -73,8 +73,8 @@ the owner signs off on the style anchors.
 | **A12** | [A12-battle-actions-pilot.md](A12-battle-actions-pilot.md) | Pilot battle action poses for the 15 base classes: attack, hurt, and shoot or cast | 38 | E3c |
 | **A12b** | [A12b-creature-actions.md](A12b-creature-actions.md) | Battle action poses for the 25 enemies and creatures met most, with the 3 fallbacks | 53; approved and imported 2026-10-11 | none (E3c imports them) |
 | **A12c** | [A12b-creature-actions.md](A12b-creature-actions.md#a12c-the-rest-33-figures-69-sheets) | Battle action poses for the other 33 enemies, bosses, summons and company creatures | 69 | none |
-| **A12d** | [A12d-class-actions.md](A12d-class-actions.md) | Battle action poses, with look masks, for the 43 advanced classes | 111 sheets, 158 masks | none (E3c and E1b import them) |
-| **A12e** | [A12d-class-actions.md](A12d-class-actions.md#a12e-the-elite-classes-43-classes-111-sheets-158-masks) | Battle action poses, with look masks, for the 43 elite classes | 111 sheets, 158 masks | none |
+| **A12d** | [A12d-class-actions.md](A12d-class-actions.md) | Battle action poses, with look masks, for the 43 advanced classes | 112 sheets, 158 masks | none (E3c and E1b import them) |
+| **A12e** | [A12d-class-actions.md](A12d-class-actions.md#a12e-the-elite-classes-43-classes-112-sheets-158-masks) | Battle action poses, with look masks, for the 43 elite classes | 112 sheets, 158 masks | none |
 | **A14** | [A14-map-weather.md](A14-map-weather.md) | Weather on the map: rain (light and heavy), splash, snow (near and far), fog, cloud shadows and lightning | 8; approved and imported 2026-10-12 | LM4 |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),

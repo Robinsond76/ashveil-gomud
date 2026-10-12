@@ -26,11 +26,12 @@ Exactly the A12 poses, frame counts and beats:
 | `attack` | 6 | A blow with the class's own weapon, as its idle carries it: 1 ready, 2 wind-up, 3 strike under way, 4 **the blow at full reach** (the hit lands here), 5 follow-through, 6 recover to the idle stance. |
 | `hurt` | 3 | Struck: 1 recoil, 2 the worst of it, 3 steadying. |
 | `shoot` | 6 | The ranger, arbalist and alchemist lines: 1 draw or raise, 2–3 aim, 4 the release (bow, crossbow bolt, or a thrown flask), 5 follow-through, 6 recover. |
-| `cast` | 4 | The cleric, wizard, witch, shaman and dollmaster lines: chanting, **looping**, hands, staff or focus raised and a glow building and fading in the class's own colour (a censer's smoke, soulfire, storm light, the doll strings tightening). Seamless loop. |
+| `cast` | 4 | The cleric, wizard, witch, shaman and dollmaster lines, and the knight and paladin (who heal by laying on hands): chanting, **looping**, hands, staff or focus raised and a glow building and fading in the class's own colour (a censer's smoke, soulfire, storm light, the doll strings tightening). Seamless loop. |
 
 Each class's blow is its own: a knight's sword over its shield, a
 blackguard's jagged axe, a duelist's thrust, a hatamoto's guarding cut, a
-sweeper's wide glaive arc. Mounted classes (the gryphon-rider line) strike
+sweeper's wide glaive arc. The knight's and paladin's `cast` is the laying on
+of hands: the sword lowered, a gauntleted hand raised with a pale, warm glow. Mounted classes (the gryphon-rider line) strike
 from the saddle, the mount lunging with the rider; keep the mount on the
 idle's ground line. The beast tamer line strikes itself; its beasts have
 their own A12c sheets.
@@ -57,7 +58,7 @@ fully transparent, no overlap, nothing outside the opaque art. Keep each
 class's choices consistent with its idle masks. Classes marked *no* have no
 idle masks (a full helm or hood hides both), so their poses need none.
 
-## A12d: the advanced classes (43 classes, 111 sheets, 158 masks)
+## A12d: the advanced classes (43 classes, 112 sheets, 158 masks)
 
 | ID | Line | Poses | Masks |
 |---|---|---|---|
@@ -95,7 +96,7 @@ idle masks (a full helm or hood hides both), so their poses need none.
 | `mistweaver` | shaman | attack, hurt, cast | no (helm or hood hides skin and hair) |
 | `stormcaller` | shaman | attack, hurt, cast | no (helm or hood hides skin and hair) |
 | `blackguard` | warrior | attack, hurt | no (helm or hood hides skin and hair) |
-| `knight` | warrior | attack, hurt | no (helm or hood hides skin and hair) |
+| `knight` | warrior | attack, hurt, cast | no (helm or hood hides skin and hair) |
 | `mercenary` | warrior | attack, hurt | no (helm or hood hides skin and hair) |
 | `coven-sage` | witch | attack, hurt, cast | yes |
 | `hag` | witch | attack, hurt, cast | yes |
@@ -105,7 +106,7 @@ idle masks (a full helm or hood hides both), so their poses need none.
 | `theurgist` | wizard | attack, hurt, cast | yes |
 | `warlock` | wizard | attack, hurt, cast | yes |
 
-## A12e: the elite classes (43 classes, 111 sheets, 158 masks)
+## A12e: the elite classes (43 classes, 112 sheets, 158 masks)
 
 | ID | Line | Poses | Masks |
 |---|---|---|---|
@@ -143,7 +144,7 @@ idle masks (a full helm or hood hides both), so their poses need none.
 | `tempest-lord` | shaman | attack, hurt, cast | no (helm or hood hides skin and hair) |
 | `veil-mother` | shaman | attack, hurt, cast | no (helm or hood hides skin and hair) |
 | `dread-knight` | warrior | attack, hurt | no (helm or hood hides skin and hair) |
-| `paladin` | warrior | attack, hurt | no (helm or hood hides skin and hair) |
+| `paladin` | warrior | attack, hurt, cast | no (helm or hood hides skin and hair) |
 | `warlord` | warrior | attack, hurt | no (helm or hood hides skin and hair) |
 | `coven-mother` | witch | attack, hurt, cast | yes |
 | `crone-of-ash` | witch | attack, hurt, cast | yes |
