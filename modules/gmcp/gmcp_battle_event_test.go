@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -401,4 +402,31 @@ func TestBattleEventCritFlagNeedsDamageThrough(t *testing.T) {
 	landed := build([]combatstream.Strike{{Hit: true, Crit: true, Raw: 8, Damage: 3}})
 	assert.True(t, landed.Crit)
 	assert.True(t, build(nil).Crit, "a round with no strikes recorded keeps the flag")
+}
+
+// TestBattleEventsCarryTheRoundsTurnOrder: Company.Battle waits for a paced
+// round's lines, so the round's order rides its first events and the screen's
+// strip matches the slots that play (Robinson's turn-order report).
+func TestBattleEventsCarryTheRoundsTurnOrder(t *testing.T) {
+	r := newEventRig(t)
+	r.user.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
+	t.Cleanup(hooks.SetRoundTurnOrderForTest(func(int) []hooks.TurnRef {
+		return []hooks.TurnRef{{UserId: 7, Slot: 1}, {MobInstanceId: 88, Slot: 2}, {UserId: 7, Slot: 3}}
+	}))
+	id := r.stream.Open(1, 100, "party-a", rigLeader, nil, []combatstream.Ref{rigEnemy(88)})
+	events.ProcessEvents()
+	r.got = nil
+	events.WithCause(2, func() {
+		r.user.SendText("Aria swings.")
+		r.stream.Emit(combatstream.Event{Round: 2, Kind: combatstream.Attack, FightID: id, Source: rigLeader, Target: rigEnemy(88), Outcome: combatstream.OutcomeHit, Damage: 3})
+	})
+	events.ProcessEvents()
+	r.turns(200)
+	ps := r.payloads()
+	require.NotEmpty(t, ps)
+	var got []string
+	for _, o := range ps[0].Order {
+		got = append(got, o.ID+":"+strconv.Itoa(o.Slot))
+	}
+	assert.Equal(t, []string{"leader:1", "m:88:2", "leader:3"}, got)
 }

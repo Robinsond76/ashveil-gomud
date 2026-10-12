@@ -100,8 +100,14 @@ type battleEventPayload struct {
 	FightRound uint64 `json:"fight_round,omitempty"`
 	// Pace is the receiver's combat pace (fast, normal, slow or off), which
 	// the screen's animation budgets follow.
-	Pace   string        `json:"pace,omitempty"`
-	Events []battleEvent `json:"events"`
+	Pace string `json:"pace,omitempty"`
+	// Order is the round's turn order, sent with the round's first
+	// events: Company.Battle is held back while a round is paced out, so
+	// without it the screen's strip would show the last round's order
+	// while this round's slots play (the same refs and slots as
+	// Company.Battle.order).
+	Order  []battleOrderRef `json:"order,omitempty"`
+	Events []battleEvent    `json:"events"`
 }
 
 // wantsBattleEvents reports whether a connection takes the feed: a web
@@ -369,6 +375,12 @@ func sendBattleEvents(userId int, batch []any) {
 		if cur == nil || cur.Fight != it.fight || cur.Round != it.round {
 			flush()
 			cur = &battleEventPayload{Fight: it.fight, Round: it.round, FightRound: it.fightRound, Pace: string(hooks.PaceOf(user))}
+			if user.Character != nil {
+				unseen := viewerFor(user, user.Character.RoomId, it.fight).unseen
+				for _, o := range gatherOrder(user, unseen) {
+					cur.Order = append(cur.Order, battleOrderRef{ID: o.ID, Slot: o.Slot})
+				}
+			}
 		}
 		cur.Events = append(cur.Events, it.event)
 	}

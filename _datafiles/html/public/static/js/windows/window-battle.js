@@ -644,6 +644,9 @@
     }
 
     function onEvents(body) {
+        // The round's turn order rides its first events (Company.Battle
+        // itself waits for the paced lines), so the strip matches the slots.
+        if (battle && Array.isArray(body.order) && body.order.length) { battle.order = body.order.map(o => ({ id: normRef(o.id), slot: o.slot })); paintOrder(); }
         const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) })).filter(e => !landsOnNothing(e));
         // fight_round counts this fight's rounds; round is the server's counter.
         if (body.fight_round && body.fight_round !== roundNo) { roundNo = body.fight_round; actingSlot = 0; paintChrome(); }

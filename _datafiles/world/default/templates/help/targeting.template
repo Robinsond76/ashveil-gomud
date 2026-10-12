@@ -29,8 +29,7 @@ waits. When your battle ends, the group that turned on you first begins
 the next one at once.
 
 While another player is free in the same place, a waiting group turns on
-them instead ("The ruffian and the others turn toward Brom."), and you each
-fight your own battle.
+them instead, and you each fight your own battle.
 
 Once your battle starts, it plays out on its own: <ansi fg="command">attack</ansi>, <ansi fg="command">cast</ansi>,
 <ansi fg="command">backstab</ansi>, <ansi fg="command">shoot</ansi>, <ansi fg="command">break</ansi>, walking out, and changes to your
@@ -53,8 +52,9 @@ fighting:
   <ansi fg="command">assist</ansi> or <ansi fg="command">defend</ansi> turns with what it follows);
 - the enemy group's anger at you doesn't wear off while the fight lasts.
 
-You're told when you turn (<ansi fg="command">You turn toward the bandit slinger.</ansi>), and see
-when others do (<ansi fg="command">Garrick Vane turns toward the bandit bruiser.</ansi>).
+Turning to a new target isn't announced; the next blows show who is
+fighting whom (the battle screen draws the lines, and
+<ansi fg="command">help battlelog</ansi> explains any hit).
 
 A focus you call in a battle turns everyone at once at the next round,
 even from a foe still standing (<ansi fg="command">help tactics</ansi>).

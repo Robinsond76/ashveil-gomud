@@ -27,19 +27,9 @@ func named(tagged string) string {
 	return util.Article(tagged)
 }
 
-// turnsToward is the line for a fighter taking a new target: "The bandit
-// cutthroat turns toward Garrick Vane." who and target are tagged names;
-// who may be "You".
-func turnsToward(who, target string) string {
-	if who == `You` {
-		return fmt.Sprintf(`You turn toward %s.`, named(target))
-	}
-	return util.CapitalizeFirst(fmt.Sprintf(`%s turns toward %s.`, named(who), named(target)))
-}
-
 // healerMarked is the line a company on its healers default says when it
 // turns on an enemy healer (Phase 35e): the player sees why the company went
-// for that foe, not the usual "you turn toward".
+// for that foe.
 func healerMarked(target string) string {
 	return fmt.Sprintf(`Your company marks %s as a healer and goes for it first.`, named(target))
 }

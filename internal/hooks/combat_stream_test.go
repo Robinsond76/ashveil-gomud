@@ -8,7 +8,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -89,27 +88,6 @@ func TestWeaponType(t *testing.T) {
 	c := &characters.Character{}
 	c.Equipment.Weapon = items.Item{ItemId: 999999} // no spec loaded
 	assert.Equal(t, "", weaponType(c))
-}
-
-func TestGroupTurnsToward(t *testing.T) {
-	assert.Equal(t, "They turn toward", groupTurnsToward(mobparty.Party{}))
-	a := engagementMob(t, 8601, 5, 1)
-	a.Character.Name = "ruffian"
-	assert.Equal(t, `The <ansi fg="mobname">ruffian</ansi> turns toward`, groupTurnsToward(mobparty.Party{Members: []int{8601}}))
-	b := engagementMob(t, 8602, 5, 1)
-	b.Character.Name = "big rat"
-	assert.Equal(t, `The <ansi fg="mobname">ruffian</ansi> and the others turn toward`, groupTurnsToward(mobparty.Party{Members: []int{8601, 8602}}))
-}
-
-func TestTurnsToward(t *testing.T) {
-	assert.Equal(t, `The <ansi fg="mobname">bandit cutthroat</ansi> turns toward <ansi fg="username">Aria</ansi>.`,
-		turnsToward(mobTag("bandit cutthroat"), userTag("Aria")))
-	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit captain</ansi>.`, turnsToward(`You`, mobTag("bandit captain")))
-	assert.Equal(t, `<ansi fg="mobname">Garrick Vane</ansi> turns toward the <ansi fg="mobname">bandit bruiser</ansi>.`,
-		turnsToward(mobTag("Garrick Vane"), mobTag("bandit bruiser")))
-	// Review fix: a player's lowercase name takes no article.
-	assert.Equal(t, `The <ansi fg="mobname">bandit captain</ansi> turns toward <ansi fg="username">bob</ansi>.`,
-		turnsToward(mobTag("bandit captain"), userTag("bob")))
 }
 
 // Phase 62: an attack round's strikes ride its event, and the fight leader's
