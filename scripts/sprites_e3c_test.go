@@ -70,6 +70,13 @@ var a12dClasses = map[string][]string{
 		"warlock"},
 }
 
+// a12dUnmasked are the A12d classes whose idles have no look masks (a full
+// helm or hood hides skin and hair), so their poses have none either; every
+// other A12d pose sheet has one.
+var a12dUnmasked = map[string]bool{"gryphon-knight": true, "wyvern-rider": true, "stalker": true, "assassin": true,
+	"scout": true, "hatamoto": true, "kensai": true, "ronin": true, "earthspeaker": true, "mistweaver": true,
+	"stormcaller": true, "blackguard": true, "knight": true, "mercenary": true}
+
 // a12dPending are the A12d sheets ordered but not yet delivered (the partial
 // delivery of 2026-10-12 brought 90 of 112). Remove each as it arrives.
 var a12dPending = map[string]bool{
@@ -133,7 +140,11 @@ func TestCommissionedBattlePosesAreImported(t *testing.T) {
 			for _, p := range strings.Fields(poses) {
 				ordered++
 				if !a12dPending[c+"/"+p] {
-					want["battle/units/"+c+"/"+p+".png"] = true
+					rel := "battle/units/" + c + "/" + p + ".png"
+					want[rel] = true
+					if masked := m.Files[rel].LookMask != ""; masked == a12dUnmasked[c] {
+						t.Errorf("%s: look mask %v, want one only for a class whose idle has them", rel, masked)
+					}
 				}
 			}
 		}

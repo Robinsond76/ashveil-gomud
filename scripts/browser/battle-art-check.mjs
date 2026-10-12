@@ -160,7 +160,9 @@ for (const dpr of [1, 1.5, 2]) {
 // struck (stepping back as well when it dodges) and its cast sheet while
 // chanting and at the release, each standing on the idle's feet row; a
 // Ranger shoots with its shoot sheet; a wolf strikes with its A12b sheet;
-// a creature with no pose sheets keeps its idle; reduced motion still plays the poses, in place.
+// a forest ogre with its A12c sheet; a knight (A12d) recoils with its hurt
+// sheet but keeps its idle to strike while its attack sheet is pending;
+// reduced motion still plays the poses, in place.
 for (const mode of ['full', 'reduced']) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
