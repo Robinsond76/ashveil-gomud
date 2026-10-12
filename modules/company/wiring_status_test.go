@@ -139,7 +139,8 @@ func TestStaggeredFoeLosesExactlyOneAction(t *testing.T) {
 
 	assert.Contains(t, b.fight(), "The bandit captain reels, and loses the action. (staggered)")
 	b.toughen()
-	assert.NotContains(t, b.fight(), "loses the action", "the second round it acts")
+	// Only the captain: a company crit can stagger another foe the same round.
+	assert.NotContains(t, b.fight(), "The bandit captain reels, and loses the action", "the second round it acts")
 }
 
 func TestKnockedDownLeaderLosesTheNextActionAndStaysDown(t *testing.T) {

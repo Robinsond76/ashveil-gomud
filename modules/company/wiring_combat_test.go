@@ -557,9 +557,20 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	assert.NotContains(t, got, "You can't reach that target from here.")
 	assert.Contains(t, got, "You can't reach the bandit captain from here.", "Aria is told she can't reach the captain")
 	assert.NotContains(t, got, "turn toward")
-	turned := regexp.MustCompile(`the ((?:first|second) cutthroat)`).FindStringSubmatch(got)
-	require.Len(t, turned, 2, "Aria swung at a cutthroat:\n%s", got)
-	assert.True(t, swungAt(got, turned[1]), "Aria swung at her new target in the same round:\n%s", got)
+	// Her new target is the cutthroat named in one of her own lines; other
+	// lines of the round name foes swinging at someone else.
+	cutthroat := regexp.MustCompile(`(?i)the ((?:first|second) cutthroat)`)
+	turned := ""
+	for _, line := range strings.Split(got, "\n") {
+		if strings.HasPrefix(line, "You") || strings.HasPrefix(line, "Aria") || strings.Contains(line, "your blow") {
+			if m := cutthroat.FindStringSubmatch(line); m != nil {
+				turned = m[1]
+				break
+			}
+		}
+	}
+	require.NotEmpty(t, turned, "Aria swung at a cutthroat in the same round:\n%s", got)
+	assert.True(t, swungAt(got, turned), "Aria swung at her new target in the same round:\n%s", got)
 
 	// F2: the whole party joined in round 1, not one member at a time.
 	company := b.companyInstances()
