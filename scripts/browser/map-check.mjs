@@ -1115,6 +1115,39 @@ for (const dpr of [1, 1.5, 2]) {
   await page.close();
 }
 
+// --- The Halo setting: the ring under your sprite and your camp fire ---
+{
+  const campShot = async (viewport, settings, name) => {
+    const pg = await open(viewport, settings);
+    await start(pg);
+    await gmcp(pg, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(2, 1), fire_lit: true, allied_camps: [] });
+    await tick(pg, 400);
+    if (shot && name) { await pg.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-halo-' + name + '.png') }); }
+    const st = await state(pg);
+    const img = await pg.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+    return { pg, st, img };
+  };
+  for (const [label, vp] of [['desk', { width: 1280, height: 900 }], ['360', { width: 360, height: 740 }]]) {
+    const on = await campShot(vp, null, label + '-on');
+    check(on.st.campAsYou === true && on.st.fire === 'bonfire', 'halo ' + label + ': camped with the fire lit');
+    await on.pg.close();
+    const off = await campShot(vp, { hereRing: false }, label + '-off');
+    check(off.st.campAsYou === true && off.st.fire === 'bonfire', 'halo ' + label + ': the camp fire still burns with the halo off');
+    check(off.img !== on.img, 'halo ' + label + ': turning the halo off changes what is drawn under the camp');
+    await off.pg.close();
+  }
+  let pg = await open({ width: 1280, height: 900 });
+  await start(pg);
+  const withRing = await pg.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+  await pg.click('.map-controls button[title="Map settings"]');
+  const haloRow = pg.locator('.map-settings-panel div', { hasText: /^Halo/ }).last();
+  await haloRow.locator('button', { hasText: 'Off' }).click();
+  await tick(pg, 300);
+  check(await pg.evaluate(() => JSON.parse(localStorage.getItem('gomud_map_settings')).hereRing === false), 'the Halo switch is saved per browser');
+  check(withRing !== await pg.evaluate(() => document.getElementById('map-2d-canvas').toDataURL()), 'the Halo switch removes the ring under your sprite');
+  await pg.close();
+}
+
 await browser.close();
 server.close();
 console.log(failures ? failures + ' check(s) failed' : 'all checks passed');
