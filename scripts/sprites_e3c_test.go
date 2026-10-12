@@ -33,21 +33,34 @@ var a12bCreatures = []string{"spider-hatchling", "fungus", "skeleton", "crocodil
 	"acolyte-dark", "ruffian-dangerous", "poacher", "dog-junkyard", "bonesetter", "ice-warrior", "stalker-cave",
 	"spider-large", "unknown-humanoid", "unknown-beast", "unknown-large"}
 
+// a12cCreatures are the A12c creatures: the rest of A7. The training dummy
+// is only struck; the lich, grave chanter and goblin shaman cast; the straw
+// archer shoots.
+var a12cCreatures = []string{"spider-queen", "bone-warden", "bonecrafter", "lich", "grave-chanter", "brigand",
+	"ruffian-enforcer", "poacher-shieldman", "shadow-trainee", "shadow-master", "goblin", "goblin-shaman", "goblin-loot",
+	"faerie", "ent", "ogre-forest", "creeper-cave", "creeper-abyssal", "ice-guardian", "dummy-training", "straw-footman",
+	"straw-archer", "guard", "guard-royal", "guard-captain", "hound", "warhound", "stone-golem", "doll", "angel", "demon",
+	"war-bear", "drake-hatchling"}
+
 func a12bWants(creature string) []string {
+	if creature == "dummy-training" {
+		return []string{"hurt"}
+	}
 	poses := []string{"attack", "hurt"}
 	switch creature {
-	case "goblin-hexer", "bonesetter":
+	case "goblin-hexer", "bonesetter", "lich", "grave-chanter", "goblin-shaman":
 		poses = append(poses, "cast")
-	case "poacher":
+	case "poacher", "straw-archer":
 		poses = append(poses, "shoot")
 	}
 	return poses
 }
 
-// TestCommissionedBattlePosesAreImported (E3c, A12b): the 38 approved A12
-// pose sheets ship for the 15 base classes and the 53 A12b sheets for 25
-// creatures, each cut like its idle (the same frame
-// size and density, so the screen stands them on the idle's feet row),
+// TestCommissionedBattlePosesAreImported (E3c, A12b, A12c): the 38 approved
+// A12 pose sheets ship for the 15 base classes, the 53 A12b sheets for 25
+// creatures and the 69 A12c sheets for the other 33, each cut like its idle
+// (the same frame size and density, so the screen stands them on the idle's
+// feet row),
 // with the pose's frame count, a looping cast, and within 60 KB a frame.
 func TestCommissionedBattlePosesAreImported(t *testing.T) {
 	dir := spriteDir(t)
@@ -79,12 +92,20 @@ func TestCommissionedBattlePosesAreImported(t *testing.T) {
 	if len(want) != 38+53 {
 		t.Fatalf("A12 and A12b list %d sheets, want 91", len(want))
 	}
+	for _, c := range a12cCreatures {
+		for _, p := range a12bWants(c) {
+			want["battle/units/"+c+"/"+p+".png"] = true
+		}
+	}
+	if len(want) != 38+53+69 {
+		t.Fatalf("A12, A12b and A12c list %d sheets, want 160", len(want))
+	}
 	for rel, meta := range m.Files {
 		if meta.Kind != "battle-pose" {
 			continue
 		}
 		if !want[rel] {
-			t.Errorf("%s: a pose sheet A12 and A12b did not order", rel)
+			t.Errorf("%s: a pose sheet A12, A12b and A12c did not order", rel)
 		}
 	}
 	for rel := range want {

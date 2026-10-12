@@ -72,7 +72,7 @@ the owner signs off on the style anchors.
 | **A13** | [A13-light-markers.md](A13-light-markers.md) | Map markers for carried light: a torch, a lantern (lit and out) and a party light orb; optional bonfire | 4 (+1 optional); delivered with the bonfire, approved and imported 2026-10-11 | LM2 |
 | **A12** | [A12-battle-actions-pilot.md](A12-battle-actions-pilot.md) | Pilot battle action poses for the 15 base classes: attack, hurt, and shoot or cast | 38 | E3c |
 | **A12b** | [A12b-creature-actions.md](A12b-creature-actions.md) | Battle action poses for the 25 enemies and creatures met most, with the 3 fallbacks | 53; approved and imported 2026-10-11 | none (E3c imports them) |
-| **A12c** | [A12b-creature-actions.md](A12b-creature-actions.md#a12c-the-rest-33-figures-69-sheets) | Battle action poses for the other 33 enemies, bosses, summons and company creatures | 69 | none |
+| **A12c** | [A12b-creature-actions.md](A12b-creature-actions.md#a12c-the-rest-33-figures-69-sheets) | Battle action poses for the other 33 enemies, bosses, summons and company creatures | 69; approved and imported 2026-10-12 | none |
 | **A14** | [A14-map-weather.md](A14-map-weather.md) | Weather on the map: rain (light and heavy), splash, snow (near and far), fog, cloud shadows and lightning | 8; approved and imported 2026-10-12 | LM4 |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),

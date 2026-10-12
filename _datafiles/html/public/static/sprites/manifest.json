@@ -929,6 +929,50 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/angel/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "summon",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/angel/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "summon",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
   "battle/units/angel/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1733,6 +1777,50 @@
    "source": "imported",
    "variant_of": "alchemist"
   },
+  "battle/units/bone-warden/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/bone-warden/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/bone-warden/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -1752,6 +1840,50 @@
    "set": "S3",
    "size": [
     512,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/bonecrafter/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/bonecrafter/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
     128
    ],
    "size_class": "M",
@@ -1868,6 +2000,50 @@
    "set": "S3",
    "size": [
     512,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/brigand/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "bandit",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/brigand/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "bandit",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
     128
    ],
    "size_class": "M",
@@ -2158,6 +2334,50 @@
    "source": "imported",
    "variant_of": "witch"
   },
+  "battle/units/creeper-abyssal/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cave",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/creeper-abyssal/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cave",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/creeper-abyssal/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2182,6 +2402,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "creeper-cave"
+  },
+  "battle/units/creeper-cave/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cave",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/creeper-cave/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cave",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/creeper-cave/idle.png": {
    "anchor": "bottom-center",
@@ -2355,6 +2619,50 @@
    "source": "imported",
    "variant_of": "arbalist"
   },
+  "battle/units/demon/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "summon",
+   "feet_baseline": 128,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/demon/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "summon",
+   "feet_baseline": 128,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
   "battle/units/demon/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2486,6 +2794,50 @@
     128
    ],
    "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/doll/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2.6666666666666665,
+   "facing": "right",
+   "family": "construct",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "S",
+   "source": "imported"
+  },
+  "battle/units/doll/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2.6666666666666665,
+   "facing": "right",
+   "family": "construct",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "S",
    "source": "imported"
   },
   "battle/units/doll/idle.png": {
@@ -2774,6 +3126,50 @@
    "source": "imported",
    "variant_of": "beasttamer"
   },
+  "battle/units/drake-hatchling/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/drake-hatchling/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/drake-hatchling/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2902,6 +3298,28 @@
    "source": "imported",
    "variant_of": "rogue"
   },
+  "battle/units/dummy-training/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "training",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/dummy-training/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -2989,6 +3407,50 @@
    "source": "imported",
    "variant_of": "cleric"
   },
+  "battle/units/ent/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "plant",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/ent/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "plant",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
   "battle/units/ent/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3011,6 +3473,50 @@
     144
    ],
    "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/faerie/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2.6666666666666665,
+   "facing": "right",
+   "family": "fey",
+   "feet_baseline": 117,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "S",
+   "source": "imported"
+  },
+  "battle/units/faerie/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2.6666666666666665,
+   "facing": "right",
+   "family": "fey",
+   "feet_baseline": 117,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "S",
    "source": "imported"
   },
   "battle/units/faerie/idle.png": {
@@ -3237,6 +3743,50 @@
    "source": "imported",
    "variant_of": "goblin"
   },
+  "battle/units/goblin-loot/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/goblin-loot/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/goblin-loot/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3262,6 +3812,73 @@
    "source": "imported",
    "variant_of": "goblin"
   },
+  "battle/units/goblin-shaman/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/goblin-shaman/cast.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 4,
+   "kind": "battle-pose",
+   "loop": true,
+   "pose": "cast",
+   "set": "S4",
+   "size": [
+    512,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/goblin-shaman/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/goblin-shaman/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3286,6 +3903,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "goblin"
+  },
+  "battle/units/goblin/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/goblin/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "goblin",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/goblin/idle.png": {
    "anchor": "bottom-center",
@@ -3431,6 +4092,73 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "dollmaster"
+  },
+  "battle/units/grave-chanter/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cultist",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/grave-chanter/cast.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cultist",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 4,
+   "kind": "battle-pose",
+   "loop": true,
+   "pose": "cast",
+   "set": "S4",
+   "size": [
+    512,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/grave-chanter/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "cultist",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/grave-chanter/idle.png": {
    "anchor": "bottom-center",
@@ -3683,6 +4411,50 @@
     64
    ]
   },
+  "battle/units/guard-captain/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "town guard",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/guard-captain/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "town guard",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/guard-captain/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3708,6 +4480,50 @@
    "source": "imported",
    "variant_of": "guard"
   },
+  "battle/units/guard-royal/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "town guard",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/guard-royal/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "town guard",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/guard-royal/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -3732,6 +4548,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "guard"
+  },
+  "battle/units/guard/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "town guard",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/guard/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "town guard",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/guard/idle.png": {
    "anchor": "bottom-center",
@@ -4081,6 +4941,50 @@
    "source": "imported",
    "variant_of": "wizard"
   },
+  "battle/units/hound/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/hound/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/hound/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4182,6 +5086,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "ranger"
+  },
+  "battle/units/ice-guardian/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "ice",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/ice-guardian/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "ice",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
   },
   "battle/units/ice-guardian/idle.png": {
    "anchor": "bottom-center",
@@ -4411,6 +5359,73 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "warrior"
+  },
+  "battle/units/lich/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/lich/cast.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 4,
+   "kind": "battle-pose",
+   "loop": true,
+   "pose": "cast",
+   "set": "S4",
+   "size": [
+    576,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/lich/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "undead",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
   },
   "battle/units/lich/idle.png": {
    "anchor": "bottom-center",
@@ -4712,6 +5727,50 @@
    "source": "imported",
    "variant_of": "rogue"
   },
+  "battle/units/ogre-forest/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "ogre",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/ogre-forest/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "ogre",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
   "battle/units/ogre-forest/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -4878,6 +5937,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "rogue"
+  },
+  "battle/units/poacher-shieldman/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "bandit",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/poacher-shieldman/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "bandit",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/poacher-shieldman/idle.png": {
    "anchor": "bottom-center",
@@ -5703,6 +6806,50 @@
    "source": "imported",
    "variant_of": "ruffian"
   },
+  "battle/units/ruffian-enforcer/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "bandit",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/ruffian-enforcer/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "bandit",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/ruffian-enforcer/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -5999,6 +7146,50 @@
    "source": "imported",
    "variant_of": "ranger"
   },
+  "battle/units/shadow-master/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "shadow guild",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/shadow-master/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "shadow guild",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/shadow-master/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -6023,6 +7214,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "shadow-trainee"
+  },
+  "battle/units/shadow-trainee/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "shadow guild",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/shadow-trainee/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "shadow guild",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/shadow-trainee/idle.png": {
    "anchor": "bottom-center",
@@ -6725,6 +7960,50 @@
    "size_class": "M",
    "source": "imported"
   },
+  "battle/units/spider-queen/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "spider",
+   "feet_baseline": 173,
+   "frame": [
+    192,
+    192
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    1152,
+    192
+   ],
+   "size_class": "XL",
+   "source": "imported"
+  },
+  "battle/units/spider-queen/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "spider",
+   "feet_baseline": 173,
+   "frame": [
+    192,
+    192
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    576,
+    192
+   ],
+   "size_class": "XL",
+   "source": "imported"
+  },
   "battle/units/spider-queen/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -6910,6 +8189,50 @@
    "source": "imported",
    "variant_of": "ranger"
   },
+  "battle/units/stone-golem/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/stone-golem/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/stone-golem/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -6955,6 +8278,50 @@
    "source": "imported",
    "variant_of": "shaman"
   },
+  "battle/units/straw-archer/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "training",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/straw-archer/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "training",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
   "battle/units/straw-archer/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -6979,6 +8346,72 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "straw-footman"
+  },
+  "battle/units/straw-archer/shoot.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "training",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "shoot",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/straw-footman/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "training",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/straw-footman/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "training",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/straw-footman/idle.png": {
    "anchor": "bottom-center",
@@ -7591,6 +9024,50 @@
    "source": "imported",
    "variant_of": "shaman"
   },
+  "battle/units/war-bear/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    864,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
+  "battle/units/war-bear/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "creature",
+   "feet_baseline": 129,
+   "frame": [
+    144,
+    144
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    432,
+    144
+   ],
+   "size_class": "L",
+   "source": "imported"
+  },
   "battle/units/war-bear/idle.png": {
    "anchor": "bottom-center",
    "density": 2,
@@ -7695,6 +9172,50 @@
    "size_class": "M",
    "source": "imported",
    "variant_of": "ranger"
+  },
+  "battle/units/warhound/attack.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "canine",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 6,
+   "kind": "battle-pose",
+   "pose": "attack",
+   "set": "S4",
+   "size": [
+    768,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
+  },
+  "battle/units/warhound/hurt.png": {
+   "anchor": "bottom-center",
+   "density": 2,
+   "facing": "right",
+   "family": "canine",
+   "feet_baseline": 115,
+   "frame": [
+    128,
+    128
+   ],
+   "frame_ms": 120,
+   "frames": 3,
+   "kind": "battle-pose",
+   "pose": "hurt",
+   "set": "S4",
+   "size": [
+    384,
+    128
+   ],
+   "size_class": "M",
+   "source": "imported"
   },
   "battle/units/warhound/idle.png": {
    "anchor": "bottom-center",

@@ -1,3 +1,9 @@
+**A12c imported: every creature has battle poses (2026-10-12).** The art agent's last creature batch is in the game, reviewed and approved ([order](art/A12b-creature-actions.md)): 69 attack, hurt, cast and shoot sheets for the other 33 A7 figures (bosses, bandits, goblins, guards, training figures, summons and company creatures). Every A7 figure now strikes and recoils with real poses.
+- **Review:** every sheet is on its idle's cell, grain and runtime frame. Each has empty gutters, only fully transparent or fully opaque pixels, the idle's feet line and its colours. The training dummy has only its hurt sheet, as ordered. Two flags accepted: the doll's strings run off the top of its frame, as its idle's do; and the faerie's lowest point sits 3 art pixels (about 1 screen pixel) below its idle's.
+- **Import:** `import_battle.py` reads the new `A12c` phase; no client change.
+- *Tests:* `TestCommissionedBattlePosesAreImported` covers A12, A12b and A12c (160 sheets). `battle-art-check.mjs`: the forest ogre strikes with its A12c sheet; a knight (an advanced class, no poses yet) keeps its idle.
+- *Next:* poses for the advanced and elite classes, when ordered.
+
 **A14 imported: weather art on the map (2026-10-12).** The art agent's map weather is in the game, reviewed and approved ([order](art/A14-map-weather.md)).
 - **Review:** all 8 files are the ordered size on the 8 px grain, with only fully transparent or fully opaque pixels, empty gutters, and no seams when tiled 3×3. The rain slants down to the left; the splash ring widens and fades; the bolt strikes the tile's centre in 3 frames.
 - **Import:** `import_art.py` has `map/weather/*` jobs (kind `weather`): 128 px for the one-tile textures, 256 for fog and clouds, a 4-frame 64 px splash and a 3-frame 128 px bolt. LM4 draws them in place of its code stand-ins, with no other code change.

@@ -49,7 +49,7 @@ const positions = { leader: { row: 0, col: 1 }, 'companion:1': { row: 1, col: 0 
 const enemy = (n, label, row, col, sprite) => ({ id: 'm:' + n, label, cell: { row, col }, health: 'unhurt', sprite, reach: true, target: '' });
 const battle = {
   group: 'a mixed rabble', narrow: false, positions,
-  enemies: [enemy(1, 'a timber wolf', 0, 0, 'wolf-timber'), enemy(2, 'a rat', 0, 2, 'rat'), enemy(3, 'a forest ogre', 1, 1, 'ogre-forest')],
+  enemies: [enemy(1, 'a timber wolf', 0, 0, 'wolf-timber'), enemy(2, 'a rat', 0, 2, 'rat'), enemy(3, 'a forest ogre', 1, 1, 'ogre-forest'), enemy(4, 'a knight', 1, 2, 'knight')],
   company: [], focus: 'none', saved_focus: 'none', focus_ready: true,
 };
 
@@ -180,7 +180,7 @@ for (const mode of ['full', 'reduced']) {
   const idleTop = ((await unit('companion:1')).art || {}).top;
   // A unit's pose sheets load as its figure is first drawn, so the very
   // first blow, flinch and chant of the fight play them: wait for the loads.
-  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot', 'wolf-timber/attack'];
+  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot', 'wolf-timber/attack', 'ogre-forest/attack'];
   await page.waitForFunction(names => names.every(n => performance.getEntriesByType('resource').some(e => e.name.endsWith('/battle/units/' + n + '.png') && e.responseEnd > 0)),
     sheets, { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(50);
@@ -213,7 +213,9 @@ for (const mode of ['full', 'reduced']) {
   check(seen['companion:1'].some(a => a.path === 'battle/units/cleric/hurt.png'), tag + 'the struck cleric plays its hurt sheet');
   check(seen['m:1'].some(a => a.path === 'battle/units/wolf-timber/attack.png'), tag + 'a wolf strikes with its A12b attack sheet');
   seen = await send({ kind: 'attack', src: 'm:3', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['m:3']);
-  check(seen['m:3'].length > 0 && seen['m:3'].every(a => a.path === 'battle/units/ogre-forest/idle.png'), tag + 'a forest ogre (no pose sheets until A12c) keeps its idle as it strikes');
+  check(seen['m:3'].some(a => a.path === 'battle/units/ogre-forest/attack.png'), tag + 'a forest ogre strikes with its A12c attack sheet');
+  seen = await send({ kind: 'attack', src: 'm:4', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['m:4']);
+  check(seen['m:4'].length > 0 && seen['m:4'].every(a => a.path === 'battle/units/knight/idle.png'), tag + 'a knight (an advanced class, no pose sheets yet) keeps its idle as it strikes');
   seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'miss' }, ['companion:1']);
   const dodge = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/hurt.png');
   check(dodge.length > 0 && Math.max(...dodge.map(a => Math.abs(a.dx))) >= 4, tag + 'a dodging cleric plays its hurt sheet and steps back: moved ' + Math.max(0, ...dodge.map(a => Math.abs(a.dx))));
