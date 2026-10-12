@@ -180,7 +180,7 @@ for (const mode of ['full', 'reduced']) {
   const idleTop = ((await unit('companion:1')).art || {}).top;
   // A unit's pose sheets load as its figure is first drawn, so the very
   // first blow, flinch and chant of the fight play them: wait for the loads.
-  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot', 'wolf-timber/attack', 'ogre-forest/attack'];
+  const sheets = ['cleric/attack', 'cleric/hurt', 'cleric/cast', 'ranger/shoot', 'wolf-timber/attack', 'ogre-forest/attack', 'knight/hurt'];
   await page.waitForFunction(names => names.every(n => performance.getEntriesByType('resource').some(e => e.name.endsWith('/battle/units/' + n + '.png') && e.responseEnd > 0)),
     sheets, { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(50);
@@ -215,7 +215,9 @@ for (const mode of ['full', 'reduced']) {
   seen = await send({ kind: 'attack', src: 'm:3', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['m:3']);
   check(seen['m:3'].some(a => a.path === 'battle/units/ogre-forest/attack.png'), tag + 'a forest ogre strikes with its A12c attack sheet');
   seen = await send({ kind: 'attack', src: 'm:4', tgt: 'companion:1', outcome: 'hit', damage: 2 }, ['m:4']);
-  check(seen['m:4'].length > 0 && seen['m:4'].every(a => a.path === 'battle/units/knight/idle.png'), tag + 'a knight (an advanced class, no pose sheets yet) keeps its idle as it strikes');
+  check(seen['m:4'].length > 0 && seen['m:4'].every(a => a.path === 'battle/units/knight/idle.png'), tag + 'a knight (an advanced class whose A12d attack sheet is still pending) keeps its idle as it strikes');
+  seen = await send({ kind: 'attack', src: 'companion:1', tgt: 'm:4', outcome: 'hit', damage: 2 }, ['m:4']);
+  check(seen['m:4'].some(a => a.path === 'battle/units/knight/hurt.png'), tag + 'a struck knight recoils with its A12d hurt sheet');
   seen = await send({ kind: 'attack', src: 'm:1', tgt: 'companion:1', outcome: 'miss' }, ['companion:1']);
   const dodge = seen['companion:1'].filter(a => a.path === 'battle/units/cleric/hurt.png');
   check(dodge.length > 0 && Math.max(...dodge.map(a => Math.abs(a.dx))) >= 4, tag + 'a dodging cleric plays its hurt sheet and steps back: moved ' + Math.max(0, ...dodge.map(a => Math.abs(a.dx))));

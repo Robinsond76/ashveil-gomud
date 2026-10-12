@@ -56,9 +56,35 @@ func a12bWants(creature string) []string {
 	return poses
 }
 
-// TestCommissionedBattlePosesAreImported (E3c, A12b, A12c): the 38 approved
+// a12dClasses are the A12d advanced classes (docs/art/A12d-class-actions.md)
+// by the poses each was ordered: every class attacks and is hurt; the
+// shooters shoot; the casters (and the knight, for Lay on Hands) cast. Its
+// block or parry row (A12f's rule) is not listed until it arrives.
+var a12dClasses = map[string][]string{
+	"attack hurt shoot": {"apothecary", "bombardier", "mutagenist", "sharpshooter", "siegebreaker", "warden-of-the-wall",
+		"hunter", "stalker", "warden"},
+	"attack hurt": {"bearward", "dragon-tamer", "houndmaster", "gryphon-knight", "skyscout", "wyvern-rider", "sweeper",
+		"valkyrie", "vanguard", "assassin", "duelist", "scout", "hatamoto", "kensai", "ronin", "blackguard", "mercenary"},
+	"attack hurt cast": {"blood-priest", "druid", "priest", "golemancer", "marionettist", "puppeteer", "earthspeaker",
+		"mistweaver", "stormcaller", "knight", "coven-sage", "hag", "hedge-witch", "arcanist", "sorcerer", "theurgist",
+		"warlock"},
+}
+
+// a12dPending are the A12d sheets ordered but not yet delivered (the partial
+// delivery of 2026-10-12 brought 90 of 112). Remove each as it arrives.
+var a12dPending = map[string]bool{
+	"mutagenist/attack": true, "mutagenist/hurt": true, "mutagenist/shoot": true, "bearward/attack": true,
+	"dragon-tamer/attack": true, "houndmaster/attack": true, "houndmaster/hurt": true, "gryphon-knight/attack": true,
+	"gryphon-knight/hurt": true, "skyscout/attack": true, "skyscout/hurt": true, "wyvern-rider/attack": true,
+	"wyvern-rider/hurt": true, "sweeper/attack": true, "valkyrie/attack": true, "vanguard/attack": true,
+	"assassin/attack": true, "duelist/attack": true, "duelist/hurt": true, "ronin/attack": true, "knight/attack": true,
+	"knight/cast": true,
+}
+
+// TestCommissionedBattlePosesAreImported (E3c, A12b, A12c, A12d): the 38 approved
 // A12 pose sheets ship for the 15 base classes, the 53 A12b sheets for 25
-// creatures and the 69 A12c sheets for the other 33, each cut like its idle
+// creatures, the 69 A12c sheets for the other 33 and the A12d sheets
+// delivered so far for the 43 advanced classes, each cut like its idle
 // (the same frame size and density, so the screen stands them on the idle's
 // feet row),
 // with the pose's frame count, a looping cast, and within 60 KB a frame.
@@ -100,12 +126,27 @@ func TestCommissionedBattlePosesAreImported(t *testing.T) {
 	if len(want) != 38+53+69 {
 		t.Fatalf("A12, A12b and A12c list %d sheets, want 160", len(want))
 	}
+	ordered, classes := 0, 0
+	for poses, list := range a12dClasses {
+		for _, c := range list {
+			classes++
+			for _, p := range strings.Fields(poses) {
+				ordered++
+				if !a12dPending[c+"/"+p] {
+					want["battle/units/"+c+"/"+p+".png"] = true
+				}
+			}
+		}
+	}
+	if classes != 43 || ordered != 112 || len(want) != 160+112-len(a12dPending) {
+		t.Fatalf("A12d lists %d classes and %d sheets (%d pending), want 43 and 112", classes, ordered, len(a12dPending))
+	}
 	for rel, meta := range m.Files {
 		if meta.Kind != "battle-pose" {
 			continue
 		}
 		if !want[rel] {
-			t.Errorf("%s: a pose sheet A12, A12b and A12c did not order", rel)
+			t.Errorf("%s: a pose sheet A12 to A12d did not order (or one still pending arrived)", rel)
 		}
 	}
 	for rel := range want {
