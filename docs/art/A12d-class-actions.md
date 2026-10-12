@@ -26,6 +26,7 @@ Exactly the A12 poses, frame counts and beats:
 | `attack` | 6 | A blow with the class's own weapon, as its idle carries it: 1 ready, 2 wind-up, 3 strike under way, 4 **the blow at full reach** (the hit lands here), 5 follow-through, 6 recover to the idle stance. |
 | `hurt` | 3 | Struck: 1 recoil, 2 the worst of it, 3 steadying. |
 | `shoot` | 6 | The ranger, arbalist and alchemist lines: 1 draw or raise, 2–3 aim, 4 the release (bow, crossbow bolt, or a thrown flask), 5 follow-through, 6 recover. |
+| `block` or `parry` | 3 | One of the two for every class, by what its idle carries: `block` for a shield-bearer, `parry` for a melee weapon and no shield, none for neither. As described in [A12f](A12f-defense-poses.md). Not listed in the tables below; list which each class got in the delivery notes. |
 | `cast` | 4 | The cleric, wizard, witch, shaman and dollmaster lines, and the knight and paladin (who heal by laying on hands): chanting, **looping**, hands, staff or focus raised and a glow building and fading in the class's own colour (a censer's smoke, soulfire, storm light, the doll strings tightening). Seamless loop. |
 
 Each class's blow is its own: a knight's sword over its shield, a
