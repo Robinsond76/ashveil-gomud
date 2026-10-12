@@ -88,7 +88,8 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   a small sleeping mark floats over the tent; resting at an inn shows the
   inn's bed instead. A fire that has burned down to embers glows low with
   no smoke, and a camp made without a tent shows two bedrolls round a ring
-  of stones instead of the tent (<ansi fg="command">help camp gear</ansi>). The camps of your own party show as blue tents, with
+  of stones instead of the tent, its one fire burning in that ring
+  (<ansi fg="command">help camp gear</ansi>). The camps of your own party show as blue tents, with
   their own fires. You never see the camp of a company that is not in
   your party, even one a step away.
 

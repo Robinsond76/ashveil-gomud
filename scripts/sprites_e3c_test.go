@@ -201,6 +201,21 @@ func TestImportBattlePoses(t *testing.T) {
 		t.Errorf("hurt entry = %v", h)
 	}
 
+	// A12f: a block and a parry are 3-frame poses, not looping.
+	defend := t.TempDir()
+	writeStripN(t, defend, "A12f/battle/units/warrior/block.png", 3, 640, 40, fig)
+	writeStripN(t, defend, "A12f/battle/units/warrior/parry.png", 3, 640, 40, fig)
+	if msg, err := run(defend, out); err != nil {
+		t.Errorf("block and parry sheets were refused: %v\n%s", err, msg)
+	} else {
+		ix := index(out)
+		for _, pose := range []string{"block", "parry"} {
+			if e := ix["battle/units/warrior/"+pose+".png"]; e["kind"] != "battle-pose" || e["pose"] != pose || e["frames"] != float64(3) || e["loop"] != nil {
+				t.Errorf("%s entry = %v, want a 3-frame battle-pose", pose, e)
+			}
+		}
+	}
+
 	// A pose whose idle in the index was cut at another size is refused,
 	// so it can't stand on the wrong feet row.
 	stale := t.TempDir()
