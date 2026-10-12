@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -1400,6 +1401,28 @@ func (c *Character) IsAggro(targetUserId int, targetMobInstanceId int) bool {
 
 func (c *Character) IsDisabled() bool {
 	return c.Health <= 0
+}
+
+// WornWarmthPieces lists what the character wears as climate pieces.
+func (c *Character) WornWarmthPieces() []climate.WornPiece {
+	worn := []climate.WornPiece{}
+	for _, item := range c.Equipment.GetAllItems() {
+		worn = append(worn, WarmthPieceOf(item))
+	}
+	return worn
+}
+
+// WarmthPieceOf is one item as a climate piece, keyed by its item type
+// (the slot name exposure's per-slot defaults use).
+func WarmthPieceOf(item items.Item) climate.WornPiece {
+	spec := item.GetSpec()
+	return climate.WornPiece{Slot: strings.ToLower(string(spec.Type)), Warmth: spec.Warmth, Bonus: spec.WarmthBonus}
+}
+
+// Warmth is the insulation the character's clothing gives, as exposure
+// totals it.
+func (c *Character) Warmth() int {
+	return climate.WornWarmth(c.WornWarmthPieces(), c.HasBuffFlag("warmed"))
 }
 
 func (c *Character) HasBuffFlag(buffFlag string) bool {
