@@ -580,10 +580,20 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	b.aria.Character.EndAggro()
 	garrick := b.companion(3)
 	garrick.Character.EndAggro()
+	// Who swung this round: a rejoiner whose new target falls in the same
+	// round ends it with no aim again (a death clears it), so the swing is
+	// the proof, not the aim left after the round.
+	swung := map[[2]int]bool{} // {user id, mob instance id}
+	stopWatching := combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if e.Kind == combatstream.Attack {
+			swung[[2]int{e.Source.UserId, e.Source.MobInstanceId}] = true
+		}
+	})
 	got = b.fight()
+	stopWatching()
 	assert.NotContains(t, got, "turn toward")
-	assert.NotNil(t, b.aria.Character.Aggro, "the leader rejoins")
-	assert.NotNil(t, garrick.Character.Aggro, "the killer rejoins")
+	assert.True(t, swung[[2]int{7, 0}] || b.aria.Character.Aggro != nil, "the leader rejoins:\n%s", got)
+	assert.True(t, swung[[2]int{0, garrick.InstanceId}] || garrick.Character.Aggro != nil, "the killer rejoins:\n%s", got)
 
 	// Phase 32d: `break` is refused in a battle (only flee takes her out),
 	// and she fights on.
