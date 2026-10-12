@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"fmt"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 
@@ -269,4 +270,51 @@ func SetDebug(on bool) {
 // Initialize the priority queue.
 func init() {
 	heap.Init(&globalQueue)
+}
+
+// DispatchNow takes the queued events match picks out of the queue and
+// hands them to handle at once, in their queued order, with the cause, slot
+// and typed marks they were queued with; every other event keeps its place.
+// It returns how many it handled. handle is the events' listener called
+// directly, not through DoListeners: DispatchNow runs inside a listener,
+// which holds the listener lock. Ashveil (PR #222 review): a combat
+// round resolves every turn under one event, so a disabling status queued
+// by an early turn must land before a later turn, not after the round.
+func DispatchNow(match func(Event) bool, handle Listener) int {
+	qLock.Lock()
+	var picked, kept []*prioritizedEvent
+	for _, pe := range globalQueue {
+		if match(pe.event) {
+			picked = append(picked, pe)
+		} else {
+			kept = append(kept, pe)
+		}
+	}
+	if len(picked) == 0 {
+		qLock.Unlock()
+		return 0
+	}
+	globalQueue = kept
+	heap.Init(&globalQueue)
+	for _, pe := range picked {
+		if ue, ok := pe.event.(uniqueEvent); ok {
+			delete(uniqueMap, ue.UniqueID())
+		}
+	}
+	qLock.Unlock()
+
+	sort.Slice(picked, func(i, j int) bool { return priorityQueue(picked).Less(i, j) })
+	for _, pe := range picked {
+		prevCause := currentCause.Swap(pe.cause)
+		prevSlot := currentSlot.Swap(int64(pe.slot))
+		prevTyped := currentTyped.Swap(pe.typed)
+		res := handle(pe.event)
+		currentCause.Store(prevCause)
+		currentSlot.Store(prevSlot)
+		currentTyped.Store(prevTyped)
+		if res == CancelAndRequeue {
+			addToRequeue(pe.event, pe.cause, pe.slot, pe.typed, pe.priority)
+		}
+	}
+	return len(picked)
 }

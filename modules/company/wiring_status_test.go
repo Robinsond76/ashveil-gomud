@@ -99,7 +99,13 @@ func TestBleedingTicksStacksAndEndsThroughTheRealRound(t *testing.T) {
 	final := b.fight()
 	assert.Regexp(t, `bandit captain bleeds\. \(2 damage, bleeding\)`, final)
 	assert.Contains(t, final, "The bandit captain's bleeding stops.")
-	last := (*ticks)[len(*ticks)-1]
+	// The captain's bleed: other fighters' lost actions are status ticks too.
+	var last combatstream.Event
+	for _, e := range *ticks {
+		if e.Target.MobInstanceId == captain.InstanceId && e.BuffId == status.Bleeding {
+			last = e
+		}
+	}
 	assert.Equal(t, combatstream.StatusExpired, last.Kind)
 	assert.False(t, status.Has(&captain.Character), "three combat rounds later it is over")
 }

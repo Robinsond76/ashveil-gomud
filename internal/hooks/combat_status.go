@@ -223,6 +223,19 @@ func statusPass() {
 	}
 }
 
+// landDisablingStatuses applies, at once, the disabling statuses earlier
+// turns of this round queued (a lullaby, a stun, a tackle's knockdown), so
+// they take the turn of a holder who has not acted yet (status.FreshLostAction).
+// The round resolves under one event, so a queued status would otherwise
+// land only after every turn had been taken. Other statuses keep their
+// timing.
+func landDisablingStatuses() {
+	events.DispatchNow(func(e events.Event) bool {
+		b, ok := e.(events.Buff)
+		return ok && b.BuffId > 0 && status.Disables(b.BuffId)
+	}, ApplyBuffs)
+}
+
 // statusCostsAction reports whether a status costs the holder this round's
 // action, telling the room and the stream when it does.
 func statusCostsAction(h statusHolder) bool {

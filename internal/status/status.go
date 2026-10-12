@@ -230,6 +230,55 @@ func LostAction(c *characters.Character) (*Spec, bool) {
 	return found, found != nil
 }
 
+// Disables reports whether buffId is a status that costs its holder turns
+// (lose-actions or lose-first-action): sleep, stun, stagger, paralysis, a
+// knockdown.
+func Disables(buffId int) bool {
+	if specs[buffId] == nil {
+		return false
+	}
+	spec := buffs.GetBuffSpec(buffId)
+	if spec == nil {
+		return false
+	}
+	for _, f := range spec.Flags {
+		if f == FlagLoseActions || f == FlagLoseFirstAction {
+			return true
+		}
+	}
+	return false
+}
+
+// FreshLostAction reports whether c carries a disabling status applied
+// since the last tick: one landed earlier in this round, before c's turn.
+// Such a holder has not acted yet, so the status takes this turn rather
+// than only the next round's. Spend counts the lost turn as one of the
+// status's rounds, so a two-round sleep still costs two turns in all.
+func FreshLostAction(c *characters.Character, spend bool) (*Spec, bool) {
+	var found *Spec
+	each(c, func(b *buffs.Buff, s *Spec) {
+		if b.Expired() || standsFast(c, s.Id) {
+			return
+		}
+		spec := buffs.GetBuffSpec(b.BuffId)
+		if spec == nil || b.TriggersLeft != b.TriggersInitial {
+			return
+		}
+		for _, f := range spec.Flags {
+			if f == FlagLoseActions || f == FlagLoseFirstAction {
+				if found == nil {
+					found = s
+				}
+				if spend {
+					b.TriggersLeft--
+				}
+				return
+			}
+		}
+	})
+	return found, found != nil
+}
+
 // Has reports whether c carries any live status.
 func Has(c *characters.Character) bool {
 	live := false

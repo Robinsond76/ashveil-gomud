@@ -237,6 +237,12 @@ func TestBindingHexParalyzesAndDamageDoesNotBreakIt(t *testing.T) {
 	require.NotNil(t, held, "a foe is paralyzed")
 	assert.Equal(t, 2, held.Character.GetBuffs(status.Paralyzed)[0].TriggersInitial, "1 round at level 10 (one more than it lasts)")
 	assert.True(t, held.Character.HasBuffFlag(status.FlagNoDodge))
+	// A hex that landed before the foe's turn took that turn already (one
+	// round in all); top it up, as if it had landed after, so the next
+	// round shows the held foe losing its action under the company's blows.
+	if bind := held.Character.GetBuffs(status.Paralyzed)[0]; bind.TriggersLeft < bind.TriggersInitial {
+		bind.TriggersLeft = bind.TriggersInitial
+	}
 
 	// Damage does not break paralysis, and it holds a lost action.
 	forceBlows(t, true)

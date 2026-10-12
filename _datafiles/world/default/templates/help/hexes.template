@@ -9,9 +9,11 @@ the hexcraft school, which only a Witch may learn.
   <ansi fg="yellow">Hex</ansi>               <ansi fg="yellow">level</ansi>  <ansi fg="yellow">mana</ansi>  <ansi fg="yellow">chant</ansi>  <ansi fg="yellow">what it does</ansi>
   Withering Hex       1      8     2     a weak damage curse, for when no hex is
                                          worth casting
-  Slumber             2      6     2     asleep for 2 rounds: loses its turns, and
-                                         the first damage wakes it (blows against a
-                                         sleeper hit 25 points more often)
+  Slumber             2      6     2     asleep for 2 rounds: loses its turns (even one
+                                         still to come this round), can't block,
+                                         parry, or dodge, and the first damage wakes
+                                         it (blows against a sleeper hit 25 points
+                                         more often)
   Earthbind           4      6     2     knocked down: loses its next action and is
                                          easier to hit
   Leaden Curse        6      8     2     hobbled: slow, and unable to flee

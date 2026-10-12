@@ -253,3 +253,10 @@ func TestWakeEndsSleepOnlyAndGroundedCountsTheHeld(t *testing.T) {
 	assert.False(t, Live(s, Asleep))
 	assert.False(t, Wake(s), "already awake")
 }
+
+func TestSleeperCannotDodgeOrBlock(t *testing.T) {
+	loadShipped(t)
+	c := holder(t)
+	c.AddBuff(Asleep, false)
+	assert.True(t, c.HasBuffFlag(FlagNoDodge) && c.HasBuffFlag(FlagNoBlock), "a sleeper raises no active defense")
+}

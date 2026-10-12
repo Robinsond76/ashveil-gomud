@@ -12,3 +12,5 @@ flags:
   - combat-status
   - lose-actions
   - asleep
+  - no-dodge
+  - no-block
