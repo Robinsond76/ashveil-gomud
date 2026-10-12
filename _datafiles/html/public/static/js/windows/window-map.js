@@ -734,9 +734,28 @@
             return { x: unit.x, y: unit.y, walking: false, start: 0 };
         }
 
+        // ROUGH_PIT: where the fire pit sits in camp-rough.png, from the sprite's
+        // centre in sprite pixels (art is 128 px, drawn at half size on the map).
+        var ROUGH_PIT = { x: -1, y: -1, scale: 1 };
+
         // fireAndRest draws a camp's fire (bottom right of the tent, or at
         // <at>) and its resting mark (over the tent).
-        function fireAndRest(cx, cy, mult, lit, resting, now, at, embers, big) {
+        // pit true means the camp art is the rough camp, which already has a
+        // stone fire pit: the flames are drawn on that pit (one fire, never a
+        // second beside it), and an unlit or cold fire is the pit as drawn.
+        function fireAndRest(cx, cy, mult, lit, resting, now, at, embers, big, pit) {
+            if (pit) {
+                lastFire = lit ? 'lit' : (embers ? 'embers' : 'unlit');
+                var pxp = cx + ROUGH_PIT.x * mult, pyp = cy + ROUGH_PIT.y * mult;
+                if (lit) {
+                    drawIcon('map/camp/fire-lit.png', pxp, pyp, mult * ROUGH_PIT.scale, now);
+                    drawIcon('map/camp/smoke.png', pxp, pyp - 12 * mult, mult, now);
+                } else if (embers) {
+                    drawIcon('map/camp/embers.png', pxp, pyp, mult * ROUGH_PIT.scale, now);
+                }
+                if (resting) { drawIcon('map/camp/resting.png', cx - 8 * mult, cy - 12 * mult, mult, now); }
+                return;
+            }
             var fx = at ? at.px : cx + 8 * mult, fy = at ? at.py : cy + 8 * mult;
             lastFire = lit ? 'lit' : (embers ? 'embers' : 'unlit');
             if (lit && big && drawIcon('map/camp/bonfire.png', fx, fy - 3 * mult, mult * 0.75, now)) {
@@ -794,7 +813,7 @@
                 ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
                 ctx.beginPath(); ctx.moveTo(p.px, p.py - q); ctx.lineTo(p.px + q, p.py + q); ctx.lineTo(p.px - q, p.py + q); ctx.closePath(); ctx.fill();
             }
-            fireAndRest(p.px, p.py, mult, lit, resting, now, fire, embers, asYou);
+            fireAndRest(p.px, p.py, tent === false ? tentMult : mult, lit, resting, now, fire, embers, asYou, tent === false);
         }
 
         // campAsYou (living map LM1) says your company is camped in the room
