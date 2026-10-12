@@ -35,7 +35,7 @@ func equipmentStats(c *characters.Character, load encumbrance.Load) domain.Equip
 	if c.Equipment.Offhand.GetSpec().Type == items.Weapon {
 		offhandDamage = offhand.DiceRoll
 	}
-	return domain.EquipmentStats{EdgeBonus: edgeBonus, EdgeStrikes: edgeStrikes, OffhandEdgeBonus: offhandEdgeBonus, OffhandEdgeStrikes: offhandEdgeStrikes, WeaponCoat: c.Equipment.Weapon.CoatSummary(time.Now()), OffhandCoat: c.Equipment.Offhand.CoatSummary(time.Now()), Hands: c.HandsRequired(c.Equipment.Weapon), Reach: c.Equipment.Weapon.GetSpec().Reach, Shield: c.HasShield(), HealthMax: c.HealthMax.Value, ManaMax: c.ManaMax.Value, Damage: weapon.DiceRoll, OffhandDamage: offhandDamage, Defense: c.GetDefense(), WornG: c.PersonalGrams(), Burden: c.BurdenWord(), DodgePct: combat.DodgeRetentionPct(c), PackCapacityG: c.Equipment.Pack.CarryBonusGrams(), CapacityG: load.CapacityGrams, CargoG: load.TotalGrams(), Stats: map[string]int{
+	return domain.EquipmentStats{EdgeBonus: edgeBonus, EdgeStrikes: edgeStrikes, OffhandEdgeBonus: offhandEdgeBonus, OffhandEdgeStrikes: offhandEdgeStrikes, WeaponCoat: c.Equipment.Weapon.CoatSummary(time.Now()), OffhandCoat: c.Equipment.Offhand.CoatSummary(time.Now()), Hands: c.HandsRequired(c.Equipment.Weapon), Reach: c.Equipment.Weapon.GetSpec().Reach, Shield: c.HasShield(), HealthMax: c.HealthMax.Value, ManaMax: c.ManaMax.Value, Damage: weapon.DiceRoll, OffhandDamage: offhandDamage, Defense: c.GetDefense(), WornG: c.PersonalGrams(), Burden: c.BurdenWord(), DodgePct: combat.DodgeRetentionPct(c), Warmth: c.Warmth(), PackCapacityG: c.Equipment.Pack.CarryBonusGrams(), CapacityG: load.CapacityGrams, CargoG: load.TotalGrams(), Stats: map[string]int{
 		"strength": c.Stats.Strength.ValueAdj, "speed": c.Stats.Speed.ValueAdj, "smarts": c.Stats.Smarts.ValueAdj, "vitality": c.Stats.Vitality.ValueAdj, "mysticism": c.Stats.Mysticism.ValueAdj, "perception": c.Stats.Perception.ValueAdj}}
 }
 
@@ -271,6 +271,10 @@ func (m *CompanyModule) EquipmentViewForMember(id int, member, focus string) dom
 		for _, itm := range u.Character.Items {
 			spec := itm.GetSpec()
 			if spec.Type == slot || (slot == items.Offhand && spec.Type == items.Weapon) {
+				// A weapon or shield the class can't use isn't offered at all.
+				if ok, _ := actor.CanWield(itm); !ok {
+					continue
+				}
 				entry.Choices = append(entry.Choices, preview("equip", string(slot), itm))
 			}
 		}
