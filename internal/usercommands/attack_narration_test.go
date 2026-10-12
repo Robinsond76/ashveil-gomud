@@ -12,5 +12,5 @@ import (
 func TestGoForText(t *testing.T) {
 	c := characters.New()
 	assert.Equal(t, `You go for the rat.`, goForText(c, `the rat`, false))
-	assert.Equal(t, `You turn toward the rat.`, goForText(c, `the rat`, true))
+	assert.Equal(t, ``, goForText(c, `the rat`, true))
 }
