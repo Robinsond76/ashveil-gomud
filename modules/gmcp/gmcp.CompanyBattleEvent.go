@@ -31,6 +31,7 @@ package gmcp
 import (
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -90,6 +91,9 @@ type battleEventItem struct {
 	round      uint64
 	fightRound uint64
 	event      battleEvent
+	// order is the round's turn order, taken as the round's first turn
+	// was emitted; nil on the rest of the round's events.
+	order []battleOrderRef
 }
 
 type battleEventPayload struct {
@@ -100,8 +104,14 @@ type battleEventPayload struct {
 	FightRound uint64 `json:"fight_round,omitempty"`
 	// Pace is the receiver's combat pace (fast, normal, slow or off), which
 	// the screen's animation budgets follow.
-	Pace   string        `json:"pace,omitempty"`
-	Events []battleEvent `json:"events"`
+	Pace string `json:"pace,omitempty"`
+	// Order is the round's turn order, sent with the round's first
+	// turn: Company.Battle is held back while a round is paced out, so
+	// without it the screen's strip would show the last round's order
+	// while this round's slots play (the same refs and slots as
+	// Company.Battle.order).
+	Order  []battleOrderRef `json:"order,omitempty"`
+	Events []battleEvent    `json:"events"`
 }
 
 // wantsBattleEvents reports whether a connection takes the feed: a web
@@ -325,11 +335,43 @@ func onCombatEvent(e combatstream.Event) {
 	if user == nil || user.Character == nil || !wantsBattleEvents(user.ConnectionId()) {
 		return
 	}
-	be, ok := buildBattleEvent(viewerFor(user, e.RoomId, e.FightID), e, fi, haveFight)
+	v := viewerFor(user, e.RoomId, e.FightID)
+	be, ok := buildBattleEvent(v, e, fi, haveFight)
 	if !ok {
 		return
 	}
-	events.AddToQueue(events.CombatData{UserId: leaderId, Data: battleEventItem{fight: e.FightID, round: e.Round, fightRound: fightRound(e, fi, haveFight), event: be}})
+	events.AddToQueue(events.CombatData{UserId: leaderId, Data: battleEventItem{fight: e.FightID, round: e.Round, fightRound: fightRound(e, fi, haveFight), event: be, order: roundOrderOnce(user, e.Round, be.Slot, v.unseen)}})
+}
+
+var (
+	orderSentMu sync.Mutex
+	// orderSent is the round whose turn order each player's events last
+	// carried.
+	orderSent = map[int]uint64{}
+)
+
+// roundOrderOnce is the round's turn order for the first event emitted in a
+// turn of that round (slot > 0, so the round's order is built), and nil for
+// every other event. It is taken as the round plays, not when its paced
+// lines go out: by then a fight that ended in that round has no order left,
+// and the strip kept the round before's (review of Robinson's turn-order
+// report). A fighter who falls mid-round keeps their place in it.
+func roundOrderOnce(user *users.UserRecord, round uint64, slot int, unseen func(int) bool) []battleOrderRef {
+	if slot <= 0 {
+		return nil
+	}
+	orderSentMu.Lock()
+	sent := orderSent[user.UserId] == round
+	orderSent[user.UserId] = round
+	orderSentMu.Unlock()
+	if sent {
+		return nil
+	}
+	var out []battleOrderRef
+	for _, o := range gatherOrder(user, unseen) {
+		out = append(out, battleOrderRef{ID: o.ID, Slot: o.Slot})
+	}
+	return out
 }
 
 // fightRound is the event's round counted from the fight's first (1), from
@@ -369,6 +411,9 @@ func sendBattleEvents(userId int, batch []any) {
 		if cur == nil || cur.Fight != it.fight || cur.Round != it.round {
 			flush()
 			cur = &battleEventPayload{Fight: it.fight, Round: it.round, FightRound: it.fightRound, Pace: string(hooks.PaceOf(user))}
+		}
+		if len(it.order) > 0 {
+			cur.Order = it.order
 		}
 		cur.Events = append(cur.Events, it.event)
 	}

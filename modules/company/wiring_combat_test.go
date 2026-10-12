@@ -555,9 +555,10 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	b.toughen()
 	got = b.fight()
 	assert.NotContains(t, got, "You can't reach that target from here.")
-	turned := regexp.MustCompile(`You can't reach the bandit captain from here\. You turn toward the ((?:first|second) cutthroat)\.`).FindStringSubmatch(got)
-	require.Len(t, turned, 2, "Aria is told she turns from the captain:\n%s", got)
-	assert.NotEqual(t, "bandit captain", turned[1])
+	assert.Contains(t, got, "You can't reach the bandit captain from here.", "Aria is told she can't reach the captain")
+	assert.NotContains(t, got, "turn toward")
+	turned := regexp.MustCompile(`the ((?:first|second) cutthroat)`).FindStringSubmatch(got)
+	require.Len(t, turned, 2, "Aria swung at a cutthroat:\n%s", got)
 	assert.True(t, swungAt(got, turned[1]), "Aria swung at her new target in the same round:\n%s", got)
 
 	// F2: the whole party joined in round 1, not one member at a time.
@@ -580,8 +581,9 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	garrick := b.companion(3)
 	garrick.Character.EndAggro()
 	got = b.fight()
-	assert.Regexp(t, `You turn toward the (first|second) cutthroat\.`, got, "the leader rejoins")
-	assert.Regexp(t, `Garrick Vane turns toward the (first|second) cutthroat\.`, got, "the killer rejoins")
+	assert.NotContains(t, got, "turn toward")
+	assert.NotNil(t, b.aria.Character.Aggro, "the leader rejoins")
+	assert.NotNil(t, garrick.Character.Aggro, "the killer rejoins")
 
 	// Phase 32d: `break` is refused in a battle (only flee takes her out),
 	// and she fights on.
@@ -672,11 +674,15 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	b.aimAt("bandit cutthroat")
 	b.toughen()
 	got := b.fight()
-	assert.Contains(t, got, "bandit captain turns toward", "the rest of the party joins")
-	assert.NotContains(t, got, "bandit fence turns toward", "the shopkeeper doesn't")
+	assert.NotContains(t, got, "turns toward")
+	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
+	require.NotNil(t, captain)
+	assert.NotNil(t, captain.Character.Aggro, "the rest of the party joins")
+	assert.Zero(t, aimedAtUser(fence), "the shopkeeper doesn't join")
 	for i := 0; i < 3; i++ {
 		b.toughen()
-		assert.NotContains(t, b.fight(), "bandit fence turns toward")
+		b.fight()
+		assert.Zero(t, aimedAtUser(fence))
 	}
 }
 
@@ -697,4 +703,12 @@ func TestHardenedFightersKeepTheirHealthThroughARecalculation(t *testing.T) {
 		assert.Equal(t, 1000, c.HealthMax.Value, "%s is still hard to kill", c.Name)
 		assert.Equal(t, 1000, c.Health)
 	}
+}
+
+// aimedAtUser is the user a mob is set on, 0 for none.
+func aimedAtUser(m *mobs.Mob) int {
+	if m.Character.Aggro == nil {
+		return 0
+	}
+	return m.Character.Aggro.UserId
 }

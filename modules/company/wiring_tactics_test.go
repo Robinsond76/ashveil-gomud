@@ -123,7 +123,7 @@ func TestTacticsFocusMidBattleTurnsEveryoneOnce(t *testing.T) {
 		}
 		assert.Equal(t, bruiser, aimOf(c), "%s turns at once, from a foe still standing", c.Name)
 	}
-	assert.Contains(t, out, "You turn toward the bandit bruiser.")
+	assert.NotContains(t, out, "turn toward")
 	focus := 0
 	for _, e := range *stream {
 		if e.Kind == combatstream.FocusChange {
