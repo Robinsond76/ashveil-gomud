@@ -256,7 +256,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			// Phase 29c: no "prepares to fight"; the fight's opener speaks
 			// for the room. Phase 32c: the foe is the whole group.
-			user.SendText(goForText(user.Character, util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, foeName)), alreadyFighting))
+			if text := goForText(user.Character, util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, foeName)), alreadyFighting); text != "" {
+				user.SendText(text)
+			}
 
 			// Phase 35e: a company on its healers default that opens on an
 			// enemy healer says so, once, as the battle starts.
@@ -314,7 +316,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 
-			user.SendText(goForText(user.Character, fmt.Sprintf(`<ansi fg="username">%s</ansi>`, p.Character.Name), alreadyFighting))
+			if text := goForText(user.Character, fmt.Sprintf(`<ansi fg="username">%s</ansi>`, p.Character.Name), alreadyFighting); text != "" {
+				user.SendText(text)
+			}
 
 			if !isSneaking {
 				p.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> comes for you.`, user.Character.Name))
@@ -392,10 +396,10 @@ func NotAnOpener(room *rooms.Room, mobInstanceId int, what string) string {
 
 // goForText is the attacker's own line as a fight begins (Phase 29c):
 // "You draw your broadsword and go for the bandit captain.", or, already
-// fighting, "You turn toward the bandit captain."
+// fighting, nothing (the target change needs no line).
 func goForText(c *characters.Character, target string, alreadyFighting bool) string {
 	if alreadyFighting {
-		return fmt.Sprintf(`You turn toward %s.`, target)
+		return ``
 	}
 	if c.Equipment.Weapon.ItemId > 0 {
 		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, combat.WeaponNounOf(&c.Equipment.Weapon), target)

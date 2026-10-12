@@ -50,7 +50,17 @@ func TestPacedCombatHoldsTheWebViews(t *testing.T) {
 	// A level gained mid-round sends a full Char payload: it waits too.
 	events.AddToQueue(GMCPCharUpdate{UserId: 7, Identifier: `Char`})
 	events.ProcessEvents()
-	assert.Empty(t, *out, "no Company payload during the paced round")
+	// The battle screen opens as the battle begins: its first snapshot is
+	// not held, though nothing else of Company is.
+	require.Len(t, *out, 1, "only the battle's opening goes out during the paced round: %v", *out)
+	assert.Equal(t, "Company.Battle", (*out)[0].module)
+	// A later change to the battle waits for the paced lines.
+	*out = nil
+	facts.Enemies[0].Health = 2
+	companyview.Refresh(u)
+	events.ProcessEvents()
+	assert.Empty(t, *out, "no further Company payload during the paced round")
+	facts.Enemies[0].Health = 0
 	assert.Zero(t, vitals, "no Char.Vitals during the paced round")
 
 	_, drained := pacer.Due(time.Now())

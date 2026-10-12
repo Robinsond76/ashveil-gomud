@@ -66,8 +66,7 @@ Once the battle starts:
   view, and only a critical hit that gets through the armor, or a
   stagger, knockdown, or stun, breaks it (<ansi fg="command">help interrupts</ansi>);
 - anyone left without a target, or with one they can't reach, turns to
-  another by their strategy, and you're told about it
-  (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
+  another by their strategy, without a line about it;
 - this goes on until the fight is over, or until you <ansi fg="command">retreat</ansi>.
 
 Where several groups are in one place, you fight them one at a time. The

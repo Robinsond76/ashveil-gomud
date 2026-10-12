@@ -559,6 +559,39 @@ func (f *companyFeed) updateExtras(user *users.UserRecord) {
 	}
 }
 
+// updateBattleOpening sends Company.Battle ahead of held combat lines when it
+// is the battle's first snapshot (the last one sent was none), so the web
+// client's battle screen opens the moment a battle begins. Later changes wait
+// for the paced lines as before.
+func (f *companyFeed) updateBattleOpening(user *users.UserRecord) {
+	if f.accepting != nil && !f.accepting(user.UserId) {
+		return
+	}
+	for _, extra := range f.extras {
+		if extra.module != "Company.Battle" || extra.build == nil {
+			continue
+		}
+		f.mu.Lock()
+		last := f.lastExtra[user.UserId][extra.module]
+		f.mu.Unlock()
+		if last != "" && last != "{}" {
+			return
+		}
+		body := extra.build(user)
+		if body == nil || string(body) == "{}" {
+			return
+		}
+		f.mu.Lock()
+		if f.lastExtra[user.UserId] == nil {
+			f.lastExtra[user.UserId] = map[string]string{}
+		}
+		f.lastExtra[user.UserId][extra.module] = string(body)
+		f.mu.Unlock()
+		f.send(user.UserId, extra.module, body)
+		return
+	}
+}
+
 // forget makes the next update send the full snapshot and every extra
 // (login, copyover, a request) or drops the user (logout).
 func (f *companyFeed) forget(userID int) {
@@ -619,6 +652,9 @@ func init() {
 	companyview.OnRefresh.Register(func(r companyview.Refreshed) companyview.Refreshed {
 		// Phase 29f: nothing runs ahead of a player's paced combat lines.
 		if holdCompany(r.User.UserId) {
+			// The battle screen is the exception: it opens as the battle
+			// begins, not once the round's lines have been read out.
+			companyFeeds.updateBattleOpening(r.User)
 			return r
 		}
 		companyFeeds.update(r.User.UserId, r.Summary)

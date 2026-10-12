@@ -57,7 +57,7 @@ func narratedFight(t *testing.T) ([]string, []combatstream.Event) {
 // hooks.DoCombat with the shipped config, every hit carries its damage at
 // the end of a line, nothing is starred, shouted, or tagged, one opener
 // starts each fight and one closing line ends each won fight after the
-// last death line, and a retarget reads "turns toward".
+// last death line, and a retarget says nothing.
 func TestNarrationThroughTheRealRound(t *testing.T) {
 	lines, stream := narratedFight(t)
 	transcript := strings.Join(lines, "\n")
@@ -67,7 +67,8 @@ func TestNarrationThroughTheRealRound(t *testing.T) {
 	assert.NotContains(t, transcript, "♥")
 	assert.NotContains(t, transcript, " turns on ")
 	assert.NotContains(t, transcript, "has died")
-	assert.Contains(t, transcript, " turns toward ", "someone takes a new target")
+	assert.NotContains(t, transcript, " turns toward ", "a new target takes no line")
+	assert.NotContains(t, transcript, "turn toward")
 
 	// Each hit the stream reports is narrated with its damage, and every
 	// damage suffix closes its line.

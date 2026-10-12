@@ -123,7 +123,7 @@ func TestADefendingLeaderTurnsWithoutCantReach(t *testing.T) {
 	mobs.GetInstance(slinger).Character.SetAggro(0, tamsin.InstanceId, characters.DefaultAttack)
 	out := b.fight()
 	assert.Equal(t, slinger, aimOf(b.aria.Character), "she goes for the foe on Tamsin, the most hurt")
-	assert.Contains(t, out, "You turn toward the bandit slinger.")
+	assert.NotContains(t, out, "turn toward")
 	assert.NotContains(t, out, "can't reach")
 }
 

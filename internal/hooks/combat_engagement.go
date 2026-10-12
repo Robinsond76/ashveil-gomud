@@ -313,10 +313,10 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 			events.AddToQueue(events.AggroChanged{UserId: leader.UserId, RoomId: leader.Character.RoomId})
 			if enemyparty.HealersDefault(leader.UserId) && enemyHealer(newId) {
 				leader.SendText(healerMarked(mobTag(mobName(newId))))
-			} else if byRule {
-				leader.SendText(turnsToward(`You`, mobTag(mobName(newId))))
-			} else {
-				leader.SendText(leaderTurnText(previous, newId, alive))
+			} else if !byRule {
+				if text := leaderTurnText(previous, newId, alive); text != "" {
+					leader.SendText(text)
+				}
 			}
 		}
 	}
@@ -336,7 +336,6 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		emitTargetChange(mobRef(mob), mobRefById(previous), mobRefById(newId), room.RoomId)
 		mob.Character.SetAggro(0, newId, attackType(mob.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-		room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newId))))
 	}
 }
 
@@ -479,11 +478,10 @@ func legalAgainstParty(col int, placed bool, party mobparty.Party, target int, a
 }
 
 func leaderTurnText(previous, newId int, alive map[company.MemberKey]bool) string {
-	name := mobName(newId)
 	if previous > 0 && alive[mobparty.MemberKeyFor(previous)] {
-		return fmt.Sprintf(`You can't reach %s from here. %s`, util.Article(mobTag(mobName(previous))), turnsToward(`You`, mobTag(name)))
+		return fmt.Sprintf(`You can't reach %s from here.`, util.Article(mobTag(mobName(previous))))
 	}
-	return turnsToward(`You`, mobTag(name))
+	return ``
 }
 
 func mobHidden(instanceId int) bool {
@@ -742,7 +740,6 @@ func (s companySide) memberHidden(key company.MemberKey) bool {
 
 func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *rooms.Room) {
 	previous := s.aimRef(mob.Character.Aggro)
-	targetName := fmt.Sprintf(`<ansi fg="username">%s</ansi>`, s.leader.Character.Name)
 	next := userRef(s.leader)
 	if key == company.LeaderMemberKey {
 		mob.Character.SetAggro(s.leader.UserId, 0, attackType(mob.Character.Aggro))
@@ -759,14 +756,12 @@ func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *
 		if target == nil {
 			return
 		}
-		targetName = mobTag(mobName(target.InstanceId))
 		next = mobRef(target)
 		mob.Character.SetAggro(0, instanceId, attackType(mob.Character.Aggro))
 	}
 	emitTargetChange(mobRef(mob), previous, next, room.RoomId)
 	mob.PreventIdle = true
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), targetName))
 }
 
 // aimRef names what an enemy's Aggro was aimed at, for a target change.
