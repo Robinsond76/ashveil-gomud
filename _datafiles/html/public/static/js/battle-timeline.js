@@ -262,7 +262,12 @@
                 break;
             }
             case 'ability': {
-                if (/tackle/i.test(e.status || '')) {
+                if (/lay on hands/i.test(e.status || '') && e.outcome !== 'failed') {
+                    // A knight's or paladin's healing touch plays as a cast
+                    // released at once (their cast sheet, A12d/A12e), with a
+                    // healing glow; it takes no chant.
+                    steps.push(act(src, 'cast-release', { fx: [{ kind: 'glow', spell: 'heal', at: 0, burst: true }] }));
+                } else if (/tackle/i.test(e.status || '')) {
                     const a = act(src, 'attack', { strikeAt: strikeAt, lunge: reduced ? '' : tgt });
                     steps.push(a);
                     if (tgt && e.outcome !== 'failed') { steps.push(react(tgt, 'prone', { delay: strikeAt, hold: 'prone' })); }
