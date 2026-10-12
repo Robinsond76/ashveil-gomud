@@ -457,6 +457,7 @@ func TestPanaceanElixirWorksOnceUntilTheSecondElixir(t *testing.T) {
 		ysolde.Character.Health = 1
 		b.aria.Character.Health = b.aria.Character.HealthMax.Value
 		for _, m := range b.livingBandits() {
+			m.Character.Level = max(m.Character.Level, 4) // whole flat damage: the blows must be lethal
 			m.Character.SetAggro(0, ysolde.InstanceId, characters.DefaultAttack)
 			m.Character.Aggro.RoundsWaiting = 0
 		}

@@ -24,9 +24,8 @@ func lightWounds(c *characters.Character) int {
 	return n
 }
 
-// A bleed that runs its course leaves a light wound on a companion; one the
-// fight's end clears leaves nothing.
-func TestABleedThatRunsOutLeavesALightWound(t *testing.T) {
+// A bleed that runs its course leaves no wound: only a critical hit wounds.
+func TestABleedThatRunsOutLeavesNoWound(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
 	b.aimAt("bandit captain")
@@ -45,14 +44,9 @@ func TestABleedThatRunsOutLeavesALightWound(t *testing.T) {
 		b.fight()
 	}
 	require.False(t, status.Has(&tamsin.Character), "the bleed ran its three rounds")
-	var bled *wounds.Wound
-	for i, w := range tamsin.Character.Wounds {
-		if w.Light && w.Kind == wounds.Cut {
-			bled = &tamsin.Character.Wounds[i]
-		}
+	for _, w := range tamsin.Character.Wounds {
+		assert.False(t, w.Light && w.Kind == wounds.Cut, "a bleed no longer wounds (owner, 2026-10-12): %+v", w)
 	}
-	require.NotNil(t, bled, "a light cut from the bleed: %+v", tamsin.Character.Wounds)
-	assert.Equal(t, 2, bled.Points, "one point a stack")
 }
 
 // Light wounds close at the fight's end, in the round that ends it (not by
@@ -86,7 +80,7 @@ func TestLightWoundsCloseWithTheFight(t *testing.T) {
 // Phase 33i2: a bleed that runs out on an enemy leaves it a light wound,
 // as it does a company member; one whose template says `wounds: none`
 // takes none.
-func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
+func TestAnEnemysBleedLeavesNoWound(t *testing.T) {
 	b := newBrawl(t)
 	// Aimed Shot guarantees a critical regardless of the ordinary crit bounds.
 	// Keep this bleed-only fixture free of that independent wound source.
@@ -115,8 +109,7 @@ func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 			cuts = append(cuts, w)
 		}
 	}
-	require.Len(t, cuts, 1, "the fight goes on, so the wound is still open")
-	assert.True(t, cuts[0].Light)
+	assert.Empty(t, cuts, "a bleed leaves no wound; only a critical hit does")
 
 	captain.WoundsRule = "none"
 	captain.Character.Wounds = nil

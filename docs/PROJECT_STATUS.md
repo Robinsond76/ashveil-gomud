@@ -2279,6 +2279,12 @@ complete and merged ([PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/
 
 ## Current position
 
+**Damage by level (2026-10-12):** every blow's flat damage bonus scales by the
+attacker's level (none at level 1, whole at level 6, `DamageFullLevel`), so
+level-1 foes and companions hit for their weapon's dice; the hero reads two
+levels ahead (`HeroDamageLead`). Wounds now come only from critical hits.
+Note and 3-5 band numbers: `docs/plans/2026-10-12-foe-damage-by-level.md`.
+
 **Web page cleanup (2026-10-06):** the public site's nav links (Home, Who's
 Online, Web Client, Configuration, Help) moved into a "Pages" tab of the
 top-right settings menu; the header and footer are slimmer so the web client

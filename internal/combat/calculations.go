@@ -157,6 +157,22 @@ func damageBonus(atkStr, defStr int) int {
 	return int(bonus)
 }
 
+// levelDamageBonus is damageBonus for an attacker of the given level: whole
+// at DamageFullLevel and above, growing evenly from nothing at level 1, so a
+// low-level attacker hits for its weapon's dice and damage tracks level
+// (owner, 2026-10-12). A hero reads HeroDamageLead levels ahead.
+func levelDamageBonus(bonus, level int, hero bool) int {
+	cfg := configs.GetCombatConfig()
+	full := int(cfg.DamageFullLevel)
+	if hero {
+		level += int(cfg.HeroDamageLead)
+	}
+	if full <= 1 || level >= full {
+		return bonus
+	}
+	return bonus * max(level-1, 0) / (full - 1)
+}
+
 // hitChanceForEdge returns a hit probability in [ToHitMin, ToHitMax]:
 // ToHitEven when even, moved toward a bound by the combined edge.
 func hitChanceForEdge(edge float64) int {
