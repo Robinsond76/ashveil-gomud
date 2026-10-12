@@ -47,21 +47,21 @@ func TestWiringLevelUpTeachesLevelSpells(t *testing.T) {
 			}
 		})
 	}
-	text := reach(2)
-	assert.False(t, u.Character.HasSpell("sparks"))
+	text := reach(3)
+	assert.False(t, u.Character.HasSpell("sparks"), "the skill schedule: Sparks comes at level 4")
 	assert.NotContains(t, text, "You have learned a new spell")
 
 	report = nil
-	text = reach(3)
+	text = reach(4)
 	assert.True(t, u.Character.HasSpell("sparks"))
 	assert.Equal(t, 1, strings.Count(text, "You have learned a new spell"), text)
 	assert.Contains(t, strings.Join(report, "\n"), "Shower of Sparks ", "the report names the new spell's size")
 
 	// A death costs the level; earning it again teaches nothing new.
-	u.Character.Level = 2
-	u.Character.Experience = u.Character.XPTL(1)
+	u.Character.Level = 3
+	u.Character.Experience = u.Character.XPTL(2)
 	assert.True(t, u.Character.HasSpell("sparks"), "a lost level keeps the spell")
-	text = reach(3)
+	text = reach(4)
 	assert.True(t, u.Character.HasSpell("sparks"))
 	assert.NotContains(t, text, "You have learned a new spell")
 }

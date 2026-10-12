@@ -1,6 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">beasttamer</ansi>
 
-The Beast Tamer raises one bonded beast, from level 1, and fights beside it.
+The Beast Tamer raises one bonded beast, from level 1, and fights beside it
+(it sends the beast in with Sic from level 2).
 Unlike a doll, the beast is alive: it stands in the formation in front of its
 Tamer and takes a turn of its own. The Tamer keeps its whip and its own blow,
 so a Beast Tamer company has six bodies and six turns, though the beast is a
@@ -38,10 +39,10 @@ to meet.
 
 Its abilities need no command and use no mana (<ansi fg="command">help abilities</ansi>):
 
-  <ansi fg="yellow-bold">Sic</ansi>         on every turn the Tamer has, the beast is sent at the Tamer's foe
+  <ansi fg="yellow-bold">Sic</ansi>         from level 2, on every turn the Tamer has, the beast is sent at the Tamer's foe
               with +10 Attack on its strike. The Tamer still strikes its own
               blow, and its whip reaches like a polearm.
-  <ansi fg="yellow-bold">Rally</ansi>       from level 3, the Tamer heals a hurt beast (below the company's
+  <ansi fg="yellow-bold">Rally</ansi>       from level 4, the Tamer heals a hurt beast (below the company's
               healing threshold) for a Minor Heal's worth, with no mana.
               Twice a battle.
   <ansi fg="yellow-bold">Pack Sense</ansi>  from level 8, the Tamer has +5 Evasion while its beast stands.

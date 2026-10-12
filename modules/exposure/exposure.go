@@ -321,6 +321,7 @@ func (m *ExposureModule) load() {
 	if m.plug != nil {
 		m.settings = parseSettings(m.plug.Config.Get)
 	}
+	climate.SetWarmthSettings(m.settings.Warmth)
 	if m.store == nil {
 		return
 	}
@@ -401,12 +402,7 @@ func (m *ExposureModule) ExposureOf(leaderUserID int, memberKey string) (int, bo
 
 // warmthOf is the insulation a character is wearing.
 func (m *ExposureModule) warmthOf(c *characters.Character) int {
-	worn := []climate.WornPiece{}
-	for _, item := range c.Equipment.GetAllItems() {
-		spec := item.GetSpec()
-		worn = append(worn, climate.WornPiece{Slot: strings.ToLower(string(spec.Type)), Warmth: spec.Warmth, Bonus: spec.WarmthBonus})
-	}
-	return climate.Warmth(worn, c.HasBuffFlag("warmed"), m.settings.Warmth)
+	return climate.Warmth(c.WornWarmthPieces(), c.HasBuffFlag("warmed"), m.settings.Warmth)
 }
 
 func (m *ExposureModule) onNewRound(e events.Event) events.ListenerReturn {

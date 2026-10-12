@@ -11,6 +11,7 @@ The following skills are required to become a Ranger:
 In a fight a ranger is trained for medium armor and may carry a buckler,
 but no larger shield. Rangers start with 6 more health and gain 0.8 a
 level, Attack 1 and Evasion 0.9 a level (<ansi fg="command">help shields</ansi>, <ansi fg="command">help armor</ansi>,
-<ansi fg="command">help evasion</ansi>).
+<ansi fg="command">help evasion</ansi>). From level 2 a ranger with a bow or sling looses an Aimed
+Shot on its own in a battle (<ansi fg="command">help abilities</ansi>, <ansi fg="command">help skill-levels</ansi>).
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jobs</ansi>, <ansi fg="command">help archetype</ansi>

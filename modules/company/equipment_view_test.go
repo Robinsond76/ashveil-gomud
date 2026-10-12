@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
@@ -384,4 +385,33 @@ func TestEquipmentViewFocusPreviewsOnlyTheShownSlot(t *testing.T) {
 	}
 	offhand := domain.EquipmentViewFocused(7, "offhand")
 	assert.Equal(t, editorSlot(t, full, "offhand"), editorSlot(t, offhand, "offhand"))
+}
+
+// A warm piece shows its warmth in the Gear preview before it is worn, so a
+// player can tell whether equipping it raises warmth, and the applied total
+// matches the preview.
+func TestEquipmentPreviewShowsWarmthChange(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	climate.SetWarmthSettings(climate.WarmthSettings{SlotDefaults: map[string]int{"body": 3}})
+	t.Cleanup(func() { climate.SetWarmthSettings(climate.WarmthSettings{}) })
+	plain := items.ItemSpec{ItemId: 989811, Name: "plain tunic", Type: items.Body, Subtype: items.Wearable, Weight: 1000}
+	furs := items.ItemSpec{ItemId: 989812, Name: "heavy furs", Type: items.Body, Subtype: items.Wearable, Weight: 1000, Warmth: 9}
+	items.SetTestItemSpec(&plain)
+	items.SetTestItemSpec(&furs)
+	t.Cleanup(func() { items.RemoveTestItemSpec(plain.ItemId); items.RemoveTestItemSpec(furs.ItemId) })
+	c.Items = []items.Item{items.New(plain.ItemId), items.New(furs.ItemId)}
+	require.NoError(t, c.Validate(true))
+
+	view := domain.EquipmentViewOf(7)
+	require.True(t, view.Available, view.Reason)
+	body := editorSlot(t, view, "body")
+	furChoice := editorChoice(t, body, c.Items[1].ShorthandId())
+	tunic := editorChoice(t, body, c.Items[0].ShorthandId())
+	require.NotNil(t, furChoice.After)
+	assert.Equal(t, view.Current.Warmth+9, furChoice.After.Warmth, "explicit warmth replaces the slot default")
+	assert.Equal(t, view.Current.Warmth+3, tunic.After.Warmth, "an item with no warmth of its own uses the slot default")
+
+	require.Contains(t, applyEditorChoice(t, b, furChoice), "equipment updated")
+	assert.Equal(t, furChoice.After.Warmth, c.Warmth())
 }

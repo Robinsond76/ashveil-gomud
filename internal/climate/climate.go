@@ -109,6 +109,32 @@ func Warmth(worn []WornPiece, warmed bool, s WarmthSettings) int {
 	return total
 }
 
+var (
+	activeWarmthMu sync.RWMutex
+	activeWarmth   WarmthSettings
+)
+
+// SetWarmthSettings records the warmth rules the exposure module is using,
+// so other views (the Gear tab) total warmth exactly as exposure does.
+func SetWarmthSettings(s WarmthSettings) {
+	activeWarmthMu.Lock()
+	defer activeWarmthMu.Unlock()
+	activeWarmth = s
+}
+
+// WornWarmth is Warmth under the settings the exposure module registered.
+func WornWarmth(worn []WornPiece, warmed bool) int {
+	activeWarmthMu.RLock()
+	s := activeWarmth
+	activeWarmthMu.RUnlock()
+	return Warmth(worn, warmed, s)
+}
+
+// PieceWarmth is one piece's insulation under the registered settings.
+func PieceWarmth(piece WornPiece) int {
+	return WornWarmth([]WornPiece{piece}, false)
+}
+
 // ComfortSettings define the comfortable air-temperature band for someone
 // wearing nothing, and how much warmth shifts its hot edge.
 type ComfortSettings struct {

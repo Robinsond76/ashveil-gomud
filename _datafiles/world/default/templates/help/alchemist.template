@@ -29,7 +29,7 @@ All of them are thrown on their own in a battle (<ansi fg="command">help strateg
 
   <ansi fg="yellow-bold">Healing Draught</ansi>  level 1: heals an ally for 8 and 2d4, plus 1 for each 6 levels; the
                    most hurt ally first
-  <ansi fg="yellow-bold">Antidote</ansi>         level 3: cures an ally's poison and bleeding. Thrown before any
+  <ansi fg="yellow-bold">Antidote</ansi>         level 4: cures an ally's poison and bleeding. Thrown before any
                    heal only while no one is below half health
   <ansi fg="yellow-bold">Fire Flask</ansi>       level 6: burns the foe aimed at and the foe beside it, at about
                    70% of a Sparks spell. Thrown only while more than 2 flasks

@@ -95,12 +95,13 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 
 <ansi fg="yellow-bold">Resources</ansi>
 
-  A small icon in a tile's corner marks what it provides, such as fresh
-  water, forage or a fishing spot (<ansi fg="command">help resources</ansi>). Up to three show, with a plus
-  for more. A resource that has been picked clean has an empty-basket mark
-  over its icon, and the mark clears on its own when the resource regrows,
-  even in a room you are not standing in. On the Classic style, and on a
-  tile zoomed too small for icons, each shows as a coloured dot instead.
+  Small icons packed inside a tile mark what it provides, such as fresh
+  water, forage or a fishing spot (<ansi fg="command">help resources</ansi>). Every resource shows, each
+  on a dark disc so it stands out on forest. A resource that has been
+  picked clean has an empty-basket mark over its icon, and the mark clears
+  on its own when the resource regrows, even in a room you are not standing
+  in. On the Classic style, and on a tile zoomed too small for icons, each
+  shows as a coloured dot instead.
 
 <ansi fg="yellow-bold">Walking by clicking</ansi>
 

@@ -39,9 +39,11 @@ cargo item to equip it for a member (help companion-gear).
 Character > Gear is the equipment editor for you and each companion (choose
 whose gear at the top). Select a slot (including Pack),
 then a compatible exact cargo item to preview it. Current → After shows weapon
-damage dice, active edge bonus/remaining strikes for each hand, hands, reach, shield, protection, worn weight, burden, dodge retained,
+damage dice, active edge bonus/remaining strikes for each hand, hands, reach, shield, protection, worn weight, burden, dodge retained, warmth,
 core stats, maximum health/mana and company capacity/cargo. Actual damage still
 depends on the foe and combat conditions; burden reduces dodge, not combat speed.
+Each cargo choice also says how much warmth it would add or take away, and an
+item's tooltip lists the warmth it gives (help temperature).
 Displaced gear is listed before you apply the change. Preview removal to see its
 impact, then choose Remove equipment. Empty slots and unavailable choices show
 why; if an item changes or leaves cargo, select again. Commands revalidate the

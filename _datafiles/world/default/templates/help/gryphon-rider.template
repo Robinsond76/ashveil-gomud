@@ -19,12 +19,12 @@ gate stands in front of any of its routes.
 
 <ansi fg="yellow-bold">Ranks of the Gryphon Rider</ansi>
 
-  Level 1   <ansi fg="yellow">Dive</ansi>        the rider's whole turn, once every 3 combat rounds: a stooping
+  Level 2   <ansi fg="yellow">Dive</ansi>        the rider's whole turn, once every 3 combat rounds: a stooping
             blow that may pass a standing front-row foe to strike the middle
             or back row, as long as the foe stands in the rider's column or
             the next. A foe's guardian can still step in for it. The rider
             has -10 Evasion until its next turn.
-  Level 3   <ansi fg="yellow">Talons</ansi>      a Dive that lands leaves the foe bleeding (<ansi fg="command">help statuses</ansi>).
+  Level 4   <ansi fg="yellow">Talons</ansi>      a Dive that lands leaves the foe bleeding (<ansi fg="command">help statuses</ansi>).
   Level 8   <ansi fg="yellow">Power dive</ansi>  a Dive deals 25% more damage.
 
 Level 5 brings the first talent: Keen Edge, Footwork, Toughness, Sharp Eye

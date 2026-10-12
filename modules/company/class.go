@@ -305,7 +305,7 @@ func (m *CompanyModule) classView(s classSubject) string {
 	default:
 		lines = append(lines, fmt.Sprintf("%s %s a level %d %s with no promotion yet. Alignment %+d.", s.label(), s.are(), s.level, lineageName(s.lineage), s.alignment))
 	}
-	// Phase 39b: a neutral lineage's base ranks, from level 1.
+	// Phase 39b: a lineage's base ranks reached, before and after promotion.
 	for _, r := range classes.BaseRanksReached(s.lineage, s.level) {
 		lines = append(lines, fmt.Sprintf("  Rank %d, %s: %s.", r.Level, r.Name, r.Text))
 	}

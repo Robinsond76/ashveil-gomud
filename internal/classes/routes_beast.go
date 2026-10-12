@@ -16,8 +16,8 @@ const (
 
 func init() {
 	registerBase("beasttamer",
-		rank(1, "Sic", "your turn sends your bonded beast at your target with +10 Attack on its strike, and your whip reaches like a polearm", BeastSic, 1, SicAttack, 10),
-		rank(3, "Rally", "heal your beast for a Minor Heal's worth, with no mana, twice a battle", Rally, 2),
+		rank(2, "Sic", "your turn sends your bonded beast at your target with +10 Attack on its strike, and your whip reaches like a polearm", BeastSic, 1, SicAttack, 10),
+		rank(4, "Rally", "heal your beast for a Minor Heal's worth, with no mana, twice a battle", Rally, 2),
 		rank(8, "Pack sense", "+5 Evasion while your beast stands", PackSense, 5),
 	)
 

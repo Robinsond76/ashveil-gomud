@@ -14,9 +14,9 @@ func TestHalberdierAbilityUnlocks(t *testing.T) {
 	assert.Equal(t, []Ability{Sweep, Brace}, PlayerAbilities(func(s string) int { return levels[s] }))
 	spec, ok := SpecOf(Brace)
 	assert.True(t, ok)
-	assert.Equal(t, 3, spec.MinLevel, "Brace comes at level 3")
+	assert.Equal(t, 4, spec.MinLevel, "Brace comes at level 4")
 	spec, _ = SpecOf(Sweep)
-	assert.Zero(t, spec.MinLevel)
+	assert.Equal(t, 2, spec.MinLevel, "Sweep comes at level 2")
 }
 
 func TestDecideSweepAndBrace(t *testing.T) {
@@ -85,10 +85,11 @@ func TestCrowdedIsTheHalberdiersDefaultRule(t *testing.T) {
 	assert.Contains(t, Rules, Crowded)
 }
 
-// Phase 39a review: Brace comes at level 3, so the displays and the battle
+// Phase 39a review (levels from the 2026-10-12 skill schedule): Brace comes at level 4, so the displays and the battle
 // leave it out below that.
 func TestAtLevelLeavesOutAbilitiesNotYetCome(t *testing.T) {
 	known := CompanionAbilities("halberdier")
-	assert.Equal(t, []Ability{Sweep}, AtLevel(known, 2))
-	assert.Equal(t, []Ability{Sweep, Brace}, AtLevel(known, 3))
+	assert.Empty(t, AtLevel(known, 1))
+	assert.Equal(t, []Ability{Sweep}, AtLevel(known, 3))
+	assert.Equal(t, []Ability{Sweep, Brace}, AtLevel(known, 4))
 }

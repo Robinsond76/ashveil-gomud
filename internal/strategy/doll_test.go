@@ -13,8 +13,8 @@ func TestDollMasterAbilityUnlocks(t *testing.T) {
 	assert.Equal(t, all, CompanionAbilities("DollMaster"))
 	levels := map[string]int{"puppetry": 1}
 	assert.Equal(t, all, PlayerAbilities(func(s string) int { return levels[s] }))
-	assert.Equal(t, []Ability{PuppetStrike}, AtLevel(all, 4))
-	assert.Equal(t, []Ability{PuppetStrike, GuardString}, AtLevel(all, 5))
+	assert.Equal(t, []Ability{PuppetStrike}, AtLevel(all, 3))
+	assert.Equal(t, []Ability{PuppetStrike, GuardString}, AtLevel(all, 4))
 	assert.Equal(t, []Ability{PuppetStrike, GuardString, Tangle}, AtLevel(all, 12))
 	assert.Equal(t, all, AtLevel(all, 18))
 }

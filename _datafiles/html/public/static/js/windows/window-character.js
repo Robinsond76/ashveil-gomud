@@ -925,7 +925,7 @@
             status: c.enabled ? 'Ready' : (c.reason || 'Disabled'),
             meta: ['Uses ' + c.skill, c.when ? 'When ' + c.when : '', c.cooldown > 0 ? 'Cooldown ' + c.cooldown + ' rounds' : ''].filter(Boolean),
         }));
-        if (!(caps.automatic || []).length) { node('div', 'csk-none', 'No trained automatic combat abilities', panel); }
+        if (!(caps.automatic || []).length) { node('div', 'csk-none', 'None yet: class abilities come as you level (help skill-levels)', panel); }
         ['field', 'camp'].forEach(group => {
             capabilityText(panel, group === 'field' ? 'Field capabilities' : 'Camp capabilities', true).style.margin = '8px 0 0';
             const list = (caps.utility || []).filter(c => c.group === group);

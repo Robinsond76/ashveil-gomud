@@ -40,7 +40,7 @@ Its abilities need no command and use no mana (<ansi fg="command">help abilities
                   in the way). The Master does not swing. With no doll able to
                   act (broken, stunned or on the ground) the Master swings
                   itself.
-  <ansi fg="yellow-bold">Guard String</ansi>      from level 5, the doll steps in and takes a blow meant for the
+  <ansi fg="yellow-bold">Guard String</ansi>      from level 4, the doll steps in and takes a blow meant for the
                   most hurt ally beside it: twice a battle, three times from
                   level 8.
   <ansi fg="yellow-bold">Tangle</ansi>            from level 12, strings snag the foe the doll strikes and push its

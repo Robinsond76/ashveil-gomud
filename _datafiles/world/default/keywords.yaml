@@ -22,6 +22,7 @@ help:
       - cooldowns
       - experience
       - progression
+      - skill-levels
       - inventory
       - jobs
       - keyring
@@ -355,6 +356,7 @@ help:
 help-aliases:
   storage: [store, unstore]
   progression: [stat-steps, stat steps, leveling]
+  skill-levels:     [skill levels, skill-schedule, skill schedule, unlocks, learning, new skills]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   chronicle: [chronicles, deeds, company chronicle]
   townsfolk: [renown, town memory, talk of the town, townsfolk talk]

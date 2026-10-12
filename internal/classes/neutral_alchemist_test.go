@@ -69,7 +69,7 @@ func TestAlchemistTalents(t *testing.T) {
 }
 
 func TestAlchemistLevelUpNamesRanks(t *testing.T) {
-	lines := RankLines("alchemist", "", 2, 3)
+	lines := RankLines("alchemist", "", 3, 4)
 	require.Len(t, lines, 1)
 	assert.Contains(t, lines[0], "New rank: Antidote")
 	assert.Contains(t, MilestoneFor("alchemist", "", 5), "Fire Flask")
