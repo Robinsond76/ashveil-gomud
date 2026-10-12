@@ -62,3 +62,19 @@ now (`internal/combat/combat.go`, `internal/hooks/combat_status.go`); the
 easy-foe crit softening is unchanged. `help wounds` updated; the crushing
 test now asserts no wound. Lower foe damage also makes big hits and crits
 rarer at low levels.
+
+## Review (2026-10-12)
+
+- Critical hits: the crit's Perception share was not ramped, so a level-1
+  1d4 foe could crit for up to 14 (telling 6 plus 8) against a target it
+  out-saw. Now the share above the even multiplier grows on the same ramp
+  (`levelCritDamageBonus`): a level-1 1d4 crit is at most 8.
+- `expectedDPS` (company assessment) applies the ramp too, reading every
+  attacker as a companion.
+- Owner's fight replayed (level-3 company of five vs three level-1 dagger
+  foes, 30 fights): foe hits average 3, max 8; hero 9 a hit, companions 6;
+  all won, 4% of company health lost.
+- Rest rhythm with the crit fix, band 3-5, 20 fights a cell: martial 23 / 20
+  / 13 for 5 / 4 / 3 members, magic 5 / 5 / 4. Kept: the owner wants
+  low-level fights very easy; all inside the harness slack; at-level foe HP
+  unchanged.

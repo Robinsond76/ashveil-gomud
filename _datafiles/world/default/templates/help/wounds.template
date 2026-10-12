@@ -21,9 +21,10 @@ which close when the fight ends, and a few creatures take none
                   critical hit leaves no wound while you stay at half your
                   health or more, and below that only a light wound of a
                   quarter of the hit.
-  <ansi fg="yellow">Light wounds</ansi>    A critical hit on a foe leaves one. Light wounds close
-                  when the fight ends. Only critical hits wound: heavy
-                  blows and bleeding no longer do.
+  <ansi fg="yellow">Light wounds</ansi>    What a critical hit leaves on a foe. Light wounds close
+                  when the fight ends.
+
+Only critical hits wound: heavy blows and bleeding leave none.
 
 The weapon decides the wound:
 

@@ -43,8 +43,7 @@ takes the blow, until its group's guards for the battle are spent
 <ansi fg="yellow-bold">Enemy wounds</ansi>
 
 Enemies take wounds too, but only light ones (<ansi fg="command">help wounds</ansi>): a critical hit
-or a crushing blow holds back some of their health from healing until the
-fight ends. A few creatures take no wounds at all (bone, fungus).
+holds back some of their health from healing until the fight ends. A few creatures take no wounds at all (bone, fungus).
 
 <ansi fg="yellow-bold">Enemies recover</ansi>
 

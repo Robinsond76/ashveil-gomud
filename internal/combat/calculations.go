@@ -368,6 +368,17 @@ func critDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc int) int {
 	return int(math.Floor(float64(base) * (mult - 1.0)))
 }
 
+// levelCritDamageBonus is critDamageBonus for an attacker of the given
+// level: the Perception advantage's share of the crit grows on the same
+// ramp as the flat bonus (levelDamageBonus), so a level-1 crit adds half
+// its weapon's best roll whatever the Perception gap (owner, 2026-10-12: a
+// level-1 foe's 1d4 crit is at most 9).
+func levelCritDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc, level int, hero bool) int {
+	even := critDamageBonus(dCount, dSides, dBonus, 0, 0)
+	full := critDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc)
+	return even + levelDamageBonus(full-even, level, hero)
+}
+
 // dodgeChanceForEdge returns the probability in [DodgeChanceMin,
 // DodgeChanceMax] that the defender dodges an incoming hit: DodgeChanceEven
 // when even, moved by the defender's combined edge (Phase 35a2: two-sided).
@@ -637,7 +648,9 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 	rate := math.Min(Tempo(&atkChar), float64(configs.GetCombatConfig().MaxTurnsPerRound))
 
-	statDmgBonus := damageBonus(atkChar.Stats.Strength.ValueAdj, defChar.Stats.Strength.ValueAdj)
+	// The level ramp as calculateCombatPower applies it (a hero's lead is
+	// not known here, so the estimate reads every attacker as a companion).
+	statDmgBonus := levelDamageBonus(damageBonus(atkChar.Stats.Strength.ValueAdj, defChar.Stats.Strength.ValueAdj), atkChar.Level, false)
 
 	attackWeapons := resolveAttackWeapons(atkChar)
 
@@ -719,8 +732,8 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 			avgDmg = 0
 		}
 
-		critBonusAmt := float64(critDamageBonus(dCount, dSides, dBonus,
-			atkChar.Stats.Perception.ValueAdj, defChar.Stats.Perception.ValueAdj))
+		critBonusAmt := float64(levelCritDamageBonus(dCount, dSides, dBonus,
+			atkChar.Stats.Perception.ValueAdj, defChar.Stats.Perception.ValueAdj, atkChar.Level, false))
 		critBonus := critBonusAmt * critPct
 
 		effHit := hitPct

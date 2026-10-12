@@ -54,3 +54,32 @@ func TestLevelOneFoeHitsForItsDice(t *testing.T) {
 	_, hi = hits(5)
 	assert.Greater(t, hi, 4, "a full-level foe carries the whole flat bonus")
 }
+
+// TestLevelOneFoeCritStaysUnderTen: with the shipped crit multipliers and
+// every blow a telling critical hit, a level-1 foe's 1d4 never tops 9, even
+// against a target it far out-sees; at full level the Perception edge
+// counts again (owner, 2026-10-12: a level-1 crit is at most 9).
+func TestLevelOneFoeCritStaysUnderTen(t *testing.T) {
+	foe := woundFight(t) // 1d4 club, every blow lands as a critical hit
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.DamageBonusMin, cfg.Combat.DamageBonusMax = 0, 0
+	cfg.Combat.DamageFullLevel, cfg.Combat.HeroDamageLead = 6, 2
+	cfg.Combat.CritMultMin, cfg.Combat.CritMultMax = 1.5, 3.0
+	cfg.Combat.TellingFactor = 1.4
+	cfg.Combat.TellingEven, cfg.Combat.TellingFull, cfg.Combat.TellingLeast = 100, 100, 100
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+	foe.Character.Stats.Perception.ValueAdj = 500
+	user := users.NewUserRecord(90341, 90341)
+	*user.Character = *edgeFighter(90231)
+
+	worst := func(level int) (hi int) {
+		foe.Character.Level = level
+		for i := 0; i < 80; i++ {
+			user.Character.Health = user.Character.HealthMax.Value
+			hi = max(hi, AttackMobVsPlayer(foe, user).DamageToTarget)
+		}
+		return hi
+	}
+	assert.Equal(t, 8, worst(1), "a telling 4 (6) plus half the die (2)")
+	assert.Greater(t, worst(6), 9, "a full-level foe's Perception edge counts")
+}

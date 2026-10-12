@@ -782,8 +782,8 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						// Phase 30a review: added, so a later crit never drops an
 						// earlier strike's status.
 						attackResult.BuffTarget = append(attackResult.BuffTarget, withoutBleeding(critBuffs, IsBloodless(&targetChar))...)
-						attackTargetDamage += critDamageBonus(dCount, dSides, dBonus,
-							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj)
+						attackTargetDamage += levelCritDamageBonus(dCount, dSides, dBonus,
+							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj, sourceChar.Level, sourceType == User)
 						// Phase 38c2: a Marksman's Called Shot hits harder when it crits.
 						if p := iaiFx.Int(classes.CritDamage); p > 0 {
 							attackTargetDamage += (attackTargetDamage*p + 50) / 100

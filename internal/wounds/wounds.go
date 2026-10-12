@@ -2,10 +2,10 @@
 // mark healing can't erase at once. A wound holds back some of a fighter's
 // health: while wounded, healing stops at the wound limit, though the true
 // maximum is unchanged. Lasting wounds (from critical hits) stay until
-// treated or rested away; light wounds (crushing blows, a bleed that runs
-// its course) close when the fight ends. The package is pure: it holds the
-// rules, the text, and the `heal wounds` planner; characters, combat, and
-// modules wire it in.
+// treated or rested away; light wounds (an enemy's, or an easy foe's crit)
+// close when the fight ends. Only critical hits wound (owner, 2026-10-12).
+// The package is pure: it holds the rules, the text, and the `heal wounds`
+// planner; characters, combat, and modules wire it in.
 package wounds
 
 import (
@@ -58,10 +58,6 @@ func Festering(ws []Wound, limit int) bool {
 // Roll picks a whole number in [0, n).
 type Roll func(n int) int
 
-// CrushingPct is the share of max health, in percent, a single strike must
-// deal to leave a light wound.
-const CrushingPct = 25
-
 // places a wound of each kind may be, for its text.
 var places = map[Kind][]string{
 	Cut:      {"arm", "leg", "side", "shoulder", "scalp", "hand"},
@@ -102,16 +98,6 @@ func FromCrit(subtype items.ItemSubType, damage int, roll Roll) Wound {
 	return Wound{Kind: k, Place: place(k, roll), Points: max(1, half(damage))}
 }
 
-// Crushing is the light wound a strike that isn't a crit leaves, and
-// whether it leaves one: only a strike of at least CrushingPct of max
-// health, holding back a quarter of its damage, rounded up.
-func Crushing(damage, maxHealth int, roll Roll) (Wound, bool) {
-	if damage <= 0 || maxHealth <= 0 || damage*100 < maxHealth*CrushingPct {
-		return Wound{}, false
-	}
-	return Wound{Kind: Bruise, Place: place(Bruise, roll), Points: max(1, (damage+3)/4), Light: true}, true
-}
-
 // EasyFightGap is how many levels below its target an attacker must be for
 // the fight to count as easy for the target (Phase 35b).
 const EasyFightGap = 3
@@ -124,7 +110,7 @@ func EasyFight(attackerLevel, targetLevel int) bool {
 
 // EasyCrit is what a crit from a much weaker foe leaves (Phase 35b): no
 // wound when the target stays at or above half its max health after the
-// blow, else a light wound of a crushing blow's size in place of a lasting
+// blow, else a light wound of a quarter of the damage in place of a lasting
 // one. ok is false for no wound.
 func EasyCrit(w Wound, damage, healthAfter, maxHealth int) (Wound, bool) {
 	if healthAfter*2 >= maxHealth {
@@ -133,11 +119,6 @@ func EasyCrit(w Wound, damage, healthAfter, maxHealth int) (Wound, bool) {
 	w.Points = max(1, (damage+3)/4)
 	w.Light = true
 	return w, true
-}
-
-// Bled is the light wound a bleed of stacks leaves when it runs its course.
-func Bled(stacks int, roll Roll) Wound {
-	return Wound{Kind: Cut, Place: place(Cut, roll), Points: max(1, stacks), Light: true}
 }
 
 // Beaten is the lasting wound a defeat leaves (Phase 53): pct percent of
