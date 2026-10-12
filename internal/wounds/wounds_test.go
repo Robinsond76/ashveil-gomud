@@ -58,29 +58,6 @@ func TestFromCrit(t *testing.T) {
 	}
 }
 
-func TestCrushing(t *testing.T) {
-	if _, ok := Crushing(3, 16, zero); ok {
-		t.Fatal("3 of 16 is under a quarter and should not wound")
-	}
-	w, ok := Crushing(4, 16, zero)
-	if !ok || !w.Light || w.Points != 1 || w.Kind != Bruise {
-		t.Fatalf("4 of 16: got %+v %v, want a 1-point light bruise", w, ok)
-	}
-	if w, _ := Crushing(9, 16, zero); w.Points != 3 {
-		t.Fatalf("9 damage: points %d, want 3", w.Points)
-	}
-	if _, ok := Crushing(0, 0, zero); ok {
-		t.Fatal("no damage never wounds")
-	}
-}
-
-func TestBled(t *testing.T) {
-	w := Bled(3, zero)
-	if !w.Light || w.Points != 3 || w.Kind != Cut {
-		t.Fatalf("got %+v", w)
-	}
-}
-
 func TestCloseWorstFirst(t *testing.T) {
 	ws := []Wound{{Kind: Cut, Points: 2}, {Kind: Fracture, Points: 5}, {Kind: Cut, Points: 9, Light: true}}
 	out, was, closed, ok := Close(ws, 3)

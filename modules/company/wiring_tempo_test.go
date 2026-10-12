@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -350,7 +351,7 @@ func TestTempoDeathBetweenPassesCancelsSecondTurn(t *testing.T) {
 	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 1)
 }
 
-func TestTempoNewStatusBetweenPassesStartsAfterFirstTick(t *testing.T) {
+func TestTempoNewStatusBetweenPassesTakesTheSecondTurn(t *testing.T) {
 	b, seen := tempoBrawl(t, 30)
 	loadStatusBuffs(t)
 	b.fight()
@@ -364,10 +365,36 @@ func TestTempoNewStatusBetweenPassesStartsAfterFirstTick(t *testing.T) {
 	}))
 	n := len(*seen)
 	b.fight()
-	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 2, "a new status waits for its first tick")
+	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 1, "a new status takes the turn still to come")
 	n = len(*seen)
 	b.fight()
-	assert.Empty(t, swingsBy(since(*seen, n), b.aria.Character.Name), "first tick now loses the round")
+	assert.Empty(t, swingsBy(since(*seen, n), b.aria.Character.Name), "and the next round's turn too")
+}
+
+// PR #222 review: in a live fight every status arrives as a queued Buff
+// event, and the whole round resolves under one event. A stun queued by an
+// earlier turn must still land before the holder's next turn that round.
+func TestTempoQueuedStatusTakesTheTurnStillToCome(t *testing.T) {
+	b, seen := tempoBrawl(t, 30)
+	loadStatusBuffs(t)
+	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
+	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
+	b.fight()
+	b.fight()
+	queued := false
+	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if !queued && e.Kind == combatstream.Attack && e.Source.UserId == 7 {
+			events.AddToQueue(events.Buff{UserId: 7, BuffId: status.Stunned, Source: `combat`})
+			queued = true
+		}
+	}))
+	n := len(*seen)
+	b.fight()
+	require.True(t, queued)
+	assert.Len(t, swingsBy(since(*seen, n), b.aria.Character.Name), 1, "the queued stun takes the second turn")
+	n = len(*seen)
+	b.fight()
+	assert.Empty(t, swingsBy(since(*seen, n), b.aria.Character.Name), "and the next round's")
 }
 
 func TestTempoAimedShotRestoresOrdinarySecondTurn(t *testing.T) {

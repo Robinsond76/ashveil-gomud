@@ -40,9 +40,10 @@ gets through also leaves a wound, from any weapon, fists and bites too:
                   moves slowly (-3 speed), for 3 rounds.
   <ansi fg="yellow">Burning</ansi>       2 fire damage each combat round, for 4 rounds. Water puts
                   it out.
-  <ansi fg="yellow">Asleep</ansi>        loses every action while it sleeps, and blows against it
-                  hit 25 points more often. The first damage it takes wakes
-                  it. A Witch's hex (<ansi fg="command">help hexes</ansi>), 2 rounds.
+  <ansi fg="yellow">Asleep</ansi>        loses every action while it sleeps, can't block, parry,
+                  or dodge, and blows against it hit 25 points more often.
+                  The first damage it takes wakes it. A Witch's hex
+                  (<ansi fg="command">help hexes</ansi>), 2 rounds.
   <ansi fg="yellow">Paralyzed</ansi>     loses every action, and can't block or dodge. Damage does
                   not break it. A Witch's Binding Hex, 1 round (2 from level 20).
   <ansi fg="yellow">Blighted</ansi>      healing it receives is halved, for 3 rounds. A Witch's
@@ -76,6 +77,9 @@ stunned (<ansi fg="command">help interrupts</ansi>).
 A fighter who loses its action does nothing that round: no blow, no spell
 round, no flight. It is told so in the line, as in
 <ansi fg="command">The bandit captain reels, and loses the action. (staggered)</ansi>.
+A status that lands before its holder's turn in the round takes that very
+turn; one that lands after it takes the holder's next turn. Either way it
+costs the same number of turns in all.
 
 <ansi fg="yellow-bold">How long they last</ansi>
 

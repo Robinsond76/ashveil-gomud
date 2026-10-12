@@ -91,9 +91,9 @@ func TestUnwoundableEnemyAndPetTakeNoWounds(t *testing.T) {
 	}
 }
 
-// TestCrushingBlowLeavesALightWound: a plain hit of a quarter of max health
-// leaves a light bruise; a smaller one leaves nothing.
-func TestCrushingBlowLeavesALightWound(t *testing.T) {
+// TestCrushingBlowLeavesNoWound: only a critical hit wounds (owner,
+// 2026-10-12); a plain hit of a quarter of max health leaves nothing.
+func TestCrushingBlowLeavesNoWound(t *testing.T) {
 	edgeSpecs(t)
 	gameplay := configs.GetGamePlayConfig()
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = 100, 100
@@ -108,8 +108,8 @@ func TestCrushingBlowLeavesALightWound(t *testing.T) {
 	weak := edgeFighter(90231)
 	weak.Health, weak.HealthMax.Value = 4, 4
 	result := calculateCombat(*source, *weak, User, User, 0, 0)
-	if len(result.WoundsToTarget) != 1 || !result.WoundsToTarget[0].Light || result.WoundsToTarget[0].Kind != wounds.Bruise {
-		t.Fatalf("1 of 4 health is crushing: %+v", result.WoundsToTarget)
+	if len(result.WoundsToTarget) != 0 {
+		t.Fatalf("1 of 4 health is a heavy blow, not a crit: %+v", result.WoundsToTarget)
 	}
 	strong := edgeFighter(90231)
 	strong.Health, strong.HealthMax.Value = 5, 5

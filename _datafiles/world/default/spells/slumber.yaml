@@ -2,7 +2,7 @@
 # applies the status; the Witch's level sets how many foes it reaches.
 spellid: slumber
 name: Slumber
-description: "Puts foes to sleep for 2 rounds: they lose their turns, and the first damage wakes them (blows against a sleeper hit more often). Reaches more foes as you level."
+description: "Puts foes to sleep for 2 rounds: they lose their turns and can't block, parry or dodge, and the first damage wakes them (blows against a sleeper hit more often). Reaches more foes as you level."
 type: harmmulti
 school: hexcraft
 cost: 6

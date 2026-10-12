@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -120,17 +119,6 @@ func (h statusHolder) enemy() bool {
 	return !companion
 }
 
-// woundable reports whether the holder can be wounded (Phase 30b): a
-// player, a company companion, or (Phase 33i2) an enemy whose template
-// allows it. A bleed's wound is light for everyone.
-func (h statusHolder) woundable() bool {
-	if h.user != nil {
-		return true
-	}
-	ok, _ := combat.MobWounds(h.mob)
-	return ok
-}
-
 // tickStatuses moves the holder's statuses on one combat round, with the
 // lines and events each one earns.
 func tickStatuses(h statusHolder) {
@@ -146,10 +134,6 @@ func tickStatuses(h statusHolder) {
 	}()
 	for _, ch := range status.Tick(h.char) {
 		hurt = hurt || ch.Damage > 0
-		// Phase 30b: a bleed that runs its course leaves a light wound.
-		if ch.Expired && ch.Spec.Id == status.Bleeding && h.woundable() {
-			h.char.AddWound(wounds.Bled(ch.Stacks, util.Rand))
-		}
 		if ch.Damage > 0 {
 			h.say(ch.Spec.TickYou, ch.Spec.TickOther, fmt.Sprintf(" (%d damage, %s)", ch.Damage, ch.Spec.Word))
 			emitCombat(combatstream.Event{Kind: combatstream.StatusTick, RoomId: h.roomId, Target: h.ref, Damage: ch.Damage, BuffId: ch.Spec.Id, Status: ch.Spec.Word})
@@ -237,6 +221,19 @@ func statusPass() {
 	if len(downPlayers)+len(downMobs) > 0 {
 		handleAffected(downPlayers, downMobs)
 	}
+}
+
+// landDisablingStatuses applies, at once, the disabling statuses earlier
+// turns of this round queued (a lullaby, a stun, a tackle's knockdown), so
+// they take the turn of a holder who has not acted yet (status.FreshLostAction).
+// The round resolves under one event, so a queued status would otherwise
+// land only after every turn had been taken. Other statuses keep their
+// timing.
+func landDisablingStatuses() {
+	events.DispatchNow(func(e events.Event) bool {
+		b, ok := e.(events.Buff)
+		return ok && b.BuffId > 0 && status.Disables(b.BuffId)
+	}, ApplyBuffs)
 }
 
 // statusCostsAction reports whether a status costs the holder this round's

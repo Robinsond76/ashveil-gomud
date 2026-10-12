@@ -40,7 +40,8 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	// of events, deaths and rewards remain. Recaptured for 35b: the hit,
 	// dodge, parry and block chances, Minor Heal's one-round chant and
 	// spell power change the rolls and the fight's length. This remains an
-	// outcome lock for subsequent narration-only changes.
+	// outcome lock for subsequent narration-only changes. Recaptured 2026-10-12
+	// for foe damage by level (the level-1 cutthroat hits for its dice).
 	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
 	// chanting for ever as a placeholder: blows breaking chants would
 	// change what it records.

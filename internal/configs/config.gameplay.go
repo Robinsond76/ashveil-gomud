@@ -49,6 +49,13 @@ type CombatConfig struct {
 	DamageBonusMax    ConfigInt   `yaml:"DamageBonusMax"`    // Maximum flat damage bonus
 	DamagePerStrength ConfigFloat `yaml:"DamagePerStrength"` // Flat damage per effective Strength (0 disables absolute Strength growth)
 	DamageEdgeMax     ConfigInt   `yaml:"DamageEdgeMax"`     // Extra damage at a full Strength edge over the defender (30g6)
+	// DamageFullLevel is the level at which an attacker's flat damage bonus is
+	// whole; below it the bonus grows evenly from none at level 1, so a
+	// low-level attacker hits for its weapon's dice (0 or 1 turns the ramp off).
+	DamageFullLevel ConfigInt `yaml:"DamageFullLevel"`
+	// HeroDamageLead is how many levels ahead of a company member the player
+	// character's flat bonus reads, so the hero hits a little harder.
+	HeroDamageLead ConfigInt `yaml:"HeroDamageLead"`
 
 	// Stat edge (30g6 amendment): a stat difference of StatEdgeSpan moves an
 	// opposed chance all the way to a bound; one point moves 1/span of it.
@@ -289,6 +296,9 @@ func (c *CombatConfig) validate() {
 	}
 	if c.DamageBonusMin < 0 {
 		c.DamageBonusMin = 0
+	}
+	if c.DamageFullLevel < 0 {
+		c.DamageFullLevel = 0
 	}
 	if c.DamageBonusMin > c.DamageBonusMax {
 		c.DamageBonusMin = 0
