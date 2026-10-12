@@ -418,7 +418,7 @@ func TestBattleEventsCarryTheRoundsTurnOrder(t *testing.T) {
 	r.got = nil
 	events.WithCause(2, func() {
 		r.user.SendText("Aria swings.")
-		r.stream.Emit(combatstream.Event{Round: 2, Kind: combatstream.Attack, FightID: id, Source: rigLeader, Target: rigEnemy(88), Outcome: combatstream.OutcomeHit, Damage: 3})
+		r.stream.Emit(combatstream.Event{Round: 2, Slot: 1, Kind: combatstream.Attack, FightID: id, Source: rigLeader, Target: rigEnemy(88), Outcome: combatstream.OutcomeHit, Damage: 3})
 	})
 	events.ProcessEvents()
 	r.turns(200)
@@ -429,4 +429,36 @@ func TestBattleEventsCarryTheRoundsTurnOrder(t *testing.T) {
 		got = append(got, o.ID+":"+strconv.Itoa(o.Slot))
 	}
 	assert.Equal(t, []string{"leader:1", "m:88:2", "leader:3"}, got)
+}
+
+// TestABattlesLastRoundKeepsItsTurnOrder: the order is taken as the round
+// plays, not when its paced lines go out. A fight that ends in a round has no
+// order left by then, and the strip kept the round before's (review of
+// Robinson's turn-order report). Only the round's first turn carries it.
+func TestABattlesLastRoundKeepsItsTurnOrder(t *testing.T) {
+	r := newEventRig(t)
+	order := []hooks.TurnRef{{UserId: 7, Slot: 1}, {MobInstanceId: 88, Slot: 2}}
+	t.Cleanup(hooks.SetRoundTurnOrderForTest(func(int) []hooks.TurnRef { return order }))
+	id := r.stream.Open(1, 100, "party-a", rigLeader, nil, []combatstream.Ref{rigEnemy(88)})
+	events.ProcessEvents()
+	r.got = nil
+	events.WithCause(3, func() {
+		r.user.SendText("The rat bleeds.")
+		r.stream.Emit(combatstream.Event{Round: 3, Kind: combatstream.StatusTick, FightID: id, Target: rigEnemy(88), Status: "bleeding", Damage: 1})
+		r.user.SendText("Aria swings.")
+		r.stream.Emit(combatstream.Event{Round: 3, Slot: 1, Kind: combatstream.Attack, FightID: id, Source: rigLeader, Target: rigEnemy(88), Outcome: combatstream.OutcomeHit, Damage: 3})
+		r.user.SendText("The rat bites.")
+		r.stream.Emit(combatstream.Event{Round: 3, Slot: 2, Kind: combatstream.Attack, FightID: id, Source: rigEnemy(88), Target: rigLeader, Outcome: combatstream.OutcomeHit, Damage: 1})
+	})
+	events.ProcessEvents()
+	order = nil // the fight is over before its lines go out
+	r.turns(200)
+	var carried [][]battleOrderRef
+	for _, p := range r.payloads() {
+		if len(p.Order) > 0 {
+			carried = append(carried, p.Order)
+		}
+	}
+	require.Len(t, carried, 1, "the round's order goes out once")
+	assert.Equal(t, []battleOrderRef{{ID: "leader", Slot: 1}, {ID: "m:88", Slot: 2}}, carried[0])
 }
