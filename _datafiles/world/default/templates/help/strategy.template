@@ -38,9 +38,10 @@ and a Demonologist, which come first in a battle): <ansi fg="command">help cleri
 
 Each character starts with its archetype's role: clerics heal, wizards
 cast, shamans cast and call a weather first (<ansi fg="command">help shaman</ansi>), witches hex (<ansi fg="command">help hexes</ansi>), everyone else fights. Nobody starts as a guardian. A healer or
-caster casts only the spells it knows. Wizards start with Magic Missile and clerics with Minor Heal; a shaman with Call Fog and Gust; a
+caster casts only the spells it knows. Wizards start with Magic Missile and clerics with Minor Heal; a shaman with Gust (Call Fog comes at level 2); a
 companion knows its archetype's spells for its level (a cleric learns
-Minor Heal All at level 3, a wizard Shower of Sparks, as players do).
+Minor Heal All at level 4, a wizard Shower of Sparks, as players do;
+<ansi fg="command">help skill-levels</ansi>).
 
 Spells in a battle are real casts: they cost mana and take their chanting
 rounds, but a spell the caster knows never fizzles. A weapon blow that draws blood on the caster

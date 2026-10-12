@@ -42,8 +42,8 @@ Once the battle starts:
   its leader's, as well as its group is coordinated (<ansi fg="command">help coordination</ansi>);
 - healers heal the hurt and casters cast their spells, with real mana,
   on both sides;
-- warriors tackle, rogues strike an opening, and rangers aim a shot, each
-  on its own when the moment comes (<ansi fg="command">help abilities</ansi>); a Sentinel
+- from level 2, warriors tackle, rogues strike an opening, and rangers aim
+  a shot, each on its own when the moment comes (<ansi fg="command">help abilities</ansi>); a Sentinel
   holds its shot to answer a blow at a weak spot in the line, and the other
   rogue and ranger elite classes add marks, ripostes, bleeding wounds and
   more (<ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>);
@@ -169,6 +169,7 @@ your <ansi fg="command">bestiary</ansi> (<ansi fg="command">help bestiary</ansi>
   <ansi fg="command">orders</ansi>            "when this, do that" rules for each member
   <ansi fg="command">stance</ansi>            a weapon stance for each member: one strength for another
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
+  <ansi fg="command">help skill-levels</ansi> the level each class's skills and spells come at
   <ansi fg="command">help guardian</ansi>     guardians and their guards
   <ansi fg="command">help battlescreen</ansi> the web client's battle picture
   <ansi fg="command">help evasion</ansi>      Attack and Evasion: the skill each level brings

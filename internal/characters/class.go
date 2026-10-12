@@ -99,8 +99,8 @@ func (c *Character) wornGear() (string, map[string]int) {
 
 func (c *Character) classOwnEffects() classes.Effects {
 	class, talents := c.ClassState()
-	// Phase 39b: a neutral lineage's base ranks (the Samurai's Iaijutsu)
-	// count from level 1, before any promotion.
+	// Phase 39b: a lineage's base ranks (the Samurai's Iaijutsu)
+	// count before any promotion.
 	lineage := ""
 	if c != nil {
 		if id := c.ArchetypeID(); classes.HasBase(id) {

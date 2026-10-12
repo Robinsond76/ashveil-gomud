@@ -14,8 +14,8 @@ company with a Witch fights fewer enemy turns than it takes.
   Mana        40 and 10 a level, refilled only by a rest, an inn or a draught
               (<ansi fg="command">help mana</ansi>)
   Stats       mysticism 4, smarts 3, perception 2, vitality 1 (<ansi fg="command">help growth</ansi>)
-  Starts with Slumber, and Withering Hex, a weak damage curse. Earthbind
-              comes at level 3, and the rest by level 18 (<ansi fg="command">help hexes</ansi>).
+  Starts with Withering Hex, a weak damage curse. Slumber comes at
+              level 2, Earthbind at 4, and the rest by level 18 (<ansi fg="command">help hexes</ansi>).
   Starter kit an ash quarterstaff, a leather cap, a cotton shirt, a student's
               amulet, food, a waterskin, a minor mana draught and a knapsack
   Utility     Weather Sense (<ansi fg="command">help forecast</ansi>)

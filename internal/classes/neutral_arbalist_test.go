@@ -33,16 +33,17 @@ func TestArbalistHasThreeUngatedRoutes(t *testing.T) {
 }
 
 // The lineage's own ranks come by level, before any promotion: Piercing Bolt
-// at 1, Steady Aim at 3, Crippling Bolt at 6, Armor-breaker at 8.
+// at 2, Steady Aim at 4, Crippling Bolt at 6, Armor-breaker at 8.
 func TestArbalistBaseRanksAndRoutes(t *testing.T) {
-	assert.Equal(t, []string{"Piercing Bolt"}, rankNames(BaseRanksReached("arbalist", 2)))
+	assert.Empty(t, BaseRanksReached("arbalist", 1), "the skill schedule: nothing but a plain shot at level 1")
+	assert.Equal(t, []string{"Piercing Bolt"}, rankNames(BaseRanksReached("arbalist", 3)))
 	assert.Equal(t, []string{"Piercing Bolt", "Steady Aim"}, rankNames(BaseRanksReached("arbalist", 5)))
 	assert.Equal(t, []string{"Piercing Bolt", "Steady Aim", "Crippling Bolt", "Armor-breaker"}, rankNames(BaseRanksReached("arbalist", 8)))
 
-	assert.Equal(t, 50, EffectsForLineage("arbalist", "", 1, nil).Int(BoltPierce), "half the armor from level 1")
+	assert.Equal(t, 50, EffectsForLineage("arbalist", "", 2, nil).Int(BoltPierce), "half the armor from level 2")
 	assert.Equal(t, 100, EffectsForLineage("arbalist", "", 8, nil).Int(BoltPierce), "all of it from level 8")
-	assert.Zero(t, EffectsForLineage("arbalist", "", 2, nil).Int(SteadyAim))
-	assert.Equal(t, 10, EffectsForLineage("arbalist", "", 3, nil).Int(SteadyAim))
+	assert.Zero(t, EffectsForLineage("arbalist", "", 3, nil).Int(SteadyAim))
+	assert.Equal(t, 10, EffectsForLineage("arbalist", "", 4, nil).Int(SteadyAim))
 	assert.Zero(t, EffectsForLineage("arbalist", "", 5, nil).Int(BoltCripple))
 	assert.Equal(t, 2, EffectsForLineage("arbalist", "", 6, nil).Int(BoltCripple))
 

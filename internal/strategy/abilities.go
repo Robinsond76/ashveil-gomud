@@ -67,38 +67,38 @@ type AbilitySpec struct {
 	Archetype string // a companion of this archetype has it
 	Skill     string // a player with this skill (level 1+) has it
 	Cooldown  int    // combat rounds before it can be used again
-	MinLevel  int    // the character level it comes at (0: from level 1)
+	MinLevel  int    // the character level it comes at (0: from level 1); the lineage's base rank of the same name comes at the same level (skill schedule, 2026-10-12)
 	When      string // its condition, for the strategy command
 	Does      string // its effect
 }
 
 // Abilities is every ability, in the order a member tries them.
 var Abilities = []AbilitySpec{
-	{ID: Tackle, Name: "Tackle", Archetype: "warrior", Skill: "brawling", Cooldown: 4,
+	{ID: Tackle, Name: "Tackle", Archetype: "warrior", Skill: "brawling", Cooldown: 4, MinLevel: 2,
 		When: "its foe is on its feet and within hand-to-hand reach, and it has no bow or sling",
 		Does: "knocks the foe down (it loses its next action), breaking a chant or wind-up; the whole turn"},
-	{ID: OpeningStrike, Name: "Opening Strike", Archetype: "rogue", Skill: "skulduggery", Cooldown: 2,
+	{ID: OpeningStrike, Name: "Opening Strike", Archetype: "rogue", Skill: "skulduggery", Cooldown: 2, MinLevel: 2,
 		When: "its foe is knocked down, stunned, staggered, or exposed, and it wields a blade or claws",
 		Does: "its first blow that lands this round is a critical hit"},
 	{ID: Overwatch, Name: "Overwatch", Cooldown: 1,
 		When: "it is a Sentinel with a shooting weapon, its Aimed Shot is not ready, and a foe could strike an ally in its middle or back row",
 		Does: "holds its turn; the first foe that goes for a middle- or back-row ally is shot before the blow resolves, and on a hit the blow lands at half damage; if none does, the arrow flies at its own foe at the round's end"},
-	{ID: AimedShot, Name: "Aimed Shot", Archetype: "ranger", Skill: "track", Cooldown: 3,
+	{ID: AimedShot, Name: "Aimed Shot", Archetype: "ranger", Skill: "track", Cooldown: 3, MinLevel: 2,
 		When: "it has a shooting weapon and its foe is not already exposed",
 		Does: "its first shot that lands this round is a critical hit, leaving the foe exposed"},
-	{ID: Sweep, Name: "Sweep", Archetype: "halberdier", Skill: "polearm", Cooldown: 3,
+	{ID: Sweep, Name: "Sweep", Archetype: "halberdier", Skill: "polearm", Cooldown: 3, MinLevel: 2,
 		When: "it wields a melee weapon, and its foe stands in a row with another foe",
 		Does: "one swing strikes its foe and one foe beside it in the same row (every foe in the row from level 8), each at 90% of the damage and each defending separately; the whole turn"},
-	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 3,
+	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 4,
 		When: "its Sweep is not ready (or has no second foe to strike), it wields a melee weapon, and a foe is striking at its place in the line",
 		Does: "holds its turn; the first foe that strikes it takes a held blow at once, 25% harder than an ordinary one"},
-	{ID: Dive, Name: "Dive", Archetype: "gryphon-rider", Skill: "skirmish", Cooldown: 3,
+	{ID: Dive, Name: "Dive", Archetype: "gryphon-rider", Skill: "skirmish", Cooldown: 3, MinLevel: 2,
 		When: "it wields a melee weapon, its foe stands within a column of its own or the next, and the ground is open sky (not indoors, in a cave or on narrow ground)",
-		Does: "one stooping blow that may pass a standing front-row foe to strike the middle or back row (a guardian can still step in); 25% harder from level 8; a landed blow from level 3 leaves the foe bleeding; the rider has -10 Evasion until its next turn; the whole turn"},
+		Does: "one stooping blow that may pass a standing front-row foe to strike the middle or back row (a guardian can still step in); 25% harder from level 8; a landed blow from level 4 leaves the foe bleeding; the rider has -10 Evasion until its next turn; the whole turn"},
 	{ID: PuppetStrike, Name: "Puppet Strike", Archetype: "dollmaster", Skill: "puppetry",
 		When: "its doll stands and a foe is within the doll's reach",
 		Does: "the doll strikes in its Master's place, with the doll's own weapon and Attack; the Master's own blow is not struck"},
-	{ID: GuardString, Name: "Guard String", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 5,
+	{ID: GuardString, Name: "Guard String", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 4,
 		When: "a foe is about to strike the most hurt ally beside the doll",
 		Does: "the doll steps in and takes the blow, twice a battle (three times from level 8)"},
 	{ID: Tangle, Name: "Tangle", Archetype: "dollmaster", Skill: "puppetry", Cooldown: 3, MinLevel: 12,
@@ -107,13 +107,13 @@ var Abilities = []AbilitySpec{
 	{ID: Splice, Name: "Emergency Splice", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 18,
 		When: "the doll would break",
 		Does: "once a battle the doll stands back up at 25% health, and its Master loses its next turn"},
-	{ID: PiercingBolt, Name: "Piercing Bolt", Archetype: "arbalist", Skill: "arbalestry", Cooldown: 2,
+	{ID: PiercingBolt, Name: "Piercing Bolt", Archetype: "arbalist", Skill: "arbalestry", Cooldown: 2, MinLevel: 2,
 		When: "it wields a shooting weapon (the crossbow), and is not winding it",
-		Does: "one heavy bolt, 140% of a shot, that ignores half the foe's armor (all of it from level 8); +10 Attack from level 3 when nothing has hurt it since its last bolt; from level 6 a landed bolt hobbles the foe; the whole turn, and the next turn is spent winding the crossbow"},
-	{ID: Sic, Name: "Sic", Archetype: "beasttamer", Skill: "taming",
+		Does: "one heavy bolt, 140% of a shot, that ignores half the foe's armor (all of it from level 8); +10 Attack from level 4 when nothing has hurt it since its last bolt; from level 6 a landed bolt hobbles the foe; the whole turn, and the next turn is spent winding the crossbow"},
+	{ID: Sic, Name: "Sic", Archetype: "beasttamer", Skill: "taming", MinLevel: 2,
 		When: "its beast stands and the Tamer has a foe",
 		Does: "sends the beast at the Tamer's foe with +10 Attack on its strike; the Tamer's own blow is still struck, with a whip that reaches like a polearm"},
-	{ID: Rally, Name: "Rally", Archetype: "beasttamer", Skill: "taming", MinLevel: 3,
+	{ID: Rally, Name: "Rally", Archetype: "beasttamer", Skill: "taming", MinLevel: 4,
 		When: "its beast is below the company's healing threshold",
 		Does: "heals the beast for a Minor Heal's worth with no mana, twice a battle"},
 	{ID: PackSense, Name: "Pack Sense", Archetype: "beasttamer", Skill: "taming", MinLevel: 8,
@@ -144,7 +144,8 @@ func CompanionAbilities(archetype string) []Ability {
 }
 
 // AtLevel keeps the abilities a character of this level has: one that
-// comes at a level (Phase 39a: Brace at 3) is left out below it.
+// comes at a level (the skill schedule: Tackle at 2, Brace at 4) is left
+// out below it.
 func AtLevel(list []Ability, level int) []Ability {
 	out := make([]Ability, 0, len(list))
 	for _, id := range list {

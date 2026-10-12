@@ -123,7 +123,7 @@ func TestSicGivesTheBeastAttackAndPackSenseGivesTheTamerEvasion(t *testing.T) {
 }
 
 func TestRallyHealsAHurtBeastWithNoMana(t *testing.T) {
-	b, stream := beastBrawl(t, 3, "")
+	b, stream := beastBrawl(t, 4, "") // Rally comes at level 4
 	b.hardenBandits()
 	b.fight()
 	ash := b.beast()

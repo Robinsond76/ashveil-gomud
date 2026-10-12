@@ -94,7 +94,7 @@ func halberdTargets(stream []combatstream.Event, source string) []int {
 }
 
 func TestHalberdierDefaultsToTheCrowdedRowAndSweeps(t *testing.T) {
-	b, stream := halberdBrawl(t, 1)
+	b, stream := halberdBrawl(t, 2) // Sweep comes at level 2
 	tamsin := b.companion(1)
 	foe := mobs.GetInstance(aimOf(&tamsin.Character))
 	require.NotNil(t, foe)
@@ -174,7 +174,7 @@ func TestASweepDefendsSeparatelyAndDoesNotMissTheRow(t *testing.T) {
 }
 
 func TestAHalberdierBracesAndAnswersTheFirstBlow(t *testing.T) {
-	b, stream := halberdBrawl(t, 3)
+	b, stream := halberdBrawl(t, 4) // Brace comes at level 4
 	tamsin := b.companion(1)
 	b.hardenBandits()
 	b.fight() // round one: the sweep
@@ -203,7 +203,7 @@ func TestAHalberdierBracesAndAnswersTheFirstBlow(t *testing.T) {
 }
 
 func TestABraceIsLostWhenNoFoeStrikesIt(t *testing.T) {
-	b, stream := halberdBrawl(t, 3)
+	b, stream := halberdBrawl(t, 4) // Brace comes at level 4
 	tamsin := b.companion(1)
 	b.hardenBandits()
 	b.fight() // the sweep
