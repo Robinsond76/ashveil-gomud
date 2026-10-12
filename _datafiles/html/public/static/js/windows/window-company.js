@@ -946,6 +946,14 @@
             card.appendChild(el('div', 'company-warmth need-warn', v.warmth));
             spoken.push(v.warmth);
         }
+        // Ailments (chill, gut-ache, fever) are the same ones the vitals strip
+        // warns of, so a warning there always has its line on the member's card.
+        if (m.status !== 'dead' && Array.isArray(v.ailments) && v.ailments.length) {
+            const ailing = el('div', 'company-warmth need-warn', 'Ailing: ' + v.ailments.join(', '));
+            ailing.title = 'Fades after a few battles, or make the remedy at camp (help ailments)';
+            card.appendChild(ailing);
+            spoken.push('ailing ' + v.ailments.join(', '));
+        }
         // Camp music: the member's family and level, and practice to the next.
         if (m.status !== 'dead' && m.music) {
             const music = el('div', 'company-chemistry company-music', 'Music: ' + m.music);

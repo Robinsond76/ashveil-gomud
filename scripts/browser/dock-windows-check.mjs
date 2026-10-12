@@ -480,12 +480,14 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   const got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).click(); });
   check(JSON.stringify(got) === '["camp prepare remedy all"]', 'Make remedies sends camp prepare remedy all (55)');
   check((await strip()).includes('You: chill (3 battles)'), 'the vitals strip warns of an ailment (55)');
+  check((await status()).includes('Ailing: Fever (5 battles)') && (await status()).includes('Ailing: Chill (3 battles)'), 'each ailing member card shows the ailment the strip warns of');
   if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '55-camp-ailing.png') }); }
   await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 10, rest_seconds: 60, can_camp: false, inn: false }));
   check(await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).count() === 0, 'no Make remedies while resting (55)');
   await page.evaluate(c => window.gmcp('Company', c), company);
   await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
   check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Ailing'), 'no Ailing line when everyone is well (55)');
+  check(!(await status()).includes('Ailing') && !(await strip()).includes('chill') && !(await strip()).includes('fever'), 'the card and the strip both clear once the ailments end');
 }
 // Phase 51: the rest duty picker, a row per member at the camp.
 {
