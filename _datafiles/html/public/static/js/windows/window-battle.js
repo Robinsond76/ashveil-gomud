@@ -644,6 +644,9 @@
     }
 
     function onEvents(body) {
+        // The round's turn order rides its first events (Company.Battle
+        // itself waits for the paced lines), so the strip matches the slots.
+        if (battle && Array.isArray(body.order) && body.order.length) { battle.order = body.order.map(o => ({ id: normRef(o.id), slot: o.slot })); paintOrder(); }
         const evs = (body.events || []).map(e => Object.assign({}, e, { src: normRef(e.src), tgt: normRef(e.tgt) })).filter(e => !landsOnNothing(e));
         // fight_round counts this fight's rounds; round is the server's counter.
         if (body.fight_round && body.fight_round !== roundNo) { roundNo = body.fight_round; actingSlot = 0; paintChrome(); }
@@ -1177,6 +1180,10 @@
     function orderTag(id) {
         if (id === '?') { return '?'; }
         const u = units.get(id);
+        // A member who acts but stands in no cell (none drawn) is still
+        // named, not shown by its key.
+        const m = u ? null : (CompanyData.read().members || []).find(x => x && x.key === id);
+        if (m && m.name) { return String(m.name).split(' ')[0]; }
         const words = String(u ? u.label : id).replace(/^(the|a|an) /i, '').split(' ').filter(Boolean);
         if (!words.length) { return id; }
         if (u && u.side !== 'enemy') { return words[0]; }
@@ -1196,7 +1203,8 @@
         order.forEach(o => {
             const u = o.id === '?' ? null : units.get(o.id);
             const tag = el('span', 'bs-turn', orderTag(o.id));
-            if (!u || u.side === 'enemy' || o.id === '?') { tag.classList.add('is-enemy'); }
+            const member = !u && /^(leader|companion:)/.test(o.id);
+            if (!member && (!u || u.side === 'enemy' || o.id === '?')) { tag.classList.add('is-enemy'); }
             if (o.slot === actingSlot) { tag.classList.add('is-acting'); }
             else if (o.slot < actingSlot) { tag.classList.add('is-done'); }
             tag.title = (u ? u.label : (o.id === '?' ? 'a foe you can\'t make out' : o.id)) + ', turn ' + o.slot + (u && u.tempo ? ', tempo ' + u.tempo : '');

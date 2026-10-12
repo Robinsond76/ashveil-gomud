@@ -404,7 +404,7 @@ func buildBattle(f battleFacts) any {
 // 82b) by the refs the battle screen draws: the player's own members by
 // key, allies by their ally refs, foes by instance, and a foe the player
 // can't make out as "?".
-func gatherOrder(user *users.UserRecord, hidden map[int]bool) []orderFact {
+func gatherOrder(user *users.UserRecord, unseen func(instanceId int) bool) []orderFact {
 	var out []orderFact
 	for _, s := range hooks.RoundTurnOrder(user.UserId) {
 		id := ""
@@ -420,7 +420,7 @@ func gatherOrder(user *users.UserRecord, hidden map[int]bool) []orderFact {
 				} else {
 					id = allyMemberRef(leaderId, string(key))
 				}
-			} else if hidden[s.MobInstanceId] {
+			} else if unseen(s.MobInstanceId) {
 				id = "?"
 			} else {
 				id = mobID(s.MobInstanceId)
@@ -569,7 +569,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		hidden[id] = e.Hidden
 		f.Enemies = append(f.Enemies, e)
 	}
-	f.Order = gatherOrder(user, hidden)
+	f.Order = gatherOrder(user, func(id int) bool { return hidden[id] })
 
 	if a := user.Character.Aggro; a != nil && a.MobInstanceId > 0 {
 		f.Company = append(f.Company, aimFact{Key: string(company.LeaderMemberKey), Target: a.MobInstanceId})

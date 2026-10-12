@@ -132,6 +132,12 @@ check((await page.evaluate(() => document.querySelector('#battle-screen .bs-titl
   check(JSON.stringify(after) === JSON.stringify(['-', '*', '', '', '']) && (await state()).acting === 2, 'the acting slot is bright and the one before it dimmed: ' + JSON.stringify(after));
   await events({ fight: 1, round: 2, events: [{ seq: 2, kind: 'attack', src: 'leader', tgt: 'm:2', outcome: 'miss', weapon: 'slashing' }] });
   check((await state()).acting === 0, 'a new round starts the strip afresh');
+  // The round's order rides its first turn's events (Company.Battle waits
+  // for the paced lines), and replaces the strip; a member in no cell
+  // (Tamsin, unplaced) is named, not shown by key or dashed as a foe.
+  await events({ fight: 1, round: 3, order: [{ id: 'm:1', slot: 1 }, { id: 'companion:4', slot: 2 }, { id: 'leader', slot: 3 }], events: [{ seq: 3, kind: 'attack', src: 'm:1', tgt: 'leader', outcome: 'miss', weapon: 'claws', slot: 1 }] });
+  const fresh = await page.evaluate(() => Array.from(document.querySelectorAll('#battle-screen .bs-order .bs-turn')).map(t => t.textContent + (t.classList.contains('is-enemy') ? '!' : '') + (t.classList.contains('is-acting') ? '*' : '')));
+  check(JSON.stringify(fresh) === JSON.stringify(['wolf 1!*', 'Tamsin', 'Wren']), 'an event batch\'s order replaces the strip, an unplaced member named: ' + JSON.stringify(fresh));
 }
 
 // --- Screenshot ---
