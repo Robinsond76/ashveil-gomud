@@ -73,9 +73,14 @@ the owner signs off on the style anchors.
 | **A12** | [A12-battle-actions-pilot.md](A12-battle-actions-pilot.md) | Pilot battle action poses for the 15 base classes: attack, hurt, and shoot or cast | 38 | E3c |
 | **A12b** | [A12b-creature-actions.md](A12b-creature-actions.md) | Battle action poses for the 25 enemies and creatures met most, with the 3 fallbacks | 53; approved and imported 2026-10-11 | none (E3c imports them) |
 | **A12c** | [A12b-creature-actions.md](A12b-creature-actions.md#a12c-the-rest-33-figures-69-sheets) | Battle action poses for the other 33 enemies, bosses, summons and company creatures | 69; approved and imported 2026-10-12 | none |
-| **A12d** | [A12d-class-actions.md](A12d-class-actions.md) | Battle action poses, with look masks, for the 43 advanced classes | 112 sheets, 158 masks | none (E3c and E1b import them) |
+| **A12d** | [A12d-class-actions.md](A12d-class-actions.md) | Battle action poses (with a block or parry each), with look masks, for the 43 advanced classes | 112 sheets, 158 masks | none (E3c and E1b import them) |
 | **A12e** | [A12d-class-actions.md](A12d-class-actions.md#a12e-the-elite-classes-43-classes-112-sheets-158-masks) | Battle action poses, with look masks, for the 43 elite classes | 112 sheets, 158 masks | none |
+| **A12f** | [A12f-defense-poses.md](A12f-defense-poses.md) | Block or parry poses (with masks) for the 15 base classes and the armed A7 figures; A12d/A12e add theirs | about 45, plus masks | none (the importer reads `block` and `parry`) |
 | **A14** | [A14-map-weather.md](A14-map-weather.md) | Weather on the map: rain (light and heavy), splash, snow (near and far), fog, cloud shadows and lightning | 8; approved and imported 2026-10-12 | LM4 |
+| **A15a** | [A15-battle-deaths.md](A15-battle-deaths.md) | Death sheets for the 15 base classes and all 58 creatures, the last frame lying still | 73 sheets, 28 masks | E3d |
+| **A15b** | [A15-battle-deaths.md](A15-battle-deaths.md#a15b-the-advanced-and-elite-classes-86-sheets-116-masks) | Death sheets for the 86 advanced and elite classes | 86 sheets, 116 masks | E3d |
+| **A16a** | [A16-battle-effects.md](A16-battle-effects.md) | Projectiles and weapon hit effects | 26 | E3e |
+| **A16b** | [A16-battle-effects.md](A16-battle-effects.md#a16b-spells-40-files) | Spell effects: an aura, bolt and impact per school, and 22 signature effects | 40 | E3e |
 
 Base figures come first, then the whole map (tiles, landmarks, icons),
 then the battle screen, and the advanced and elite classes come last.
@@ -95,6 +100,8 @@ folder until the matching step is merged.
 | **E2b** | *Done 2026-10-11.* The map draws the A2b inside-corner overlay (`terrain-corner`, `shore-corner-<c>`) over a shore piece in each corner whose diagonal neighbour is water (a lake cell or a water room) while the two sides beside it are shore (`MapTiles.corners`). | A2b |
 | **E3** | High-resolution battle screen: the 320×180 picture drawn at device pixels, with the battle units and backdrops imported as exact pixel art at their measured grain (density 2; 8/3 for small creatures). | A6, A7, battle half of A8–A10 |
 | **E3c** | *Done 2026-10-11.* `import_battle.py` imports pose sheets (`POSES`: attack and shoot 6 frames, hurt 3, cast 4 looping) on the idle's cell and grain, as `battle-pose` entries; the battle screen plays `battle/units/<id>/<pose>.png` on the idle's feet row and preloads a unit's poses when its figure is first drawn. Later pose orders (advanced classes, creatures) need only their masters. | A12 |
+| **E3d** | Death sheets: `import_battle.py` imports a `death` pose (6 frames, not looping, A11 masks like the other poses); the battle screen plays it when a figure falls, holds its last frame while it stays down (in place of today's flat shape), and plays it backwards when a fallen companion is raised. | A15a, A15b |
+| **E3e** | Battle effects: an importer kind for effects at the battle grain (density 2: projectiles 16, hits 32, auras 64 logical px, beam segments that tile); the battle screen draws hits, projectiles (turned to their path), auras, beams and status ticks from the art, scaled by density, with today's code effects as the fallback; a spell-to-school table (or the spell's school sent with its event) picks the school effects, and signature ids override them. | A16a, A16b |
 | **E4** | Rewrite the sprite specification's craft and technical sections to point here. Contact sheets come from the imported art. | all, as phases land |
 
 ## Owner decisions to confirm
