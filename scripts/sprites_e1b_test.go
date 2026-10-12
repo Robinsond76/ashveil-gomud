@@ -73,8 +73,9 @@ func TestLookMasksAreImported(t *testing.T) {
 	}
 	// The A11 delivery: 71 map classes and 72 battle idles show skin or hair.
 	// A11c: the 38 A12 pose sheets of the 15 base classes, but for the
-	// helmed warrior's two (its masks mark nothing): 36.
-	want := map[string]int{"map idle": 71, "map walk": 71, "battle idle": 72, "battle pose": 36}
+	// helmed warrior's two (its masks mark nothing): 36. A12d's partial
+	// delivery: 65 of its 90 sheets have skin or hair masks.
+	want := map[string]int{"map idle": 71, "map walk": 71, "battle idle": 72, "battle pose": 36 + 65}
 	for k, n := range counts {
 		if want[k] != n {
 			t.Errorf("%d %s sheets have look masks, want %d", n, k, want[k])

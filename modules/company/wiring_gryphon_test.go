@@ -105,7 +105,7 @@ func diveCount(stream []combatstream.Event, source string) int {
 }
 
 func TestAGryphonRiderDivesPastTheFrontRow(t *testing.T) {
-	b, stream := gryphonBrawl(t, 1)
+	b, stream := gryphonBrawl(t, 2)
 	foe := b.deepFoe()
 	b.aimTamsinAt(foe)
 	b.hardenBandits()
@@ -116,14 +116,14 @@ func TestAGryphonRiderDivesPastTheFrontRow(t *testing.T) {
 	hit := halberdTargets(round, "Tamsin Reed")
 	require.Len(t, hit, 1, "the dive is her whole turn: one blow")
 	assert.Equal(t, foe.InstanceId, hit[0], "the blow lands on the foe behind the front row")
-	// Level 1: no talons yet.
+	// Level 2 (Dive comes at 2): no talons yet.
 	assert.False(t, status.Live(&foe.Character, status.Bleeding))
 	// The rider paid 10 Evasion for the rest of the round.
 	assert.Equal(t, -10, b.companion(1).Character.Aura.Evasion)
 }
 
 func TestADiveRestsThreeRoundsAndTheCostEnds(t *testing.T) {
-	b, stream := gryphonBrawl(t, 1)
+	b, stream := gryphonBrawl(t, 2)
 	foe := b.deepFoe()
 	b.aimTamsinAt(foe)
 	b.hardenBandits()
@@ -143,11 +143,11 @@ func TestADiveRestsThreeRoundsAndTheCostEnds(t *testing.T) {
 	assert.Equal(t, 1, diveCount(since(*stream, n), "Tamsin Reed"), "ready again on the fourth round")
 }
 
-func TestTalonsBleedFromLevelThree(t *testing.T) {
+func TestTalonsBleedFromLevelFour(t *testing.T) {
 	for _, tc := range []struct {
 		level int
 		bleed bool
-	}{{2, false}, {3, true}} {
+	}{{3, false}, {4, true}} {
 		t.Run(fmt.Sprintf("level %d", tc.level), func(t *testing.T) {
 			b, stream := gryphonBrawl(t, tc.level)
 			foe := b.deepFoe()
@@ -166,7 +166,7 @@ func TestTalonsBleedFromLevelThree(t *testing.T) {
 func TestADiveCannotFlyIndoorsOrOnNarrowGround(t *testing.T) {
 	for _, tag := range []string{"narrow", "indoor"} {
 		t.Run(tag, func(t *testing.T) {
-			b, stream := gryphonBrawl(t, 1)
+			b, stream := gryphonBrawl(t, 2)
 			was := append([]string(nil), b.road.Tags...)
 			t.Cleanup(func() { b.road.Tags = was })
 			foe := b.deepFoe()
@@ -180,7 +180,7 @@ func TestADiveCannotFlyIndoorsOrOnNarrowGround(t *testing.T) {
 }
 
 func TestADiveStrikesTheGuardianThatStepsIn(t *testing.T) {
-	b, stream := gryphonBrawl(t, 1)
+	b, stream := gryphonBrawl(t, 2)
 	foe := b.deepFoe()
 	party, ok := enemyparty.PartyOf(b.road, foe.InstanceId)
 	require.True(t, ok)
@@ -211,7 +211,7 @@ func TestARiderWithAbilitiesOffDoesNotDive(t *testing.T) {
 }
 
 func TestAnUnarmedRiderCannotDive(t *testing.T) {
-	b, stream := gryphonBrawl(t, 1)
+	b, stream := gryphonBrawl(t, 2)
 	b.companion(1).Character.Equipment.Weapon = items.Item{}
 	foe := b.deepFoe()
 	b.aimTamsinAt(foe)
@@ -244,7 +244,7 @@ func TestAPlayerGryphonRiderDives(t *testing.T) {
 }
 
 func TestAGryphonRidersDefaultAimIsTheHealersThenCasters(t *testing.T) {
-	b, _ := gryphonBrawl(t, 1)
+	b, _ := gryphonBrawl(t, 2)
 	list := b.cmd("strategy", "")
 	assert.Regexp(t, `Tamsin Reed\s+gryphon-rider\s+fighter\s+healers`, list)
 }
@@ -257,7 +257,7 @@ func TestADiveReachesOnlyAColumnOfItsOwnOrTheNext(t *testing.T) {
 		struck bool
 	}{{"column 1", 1, true}, {"column 0", 0, false}} {
 		t.Run(tc.name, func(t *testing.T) {
-			b, stream := gryphonBrawl(t, 1)
+			b, stream := gryphonBrawl(t, 2)
 			b.place(2)
 			foe := b.deepFoe(tc.col)
 			b.aimTamsinAt(foe)
@@ -282,7 +282,7 @@ func TestAPlacedRidersAimReachesTheHealerBehindTheFront(t *testing.T) {
 		aims bool
 	}{{"in range", 1, true}, {"out of range", 0, false}} {
 		t.Run(tc.name, func(t *testing.T) {
-			b, _ := gryphonBrawl(t, 1)
+			b, _ := gryphonBrawl(t, 2)
 			b.place(2)
 			healer := b.deepFoe(tc.col)
 			healer.Role = "healer"

@@ -20,21 +20,23 @@ func TestPowerLines(t *testing.T) {
 	assert.Empty(t, powerLines(after, after))
 }
 
-// Phase 46: a halberdier's level-up report names Brace (level 3), Hook (6),
+// Phase 46: a halberdier's level-up report names Sweep (level 2), Brace (4), Hook (6),
 // the Sweep that reaches the whole row (8) and Hook's better chance (20) as
 // the shared "New rank" lines, and the power report no longer repeats them.
 func TestHalberdierLevelsAreNewRankLines(t *testing.T) {
 	rank := func(from, to int) []string { return classes.RankLines("halberdier", "", from, to) }
-	assert.Empty(t, rank(1, 2))
-	require.Len(t, rank(2, 3), 1)
-	assert.Contains(t, rank(2, 3)[0], "New rank: Brace, ")
+	require.Len(t, rank(1, 2), 1)
+	assert.Contains(t, rank(1, 2)[0], "New rank: Sweep, ")
+	assert.Empty(t, rank(2, 3))
+	require.Len(t, rank(3, 4), 1)
+	assert.Contains(t, rank(3, 4)[0], "New rank: Brace, ")
 	assert.Contains(t, rank(5, 6)[0], "New rank: Hook, ")
 	assert.Contains(t, rank(7, 8)[0], "New rank: Wide sweep, ")
 	assert.Contains(t, rank(19, 20)[0], "New rank: Deep hook, ")
 
 	c := characters.New()
 	c.HPArchetype = "halberdier"
-	for _, level := range []int{1, 3, 6, 8, 20} {
+	for _, level := range []int{1, 2, 4, 6, 8, 20} {
 		c.Level = level
 		assert.Empty(t, abilityPower(c, strategy.CompanionAbilities("halberdier")), "level %d", level)
 	}
@@ -49,8 +51,9 @@ func TestPowerSnapshotNamesTheGryphonRidersPowerDive(t *testing.T) {
 		c.Level = level
 		return abilityPower(c, strategy.CompanionAbilities("gryphon-rider"))
 	}
-	assert.Equal(t, []powerEntry{{"Dive", "100% of a blow"}}, at(1))
-	assert.Empty(t, powerLines(at(2), at(3)))
+	assert.Empty(t, at(1), "Dive comes at level 2")
+	assert.Equal(t, []powerEntry{{"Dive", "100% of a blow"}}, at(2))
+	assert.Empty(t, powerLines(at(3), at(4)))
 	assert.Equal(t, []string{"Dive 100% of a blow -> 125% of a blow"}, powerLines(at(7), at(8)))
 }
 
@@ -63,7 +66,8 @@ func TestPowerSnapshotNamesTheArbalistsPiercingBolt(t *testing.T) {
 		c.Level = level
 		return abilityPower(c, strategy.CompanionAbilities("arbalist"))
 	}
-	assert.Equal(t, []powerEntry{{"Piercing Bolt", "140% of a shot"}}, at(1))
+	assert.Empty(t, at(1), "Piercing Bolt comes at level 2")
+	assert.Equal(t, []powerEntry{{"Piercing Bolt", "140% of a shot"}}, at(2))
 	assert.Empty(t, powerLines(at(7), at(8)), "Armor-breaker is a rank line, not a size")
 	c.HPClass = "siegebreaker"
 	assert.Equal(t, []string{"Piercing Bolt 140% of a shot -> 160% of a shot"}, powerLines(at(14), at(15)))

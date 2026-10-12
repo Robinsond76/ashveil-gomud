@@ -21,11 +21,11 @@ stands in front of any of its routes.
 Stormcraft is the Shaman's school; only a Shaman may learn it.
 
   <ansi fg="yellow">Spell</ansi>        <ansi fg="yellow">level</ansi>  <ansi fg="yellow">mana</ansi>  <ansi fg="yellow">chant</ansi>  <ansi fg="yellow">what it does</ansi>
-  Call Fog       1      6     1     for 3 rounds, foes' ranged attacks lose 10
+  Gust           1      5     2     a small wind spell, about 70% of Magic Missile
+  Call Fog       2      6     1     for 3 rounds, foes' ranged attacks lose 10
                                     points of accuracy and their spells hit
                                     10% weaker (they are fogbound)
-  Gust           1      5     2     a small wind spell, about 70% of Magic Missile
-  Chill Wind     3     12     2     for 3 rounds, foes' spell chants and sling
+  Chill Wind     4     12     2     for 3 rounds, foes' spell chants and sling
                                     shots take one extra round to begin, as in
                                     the cold (they are windchilled)
   Rain           6     10     2     for 3 rounds, Lightning strikes 50% harder

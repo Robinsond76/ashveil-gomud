@@ -43,8 +43,9 @@ and an alchemist heals and burns with thrown flasks
 (<ansi fg="command">help halberdier</ansi>, <ansi fg="command">help dollmaster</ansi>, <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help alchemist</ansi>, <ansi fg="command">help abilities</ansi>).
 
 Wizards start with Magic Missile, clerics with Minor Heal, witches with
-Slumber and shamans with Call Fog and Gust, the spells they cast in battle
-(<ansi fg="command">help witch</ansi>, <ansi fg="command">help shaman</ansi>).
+Withering Hex and shamans with Gust, the spells they cast in battle
+(<ansi fg="command">help witch</ansi>, <ansi fg="command">help shaman</ansi>). Every other skill and spell comes as
+you level (<ansi fg="command">help skill-levels</ansi>).
 
 <ansi fg="yellow-bold">Classes</ansi>
 

@@ -8,8 +8,8 @@ package classes
 
 func init() {
 	registerBase("gryphon-rider",
-		rank(1, "Dive", "a stooping blow that can pass a standing front-row foe to strike the middle or back row (cooldown 3 rounds, open sky only); the rider has -10 Evasion until its next turn"),
-		rank(3, "Talons", "a Dive that lands leaves the foe bleeding", Talons, 1),
+		rank(2, "Dive", "a stooping blow that can pass a standing front-row foe to strike the middle or back row (cooldown 3 rounds, open sky only); the rider has -10 Evasion until its next turn"),
+		rank(4, "Talons", "a Dive that lands leaves the foe bleeding", Talons, 1),
 		rank(8, "Power dive", "a Dive deals 25% more damage", DiveDmg, 25),
 	)
 

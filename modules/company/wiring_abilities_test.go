@@ -42,12 +42,30 @@ func abilityBrawl(t *testing.T, companions map[int]string) (*brawl, *[]combatstr
 }
 
 // start opens the fight on the bandit captain, with everyone hard to kill.
+// A companion still at the harness's level 1 is raised to 4: the skill
+// schedule (2026-10-12) brings a lineage's first skills at levels 2 and 4.
+// A level a test set itself is kept.
 func (b *brawl) start() {
 	b.t.Helper()
 	captain, _, _, _, _ := b.shapeBandits()
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
 	b.hardenBandits()
 	b.toughen()
+	b.skilledFrom(1, 4)
+}
+
+// skilled raises every companion below a level to it: the level the
+// abilities read, nothing else.
+func (b *brawl) skilled(level int) { b.skilledFrom(level-1, level) }
+
+// skilledFrom raises every companion at or below from to level.
+func (b *brawl) skilledFrom(from, level int) {
+	b.t.Helper()
+	for _, instance := range module.instances[7] {
+		if m := mobs.GetInstance(instance); m != nil && m.Character.Level <= from {
+			m.Character.Level = level
+		}
+	}
 }
 
 // since are the events after the first n.
@@ -491,7 +509,7 @@ func TestATackleAtLevel20KeepsTheFoeDownLonger(t *testing.T) {
 		})
 		return left
 	}
-	low, high := down(1), down(20)
+	low, high := down(2), down(20)
 	require.Positive(t, low)
 	assert.Equal(t, low+1, high)
 }

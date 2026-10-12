@@ -356,6 +356,7 @@ func TestBalanceReadyArcherRetainsEarnedTurn(t *testing.T) {
 				c.Equipment.Weapon = items.New(10014)
 			}
 			if player {
+				b.skilled(2) // the skill schedule: Tackle comes at level 2
 				require.Contains(t, b.cmd("strategy", "tamsin abilities on"), "will use Tackle")
 			}
 			b.cmd("attack", fmt.Sprintf("#%d", opening))

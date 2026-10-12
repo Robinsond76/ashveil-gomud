@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -167,4 +168,20 @@ func TestGMCPEnchantedPlainPieceCarriesItsEnchantLine(t *testing.T) {
 	worn := inventoryMemberOf(member).Worn
 	require.NotEmpty(t, worn)
 	assert.Equal(t, got, worn[0].Relic)
+}
+
+// The Gear tab's tooltip names the warmth a worn piece would add: its own
+// value, or the slot default, and nothing for a piece that adds none.
+func TestGMCPItemCarriesWarmth(t *testing.T) {
+	climate.SetWarmthSettings(climate.WarmthSettings{SlotDefaults: map[string]int{"body": 3}})
+	t.Cleanup(func() { climate.SetWarmthSettings(climate.WarmthSettings{}) })
+	testItemSpecs(t,
+		items.ItemSpec{ItemId: 989321, Name: "furs", Type: items.Body, Subtype: items.Wearable, Warmth: 9},
+		items.ItemSpec{ItemId: 989322, Name: "tunic", Type: items.Body, Subtype: items.Wearable},
+		items.ItemSpec{ItemId: 989323, Name: "bangle", Type: items.Ring, Subtype: items.Wearable})
+	assert.Equal(t, 9, newInventory_Item(items.New(989321)).Warmth)
+	assert.Equal(t, 3, newInventory_Item(items.New(989322)).Warmth)
+	data, err := json.Marshal(newInventory_Item(items.New(989323)))
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "warmth")
 }

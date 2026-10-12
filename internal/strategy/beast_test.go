@@ -13,8 +13,9 @@ func TestBeastTamerAbilityUnlocks(t *testing.T) {
 	assert.Equal(t, all, CompanionAbilities("BeastTamer"))
 	levels := map[string]int{"taming": 1}
 	assert.Equal(t, all, PlayerAbilities(func(s string) int { return levels[s] }))
-	assert.Equal(t, []Ability{Sic}, AtLevel(all, 2))
-	assert.Equal(t, []Ability{Sic, Rally}, AtLevel(all, 3))
+	assert.Equal(t, []Ability{Sic}, AtLevel(all, 3))
+	assert.Empty(t, AtLevel(all, 1), "Sic comes at level 2")
+	assert.Equal(t, []Ability{Sic, Rally}, AtLevel(all, 4))
 	assert.Equal(t, all, AtLevel(all, 8))
 }
 

@@ -33,14 +33,15 @@ func TestGryphonRiderHasThreeUngatedRoutes(t *testing.T) {
 }
 
 // The lineage's own ranks come by level, before any promotion: Dive at 1,
-// Talons at 3, Power dive at 8; a route's ranks sit on top of them.
+// Talons at 4, Power dive at 8; a route's ranks sit on top of them.
 func TestGryphonRiderBaseRanksAndRoutes(t *testing.T) {
-	assert.Equal(t, []string{"Dive"}, rankNames(BaseRanksReached("gryphon-rider", 2)))
+	assert.Empty(t, BaseRanksReached("gryphon-rider", 1))
+	assert.Equal(t, []string{"Dive"}, rankNames(BaseRanksReached("gryphon-rider", 3)))
 	assert.Equal(t, []string{"Dive", "Talons"}, rankNames(BaseRanksReached("gryphon-rider", 7)))
 	assert.Equal(t, []string{"Dive", "Talons", "Power dive"}, rankNames(BaseRanksReached("gryphon-rider", 8)))
 
-	assert.Nil(t, EffectsForLineage("gryphon-rider", "", 2, nil), "Dive's numbers are in the ability; nothing to read yet")
-	assert.True(t, EffectsForLineage("gryphon-rider", "", 3, nil).Has(Talons))
+	assert.Nil(t, EffectsForLineage("gryphon-rider", "", 3, nil), "Dive's numbers are in the ability; nothing to read yet")
+	assert.True(t, EffectsForLineage("gryphon-rider", "", 4, nil).Has(Talons))
 	assert.Zero(t, EffectsForLineage("gryphon-rider", "", 7, nil).Int(DiveDmg))
 	assert.Equal(t, 25, EffectsForLineage("gryphon-rider", "", 8, nil).Int(DiveDmg))
 
@@ -71,7 +72,7 @@ func TestGryphonRiderTalents(t *testing.T) {
 
 // The level-up report names a base rank when it arrives.
 func TestGryphonRiderLevelUpNamesRanks(t *testing.T) {
-	lines := RankLines("gryphon-rider", "", 2, 3)
+	lines := RankLines("gryphon-rider", "", 3, 4)
 	require.Len(t, lines, 1)
 	assert.Contains(t, lines[0], "New rank: Talons")
 	assert.Contains(t, MilestoneFor("gryphon-rider", "", 6), "Power dive")

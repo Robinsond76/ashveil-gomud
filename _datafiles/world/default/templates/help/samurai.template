@@ -19,13 +19,13 @@ any of its routes.
 
 <ansi fg="yellow-bold">Ranks of the Samurai</ansi>
 
-  Level 1   <ansi fg="yellow">Iaijutsu</ansi>  the Samurai starts every battle with half a turn on its action
+  Level 2   <ansi fg="yellow">Iaijutsu</ansi>  the Samurai starts every battle with half a turn on its action
             meter, so it acts sooner and takes the first round's first
             turn ahead of anyone at its tempo (<ansi fg="command">help tempo</ansi>). Its first strike of the battle
             deals 50% more damage with +10% critical chance. The strike is
             spent by that swing, hit or miss, and comes back with the next
             battle.
-  Level 3   <ansi fg="yellow">Focus</ansi>     +3% critical chance for each round in a row in which no blow
+  Level 4   <ansi fg="yellow">Focus</ansi>     +3% critical chance for each round in a row in which no blow
             lands on the Samurai, up to +9%. A blow that lands resets it.
   Level 8   <ansi fg="yellow">Zanshin</ansi>   when the Samurai fells a foe, its action meter gains half a turn
             (once a round), so it is ready for the next one sooner.

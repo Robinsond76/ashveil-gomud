@@ -443,6 +443,7 @@
         if (item.type)     { rows.push({ label: 'Type',    value: item.type    }); }
         if (item.subtype)  { rows.push({ label: 'Subtype', value: item.subtype }); }
         if (item.uses > 0) { rows.push({ label: 'Uses',    value: item.uses    }); }
+        if (item.warmth > 0) { rows.push({ label: 'Warmth', value: '+' + item.warmth }); }
         const grams = weightOf(item.id);
         if (grams !== null) { rows.push({ label: 'Weight', value: (grams / 1000).toFixed(1) + ' kg' }); }
 
@@ -847,7 +848,11 @@
         candidates.forEach(entry => {
             const c = entry.choice;
             const removal = entry.key.startsWith('remove:');
-            const button = editorNode('button', removal ? 'Preview removal' : c.label, choices);
+            // Say what the piece does to warmth before it is chosen.
+            const warmthShift = c.after && typeof c.after.warmth === 'number' && typeof view.current.warmth === 'number'
+                ? c.after.warmth - view.current.warmth : 0;
+            const warmthNote = warmthShift ? ' (' + (warmthShift > 0 ? '+' : '') + warmthShift + ' warmth)' : '';
+            const button = editorNode('button', (removal ? 'Preview removal' : c.label) + warmthNote, choices);
             button.type = 'button';
             button.dataset.gearFocus = 'choice:' + entry.key;
             button.setAttribute('aria-pressed', String(entry.key === editorChoice));
@@ -872,7 +877,7 @@
             return String(value);
         }
         const rows = [
-            ['Weapon damage', 'damage'], ['Offhand damage', 'offhand_damage'], ['Weapon edge bonus', 'edge_bonus'], ['Weapon edge strikes', 'edge_strikes'], ['Offhand edge bonus', 'offhand_edge_bonus'], ['Offhand edge strikes', 'offhand_edge_strikes'], ['Weapon poison', 'weapon_coat'], ['Offhand poison', 'offhand_coat'], ['Hands', 'hands'], ['Reach', 'reach'], ['Shield', 'shield'], ['Protection (%)', 'defense'], ['Maximum health', 'health_max'], ['Maximum mana', 'mana_max'],
+            ['Weapon damage', 'damage'], ['Offhand damage', 'offhand_damage'], ['Weapon edge bonus', 'edge_bonus'], ['Weapon edge strikes', 'edge_strikes'], ['Offhand edge bonus', 'offhand_edge_bonus'], ['Offhand edge strikes', 'offhand_edge_strikes'], ['Weapon poison', 'weapon_coat'], ['Offhand poison', 'offhand_coat'], ['Hands', 'hands'], ['Reach', 'reach'], ['Shield', 'shield'], ['Protection (%)', 'defense'], ['Warmth', 'warmth'], ['Maximum health', 'health_max'], ['Maximum mana', 'mana_max'],
             ['Worn weight (g)', 'worn_g'], ['Burden', 'burden'], ['Dodge retained (%)', 'dodge_pct'],
             ['Pack capacity (g)', 'pack_capacity_g'], ['Company capacity (g)', 'capacity_g'], ['Cargo weight (g)', 'cargo_g']
         ];
@@ -888,7 +893,7 @@
             editorNode('td', String(view.current.stats[key]), row);
             if (after) { editorNode('td', String(after.stats[key]), row).className = String(after.stats[key]) !== String(view.current.stats[key]) ? 'changed' : ''; }
         });
-        editorNode('p', 'Burden reduces dodge. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. A poison coating (time and hits left) may leave a poison on a foe your blade wounds. The foe and combat conditions affect actual damage.', panel).className = 'gw-editor-help';
+        editorNode('p', 'Burden reduces dodge. Warmth is the insulation your clothing gives against cold; more warmth keeps you comfortable in colder air but makes heat harder to bear. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. A poison coating (time and hits left) may leave a poison on a foe your blade wounds. The foe and combat conditions affect actual damage.', panel).className = 'gw-editor-help';
         if (candidate) {
             if (candidate.returned && candidate.returned.length) { editorNode('p', 'Returns to cargo: ' + candidate.returned.join(', '), panel); }
             if (!candidate.allowed) { const reason = editorNode('p', candidate.reason, panel); reason.setAttribute('role', 'status'); }
