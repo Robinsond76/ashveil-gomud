@@ -53,8 +53,8 @@ fighting:
 - the enemy group's anger at you doesn't wear off while the fight lasts.
 
 Turning to a new target isn't announced; the next blows show who is
-fighting whom (the battle screen draws the lines, and
-<ansi fg="command">help battlelog</ansi> explains any hit).
+fighting whom. On the battle screen, point at a figure to see whom it
+strikes, and <ansi fg="command">help battlelog</ansi> explains any hit.
 
 A focus you call in a battle turns everyone at once at the next round,
 even from a foe still standing (<ansi fg="command">help tactics</ansi>).
