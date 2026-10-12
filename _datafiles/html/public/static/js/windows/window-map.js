@@ -433,6 +433,9 @@
         '    box-shadow: 0 4px 16px rgba(0,0,0,0.65);',
         '    padding: 8px 10px;',
         '    min-width: 160px;',
+        '    box-sizing: border-box;',
+        '    max-height: calc(100% - 38px);', // a short map window scrolls the panel
+        '    overflow-y: auto;',
         '    display: flex;',
         '    flex-direction: column;',
         '    gap: 6px;',

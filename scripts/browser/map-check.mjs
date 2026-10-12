@@ -1140,6 +1140,12 @@ for (const dpr of [1, 1.5, 2]) {
   await start(pg);
   const withRing = await pg.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
   await pg.click('.map-controls button[title="Map settings"]');
+  const fits = async () => pg.evaluate(() => {
+    const p = document.querySelector('.map-settings-panel').getBoundingClientRect();
+    const w = document.querySelector('.map-canvas-wrap').getBoundingClientRect();
+    return p.bottom <= w.bottom + 0.5;
+  });
+  check(await fits(), 'the map settings panel fits inside the map, scrolling when the map is short');
   const haloRow = pg.locator('.map-settings-panel div', { hasText: /^Halo/ }).last();
   await haloRow.locator('button', { hasText: 'Off' }).click();
   await tick(pg, 300);
