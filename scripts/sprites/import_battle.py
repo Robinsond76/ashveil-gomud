@@ -21,8 +21,9 @@ refused.
 
 A pose sheet (A12, E3c: `battle/units/<id>/<pose>.png`) is cut the same
 way, with the pose's own frame count (POSES): an attack and a shot have 6
-frames (the blow or release on frame 4), a hurt 3, and a cast 4 drawn to
-loop (`loop` in its entry; the battle screen's planner decides when a step
+frames (the blow or release on frame 4), a hurt 3, a block or parry 3 (a
+blow caught on a shield, or turned aside by a weapon: A12f), and a cast 4
+drawn to loop (`loop` in its entry; the battle screen's planner decides when a step
 loops it: while chanting, not at the release). A pose is imported only for a
 unit whose idle is imported too (in the same run or already in the index),
 at the same runtime frame and density, so the battle screen can stand it on
@@ -54,10 +55,11 @@ import roster  # noqa: E402
 from import_art import encode, shrink, IMPORTED, DEFAULT_SRC  # noqa: E402
 from import_sheet import look_mask, mask_png  # noqa: E402
 
-PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10", "A12", "A12b", "A12c"]
+PHASES = ["A6", "A7", "A8a", "A8b", "A9", "A10", "A12", "A12b", "A12c", "A12d", "A12e", "A12f"]
 FRAMES = 4
 # Action poses (A12): frames, and whether the screen loops the sheet.
-POSES = {"attack": (6, False), "hurt": (3, False), "shoot": (6, False), "cast": (4, True)}
+POSES = {"attack": (6, False), "hurt": (3, False), "shoot": (6, False), "cast": (4, True),
+         "block": (3, False), "parry": (3, False)}
 POSE_FRAME_MS = 120           # a looping pose's frame time; the others span their step
 # master cell -> (grain, runtime frame) by size class.
 CELLS = {

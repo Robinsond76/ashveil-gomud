@@ -281,6 +281,20 @@ await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_i
 await tick(page, 300);
 s = await state(page);
 check(s.fire === 'bonfire', 'lighting the fire lights the camp you are, as a bonfire (A13): ' + s.fire);
+// A rough camp (no tent) has its own stone pit: lighting it burns on that pit, not a second bonfire beside it.
+const roughCamp = (o) => ({ has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), tent: false, allied_camps: [], ...o });
+await gmcp(page, 'Company.Camp', roughCamp({ fire_lit: false }));
+await tick(page, 300);
+s = await state(page);
+check(s.fire === 'unlit', 'a rough camp you are, unlit: its own pit and no second fire: ' + s.fire);
+if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-rough-unlit.png') }); }
+await gmcp(page, 'Company.Camp', roughCamp({ fire_lit: true }));
+await tick(page, 300);
+s = await state(page);
+check(s.fire === 'lit', 'a lit rough camp you are burns on its own pit, not as a bonfire: ' + s.fire);
+if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-rough-lit.png') }); }
+await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: true, allied_camps: [] });
+await tick(page, 300);
 await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: id(yourTile.x, yourTile.y), fire_lit: false, embers: true, allied_camps: [] });
 await tick(page, 300);
 check((await state(page)).fire === 'embers', 'after a rest the camp you are glows with embers');
