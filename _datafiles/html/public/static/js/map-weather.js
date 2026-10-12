@@ -18,7 +18,7 @@
  *     lightning  true in a storm.
  *     dim        how much the sky darkens the tiles (0-1).
  *   opts.reduced (reduced motion) stops every layer and the splashes;
- *   opts.fogVeil says LM2 already draws a fog veil, so fog thins to match.
+ *   opts.fogVeil says LM2 already draws a fog veil, so fog thins to a third.
  *
  *   MapWeather.nextStrike(now, rand) -> when the next lightning strike
  *                       comes: 4 to 9 seconds after now (rand is 0-1).
@@ -46,8 +46,10 @@
     var FLASH_MS = 140, BOLT_MS = 420;
     var STRIKE_MIN_MS = 4000, STRIKE_SPREAD_MS = 5000;
 
+    // A rain texture spans two tiles, so its streaks stay long enough to
+    // read at the map's usual zoom.
     function rain(tex, speed, alpha) {
-        return { tex: tex, size: 1, vx: SLANT_X * speed, vy: SLANT_Y * speed, alpha: alpha };
+        return { tex: tex, size: 2, vx: SLANT_X * speed, vy: SLANT_Y * speed, alpha: alpha };
     }
 
     function plan(weather, opts) {
@@ -60,14 +62,16 @@
             layers.push({ tex: 'clouds', size: 2, vx: 0.05, vy: 0.02, alpha: 0.18 });
             dim = name === 'storm' ? 0.18 : 0.08;
         }
-        var fog = opts.fogVeil ? 0.5 : 1;
+        // LM2 already veils the fog when it cuts sight: the drifting banks
+        // thin to a third so the map stays readable.
+        var fog = opts.fogVeil ? 0.35 : 1;
         switch (name) {
         case 'rain':
-            layers.push(rain('rain', 3, 0.5));
+            layers.push(rain('rain', 3, 0.65));
             splash = 0.6;
             break;
         case 'storm':
-            layers.push(rain('rain-heavy', 5, 0.5));
+            layers.push(rain('rain-heavy', 5, 0.6));
             splash = 1.2;
             lightning = true;
             break;

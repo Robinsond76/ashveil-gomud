@@ -126,6 +126,14 @@ def jobs():
     out.append(Job("map/camp/bonfire.png", ["A13/map/camp/bonfire.png"], [128, 128],
                    _anim({"kind": "camp", "set": "S1", "frames": 4, "anchor": "center"}, 150),
                    frames=4, budget=BIG))
+    # A14 (LM4): weather the map slides over its outdoor tiles. The textures
+    # tile seamlessly: one tile across (512 px masters) or two (1024 px).
+    weather = [("rain", 128, 1, 0), ("rain-heavy", 128, 1, 0), ("snow", 128, 1, 0), ("snow-far", 128, 1, 0),
+               ("fog", 256, 1, 0), ("clouds", 256, 1, 0), ("splash", 64, 4, 100), ("lightning", 128, 3, 140)]
+    for name, px, n, ms in weather:
+        out.append(Job(f"map/weather/{name}.png", [f"A14/map/weather/{name}.png"], [px, px],
+                       _anim({"kind": "weather", "set": "S1", "frames": n, "anchor": "center"}, ms),
+                       frames=n, budget=BIG if px >= 128 else SMALL))
     camp = [("tent", 128, 1, 0), ("tent-ally", 128, 1, 0), ("camp-rough", 128, 1, 0),
             ("camp-rough-ally", 128, 1, 0), ("fire-unlit", 64, 1, 0), ("fire-lit", 64, 4, 150),
             ("embers", 64, 3, 150), ("smoke", 64, 4, 150), ("resting", 64, 3, 150), ("inn-rest", 64, 1, 0)]

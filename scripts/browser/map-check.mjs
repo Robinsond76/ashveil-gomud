@@ -994,10 +994,14 @@ for (const dpr of [1, 1.5, 2]) {
   s = await setWeather({ name: 'clear', cloud_cover: 0 });
   check(s.weather === null, 'a clear sky draws none');
   s = await setWeather({ name: 'overcast', cloud_cover: 3 });
-  check(s.weather && JSON.stringify(s.weather.layers) === '["clouds"]' && s.weather.cells === s.drawn.tiles && s.weather.cells > 10 && s.weather.art.clouds === 'code' && s.weather.moving,
-    'overcast drifts cloud shadows over every outdoor tile (drawn in code until A14): ' + JSON.stringify(s.weather));
+  await tick(page, 300); // the A14 texture loads
+  s = await state(page);
+  check(s.weather && JSON.stringify(s.weather.layers) === '["clouds"]' && s.weather.cells === s.drawn.tiles && s.weather.cells > 10 && s.weather.art.clouds === 'art' && s.weather.moving,
+    'overcast drifts the A14 cloud shadows over every outdoor tile: ' + JSON.stringify(s.weather));
   s = await setWeather({ name: 'rain', cloud_cover: 3 });
-  check(JSON.stringify(s.weather.layers) === '["clouds","rain"]', 'rain: ' + JSON.stringify(s.weather.layers));
+  await tick(page, 300);
+  s = await state(page);
+  check(JSON.stringify(s.weather.layers) === '["clouds","rain"]' && s.weather.art.rain === 'art', 'rain, in its A14 art: ' + JSON.stringify(s.weather));
   const a1 = await sample(); await tick(page, 150); const a2 = await sample();
   check(a1 !== a2, 'the rain falls (the map changes from frame to frame)');
   let splashed = 0;
@@ -1011,7 +1015,7 @@ for (const dpr of [1, 1.5, 2]) {
   await page.evaluate(() => window.MapView.strikeNow());
   await tick(page, 30);
   s = await state(page);
-  check(s.weather.strikes === before + 1 && s.weather.flash && s.weather.bolt === 'code', 'lightning strikes with a brief flash: ' + JSON.stringify(s.weather));
+  check(s.weather.strikes === before + 1 && s.weather.flash && s.weather.bolt === 'art', 'lightning strikes, its A14 bolt with a brief flash: ' + JSON.stringify(s.weather));
   if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-lm4-storm.png') }); }
   await tick(page, 500);
   check(!(await state(page)).weather.flash, 'the flash is over within half a second');
