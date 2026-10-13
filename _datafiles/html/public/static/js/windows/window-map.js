@@ -44,6 +44,7 @@
         style:           'tiles',    // Phase 40c: 'tiles' (terrain art, landmarks, walls, fog) | 'classic' (coloured squares and letters)
         dayNight:        true,       // Phase 40d: shade outdoor tiles by the game's time of day
         weather:         true,       // LM4: rain, storms, fog, clouds and snow over outdoor tiles
+        hereRing:        true,       // the halo under your sprite (and under your camp); off = no ring
     };
 
     // Phase 40a: room resources. The tiles style draws each one's S1 icon
@@ -432,6 +433,9 @@
         '    box-shadow: 0 4px 16px rgba(0,0,0,0.65);',
         '    padding: 8px 10px;',
         '    min-width: 160px;',
+        '    box-sizing: border-box;',
+        '    max-height: calc(100% - 38px);', // a short map window scrolls the panel
+        '    overflow-y: auto;',
         '    display: flex;',
         '    flex-direction: column;',
         '    gap: 6px;',
@@ -880,7 +884,9 @@
             alpha *= figureDim;
             ctx.save();
             ctx.globalAlpha = alpha;
-            if (!drawIcon('map/markers/here-ring.png', p.px, p.py + 8 * mult, mult, now)) {
+            if (mapSettings.hereRing === false) {
+                // The player turned the halo off: nothing under the sprite.
+            } else if (!drawIcon('map/markers/here-ring.png', p.px, p.py + 8 * mult, mult, now)) {
                 ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = Math.max(1, mult * 2);
                 ctx.strokeRect(p.px - tile / 2, p.py - tile / 2, tile, tile);
             }
@@ -2657,6 +2663,12 @@
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
                 function () { return mapSettings.sprites !== false; },
                 function (v) { mapSettings.sprites = v; }
+            )));
+
+            panel.appendChild(row('Halo', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.hereRing !== false; },
+                function (v) { mapSettings.hereRing = v; }
             )));
 
             panel.appendChild(row('Camps', btnGroup(
