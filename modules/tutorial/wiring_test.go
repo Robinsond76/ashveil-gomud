@@ -473,11 +473,14 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	_, ok = camping.LeaderRest(aria.UserId)
 	assert.False(t, ok, "the course camp is struck")
 
-	// A camp made after the lesson (the Campground still allows one) is
-	// struck when the player walks out.
+	// A camp made after the lesson (the Campground still allows one) holds
+	// the player until it is broken.
 	run(aria, "camp", "")
 	_, ok = camping.LeaderRest(aria.UserId)
 	require.True(t, ok)
+	got = run(aria, "east", "")
+	assert.Contains(t, got, "Break camp", "a pitched camp refuses the walk")
+	run(aria, "camp", "break")
 
 	// Combat (27c): the squad stands in the player's own Practice Yard as
 	// one party, footmen in front, the archer behind.

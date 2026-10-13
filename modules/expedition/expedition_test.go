@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
@@ -1242,4 +1243,31 @@ func TestCombatInterruptionSaveFailureCancelsSpawnAndRetryMakesOneEncounter(t *t
 	require.NoError(t, m.interruptLocked(original))
 	assert.Equal(t, 2, m.sessions[7].Interruption.CombatMobInstanceId)
 	assert.Equal(t, []int{1}, spawner.cancelCalls, "successful retry keeps its encounter")
+}
+
+type campHold struct{ room int }
+
+func (campHold) MovementBlocked(int) (bool, string) { return false, "" }
+func (c campHold) LeaveBlocked(_, roomID int) (bool, string) {
+	return roomID == c.room, "Break camp before you leave."
+}
+
+func TestStartTravelRefusedWhileCampPitched(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	module := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+	camping.SetMovementProvider(campHold{room: 100})
+	t.Cleanup(func() { camping.SetMovementProvider(nil) })
+
+	handled, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Empty(t, store.saved.Sessions, "a pitched camp holds the company: no journey starts")
+	assert.Empty(t, scheduler.callbacks)
+
+	// A camp in another room does not hold this one.
+	camping.SetMovementProvider(campHold{room: 999})
+	_, err = module.StartTravel(startRequest())
+	require.NoError(t, err)
+	assert.Len(t, store.saved.Sessions, 1)
 }
