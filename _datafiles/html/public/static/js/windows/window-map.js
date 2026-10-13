@@ -665,7 +665,7 @@
 
         // drawIcon draws a centered, anchor-less marker (ring, badge, camp
         // pieces) at <mult>x. It reports whether the image was ready.
-        function drawIcon(path, cx, cy, mult, now) {
+        function drawIcon(path, cx, cy, mult, now, flip) {
             var a = Sprites.art(path);
             if (!a) { return false; }
             var f = Sprites.frame(a.info, 0, now, 0);
@@ -673,6 +673,11 @@
             var w = f.sw * mult / d, h = f.sh * mult / d;
             ctx.save();
             artSmoothing(a.info);
+            if (flip) {
+                // mirror about the icon's own centre
+                var mx = snap(cx - w / 2) + w / 2;
+                ctx.translate(mx, 0); ctx.scale(-1, 1); ctx.translate(-mx, 0);
+            }
             ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, snap(cx - w / 2), snap(cy - h / 2), w, h);
             ctx.restore();
             return true;
@@ -794,10 +799,16 @@
             var tentMult = mult;
             if (asYou && !innRest) {
                 tentMult = mult * 1.25;
-                fire = { px: p.px + 5 * mult, py: p.py + 10 * mult };
+                fire = { px: p.px + 10 * mult, py: p.py + 8 * mult };
                 // A rough camp has no tent to stand back: it sits lower so
                 // its own pit, where the fire burns, is on your here-ring.
                 p = { px: p.px, py: p.py + (tent === false ? 9 : -3) * mult };
+            }
+            if (tent !== false && !occupied && !innRest) {
+                // The tent faces right (its art is mirrored) and stands on the
+                // left of the tile, the fire to its right, all inside the tile.
+                fire = fire || { px: p.px + 11 * mult, py: p.py + 7 * mult };
+                p = { px: p.px - 6 * mult, py: p.py };
             }
             if (occupied) {
                 // Your sprite stands on this tile and would hide the camp:
@@ -813,7 +824,7 @@
             var pitch = (tent === false)
                 ? (ally ? 'map/camp/camp-rough-ally.png' : 'map/camp/camp-rough.png')
                 : (ally ? 'map/camp/tent-ally.png' : 'map/camp/tent.png');
-            if (!drawIcon(pitch, p.px, p.py, tentMult, now)) {
+            if (!drawIcon(pitch, p.px, p.py, tentMult, now, tent !== false)) {
                 // no art yet: a small tent triangle
                 var q = getRoomSize() * zoomScale * 0.4;
                 ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
