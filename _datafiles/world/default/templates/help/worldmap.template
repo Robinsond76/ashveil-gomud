@@ -195,8 +195,9 @@ instead.
   no darkness), <ansi fg="yellow">Weather</ansi> (on, or off for a clear map) and <ansi fg="yellow">Halo</ansi> (on, or off to
   hide the glowing ring round your orb, or in the Tiles style the ring
   under your sprite and your camp fire; your orb keeps its gold rim). The
-  weather shows on the Orbs and Tiles styles. All are kept per browser. The
-  map shows only what the game already tells you: nothing about anyone
-  outside your party.
+  weather shows on the Orbs and Tiles styles (on the orbs it and the night
+  fall on the pictures, leaving the ground between them clear). All are
+  kept per browser. The map shows only what the game already tells you:
+  nothing about anyone outside your party.
 
 See also: <ansi fg="command">help walkto</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.

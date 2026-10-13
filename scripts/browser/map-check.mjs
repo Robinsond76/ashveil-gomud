@@ -1214,6 +1214,31 @@ for (const dpr of [1, 1.5, 2]) {
   check(s.drawn.chevrons === 1, 'a room with a way up shows its chevron');
   if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-orbs.png') }); }
 
+  // Night and rain lie on the orbs, not on the ground between them (review
+  // 2026-10-13: square cells of rain and overlapping dark discs blotched it).
+  const pixelBetween = (pg, a, b) => pg.evaluate(([a, b]) => {
+    const c = document.getElementById('map-2d-canvas'), r = c.getBoundingClientRect();
+    const p = window.MapView.pointOf(a), q = window.MapView.pointOf(b);
+    const k = c.width / r.width;
+    const x = Math.round(((p.x + q.x) / 2 - r.left) * k), y = Math.round(((p.y + q.y) / 2 - r.top) * k);
+    return Array.from(c.getContext('2d').getImageData(x, y, 1, 1).data).join();
+  }, [a, b]);
+  const pixelOn = (pg, a) => pg.evaluate(a => {
+    const c = document.getElementById('map-2d-canvas'), r = c.getBoundingClientRect(), p = window.MapView.pointOf(a), k = c.width / r.width;
+    return Array.from(c.getContext('2d').getImageData(Math.round((p.x - r.left) * k), Math.round((p.y - r.top) * k), 1, 1).data).join();
+  }, a);
+  const groundDay = await pixelBetween(page, id(3, 1), id(4, 2));
+  const orbDay = await pixelOn(page, id(4, 2));
+  await gmcp(page, 'Gametime', Object.assign(clock(23), { weather: { name: 'rain', cloud_cover: 3 } }));
+  await tick(page, 400);
+  s = await state(page);
+  check(s.weather && s.weather.cells > 0 && s.drawn.shaded > 0, 'rain and night fall on the orb map: ' + JSON.stringify({ w: s.weather && s.weather.cells, n: s.drawn.shaded }));
+  check(await pixelBetween(page, id(3, 1), id(4, 2)) === groundDay, 'the ground between the orbs stays clear of the rain and the night shade');
+  check(await pixelOn(page, id(4, 2)) !== orbDay, 'the night darkens the orbs themselves');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-orbs-night-rain.png') }); }
+  await gmcp(page, 'Gametime', clock(12));
+  await tick(page, 300);
+
   // A click on a neighbouring orb offers the walk there.
   const pt = await page.evaluate(n => window.MapView.pointOf(n), id(3, 0));
   await page.mouse.click(pt.x, pt.y);

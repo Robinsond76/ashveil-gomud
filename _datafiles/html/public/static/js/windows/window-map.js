@@ -1437,13 +1437,26 @@
 
         var NIGHT_STRENGTH = 0.55;   // how dark full night multiplies a tile
 
-        // fillCell fills a room's cell for the night shade and the LM2
-        // darkness: its tile, or in the orb style a disc a little wider than
-        // the orb and its ring of icons (roundCells).
-        var roundCells = false;
-        function fillCell(c2, px, py, size) {
+        // fillCell fills a room's cell for the night shade, the LM2 darkness
+        // and the weather clip: its tile, or in the orb style the orb itself
+        // (roundCells maps each room id to its orb's outer radius), so the
+        // dark and the rain lie on the pictures, not in blotches on the
+        // ground between them, and the icons round an orb stay readable.
+        var roundCells = null;
+        function cellPath(c2, px, py, size, id) {
             if (roundCells) {
-                c2.beginPath(); c2.arc(px, py, size * 0.58, 0, Math.PI * 2); c2.fill();
+                var r = roundCells[id];
+                if (!r) { return false; }
+                c2.moveTo(px + r, py); c2.arc(px, py, r, 0, Math.PI * 2);
+                return true;
+            }
+            c2.rect(Math.round(px - size / 2), Math.round(py - size / 2), size, size);
+            return true;
+        }
+        function fillCell(c2, px, py, size, id) {
+            if (roundCells) {
+                c2.beginPath();
+                if (cellPath(c2, px, py, size, id)) { c2.fill(); }
                 return;
             }
             c2.fillRect(Math.round(px - size / 2), Math.round(py - size / 2), size, size);
@@ -1466,7 +1479,7 @@
                 var biome = biomeTable[room.env];
                 if (biome && (biome.indoor || biome.dark)) { return; }
                 var p = gridToCanvas(room.x, room.y);
-                fillCell(ctx, p.px, p.py, tilePx);
+                fillCell(ctx, p.px, p.py, tilePx, id);
                 drawn.shaded++;
             });
             var water = biomeTable.water;
@@ -1510,11 +1523,11 @@
         function drawSight(inSight, glow, tilePx, lakes, nowMs) {
             var cells = [];
             rooms.forEach(function (room, id) {
-                cells.push({ p: gridToCanvas(room.x, room.y), seen: inSight.has(id), here: id === currentRoomId });
+                cells.push({ p: gridToCanvas(room.x, room.y), seen: inSight.has(id), here: id === currentRoomId, id: id });
             });
             lakes.forEach(function (c) { cells.push({ p: gridToCanvas(c.x, c.y), seen: c.seen, here: false }); });
             function cell(c2, c) {
-                fillCell(c2, c.p.px, c.p.py, tilePx);
+                fillCell(c2, c.p.px, c.p.py, tilePx, c.id);
             }
             ctx.save();
             ctx.globalCompositeOperation = 'saturation';
@@ -1708,7 +1721,7 @@
             ctx.beginPath();
             cells.forEach(function (c) {
                 var p = gridToCanvas(c.x, c.y);
-                ctx.rect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
+                cellPath(ctx, p.px, p.py, tilePx, c.id);
             });
             ctx.clip();
             if (plan.dim > 0) {
@@ -2688,6 +2701,19 @@
                 if (remembered(id)) { drawn.remembered++; }
             });
 
+            // your halo ring, under the icons that ring your orb
+            if (halo) {
+                ctx.save();
+                ctx.globalAlpha = unitAlpha(nowMs) * ((sight && inSight !== null && sight.level === 0) ? 0.45 : 1);
+                ctx.strokeStyle = 'rgba(255,214,120,0.95)';
+                ctx.shadowColor = 'rgba(255,214,120,0.9)';
+                ctx.shadowBlur = Math.max(4, R * 0.25);
+                ctx.lineWidth = Math.max(1.5, R * 0.055);
+                ctx.beginPath(); ctx.arc(here.px, here.py, R * 1.22, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+                drawn.halo = true;
+            }
+
             // resource icons round each orb, clear of its lines; up/down marks
             var campHere = {};
             if (campInfo && mapSettings.showCamp !== false) {
@@ -2736,20 +2762,22 @@
             // weather, then the night (or LM2 darkness) over the map
             var drewAll = {};
             rooms.forEach(function (room, id) { drewAll[id] = true; });
+            // each orb out to its rim (fillCell)
+            roundCells = {};
+            rooms.forEach(function (room, id) { roundCells[id] = radius[id] + bw * 1.4; });
             var weatherInfo = (window.MapWeather && mapSettings.weather !== false && timeInfo) ? timeInfo.weather : null;
             var weatherPlan = weatherInfo ? window.MapWeather.plan(weatherInfo, { reduced: reducedMotion(), fogVeil: !!(glow && glow.fog) }) : null;
             var weatherAt = weatherPlan ? weatherCells(drewAll, [], inSight, !!weatherInfo.indoor, !!(glow && glow.fog), null) : [];
             lastWeather = null;
             var weatherMoving = weatherPlan ? drawWeather(weatherPlan, weatherAt, step, nowMs) : false;
             if (weatherPlan && !lastWeather) { lastWeather = { name: weatherPlan.name, layers: [], art: {}, cells: 0, splashes: 0, strikes: storm.strikes, flash: false, dim: 0 }; }
-            roundCells = true;
             if (glow) {
                 nightQuant = Math.round(nightLevel() * 10);
                 drawSight(inSight, glow, step, [], nowMs);
             } else {
                 drawNightShade(drewAll, step, []);
             }
-            roundCells = false;
+            roundCells = null;
             figureDim = (sight && inSight !== null && sight.level === 0) ? 0.45 : 1;
             lastSight = sight ? {
                 level: sight.level, daylight: !!sight.daylight, source: sight.source || '',
@@ -2793,21 +2821,10 @@
                 if (t < 1) { anyEasing = true; }
             });
 
-            // your halo ring and company badge
+            // your company badge
             if (here && rooms.has(currentRoomId)) {
                 var alpha = unitAlpha(nowMs) * figureDim;
                 if (alpha >= 1) { unit.fadeStart = -1; }
-                ctx.save();
-                ctx.globalAlpha = alpha;
-                if (halo) {
-                    ctx.strokeStyle = 'rgba(255,214,120,0.95)';
-                    ctx.shadowColor = 'rgba(255,214,120,0.9)';
-                    ctx.shadowBlur = Math.max(4, R * 0.25);
-                    ctx.lineWidth = Math.max(1.5, R * 0.055);
-                    ctx.beginPath(); ctx.arc(here.px, here.py, R * 1.22, 0, Math.PI * 2); ctx.stroke();
-                    drawn.halo = true;
-                }
-                ctx.restore();
                 if (companySize > 1) {
                     var m = R / 22;
                     ctx.save(); ctx.globalAlpha = alpha;
