@@ -24,7 +24,7 @@ button in them just types a command for you.
   classes, and your camp (and your party's) shows as a tent with its
   fire. Rooms are terrain tiles with landmarks, walls where there is no
   exit, and fog at the edge of what you know. The settings button has
-  Style (Tiles or Classic), Sprites, Camps and Day/night switches
+  Style (Tiles or Classic), Sprites, Camps, Halo and Day/night switches
   (<ansi fg="command">help worldmap</ansi>). Click a room on the map to walk there (<ansi fg="command">help walkto</ansi>).
 
 <ansi fg="yellow-bold">The right column: the dock</ansi>

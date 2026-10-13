@@ -409,3 +409,24 @@ type RecipeRow struct {
 	Level int
 	Ready bool
 }
+
+// LeaveProvider is optionally implemented by the registered movement
+// provider. LeaveBlocked reports that the leader has a camp pitched in
+// roomID, so walking out of it is refused until the camp is broken.
+type LeaveProvider interface {
+	LeaveBlocked(leaderUserID, roomID int) (blocked bool, message string)
+}
+
+// LeaveBlocked refuses a voluntary walk out of a room holding the leader's
+// pitched camp (idle, lit or resting). Forced moves (fleeing, death, admin
+// teleport) do not call it. Without a provider, movement is unchanged.
+func LeaveBlocked(leaderUserID, roomID int) (bool, string) {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	lp, ok := p.(LeaveProvider)
+	if !ok {
+		return false, ""
+	}
+	return lp.LeaveBlocked(leaderUserID, roomID)
+}
