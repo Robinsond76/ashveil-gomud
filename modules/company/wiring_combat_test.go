@@ -183,6 +183,12 @@ func newBrawl(t *testing.T) *brawl {
 	t.Cleanup(hooks.ResetTempoForTest)
 	hooks.ResetBattleClockForTest()
 	t.Cleanup(hooks.ResetBattleClockForTest)
+	// Dolls an earlier test left behind (its cleanup ran before a doll rose)
+	// would otherwise stand in the next test's formation.
+	hooks.ResetDollsForTest()
+	domain.ResetDollsForTest()
+	t.Cleanup(domain.ResetDollsForTest)
+	t.Cleanup(hooks.ResetDollsForTest)
 	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 1 }))
 	t.Cleanup(hooks.UseMoraleStateForTest(nil, nil))
 	t.Cleanup(hooks.UseMoraleRollForTest(func(int) int { return 99 }))
@@ -557,9 +563,20 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	assert.NotContains(t, got, "You can't reach that target from here.")
 	assert.Contains(t, got, "You can't reach the bandit captain from here.", "Aria is told she can't reach the captain")
 	assert.NotContains(t, got, "turn toward")
-	turned := regexp.MustCompile(`the ((?:first|second) cutthroat)`).FindStringSubmatch(got)
-	require.Len(t, turned, 2, "Aria swung at a cutthroat:\n%s", got)
-	assert.True(t, swungAt(got, turned[1]), "Aria swung at her new target in the same round:\n%s", got)
+	// Her new target is the cutthroat named in one of her own lines; other
+	// lines of the round name foes swinging at someone else.
+	cutthroat := regexp.MustCompile(`(?i)the ((?:first|second) cutthroat)`)
+	turned := ""
+	for _, line := range strings.Split(got, "\n") {
+		if strings.HasPrefix(line, "You") || strings.HasPrefix(line, "Aria") || strings.Contains(line, "your blow") {
+			if m := cutthroat.FindStringSubmatch(line); m != nil {
+				turned = m[1]
+				break
+			}
+		}
+	}
+	require.NotEmpty(t, turned, "Aria swung at a cutthroat in the same round:\n%s", got)
+	assert.True(t, swungAt(got, turned), "Aria swung at her new target in the same round:\n%s", got)
 
 	// F2: the whole party joined in round 1, not one member at a time.
 	company := b.companyInstances()
@@ -577,6 +594,14 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	// The kill case: a kill ends the killer's aggro (DoCombat's own kill
 	// branch), and a mob's death clears every player's aggro on it
 	// (suicide). Both rejoin at the start of the next round.
+	// The rejoin round must not end the battle before both have acted: a
+	// last foe falling first ends the fight, and them with no swing and no
+	// aim (seen as a rare "the leader rejoins" failure).
+	natural := map[*characters.Character][2]int{}
+	for _, m := range b.livingBandits() {
+		natural[&m.Character] = [2]int{m.Character.HealthMax.Value, m.Character.Health}
+		hardTo(&m.Character, 1000)
+	}
 	b.aria.Character.EndAggro()
 	garrick := b.companion(3)
 	garrick.Character.EndAggro()
@@ -601,6 +626,12 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	assert.False(t, engagement.StoodDown(7), "nothing stood her down")
 	_, inBattle := battle.Current(7)
 	assert.True(t, inBattle, "her battle goes on")
+	for c, hp := range natural {
+		if c.Health > 0 {
+			hardTo(c, hp[0])
+			c.Health = hp[1]
+		}
+	}
 
 	// And the fight runs to its end with nobody left idle.
 	b.fightToTheEnd(200)
@@ -694,6 +725,22 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 		b.fight()
 		assert.Zero(t, aimedAtUser(fence))
 	}
+}
+
+// TestShopkeeperFightsBackWhenAttacked: staying out of the group's fight
+// doesn't make a shopkeeper a punching bag; struck directly, it answers.
+func TestShopkeeperFightsBackWhenAttacked(t *testing.T) {
+	b := newBrawl(t)
+	fence := mobs.NewMobById(9105, b.road.RoomId)
+	require.NotNil(t, fence)
+	fence.SpawnGroup = brawlBandits
+	require.True(t, fence.HasShop())
+	b.road.AddMob(fence.InstanceId)
+
+	b.aimAt(fmt.Sprintf("#%d", fence.InstanceId))
+	b.toughen()
+	b.fight()
+	assert.Equal(t, b.aria.UserId, aimedAtUser(fence), "the fence fights back")
 }
 
 func TestHardenedFightersKeepTheirHealthThroughARecalculation(t *testing.T) {

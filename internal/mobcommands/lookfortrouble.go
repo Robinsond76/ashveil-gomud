@@ -90,6 +90,12 @@ func LookForTrouble(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) 
 				continue
 			}
 
+			// A shopkeeper in a hostile group stays behind its counter: the
+			// fight is the group's, not the shop's (joinsTheFight agrees).
+			if mob.HasShop() {
+				continue
+			}
+
 			// Hostility default to 5 minutes
 			for _, groupName := range mob.Groups {
 				// Does this group hate this player?

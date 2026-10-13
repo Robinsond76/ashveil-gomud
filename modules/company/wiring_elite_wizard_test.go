@@ -290,7 +290,7 @@ func TestNecromancerBargainLeavesOneHealthOnce(t *testing.T) {
 	b.startWitchFight()
 	b.toughen()
 	b.hold(nil)
-	b.aria.Character.Health = 3
+	b.aria.Character.Health = 1 // any landed blow is lethal, whatever it rolls
 	b.strike(0, false)
 	out := b.fight()
 	assert.Contains(t, out, "lich's bargain, 1 health left")

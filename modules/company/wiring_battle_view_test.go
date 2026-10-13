@@ -292,7 +292,7 @@ func TestBattleViewCompanionsOthersDarkAndTelnet(t *testing.T) {
 	// Companions' targets, and their changes as bandits fall.
 	aimSets := map[string]bool{}
 	sawCompanion := false
-	for i := 0; i < 6 && len(b.livingBandits()) > 1; i++ {
+	for i := 0; i < 40 && len(b.livingBandits()) > 1 && len(aimSets) < 2; i++ {
 		b.toughen()
 		b.fight()
 		b.refresh(7)

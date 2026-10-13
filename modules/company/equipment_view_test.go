@@ -338,6 +338,9 @@ func TestEquipmentViewIgnoresRoundTicksAndPrunesOffline(t *testing.T) {
 		return module.equipmentViews.builds
 	}
 	module.equipmentViews.mu.Lock()
+	if module.equipmentViews.byUser == nil { // built lazily; empty when this test runs first
+		module.equipmentViews.byUser = map[int]equipmentViewEntry{}
+	}
 	module.equipmentViews.byUser[424242] = equipmentViewEntry{}
 	module.equipmentViews.mu.Unlock()
 
