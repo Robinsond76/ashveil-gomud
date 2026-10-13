@@ -303,6 +303,12 @@ func TestGoRefusesWhileCampPitched(t *testing.T) {
 	assert.True(t, handled)
 	assert.Equal(t, 920011, user.Character.RoomId, "a pitched camp holds the company")
 
+	// A word that is no exit is not a walk: it falls through so the player
+	// sees "not recognized", not the camp refusal.
+	handled, err = Go("xyzzy", user, origin, 0)
+	require.NoError(t, err)
+	assert.False(t, handled, "a typo at camp is not refused as a walk")
+
 	// A camp in some other room does not hold this one.
 	camping.SetMovementProvider(fakeCampLeave{campRoom: 1})
 	_, err = Go("north", user, origin, 0)
