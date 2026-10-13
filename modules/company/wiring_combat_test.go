@@ -183,6 +183,12 @@ func newBrawl(t *testing.T) *brawl {
 	t.Cleanup(hooks.ResetTempoForTest)
 	hooks.ResetBattleClockForTest()
 	t.Cleanup(hooks.ResetBattleClockForTest)
+	// Dolls an earlier test left behind (its cleanup ran before a doll rose)
+	// would otherwise stand in the next test's formation.
+	hooks.ResetDollsForTest()
+	domain.ResetDollsForTest()
+	t.Cleanup(domain.ResetDollsForTest)
+	t.Cleanup(hooks.ResetDollsForTest)
 	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 1 }))
 	t.Cleanup(hooks.UseMoraleStateForTest(nil, nil))
 	t.Cleanup(hooks.UseMoraleRollForTest(func(int) int { return 99 }))
