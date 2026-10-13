@@ -621,6 +621,10 @@ func TestMapLegendsHaveLandmarks(t *testing.T) {
 		Legends map[string]string `json:"legends"`
 		Symbols map[string]string `json:"symbols"`
 		Glyphs  []string          `json:"glyphs"`
+		// The painted-orb map's room-name rules: [text, landmark] and
+		// [text, terrain].
+		Titles      [][2]string `json:"titles"`
+		TitleGround [][2]string `json:"titleGround"`
 	}
 	if err := json.Unmarshal(raw, &table); err != nil {
 		t.Fatal(err)
@@ -631,6 +635,25 @@ func TestMapLegendsHaveLandmarks(t *testing.T) {
 			if _, ok := m.Files["map/landmarks/"+id+".png"]; !ok {
 				t.Errorf("%q maps to landmark %q, which has no art in the manifest", from, id)
 			}
+		}
+	}
+	if len(table.Titles) == 0 || len(table.TitleGround) == 0 {
+		t.Error("the orb map's titles and titleGround rules are missing")
+	}
+	for _, r := range table.Titles {
+		if r[0] != strings.ToLower(r[0]) || r[0] == "" {
+			t.Errorf("title rule %q must be non-empty lowercase text", r[0])
+		}
+		if _, ok := m.Files["map/landmarks/"+r[1]+".png"]; !ok {
+			t.Errorf("title rule %q maps to landmark %q, which has no art in the manifest", r[0], r[1])
+		}
+	}
+	for _, r := range table.TitleGround {
+		if r[0] != strings.ToLower(r[0]) || r[0] == "" {
+			t.Errorf("titleGround rule %q must be non-empty lowercase text", r[0])
+		}
+		if _, ok := m.Files["map/terrain/"+r[1]+".png"]; !ok {
+			t.Errorf("titleGround rule %q maps to terrain %q, which has no art in the manifest", r[0], r[1])
 		}
 	}
 	glyph := map[string]bool{}

@@ -33,5 +33,29 @@
     "B": "bridge",
     "★": "landmark"
   },
-  "glyphs": ["shore"]
+  "glyphs": ["shore"],
+  "_titles_note": "Painted-orb map (2026-10-13): a room with no legend or symbol landmark takes the first 'titles' rule whose text is in its name (case-insensitive); 'titleGround' swaps the terrain its orb is painted on. TestMapLegendsHaveLandmarks checks the art exists.",
+  "titles": [
+    ["castle gates", "gate"],
+    ["castle", "keep"],
+    ["throne", "keep"],
+    ["library", "alts"],
+    ["training yard", "trainer"],
+    ["vault", "bank"],
+    ["sanctuary doors", "temple"],
+    ["tavern", "inn"],
+    ["blacksmith", "smithy"],
+    ["smithy", "smithy"],
+    ["herbalist", "herbalist"],
+    ["shop", "shop"],
+    ["residential district", "village"],
+    ["slums", "gate"]
+  ],
+  "titleGround": [
+    ["alley", "slums"],
+    ["beggars", "slums"],
+    ["garden", "land"],
+    ["hedge", "land"],
+    ["bushes", "land"]
+  ]
 }

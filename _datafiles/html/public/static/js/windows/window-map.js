@@ -41,7 +41,7 @@
         showResources:   true,       // Phase 40a: draw room-resource icons in tile corners
         sprites:         true,       // Phase 40b: your class sprite, company badge and ally sprites; off = the classic red square and hearts
         showCamp:        true,       // Phase 40b: your camp and your party's camps
-        style:           'tiles',    // Phase 40c: 'tiles' (terrain art, landmarks, walls, fog) | 'classic' (coloured squares and letters)
+        style:           'orbs',     // 'orbs' (painted orbs, 2026-10-13) | 'tiles' (Phase 40c terrain art, landmarks, walls, fog, sprites) | 'classic' (coloured squares and letters)
         dayNight:        true,       // Phase 40d: shade outdoor tiles by the game's time of day
         weather:         true,       // LM4: rain, storms, fog, clouds and snow over outdoor tiles
         hereRing:        true,       // the halo under your sprite (and under your camp); off = no ring
@@ -478,8 +478,15 @@
         var TILE_ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3, 4]; // tile sizes 16, 24, 32, 48, 64, 96 and 128 px stay crisp
         var ANIM_TILE_MS = 250;
         function tilesOn()      { return mapSettings.style !== 'classic'; }
-        function getRoomSize()  { return tilesOn() ? TILE_PX : Math.round(mapSettings.roomSize); }
-        function getBaseStep()  { return tilesOn() ? TILE_PX : Math.round(mapSettings.roomSpacing); }
+        // The painted-orb style (2026-10-13): rooms are round pictures ORB_STEP
+        // px apart at zoom 1, ORB_R of that step across their radius; a road
+        // with no landmark is a smaller orb (ROAD_R). It shares the tile
+        // zooms. No figures are drawn in it: a halo and your orb's gold rim
+        // mark where you are.
+        var ORB_STEP = 48, ORB_R = 0.34, ROAD_R = 0.25;
+        function orbsOn()       { return mapSettings.style === 'orbs' && !!window.MapOrbs; }
+        function getRoomSize()  { return orbsOn() ? Math.round(ORB_STEP * ORB_R * 2) : (tilesOn() ? TILE_PX : Math.round(mapSettings.roomSize)); }
+        function getBaseStep()  { return orbsOn() ? ORB_STEP : (tilesOn() ? TILE_PX : Math.round(mapSettings.roomSpacing)); }
         function snapZoom(z) {
             var best = TILE_ZOOMS[0];
             TILE_ZOOMS.forEach(function (v) { if (Math.abs(v - z) < Math.abs(best - z)) { best = v; } });
@@ -516,8 +523,13 @@
         // Phase 47: a phone starts one tile size closer (48 px tiles), so
         // the rooms around you read at arm's length; a default zoom in the
         // map settings or a pinch still wins.
+        // The orb style starts closer on a desktop (orbs 82 px across) so the
+        // pictures and the icons round them read.
         function startZoom() {
-            try { return window.matchMedia && window.matchMedia('(max-width: 820px)').matches ? 1.5 : 1.0; } catch (e) { return 1.0; }
+            var phone = false;
+            try { phone = !!(window.matchMedia && window.matchMedia('(max-width: 820px)').matches); } catch (e) { phone = false; }
+            if (mapSettings.style === 'orbs') { return 1.5; }
+            return phone ? 1.5 : 1.0;
         }
         var zoomScale     = startZoom();
         var currentZoneKey = '';
@@ -1425,6 +1437,18 @@
 
         var NIGHT_STRENGTH = 0.55;   // how dark full night multiplies a tile
 
+        // fillCell fills a room's cell for the night shade and the LM2
+        // darkness: its tile, or in the orb style a disc a little wider than
+        // the orb and its ring of icons (roundCells).
+        var roundCells = false;
+        function fillCell(c2, px, py, size) {
+            if (roundCells) {
+                c2.beginPath(); c2.arc(px, py, size * 0.58, 0, Math.PI * 2); c2.fill();
+                return;
+            }
+            c2.fillRect(Math.round(px - size / 2), Math.round(py - size / 2), size, size);
+        }
+
         // drawNightShade darkens and cools the tiles the sky reaches (not
         // indoor or dark biomes) by the time of day; labels stay readable
         // because only terrain, landmark and icon layers sit under it.
@@ -1442,14 +1466,14 @@
                 var biome = biomeTable[room.env];
                 if (biome && (biome.indoor || biome.dark)) { return; }
                 var p = gridToCanvas(room.x, room.y);
-                ctx.fillRect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
+                fillCell(ctx, p.px, p.py, tilePx);
                 drawn.shaded++;
             });
             var water = biomeTable.water;
             if (!(water && (water.indoor || water.dark))) {
                 (drewLakes || []).forEach(function (c) {
                     var p = gridToCanvas(c.x, c.y);
-                    ctx.fillRect(Math.round(p.px - tilePx / 2), Math.round(p.py - tilePx / 2), tilePx, tilePx);
+                    fillCell(ctx, p.px, p.py, tilePx);
                     drawn.shaded++;
                 });
             }
@@ -1490,7 +1514,7 @@
             });
             lakes.forEach(function (c) { cells.push({ p: gridToCanvas(c.x, c.y), seen: c.seen, here: false }); });
             function cell(c2, c) {
-                c2.fillRect(Math.round(c.p.px - tilePx / 2), Math.round(c.p.py - tilePx / 2), tilePx, tilePx);
+                fillCell(c2, c.p.px, c.p.py, tilePx);
             }
             ctx.save();
             ctx.globalCompositeOperation = 'saturation';
@@ -2015,6 +2039,7 @@
             if (!ctx || !canvas) { return; }
             ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
             ctx.clearRect(0, 0, viewW, viewH);
+            if (orbsOn()) { renderOrbs(); return; }
             ctx.fillStyle = mapSettings.mapBackground;
             ctx.fillRect(0, 0, viewW, viewH);
 
@@ -2356,7 +2381,463 @@
             }
         }
 
+        // -- Painted orbs (2026-10-13) -------------------------------------------
+        // The owner's chosen map: each room a painted orb (map-orbs.js) of its
+        // terrain and landmark, joined by bronze lines, its resource icons in
+        // a ring round it clear of the lines. No figures: your room has a
+        // gold rim and, with the Halo on, a glowing ring that glides as you
+        // walk; your company badge sits on it. Camps pitch beside their orb.
+        var orbCache = new Map();
+        var ORB_CACHE_MAX = 600;
+        var ORB_BG = ['#2b2319', '#120e0a'];
+
+        // orbArt is the source rectangle of one frame of <path> once loaded:
+        // a variants sheet's column <variant>, else the first frame. null
+        // while it loads; false when there is no such art.
+        function orbArt(path, variant) {
+            var st = Sprites.status(path);
+            if (st === 'loading') { return null; }
+            var a = st === 'ready' ? Sprites.art(path) : null;
+            if (!a) { return false; }
+            var fw = a.info.frame ? a.info.frame[0] : a.img.width, fh = a.info.frame ? a.info.frame[1] : a.img.height;
+            var vs = Math.max(1, a.info.variants || 1);
+            var v = ((variant % vs) + vs) % vs;
+            return { img: a.img, sx: v * fw, sy: 0, sw: fw, sh: fh };
+        }
+
+        // orbLook decides what a room's orb shows: its ground (a coast piece
+        // for shore, the ground a road crosses for road, a title's ground),
+        // its landmark (legend, symbol, then the landmark table's title
+        // rules), and for a road with no landmark the track's directions.
+        function orbLook(room, id, coordIndex, onward, lakeIndex) {
+            var info = roomInfoStore.get(id) || {};
+            var table = Sprites.data('map/landmarks.json');
+            var mo = window.MapOrbs;
+            var legend = String(info.maplegend || '').toLowerCase();
+            var sym = info.mapsymbol || '';
+            var lm = table ? ((table.legends && table.legends[legend]) || (table.symbols && table.symbols[sym]) || '') : '';
+            var byTitle = false;
+            if (!lm && table) { lm = mo.titleMatch(table.titles, info.name); byTitle = !!lm; }
+            var env = room.env || 'default';
+            var titled = table ? mo.titleMatch(table.titleGround, info.name) : '';
+            if (titled) { env = titled; }
+            var road = null, groundPath = '', variant = id;
+            var rc = roomCache[id];
+            if (env === 'road') {
+                var dirs = [], seen = {}, envs = [];
+                (rc ? (rc.exits || []).concat(rc.stubs || []) : []).forEach(function (e) {
+                    if (e.dz !== 0 || e.secret || typeof e.dx !== 'number' || (e.dx === 0 && e.dy === 0)) { return; }
+                    var k = e.dx + ',' + e.dy;
+                    if (seen[k]) { return; }
+                    seen[k] = true;
+                    dirs.push([e.dx, e.dy]);
+                    var o = coordIndex[(room.x + e.dx) + ',' + (room.y + e.dy)];
+                    var or = o === undefined ? null : rooms.get(o);
+                    if (or) { envs.push(or.env); }
+                });
+                [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+                    var o = coordIndex[(room.x + d[0]) + ',' + (room.y + d[1])];
+                    var or = o === undefined ? null : rooms.get(o);
+                    if (or) { envs.push(or.env); }
+                });
+                road = { dirs: dirs, seed: id };
+                env = mo.roadGround(envs);
+            } else if (window.MapTiles && window.MapTiles.tiled(env) && !titled) {
+                var piece = window.MapTiles.piece(env, tileLook(room, id, coordIndex, onward, lakeIndex));
+                if (piece && Sprites.has('map/terrain/' + piece + '.png')) { groundPath = 'map/terrain/' + piece + '.png'; variant = 0; }
+            }
+            if (!groundPath) {
+                groundPath = 'map/terrain/' + env + '.png';
+                if (!Sprites.has(groundPath)) { groundPath = 'map/terrain/unknown.png'; }
+            }
+            return { ground: groundPath, variant: variant, landmark: lm ? 'map/landmarks/' + lm + '.png' : '',
+                     road: lm ? null : road, byTitle: byTitle, env: room.env || '' };
+        }
+
+        // orbCanvas paints (or reuses) a room's orb at radius R (CSS px). Art
+        // still loading is left out and the orb is not kept, so it is painted
+        // again once the art arrives.
+        function orbCanvas(look, R, gold, fill) {
+            var rp = Math.max(2, Math.round(R * pixelRatio));
+            var g = orbArt(look.ground, look.variant);
+            var l = look.landmark ? orbArt(look.landmark, 0) : false;
+            var road = look.road ? { dirs: look.road.dirs, seed: look.road.seed } : null;
+            var key = [look.ground, look.variant, look.landmark, road ? road.dirs.join(';') + '/' + road.seed : '',
+                       rp, gold ? 'g' : 'b', fill].join('|');
+            var hit = orbCache.get(key);
+            if (hit) { return hit; }
+            var c = window.MapOrbs.paint({ r: rp, ground: g || null, landmark: l || null, road: road, color: fill, rim: gold ? 'gold' : 'bronze' });
+            var done = { canvas: c, art: !!g, landmark: !!l };
+            if (g !== null && l !== null) {
+                if (orbCache.size >= ORB_CACHE_MAX) { orbCache.clear(); }
+                orbCache.set(key, done);
+            }
+            return done;
+        }
+
+        // orbChip draws one resource icon on its dark disc (the tile style's
+        // look); too small to read, it is the resource's coloured dot.
+        function orbChip(cx, cy, cr, rid, picked, nowMs) {
+            var meta = RESOURCE_INFO[rid];
+            ctx.save();
+            ctx.fillStyle = 'rgba(12,12,16,0.82)';
+            ctx.strokeStyle = 'rgba(240,215,160,0.85)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.restore();
+            if (cr * 2 >= 12) {
+                var mult = cr * 1.8 / 16;
+                if (drawIcon('map/resources/' + (meta ? rid : 'unknown') + '.png', cx, cy, mult, nowMs)) {
+                    if (picked) { drawIcon('map/resources/depleted.png', cx, cy, mult, nowMs); }
+                    drawn.icons++;
+                    return;
+                }
+            }
+            drawn.dots++;
+            var dot = Math.max(1.5, cr * 0.55);
+            ctx.save();
+            ctx.fillStyle = (meta && meta.color) || '#aaaaaa';
+            ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
+            ctx.beginPath(); ctx.arc(cx, cy, dot, 0, Math.PI * 2);
+            if (picked) {
+                ctx.fillStyle = 'rgba(12,12,16,0.72)'; ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx - dot, cy + dot); ctx.lineTo(cx + dot, cy - dot); ctx.stroke();
+            } else {
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // drawOrbCamp pitches a camp beside its orb, up and to the left: the
+        // tent (or the rough camp, or the inn's bed for an inn rest), the fire
+        // in front of it, the resting mark over it.
+        function drawOrbCamp(roomId, ally, lit, resting, innRest, embers, tent, R, nowMs) {
+            var r = rooms.get(roomId);
+            if (!r) { return; }
+            var p = gridToCanvas(r.x, r.y);
+            var tx = p.px - R * 1.22, ty = p.py - R * 1.02;
+            if (innRest) {
+                drawIcon('map/camp/inn-rest.png', tx, ty, R * 0.9 / 16, nowMs);
+                drawn.camps++;
+                return;
+            }
+            var rough = tent === false;
+            var pitch = rough ? (ally ? 'map/camp/camp-rough-ally.png' : 'map/camp/camp-rough.png')
+                              : (ally ? 'map/camp/tent-ally.png' : 'map/camp/tent.png');
+            var tm = R * 1.2 / 32;
+            if (!drawIcon(pitch, tx, ty, tm, nowMs, !rough)) {
+                var q = R * 0.45;
+                ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
+                ctx.beginPath(); ctx.moveTo(tx, ty - q); ctx.lineTo(tx + q, ty + q); ctx.lineTo(tx - q, ty + q); ctx.closePath(); ctx.fill();
+            }
+            drawn.camps++;
+            // the rough camp's own pit holds its fire; a tent's fire is in front of it
+            var fx = rough ? tx + ROUGH_PIT.x * tm : p.px - R * 0.62, fy = rough ? ty + ROUGH_PIT.y * tm : p.py - R * 0.7;
+            var fm = rough ? tm * ROUGH_PIT.scale : R * 0.7 / 16;
+            lastFire = lit ? 'lit' : (embers ? 'embers' : 'unlit');
+            if (lit) {
+                drawIcon('map/camp/fire-lit.png', fx, fy, fm, nowMs);
+                drawIcon('map/camp/smoke.png', fx, fy - fm * 12, fm, nowMs);
+            } else if (embers) {
+                if (!drawIcon('map/camp/embers.png', fx, fy, fm, nowMs) && !rough) { drawIcon('map/camp/fire-unlit.png', fx, fy, fm, nowMs); }
+            } else if (!rough) {
+                drawIcon('map/camp/fire-unlit.png', fx, fy, fm, nowMs);
+            }
+            if (resting) { drawIcon('map/camp/resting.png', tx, ty - R * 0.7, R * 0.6 / 16, nowMs); }
+        }
+
+        function renderOrbs() {
+            var nowMs = performance.now();
+            var step = getBaseStep() * zoomScale;
+            var R = step * ORB_R, RR = step * ROAD_R;
+            drawn = { tiles: 0, fallbacks: 0, walls: 0, fog: 0, landmarks: 0, glyphs: 0, animated: 0, icons: 0, dots: 0, path: 0, shaded: 0,
+                      pieces: {}, corners: {}, replaced: 0, lakes: 0, remembered: 0,
+                      orbs: 0, roads: 0, flat: 0, titled: 0, camps: 0, allies: 0, chevrons: 0, halo: false, badge: false, rim: {}, slots: {}, lines: 0 };
+            lastFigures = { you: false, companions: 0 };
+            lastCampAsYou = false;
+            lastFire = '';
+
+            if (mapSettings.mapBackground === MAP_SETTINGS_DEFAULTS.mapBackground) {
+                var bg = ctx.createRadialGradient(viewW / 2, viewH / 2, 20, viewW / 2, viewH / 2, Math.max(viewW, viewH) * 0.75);
+                bg.addColorStop(0, ORB_BG[0]); bg.addColorStop(1, ORB_BG[1]);
+                ctx.fillStyle = bg;
+            } else {
+                ctx.fillStyle = mapSettings.mapBackground;
+            }
+            ctx.fillRect(0, 0, viewW, viewH);
+
+            var coordIndex = {};
+            rooms.forEach(function (room, id) { coordIndex[room.x + ',' + room.y] = id; });
+            var lakeIndex = {};
+            lakeCells.forEach(function (c) { lakeIndex[c.x + ',' + c.y] = true; });
+
+            // LM2 sight, as the tiles style reads it
+            var sight = (window.MapSight && mapSettings.dayNight !== false && timeInfo) ? timeInfo.sight : null;
+            if (sight && sight.room && currentRoomId !== null && sight.room !== currentRoomId) { sight = heldSight; } else { heldSight = sight; }
+            var inSight = window.MapSight ? window.MapSight.visible(sight, currentRoomId, joinedTo(currentRoomId)) : null;
+            var glow = window.MapSight ? window.MapSight.glow(sight) : null;
+            function remembered(id) { return inSight !== null && !inSight.has(id); }
+
+            var looks = {}, radius = {};
+            rooms.forEach(function (room, id) {
+                looks[id] = orbLook(room, id, coordIndex, onwardCache, lakeIndex);
+                radius[id] = looks[id].road ? RR : R;
+            });
+            var bw = Math.max(1.5, R * 0.085);
+            var defaultLine = mapSettings.connectionColor === MAP_SETTINGS_DEFAULTS.connectionColor;
+            function line(ax, ay, bx, by, fade) {
+                var lw = Math.max(1.5, step * 0.04);
+                ctx.save();
+                ctx.lineCap = 'round';
+                if (fade) {
+                    var gr = ctx.createLinearGradient(ax, ay, bx, by);
+                    gr.addColorStop(0, defaultLine ? 'rgba(160,128,84,0.85)' : mapSettings.connectionColor);
+                    gr.addColorStop(1, 'rgba(160,128,84,0)');
+                    ctx.strokeStyle = gr; ctx.lineWidth = lw;
+                    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+                    ctx.restore();
+                    return;
+                }
+                if (defaultLine) {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = lw + 3;
+                    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+                    ctx.strokeStyle = '#7b6446'; ctx.lineWidth = lw;
+                    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+                    ctx.strokeStyle = 'rgba(232,205,160,0.4)'; ctx.lineWidth = Math.max(0.8, lw * 0.25);
+                    ctx.beginPath(); ctx.moveTo(ax - 0.5, ay - 0.8); ctx.lineTo(bx - 0.5, by - 0.8); ctx.stroke();
+                } else {
+                    ctx.strokeStyle = mapSettings.connectionColor; ctx.lineWidth = lw;
+                    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // exit lines, orb rim to orb rim; each orb's line angles for its icon ring
+            var lineAngles = {};
+            function addAngle(id, a) { (lineAngles[id] = lineAngles[id] || []).push(a); }
+            var badges = [];
+            edges.forEach(function (flags, key) {
+                var parts = key.split('-');
+                var a = parseInt(parts[0], 10), b = parseInt(parts[1], 10);
+                var rA = rooms.get(a), rB = rooms.get(b);
+                if (!rA || !rB) { return; }
+                var pA = gridToCanvas(rA.x, rA.y), pB = gridToCanvas(rB.x, rB.y);
+                var dx = pB.px - pA.px, dy = pB.py - pA.py, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l;
+                addAngle(a, Math.atan2(dy, dx)); addAngle(b, Math.atan2(-dy, -dx));
+                var ra = radius[a] + bw, rb = radius[b] + bw;
+                if (l > ra + rb) {
+                    line(pA.px + ux * ra, pA.py + uy * ra, pB.px - ux * rb, pB.py - uy * rb, false);
+                    drawn.lines++;
+                }
+                if (flags.locked || flags.secret) { badges.push([(pA.px + pB.px) / 2, (pA.py + pB.py) / 2, flags.secret ? 'secret' : 'key']); }
+            });
+            zoneExitStubs.forEach(function (stub) {
+                var r = rooms.get(stub.roomId);
+                if (!r) { return; }
+                var len = Math.hypot(stub.dx, stub.dy);
+                if (!len) { return; }
+                var p = gridToCanvas(r.x, r.y), ux = stub.dx / len, uy = stub.dy / len, ra = radius[stub.roomId] + bw;
+                addAngle(stub.roomId, Math.atan2(uy, ux));
+                line(p.px + ux * ra, p.py + uy * ra, p.px + ux * step * 0.62, p.py + uy * step * 0.62, true);
+                if (stub.locked || stub.secret) { badges.push([p.px + ux * step * 0.45, p.py + uy * step * 0.45, stub.secret ? 'secret' : 'key']); }
+            });
+            badges.forEach(function (b) { drawLineBadge(b[0], b[1], b[2]); });
+
+            // shadows on the ground
+            rooms.forEach(function (room, id) {
+                var p = gridToCanvas(room.x, room.y), r = radius[id];
+                var sx = p.px + r * 0.22, sy = p.py + r * 0.85;
+                var sh = ctx.createRadialGradient(sx, sy, 1, sx, sy, r * 1.05);
+                sh.addColorStop(0, 'rgba(0,0,0,0.5)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.save(); ctx.translate(sx, sy); ctx.scale(1, 0.36); ctx.translate(-sx, -sy);
+                ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(sx, sy, r * 1.05, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            });
+
+            // your halo's glow, under the orbs; it glides with your walk
+            var pose = unit.x !== null ? unitPose(nowMs) : null;
+            var here = pose ? gridToCanvas(pose.x, pose.y) : (rooms.has(currentRoomId) ? gridToCanvas(rooms.get(currentRoomId).x, rooms.get(currentRoomId).y) : null);
+            var halo = here && mapSettings.hereRing !== false && rooms.has(currentRoomId);
+            if (halo) {
+                var hg = ctx.createRadialGradient(here.px, here.py, R * 0.6, here.px, here.py, R * 2);
+                hg.addColorStop(0, 'rgba(255,214,120,0.30)'); hg.addColorStop(1, 'rgba(255,214,120,0)');
+                ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(here.px, here.py, R * 2, 0, Math.PI * 2); ctx.fill();
+            }
+            // a lit campfire throws warm light on the ground by its orb
+            if (campInfo && mapSettings.showCamp !== false && campInfo.has_camp && campInfo.fire_lit && !campInfo.inn && rooms.has(campInfo.room_id)) {
+                var cr0 = rooms.get(campInfo.room_id), cp0 = gridToCanvas(cr0.x, cr0.y);
+                var fx0 = cp0.px - R * 0.7, fy0 = cp0.py - R * 0.7;
+                var fg = ctx.createRadialGradient(fx0, fy0, 2, fx0, fy0, R * 2.2);
+                fg.addColorStop(0, 'rgba(255,150,50,0.30)'); fg.addColorStop(1, 'rgba(255,120,30,0)');
+                ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = fg;
+                ctx.beginPath(); ctx.arc(fx0, fy0, R * 2.2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+            }
+
+            // the orbs
+            rooms.forEach(function (room, id) {
+                var p = gridToCanvas(room.x, room.y), r = radius[id], look = looks[id];
+                var mine = id === currentRoomId;
+                var o = orbCanvas(look, r, mine, colorForSymbol(room.symbol, room.env));
+                var w = o.canvas.width / pixelRatio;
+                ctx.drawImage(o.canvas, p.px - w / 2, p.py - w / 2, w, w);
+                drawn.orbs++;
+                if (look.road) { drawn.roads++; }
+                if (!o.art) { drawn.flat++; }
+                if (o.landmark) { drawn.landmarks++; if (look.byTitle) { drawn.titled++; } }
+                drawn.rim[id] = mine ? 'gold' : 'bronze';
+                if (remembered(id)) { drawn.remembered++; }
+            });
+
+            // resource icons round each orb, clear of its lines; up/down marks
+            var campHere = {};
+            if (campInfo && mapSettings.showCamp !== false) {
+                if (campInfo.has_camp && campInfo.room_id) { campHere[campInfo.room_id] = true; }
+                (campInfo.allied_camps || []).forEach(function (c) { campHere[c.room_id] = true; });
+            }
+            var BADGE_A = -Math.PI / 4, CAMP_A = -3 * Math.PI / 4;
+            rooms.forEach(function (room, id) {
+                if (remembered(id)) { return; }
+                var p = gridToCanvas(room.x, room.y), r = radius[id];
+                var cr = Math.max(5, R * 0.3) * (r < R ? 0.85 : 1);
+                var ringR = r + bw + cr + 1.5;
+                var blocked = (lineAngles[id] || []).map(function (a) { return { a: a, half: Math.asin(Math.min(1, (step * 0.04 + 3) / ringR)) }; });
+                var chevA = campHere[id] ? -Math.PI / 2 : CAMP_A;
+                if (id === currentRoomId) { blocked.push({ a: BADGE_A, half: 0.35 }); }
+                if (campHere[id]) { blocked.push({ a: CAMP_A, half: 0.7 }); }
+                var vert = [];
+                if (room.hasUp) { vert.push('up'); }
+                if (room.hasDown) { vert.push('down'); }
+                var chipStep = 2 * Math.asin(Math.min(1, cr * 1.1 / ringR));
+                vert.forEach(function (d, i) {
+                    var a = chevA + i * chipStep;
+                    blocked.push({ a: a, half: chipStep / 2 });
+                    var vx = p.px + Math.cos(a) * ringR, vy = p.py + Math.sin(a) * ringR, vr = cr * 0.85;
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(12,12,16,0.85)'; ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(vx, vy, vr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.restore();
+                    if (!drawIcon('map/markers/exit-' + d + '.png', vx, vy, vr * 1.7 / 8, nowMs)) {
+                        ctx.save(); ctx.fillStyle = '#ffffff'; ctx.font = 'bold ' + Math.round(vr * 1.4) + 'px monospace';
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d === 'up' ? '▴' : '▾', vx, vy); ctx.restore();
+                    }
+                    drawn.chevrons++;
+                });
+                if (!mapSettings.showResources) { return; }
+                var res = resourcesFor(id).slice(0, RESOURCE_ICON_MAX);
+                if (!res.length) { return; }
+                var gone = depletedFor(id);
+                var slots = window.MapOrbs.ringSlots(res.length, blocked, chipStep);
+                drawn.slots[id] = slots;
+                res.forEach(function (rid, i) {
+                    orbChip(p.px + Math.cos(slots[i]) * ringR, p.py + Math.sin(slots[i]) * ringR, cr, rid, gone.indexOf(rid) !== -1, nowMs);
+                });
+            });
+
+            // weather, then the night (or LM2 darkness) over the map
+            var drewAll = {};
+            rooms.forEach(function (room, id) { drewAll[id] = true; });
+            var weatherInfo = (window.MapWeather && mapSettings.weather !== false && timeInfo) ? timeInfo.weather : null;
+            var weatherPlan = weatherInfo ? window.MapWeather.plan(weatherInfo, { reduced: reducedMotion(), fogVeil: !!(glow && glow.fog) }) : null;
+            var weatherAt = weatherPlan ? weatherCells(drewAll, [], inSight, !!weatherInfo.indoor, !!(glow && glow.fog), null) : [];
+            lastWeather = null;
+            var weatherMoving = weatherPlan ? drawWeather(weatherPlan, weatherAt, step, nowMs) : false;
+            if (weatherPlan && !lastWeather) { lastWeather = { name: weatherPlan.name, layers: [], art: {}, cells: 0, splashes: 0, strikes: storm.strikes, flash: false, dim: 0 }; }
+            roundCells = true;
+            if (glow) {
+                nightQuant = Math.round(nightLevel() * 10);
+                drawSight(inSight, glow, step, [], nowMs);
+            } else {
+                drawNightShade(drewAll, step, []);
+            }
+            roundCells = false;
+            figureDim = (sight && inSight !== null && sight.level === 0) ? 0.45 : 1;
+            lastSight = sight ? {
+                level: sight.level, daylight: !!sight.daylight, source: sight.source || '',
+                carried: sight.carried || '', fog: !!sight.fog,
+                visible: inSight === null ? 'all' : Array.from(inSight).sort(function (a, b) { return a - b; }),
+                glow: glow, marker: window.MapSight.marker(sight), dim: figureDim
+            } : null;
+
+            var walkAnim = drawWalkPath(R * 2, nowMs);
+
+            // camps beside their orbs
+            if (campInfo && mapSettings.showCamp !== false) {
+                (campInfo.allied_camps || []).forEach(function (c) {
+                    if (remembered(c.room_id)) { return; }
+                    drawOrbCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, !!c.embers, c.tent, R, nowMs);
+                });
+                if (campInfo.has_camp && campInfo.room_id) {
+                    var inn = !!(campInfo.here && campInfo.inn && campInfo.resting);
+                    drawOrbCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, !!campInfo.embers, campInfo.tent, R, nowMs);
+                }
+            }
+
+            // your party: a pennant over the orb each member stands on
+            var currentRc = (currentRoomId !== null) ? roomCache[currentRoomId] : null;
+            var anyEasing = false;
+            Object.keys(partyHeartEase).forEach(function (name) {
+                var ease = partyHeartEase[name];
+                if (!currentRc || ease.toZ !== currentRc.z) { return; }
+                if (ease.toGx === currentRc.x && ease.toGy === currentRc.y) { return; }
+                var allyRoom = coordIndex[ease.toGx + ',' + ease.toGy];
+                if (inSight !== null && (allyRoom === undefined || remembered(allyRoom))) { return; }
+                var t = Math.min((nowMs - ease.startTime) / 1000 / HEART_EASE_DURATION, 1), s = smoothstep(t);
+                var ap = gridToCanvas(ease.fromGx + (ease.toGx - ease.fromGx) * s, ease.fromGy + (ease.toGy - ease.fromGy) * s);
+                if (!drawIcon('map/markers/ally-banner.png', ap.px, ap.py - R * 1.15, R * 0.8 / 16, nowMs)) {
+                    ctx.fillStyle = ease.aggro ? '#ff3333' : '#00cfcf';
+                    ctx.font = 'bold ' + Math.round(R) + 'px serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('♥', ap.px, ap.py - R * 1.15);
+                }
+                drawn.allies++;
+                if (t < 1) { anyEasing = true; }
+            });
+
+            // your halo ring and company badge
+            if (here && rooms.has(currentRoomId)) {
+                var alpha = unitAlpha(nowMs) * figureDim;
+                if (alpha >= 1) { unit.fadeStart = -1; }
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                if (halo) {
+                    ctx.strokeStyle = 'rgba(255,214,120,0.95)';
+                    ctx.shadowColor = 'rgba(255,214,120,0.9)';
+                    ctx.shadowBlur = Math.max(4, R * 0.25);
+                    ctx.lineWidth = Math.max(1.5, R * 0.055);
+                    ctx.beginPath(); ctx.arc(here.px, here.py, R * 1.22, 0, Math.PI * 2); ctx.stroke();
+                    drawn.halo = true;
+                }
+                ctx.restore();
+                if (companySize > 1) {
+                    var m = R / 22;
+                    ctx.save(); ctx.globalAlpha = alpha;
+                    drawBadge({ px: here.px + Math.cos(BADGE_A) * R * 1.25 - 9 * m, py: here.py + Math.sin(BADGE_A) * R * 1.25 + 12 * m }, m, nowMs);
+                    ctx.restore();
+                    drawn.badge = true;
+                }
+            }
+
+            var stormIn = drawLightning(weatherPlan, weatherAt, step, nowMs);
+            if (!document.hidden) {
+                if (weatherMoving === 'fast' || (stormIn && stormIn <= 16)) { scheduleAnim(true); }
+                else if (weatherMoving === 'slow') { scheduleAnim(false); }
+                if (stormIn > 16) { scheduleAnim(false, stormIn); }
+            }
+            if (drawCrossing(nowMs)) { scheduleAnim(true); }
+            if (anyEasing || (pose && pose.walking)) { scheduleAnim(true); }
+            if ((walkAnim && !reducedMotion()) || (drawn.camps && !reducedMotion())) { scheduleAnim(false); }
+        }
+
         function roomAtPoint(cx, cy) {
+            if (orbsOn()) {
+                // an orb answers anywhere in its own share of the grid
+                var reach = getBaseStep() * zoomScale * 0.45, best = null, bestD = Infinity;
+                rooms.forEach(function (room, id) {
+                    var q = gridToCanvas(room.x, room.y), d = Math.hypot(cx - q.px, cy - q.py);
+                    if (d <= reach && d < bestD) { best = id; bestD = d; }
+                });
+                return best;
+            }
             var half = (getRoomSize() * zoomScale) / 2;
             for (var [id, room] of rooms) {
                 var p = gridToCanvas(room.x, room.y);
@@ -2619,16 +3100,18 @@
 
             // Phase 40c: tiles (terrain art, landmarks, walls, fog) or the classic
             // coloured squares. Shape, size and spacing only apply to classic.
-            var classicRows = [];
+            var classicRows = [], tileRows = [];
             function applyStyleRows() {
                 classicRows.forEach(function (r) { r.style.display = tilesOn() ? 'none' : ''; });
+                // figures (sprites) are only drawn in the tiles style
+                tileRows.forEach(function (r) { r.style.display = mapSettings.style === 'tiles' ? '' : 'none'; });
             }
             panel.appendChild(row('Style', btnGroup(
-                [{ label: 'Tiles', value: 'tiles' }, { label: 'Classic', value: 'classic' }],
-                function () { return tilesOn() ? 'tiles' : 'classic'; },
+                [{ label: 'Orbs', value: 'orbs' }, { label: 'Tiles', value: 'tiles' }, { label: 'Classic', value: 'classic' }],
+                function () { return mapSettings.style === 'orbs' || mapSettings.style === 'classic' ? mapSettings.style : 'tiles'; },
                 function (v) {
                     mapSettings.style = v;
-                    if (v === 'tiles') { zoomScale = snapZoom(zoomScale); }
+                    if (v !== 'classic') { zoomScale = snapZoom(zoomScale); }
                     applyStyleRows();
                 }
             )));
@@ -2659,11 +3142,13 @@
                 function (v) { mapSettings.weather = v; }
             )));
 
-            panel.appendChild(row('Sprites', btnGroup(
+            var spritesRow = row('Sprites', btnGroup(
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
                 function () { return mapSettings.sprites !== false; },
                 function (v) { mapSettings.sprites = v; }
-            )));
+            ));
+            panel.appendChild(spritesRow);
+            tileRows.push(spritesRow);
 
             panel.appendChild(row('Halo', btnGroup(
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
@@ -2878,12 +3363,12 @@
                 var lookRes = identity.look ? resolveSheet(chainKeys(identity.classid, identity.lineage), false, identity.look) : null;
                 var pose = unit.x === null ? null : unitPose(performance.now());
                 return {
-                    spriteDrawn: spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
+                    spriteDrawn: !orbsOn() && spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
                     queued: unit.queue.length, companySize: companySize,
                     companions: companions.map(function (c) {
                         return { key: c.key, sprite: spritesOn() && resolveSheet(chainKeys(c.classid, c.lineage), false) !== null };
                     }),
-                    style: tilesOn() ? 'tiles' : 'classic', drawn: drawn, zoom: zoomScale,
+                    style: orbsOn() ? 'orbs' : (tilesOn() ? 'tiles' : 'classic'), drawn: drawn, zoom: zoomScale,
                     camp: campInfo, campAsYou: lastCampAsYou, figures: lastFigures, fire: lastFire, fading: unit.fadeStart >= 0,
                     walk: walkInfo, night: nightLevel(),
                     unit: pose ? { x: pose.x, y: pose.y } : null,

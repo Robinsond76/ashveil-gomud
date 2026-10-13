@@ -43,3 +43,34 @@ func TestWorldMapHelp(t *testing.T) {
 		assert.Contains(t, tagPattern.ReplaceAllString(hubText, ""), "help worldmap", "help %s points at help worldmap", hub)
 	}
 }
+
+// TestWorldMapOrbsHelp (painted orbs, 2026-10-13): the default map style is
+// described where players look, in help worldmap and help webclient, with
+// what replaced the figures, and the old styles stay documented.
+func TestWorldMapOrbsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	text, err := GetHelpContents("worldmap")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Painted orbs", "bronze rim", "a castle shows its keep", "slums' cobbles", "Bronze lines join",
+		"smaller orb with its track painted", "milestone", "in a ring round its orb", "kept clear of the lines",
+		"No figures stand on the orb map", "gold rim", "glides along as you walk", "small pennant", "pitched beside its orb",
+		"Orbs, the default", "Sprites (Tiles style", "Terrain (Tiles style)", "your orb keeps its gold rim"} {
+		assert.Contains(t, plain, want)
+	}
+	for _, alias := range []string{"orb map", "orbs"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, text, got, "help %s is help worldmap", alias)
+	}
+
+	web, err := GetHelpContents("webclient")
+	require.NoError(t, err)
+	web = tagPattern.ReplaceAllString(web, "")
+	for _, want := range []string{"painted orb", "in a ring round an orb", "gold rim", "Style (Orbs"} {
+		assert.Contains(t, web, want)
+	}
+	assert.NotContains(t, web, "You stand on the map as your class", "the default map draws no figure")
+}
