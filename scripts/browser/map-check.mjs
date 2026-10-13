@@ -3,6 +3,8 @@
 // core) in Chromium with Playwright: the class sprite, its facing and walk
 // queue, the company badge, camp markers and the settings (40b); terrain
 // tiles, walls, fog, landmarks, companions and the classic style (40c).
+// The painted orbs (2026-10-13), now the default style, have their own
+// section at the end; every earlier section opens in the tiles style.
 //
 //   NODE_PATH=$(npm root -g) node scripts/browser/map-check.mjs [screenshot.png]
 import { createRequire } from 'node:module';
@@ -68,7 +70,10 @@ async function open(viewport, settings, abort) {
   });
   if (abort) { await page.route(abort, r => r.abort()); }
   await page.goto(url);
-  await page.evaluate(s => { localStorage.clear(); if (s) { localStorage.setItem('gomud_map_settings', JSON.stringify(s)); } }, settings || null);
+  // The sections written for the tiles style open in it unless they name a
+  // style; { style: undefined } stores no style, which is the orbs default.
+  const stored = settings && 'style' in settings ? settings : Object.assign({ style: 'tiles' }, settings || {});
+  await page.evaluate(s => { localStorage.clear(); localStorage.setItem('gomud_map_settings', JSON.stringify(s)); }, stored);
   await page.reload();
   return page;
 }
@@ -127,7 +132,7 @@ check((await state(page)).keys.join() === 'warrior,adventurer', 'an unpromoted c
       r.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(here, 'fixtures', 'warrior-1x-' + f + '.png')) }));
   }
   await fixturePage.goto(url);
-  await fixturePage.evaluate(() => localStorage.clear());
+  await fixturePage.evaluate(() => { localStorage.clear(); localStorage.setItem('gomud_map_settings', JSON.stringify({ style: 'tiles' })); });
   await fixturePage.reload();
   await gmcp(fixturePage, 'World.Map', world);
   await gmcp(fixturePage, 'Char.Info', { name: 'Wren', classid: 'tint-fixture', lineage: '' });
@@ -417,7 +422,7 @@ const gotoMixed = async (settings, abort) => {
 
 page = await gotoMixed(null);
 s = await state(page);
-check(s.style === 'tiles', 'the tiles style is the default');
+check(s.style === 'tiles', 'the tiles style can still be chosen');
 check(s.drawn.tiles === 7 && s.drawn.fallbacks === 0, 'every room draws its biome tile (the unknown biome too): ' + JSON.stringify(s.drawn));
 check(s.drawn.walls === 1, 'two touching rooms with no exit between them show one wall edge: ' + s.drawn.walls);
 check(s.drawn.fog === 1, 'the unvisited exit ends in a fog tile: ' + s.drawn.fog);
@@ -781,7 +786,7 @@ for (const dpr of [1, 1.5, 2]) {
   page = await ctx.newPage();
   page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
   await page.goto(url);
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('gomud_map_settings', JSON.stringify({ style: 'tiles' })); });
   await page.reload();
   await start(page);
   await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'paladin', lineage: 'warrior' });
@@ -1152,6 +1157,141 @@ for (const dpr of [1, 1.5, 2]) {
   check(await pg.evaluate(() => JSON.parse(localStorage.getItem('gomud_map_settings')).hereRing === false), 'the Halo switch is saved per browser');
   check(withRing !== await pg.evaluate(() => document.getElementById('map-2d-canvas').toDataURL()), 'the Halo switch removes the ring under your sprite');
   await pg.close();
+}
+
+// --- Painted orbs (2026-10-13): the default map, with no figures on it ---
+{
+  // A town over a road over a forest: landmarks by legend and by room name,
+  // a name that swaps the ground, road orbs, and resources in the middle.
+  // (The map leaves out a zone's 0,0 room unless it is the zone root.)
+  const orbRoom = (x, y) => {
+    const r = roomInfo(x, y);
+    r.name = 'Field ' + x + ',' + y;
+    if (y === 0) { r.environment = 'city'; }
+    if (y === 1) { r.environment = 'road'; }
+    if (x === 4 && y === 0) { r.maplegend = 'Townsquare'; r.name = 'Town Square'; }
+    if (x === 1 && y === 0) { r.name = 'The Castle Library'; }
+    if (x === 2 && y === 0) { r.name = 'A Dark Alley'; }
+    if (x === 3 && y === 0) { r.maplegend = 'Inn'; r.name = 'The Inn'; }
+    if (x === 2 && y === 1) { r.environment = 'forest'; r.resources = ['water', 'forage', 'herbs', 'game', 'firewood']; r.depleted = ['herbs']; }
+    if (x === 4 && y === 2) { r.exitsv2.up = { num: 200, dx: 0, dy: 0, dz: 1 }; }
+    return r;
+  };
+  const orbWorld = { biomes: {}, rooms: [] };
+  for (let y = 0; y < H; y++) { for (let x = 0; x < W; x++) { orbWorld.rooms.push(orbRoom(x, y)); } }
+  const orbSettle = pg => pg.waitForFunction(() => {
+    const st = window.MapView.state();
+    return st.drawn.orbs > 0 && st.drawn.flat === 0 && !st.walking;
+  }, null, { timeout: 5000 });
+  const orbStart = async (viewport, settings) => {
+    const pg = await open(viewport, settings);
+    await gmcp(pg, 'World.Map', orbWorld);
+    await gmcp(pg, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+    await gmcp(pg, 'Room', { Info: orbRoom(2, 1) });
+    await orbSettle(pg);
+    await tick(pg, 400);
+    return pg;
+  };
+  const canvasImg = pg => pg.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+
+  page = await orbStart({ width: 1280, height: 900 }, { style: undefined });
+  s = await state(page);
+  check(s.style === 'orbs', 'the painted orbs are the default style');
+  check(s.drawn.orbs === 14 && s.drawn.tiles === 0 && s.drawn.flat === 0, 'every room is a painted orb, no tiles: ' + JSON.stringify({ orbs: s.drawn.orbs, tiles: s.drawn.tiles, flat: s.drawn.flat }));
+  check(!s.spriteDrawn && !s.figures.you && s.figures.companions === 0, 'no figures stand on the orb map');
+  check(s.drawn.lines === 20, 'each exit is one line from orb to orb: ' + s.drawn.lines);
+  check(s.drawn.roads === 4, 'the road rooms (all but the forest one) are road orbs: ' + s.drawn.roads);
+  check(s.drawn.landmarks === 3 && s.drawn.titled === 1, 'two legends and one room name (the library) paint landmarks: ' + JSON.stringify({ l: s.drawn.landmarks, t: s.drawn.titled }));
+  const here = id(2, 1);
+  check(s.drawn.rim[here] === 'gold' && s.drawn.rim[id(1, 1)] === 'bronze', 'your orb has the gold rim, the others bronze');
+  check(s.drawn.halo === true, 'the halo ring marks your orb');
+  check(s.drawn.icons === 5 && s.drawn.dots === 0, 'the five resources ring the orb as icons: ' + JSON.stringify({ i: s.drawn.icons, d: s.drawn.dots }));
+  const slots = s.drawn.slots[here] || [];
+  const gapTo = (a, b) => { const d = Math.abs(a - b) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; };
+  const lineAs = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+  check(slots.length === 5 && slots.every(a => lineAs.every(l => gapTo(a, l) > 0.2)), 'the icons sit clear of the four lines: ' + JSON.stringify(slots.map(a => +a.toFixed(2))));
+  check(slots.every((a, i) => slots.every((b, j) => i === j || gapTo(a, b) > 0.3)), 'no two icons overlap');
+  check(s.drawn.chevrons === 1, 'a room with a way up shows its chevron');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-orbs.png') }); }
+
+  // Night and rain lie on the orbs, not on the ground between them (review
+  // 2026-10-13: square cells of rain and overlapping dark discs blotched it).
+  const pixelBetween = (pg, a, b) => pg.evaluate(([a, b]) => {
+    const c = document.getElementById('map-2d-canvas'), r = c.getBoundingClientRect();
+    const p = window.MapView.pointOf(a), q = window.MapView.pointOf(b);
+    const k = c.width / r.width;
+    const x = Math.round(((p.x + q.x) / 2 - r.left) * k), y = Math.round(((p.y + q.y) / 2 - r.top) * k);
+    return Array.from(c.getContext('2d').getImageData(x, y, 1, 1).data).join();
+  }, [a, b]);
+  const pixelOn = (pg, a) => pg.evaluate(a => {
+    const c = document.getElementById('map-2d-canvas'), r = c.getBoundingClientRect(), p = window.MapView.pointOf(a), k = c.width / r.width;
+    return Array.from(c.getContext('2d').getImageData(Math.round((p.x - r.left) * k), Math.round((p.y - r.top) * k), 1, 1).data).join();
+  }, a);
+  const groundDay = await pixelBetween(page, id(3, 1), id(4, 2));
+  const orbDay = await pixelOn(page, id(4, 2));
+  await gmcp(page, 'Gametime', Object.assign(clock(23), { weather: { name: 'rain', cloud_cover: 3 } }));
+  await tick(page, 400);
+  s = await state(page);
+  check(s.weather && s.weather.cells > 0 && s.drawn.shaded > 0, 'rain and night fall on the orb map: ' + JSON.stringify({ w: s.weather && s.weather.cells, n: s.drawn.shaded }));
+  check(await pixelBetween(page, id(3, 1), id(4, 2)) === groundDay, 'the ground between the orbs stays clear of the rain and the night shade');
+  check(await pixelOn(page, id(4, 2)) !== orbDay, 'the night darkens the orbs themselves');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-orbs-night-rain.png') }); }
+  await gmcp(page, 'Gametime', clock(12));
+  await tick(page, 300);
+
+  // A click on a neighbouring orb offers the walk there.
+  const pt = await page.evaluate(n => window.MapView.pointOf(n), id(3, 0));
+  await page.mouse.click(pt.x, pt.y);
+  await tick(page, 200);
+  check(await page.locator('text=Walk to The Inn').count() === 1, 'a click on an orb offers the walk there');
+  await page.keyboard.press('Escape');
+
+  // A company badge rides on your orb.
+  await gmcp(page, 'Company', company);
+  await tick(page, 300);
+  check((await state(page)).drawn.badge === true, 'your company badge sits on your orb');
+
+  // The camp pitches beside the orb, its fire lit.
+  await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: here, fire_lit: true, tent: true, allied_camps: [] });
+  await tick(page, 400);
+  s = await state(page);
+  check(s.drawn.camps === 1 && s.fire === 'lit', 'your camp and its lit fire are drawn by your orb: ' + JSON.stringify({ c: s.drawn.camps, f: s.fire }));
+  const campSlots = s.drawn.slots[here] || [];
+  check(campSlots.every(a => gapTo(a, -3 * Math.PI / 4) > 0.5), 'the icons leave the camp corner clear');
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-orbs-camp.png') }); }
+  const haloOn = await canvasImg(page);
+  await page.close();
+
+  page = await orbStart({ width: 1280, height: 900 }, { style: undefined, hereRing: false });
+  await gmcp(page, 'Company', company);
+  await gmcp(page, 'Company.Camp', { has_camp: true, here: true, room: 'x', room_id: here, fire_lit: true, tent: true, allied_camps: [] });
+  await tick(page, 400);
+  s = await state(page);
+  check(s.drawn.halo === false && s.drawn.rim[here] === 'gold' && s.drawn.camps === 1, 'with the Halo off your orb keeps its gold rim and the camp still burns');
+  check(haloOn !== await canvasImg(page), 'the Halo setting changes the orb map');
+  await page.close();
+
+  // The phone: a closer start, the same orbs.
+  page = await orbStart({ width: 360, height: 740 }, { style: undefined });
+  s = await state(page);
+  check(s.style === 'orbs' && s.drawn.orbs > 0 && s.drawn.icons === 5, 'the phone draws the orbs and their icons: ' + JSON.stringify({ o: s.drawn.orbs, i: s.drawn.icons }));
+  if (shot) { await page.locator('#map-window').screenshot({ path: shot.replace(/\.png$/, '-orbs-360.png') }); }
+  await page.close();
+
+  // The Style setting switches to tiles (with sprites) and back.
+  page = await orbStart({ width: 1280, height: 900 }, { style: undefined });
+  await page.click('.map-controls button[title="Map settings"]');
+  const styleRow = page.locator('.map-settings-panel div', { hasText: /^Style/ }).last();
+  check(await page.locator('.map-settings-panel div', { hasText: /^Sprites/ }).last().isHidden(), 'the Sprites switch is hidden in the orbs style');
+  await styleRow.locator('button', { hasText: 'Tiles' }).click();
+  await settle(page);
+  s = await state(page);
+  check(s.style === 'tiles' && s.spriteDrawn && !s.drawn.orbs && s.drawn.tiles > 0, 'the Tiles style brings back the tiles and your sprite');
+  await styleRow.locator('button', { hasText: 'Orbs' }).click();
+  await orbSettle(page);
+  check((await state(page)).style === 'orbs', 'the Orbs button returns to the orbs');
+  check(await page.evaluate(() => !('style' in JSON.parse(localStorage.getItem('gomud_map_settings') || '{}'))), 'choosing the default style stores nothing');
+  await page.close();
 }
 
 await browser.close();

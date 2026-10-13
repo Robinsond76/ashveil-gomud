@@ -1,9 +1,45 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">worldmap</ansi>
 
-In the web client, the Map window draws the rooms you have seen as terrain
-tiles and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ansi fg="command">help map</ansi>) instead.
+In the web client, the Map window draws the rooms you have seen as painted
+orbs joined by lines, with where you are marked on them. The settings button
+switches to the Tiles style (terrain tiles with your figure walking on them)
+or the Classic squares and letters. The text clients have <ansi fg="command">map</ansi> (<ansi fg="command">help map</ansi>)
+instead.
 
-<ansi fg="yellow-bold">Terrain</ansi>
+<ansi fg="yellow-bold">Painted orbs</ansi>
+
+  Each room is a round painting of what it is, in a bronze rim. Its ground
+  shows through (grass, forest, stone streets, sand, cave rock and the
+  rest), and a landmark room shows its building over it: an inn, bank,
+  temple, gate, keep or shop. A room with no landmark of its own can take
+  one from its name: a castle shows its keep, a library its shelves, a
+  vault the bank and a training yard the trainer, and an alley or beggars'
+  lane is painted on the slums' cobbles.
+
+  Bronze lines join each room to the rooms its exits lead to. An exit
+  somewhere you have not been, or on into another region, fades out a
+  short way along. A locked door shows a key on its line and a secret
+  passage you have found a question mark. Stairs up or down show a small
+  chevron beside the orb.
+
+  A road with no landmark is a smaller orb with its track painted across
+  it, running out the way its exits go over the ground it passes through,
+  with ruts, stones, tufts of grass and now and then a milestone, so no two
+  stretches look alike.
+
+  A room's resource icons sit in a ring round its orb, starting at the
+  bottom, each on a dark disc and kept clear of the lines. A picked-clean
+  resource has the empty-basket mark. Zoomed out too far to read, they
+  are coloured dots.
+
+  No figures stand on the orb map. Your room has a gold rim, and with the
+  <ansi fg="yellow">Halo</ansi> on a glowing ring round it glides along as you walk. Your company's
+  shield sits at its upper right. A party member shows as a small pennant
+  over their room. Your camp is pitched beside its orb, up and to the
+  left: the tent with its fire in front, the rough camp, or the inn's bed
+  while you rest at an inn.
+
+<ansi fg="yellow-bold">Terrain (Tiles style)</ansi>
 
   Each room is a small picture of its ground: grass, forest, road, water,
   shore, swamp, snow, desert, cave, dungeon, city and the rest. Rooms that
@@ -29,7 +65,7 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   An exit you have not been through ends in a patch of <ansi fg="yellow">fog</ansi>: the edge of what
   you know. A room whose ground has no picture shows plain stone.
 
-<ansi fg="yellow-bold">Landmarks</ansi>
+<ansi fg="yellow-bold">Landmarks (Tiles style)</ansi>
 
   An inn, bank, trainer, temple, gate, wall, bridge, keep and other
   places drawn from the room's type show a small building or sign over the
@@ -37,7 +73,7 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   picture keeps its letter, outlined so you can read it. Hover over any
   room for its name and type.
 
-<ansi fg="yellow-bold">You</ansi>
+<ansi fg="yellow-bold">You (Tiles style)</ansi>
 
   You are drawn as your class: a warrior, cleric, rogue, ranger, wizard or
   witch. Before you have chosen one, or when a class has no picture of its
@@ -64,20 +100,20 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
   with you (you, and each companion who is present and not separated or
   fallen). It is hidden when you travel alone (<ansi fg="command">help company</ansi>).
 
-  Companions who are with you stand beside you, drawn as their class
+  In the Tiles style, companions who are with you stand beside you, drawn as their class
   (small, at three quarters of your size) and walking with you. Up to four
   are drawn; the shield still counts everyone. One whose class is not
   known is counted but not drawn.
 
 <ansi fg="yellow-bold">Your party</ansi>
 
-  A party member whose class is known is drawn as that class, a little
+  In the Tiles style, a party member whose class is known is drawn as that class, a little
   smaller than you and with a small pennant over them. One whose class is
   not known stays a heart. Nobody outside your party appears on the map.
 
 <ansi fg="yellow-bold">Camps</ansi>
 
-  While you stand in your own camp, the camp is you: your figure and your
+  In the Tiles style, while you stand in your own camp, the camp is you: your figure and your
   companions are round the fire, and the tent with its fire marks where you
   are. Walk off and you step out of it; the camp stays where you pitched it.
   At an inn you keep your figure, and with Sprites off you stay the red
@@ -95,7 +131,7 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 
 <ansi fg="yellow-bold">Resources</ansi>
 
-  Small icons packed inside a tile mark what it provides, such as fresh
+  In the Tiles style, small icons packed inside a tile mark what it provides, such as fresh
   water, forage or a fishing spot (<ansi fg="command">help resources</ansi>). Every resource shows, each
   on a dark disc so it stands out on forest. A resource that has been
   picked clean has an empty-basket mark over its icon, and the mark clears
@@ -151,10 +187,17 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 
 <ansi fg="yellow-bold">Settings</ansi>
 
-  The settings button on the map has <ansi fg="yellow">Style</ansi> (Tiles, or Classic for the plain
-  coloured squares and letters, where shape, size and spacing apply),
-  <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red square and hearts) and
-  <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker) and <ansi fg="yellow">Day/night</ansi> (on, or off for no shading and no darkness) and <ansi fg="yellow">Weather</ansi> (on, or off for a clear map). <ansi fg="yellow">Halo</ansi> (on, or off to hide the ring under your sprite and your camp fire). The weather shows on the Tiles style only. All are kept per browser. The map shows only what the game already tells
-  you: nothing about anyone outside your party.
+  The settings button on the map has <ansi fg="yellow">Style</ansi> (Orbs, the default; Tiles, for
+  terrain tiles and figures; or Classic, the plain coloured squares and
+  letters, where shape, size and spacing apply), <ansi fg="yellow">Sprites</ansi> (Tiles style
+  only: on, or off for the classic red square and hearts), <ansi fg="yellow">Camps</ansi> (on, or
+  off to hide every camp marker), <ansi fg="yellow">Day/night</ansi> (on, or off for no shading and
+  no darkness), <ansi fg="yellow">Weather</ansi> (on, or off for a clear map) and <ansi fg="yellow">Halo</ansi> (on, or off to
+  hide the glowing ring round your orb, or in the Tiles style the ring
+  under your sprite and your camp fire; your orb keeps its gold rim). The
+  weather shows on the Orbs and Tiles styles (on the orbs it and the night
+  fall on the pictures, leaving the ground between them clear). All are
+  kept per browser. The map shows only what the game already tells you:
+  nothing about anyone outside your party.
 
 See also: <ansi fg="command">help walkto</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.

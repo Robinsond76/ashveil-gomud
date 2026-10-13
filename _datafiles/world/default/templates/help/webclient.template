@@ -11,21 +11,23 @@ button in them just types a command for you.
   The Time and Date sky also shows the weather where you are
   (<ansi fg="command">help weather</ansi>).
 
-  On the map, small icons inside a room's tile mark what it provides:
-  fresh water, forage, shelter, and what you can gather. Hover for names;
-  the settings button turns the markers off (<ansi fg="command">help resources</ansi>). The Room Info
-  panel lists the current room's resources as badges under its name. A
-  gathering resource that has been picked clean has an empty-basket mark
-  on the map and is dimmed in the panel (<ansi fg="command">help gathering</ansi>).
+  The map draws each room as a painted orb of its ground and landmark,
+  joined to its neighbours by lines; a road is a smaller orb with its track
+  painted across it. Small icons in a ring round an orb mark what the room
+  provides: fresh water, forage, shelter, and what you can gather. Hover
+  for names; the settings button turns the markers off (<ansi fg="command">help resources</ansi>). The
+  Room Info panel lists the current room's resources as badges under its
+  name. A gathering resource that has been picked clean has an
+  empty-basket mark on the map and is dimmed in the panel
+  (<ansi fg="command">help gathering</ansi>).
 
-  You stand on the map as your class, facing the way you walked, with a
-  gold ring under you. A small shield with a number shows how many of
-  your company travel with you, your party's members show as their
-  classes, and your camp (and your party's) shows as a tent with its
-  fire. Rooms are terrain tiles with landmarks, walls where there is no
-  exit, and fog at the edge of what you know. The settings button has
-  Style (Tiles or Classic), Sprites, Camps, Halo and Day/night switches
-  (<ansi fg="command">help worldmap</ansi>). Click a room on the map to walk there (<ansi fg="command">help walkto</ansi>).
+  Your room has a gold rim and a glowing halo round it, with a small
+  shield showing how many of your company travel with you; your party's
+  members show as pennants, and your camp (and your party's) as a tent
+  with its fire beside the orb. The settings button has Style (Orbs,
+  Tiles, where you walk the terrain tiles as your class, or Classic),
+  Sprites, Camps, Halo, Weather and Day/night switches (<ansi fg="command">help worldmap</ansi>).
+  Click a room on the map to walk there (<ansi fg="command">help walkto</ansi>).
 
 <ansi fg="yellow-bold">The right column: the dock</ansi>
 

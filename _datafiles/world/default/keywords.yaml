@@ -511,7 +511,7 @@ help-aliases:
   walkto:           [autowalk, auto-walk, click-to-walk, click to walk, walk to, walk-to, tile-ready, tile ready, tile regions, showcase, alderbrook]
   camp:             [camping, campfire, camp chores, camp-chores, before you sleep]
   inn:              [inns, inn-room, inn-rooms, inn-tiers, private-room, suite, common-room]
-  worldmap:         [map window, mapwindow, tile map, world map]
+  worldmap:         [map window, mapwindow, tile map, world map, orb map, orbs, map orbs]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, tents, camp tent, camp-tent, fur tent, fur-lined tent, camouflaged tent, large tent, pavilion, pavilion tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
