@@ -282,6 +282,8 @@ func TestGoTravelInterception(t *testing.T) {
 		assert.Equal(t, 920011, user.Character.RoomId, "ordinary movement must be refused during travel")
 		assert.Equal(t, 100, user.Character.ActionPoints)
 	})
+
+	t.Run("a pitched camp refuses the walk", goRefusesWhileCampPitched)
 }
 
 type fakeCampLeave struct{ campRoom int }
@@ -291,7 +293,9 @@ func (f fakeCampLeave) LeaveBlocked(_, roomID int) (bool, string) {
 	return roomID == f.campRoom, "Break camp first."
 }
 
-func TestGoRefusesWhileCampPitched(t *testing.T) {
+// goRefusesWhileCampPitched runs inside TestGoTravelInterception, which
+// loads the 920011 rooms.
+func goRefusesWhileCampPitched(t *testing.T) {
 	origin := rooms.LoadRoom(920011)
 	require.NotNil(t, origin)
 	camping.SetMovementProvider(fakeCampLeave{campRoom: origin.RoomId})
