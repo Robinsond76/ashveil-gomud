@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
@@ -281,6 +282,32 @@ func TestGoTravelInterception(t *testing.T) {
 		assert.Equal(t, 920011, user.Character.RoomId, "ordinary movement must be refused during travel")
 		assert.Equal(t, 100, user.Character.ActionPoints)
 	})
+}
+
+type fakeCampLeave struct{ campRoom int }
+
+func (f fakeCampLeave) MovementBlocked(int) (bool, string) { return false, "" }
+func (f fakeCampLeave) LeaveBlocked(_, roomID int) (bool, string) {
+	return roomID == f.campRoom, "Break camp first."
+}
+
+func TestGoRefusesWhileCampPitched(t *testing.T) {
+	origin := rooms.LoadRoom(920011)
+	require.NotNil(t, origin)
+	camping.SetMovementProvider(fakeCampLeave{campRoom: origin.RoomId})
+	t.Cleanup(func() { camping.SetMovementProvider(nil) })
+
+	user := travelTestUser(t, 21, origin.RoomId)
+	handled, err := Go("north", user, origin, 0)
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 920011, user.Character.RoomId, "a pitched camp holds the company")
+
+	// A camp in some other room does not hold this one.
+	camping.SetMovementProvider(fakeCampLeave{campRoom: 1})
+	_, err = Go("north", user, origin, 0)
+	require.NoError(t, err)
+	assert.Equal(t, 920012, user.Character.RoomId)
 }
 
 type recordingStepper struct{ calls [][3]int }

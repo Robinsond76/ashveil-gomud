@@ -117,7 +117,10 @@ round count; a rest takes real time, not game time.
 
   <ansi fg="command">camp break</ansi>
   Strikes the camp. You can't break camp while resting; wait for the
-  rest to finish (or let it lapse) first. Breaking camp doesn't refund
+  rest to finish (or let it lapse) first. While a camp is pitched you
+  can't walk out of its room (by direction, map click, walkto or a
+  route): break camp first. Being driven out of a fight or sent away by
+  an admin still moves you. Breaking camp doesn't refund
   the rest, change your hunger or thirst, or move you anywhere.
 
 <ansi fg="yellow-bold">Usage:</ansi>

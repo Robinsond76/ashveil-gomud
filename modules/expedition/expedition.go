@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -528,6 +529,11 @@ func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error
 	if _, exists := m.sessions[req.LeaderUserID]; exists {
 		// A second start must not replace, duplicate, or reset the session.
 		m.sendToLeader(req.LeaderUserID, "You are already travelling.")
+		return true, nil
+	}
+	// A pitched camp holds the company until it is broken.
+	if blocked, why := camping.LeaveBlocked(req.LeaderUserID, req.OriginRoomID); blocked {
+		m.sendToLeader(req.LeaderUserID, why)
 		return true, nil
 	}
 	// A company with a Collapsed member (fatigue 0) can't set out on a route.

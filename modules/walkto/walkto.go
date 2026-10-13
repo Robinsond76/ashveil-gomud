@@ -299,6 +299,9 @@ func (m *WalktoModule) cannotWalk(user *users.UserRecord) string {
 	if blocked, msg := camping.MovementBlocked(user.UserId); blocked {
 		return msg
 	}
+	if blocked, msg := camping.LeaveBlocked(user.UserId, user.Character.RoomId); blocked {
+		return msg
+	}
 	if blocked, msg := storyevents.MovementBlocked(user.UserId); blocked {
 		return msg
 	}

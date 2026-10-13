@@ -54,6 +54,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		return true, nil
 	}
 
+	// A pitched camp holds the company until it is broken.
+	if blocked, message := camping.LeaveBlocked(user.UserId, user.Character.RoomId); blocked {
+		user.SendText(message)
+		return true, nil
+	}
+
 	// A story event waiting for an answer holds the company where it is
 	// (Phase 60).
 	if blocked, message := storyevents.MovementBlocked(user.UserId); blocked {

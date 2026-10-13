@@ -697,3 +697,22 @@ func TestCampCommandsShowFuelUntilTheFireIsLit(t *testing.T) {
 	assert.Contains(t, status, "damp wood gives light and no warmth")
 	assert.NotContains(t, status, "Fuel:", "a lit fire needs no fuel line")
 }
+
+func TestLeaveBlockedWhileCampPitched(t *testing.T) {
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	user := campUser(t, 7, 100)
+
+	blocked, _ := module.LeaveBlocked(7, 100)
+	assert.False(t, blocked, "no camp, no hold")
+
+	module.establish(user, eligibleRoom())
+	blocked, why := module.LeaveBlocked(7, 100)
+	assert.True(t, blocked)
+	assert.Contains(t, why, "camp break")
+	blocked, _ = module.LeaveBlocked(7, 999)
+	assert.False(t, blocked, "a camp elsewhere does not hold this room")
+
+	module.breakCamp(user, eligibleRoom())
+	blocked, _ = module.LeaveBlocked(7, 100)
+	assert.False(t, blocked, "breaking camp frees the company")
+}

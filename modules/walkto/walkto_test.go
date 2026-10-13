@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -384,4 +385,20 @@ func TestARefusedStepStopsTheWalk(t *testing.T) {
 	assert.False(t, w.m.Active(7))
 	assert.Equal(t, 96002, w.user.Character.RoomId)
 	assert.Empty(t, w.timers, "no timer re-arms after the stop")
+}
+
+type campHold struct{ room int }
+
+func (campHold) MovementBlocked(int) (bool, string) { return false, "" }
+func (c campHold) LeaveBlocked(_, roomID int) (bool, string) {
+	return roomID == c.room, "Your camp is pitched here. Break camp before you leave."
+}
+
+func TestWalkRefusedWhileCampPitched(t *testing.T) {
+	w := newWorld(t)
+	camping.SetMovementProvider(campHold{room: 96001})
+	t.Cleanup(func() { camping.SetMovementProvider(nil) })
+	assert.Contains(t, w.walk("inn"), "Break camp")
+	assert.False(t, w.m.Active(7))
+	assert.Equal(t, 96001, w.user.Character.RoomId)
 }

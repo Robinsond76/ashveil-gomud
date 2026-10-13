@@ -556,6 +556,7 @@ type CampingModule struct {
 var (
 	_ camping.ViewProvider     = (*CampingModule)(nil)
 	_ camping.MovementProvider = (*CampingModule)(nil)
+	_ camping.LeaveProvider    = (*CampingModule)(nil)
 	_ camping.AbandonProvider  = (*CampingModule)(nil)
 )
 
@@ -1395,6 +1396,19 @@ func (m *CampingModule) MovementBlocked(leaderUserID int) (bool, string) {
 	}
 	remaining := m.remainingLocked(camp)
 	return true, fmt.Sprintf("You are resting at camp (%s remaining). Wait for your company to recover, or it will be interrupted.", remaining.Round(time.Second))
+}
+
+// LeaveBlocked implements camping.LeaveProvider: while a camp is pitched in
+// the room, walking out of it is refused until the camp is broken. A resting
+// camp is already refused by MovementBlocked, with its own text.
+func (m *CampingModule) LeaveBlocked(leaderUserID, roomID int) (bool, string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.RoomID != roomID {
+		return false, ""
+	}
+	return true, "Your camp is pitched here. Break camp before you leave: type <ansi fg=\"command\">camp break</ansi>."
 }
 
 func (m *CampingModule) remainingLocked(camp camping.Camp) time.Duration {
